@@ -1,0 +1,614 @@
+---
+title:
+author:
+date: "Friday, February 27, 2015"
+output: html_document
+html_document:
+    keep_md: yes
+---
+![Statistics for pedologists course banner image](logo.jpg)  
+
+##CHAPTER 4: EXPLORATORY DATA ANALYSIS  
+ 
+ * [4.0 Examine your data](#exam)  
+ * [4.1 Frequency distribution](#freq)       
+ * [4.2 Measures of central tendency](#cent)        
+ * [4.3 Measures of Dispersion](#disp)      
+ * [4.4 Box plots](#box)       
+ * [4.5 Quantile comparison plot](#qq)       
+ * [4.6 Assessing normality](#norm)       	
+ * [4.7 Special cases - Circular data and pH](#circ)       
+ * [4.8 Scatterplot](#scat)       
+ * [4.9 Correlation matrix](#corr)       
+ * [4.10 Spatial auto-correlation](#auto)      
+ * [4.11 References](#ref)   
+
+Before embarking on statistical tests and inferences, it is essential to understand your data. This will be done through conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
+
+Filliben (2004), described EDA as:  
+
+_an approach/philosophy for data analysis that employs a variety of techniques (mostly  graphical) to maximize:_  
+
+ 1. insight into a data set  
+ 2. uncover underlying structure  
+ 3. extract important variables  
+ 4. detect outliers and anomalies  
+ 5. test underlying assumptions  
+ 6. develop parsimonious models and  
+ 7. determine optimal factor settings  
+  
+Tukey (1980) summarized:  
+
+_If we need a short suggestion of what exploratory data analysis is, I would suggest that_  
+
+ 1. It is an attitude, AND  
+ 2.	A flexibility, AND  
+ 3.	Some graph paper (or transparencies, or both)  
+
+_No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper – and transparencies – are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated._
+
+Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the “pictures”, i.e. graphical output, and descriptive statistics we will use to explore data.  
+
+Descriptive statistics include:  
+
+ * Mean – arithmetic average  
+ * Median – midpoint  
+ * Mode – most frequent value in a dataset  
+ * Standard Deviation – variation about the mean  
+ * Interquartile Range – statistical dispersion  
+ * Kurtosis – peakedness of the data distribution  
+ * Skewness – symmetry of the data distribution  
+
+Graphical methods include:  
+
+ * Histogram – bar plot where each bar represents the frequency of cases for each range of values
+ * Density estimation – an estimation of the frequency distribution based on the sample data
+ * Quantile-quantile plot - plot of actual data values against a normal distribution
+ * Box plots - a visual representation of median, quartiles, symmetry, skew, and outliers
+ * Scatter plots - graphical display of one variable plotted on the x axis and another on the y axis
+ * Radial plots – plots formatted for representation of circular data 
+
+Graphical methods represent an intuitive way to investigate data.   
+
+
+###<a id="exam")></a>4.0  Examine your data  
+
+Before starting EDA, look at your data to make sure there are no errors due to typos, coding, missing values or other countless possibilities for error. If we read the sample dataset:  
+```{r, eval=FALSE}
+sand <- read.table("sand_example.csv", header = TRUE, sep=",")
+```
+
+As noted in Chapter 1, a visual examination of the raw data is possible by looking at the data object:  
+```{r, eval=FALSE}
+sand
+```
+ 
+
+This view is fine for a smaller dataset, but can be cumbersome for a large dataset. The check for missing data:  
+
+```{r, eval=FALSE}
+is.na(sand)
+```
+
+should return:  
+
+![R GUI image](ch4jpg/ch4_fig1.jpg)  
+
+R will return TRUE if there is a missing value within a given row and column or FALSE if there is not. In our sand example, there were no missing values, so R returned all combinations as FALSE.  
+
+An example with missing data would look like:  
+
+![R GUI image](ch4jpg/ch4_fig2.jpg)  
+
+Determining the missing element(s) using:  
+```{r, eval=FALSE}
+which(is.na(sand))
+```
+
+In our example dataset, “integer (0)” is returned because we do not have any missing values. A dataset with missing values would return something like this:  
+
+![R GUI image](ch4jpg/ch4_fig3.jpg)  
+
+This indicates that the 76<sup>th</sup> and 83<sup>rd</sup> elements in the data object are missing. If one started counting top-to-bottom and left-to-right, the 76th and 83rd elements are where the TRUE value appears in the output. You may choose to examine and deal with missing values using the software of your choice before importing into R.  
+
+When you have missing data and the function you want to run will not run with missing values, the following options are available:  
+
+ 1. Exclude all rows or columns that contain missing values (**na.exclude**)  
+ 2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column (**df[is.na(df)]<- 0**) (in this example df represents data with NA values and the function is recoding all NA values as 0)  
+
+A quick check for coding errors of categories would be to summarize by the category. In the sample dataset, summarizing mean sand content by landuse using the aggregate command:  
+
+```{r, eval=FALSE}
+aggregate( sand~landuse, sand, mean)
+```
+
+returns:  
+
+![R GUI image](ch4jpg/ch4_fig4.jpg)  
+
+There should be three categories of landuse, which the output verifies. If the aggregate command returned the following, you could quickly fix the typos for “crops” and “Pasture”:  
+
+![R GUI image](ch4jpg/ch4_fig5.jpg)  
+
+###<a id="freq")></a>4.1  Frequency distribution  
+
+Now that missing values and coding errors have been checked and corrected, a graphical depiction of the sample data distribution in the form of a bar graph, for nominal data, or a histogram, for continuous data conveys a wealth of information.  
+
+An idealized histogram with a normal distribution is shown in Figure 1:  
+
+![R GUI image](ch4jpg/ch4_fig6.jpg)  Figure 1. Normal Distribution  
+
+Observing Figure 1 indicates the data is symmetrically distributed, there is an equal distribution on either side of the highest point on the graph.  By contrast, Figures 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
+
+![R GUI image](ch4jpg/ch4_fig7.jpg)  Figure 2. Skewed example 1  
+
+![R GUI image](ch4jpg/ch4_fig8.jpg)  Figure 3. Skewed example 2  
+
+Displaying data in this manner provides a visual means to determine if your data has a wide, flat distribution, a narrow, peaked distribution, a normal distribution or a skewed distribution as in Figures 1 – 3.  
+
+Using the “sand_example.csv” file as the sample data set, review the histogram command from Chapter 1. Remember to use the read.table command and create the “sand” data object in R. The next command will create a histogram with 12 bins:  
+```{r, eval=FALSE}
+hist(sand$sand, freq=TRUE, breaks=12, xlim = c(15, 40), main = "Histogram of Sand", sub = "with 12 bins", col ="lightblue", ylab = "Counts", xlab = "Total Sand")
+```
+
+![R GUI image](ch4jpg/ch4_fig9.jpg)  Figure 4. Histogram with 12 bins  
+
+The next command will create a histogram with 5 bins:  
+
+```{r, eval=FALSE}
+hist(sand$sand, freq=TRUE, breaks=5, xlim = c(15, 40), main = "Histogram of Sand", sub = "with 5 bins", col ="lightblue", ylab = "Counts", xlab = "Total Sand")
+```
+
+![R GUI image](ch4jpg/ch4_fig10.jpg)  Figure 5. Histogram with 5 bins  
+
+Since histograms are dependent on the number of bins, they may not be the best method of determining the shape of a distribution.  
+
+A density estimation, also known as a Kernel density plot, may provide a better visualization of the shape of the distribution:  
+ 
+```{r, eval=FALSE}
+d<-(density(sand$sand))
+plot(d)
+```
+
+![R GUI image](ch4jpg/ch4_fig11.jpg)  Figure 6. The Kernel density plot depicts a smoothed line of the distribution  
+
+ArcGIS also provides the capability of creating histograms for data associated with point files using the Geostatistical Analyst:  
+
+![R GUI image](ch4jpg/ch4_fig12.jpg)  
+
+###<a id="cent")></a>4.2  Measures of central tendency  
+
+These are measures to determine the mid-point of the range of observed samples. The mean and median are the most commonly used measures for our purposes.  
+
+**Mean** - The arithmetic average all are familiar with, formally expressed as:![R GUI image](ch4jpg/ch4_fig13.jpg) which means sum all X values in the sample and divide by the number of samples. It is assumed that all references in this document refer to samples rather than a population.  
+
+The mean sand content from the sample dataset may be determined:  
+
+```{r, eval=FALSE}
+mean(sand$sand)
+```
+
+![R GUI image](ch4jpg/ch4_fig14.jpg)  
+
+To determine the mean by group or category, use the aggregate command as discussed in section 4.0:  
+```{r, eval=FALSE}
+aggregate( sand~landuse, sand, mean)
+```
+ returns:  
+ 
+![R GUI image](ch4jpg/ch4_fig15.jpg)  
+
+**Median** – The middle measurement of a sample set. This is known as the middle or 50% quartile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.  
+
+The median from the sample dataset may be determined:  
+
+```{r, eval=FALSE}
+median(sand$sand)
+```
+
+returns:
+
+![R GUI image](ch4jpg/ch4_fig16.jpg)  
+
+To determine the median by group or category, use the aggregate command as discussed in section 4.0:  
+
+```{r, eval=FALSE}
+aggregate( sand~landuse, sand, median)
+```
+returns:  
+
+![R GUI image](ch4jpg/ch4_fig17.jpg)  
+
+It is apparent that the mean and median are different. In a normal distribution, the mean and median would be equal. Normal distributions should not be assumed with soils data. A graphical examination of the sand is possible:  
+
+```{r, eval=FALSE}
+d<-(density(sand$sand))
+plot(d)
+amean <-mean(sand$sand)
+amed <-median(sand$sand)
+abline(v=amed, col="green") #plot the median as a gree vertical line 
+abline(v=amean, col="red") #plot the mean as a red vertical line
+```
+
+![R GUI image](ch4jpg/ch4_fig18.jpg)Figure 7. Density plot; median in green and mean in red  
+
+The green vertical line represents the breakpoint for the median and the red represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be normal. The further the data departs from normality, the less meaningful the mean becomes.  The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 indicates a greater proportion of the samples are less than the mean. Using the mean would be overestimating the sand content of the sample dataset in this case.  
+
+###<a id="disp")></a>4.3  Measures of Dispersion  
+
+These are measures to determine the spread of data around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point.  
+
+**Range** – The difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
+
+```{r, eval=FALSE}
+range(sand$sand)
+```
+
+which returns the minimum and maximum values observed, or:  
+```{r, eval=FALSE}
+max(sand$sand) - min(sand$sand)
+```
+![R GUI image](ch4jpg/ch4_fig19.jpg)  
+
+which returns the value of the range  
+
+**Variance** – A positive value indicating deviation from the mean:![R GUI image](ch4jpg/ch4_fig20.jpg)  
+
+This is the square of the sum of the deviations from the mean, divided by the number of samples – 1. It is commonly referred to as the sum of squares. As the deviation increases, variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the _standard deviation_. Variance for the sample dataset is:  
+
+```{r, eval=FALSE}
+var(sand$sand)
+```
+
+![R GUI image](ch4jpg/ch4_fig21.jpg)
+
+**Standard Deviation** – The square root of the variance:![R GUI image](ch4jpg/ch4_fig22.jpg)  
+
+The units of the standard deviation are the same as the units measured. Standard deviation for the sample dataset is:  
+
+```{r, eval=FALSE}
+sd(sand$sand)
+```
+
+![R GUI image](ch4jpg/ch4_fig23.jpg)  
+
+**Coefficient of Variation** (CV) – A relative (i.e. unitless) measure of standard deviation:![R GUI image](ch4jpg/ch4_fig24.jpg)  
+
+CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, a relative measure is more useful when comparing variation of datasets. CV may be calculated for the sample dataset as:  
+
+```{r, eval=FALSE}
+cv = sd((sand$sand)/mean(sand$sand))*100
+cv
+```
+
+![R GUI image](ch4jpg/ch4_fig25.jpg)  
+
+**Interquartile Range** (IQR) – The range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data.   IQR may be calculated for the sample dataset as:  
+
+```{r, eval=FALSE}
+quantile(sand$sand, c(0.25, 0.75))
+```
+
+![R GUI image](ch4jpg/ch4_fig26.jpg)  
+
+**Quantiles (aka Percentiles)** - The percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.  
+
+Quantiles may be calculated for the 10%, 50% and 90% percentiles for the sample dataset as:  
+
+```{r, eval=FALSE}
+quantile(sand$sand, c(0.1, 0.5, 0.9))
+```
+
+![R GUI image](ch4jpg/ch4_fig27.jpg)  
+
+Thus, 80% of the observations have a sand content between 21.0% and 34.3%, while 10% are less than 21.0% and 10% are greater than 34.3%. Quantiles are robust measures, unaffected by data distributions.  
+
+###<a id="box")></a>4.4  Box plots  
+
+A graphical representation that shows the quartiles, minimum, maximum and outliers, if present, of the data.  Boxplots convey the shape of the data distribution, the presence of extreme values, and the ability to compare with other variables using the same scale, providing an excellent tool for screening data quality, determining thresholds for variables or developing working hypotheses.  
+
+The parts of the boxplot are shown in Figure 8. The “box” of the boxplot is defined as the 1st quartile, (Q1 in the figure) and the 3rd quartile, (Q3 in the figure). The median, or 2nd quartile, is the dark line in the box. The whiskers show data that is 1.5 * IQR above and below the 3rd and 1st quartile. Any data point that is beyond a whisker is considered an outlier.  
+
+That is not to say the points are in error, just that they are extreme compared to the rest of the dataset. This is a good visual cue to verify any data points that show as outliers to make sure there are no errors in data entry or measurement.  
+
+![R GUI image](ch4jpg/ch4_fig28.jpg)Figure 8. Boxplot description (Seltman, 2009)  
+
+A boxplot of sand content by horizon may be made for the sample dataset as:  
+
+
+```{r, eval=FALSE}
+boxplot(sand~ horizon, xlab="Master Horizon", ylab="Sand (%)", data=sand)
+```
+
+The xlab and ylab parameters control the titles of the x and y axis.  
+
+![R GUI image](ch4jpg/ch4_fig29.jpg)Figure 9. Box plot of sand by horizon  
+
+This plot shows us that B horizons typically contain more sand than A horizons and that the median of sand in A horizons is around 23% and around 26% in B horizons.  
+
+A boxplot of sand content by landuse may be made for the sample dataset as:  
+
+```{r, eval=FALSE}
+boxplot(sand~landuse, data = sand)
+```
+
+![R GUI image](ch4jpg/ch4_fig30.jpg)Figure 10. Box plot of sand by landuse.  
+
+Notice that the boxplot for “range” has a single circle on the graph above it.  This indicates an outlier, or a value that is more than 1.5 x IQR.  You should evaluate this data point to ensure that the number measured and entered is correct.  
+
+###<a id="qq")></a>4.5  Quantile comparison plots (QQplot)  
+
+a plot of actual data values against a Gaussian distribution (normal distribution with a mean of 0 and standard deviation of 1).  
+
+A QQplot of sand content may be made for the sample dataset as:  
+```{r, eval=FALSE}
+qqnorm(sand$sand)
+qqline(sand$sand, col= "red")
+```
+
+![R GUI image](ch4jpg/ch4_fig31.jpg)Figure 11. QQplot  
+
+The red line represents the quantiles of a normal distribution. If the data set is perfectly normal, the data points will fall along the red line. This plot reinforces the slightly skewed distribution that was seen in the density plot of Figure 7.  
+
+ArcGIS also provides the capability of creating QQplots for data associated with point files using the Geostatistical Analyst:  
+
+![R GUI image](ch4jpg/ch4_fig32.jpg)  
+
+A more detailed explanation of QQplots may be found at the ESRI webpage:  
+[http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//00310000000q000000](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//00310000000q000000)  
+
+###<a id="norm")></a>4.6  Assessing normality  
+
+What is a normal distribution and why should you care? Many statistical tests are based on the properties of a normal distribution. Using certain tests on data that are not normally distributed can be misleading or incorrect. Most tests that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help examine your data and proceed accordingly.  
+
+A normal distribution is also known as a Gaussian distribution or the colloquial “Bell Curve”. A normal distribution has the following properties (Lane):  
+
+ 1. Normal distributions are symmetric around their mean 
+ 2.	The mean, median, and mode of a normal distribution are equal 
+ 3.	The area under the normal curve is equal to 1.0 
+ 4.	Normal distributions are denser in the center and less dense in the tails 
+ 5.	Normal distributions are defined by two parameters, the mean (μ) and the standard deviation (σ)
+ 6.	68% of the area of a normal distribution is within one standard deviation of the mean
+
+![R GUI image](ch4jpg/ch4_fig33.jpg)    
+
+ 7. 7.  Approximately 95% of the area of a normal distribution is within two standard deviations of the mean.  
+
+![R GUI image](ch4jpg/ch4_fig34.jpg)  
+
+Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically Normal, Bimodal or Skewed:  
+
+![R GUI image](ch4jpg/ch4_fig35.jpg)Figure 12. Sample histograms    
+
+Occasionally distributions are Uniform, or nearly so:  
+
+![R GUI image](ch4jpg/ch4_fig36.jpg)Figure 13. Uniform distribution  
+
+The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) may be used to bolster the graphical examination of your data and are available through Rcmdr,  
+
+![R GUI image](ch4jpg/ch4_fig37.jpg)  
+
+and the Geostatistical Analyst – Histogram Tool in ArcGIS. A rule of thumb for interpreting skewness suggested by Bulmer (1979) follows:  
+
+ * If skewness is less than −1 or greater than +1, the distribution is highly skewed
+ * If skewness is between −1 and −½ or between +½ and +1, the distribution is moderately skewed
+ * If skewness is between −½ and +½, the distribution is approximately symetric  
+ 
+Statistical tests for normality that utilize Kurtosis and Skewness are available with the fBasics package in R  including:  
+
+ * Kolmogorov-Smirnov
+ * Shapiro-Wilk’s
+ * Jarque-Bera
+ * D’Agostino  
+ 
+Using the sample data. the default test uses the Shapiro-Wilk’s method:  
+
+```{r, eval=FALSE} 
+normalTest(sand$sand)
+```
+Install or load the fBasics package if you receive an error:  
+
+install.packages("fBasics", dep=TRUE, repos='http://cran.case.edu/')      
+library(fBasics) # Add the fBasics package  
+
+
+![R GUI image](ch4jpg/ch4_fig38.jpg)  
+
+The null hypothesis for the test is: “this sample comes from a normal population”. The output has a p value of 0.1867, which is fairly high, so the null hypothesis would not be rejected.  The Jarque-Bera test also returns a high p  
+
+```{r, eval=FALSE}
+jarqueberaTest(sand$sand)
+```
+
+![R GUI image](ch4jpg/ch4_fig39.jpg)  
+
+The D’Agostino test returns:  
+
+```{r, eval=FALSE}
+dagoTest(sand$sand)
+```
+
+![R GUI image](ch4jpg/ch4_fig40.jpg)  
+
+Which lets you know this test will only run when there are at least 20 sample points.  
+
+The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable, i.e. Low, RV and High values. Often a rule-of thumb similar to: “two standard deviations” is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, like Figure 14, using standard deviation as a parameter does not provide useful information of the data distribution.  
+
+![R GUI image](ch4jpg/ch4_fig41.jpg)Figure 14. Skewed distribution  
+
+The dataset for Figure 14 has a mean of ~6.9, a median of 5 and a standard deviation is ~6.1. Using the standard deviation or the mean to populate the low, rv and high values would not be appropriate. As mentioned in section 4.2 and 4.3, the median and a specified quantile(percentile) would be the most foolproof measures for assigning these values, performing uniformly well for normally as well as non-normally distributed data.  
+
+There is a suite of statistical tools available for data that is not normally distributed called nonparametric methods. These will be discussed in subsequent chapters.  
+
+
+###<a id="circ")></a>4.7  Special cases - Circular data and pH
+
+The two most common variables warranting special consideration for pedologists are:  
+
+**Slope aspect** - requires the use of circular statistics for summarizing numerically, or graphical interpretation using circular plots. For example, if soil map units being summarized have a uniform distribution of slope aspects ranging from 335 degrees to 25 degrees, the Zonal Statistics tool in ArcGIS would return a mean of 180.  
+
+The most intuitive means available for evaluating and describing slope aspect are circular plots available with the circular package in R and the radial plot option in the [TEUI](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html) Toolkit. The circular package in R will also calculate circular statistics like mean, median, quartiles etc. An example dataset with one column containing slope aspect values may be evaluated as: 
+
+The text file containing aspect values (aspect_extract3.csv) is similar to this sample:  
+
+GRID_CODE  
+51.4996  
+51.5852  
+51.5700  
+51.7099  
+51.9115  
+51.4930  
+
+```{r, eval=FALSE}
+aspect3 <- read.csv("C:/WorkSpace/stats/aspect/aspect_extract3.csv")
+require(circular)
+x=circular(aspect3, units="degrees", template= "geographics", zero= pi/2, rotation = "clock")
+summary(x)
+```
+
+![R GUI image](ch4jpg/ch4_fig42.jpg)  
+
+The numeric output is fine, but a graphic is more revealing (Figure 15):  
+```{r, eval=FALSE}
+rose.diag(x, bins=12, col="gray 90", lwd=2, zero= pi/2, rotation = "clock")
+```
+ 
+![R GUI image](ch4jpg/ch4_fig43.jpg)Figure 15. Rose Diagram  
+
+The graphic reveals a dominant Northeast exposure with a secondary Western slope aspect. This is expected from the sample map unit that occurs in the ridge and valley province with strong directional trends. Unfortunately, there is not a good way to convey bimodal slope aspect distributions in NASIS.  
+
+**pH** – since pH is logarithmic, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.  
+
+If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:  
+
+-log10(mean(10^-datatbl$ph, na.rm=T))  
+
+In this example, datatbl is the data object and ph is the column containing pH values.  
+
+If there is a need to create a surface of pH values, i.e. interpolate values from point observations, the operation of determining values at unknown points is analogous to determining an average and the use of hydrogen ion concentration would be the proper input.  
+
+If spatial interpolation is going to be performed, the following steps should be executed:  
+
+ 1.  transform pH to the actual H+ concentration 
+ 2.	interpolate
+ 3.	back transform to log value
+
+Here is a brief example for interpolating pH using common software:    
+
+1. Assume a comma delimited text file with pH, and x and y coordinates named “Excel_ph2.csv”
+2.	Open the file in Excel and it looks similar to this:  
+![R GUI image](ch4jpg/ch4_fig44.jpg)  
+3.  Format a column as numeric with ~15 decimals and a header named H_concentration
+4.	Enter a formula in the first empty cell as: =(1/10^B2) * 1000000
+5.	Drag the cell down to all empty records, which results in a transformed H+concentration
+![R GUI image](ch4jpg/ch4_fig45.jpg)
+ 
+This is a workaround for ArcGIS, which truncates data that is extremely small like the H+ concentration for pH > 7.  
+
+6.  Bring the text file into ArcGIS as points using Make XY Event Layer
+
+![R GUI image](ch4jpg/ch4_fig46.jpg)  
+
+![R GUI image](ch4jpg/ch4_fig47.jpg)  
+
+Opening the table for the Event layer:  
+
+![R GUI image](ch4jpg/ch4_fig48.jpg)  
+
+7. Interpolate using the interpolation method of choice - Spline will be used in this example    
+
+![R GUI image](ch4jpg/ch4_fig49.jpg)  
+![R GUI image](ch4jpg/ch4_fig50.jpg)  
+
+8. The resulting values correspond to H+ concentration * 10<sup>6</sup>  
+
+![R GUI image](ch4jpg/ch4_fig51.jpg)  
+
+9. Convert values to pH using Raster Calculator  
+
+![R GUI image](ch4jpg/ch4_fig52.jpg)  
+
+10. The values now correspond to pH
+
+![R GUI image](ch4jpg/ch4_fig53.jpg)  
+
+###<a id="scat")></a>4.8  Scatterplot
+
+Plotting points of one variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. It is assumed that these plots are for ratio or interval data types. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used and the large variety of raster datasets and derivatives that may have potential use.  
+
+The purpose of a scatterplot is to see how one variable relates to another. With statistical modeling in particular and general development of a mental model in general, the goal is parsimony. The goal is to determine the fewest number of variables required to explain or describe a phenomenon. If two variables explain the same thing, i.e. they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.  
+
+Check to see if you have the lattice package installed using:  
+```{r, eval=FALSE}
+library()
+```
+If lattice is not installed, use:  
+install.packages("lattice", dep=TRUE, repos='http://cran.case.edu/')
+```{r, eval=FALSE}  
+library(lattice)  #load the package
+```
+Create a basic scatter plot using a dataset included with R that shows soil properties by depth for points collected along a transect in Australia. Information on the dataset is located here:  
+[http://vincentarelbundock.github.io/Rdatasets/doc/MASS/gilgais.html](http://vincentarelbundock.github.io/Rdatasets/doc/MASS/gilgais.html)  
+
+```{r, eval=FALSE}
+library(MASS)
+plot(e00~c00, data=gilgais)
+```
+
+This plots electrical conductivity at 0-10cm on the Y axis and chloride content on the X axis. As shown in Fugure 16, there is a strong correlation between these variables, as expected.  
+
+![R GUI image](ch4jpg/ch4_fig54.jpg)Figure 16. Scatter Plot  
+
+The function below produces a scatterplot matrix for all variables in the gilgais dataset. This is a good command to use for determining rough linear correlations for continuous variables.  
+
+```{r, eval=FALSE}
+pairs(gilgais)
+```
+
+![R GUI image](ch4jpg/ch4_fig55.jpg)  
+
+###<a id="corr")></a>4.9  Correlation matrix  
+
+A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the gilgais dataset:  
+
+```{r, eval=FALSE}
+cor(gilgais)
+```
+
+![R GUI image](ch4jpg/ch4_fig56.jpg)  
+
+As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0.  
+
+What is considered highly correlated? A good rule of thumb is anything with a value of **0.7** or greater is considered highly correlated.  The scatterplot shows a tight, linear relationship between e00 and c00, which is corroborated with the correlation matrix showing a correlation coefficient of ~0.96.  
+
+Negative values indicate a negative relationship between variables. In the case of pH80 and e80; as electrical conductivity increases, pH decreases. This is a strong negative correlation of ~ -0.85.  
+
+###<a id="auto")></a>4.10  Spatial auto-correlation  
+
+In progress  
+
+###<a id="ref")></a>4.11 References  
+
+Bulmer, M. G. 1979. Principal of Statistics  
+
+deSmith, M. 2014. Statistical Analysis Handbook  
+[http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  
+
+ESRI ArcGIS. Normal QQ plot and general QQ plot.  
+[http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//00310000000q000000](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//00310000000q000000)    
+
+FAO Corporate Document Repository. 
+[http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm)    
+
+Filliben, J. J. 2004. NIST/SEMATECH e-Handbook of Statistical Methods. [http://www.itl.nist.gov/div898/handbook/eda/section1/eda11.htm](http://www.itl.nist.gov/div898/handbook/eda/section1/eda11.htm])    
+
+Lane, D.M. Online Statistics Education: A Multimedia Course of Study [(http://onlinestatbook.com/](http://onlinestatbook.com/) Project Leader: [David M. Lane](http://www.ruf.rice.edu/~lane/), Rice University    
+
+Seltman, H. 2009. Experimental Design and Analysis. Chapter 4: Exploratory Data Analysis. Carnegie Mellon University.  [http://www.stat.cmu.edu/~hseltman/309/Book/chapter4.pdf](http://www.stat.cmu.edu/~hseltman/309/Book/chapter4.pdf)    
+
+TEUI. USFS, [http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html)   
+
+Tukey, John. 1977. Exploratory Data Analysis, Addison-Wesley    
+
+Tukey, J. 1980. We need both exploratory and confirmatory. The American Statistician, 34:1, 23-25  
+
