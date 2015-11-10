@@ -25,18 +25,18 @@ The purpose of the web page is to serve as a permanent reference for all of the 
 There may be overlap between slides and the web-based content. That should not be a problem as a web page is a better means of serving as a reference than slides. Using content from the web page to help author slides will expedite course development. In addition, a link to the web page may be better than a tedious, word dense slide.
 
 
-9. Date for the pilot class to be March 1-3 and 8-10, 2016
+1. Date for the pilot class to be March 1-3 and 8-10, 2016
 
-10. Volunteers are needed to complete web based content for:
-Logistic regression
-Tree based models
-Validation and uncertainty
-Clustering and ordination
+2. Volunteers are needed to complete web based content for:
+ * Logistic regression
+ * Tree based models
+ * Validation and uncertainty
+ * Clustering and ordination
 
-11. Slides and exercises/interactions need to be developed for all modules. The individual(s) working on the slides will typically be the same ones developing the web content.
+3. Slides and exercises/interactions need to be developed for all modules. The individual(s) working on the slides will typically be the same ones developing the web content.
 
-12. Web content will be posted to GitHub soon. Any edits to the current and future content is fair game, whatever it takes to get the lessons conveyed.
+4. Web content will be posted to GitHub soon. Any edits to the current and future content is fair game, whatever it takes to get the lessons conveyed.
 
-13. Aaron Achen, Editor at the NSSC has agreed to edit the web content to make sure we are communicating well, rather than "real good"
+5. Aaron Achen, Editor at the NSSC has agreed to edit the web content to make sure we are communicating well, rather than "real good"
 
-14. As a pilot session, we can suggest participants. It may be good to get a few folks in the pilot session that would be strong candidates for becoming future instructors. At the minimum, we need a few savvy folks that will be helpfully critical. In addition, people signed up for courses that have this "Statistics" class as a recommend prerequisite (e.g. DSM with ArcSIE) would be candidates.
+6. As a pilot session, we can suggest participants. It may be good to get a few folks in the pilot session that would be strong candidates for becoming future instructors. At the minimum, we need a few savvy folks that will be helpfully critical. In addition, people signed up for courses that have this "Statistics" class as a recommend prerequisite (e.g. DSM with ArcSIE) would be candidates.
