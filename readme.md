@@ -45,3 +45,8 @@ There may be overlap between slides and the web-based content. That should not b
 ## Datasets
 Standard data sets for teaching, student data for exercises.
 
+## Links to pages
+http://ncss-tech.github.io/stats_for_soil_survey/
+
+
+
