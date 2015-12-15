@@ -40,3 +40,8 @@ There may be overlap between slides and the web-based content. That should not b
 5. Aaron Achen, Editor at the NSSC has agreed to edit the web content to make sure we are communicating well, rather than "real good"
 
 6. As a pilot session, we can suggest participants. It may be good to get a few folks in the pilot session that would be strong candidates for becoming future instructors. At the minimum, we need a few savvy folks that will be helpfully critical. In addition, people signed up for courses that have this "Statistics" class as a recommend prerequisite (e.g. DSM with ArcSIE) would be candidates.
+
+
+## Datasets
+Standard data sets for teaching, student data for exercises.
+
