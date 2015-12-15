@@ -1,20 +1,9 @@
----
-title: Clustering and Ordination
-author: D.E. Beaudette
-date: "Winter 2015/2016"
-output:
-  html_document:
-    keep_md: yes
----
+# Clustering and Ordination
+D.E. Beaudette  
+Winter 2015/2016  
 
 
-```{r setup, echo=FALSE, results='hide', warning=FALSE}
-# setup
-library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
-options(width=100, stringsAsFactors=FALSE)
-```
+
 
 
 ![Statistics for pedologists course banner image](logo.jpg)  
@@ -30,7 +19,8 @@ options(width=100, stringsAsFactors=FALSE)
 
 An example is presented below that illustrates the relationship between dendrogram and dissimilarity as evaluated between objects with 2 variables. Essentially, the level at which branches merge (relative to the "root" of the tree) is related to their similarity. In the example below it is clear that (in terms of clay and rock fragment content) soils 4 and 5 are more similar to each other than to soil 2. In addition, soils 1 and 3 are more similar to each other than soils 4 and 5 are to soil 2. Recall that in this case pair-wise dissimilarity is based on the Euclidean distance between soils in terms of their clay content and rock fragment content. Therefore proximity in the scatter plot of frock frags vs. clay is directly related to our simple evaluation of "dissimilarity". Inline-comments in the code below elaborate further.
 
-```{r dendrogram-example, fig.width=8, fig.height=4}
+
+```r
 # load required libraries
 library(cluster) # clustering functions
 library(ape) # nicer plotting of dendrograms
@@ -48,7 +38,21 @@ d <- daisy(s)
 
 # inspect pair-wise dissimilarity matrix
 print(d)
+```
 
+```
+## Dissimilarities :
+##           1         2         3         4
+## 2 13.038405                              
+## 3 12.727922 20.099751                    
+## 4 19.723083 10.049876 20.615528          
+## 5 26.419690 16.124515 26.076810  6.708204
+## 
+## Metric :  euclidean 
+## Number of objects : 5
+```
+
+```r
 # perform divisive hierarcical clustering for dendrogram creation
 d.diana <- diana(d)
 
@@ -68,9 +72,12 @@ text(s$clay, s$frags, row.names(s), font=2)
 plot(d.phylo, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90, y.lim=c(-1, 15))
 ```
 
+<img src="clustering_and_ordination_files/figure-html/dendrogram-example-1.png" title="" alt="" style="display: block; margin: auto;" />
+
 
 ### A Soils Example
-```{r make-data, fig.width=5, fig.height=5}
+
+```r
 library(aqp)
 library(cluster)
 library(ape)
@@ -121,7 +128,10 @@ par.settings=list(superpose.symbol=list(pch=16, col=cols, cex=1.5))
 )
 ```
 
-```{r compute-distance, fig.width=8, fig.height=4}
+<img src="clustering_and_ordination_files/figure-html/make-data-1.png" title="" alt="" style="display: block; margin: auto;" />
+
+
+```r
 # compute betwee-profile dissimilarity, no depth weighting
 d.dis <- profile_compare(d, vars=c('clay', 'ph', 'frags'), k=0, 
 max_d=61, replace_na=TRUE, add_soil_flag=TRUE)
@@ -129,7 +139,16 @@ max_d=61, replace_na=TRUE, add_soil_flag=TRUE)
 # check total, between-profile dissimilarity, normalized to maximum
 d.m <- signif(as.matrix(d.dis / max(d.dis)), 2)
 print(d.m)
+```
 
+```
+##          auburn dunstone sobrante
+## auburn     0.00     0.67     1.00
+## dunstone   0.67     0.00     0.94
+## sobrante   1.00     0.94     0.00
+```
+
+```r
 # group via divisive hierarchical clustering
 d.diana <- diana(d.dis)
 # convert classes, for better plotting
@@ -150,10 +169,13 @@ plot(d.phylo, direction='down', adj=0.5, srt=0,
 label.offset=0.5, font=1, y.lim=c(-5, 25), cex=0.7)
 ```
 
+<img src="clustering_and_ordination_files/figure-html/compute-distance-1.png" title="" alt="" style="display: block; margin: auto;" />
+
 
 ***********
 
-```{r demo-2}
+
+```r
 # continuing from example above...
 	
 # return dissimilarity matrices at each depth slice
@@ -162,7 +184,16 @@ max_d=61, replace_na=TRUE, add_soil_flag=TRUE, return_depth_distances=TRUE)
 
 # check between-profile dissimilarity, at slice 1
 print(as.matrix(d.dis.all[[1]]))
+```
 
+```
+##             auburn  dunstone  sobrante
+## auburn   0.0000000 0.8461538 0.5205128
+## dunstone 0.8461538 0.0000000 0.6333333
+## sobrante 0.5205128 0.6333333 0.0000000
+```
+
+```r
 # init functions for extracting pair-wise dissimilarity: 
 f.12 <- function(i) as.matrix(i)[1, 2] # between auburn and dunstone
 f.13 <- function(i) as.matrix(i)[1, 3] # between auburn and sobrante
@@ -199,6 +230,8 @@ trellis.par.set(
 # render figure
 print(p.3)
 ```
+
+<img src="clustering_and_ordination_files/figure-html/demo-2-1.png" title="" alt="" style="display: block; margin: auto;" />
 
 
 
