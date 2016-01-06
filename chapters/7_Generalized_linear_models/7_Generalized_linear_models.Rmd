@@ -1,0 +1,64 @@
+---
+title: "7_Generalized_linear_models"
+author: "Stephen Roecker"
+date: "January 6, 2016"
+output: 
+ html_document: 
+    toc: yes
+---
+
+# Introduction
+
+Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or temperature, GLM for example can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or soil nutrients. This greatly expands the applicable of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.  
+
+In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(x). However such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(x)). Also previous transformations were not guaranteed to achieve both normality and constant variance. GLM likewise transform the response, but provide separate functions to transform the mean response and variance, know as the link and variance functions respectively. In addition to transforming the response, GLM also report the results in the original scale of the response variable.
+
+In order to allow for 
+
+```{r}
+library(soilDB)
+library(rgdal)
+library(lattice)
+library(plyr)
+library(dplyr)
+
+pedons <- fetchNASIS()
+
+idx <- complete.cases(site(pedons)[c("x", "y")])
+pedons <- pedons[idx]
+coordinates(pedons) <- ~ x + y
+
+summary(pedons$argillic.horizon)
+
+ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs")
+ca794 <- subset(ssa, areasymbol == "CA794")
+plot(ca794)
+pedons_sp <- as(pedons, "SpatialPointsDataFrame")
+plot(pedons_sp, add = TRUE)
+writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile")
+
+summary(pedons$argillic.horizon)
+barplot(table(pedons$argillic.horizon))
+
+s <- site(pedons)
+s$gravel <- s$surface_gravel-s$surface_fgravel
+s$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum)
+s$pavement <- ifelse(s$slope_field < 15, s$surface_total, NA)
+s$bedrckdepth <- ifelse(s$slope_field < 15, s$bedrckdepth, NA)
+s_m <- melt(s[c("argillic.horizon", "slope_field", "elev_field", "bedrckdepth", "pavement")], id = "argillic.horizon")
+bwplot(argillic.horizon ~ value | variable, data = s_m, scales = list(x = "free"))
+
+# Argillic by soil scientist
+test <- with(s, table(describer, argillic.horizon))
+test_df1 <- as.data.frame(test[, 1:2])
+test_df1_sort <- test_df1[order(test_df1["TRUE"], decreasing = TRUE), ]
+head(test1_sort)
+
+test2 <- round(prop.table(test, 1) * 100)
+test_df2 <- as.data.frame(test2[, 1:2])
+test_df2_sort<- test_df2[order(test_df1["TRUE"], decreasing = TRUE), ]
+head(test_df2_sort)
+```
+
+
+
