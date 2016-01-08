@@ -22,42 +22,86 @@ library(lattice)
 library(plyr)
 library(dplyr)
 
+# Read in data
 pedons <- fetchNASIS()
 
+# Plot coordinates
 idx <- complete.cases(site(pedons)[c("x", "y")])
-pedons <- pedons[idx]
-coordinates(pedons) <- ~ x + y
-
-summary(pedons$argillic.horizon)
+pedons2 <- pedons[idx]
+coordinates(pedons2) <- ~ x + y
+proj4string(pedons2) <- CRS("+init=epsg:4326")
 
 ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs")
 ca794 <- subset(ssa, areasymbol == "CA794")
 plot(ca794)
-pedons_sp <- as(pedons, "SpatialPointsDataFrame")
+pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
 plot(pedons_sp, add = TRUE)
+pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
 writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile")
 
+# Exploratory analysis
 summary(pedons$argillic.horizon)
+summary(grepl("arg", pedons$tax_subgroup))
 barplot(table(pedons$argillic.horizon))
 
+d <- diagnostic_hz(pedons)
+idx <- unique(d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"])
+pedons$argillic.horizon <- site(pedons)$peiid %in% idx
+summary(pedons$argillic.horizon)
+
 s <- site(pedons)
-s$gravel <- s$surface_gravel-s$surface_fgravel
+s$surface_gravel <- s$surface_gravel-s$surface_fgravel
 s$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum)
 s$pavement <- ifelse(s$slope_field < 15, s$surface_total, NA)
 s$bedrckdepth <- ifelse(s$slope_field < 15, s$bedrckdepth, NA)
 s_m <- melt(s[c("argillic.horizon", "slope_field", "elev_field", "bedrckdepth", "pavement")], id = "argillic.horizon")
 bwplot(argillic.horizon ~ value | variable, data = s_m, scales = list(x = "free"))
 
-# Argillic by soil scientist
+# Argillic by soil scientist, bias?
 test <- with(s, table(describer, argillic.horizon))
 test_df1 <- as.data.frame(test[, 1:2])
 test_df1_sort <- test_df1[order(test_df1["TRUE"], decreasing = TRUE), ]
-head(test1_sort)
+head(test_df1_sort)
 
 test2 <- round(prop.table(test, 1) * 100)
 test_df2 <- as.data.frame(test2[, 1:2])
 test_df2_sort<- test_df2[order(test_df1["TRUE"], decreasing = TRUE), ]
 head(test_df2_sort)
+
+# Geodata extract
+folder1 <- "M:/geodata/project_data/8VIC/"
+folder2 <- "M:/geodata/imagery/gamma/"
+files1 <- c(
+  elev    = "ned30m_8VIC.tif",
+  slope   = "ned30m_8VIC_slope5.tif",
+  aspect  = "ned30m_8VIC_aspect5.tif",
+  twi     = "ned30m_8VIC_wetness.tif",
+  z2str   = "ned30m_8VIC_z2stream.tif",
+  mrrtf   = "ned30m_8VIC_mrrtf.tif",
+  mrvbf   = "ned30m_8VIC_mrvbf.tif",
+#  solar   = "ned30m_vic8_solar.tif",
+  solarcv = "ned30m_vic8_solarcv.tif",
+  precip  = "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
+  precipsum = "prism30m_vic8_ppt_1981_2010_summer_mm.tif",
+  temp    = "prism30m_vic8_tavg_1981_2010_annual_C.tif",
+  landsat = "landsat30m_vic8_b123457.tif",
+  tc      = "landsat30m_vic8_tc123.tif"
+  )
+files2 <- c(
+  k  = "namrad_k_aea.tif",
+  th = "namrad_th_aea.tif",
+  u  = "namrad_u_aea.tif"
+)
+geodata <- c(paste0(folder, files), paste0(folder2, files2)) 
+names(geodata) <- names(c(files1, files2))
+
+geodata_df <- data.frame(extract(stack(geodata[1:7]), pedons_sp), extract(raster(geodata[8]), pedons_sp), extract(stack(geodata[9:11]), pedons_sp), extract(stack(geodata[12:13]), pedons_sp), extract(stack(geodata[14:16]), pedons_sp))
+names(geodata_df)[c(8, 17)] <- c("solarcv", "landsat_7")
+save(geodata_df, file = "C:/workspace/stats_for_soil_survey/trunk/data/geodata_df.Rdata")
+
+data <- cbind(argillic = pedons2$argillic.horizon, x = site(pedons2)$x, y = site(pedons2)$y, geodata_df)
+save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/data_8VIC.Rdata")
+
 ```
 
 
