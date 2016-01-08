@@ -99,8 +99,15 @@ geodata_df <- data.frame(extract(stack(geodata[1:7]), pedons_sp), extract(raster
 names(geodata_df)[c(8, 17)] <- c("solarcv", "landsat_7")
 save(geodata_df, file = "C:/workspace/stats_for_soil_survey/trunk/data/geodata_df.Rdata")
 
+d <- diagnostic_hz(pedons2)
+idx <- unique(d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"])
+pedons2$argillic.horizon <- site(pedons2)$peiid %in% idx
 data <- cbind(argillic = pedons2$argillic.horizon, x = site(pedons2)$x, y = site(pedons2)$y, geodata_df)
 save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/data_8VIC.Rdata")
+
+
+data_m <- melt(s[c("argillic", "ld", "elev_field", "bedrckdepth", "pavement")], id = "argillic.horizon")
+bwplot(argillic ~ wetness, data = data, scales = list(x = "free"))
 
 ```
 
