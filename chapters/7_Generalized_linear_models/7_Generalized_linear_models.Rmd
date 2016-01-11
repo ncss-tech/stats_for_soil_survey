@@ -17,27 +17,17 @@ In order to allow for
 
 ```{r}
 library(soilDB)
+library(raster)
 library(rgdal)
 library(lattice)
+library(reshape2)
 library(plyr)
 library(dplyr)
+library(caret)
 
 # Read in data
 pedons <- fetchNASIS()
 
-# Plot coordinates
-idx <- complete.cases(site(pedons)[c("x", "y")])
-pedons2 <- pedons[idx]
-coordinates(pedons2) <- ~ x + y
-proj4string(pedons2) <- CRS("+init=epsg:4326")
-
-ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs")
-ca794 <- subset(ssa, areasymbol == "CA794")
-plot(ca794)
-pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
-plot(pedons_sp, add = TRUE)
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
-writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile")
 
 # Exploratory analysis
 summary(pedons$argillic.horizon)
@@ -57,7 +47,35 @@ s$bedrckdepth <- ifelse(s$slope_field < 15, s$bedrckdepth, NA)
 s_m <- melt(s[c("argillic.horizon", "slope_field", "elev_field", "bedrckdepth", "pavement")], id = "argillic.horizon")
 bwplot(argillic.horizon ~ value | variable, data = s_m, scales = list(x = "free"))
 
+
+# Plot coordinates
+idx <- complete.cases(site(pedons)[c("x", "y")])
+pedons2 <- pedons[idx]
+coordinates(pedons2) <- ~ x + y
+proj4string(pedons2) <- CRS("+init=epsg:4326")
+
+ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs")
+ca794 <- subset(ssa, areasymbol == "CA794")
+plot(ca794)
+pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
+plot(pedons_sp, add = TRUE)
+pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
+writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile")
+
+
 # Argillic by soil scientist, bias?
+desc_test <- function(old) {
+  if (is.na(old)) {new <- "other"}
+  if (grepl("Stephen", old)) {new <- "Stephen"} 
+  if (grepl("Paul", old)) {new <- "Paul"} 
+  if (grepl("Peter", old)) {new <- "Peter"} 
+  if (!any(new %in% c("Stephen", "Paul", "Peter"))) {new <- "other"}
+ return(new)
+}
+  or (i in seq_along(x)if (grepl("Stephen", s$describer)) "Stephen"
+                if (grepl("Paul", s$describer)) "Paul"
+                if (grepl("Peter", s$describer)) "Peter"
+
 test <- with(s, table(describer, argillic.horizon))
 test_df1 <- as.data.frame(test[, 1:2])
 test_df1_sort <- test_df1[order(test_df1["TRUE"], decreasing = TRUE), ]
@@ -71,44 +89,76 @@ head(test_df2_sort)
 # Geodata extract
 folder1 <- "M:/geodata/project_data/8VIC/"
 folder2 <- "M:/geodata/imagery/gamma/"
-files1 <- c(
-  elev    = "ned30m_8VIC.tif",
-  slope   = "ned30m_8VIC_slope5.tif",
-  aspect  = "ned30m_8VIC_aspect5.tif",
-  twi     = "ned30m_8VIC_wetness.tif",
-  z2str   = "ned30m_8VIC_z2stream.tif",
-  mrrtf   = "ned30m_8VIC_mrrtf.tif",
-  mrvbf   = "ned30m_8VIC_mrvbf.tif",
-#  solar   = "ned30m_vic8_solar.tif",
-  solarcv = "ned30m_vic8_solarcv.tif",
-  precip  = "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
-  precipsum = "prism30m_vic8_ppt_1981_2010_summer_mm.tif",
-  temp    = "prism30m_vic8_tavg_1981_2010_annual_C.tif",
-  landsat = "landsat30m_vic8_b123457.tif",
-  tc      = "landsat30m_vic8_tc123.tif"
-  )
-files2 <- c(
-  k  = "namrad_k_aea.tif",
-  th = "namrad_th_aea.tif",
-  u  = "namrad_u_aea.tif"
+files1 <- list(
+  terrain = c(
+    elev    = "ned30m_8VIC.tif",
+    slope   = "ned30m_8VIC_slope5.tif",
+    aspect  = "ned30m_8VIC_aspect5.tif",
+    twi     = "ned30m_8VIC_wetness.tif",
+    z2str   = "ned30m_8VIC_z2stream.tif",
+    mrrtf   = "ned30m_8VIC_mrrtf.tif",
+    mrvbf   = "ned30m_8VIC_mrvbf.tif",
+    #  solar   = "ned30m_vic8_solar.tif",
+    solarcv = "ned30m_vic8_solarcv.tif"
+    ),
+  climate = c(
+    precip  = "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
+    precipsum = "prism30m_vic8_ppt_1981_2010_summer_mm.tif",
+    temp    = "prism30m_vic8_tavg_1981_2010_annual_C.tif"
+    ),
+  imagery = c(
+    ls = "landsat30m_vic8_b123457.tif",
+    tc      = "landsat30m_vic8_tc123.tif"
+    )
 )
-geodata <- c(paste0(folder, files), paste0(folder2, files2)) 
-names(geodata) <- names(c(files1, files2))
+files2 <- list(
+  gamma = c(
+    k  = "namrad_k_aea.tif",
+    th = "namrad_th_aea.tif",
+    u  = "namrad_u_aea.tif"
+    )
+)
+geodata <- c(lapply(files1, function(x) paste0(folder1, x)), lapply(files2, function(x) paste0(folder2, x))) 
+names(geodata$terrain) <- names(files1$terrain)
+names(geodata$climate) <- names(files1$climate)
+names(geodata$imagery) <- names(files1$imagery)
+names(geodata$gamma) <- names(files2$gamma)
 
-geodata_df <- data.frame(extract(stack(geodata[1:7]), pedons_sp), extract(raster(geodata[8]), pedons_sp), extract(stack(geodata[9:11]), pedons_sp), extract(stack(geodata[12:13]), pedons_sp), extract(stack(geodata[14:16]), pedons_sp))
-names(geodata_df)[c(8, 17)] <- c("solarcv", "landsat_7")
-save(geodata_df, file = "C:/workspace/stats_for_soil_survey/trunk/data/geodata_df.Rdata")
+geodata_df <- data.frame(
+  as.data.frame(pedons_sp)[c("argillic.horizon", "x_std", "y_std", "describer")],
+  extract(stack(geodata$terrain[1:7]), pedons_sp),
+  extract(raster(geodata$terrain[8]), pedons_sp),
+  extract(stack(geodata$imagery), pedons_sp),
+  extract(stack(geodata$gamma), pedons_sp),
+  extract(stack(geodata$climate), pedons_sp)
+  )
+names(geodata_df)[c(12, 21)] <- c("solarcv", "ls_7")
 
-d <- diagnostic_hz(pedons2)
-idx <- unique(d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"])
-pedons2$argillic.horizon <- site(pedons2)$peiid %in% idx
-data <- cbind(argillic = pedons2$argillic.horizon, x = site(pedons2)$x, y = site(pedons2)$y, geodata_df)
-save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/data_8VIC.Rdata")
+geodata_idx <- list()
+geodata_idx$terrain <- names(files1$terrain)
+geodata_idx$climate <- names(files1$climate)
+geodata_idx$imagery <- names(geodata_df)[!names(geodata_df) %in% names(files1$terrain) &
+                                        !names(geodata_df) %in% names(files1$climate) &
+                                        !names(geodata_df) %in% names(files2$gamma) &
+                                        !names(geodata_df) %in% c("argillic.horizon", "x_std", "y_std")]
+geodata_idx$gamma <- names(files2)
 
+data <- subset(geodata_df, select = - c(x_std, y_std, describer))
+save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 
-data_m <- melt(s[c("argillic", "ld", "elev_field", "bedrckdepth", "pavement")], id = "argillic.horizon")
-bwplot(argillic ~ wetness, data = data, scales = list(x = "free"))
+data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE
+data_m <- melt(data, id = "argillic.horizon")
+bwplot(argillic.horizon ~ value | variable, data = data_m, scales = list(x = "free"), as.table = TRUE)
 
+source("M:/software/R/")
+
+aggregate(data[c("twi", "z2str")], list(data$argillic.horizon), summary)
+data$twi_sc <- abs(data$twi - 13.7)
+data$z2str_sc <- abs(data$z2str - 13.9)
+
+test <- glm(argillic.horizon ~., data = data, family = binomial())
+summary(test)
+confusionMatrix(test$fitted.values > 0.5, as.logical(test$y))
 ```
 
 
