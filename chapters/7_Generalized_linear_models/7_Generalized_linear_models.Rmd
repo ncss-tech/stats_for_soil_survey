@@ -15,7 +15,7 @@ In the past in order to handle non-linearity and heterogeneous variances, transf
 
 In order to allow for 
 
-```{r}
+```{r load packages, message=FALSE, warning=FALSE}
 library(soilDB)
 library(raster)
 library(rgdal)
@@ -24,69 +24,82 @@ library(reshape2)
 library(plyr)
 library(dplyr)
 library(caret)
+```
 
 # Read in data
+```{r import data}
 pedons <- fetchNASIS()
-
+# pedons <- read.csv("C:workspace/pedons.csv")
+```
 
 # Exploratory analysis
+```{r exploratory analysis}
 summary(pedons$argillic.horizon)
 summary(grepl("arg", pedons$tax_subgroup))
+pedons$argillic.horizon <- grepl("arg", pedons$tax_subgroup)
+
 barplot(table(pedons$argillic.horizon))
 
+# Example of mining the argillic horizon from the pedon diagnostic features table. This might be useful if we wanted to filter out argillic horizons that start below 50cm, such as where a fan apron overlies a fan remnant. However as we saw earlier some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name. 
 d <- diagnostic_hz(pedons)
 idx <- unique(d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"])
-pedons$argillic.horizon <- site(pedons)$peiid %in% idx
-summary(pedons$argillic.horizon)
+test <- site(pedons)$peiid %in% idx
+summary(test)
 
+# Examine geomorphic info from te site table.
 s <- site(pedons)
-s$surface_gravel <- s$surface_gravel-s$surface_fgravel
-s$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum)
-s$pavement <- ifelse(s$slope_field < 15, s$surface_total, NA)
-s$bedrckdepth <- ifelse(s$slope_field < 15, s$bedrckdepth, NA)
+s$surface_gravel <- s$surface_gravel-s$surface_fgravel # recalculate gravel
+s$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum) # calculate the total rock fragments
+s$pavement <- ifelse(s$slope_field < 15, s$surface_total, NA) # subset rock fragments to slopes < 15% 
+s$bedrckdepth <- ifelse(s$slope_field < 15, s$bedrckdepth, NA) # subset bedrock depth to slopes <15%
 s_m <- melt(s[c("argillic.horizon", "slope_field", "elev_field", "bedrckdepth", "pavement")], id = "argillic.horizon")
 bwplot(argillic.horizon ~ value | variable, data = s_m, scales = list(x = "free"))
-
+# We can see a variety of landforms have been used. Some more frequently than others. Overall argillic horizons seem to concide with fan remnants.
+with(site(pedons), table(landform.string, argillic.horizon))
 
 # Plot coordinates
-idx <- complete.cases(site(pedons)[c("x", "y")])
+idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
 pedons2 <- pedons[idx]
-coordinates(pedons2) <- ~ x + y
-proj4string(pedons2) <- CRS("+init=epsg:4326")
+coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
+proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
 
-ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs")
-ca794 <- subset(ssa, areasymbol == "CA794")
+ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
+ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
 plot(ca794)
 pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
 plot(pedons_sp, add = TRUE)
+# Beware some points that fall outside of CA794 are not show here. Some are way outside of CA794.
+
 pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
-writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile")
+# writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
 
 
-# Argillic by soil scientist, bias?
+# Argillic horizon by soil scientist, bias?
 desc_test <- function(old) {
+  old <- as.character(old)
   if (is.na(old)) {new <- "other"}
   if (grepl("Stephen", old)) {new <- "Stephen"} 
   if (grepl("Paul", old)) {new <- "Paul"} 
-  if (grepl("Peter", old)) {new <- "Peter"} 
-  if (!any(new %in% c("Stephen", "Paul", "Peter"))) {new <- "other"}
+  if (grepl("Peter", old)) {new <- "Peter"}
+  if (!any(grepl("Stephen", old) | grepl("Paul", old) | grepl("Peter", old))) new <- "other"
  return(new)
 }
-  or (i in seq_along(x)if (grepl("Stephen", s$describer)) "Stephen"
-                if (grepl("Paul", s$describer)) "Paul"
-                if (grepl("Peter", s$describer)) "Peter"
+
+s$describer <- sapply(s$describer, desc_test)
 
 test <- with(s, table(describer, argillic.horizon))
 test_df1 <- as.data.frame(test[, 1:2])
 test_df1_sort <- test_df1[order(test_df1["TRUE"], decreasing = TRUE), ]
-head(test_df1_sort)
+head(test_df1_sort) # Frequency of argillic horizon by soil scientist
 
 test2 <- round(prop.table(test, 1) * 100)
 test_df2 <- as.data.frame(test2[, 1:2])
 test_df2_sort<- test_df2[order(test_df1["TRUE"], decreasing = TRUE), ]
-head(test_df2_sort)
+head(test_df2_sort) # Proportion of argillic horizon by soil scientist
+```
 
 # Geodata extract
+```{r geodata extract}
 folder1 <- "M:/geodata/project_data/8VIC/"
 folder2 <- "M:/geodata/imagery/gamma/"
 files1 <- list(
@@ -132,33 +145,40 @@ geodata_df <- data.frame(
   extract(stack(geodata$gamma), pedons_sp),
   extract(stack(geodata$climate), pedons_sp)
   )
-names(geodata_df)[c(12, 21)] <- c("solarcv", "ls_7")
+names(geodata_df)[c(12, 18)] <- c("solarcv", "ls_7")
 
-geodata_idx <- list()
-geodata_idx$terrain <- names(files1$terrain)
-geodata_idx$climate <- names(files1$climate)
-geodata_idx$imagery <- names(geodata_df)[!names(geodata_df) %in% names(files1$terrain) &
+gidx <- list()
+gidx$terrain <- names(files1$terrain)
+gidx$climate <- names(files1$climate)
+gidx$imagery <- names(geodata_df)[!names(geodata_df) %in% names(files1$terrain) &
                                         !names(geodata_df) %in% names(files1$climate) &
                                         !names(geodata_df) %in% names(files2$gamma) &
-                                        !names(geodata_df) %in% c("argillic.horizon", "x_std", "y_std")]
-geodata_idx$gamma <- names(files2)
+                                        !names(geodata_df) %in% c("argillic.horizon", "x_std", "y_std", "describer")]
+gidx$gamma <- names(files2$gamma)
 
-data <- subset(geodata_df, select = - c(x_std, y_std, describer))
+
+data <- subset(geodata_df, select = - c(x_std, y_std))
 save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 
-data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE
-data_m <- melt(data, id = "argillic.horizon")
+
+load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+data$describer <- sapply(data$describer, desc_test)
+data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE # Subset out argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+data_m <- subset(data, select = - c(describer))
+data_m <- melt(data_m, id = "argillic.horizon")
 bwplot(argillic.horizon ~ value | variable, data = data_m, scales = list(x = "free"), as.table = TRUE)
 
-source("M:/software/R/")
-
-aggregate(data[c("twi", "z2str")], list(data$argillic.horizon), summary)
+# Argillic horizons seem to occur over a limited range of twi and z2str. So lets rescale those variables by substracting their median
+aggregate(data[c("twi", "z2str")], list(data$argillic.horizon), median)
 data$twi_sc <- abs(data$twi - 13.7)
-data$z2str_sc <- abs(data$z2str - 13.9)
+data$z2str_sc <- abs(data$z2str - 12.9)
 
 test <- glm(argillic.horizon ~., data = data, family = binomial())
 summary(test)
-confusionMatrix(test$fitted.values > 0.5, as.logical(test$y))
+confusionMatrix(test$fitted.values > 0.5, as.logical(test$y), positive = "TRUE")
+
+test2 <- glm(argillic.horizon ~ twi_sc + slope + z2str_sc + tc_2, data = na.exclude(data), family = binomial())
+confusionMatrix(test2$fitted.values > 0.35, as.logical(test2$y), positive = "TRUE")
 ```
 
 
