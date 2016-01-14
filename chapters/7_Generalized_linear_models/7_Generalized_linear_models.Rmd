@@ -9,13 +9,17 @@ output:
 
 # Introduction
 
-Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or temperature, GLM for example can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or soil nutrients. This greatly expands the applicable of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.  
+Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or temperature, GLM can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or soil nutrients non-normal error terms. This greatly expands the applicable of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.  
 
 In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(x). However such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(x)). Also previous transformations were not guaranteed to achieve both normality and constant variance. GLM likewise transform the response, but provide separate functions to transform the mean response and variance, know as the link and variance functions respectively. In addition to transforming the response, GLM also report the results in the original scale of the response variable.
 
 In order to allow for 
 
+# Load packages
+
+This is a necessary evil everytime you start R. Most of the basic functions we need to develop a logistic regression model are con
 ```{r load packages, message=FALSE, warning=FALSE}
+library(aqp)
 library(soilDB)
 library(raster)
 library(rgdal)
@@ -27,27 +31,41 @@ library(caret)
 ```
 
 # Read in data
+
+Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Once data is captured in NASIS it much easier to import the data into R and extract the pieces you need.
+
 ```{r import data}
-pedons <- fetchNASIS()
-# pedons <- read.csv("C:workspace/pedons.csv")
+pedons <- fetchNASIS() # beware the error messages, looks like we have some
+# pedons <- read.csv("C:/workspace/test.csv")
+
+str(pedons, max.level = 2)
 ```
 
 # Exploratory analysis
+
+Generally before we begin modeling its good to explore the data. By using the summary() function, we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are all the argillic horizons haven't been properly populated in the diagnostic horizon table like they should be. Luckily for us, the argillic horizon always pops up in the taxonomic name, so we can use pattern matching to extract it. By doing this gain an additional 9 pedons with argillic horizons and are able to label the missing values (i.e. NA).
+
 ```{r exploratory analysis}
 summary(pedons$argillic.horizon)
-summary(grepl("arg", pedons$tax_subgroup))
+summary(grepl("arg", pedons$tax_subgroup)) # use pattern matching to exact "arg" from the taxonomic subgroup name
+
 pedons$argillic.horizon <- grepl("arg", pedons$tax_subgroup)
+```
 
-barplot(table(pedons$argillic.horizon))
+Ideally if the diagnostic horizon table were populated we could filter out argillic horizons that start below 50cm, which may not be representative of "good" argillic horizons and may have gotten correlated to a Torripsamments.However as we saw earlier some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name, since it gives us the biggest sample. 
 
-# Example of mining the argillic horizon from the pedon diagnostic features table. This might be useful if we wanted to filter out argillic horizons that start below 50cm, such as where a fan apron overlies a fan remnant. However as we saw earlier some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name. 
+```{r}
 d <- diagnostic_hz(pedons)
 idx <- unique(d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"])
 test <- site(pedons)$peiid %in% idx
 summary(test)
+```
 
+Another obvious place to look is at the geomorphic data in the site table. This information is hopefully  (Nauman and Thompson, 2014)
+
+```{r}
 # Examine geomorphic info from te site table.
-s <- site(pedons)
+s <- site(pedons) # extract the site table from the pedons object
 s$surface_gravel <- s$surface_gravel-s$surface_fgravel # recalculate gravel
 s$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum) # calculate the total rock fragments
 s$pavement <- ifelse(s$slope_field < 15, s$surface_total, NA) # subset rock fragments to slopes < 15% 
@@ -55,7 +73,39 @@ s$bedrckdepth <- ifelse(s$slope_field < 15, s$bedrckdepth, NA) # subset bedrock 
 s_m <- melt(s[c("argillic.horizon", "slope_field", "elev_field", "bedrckdepth", "pavement")], id = "argillic.horizon")
 bwplot(argillic.horizon ~ value | variable, data = s_m, scales = list(x = "free"))
 # We can see a variety of landforms have been used. Some more frequently than others. Overall argillic horizons seem to concide with fan remnants.
-with(site(pedons), table(landform.string, argillic.horizon))
+table(s$landform.string, s$argillic.horizon)
+
+s$argillic.horizon <- ifelse(s$slope_field > 15, NA, s$argillic.horizon) # subset to look at just fans
+round(prop.table(table(s$hillslope_pos, s$argillic.horizon), 1) * 100)
+round(prop.table(table(paste(s$shapedown, s$shapeacross), s$argillic.horizon), 1) * 100)
+
+
+# Argillic horizon by soil scientist, bias?
+desc_test <- function(old) {
+  old <- as.character(old)
+  new <- NA
+  if (is.na(old)) {new <- "other"}
+  if (grepl("Stephen", old)) {new <- "Stephen"} 
+  if (grepl("Paul", old)) {new <- "Paul"} 
+  if (grepl("Peter", old)) {new <- "Peter"}
+  if (is.na(new)) {new <- "other"}
+ return(new)
+}
+
+s <- site(pedons)
+s$describer <- sapply(s$describer, desc_test)
+pedons$describer <- s$describer
+
+test <- table(s$describer, s$argillic.horizon)
+test_df1 <- as.data.frame(test[, 1:2])
+test_df1_sort <- test_df1[order(test_df1["TRUE"], decreasing = TRUE), ]
+head(test_df1_sort) # Frequency of argillic horizon by soil scientist
+
+test2 <- round(prop.table(test, 1) * 100)
+test_df2 <- as.data.frame(test2[, 1:2])
+test_df2_sort<- test_df2[order(test_df1["TRUE"], decreasing = TRUE), ]
+head(test_df2_sort) # Proportion of argillic horizon by soil scientist
+
 
 # Plot coordinates
 idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
@@ -73,96 +123,77 @@ plot(pedons_sp, add = TRUE)
 pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
 # writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
 
-
-# Argillic horizon by soil scientist, bias?
-desc_test <- function(old) {
-  old <- as.character(old)
-  if (is.na(old)) {new <- "other"}
-  if (grepl("Stephen", old)) {new <- "Stephen"} 
-  if (grepl("Paul", old)) {new <- "Paul"} 
-  if (grepl("Peter", old)) {new <- "Peter"}
-  if (!any(grepl("Stephen", old) | grepl("Paul", old) | grepl("Peter", old))) new <- "other"
- return(new)
-}
-
-s$describer <- sapply(s$describer, desc_test)
-
-test <- with(s, table(describer, argillic.horizon))
-test_df1 <- as.data.frame(test[, 1:2])
-test_df1_sort <- test_df1[order(test_df1["TRUE"], decreasing = TRUE), ]
-head(test_df1_sort) # Frequency of argillic horizon by soil scientist
-
-test2 <- round(prop.table(test, 1) * 100)
-test_df2 <- as.data.frame(test2[, 1:2])
-test_df2_sort<- test_df2[order(test_df1["TRUE"], decreasing = TRUE), ]
-head(test_df2_sort) # Proportion of argillic horizon by soil scientist
 ```
 
 # Geodata extract
+
+Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract geodata values where they intersect with your field data.
+
 ```{r geodata extract}
-folder1 <- "M:/geodata/project_data/8VIC/"
-folder2 <- "M:/geodata/imagery/gamma/"
-files1 <- list(
-  terrain = c(
-    elev    = "ned30m_8VIC.tif",
-    slope   = "ned30m_8VIC_slope5.tif",
-    aspect  = "ned30m_8VIC_aspect5.tif",
-    twi     = "ned30m_8VIC_wetness.tif",
-    z2str   = "ned30m_8VIC_z2stream.tif",
-    mrrtf   = "ned30m_8VIC_mrrtf.tif",
-    mrvbf   = "ned30m_8VIC_mrvbf.tif",
-    #  solar   = "ned30m_vic8_solar.tif",
-    solarcv = "ned30m_vic8_solarcv.tif"
-    ),
-  climate = c(
-    precip  = "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
-    precipsum = "prism30m_vic8_ppt_1981_2010_summer_mm.tif",
-    temp    = "prism30m_vic8_tavg_1981_2010_annual_C.tif"
-    ),
-  imagery = c(
-    ls = "landsat30m_vic8_b123457.tif",
-    tc      = "landsat30m_vic8_tc123.tif"
-    )
-)
-files2 <- list(
-  gamma = c(
-    k  = "namrad_k_aea.tif",
-    th = "namrad_th_aea.tif",
-    u  = "namrad_u_aea.tif"
-    )
-)
-geodata <- c(lapply(files1, function(x) paste0(folder1, x)), lapply(files2, function(x) paste0(folder2, x))) 
-names(geodata$terrain) <- names(files1$terrain)
-names(geodata$climate) <- names(files1$climate)
-names(geodata$imagery) <- names(files1$imagery)
-names(geodata$gamma) <- names(files2$gamma)
+# folder1 <- "M:/geodata/project_data/8VIC/"
+# folder2 <- "M:/geodata/imagery/gamma/"
+# files1 <- list(
+#   terrain = c(
+#     elev    = "ned30m_8VIC.tif",
+#     slope   = "ned30m_8VIC_slope5.tif",
+#     aspect  = "ned30m_8VIC_aspect5.tif",
+#     twi     = "ned30m_8VIC_wetness.tif",
+#     z2str   = "ned30m_8VIC_z2stream.tif",
+#     mrrtf   = "ned30m_8VIC_mrrtf.tif",
+#     mrvbf   = "ned30m_8VIC_mrvbf.tif",
+#     #  solar   = "ned30m_vic8_solar.tif",
+#     solarcv = "ned30m_vic8_solarcv.tif"
+#     ),
+#   climate = c(
+#     precip  = "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
+#     precipsum = "prism30m_vic8_ppt_1981_2010_summer_mm.tif",
+#     temp    = "prism30m_vic8_tavg_1981_2010_annual_C.tif"
+#     ),
+#   imagery = c(
+#     ls = "landsat30m_vic8_b123457.tif",
+#     tc      = "landsat30m_vic8_tc123.tif"
+#     )
+# )
+# files2 <- list(
+#   gamma = c(
+#     k  = "namrad_k_aea.tif",
+#     th = "namrad_th_aea.tif",
+#     u  = "namrad_u_aea.tif"
+#     )
+# )
+# geodata <- c(lapply(files1, function(x) paste0(folder1, x)), lapply(files2, function(x) paste0(folder2, x))) 
+# names(geodata$terrain) <- names(files1$terrain)
+# names(geodata$climate) <- names(files1$climate)
+# names(geodata$imagery) <- names(files1$imagery)
+# names(geodata$gamma) <- names(files2$gamma)
+# 
+# geodata_df <- data.frame(
+#   as.data.frame(pedons_sp)[c("argillic.horizon", "x_std", "y_std", "describer")],
+#   extract(stack(geodata$terrain[1:7]), pedons_sp),
+#   extract(raster(geodata$terrain[8]), pedons_sp),
+#   extract(stack(geodata$imagery), pedons_sp),
+#   extract(stack(geodata$gamma), pedons_sp),
+#   extract(stack(geodata$climate), pedons_sp)
+#   )
+# names(geodata_df)[c(12, 18)] <- c("solarcv", "ls_7")
+# 
+# gidx <- list()
+# gidx$terrain <- names(files1$terrain)
+# gidx$climate <- names(files1$climate)
+# gidx$imagery <- names(geodata_df)[!names(geodata_df) %in% names(files1$terrain) &
+#                                         !names(geodata_df) %in% names(files1$climate) &
+#                                         !names(geodata_df) %in% names(files2$gamma) &
+#                                         !names(geodata_df) %in% c("argillic.horizon", "x_std", "y_std", "describer", "surface_total")]
+# gidx$gamma <- names(files2$gamma)
+# 
+# 
+# data <- subset(geodata_df, select = - c(x_std, y_std))
+# save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+```
 
-geodata_df <- data.frame(
-  as.data.frame(pedons_sp)[c("argillic.horizon", "x_std", "y_std", "describer")],
-  extract(stack(geodata$terrain[1:7]), pedons_sp),
-  extract(raster(geodata$terrain[8]), pedons_sp),
-  extract(stack(geodata$imagery), pedons_sp),
-  extract(stack(geodata$gamma), pedons_sp),
-  extract(stack(geodata$climate), pedons_sp)
-  )
-names(geodata_df)[c(12, 18)] <- c("solarcv", "ls_7")
-
-gidx <- list()
-gidx$terrain <- names(files1$terrain)
-gidx$climate <- names(files1$climate)
-gidx$imagery <- names(geodata_df)[!names(geodata_df) %in% names(files1$terrain) &
-                                        !names(geodata_df) %in% names(files1$climate) &
-                                        !names(geodata_df) %in% names(files2$gamma) &
-                                        !names(geodata_df) %in% c("argillic.horizon", "x_std", "y_std", "describer")]
-gidx$gamma <- names(files2$gamma)
-
-
-data <- subset(geodata_df, select = - c(x_std, y_std))
-save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
-
-
+```{r More }
 load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
-data$describer <- sapply(data$describer, desc_test)
+data <- na.exclude(data)
 data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE # Subset out argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 data_m <- subset(data, select = - c(describer))
 data_m <- melt(data_m, id = "argillic.horizon")
