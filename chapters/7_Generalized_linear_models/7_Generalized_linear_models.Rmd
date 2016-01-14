@@ -17,22 +17,23 @@ In order to allow for
 
 # Load packages
 
-This is a necessary evil everytime you start R. Most of the basic functions we need to develop a logistic regression model are con
+This is a necessary evil everytime you start R. Most of the basic functions we need to develop a logistic regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
+
 ```{r load packages, message=FALSE, warning=FALSE}
-library(aqp)
-library(soilDB)
-library(raster)
-library(rgdal)
-library(lattice)
-library(reshape2)
-library(plyr)
-library(dplyr)
-library(caret)
+library(aqp) # specialized soil classes and functions
+library(soilDB) # NASIS and SDA import functions
+library(raster) # guess
+library(rgdal) # spatial import
+library(lattice) # graphing
+library(reshape2) # data manipulation
+library(plyr) # data manipulation
+library(dplyr) # data manipulation
+library(caret) # printing
 ```
 
 # Read in data
 
-Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Once data is captured in NASIS it much easier to import the data into R and extract the pieces you need.
+Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Once data is captured in NASIS it much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS it may as well not exist, and will haunt you for the rest of your life.
 
 ```{r import data}
 pedons <- fetchNASIS() # beware the error messages, looks like we have some
@@ -43,7 +44,7 @@ str(pedons, max.level = 2)
 
 # Exploratory analysis
 
-Generally before we begin modeling its good to explore the data. By using the summary() function, we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are all the argillic horizons haven't been properly populated in the diagnostic horizon table like they should be. Luckily for us, the argillic horizon always pops up in the taxonomic name, so we can use pattern matching to extract it. By doing this gain an additional 9 pedons with argillic horizons and are able to label the missing values (i.e. NA).
+Generally before we begin modeling its good to explore the data. By using the summary() function, we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are all the argillic horizons haven't been properly populated in the diagnostic horizon table like they should be. Luckily for us, the desert argillic horizons always pop up in the taxonomic name, so we can use pattern matching to extract it. By doing this gain an additional 9 pedons with argillic horizons and are able to label the missing values (i.e. NA).
 
 ```{r exploratory analysis}
 summary(pedons$argillic.horizon)
@@ -52,7 +53,7 @@ summary(grepl("arg", pedons$tax_subgroup)) # use pattern matching to exact "arg"
 pedons$argillic.horizon <- grepl("arg", pedons$tax_subgroup)
 ```
 
-Ideally if the diagnostic horizon table were populated we could filter out argillic horizons that start below 50cm, which may not be representative of "good" argillic horizons and may have gotten correlated to a Torripsamments.However as we saw earlier some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name, since it gives us the biggest sample. 
+Ideally if the diagnostic horizon table were populated we could also filter out argillic horizons that start below 50cm, which may not be representative of "good" argillic horizons and may therefore have gotten correlated to a Torripsamments anyway. Not only are unrepresentative sites confusing for scientists, they're equally confusing for models. However as we saw earlier some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name, since it gives us the biggest sample. 
 
 ```{r}
 d <- diagnostic_hz(pedons)
