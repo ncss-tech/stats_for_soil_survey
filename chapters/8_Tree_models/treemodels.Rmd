@@ -117,7 +117,9 @@ plot(rf)  ##out of bag (OOB) error rate versus number of trees
 
 ```
 
-The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 40% of the variance and produced a mean square error (sum of squared residuals divided by n) of 21 cm2. Another way to assess the rf model is to look at the variable importance plot. 
+The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 40% of the variance and produced a mean square error (sum of squared residuals divided by n) of 21 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly. This is due to the random subsetting and averaging in the randomForest algorithm. The defaults for the number of trees (ntree) and number of variables tried at each split (mtry) may need to be adjusted to explain more variance in the data. For most datasets, manually tweaking these parameters and examining the statistical summary is often sufficient. The tuneRF ( ) function can be used to determine the optimal mtry value, but some users have claimed that this algorithm leads to bias. Feel free to manually tweak the ntree and mtry settings to see how they effect the overall model performance. 
+
+Another way to assess the rf model is to look at the variable importance plot. 
 
 ```{r, fig.width=7, fig.height=8}
 varImpPlot(rf)
@@ -135,16 +137,18 @@ In the rf model, it is apparent that spodint is the most important variable used
 <br/>
 
 ##8.3 Prediction using Tree-based Models
-As with any modeling technique, tree-based models can be used for prediction and can be spatially interpolated using environmental covariates. Most commonly, whole datasets are subdivided into train and test data sets:
+As with any modeling technique, tree-based models can be used for prediction and can be spatially interpolated using environmental covariates. In order to spatially interpolate the model using environmental covariates, R requires a raster stack. Below is an example of how to perform a raster stack and use the predict ( ) function for our randomForest regression model:
 
 ```{r}
-## splits 70% of the data selected randomly into training set and the remaining 30% sample into test data set
-datasplit<-sort(sample(nrow(soildata), nrow(soildata)*.7)) 
-train<-soildata[datasplit,]
-test<-soildata[-datasplit,]
+rasters<-stack(list.files(getwd(),pattern="img$",full.names=FALSE)) ##combines rasters with a .img file extension stored in the working directory
 
-str(train)
-str(test)
+rasters 
+
+predict(rasters,rf, type="response",progress="window",overwrite=TRUE,filename="randomforestprediction.img") ##type: "response" for predicted values, "prob" for matrix of class probabilities, or "votes" for matrix of vote counts
+
 
 ```
 
+
+##8.4 Summary
+Tree-based models are intuitive, quick to run, nonparametric, and are often ideal for exploratory data analysis and prediction. Both rpart and randomForest produce graphical and tabular outputs to aid interpretation. Both packages also perform internal validataion (rpart=10-fold cross validation; randomForest=OOB error estimates) to assess model performance. 
