@@ -281,33 +281,29 @@ s <- site(pedons)
 s$describer <- sapply(s$describer, desc_test)
 pedons$describer <- s$describer
 
-test <- table(s$describer, s$argillic.horizon)
-test_df1 <- as.data.frame(test[, 1:2])
-test_df1_sort <- test_df1[order(test_df1["TRUE"], decreasing = TRUE), ]
-head(test_df1_sort) # Frequency of argillic horizon by soil scientist
+table(s$describer, s$argillic.horizon)
 ```
 
 ```
-##         FALSE TRUE
-## Peter     312  102
-## other     204   77
-## Paul      168   68
-## Stephen   178   28
+##          
+##           FALSE TRUE
+##   other     204   77
+##   Paul      168   68
+##   Peter     312  102
+##   Stephen   178   28
 ```
 
 ```r
-test2 <- round(prop.table(test, 1) * 100)
-test_df2 <- as.data.frame(test2[, 1:2])
-test_df2_sort<- test_df2[order(test_df1["TRUE"], decreasing = TRUE), ]
-head(test_df2_sort) # Proportion of argillic horizon by soil scientist
+round(prop.table(table(s$describer, s$argillic.horizon), 1) * 100)
 ```
 
 ```
-##         FALSE TRUE
-## Peter      75   25
-## other      73   27
-## Paul       71   29
-## Stephen    86   14
+##          
+##           FALSE TRUE
+##   other      73   27
+##   Paul       71   29
+##   Peter      75   25
+##   Stephen    86   14
 ```
 
 ```r
