@@ -9,9 +9,17 @@ output:
 
 # Introduction
 
-Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or temperature, GLM can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or soil nutrients non-normal error terms. This greatly expands the applicable of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.  
+Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or temperature, GLM can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or counts of a plant species along a transact. This greatly expands the applicable of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.  
 
-In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(x). However such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(x)). Also previous transformations were not guaranteed to achieve both normality and constant variance. GLM likewise transform the response, but provide separate functions to transform the mean response and variance, know as the link and variance functions respectively. In addition to transforming the response, GLM also report the results in the original scale of the response variable.
+In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(x). However such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(x)). Also previous transformations were not guaranteed to achieve both normality and constant variance. GLM likewise transform the response, but provide separate functions to transform the mean response and variance, know as the link and variance functions respectively. So instead of looking like so
+
+y = b0 + b1
+
+you get
+
+_f_(y) = b0 + b1
+
+
 
 In order to allow for 
 
@@ -27,7 +35,6 @@ library(rgdal) # spatial import
 library(lattice) # graphing
 library(reshape2) # data manipulation
 library(plyr) # data manipulation
-library(dplyr) # data manipulation
 library(caret) # printing
 ```
 
@@ -36,7 +43,8 @@ library(caret) # printing
 Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you.  Once data is captured in NASIS it much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS it may as well not exist, and will it haunt you for the rest of your life.
 
 ```{r import data}
-pedons <- fetchNASIS() # beware the error messages, uh oh looks like we have some, look the other way (by default they don't get imported)
+load(file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
+#pedons <- fetchNASIS() # beware the error messages, uh oh looks like we have some, look the other way (by default they don't get imported)
 # pedons <- read.csv("C:/workspace/test.csv")
 
 str(pedons, max.level = 2)
@@ -82,19 +90,10 @@ round(prop.table(table(paste(s$shapedown, s$shapeacross), s$argillic.horizon), 1
 
 
 # Argillic horizon by soil scientist, bias?
-desc_test <- function(old) {
-  old <- as.character(old)
-  new <- NA
-  if (is.na(old)) {new <- "other"}
-  if (grepl("Stephen", old)) {new <- "Stephen"} 
-  if (grepl("Paul", old)) {new <- "Paul"} 
-  if (grepl("Peter", old)) {new <- "Peter"}
-  if (is.na(new)) {new <- "other"}
- return(new)
-}
+
 
 s <- site(pedons)
-s$describer <- sapply(s$describer, desc_test)
+#s$describer <- sapply(s$describer, desc_test)
 pedons$describer <- s$describer
 
 test <- table(s$describer, s$argillic.horizon)
@@ -109,19 +108,19 @@ head(test_df2_sort) # Proportion of argillic horizon by soil scientist
 
 
 # Plot coordinates
-idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
-pedons2 <- pedons[idx]
-coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
-proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
+#idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
+#pedons2 <- pedons[idx]
+#coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
+#proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
 
-ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
-ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+#ssa <- readOGR(dsn = "F:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
+#ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
 plot(ca794)
-pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
-plot(pedons_sp, add = TRUE)
+#pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
+#plot(pedons_sp, add = TRUE)
 # Beware some points that fall outside of CA794 are not show here. Some are way outside of CA794.
 
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
+#pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
 # writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
 
 ```
@@ -189,11 +188,10 @@ Prior to any spatial analysis or modeling, you need to develop a suite of geodat
 # 
 # 
 # data <- subset(geodata_df, select = - c(x_std, y_std))
-# save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
 ```
 
 ```{r More }
-load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 data <- na.exclude(data)
 data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE # Subset out argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 data_m <- subset(data, select = - c(describer))
