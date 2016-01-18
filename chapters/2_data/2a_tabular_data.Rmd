@@ -1,11 +1,19 @@
 ---
 title:
-author:
+author: Jay Skovlin and D.E. Beaudette
 date: "Friday, January 15, 2016"
 output: html_document
 html_document:
     keep_md: yes
 ---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+# library(printr, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
 ##CHAPTER 2a: TABULAR DATA WE USE
@@ -33,7 +41,7 @@ html_document:
  * [2.5 Working with SPC data in R](#basicR) 
  * [2.6 Consistency checking pedon data in R](#check) 
  * [2.7 Preparing other data sources for R](#data)
- * [2.8 References?](#ref)
+ * [2.8 References](#ref)
  
 ###<a id="ODBC")></a>2.1  Using the soilDB package to load NASIS pedon data into R 
  
@@ -42,6 +50,9 @@ html_document:
 Data from a selected set of NASIS may be used as described in this [Job Aid](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1237479&ext=pdf) on “How to Create an ODBC Connection and Setup SoilDB for Use with R”.  
 
  **Query and load some pedon data into your selected set**
+ show screen shots of the results returned.
+ may need to re-organize the order of the sections/material presented here....to make it flow logically.    Can flesh out sections with code blocks and then organize it.
+ - cover data types in here as well.
 
  
 ###<a id="fetch")></a>2.2  Checks run by the fetch functions when pulling data into R 
@@ -51,6 +62,7 @@ Data from a selected set of NASIS may be used as described in this [Job Aid](htt
 - inconsistent horizon boundaries: pedons with inconsistent horizon boundaries are not loaded.  In most cases this occurs when the bottom depth of a horizon is not the same as the upper depth of the next lower horizon.
 
 - missing lower horizon depths: offending horizons are fixed by replacing the missing bottom depth with the top depth + 2cm
+
 - sites missing pedon records: these data are not loaded
 
 ####How can we find the site ID's where these errors occur so that we can to fix them in NASIS?
@@ -59,30 +71,74 @@ Should errors in the pedon data be detected when loading using fetchNASIS() you 
 - get('sites.missing.pedons', envir=soilDB.env)
 - get('dup.pedon.ids', envir=soilDB.env)
 - get('bad.pedon.ids', envir=soilDB.env)
+    - returns pedon ID's for pedons with inconsistent horizon depths
 
-
-
-
-- provide link to existing documentation -[Introduction to soilDB](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/soilDB-Intro.html?root=aqp)
+For more information on the design of soilDB functions use the following link to the soilDB documentation - [Introduction to soilDB](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/soilDB-Intro.html?root=aqp)
 
 ###<a id="SPC")></a>2.3  The structure of pedon data stored in a Soil Profile Collection (SPC) 
-####explain:
+####Briefly explain this then go into demonstrations:
 - site-level and horizon-level data structures
 - how the SPC flattens the site, siteobs, pedon, phorizon NASIS data structure
 
+#### The `Gopheridge` Sample Dataset
+The `gopheridge` sample dataset is very similar to the type of data returned from `fetchNASIS()`. The following demonstration is intended to show the structure of the Soil Profile Collection (SPC) object that is returned by 'fetchNASIS()'. 
 
-###<a id="view")></a>2.4  View a set of pedon data
+Before proceeding it may be helpful to review the `aqp` manual pages: `library(aqp) ; help(aqp)`, or the [SoilProfileCollection object introduction](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).  This tutorial provides an excellent overview of how the SPC object is constructed.
+
+Open R, and setup the environment by loading packages and the sample dataset.
+```{r gopheridge_a, eval=FALSE}
+library(soilDB)
+
+# load example dataset
+data(gopheridge)
+
+# what kind of object is this?
+class(gopheridge)
+
+# look at the first 6 lines of the data
+head(gopheridge)
+
+
+```
+
+###<a id="view")></a>2.4  Viewing pedon locations
 ####Ideas:
-- plot data within county or state boundary include code block
+- plot data within county or state boundary 
 - Quick check: Does the data roughly plot where you would expect it to?
-- include code to subset to exclude points with location errors
+- include code to subset to exclude points with location errors? 
+- more complicated outputs - using plotKML package to create KML for GE - add code here or add link to more complex examples and work these up as soilDB documentation.
 
+```{r gopheridge_b, eval=FALSE}
+# plot the locations of the gopherridge pedons within R
+# Steps:
+# 1) subset to a new data frame
+# 2) create a spatial points data frame (SPDF)
+# 3) plot the data
 
+# load libraries
+library(sp)
+library(maps)
+
+# subset standard WGS84 decimal degree coordinates from the gopheridge SPC by specifying column names
+gopher.locations <- site(gopheridge)[, c('site_id', 'x_std', 'y_std')]
+
+# initialize coordinates in an SPDF
+coordinates(gopher.locations) <- ~ x_std + y_std
+
+# plot county boundaries
+map('county', 'california', fill = FALSE)
+
+# add plot of pedon data locations
+plot(gopher.locations, add = TRUE)
+box()
+
+```
 
 ###<a id="basicR")></a>2.5  Working with SPC data in R
 ####Overview of some common R methods that can be used to inspect pedon data:
 - str()
 - head()
+- colnames(), names()
 - summaries via table()
 - order()
 
@@ -108,7 +164,7 @@ Should errors in the pedon data be detected when loading using fetchNASIS() you 
 
 
 
-###<a id="data")></a>2.7  Preparing data for use in R  
+###<a id="data")></a>2.7  Preparing other data sources for use in R  
 
 When preparing data for statistical analysis, a nicely formatted summary table is not appropriate. The data needs to be basic and compact.  The required configuration will be a comma delimited text file, where columns contain dependent and independent variables and rows contain individual observations of the variables.  Using sand content as an example, you might collect or present your data like this:  
 
