@@ -69,13 +69,15 @@ Before working in R, **create a folder** to keep all R files in, such as "C:/wor
 
 Before entering any commands in R, it is best to find out what the current working directory is by typing `getwd()` after the command prompt in the R Console.
 
-```{r, eval=FALSE}
+
+```r
 getwd()
 ```
 
 Now change the working directory to the new folder you setup. Use the backlash as follows to avoid errors in R:    
 
-```{r}
+
+```r
 setwd("C:/workspace")
 ```
 
@@ -109,13 +111,15 @@ west,range,B,24,24
 
 The sand_example.csv file is then imported into R by typing:  
 
-```{r}
+
+```r
 sand <- read.csv("C:/workspace/sand_example.csv")
 ```
 
 There are other arguments that you might want to use with `read.csv()`. A quick way to find out what arguments are available for a given command is to type `help(command)`. In this example, you would **type**:
 
-```{r, eval=FALSE}
+
+```r
 help(read.csv) # or
 ?read.csv
 ```
@@ -126,22 +130,59 @@ This command will bring up a webpage that describes all of the possible argument
 
 To export data from R, use the command `write.csv`.  Since we have already set our working directory, R will automatically save our file into the folder that we specified as our working directory.  
 
-```{r, eval=FALSE}
+
+```r
 write.csv(sand, file = "sand_example2.csv")
-``` 
+```
 
 **VIEWING DATA AND DATA OBJECTS**  
 
 A few commands that you can use to view your data in R are `str()`, `names()` and `head()`. `str()` shows the structure of the data object, while `names()` shows the column names (i.e. headers) of your data, and `head` prints the first 6 lines of data. You can also enter the name of the table next to the command prompt to print the entire table; however avoid doing this if your table is large. Instead for large tables try `View(sand)`.   
 
 **Enter** the following commands to view your dataset in R:  
-```{r}
-str(sand)
-names(sand)
-head(sand)
 
+```r
+str(sand)
+```
+
+```
+## 'data.frame':	18 obs. of  5 variables:
+##  $ location: Factor w/ 3 levels "city","farm",..: 1 1 1 1 1 1 2 2 2 2 ...
+##  $ landuse : Factor w/ 3 levels "crop","pasture",..: 1 1 2 2 3 3 1 1 2 2 ...
+##  $ master  : Factor w/ 2 levels "A","B": 1 2 1 2 1 2 1 2 1 2 ...
+##  $ depth   : int  14 25 10 27 15 23 12 31 17 26 ...
+##  $ sand    : int  19 21 23 34 22 23 31 35 30 36 ...
+```
+
+```r
+names(sand)
+```
+
+```
+## [1] "location" "landuse"  "master"   "depth"    "sand"
+```
+
+```r
+head(sand)
+```
+
+```
+##   location landuse master depth sand
+## 1     city    crop      A    14   19
+## 2     city    crop      B    25   21
+## 3     city pasture      A    10   23
+## 4     city pasture      B    27   34
+## 5     city   range      A    15   22
+## 6     city   range      B    23   23
+```
+
+```r
 ls()
-``` 
+```
+
+```
+## [1] "sand"
+```
 
 A data object is anything you've created or imported and assigned a name to in R. The `ls()` command allows you to see what data objects are in your R session. In the figure above, you see that sand is the only data object returned. If you wanted to delete all data objects from your R session, you would type:  
 
@@ -168,7 +209,8 @@ The R workspace consists of all the data objects you've created or loaded during
 ![R GUI image](figure/ch1_fig12_rgui.jpg)    
 
 The R command for saving your workspace is:
-```{r, eval=FALSE}
+
+```r
 save.image(file="workspaceRData")
 ```
 
@@ -223,29 +265,33 @@ Packages are collections of well-defined and referenced code developed by R user
 
 First, find out what packages have been installed by **typing**:
 
-```{r, eval=FALSE}
+
+```r
 library()
-``` 
+```
 
 To install a package that you do not have currently downloaded, **type the following command**:  
 
-```{r, eval=FALSE}
+
+```r
 install.packages("maps")
-``` 
+```
 
 Prior to installing the package you will be asked which CRAN mirror site you would like to download from. Simply select the CRAN mirror closest to your physical location and click OK.The Comprehensive R Archive Network (CRAN) is a collection of sites that carry identical material for R. If instead you had typed **install.packages("maps", dep = TRUE)** in to the Console, several additional packages would have been installed that are used maybe used by the maps packages, known as dependencies. The maps package will allow us to create nice base maps in R. 
 
 To use the installed package, we must load it to our current library by **typing**: 
-```{r, eval=FALSE}
+
+```r
 library(maps)
 ```
 
 To find more documentation about the maps package; **request more information from R**: 
 
-```{r, eval=FALSE}
+
+```r
 ??maps # or
 help(package = "maps")
-``` 
+```
 This will send you to a webpage.  We are interested in the maps:map documentation.  At that website, you see the documentation about that function.  There are a lot of options, but we’ll focus on the basics.  
 
 Useage (simple form): map(database, regions)  
@@ -257,17 +303,19 @@ This means the command is “map” which will be followed by specific instructi
 
 **Now we can call the map function from the maps package.**  
 
-```{r, eval=FALSE}
+
+```r
 map("usa")
 map("state")
-``` 
+```
 
 **When the region is left out, it defaults to showing all regions.  We can specify a specific region.**  
 
-```{r, eval=FALSE}
+
+```r
 map("county", "west virginia")
 map("county", region=c("maryland", "virginia","west virginia"))
-``` 
+```
 **Now try your home state.**  
 
 Try some of the examples included at the end of the map {maps} documentation, from the previous search, or [http://cran.r-project.org/web/packages/maps/maps.pdf](http://cran.r-project.org/web/packages/maps/maps.pdf)  
@@ -355,9 +403,7 @@ The plot will appear in a separate window within the R GUI
 
 Boxplot output:  
 
-```{r, echo=FALSE}
-boxplot(sand ~ landuse, data = sand)
-```
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
 
 ![R GUI image](figure/ch1_fig27_rgui.jpg)  
 
@@ -366,9 +412,12 @@ If you want to change something slightly, edit the command line in the script wi
 Use R help – or use an online search engine to find information about the desired function.  
 For instance, if you would like to change the colors of the bars in the histogram, edit the ‘col’ command:  
 
-```{r}
+
+```r
 hist(sand$sand, col="grey")  
 ```
+
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
   
 Select the line and then click the ‘Submit’ button.  
 
@@ -381,8 +430,19 @@ To calculate basic summary statistics use the options in the Statistics menu.  A
 
 Results are returned in the ‘Output Window’ and consist of a summary of the number of records for each categorical (name) variable and some basic measures of the continuous (numeric) variables.  
 
-```{r}
+
+```r
 summary(sand)
+```
+
+```
+##  location    landuse  master     depth            sand      
+##  city:6   crop   :6   A:9    Min.   :10.00   Min.   :19.00  
+##  farm:6   pasture:6   B:9    1st Qu.:14.00   1st Qu.:23.00  
+##  west:6   range  :6          Median :20.00   Median :25.00  
+##                              Mean   :20.06   Mean   :26.33  
+##                              3rd Qu.:25.75   3rd Qu.:29.75  
+##                              Max.   :31.00   Max.   :36.00
 ```
   
 
