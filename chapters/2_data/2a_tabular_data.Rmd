@@ -17,28 +17,98 @@ html_document:
 -	View a set of pedon data from a selected set in NASIS in R
 -	Learn basic commands for inspecting objects and data types
 - Learn basic checks that you can do to filter and inspect the consistency of a pedon dataset
--	Joining additional data to an SPC?
+-	Not finding the data you need? Joining additional data to an SPC via extended data functions
 
 #Objectives:
 - Use the soilDB package to load NASIS pedon data into R
+- Examine the data and understand its structure
+- Learn ways to work with and inspect pedon data in R
 
 #Contents:
 
  * [2.1 ODBC Connection to NASIS](#ODBC)
- * [2.2 Accuracy and Precision](#acc) 
- * [2.3 Preparing data for R](#data)
- * [2.4 References](#ref)
+ * [2.2 fetch functions and data checks](#fetch) 
+ * [2.3 Soil Profile Collection (SPC) object](#SPC)
+ * [2.4 Viewing pedon data](#view) 
+ * [2.5 Working with SPC data in R](#basicR) 
+ * [2.6 Consistency checking pedon data in R](#check) 
+ * [2.7 Preparing other data sources for R](#data)
+ * [2.8 References?](#ref)
  
-###<a id="ODBC")></a>2.1  Using the soilDB package to pull NASIS pedon data into R 
+###<a id="ODBC")></a>2.1  Using the soilDB package to load NASIS pedon data into R 
  
  **First step - set up an Open Database Connectivity (ODBC) connection to NASIS on your computer**  
 
 Data from a selected set of NASIS may be used as described in this [Job Aid](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1237479&ext=pdf) on “How to Create an ODBC Connection and Setup SoilDB for Use with R”.  
 
  **Query and load some pedon data into your selected set**
- 
 
-###<a id="data")></a>2.3  Preparing data for use in R  
+ 
+###<a id="fetch")></a>2.2  Checks run by the fetch functions when pulling data into R 
+
+####When loading pedons with the fetchNASIS() function data checks are performed for: 
+- multiple map datums: results reported to the user and the data are not modified
+- inconsistent horizon boundaries: pedons with inconsistent horizon boundaries are not loaded.  In most cases this occurs when the bottom depth of a horizon is not the same as the upper depth of the next lower horizon.
+
+- missing lower horizon depths: offending horizons are fixed by replacing the missing bottom depth with the top depth + 2cm
+- sites missing pedon records: these data are not loaded
+
+####How can we find the site ID's where these errors occur so that we can to fix them in NASIS?
+Should errors in the pedon data be detected when loading using fetchNASIS() you can use the following get functions to track them back to the records in NASIS:
+
+- get('sites.missing.pedons', envir=soilDB.env)
+- get('dup.pedon.ids', envir=soilDB.env)
+- get('bad.pedon.ids', envir=soilDB.env)
+
+
+
+
+- provide link to existing documentation -[Introduction to soilDB](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/soilDB-Intro.html?root=aqp)
+
+###<a id="SPC")></a>2.3  The structure of pedon data stored in a Soil Profile Collection (SPC) 
+####explain:
+- site-level and horizon-level data structures
+- how the SPC flattens the site, siteobs, pedon, phorizon NASIS data structure
+
+
+###<a id="view")></a>2.4  View a set of pedon data
+####Ideas:
+- plot data within county or state boundary include code block
+- Quick check: Does the data roughly plot where you would expect it to?
+- include code to subset to exclude points with location errors
+
+
+
+###<a id="basicR")></a>2.5  Working with SPC data in R
+####Overview of some common R methods that can be used to inspect pedon data:
+- str()
+- head()
+- summaries via table()
+- order()
+
+####subsetting options using:
+- filters by indexing
+- which()
+- pattern matching - grep()
+
+
+###<a id="check")></a>2.6  Consistency checking pedon data using R
+####assumptions:
+- some common pit falls of working with pedon data
+- consistency in data population is key!
+- horizonation issues, etc
+- missing data
+
+
+
+
+
+
+
+
+
+
+###<a id="data")></a>2.7  Preparing data for use in R  
 
 When preparing data for statistical analysis, a nicely formatted summary table is not appropriate. The data needs to be basic and compact.  The required configuration will be a comma delimited text file, where columns contain dependent and independent variables and rows contain individual observations of the variables.  Using sand content as an example, you might collect or present your data like this:  
 
@@ -71,7 +141,7 @@ west,range,B,24,24
 
 If you copy and paste the comma delimited text, starting with the header line of location, and save it as a text file named “sample_table.txt” in the \ C:/Temp\ folder, you can open R and run these commands by copying text from the boxes and pasting into the R prompt:  
 
-
+###<a id="refs")></a>2.8  References
 
 
 
