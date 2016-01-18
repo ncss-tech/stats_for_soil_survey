@@ -121,15 +121,25 @@ Data frames are matrices that allow different columns to have different data for
 MISSING DATA  
 
 In R, missing numerical and categorical values within a dataset are displayed with the symbol NA (not available). Impossible numerical and categorical values, like ones divided by 0, are represented by the symbol NaN (not a number). Some functions in R will not run if your data contain missing values. One way to test for missing values is to **type**:  
-```{r}
+
+```r
 any(is.na(sand))
-``` 
+```
+
+```
+## [1] FALSE
+```
 
 R will return TRUE if there is a missing value within a given row and column or FALSE if there is not. In our sand example, there were no missing values, so R returned all combinations as FALSE. If you wanted to quickly find out which one is missing, type:  
 
-```{r}
+
+```r
 which(is.na(sand))
-``` 
+```
+
+```
+## integer(0)
+```
 
 In our example with the sand dataset, `integer (0)` is returned because we do not have any missing values. When you have missing data and the function you want to run will not run with missing values, you have the following options:  
 
@@ -486,8 +496,8 @@ The examples presented in sections 5.1 and 5.2 summarize using traditional metri
 
 Copy this script and paste to an empty Notepad document and save as “mapunit\_summary\_slope.R” in the same folder where your SSURGO shapefile and slope layer resides.  
 
-```{r, eval=FALSE}
 
+```r
 # R function to generate statistical summary of MUSYM elevation, slope, aspect, etc. 
 # S. Roecker NRCS
 # set the following parameters accordingly
@@ -577,8 +587,6 @@ MUSYM.plot=function(mapunit){
     dev.off()
     }
 } 
-
-
 ```
 
 **Step 2.**  
@@ -620,7 +628,8 @@ The script creates three “csv” files:
 Optional histogram representation of slope distribution by mapunit  
 
 At the R prompt type  
-```{r, eval=FALSE}
+
+```r
 data<-read.csv("data.csv")
 MUSYM.plot(data)
 ```
