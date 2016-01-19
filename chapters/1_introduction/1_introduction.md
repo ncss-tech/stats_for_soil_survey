@@ -112,14 +112,6 @@ west,range,B,24,24
 The sand_example.csv file can then imported into R by typing:  
 
 
-```
-## Warning in file(file, "rt"): cannot open file 'C:/workspace/
-## sand_example.csv': No such file or directory
-```
-
-```
-## Error in file(file, "rt"): cannot open the connection
-```
 
 
 ```r
@@ -156,7 +148,12 @@ str(sand)
 ```
 
 ```
-## Error in str(sand): object 'sand' not found
+## 'data.frame':	18 obs. of  5 variables:
+##  $ location: Factor w/ 3 levels "city","farm",..: 1 1 1 1 1 1 2 2 2 2 ...
+##  $ landuse : Factor w/ 3 levels "crop","pasture",..: 1 1 2 2 3 3 1 1 2 2 ...
+##  $ master  : Factor w/ 2 levels "A","B": 1 2 1 2 1 2 1 2 1 2 ...
+##  $ depth   : int  14 25 10 27 15 23 12 31 17 26 ...
+##  $ sand    : int  19 21 23 34 22 23 31 35 30 36 ...
 ```
 
 ```r
@@ -164,7 +161,7 @@ names(sand)
 ```
 
 ```
-## Error in eval(expr, envir, enclos): object 'sand' not found
+## [1] "location" "landuse"  "master"   "depth"    "sand"
 ```
 
 ```r
@@ -172,7 +169,13 @@ head(sand)
 ```
 
 ```
-## Error in head(sand): object 'sand' not found
+##   location landuse master depth sand
+## 1     city    crop      A    14   19
+## 2     city    crop      B    25   21
+## 3     city pasture      A    10   23
+## 4     city pasture      B    27   34
+## 5     city   range      A    15   22
+## 6     city   range      B    23   23
 ```
 
 ```r
@@ -180,7 +183,7 @@ ls()
 ```
 
 ```
-## [1] "test"
+## [1] "sand" "test"
 ```
 
 A data object is anything you've created or imported and assigned a name to in R. The `ls()` command allows you to see what data objects are in your R session. In the figure above, you see that sand is the only data object returned. If you wanted to delete all data objects from your R session, you would type:  
@@ -412,10 +415,7 @@ The plot will appear in a separate window within the R GUI
 
 Boxplot output:  
 
-
-```
-## Error in eval(expr, envir, enclos): object 'sand' not found
-```
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
 
 ![R GUI image](figure/ch1_fig27_rgui.jpg)  
 
@@ -429,9 +429,7 @@ For instance, if you would like to change the colors of the bars in the histogra
 hist(sand$sand, col="grey")  
 ```
 
-```
-## Error in hist(sand$sand, col = "grey"): object 'sand' not found
-```
+![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
   
 Select the line and then click the ‘Submit’ button.  
 
@@ -450,7 +448,13 @@ summary(sand)
 ```
 
 ```
-## Error in summary(sand): object 'sand' not found
+##  location    landuse  master     depth            sand      
+##  city:6   crop   :6   A:9    Min.   :10.00   Min.   :19.00  
+##  farm:6   pasture:6   B:9    1st Qu.:14.00   1st Qu.:23.00  
+##  west:6   range  :6          Median :20.00   Median :25.00  
+##                              Mean   :20.06   Mean   :26.33  
+##                              3rd Qu.:25.75   3rd Qu.:29.75  
+##                              Max.   :31.00   Max.   :36.00
 ```
   
 
@@ -470,18 +474,13 @@ Example Ouput:
 
 ```r
 AnovaModel.1 <- aov(sand ~ landuse, data = sand)
-```
-
-```
-## Error in terms.formula(formula, "Error", data = data): object 'sand' not found
-```
-
-```r
 summary(AnovaModel.1)
 ```
 
 ```
-## Error in summary(AnovaModel.1): object 'AnovaModel.1' not found
+##             Df Sum Sq Mean Sq F value Pr(>F)
+## landuse      2     48   24.00   0.914  0.422
+## Residuals   15    394   26.27
 ```
 
 ```r
@@ -489,7 +488,10 @@ with(sand, numSummary(sand, groups=landuse, statistics = c("mean", "sd")))
 ```
 
 ```
-## Error in with(sand, numSummary(sand, groups = landuse, statistics = c("mean", : object 'sand' not found
+##             mean       sd data:n
+## crop    26.33333 6.022181      6
+## pasture 28.33333 6.022181      6
+## range   24.33333 2.503331      6
 ```
 
 This result indicates that the sand content of these landuses are not significantly different (Pr = 0.422).  It should be noted that this simple analysis has not accounted for the two kinds of horizons analyzed (A and B) or the non-independent nature of multiple samples collected at each location. It also doesn't tell you if comparing sand content between land uses was a reasonable thing to do.  
