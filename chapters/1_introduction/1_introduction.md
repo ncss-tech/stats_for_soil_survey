@@ -22,7 +22,7 @@ output:
  
 ###<a id="intro")></a>1.1  Introduction
 
-R is a free, open-source software and programming language developed in 1995 at the University of Auckland that is capable of executing simple and complex mathematical, statistical, and graphical functions [(Ikaha and Gentleman, 1996)](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf).  It is a dialect of the S language and is case sensitive. The R interface allows you to execute functions using a command prompt (>). As we speak Soil Scientists and Ecologists are using R for exploring data, modeling soil and plant relationships, generating raster-based model predictions, and developing new R functions.  
+R is a free, open-source software and programming language developed in 1995 at the University of Auckland that is capable of executing simple and complex mathematical, statistical, and graphical functions [(Ikaha and Gentleman, 1996)](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf).  It is a dialect of the S language and is case sensitive. The R interface allows you to execute functions using a command prompt (>). To date R has become popular amongst Soil Scientists and Ecologists for exploring data, modeling soil and plant relationships, generating raster-based model predictions, and developing new R functions.  
 
 R has been installed on all computers with NASIS and is typically updated and CCE approved once a year. USDA machines maybe 1 to 3 versions behind the latest available version for public download. Having an outdated version of R though rarely creates a problem, although warnings may appear.  
 
@@ -113,7 +113,16 @@ The sand_example.csv file can then imported into R by typing:
 
 
 ```r
-sand <- read.csv("C:/workspace/sand_example.csv")
+sand <- read.csv("sand_example.csv")
+```
+
+```
+## Warning in file(file, "rt"): cannot open file 'sand_example.csv': No such
+## file or directory
+```
+
+```
+## Error in file(file, "rt"): cannot open the connection
 ```
 
 There are other arguments that you might want to use with `read.csv()`. A quick way to find out what arguments are available for a given command is to type `help(command)`. In this example, you would **type**:
@@ -146,12 +155,7 @@ str(sand)
 ```
 
 ```
-## 'data.frame':	18 obs. of  5 variables:
-##  $ location: Factor w/ 3 levels "city","farm",..: 1 1 1 1 1 1 2 2 2 2 ...
-##  $ landuse : Factor w/ 3 levels "crop","pasture",..: 1 1 2 2 3 3 1 1 2 2 ...
-##  $ master  : Factor w/ 2 levels "A","B": 1 2 1 2 1 2 1 2 1 2 ...
-##  $ depth   : int  14 25 10 27 15 23 12 31 17 26 ...
-##  $ sand    : int  19 21 23 34 22 23 31 35 30 36 ...
+## Error in str(sand): object 'sand' not found
 ```
 
 ```r
@@ -159,7 +163,7 @@ names(sand)
 ```
 
 ```
-## [1] "location" "landuse"  "master"   "depth"    "sand"
+## Error in eval(expr, envir, enclos): object 'sand' not found
 ```
 
 ```r
@@ -167,13 +171,7 @@ head(sand)
 ```
 
 ```
-##   location landuse master depth sand
-## 1     city    crop      A    14   19
-## 2     city    crop      B    25   21
-## 3     city pasture      A    10   23
-## 4     city pasture      B    27   34
-## 5     city   range      A    15   22
-## 6     city   range      B    23   23
+## Error in head(sand): object 'sand' not found
 ```
 
 ```r
@@ -181,14 +179,14 @@ ls()
 ```
 
 ```
-## [1] "sand"
+## character(0)
 ```
 
 A data object is anything you've created or imported and assigned a name to in R. The `ls()` command allows you to see what data objects are in your R session. In the figure above, you see that sand is the only data object returned. If you wanted to delete all data objects from your R session, you would type:  
 
 **rm(list = ls(all = TRUE))**
 
-The `ls()` and `rm(list = ls(all = TRUE))` functions are also available in the RGui under the menu bar heading **Misc**. 
+The `ls()` and `rm()` functions are also available in the RGui under the menu bar heading **Misc**. 
 
 ![R GUI image](figure/ch1_fig4_rgui.jpg)  
 
@@ -202,7 +200,7 @@ The easiest way to save your work in R is simply by clicking on **File > Save to
 
 **WORKSPACE (.RDATA)**  
 
-The R workspace consists of all the data objects you've created or loaded during your R session. When you quit R by either typing q() or exiting out of the application window, R will prompt you to save your workspace. If you choose yes, R will save a file called .RData to your working directory. The next time you open R and link to the same working directory that the .RData file is saved to, all of your data objects will be available in R. You can also save or load your workspace at any time during your R session by clicking on **File** tab on the menu bar.   
+The R workspace consists of all the data objects you've created or loaded during your R session. When you quit R by either typing `q()` or exiting out of the application window, R will prompt you to save your workspace. If you choose yes, R will save a file called .RData to your working directory. The next time you open R and link to the same working directory that the .RData file is saved to, all of your data objects will be available in R. You can also save or load your workspace at any time during your R session by clicking on **File** tab on the menu bar.   
 
 ![R GUI image](figure/ch1_fig11_rgui.jpg)  
 
@@ -245,7 +243,7 @@ loadhistory(file = "sand.Rhistory")
 
 |Function                    |Output          |
 |:---------------------------|:---------------|
-|"pdf("graphic.pdf")         |pdf file        |
+|pdf("graphic.pdf")          |pdf file        |
 |win.metafile("graphic.wmf") |window metafile |
 |png("graph.png")            |png file        |
 |jpeg("graph.jpg")           |jpeg file       |
@@ -262,19 +260,7 @@ The R command for saving a graphic is:
 ```r
 jpeg(file = "sand.jpeg")**
 plot(sand$sand)
-```
-
-```
-## numeric(0)
-```
-
-```r
 dev.off()
-```
-
-```
-## png 
-##   2
 ```
 
 The first line of this command creates a blank file named sand with a JPEG extension.  The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the jpeg file we are creating). The third line closes the graphics device.  
@@ -311,10 +297,9 @@ To find more documentation about the maps package; **request more information fr
 
 
 ```r
-??maps # or
 help(package = "maps")
 ```
-This will send you to a webpage.  We are interested in the maps:map documentation.  At that website, you see the documentation about that function.  There are a lot of options, but we’ll focus on the basics.  
+This will send you to a webpage.  We are interested in the maps:map documentation.  At that website, you see the documentation about that function.  There are a lot of options, but we'll focus on the basics.  
 
 Useage (simple form): map(database, regions)  
 This means the command is “map” which will be followed by specific instructions (called arguments).  In this case:  
@@ -426,7 +411,10 @@ The plot will appear in a separate window within the R GUI
 
 Boxplot output:  
 
-![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
+
+```
+## Error in eval(expr, envir, enclos): object 'sand' not found
+```
 
 ![R GUI image](figure/ch1_fig27_rgui.jpg)  
 
@@ -440,7 +428,9 @@ For instance, if you would like to change the colors of the bars in the histogra
 hist(sand$sand, col="grey")  
 ```
 
-![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
+```
+## Error in hist(sand$sand, col = "grey"): object 'sand' not found
+```
   
 Select the line and then click the ‘Submit’ button.  
 
@@ -459,13 +449,7 @@ summary(sand)
 ```
 
 ```
-##  location    landuse  master     depth            sand      
-##  city:6   crop   :6   A:9    Min.   :10.00   Min.   :19.00  
-##  farm:6   pasture:6   B:9    1st Qu.:14.00   1st Qu.:23.00  
-##  west:6   range  :6          Median :20.00   Median :25.00  
-##                              Mean   :20.06   Mean   :26.33  
-##                              3rd Qu.:25.75   3rd Qu.:29.75  
-##                              Max.   :31.00   Max.   :36.00
+## Error in summary(sand): object 'sand' not found
 ```
   
 
@@ -485,13 +469,18 @@ Example Ouput:
 
 ```r
 AnovaModel.1 <- aov(sand ~ landuse, data = sand)
+```
+
+```
+## Error in terms.formula(formula, "Error", data = data): object 'sand' not found
+```
+
+```r
 summary(AnovaModel.1)
 ```
 
 ```
-##             Df Sum Sq Mean Sq F value Pr(>F)
-## landuse      2     48   24.00   0.914  0.422
-## Residuals   15    394   26.27
+## Error in summary(AnovaModel.1): object 'AnovaModel.1' not found
 ```
 
 ```r
@@ -499,10 +488,7 @@ with(sand, numSummary(sand, groups=landuse, statistics = c("mean", "sd")))
 ```
 
 ```
-##             mean       sd data:n
-## crop    26.33333 6.022181      6
-## pasture 28.33333 6.022181      6
-## range   24.33333 2.503331      6
+## Error in with(sand, numSummary(sand, groups = landuse, statistics = c("mean", : object 'sand' not found
 ```
 
 This result indicates that the sand content of these landuses are not significantly different (Pr = 0.422).  It should be noted that this simple analysis has not accounted for the two kinds of horizons analyzed (A and B) or the non-independent nature of multiple samples collected at each location. It also doesn't tell you if comparing sand content between land uses was a reasonable thing to do.  
