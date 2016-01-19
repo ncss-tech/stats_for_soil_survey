@@ -112,17 +112,18 @@ west,range,B,24,24
 The sand_example.csv file can then imported into R by typing:  
 
 
-```r
-sand <- read.csv("sand_example.csv")
 ```
-
-```
-## Warning in file(file, "rt"): cannot open file 'sand_example.csv': No such
-## file or directory
+## Warning in file(file, "rt"): cannot open file 'C:/workspace/
+## sand_example.csv': No such file or directory
 ```
 
 ```
 ## Error in file(file, "rt"): cannot open the connection
+```
+
+
+```r
+sand <- read.csv("sand_example.csv")
 ```
 
 There are other arguments that you might want to use with `read.csv()`. A quick way to find out what arguments are available for a given command is to type `help(command)`. In this example, you would **type**:
