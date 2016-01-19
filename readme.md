@@ -45,8 +45,9 @@ There may be overlap between slides and the web-based content. That should not b
 ## Datasets
 Standard data sets for teaching, student data for exercises.
 
-## Links to pages
-* http://ncss-tech.github.io/stats_for_soil_survey/chapters/pre-class-assignment/
-* http://ncss-tech.github.io/stats_for_soil_survey/chapters/clustering_and_ordination/
+## Example Links to pages
+* [main page](http://ncss-tech.github.io/stats_for_soil_survey/)
+* [pre-call assignment](http://ncss-tech.github.io/stats_for_soil_survey/0_chapters/pre-class-assignment/)
+* [ordination](http://ncss-tech.github.io/stats_for_soil_survey/5_chapters/clustering_and_ordination/)
 
 
