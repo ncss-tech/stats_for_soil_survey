@@ -47,7 +47,7 @@ Standard data sets for teaching, student data for exercises.
 
 ## Example Links to pages
 * [main page](http://ncss-tech.github.io/stats_for_soil_survey/)
-* [pre-call assignment](http://ncss-tech.github.io/stats_for_soil_survey/0_chapters/pre-class-assignment/)
-* [ordination](http://ncss-tech.github.io/stats_for_soil_survey/5_chapters/clustering_and_ordination/)
+* [pre-class assignment](http://ncss-tech.github.io/stats_for_soil_survey/chapters/0_pre-class-assignment/)
+* [ordination](http://ncss-tech.github.io/stats_for_soil_survey/chapters/5_clustering_and_ordination/)
 
 
