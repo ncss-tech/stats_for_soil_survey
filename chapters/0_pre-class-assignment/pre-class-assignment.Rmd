@@ -8,7 +8,7 @@ html_document:
 
 1. View Paul Finnel's [webinar](https://youtu.be/VcdowqknChQ)
 
-2. Create a folder on your machine to be used as the working directory for this course
+2. Create a folder on your machine to be used as the working directory for this course, e.g. `E:/r-working-dir`.
 
 3. Open RStudio, verify that version 0.99.467 is installed (Help>About RStudio), and set working directory (Session>Set Working Directory)
 
@@ -46,7 +46,37 @@ sapply(packages, library, character.only = TRUE, quietly=TRUE, logical.return=TR
 
 5. Establish [ODBC Connection to NASIS](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp)
 
-6. Get Example Data
+6. Get Example Data ***not sure if this is right, it dumps all data files into single dir***
+After making a working directory on your local machine (`E:/r-working-dir` used as an example here), 
+```{r, warning=FALSE, message=FALSE, results="hide", eval=FALSE}
+# define working dir, this should already exist
+wd <- 'E:/r-working-dir'
+
+# define function for getting files and organizing locally
+getData <- function(wd, files) {
+  # base data URL
+  base.url <- 'https://github.com/ncss-tech/stats_for_soil_survey/blob/master/data/'
+  
+  # make data path using first file
+  wd.data <- paste0(wd, '/', strsplit(files[1], '/')[[1]][[1]])
+  
+  # make a sub-folder for data files
+  if(!dir.exists(wd.data))
+    dir.create(wd.data)
+  
+  # iterate over files and download
+  for(f in files) {
+    f.remote <- paste0(base.url, f)
+    f.local <- paste0(wd.data, '/', basename(f))
+    download.file(f.remote, f.local, quiet = TRUE)
+  }
+}
+
+
+
+# chapter 5 data files
+getData(wd, c('clustering_and_ordination/ARTRV.csv'))
+```
 
 7. Check Functionality (do we need this?)
 
