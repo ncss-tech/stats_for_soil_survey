@@ -183,7 +183,7 @@ ls()
 ```
 
 ```
-## [1] "sand" "test"
+## [1] "sand"
 ```
 
 A data object is anything you've created or imported and assigned a name to in R. The `ls()` command allows you to see what data objects are in your R session. In the figure above, you see that sand is the only data object returned. If you wanted to delete all data objects from your R session, you would type:  
