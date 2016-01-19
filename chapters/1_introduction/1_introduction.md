@@ -22,23 +22,23 @@ output:
  
 ###<a id="intro")></a>1.1  Introduction
 
-R is a free, open-source software and programming language developed in 1995 at the University of Auckland that is capable of executing simple and complex mathematical, statistical, and graphical functions (Ikaha and Gentleman, 1996).  It is a dialect of the S language and is case sensitive. The R interface allows you to execute functions using a command prompt (>). As we speak Soil Scientists and Ecologists are using R for exploring data, modeling soils and plants, generating raster-based model predictions, and developing new R functions.  
+R is a free, open-source software and programming language developed in 1995 at the University of Auckland that is capable of executing simple and complex mathematical, statistical, and graphical functions [(Ikaha and Gentleman, 1996)](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf).  It is a dialect of the S language and is case sensitive. The R interface allows you to execute functions using a command prompt (>). As we speak Soil Scientists and Ecologists are using R for exploring data, modeling soil and plant relationships, generating raster-based model predictions, and developing new R functions.  
 
-R has been installed on all computers with NASIS and is typically updated and CCE approved once a year. USDA machines may be 1 to 3 versions behind the latest available version for public download. Having an outdated version of R though rarely creates a problem, although warnings may appear.  
+R has been installed on all computers with NASIS and is typically updated and CCE approved once a year. USDA machines maybe 1 to 3 versions behind the latest available version for public download. Having an outdated version of R though rarely creates a problem, although warnings may appear.  
 
 A few tips in R before you get started:  
 
-- R is command-line driven and requires you to type or copy and paste commands after the command prompt (>) that appears when you open R. After typing a command and presssing **enter** on your keyboard in the R console, the command will run. If your command is not complete, R will issue a continuation prompt (signified by a plus sign, +). 
+- R is command-line driven and requires you to type or copy and paste commands after the command prompt (>) that appears when you open R. After typing a command and pressing enter on your keyboard in the R console, the command will run. If your command is not complete, R will issue a continuation prompt (signified by a plus sign, `+`). 
 
 - R has a built in editor where you can edit and select code to run. Some people find it easiest to use Notepad instead. 
 
 - R is case sensitive, make sure your spelling and capitalization are correct!  
  
-- Commands in R are also called functions. The basic format of a function in R is: > function.name (argument, options)  
+- Commands in R are also called functions. The basic format of a function in R is: `function.name(argument, options)`  
  
 - The up arrow (^) on your keyboard can be used to bring up previous commands that you've typed in the R console. 
  
-- The `$` is used to select a particular column within the dataset (dataset$column).
+- The `$` is used to select a particular column within the dataset, `dataset$column`.
 
 - Any text that you do not want R to act on (such as instructions, information, notes or comments) needs to be preceded by a `#` (aka hashtag or comment).  R will ignore the remainder of the script line following `#`, if it is included in an R script. For example:  
  
@@ -47,7 +47,7 @@ A few tips in R before you get started:
 
 ###<a id="gui")></a>1.2  R Graphical User Interface
  
-**Navigate** to R (in the start and program menus) and Open R (3.1.1, or latest version). When you first open R, the R console window below appears:  
+**Navigate** to R (in the start and program menus) and **Open** R (3.1.1, or latest version). When you first open R, the R console window below appears:  
 
 ![R GUI image](figure/ch1_fig1_rgui.jpg)  
 
@@ -57,7 +57,7 @@ The RGui contains 3 main windows: R console, R editor, and R graphics:
 
 To use R, you type commands after the command prompt `>`. In the R Console window, if you type a command and press ENTER, the command will run. You are able to edit command text in R Editor and are also able to then highlight, right click, and select run for the commands that you wish to run. The R Graphics window will display only when the `plot()` function is run.  
 
-Commands in R can range from simple mathematical equations to complex statistical functions and models. As an example of simple math, if you type:  `9 * 8 + 6 - 1` in R and hit ENTER, R will act as a calculator and return the answer, `77`.  
+Commands in R can range from simple mathematical equations to complex statistical functions and models. As an example of simple math, if you type:  `9 * 8 + 6 - 1` in R and hit ENTER, R will act as a calculator and return the answer `77`.  
 
 ###<a id="datamanagement")></a>1.3  Data Management in R  
 
@@ -81,7 +81,7 @@ Now change the working directory to the new folder you setup. Use the backlash a
 setwd("C:/workspace")
 ```
 
-The working directory can also be changed and set by clicking on **File > Change dir...** from the menu bar. Setting a working directory allows you to import data into R with just a file name, not an entire folder path and file name. It also is the default folder for when you save or export data out of R. *Every time you start an R session, you should set your R directory*. 
+The working directory can also be changed and set by clicking on **File > Change dir...** from the menu bar. Setting a working directory allows you to import data into R with just a file name, not an entire folder path and file name. It also is the default folder for when you save or export data out of R. *Every time you start an R session, you should set your working directory*. 
 
 **IMPORTING DATA**
 
@@ -109,7 +109,7 @@ west,pasture,B,31,26
 west,range,A,14,23  
 west,range,B,24,24  
 
-The sand_example.csv file is then imported into R by typing:  
+The sand_example.csv file can then imported into R by typing:  
 
 
 ```r
@@ -124,7 +124,7 @@ help(read.csv) # or
 ?read.csv
 ```
 
-This command will bring up a webpage that describes all of the possible arguments for that command and usually provides examples. You should also notice that `read.csv()` is just one of several functions for reading text files.
+These commands will bring up a webpage that describes all of the possible arguments for a command and usually provides examples. You should also notice by reading the help page for `read.csv()` that it is just one of several functions for reading text files.
 
 **EXPORTING DATA**
 
@@ -137,7 +137,7 @@ write.csv(sand, file = "sand_example2.csv")
 
 **VIEWING DATA AND DATA OBJECTS**  
 
-A few commands that you can use to view your data in R are `str()`, `names()` and `head()`. `str()` shows the structure of the data object, while `names()` shows the column names (i.e. headers) of your data, and `head` prints the first 6 lines of data. You can also enter the name of the table next to the command prompt to print the entire table; however avoid doing this if your table is large. Instead for large tables try `View(sand)`.   
+A few commands that you can use to view your data in R are `str()`, `names()` and `head()`. `str()` shows the structure of the data object, while `names()` shows the column names (i.e. headers) of your data, and `head` prints the first 6 lines of data. You can also enter the name of the table next to the command prompt to print the entire table; however avoid doing this if your table is large. Instead for large tables try `View(sand)`, this will opend the dataset in a separate window.   
 
 **Enter** the following commands to view your dataset in R:  
 
@@ -181,7 +181,7 @@ ls()
 ```
 
 ```
-## [1] "sand"
+## [1] "anova1"       "AnovaModel.1" "sand"         "test"
 ```
 
 A data object is anything you've created or imported and assigned a name to in R. The `ls()` command allows you to see what data objects are in your R session. In the figure above, you see that sand is the only data object returned. If you wanted to delete all data objects from your R session, you would type:  
@@ -194,7 +194,7 @@ The `ls()` and `rm(list = ls(all = TRUE))` functions are also available in the R
 
 ###<a id="saving")></a>1.4  Saving R Files  
 
-In R, there are several types of files that you can save to keep track of the work you do in R: workspace, script, history, and graphics. It is important to save often because R, like most software, may crash periodically especially when working with large files. Saving your work in R can be done through command prompt or the RGui.  
+In R, there are several types of files that you can save to keep track of the work you do in R: workspace, script, history, and graphics. It is important to save often because R, like other software, may crash periodically especially when working with large files. Saving your work in R can be done via commandline or meanus.  
 
 The easiest way to save your work in R is simply by clicking on **File > Save to File**, and select one of the saving options in the menu bar. Depending on which window you have selected, such as the R Console or Editor, different options will appear.
 
@@ -202,7 +202,7 @@ The easiest way to save your work in R is simply by clicking on **File > Save to
 
 **WORKSPACE (.RDATA)**  
 
-The R workspace consists of all the data objects you've created or loaded during your R session. When you quit R by either typing q() or exiting out of the application window, R will prompt you to save your workspace. If you choose yes, R will save a file called “.RData” to your working directory. The next time you open R and link to the same working directory that the R.Data file is saved to, all of your data objects will be available in R. You can also save or load your workspace at any time during your R session by clicking on **File** tab on the menu bar.   
+The R workspace consists of all the data objects you've created or loaded during your R session. When you quit R by either typing q() or exiting out of the application window, R will prompt you to save your workspace. If you choose yes, R will save a file called .RData to your working directory. The next time you open R and link to the same working directory that the .RData file is saved to, all of your data objects will be available in R. You can also save or load your workspace at any time during your R session by clicking on **File** tab on the menu bar.   
 
 ![R GUI image](figure/ch1_fig11_rgui.jpg)  
 
@@ -211,55 +211,77 @@ The R workspace consists of all the data objects you've created or loaded during
 The R command for saving your workspace is:
 
 ```r
-save.image(file="workspaceRData")
+save.image(file="workspace.RData")
 ```
 
 **R SCRIPT (.R)**  
 
-A R script is simply a text file of R commands that you’ve typed. You want to save your scripts (whether they were written in R Editor or an ancillary program like Notepad) so that you can reference them in the future, edit them if needed, and keep track of what you’ve done. In order to save R scripts in the R Gui, make sure the R Editor window is active and go to **File > Save as**… on the menu bar. Save scripts with .R extension. R assumes that script files are saved with only that extension. If you are using another text editor you won’t need to worry about saving your scripts in R. You can always copy and paste them in to the R Console or R Editor from your text editor.  
+A R script is simply a text file of R commands that you've typed. You want to save your scripts (whether they were written in R Editor or an ancillary program like Notepad) so that you can reference them in the future, edit them if needed, and keep track of what you've done. In order to save R scripts in the R Gui, make sure the R Editor window is active and go to **File > Save as** on the menu bar. Save scripts with the .R extension. R assumes that script files are saved with only that extension. If you are using another text editor you won't need to worry about saving your scripts in R. You can always copy and paste them in to the R Console or R Editor from your text editor.  
 
 ![R GUI image](figure/ch1_fig13_rgui.jpg)  
 
-To open a R script, go to **File > Open script**…  
+To open a R script, go to **File > Open script**:  
 
 ![R GUI image](figure/ch1_fig14_rgui.jpg)  
 
-**R HISTORY (.RHISTORY)**  
+**R HISTORY (.Rhistory)**  
 
-R history is very similar to R script except for the way it is displayed in R. When you open a R script file, R Editor opens and lists all of the commands that you’ve saved. You can highlight and select which commands you want to run from the R Editor window and edit the R code. With a R history file, you load it into your R Console. Once loaded, you can browse the history from the command line by pressing the up-arrow and down-arrow keys. Pressing the up-arrow key will display commands you typed one-by-one beginning with the last one you ran. You can press **Enter** at any time to run the command that is currently displayed. You can load and save history from the menu bar: **File > Load History**… or **File > Save History**…
-
+R history files are a copy of all your key strokes. You might think of it as brute force way of saving your work. This can often be useful if you didn't document all your steps in an .R script file. Like an .R file, a .Rhistory is simply a text file, and can be treated as such. To load or save your R history from the menu bar select: **File > Load History** or **File > Save History**. If you load an .Rhistory file your previous commands will again become available with the up-arrow and down-arrow keys. If an .Rhistory fil
 
 ![R GUI image](figure/ch1_fig15_rgui.jpg) 
 
 You can also use command line:  
 
-**savehistory(file = "history1.Rhistory")**  
-**loadhistory(file = "history1.Rhistory")**  
 
-R history files do not HAVE to have the .Rhistory extension in order for R to read them, but it is preferable. R history files can also be viewed in most text editors such as Notepad.   
-
+```r
+savehistory(file = "sand.Rhistory")  
+loadhistory(file = "sand.Rhistory")  
+```
 
 **GRAPHICS**  
+
  Graphic outputs can be saved in one of many formats: 
  
-![R GUI image](figure/ch1_fig17_rgui.jpg)
- 
-To save a graphic: (1) Click in the Graphics Device window to bring it to focus, (2) click on **File > Save as** … from the menu bar, and (3) save as desired image format.  
+
+|Function                    |Output          |
+|:---------------------------|:---------------|
+|"pdf("graphic.pdf")         |pdf file        |
+|win.metafile("graphic.wmf") |window metafile |
+|png("graph.png")            |png file        |
+|jpeg("graph.jpg")           |jpeg file       |
+|bmp("graph.bmp")            |bmp file        |
+|postscript("graph.ps")      |postscript file |
+
+To save a graphic: (1) Click in the **Graphics Device window** to bring it to focus, (2) click on **File > Save as** from the menu bar, and (3) save as desired image format.  
 
 ![R GUI image](figure/ch1_fig18_rgui.jpg)  
 
 The R command for saving a graphic is:  
 
-**jpeg (file = "vector1.jpeg")**
-**plot(vector1)**
-**dev.off ( )**
 
+```r
+jpeg(file = "sand.jpeg")**
+plot(sand$sand)
+```
 
-The first line of this command creates a blank file named “**vector1**” with a JPEG extension.  The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the jpeg file we are creating). The third line closes the graphics device.  
+```
+## numeric(0)
+```
+
+```r
+dev.off()
+```
+
+```
+## png 
+##   2
+```
+
+The first line of this command creates a blank file named sand with a JPEG extension.  The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the jpeg file we are creating). The third line closes the graphics device.  
 
 ###<a id="packages")></a>1.5   Installing and Loading Packages
 
-Packages are collections of well-defined and referenced code developed by R users that run specific functions.  They often include example data that can be used when executing those functions.  While R comes with some standard, basic statistical functions; most of our work will require additional packages. In order to use a package, you must install and then load it. This can be done through command line or using the R GUI. Examples of both are provided below. R packages only need to be installed on your computer once unless R is upgraded or re-installed. Every time you start a new R session, you will have to load every package that you intend to use in that session.  
+Packages are collections of well-defined and referenced code developed by R users that run specific functions. They often include example data that can be used when executing those functions. While R comes with some standard, basic statistical functions; most of our work will require additional packages. In order to use a package, you must install and then load it. This can be done through command line or using the R GUI. Examples of both are provided below. R packages only need to be installed on your computer once unless R is upgraded or re-installed. Every time you start a new R session, you will have to load every package that you intend to use in that session.  
 
 **COMMAND LINE** 
 
@@ -329,16 +351,17 @@ When the R Console window is active in the R GUI (simply click on the Console wi
 You can select more than one package to install at a time by holding down the **Ctrl** key.  
 
 
-###<a id="cmdr")></a>1.7  A Graphical user interface for R – RCMDR (R COMMANDER)  
+###<a id="cmdr")></a>1.7  A Graphical user interface for R: RCMDR (R COMMANDER)  
 
 R Commander (Rcmdr) is an expanded GUI in R that allows users to run basic statistical functions in R using menu bars, icons, and information fields.  It was created for students in introductory statistics courses so they could see how the software worked without learning a large number of command line scripts.  Rcmdr is a great way to begin familiarizing yourself with R and statistics within a standardized framework.   
 
-**To onstall and load Rcmdr from the R console**:  
+**To install and load Rcmdr from the R console**:  
 
 
-**install.packages("Rcmdr",dep=TRUE)**  
-**library(Rcmdr)**  
-
+```r
+install.packages("Rcmdr", dep = TRUE)  
+library(Rcmdr)  
+```
 
 This should open the R Commander window.  If it is not visible, select it from you toolbar (it may be in a list with other R windows).  
 
@@ -403,7 +426,7 @@ The plot will appear in a separate window within the R GUI
 
 Boxplot output:  
 
-![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
+![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
 
 ![R GUI image](figure/ch1_fig27_rgui.jpg)  
 
@@ -417,7 +440,7 @@ For instance, if you would like to change the colors of the bars in the histogra
 hist(sand$sand, col="grey")  
 ```
 
-![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
   
 Select the line and then click the ‘Submit’ button.  
 
@@ -457,9 +480,32 @@ If you wish to reuse your model, give it a unique name in the ‘Enter name for 
 
 Example Ouput:  
 
-![R GUI image](figure/ch1_fig30_rgui.jpg)  
 
-This result indicates that the sand content of these landuses are not significantly different ( Pr = 0.422).  It should be noted that this simple analysis has not accounted for the two kinds of horizons analyzed (A and B) or the non-independent nature of multiple samples collected at each location.  It also doesn’t tell you if comparing sand content between land uses was a reasonable thing to do.  
+
+
+```r
+AnovaModel.1 <- aov(sand ~ landuse, data = sand)
+summary(AnovaModel.1)
+```
+
+```
+##             Df Sum Sq Mean Sq F value Pr(>F)
+## landuse      2     48   24.00   0.914  0.422
+## Residuals   15    394   26.27
+```
+
+```r
+with(sand, numSummary(sand, groups=landuse, statistics = c("mean", "sd")))
+```
+
+```
+##             mean       sd data:n
+## crop    26.33333 6.022181      6
+## pasture 28.33333 6.022181      6
+## range   24.33333 2.503331      6
+```
+
+This result indicates that the sand content of these landuses are not significantly different (Pr = 0.422).  It should be noted that this simple analysis has not accounted for the two kinds of horizons analyzed (A and B) or the non-independent nature of multiple samples collected at each location. It also doesn't tell you if comparing sand content between land uses was a reasonable thing to do.  
 
 **SAVING R SCRIPTS**  
 
@@ -594,11 +640,7 @@ This will work for any function in the console command prompt. You can also sear
 - [Coastal Carolina Tutorials in R](http://ww2.coastal.edu/kingw/statistics/R-tutorials/)  
 - [Stack Overflow (discussion forum that includes R questions)](http://stackoverflow.com/)
 - [Google](www.google.com) (this will usually lead you to Stack Overflow)  
- 
- 
- 
-
-[Stay connected with the latest discussions of R on USDA Connect – Soil R Users Community](https://connections.usda.gov/communities/service/html/communityview?communityUuid=f6c7ba46-2a7a-49d0-b3c4-c837f4343349)  
+- [Stay connected with the latest discussions of Soil Survey R Users on Google+](https://plus.google.com/u/0/communities/101713042265696005456)  
 
 ###<a id="ref")></a>1.10  References  
 
