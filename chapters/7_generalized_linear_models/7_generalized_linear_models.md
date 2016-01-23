@@ -7,21 +7,35 @@ output:
     toc: yes
 ---
 
+
+
+
 # Introduction
 
-Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or temperature, GLM can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or counts of a plant species along a transact. This greatly expands the applicable of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.  
+Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or soil temperature, GLM can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or counts of a plant species along a transact (i.e. Poisson regression). These generalizations greatly expands the applicability of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.
 
-In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(x). However such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(x)). Also previous transformations were not guaranteed to achieve both normality and constant variance. GLM likewise transform the response, but provide separate functions to transform the mean response and variance, know as the link and variance functions respectively. So instead of looking like so
+In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(x). However such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(x)). Also previous transformations were not guaranteed to achieve both normality and constant variance simultaneously. GLM likewise transform the response, but also preserve the scale of the response and provide separate functions to transform the mean response and variance, know as the link and variance functions respectively. So instead of looking like this
 
-y = b0 + b1
+$f(y) = \beta_{0} + \beta_{1}x + \varepsilon$
 
-you get
+you get this
 
-_f_(y) = b0 + b1
+$g(\mu)$ or $\eta = \beta_{0} + \beta_{1}x + \varepsilon$
+
+with $g(\mu)$ or $\eta$ symbolizing the link function. 
+
+Another alteration the classical linear model is that with GLM the coefficients are estimated iteratively by maximum likelihood estimation instead of ordinary least squares. This results in the GLM minimizing the deviance, instead of the sum of squares. However for the Gaussian (i.e. normal) distributions the deviance and sum of squares are equivalent.
 
 
+# Logistic regression
 
-In order to allow for 
+Logistic regression is a specific type of GLM designed to model data that has a binomial distribution (i.e. presense/absense, yes/no, or proptional data). For binomial data the logit link transform is used. The effect of the logit transform can be seen in the following figure. It creates a sigmoidal curve, which enhances the separation between the two groups. It also has the effect of ensuring that the values range between 0 and 1.
+
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
+
+When comparing a simple linear model vs a simple logistic model we can see the effect of the logit transform on the relationship between the response and predictor variable. As before it follows a sigmoidal curve, and prevents predictions from exceeding 0 and 1. 
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
 
 # Load packages
 
@@ -45,31 +59,8 @@ Hopefully like all good soil scientists and ecological site specialists you ente
 
 
 ```r
-pedons <- fetchNASIS() # beware the error messages, uh oh looks like we have some, look the other way (by default they don't get imported)
-```
-
-```
-## mixing dry colors ... [20 of 4190 horizons]
-```
-
-```
-## mixing moist colors ... [14 of 4226 horizons]
-```
-
-```
-## replacing missing lower horizon depths with top depth + 1cm ... [148 horizons]
-```
-
-```
-## -> QC: duplicate pedons: use `get('dup.pedon.ids', envir=soilDB.env)` for related peiid values
-```
-
-```
-## -> QC: horizon errors detected, use `get('bad.pedon.ids', envir=soilDB.env)` for related userpedonid values
-```
-
-```r
-#load(file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
+#pedons <- fetchNASIS() # beware the error messages, uh oh looks like we have some, look the other way (by default they don't get imported)
+load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 
 str(pedons, max.level = 2)
 ```
@@ -141,7 +132,7 @@ s_m <- melt(s[c("argillic.horizon", "slope_field", "elev_field", "bedrckdepth", 
 bwplot(argillic.horizon ~ value | variable, data = s_m, scales = list(x = "free"))
 ```
 
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
 
 ```r
 # We can see a variety of landforms have been used. Some more frequently than others. Overall argillic horizons seem to concide with fan remnants.
@@ -152,48 +143,44 @@ table(s$landform.string, s$argillic.horizon)
 ##                                            
 ##                                             FALSE TRUE
 ##   alluvial fan                                 47    9
-##   alluvial fan & drainageway                    1    0
-##   alluvial fan & fan apron                      1    0
-##   alluvial fan & fan piedmont                   1    0
+##   alluvial fan & fan apron                      2    0
 ##   alluvial fan & fan remnant                    1    0
-##   alluvial fan & sand sheet                     1    0
 ##   ballena                                       7    3
 ##   bench                                         1    0
 ##   braided stream & swale                        1    0
 ##   channel                                       2    0
 ##   channel & drainageway                         1    0
 ##   drainageway                                  38    0
-##   drainageway & alluvial fan                    2    0
+##   drainageway & alluvial fan                    3    0
 ##   drainageway & fan apron                       4    0
-##   drainageway & fan piedmont                    3    0
+##   drainageway & fan piedmont                    1    0
 ##   drainageway & fan remnant                     3    0
 ##   drainageway & inset fan                       4    0
 ##   drainageway & valley                          2    0
 ##   dune                                          1    0
-##   dune & sand sheet                             1    0
 ##   eroded fan remnant & pediment                 1    0
 ##   fan                                           8    1
 ##   fan & fan apron                               0    1
 ##   fan apron                                   123   27
-##   fan apron & alluvial fan                      1    0
-##   fan apron & fan piedmont                      0    2
-##   fan apron & fan remnant                       3   19
+##   fan apron & fan remnant                       4   25
 ##   fan apron & pediment                          6    0
 ##   fan apron & rock pediment                     2    0
 ##   fan piedmont                                  3    0
-##   fan piedmont & alluvial fan                   0    1
-##   fan piedmont & fan apron                      0    1
-##   fan piedmont & fan remnant                    1    2
+##   fan piedmont & alluvial fan                   1    1
+##   fan piedmont & drainageway                    2    0
+##   fan piedmont & fan apron                      0    3
+##   fan piedmont & fan remnant                    2    3
 ##   fan piedmont & pediment                       0    1
 ##   fan piedmont & wash                           1    0
 ##   fan remnant                                 120  103
 ##   fan remnant & alluvial fan                    2    1
 ##   fan remnant & alluvial fan & fan piedmont     1    0
 ##   fan remnant & channel                         1    0
-##   fan remnant & fan apron                       1    7
-##   fan remnant & fan piedmont                    1    2
+##   fan remnant & fan apron                       0    1
+##   fan remnant & fan piedmont                    0    1
 ##   fan remnant & hillslope                       0    1
 ##   fan remnant & pediment                        1    1
+##   fan remnant & sand sheet                      1    0
 ##   fan skirt                                     0    1
 ##   flat                                          1    0
 ##   free face                                     2    0
@@ -217,9 +204,9 @@ table(s$landform.string, s$argillic.horizon)
 ##   ridge                                         1    0
 ##   rock pediment                                 7    1
 ##   sand sheet                                   11    0
-##   sand sheet & alluvial fan                     1    0
-##   sand sheet & dune                             1    0
-##   sand sheet & fan remnant                      2    1
+##   sand sheet & alluvial fan                     2    0
+##   sand sheet & dune                             2    0
+##   sand sheet & fan remnant                      1    1
 ##   spur                                         29    1
 ##   stream terrace                                5    0
 ##   terrace                                      10    0
@@ -266,156 +253,91 @@ round(prop.table(table(paste(s$shapedown, s$shapeacross), s$argillic.horizon), 1
 ```r
 # Argillic horizon by soil scientist, bias?
 # Argillic horizon by soil scientist, bias?
-desc_test <- function(old) {
-  old <- as.character(old)
-  new <- NA
-  if (is.na(old)) {new <- "other"}
-  if (grepl("Stephen", old)) {new <- "Stephen"} 
-  if (grepl("Paul", old)) {new <- "Paul"} 
-  if (grepl("Peter", old)) {new <- "Peter"}
-  if (is.na(new)) {new <- "other"}
- return(new)
-}
+# desc_test <- function(old) {
+#   old <- as.character(old)
+#   new <- NA
+#   if (is.na(old)) {new <- "other"}
+#   if (grepl("Stephen", old)) {new <- "Stephen"} 
+#   if (grepl("Paul", old)) {new <- "Paul"} 
+#   if (grepl("Peter", old)) {new <- "Peter"}
+#   if (is.na(new)) {new <- "other"}
+#  return(new)
+# }
+# 
+# s <- site(pedons)
+# s$describer <- sapply(s$describer, desc_test)
+# pedons$describer <- s$describer
+# 
+# table(s$describer, s$argillic.horizon)
+# 
+# round(prop.table(table(s$describer, s$argillic.horizon), 1) * 100)
+# 
 
-s <- site(pedons)
-s$describer <- sapply(s$describer, desc_test)
-pedons$describer <- s$describer
 
-table(s$describer, s$argillic.horizon)
-```
-
-```
-##          
-##           FALSE TRUE
-##   other     204   77
-##   Paul      168   68
-##   Peter     312  102
-##   Stephen   178   28
-```
-
-```r
-round(prop.table(table(s$describer, s$argillic.horizon), 1) * 100)
-```
-
-```
-##          
-##           FALSE TRUE
-##   other      73   27
-##   Paul       71   29
-##   Peter      75   25
-##   Stephen    86   14
-```
-
-```r
-# Plot coordinates
-idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
-pedons2 <- pedons[idx]
-coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
-proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
-
-ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
-```
-
-```
-## OGR data source with driver: ESRI Shapefile 
-## Source: "M:/geodata/soils", layer: "soilsa_a_nrcs"
-## with 3262 features
-## It has 8 fields
-```
-
-```r
-ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+# # Plot coordinates
+# idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
+# pedons2 <- pedons[idx]
+# coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
+# proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
+# 
+# ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
+# ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
 plot(ca794)
-pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
 ```
 
-```
-## only site data are extracted
-```
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-2.png)
 
 ```r
-plot(pedons_sp, add = TRUE)
-```
-
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-2.png)
-
-```r
+# pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
+# plot(pedons_sp, add = TRUE)
 # Beware some points that fall outside of CA794 are not show here. Some are way outside of CA794.
 
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
+# pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
 # writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
 ```
 
-# Geodata extract
+# Extract geodata at pedons locations
 
-Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract geodata values where they intersect with your field data.
+Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data locations. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract the geodata values where they intersect with your field data locations.
 
 
 ```r
-# folder1 <- "M:/geodata/project_data/8VIC/"
-# folder2 <- "M:/geodata/imagery/gamma/"
-# files1 <- list(
-#   terrain = c(
-#     elev    = "ned30m_8VIC.tif",
-#     slope   = "ned30m_8VIC_slope5.tif",
-#     aspect  = "ned30m_8VIC_aspect5.tif",
-#     twi     = "ned30m_8VIC_wetness.tif",
-#     z2str   = "ned30m_8VIC_z2stream.tif",
-#     mrrtf   = "ned30m_8VIC_mrrtf.tif",
-#     mrvbf   = "ned30m_8VIC_mrvbf.tif",
-#     #  solar   = "ned30m_vic8_solar.tif",
-#     solarcv = "ned30m_vic8_solarcv.tif"
-#     ),
-#   climate = c(
-#     precip  = "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
-#     precipsum = "prism30m_vic8_ppt_1981_2010_summer_mm.tif",
-#     temp    = "prism30m_vic8_tavg_1981_2010_annual_C.tif"
-#     ),
-#   imagery = c(
-#     ls = "landsat30m_vic8_b123457.tif",
-#     tc      = "landsat30m_vic8_tc123.tif"
-#     )
-# )
-# files2 <- list(
-#   gamma = c(
-#     k  = "namrad_k_aea.tif",
-#     th = "namrad_th_aea.tif",
-#     u  = "namrad_u_aea.tif"
-#     )
-# )
-# geodata <- c(lapply(files1, function(x) paste0(folder1, x)), lapply(files2, function(x) paste0(folder2, x))) 
-# names(geodata$terrain) <- names(files1$terrain)
-# names(geodata$climate) <- names(files1$climate)
-# names(geodata$imagery) <- names(files1$imagery)
-# names(geodata$gamma) <- names(files2$gamma)
+# folder <- "M:/geodata/project_data/8VIC/"
+# files <- list(
+#   elev   = "ned30m_8VIC.tif",
+#   slope  = "ned30m_8VIC_slope5.tif",
+#   aspect = "ned30m_8VIC_aspect5.tif",
+#   twi    = "ned30m_8VIC_wetness.tif",
+#   z2str  = "ned30m_8VIC_z2stream.tif",
+#   mrrtf  = "ned30m_8VIC_mrrtf.tif",
+#   mrvbf  = "ned30m_8VIC_mrvbf.tif",
+#   solar  = "ned30m_8VIC_solar.tif",
+#   precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif",
+#   precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif",
+#   temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif",
+#   ls     = "landsat30m_8VIC_b123457.tif",
+#   tc     = "landsat30m_8VIC_tc123.tif",
+#   k      = "gamma30m_8VIC_namrad_k.tif",
+#   th     = "gamma30m_8VIC_namrad_th.tif",
+#   u      = "gamma30m_8VIC_namrad_u.tif"
+#   )
+# geodata <- lapply(files, function(x) paste0(folder, x)) 
 # 
 # geodata_df <- data.frame(
 #   as.data.frame(pedons_sp)[c("argillic.horizon", "x_std", "y_std", "describer")],
-#   extract(stack(geodata$terrain[1:7]), pedons_sp),
-#   extract(raster(geodata$terrain[8]), pedons_sp),
-#   extract(stack(geodata$imagery), pedons_sp),
-#   extract(stack(geodata$gamma), pedons_sp),
-#   extract(stack(geodata$climate), pedons_sp)
+#   extract(stack(geodata), pedons_sp)
 #   )
-# names(geodata_df)[c(12, 18)] <- c("solarcv", "ls_7")
-# 
-# gidx <- list()
-# gidx$terrain <- names(files1$terrain)
-# gidx$climate <- names(files1$climate)
-# gidx$imagery <- names(geodata_df)[!names(geodata_df) %in% names(files1$terrain) &
-#                                         !names(geodata_df) %in% names(files1$climate) &
-#                                         !names(geodata_df) %in% names(files2$gamma) &
-#                                         !names(geodata_df) %in% c("argillic.horizon", "x_std", "y_std", "describer", "surface_total")]
-# gidx$gamma <- names(files2$gamma)
-# 
+# names(geodata_df)[names(geodata_df) == "ls_6"] <- "ls_7"
 # 
 # data <- subset(geodata_df, select = - c(x_std, y_std))
-# save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
+#data[c("describer", "x_std", "y_std")] <- NULL
+#site(pedons)[c("describer", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
+#save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
 ```
 
 
 ```r
-load(file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
+#load(file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
 data <- na.exclude(data)
 data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE # Subset out argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 data_m <- subset(data, select = - c(describer))
@@ -537,7 +459,43 @@ confusionMatrix(test$fitted.values > 0.5, as.logical(test$y), positive = "TRUE")
 ```
 
 ```r
-test2 <- glm(argillic.horizon ~ twi_sc + slope + z2str_sc + tc_2, data = na.exclude(data), family = binomial())
+test2 <- glm(argillic.horizon ~ twi_sc + slope + z2str_sc + tc_2 + describer, data = na.exclude(data), family = binomial())
+summary(test2)
+```
+
+```
+## 
+## Call:
+## glm(formula = argillic.horizon ~ twi_sc + slope + z2str_sc + 
+##     tc_2 + describer, family = binomial(), data = na.exclude(data))
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -1.65535  -0.59893  -0.15788  -0.00359   2.62288  
+## 
+## Coefficients:
+##                   Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)      -1.307630   0.725734  -1.802 0.071576 .  
+## twi_sc           -0.601094   0.093198  -6.450 1.12e-10 ***
+## slope            -0.226283   0.048614  -4.655 3.25e-06 ***
+## z2str_sc         -0.020928   0.006796  -3.080 0.002073 ** 
+## tc_2              0.048442   0.013096   3.699 0.000217 ***
+## describerPaul     0.600863   0.336465   1.786 0.074129 .  
+## describerPeter    0.313250   0.274398   1.142 0.253624    
+## describerStephen -0.354392   0.434889  -0.815 0.415129    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 764.5  on 860  degrees of freedom
+## Residual deviance: 539.8  on 853  degrees of freedom
+## AIC: 555.8
+## 
+## Number of Fisher Scoring iterations: 8
+```
+
+```r
 confusionMatrix(test2$fitted.values > 0.35, as.logical(test2$y), positive = "TRUE")
 ```
 
@@ -546,27 +504,27 @@ confusionMatrix(test2$fitted.values > 0.35, as.logical(test2$y), positive = "TRU
 ## 
 ##           Reference
 ## Prediction FALSE TRUE
-##      FALSE   635   69
-##      TRUE     86   71
-##                                           
-##                Accuracy : 0.82            
-##                  95% CI : (0.7927, 0.8451)
-##     No Information Rate : 0.8374          
-##     P-Value [Acc > NIR] : 0.9224          
-##                                           
-##                   Kappa : 0.3698          
-##  Mcnemar's Test P-Value : 0.1987          
-##                                           
-##             Sensitivity : 0.50714         
-##             Specificity : 0.88072         
-##          Pos Pred Value : 0.45223         
-##          Neg Pred Value : 0.90199         
-##              Prevalence : 0.16260         
-##          Detection Rate : 0.08246         
-##    Detection Prevalence : 0.18235         
-##       Balanced Accuracy : 0.69393         
-##                                           
-##        'Positive' Class : TRUE            
+##      FALSE   642   66
+##      TRUE     79   74
+##                                          
+##                Accuracy : 0.8316         
+##                  95% CI : (0.8049, 0.856)
+##     No Information Rate : 0.8374         
+##     P-Value [Acc > NIR] : 0.6969         
+##                                          
+##                   Kappa : 0.4039         
+##  Mcnemar's Test P-Value : 0.3190         
+##                                          
+##             Sensitivity : 0.52857        
+##             Specificity : 0.89043        
+##          Pos Pred Value : 0.48366        
+##          Neg Pred Value : 0.90678        
+##              Prevalence : 0.16260        
+##          Detection Rate : 0.08595        
+##    Detection Prevalence : 0.17770        
+##       Balanced Accuracy : 0.70950        
+##                                          
+##        'Positive' Class : TRUE           
 ## 
 ```
 
