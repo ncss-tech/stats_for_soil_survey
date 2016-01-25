@@ -64,11 +64,11 @@ par(mfrow = c(1, 3))
 
 # Logistic regression example
 
-Now that we've got some of the basic GLM theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The example selected for this chapter comes from the Mojave desert (where I've dug a few holes). One of the frequent logistic problems encountered in the Mojave involves mapping argillic horizons given the subtle relief of expressed by most of the fan piedmonts. Generally argillic horizons in this environment are found on fan remnants, which is a stable landform that is a remnant of the Pleistocene. Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or deposition.
+Now that we've got some of the basic GLM theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter comes from the Mojave desert (where I've dug a few holes). The problem tackled here is a familiar one, where can I expect to find a specific soil series on the landscape. In particular we're going to try and map the Jumborox and Helendale soil series. Both are typic haplargids and can be found on fan remnants, which are a stable landform that is a remnant of the Pleistocene. Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or deposition.
 
 # Load packages
 
-This is a necessary evil everytime you start R. Most of the basic functions we need to develop a logistic regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
+To start, as always we need to load some extra packages. This is a necessary evil everytime you start R. Most of the basic functions we need to develop a logistic regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
 
 ```{r load packages, echo=FALSE, message=FALSE, warning=FALSE}
 library(aqp) # specialized soil classes and functions
@@ -79,6 +79,7 @@ library(lattice) # graphing
 library(reshape2) # data manipulation
 library(plyr) # data manipulation
 library(caret) # printing
+library(rms) # additional regression modeling tools
 ```
 
 # Read in data
@@ -86,88 +87,83 @@ library(caret) # printing
 Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you.  Once data is captured in NASIS it much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS it may as well not exist, and will it haunt you for the rest of your life.
 
 ```{r import data}
-#pedons <- fetchNASIS() # beware the error messages, uh oh looks like we have some, look the other way (by default they don't get imported)
-load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+pedons <- fetchNASIS() # beware the error messages, uh oh looks like we have some, look the other way (by default they don't get imported)
+#load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 
-str(pedons, max.level = 2)
+str(pedons) # Examine the makeup of the data we imported from NASIS.
 ```
 
 # Exploratory analysis
 
-Generally before we begin modeling its good to explore the data. By using the summary() function, we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are all the argillic horizons haven't been properly populated in the diagnostic horizon table like they should be. Luckily for us, the desert argillic horizons always pop up in the taxonomic name, so we can use pattern matching to extract it. By doing this gain an additional 9 pedons with argillic horizons and are able to label the missing values (i.e. NA).
-
-```{r exploratory analysis}
-summary(pedons$argillic.horizon)
-summary(grepl("arg", pedons$tax_subgroup)) # use pattern matching to exact "arg" from the taxonomic subgroup name
-
-pedons$argillic.horizon <- grepl("arg", pedons$tax_subgroup)
-```
-
-Ideally if the diagnostic horizon table were populated we could also filter out argillic horizons that start below 50cm, which may not be representative of "good" argillic horizons and may therefore have gotten correlated to a Torripsamments anyway. Not only are unrepresentative sites confusing for scientists, they're equally confusing for models. However as we saw earlier some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name, since it gives us the biggest sample. 
+Generally before we begin modeling its good to explore the data. To start lets take a look at the number of soil series observed in our dataset.
 
 ```{r}
-d <- diagnostic_hz(pedons)
-idx <- unique(d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"])
-test <- site(pedons)$peiid %in% idx
-summary(test)
+s <- site(pedons) # extract the site table
+table(s$taxonname) # tabulate the number of soil series observed
 ```
 
-Another obvious place to look is at the geomorphic data in the site table. This information is hopefully  (Nauman and Thompson, 2014)
+I count almost 200 series. Luckily we have a decent sample of Jumborox and Helendale. However you'll notice some are misspelled and other curiously labeled. Assuming the misspelled series belong in sample and in order to help boost our sample size, we'll temporarily adjust these series names. At a minimum for modeling purposes we probably need 10 pedons for the series we're interested in and a total of 100 pedons overall.
 
 ```{r}
-# Examine geomorphic info from te site table.
-s <- site(pedons) # extract the site table from the pedons object
-s$surface_gravel <- s$surface_gravel-s$surface_fgravel # recalculate gravel
-s$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum) # calculate the total rock fragments
-s$pavement <- ifelse(s$slope_field < 15, s$surface_total, NA) # subset rock fragments to slopes < 15% 
-s$bedrckdepth <- ifelse(s$slope_field < 15, s$bedrckdepth, NA) # subset bedrock depth to slopes <15%
-s_m <- melt(s[c("argillic.horizon", "slope_field", "elev_field", "bedrckdepth", "pavement")], id = "argillic.horizon")
-bwplot(argillic.horizon ~ value | variable, data = s_m, scales = list(x = "free"))
-# We can see a variety of landforms have been used. Some more frequently than others. Overall argillic horizons seem to concide with fan remnants.
-table(s$landform.string, s$argillic.horizon)
+s$taxonname <- ifelse(grepl("Jumbo", s$taxonname), "Jumborox", s$taxonname) # search for the word "Jumbo" and if found replace with "Jumborox", otherwise keep the original taxonname
+s$taxonname <- ifelse(grepl("Helen", s$taxonname), "Helendale", s$taxonname)
+s$taxonname <- ifelse(s$taxonname == "Jumborox" | s$taxonname == "Helendale", s$taxonname, "other")
 
-s$argillic.horizon <- ifelse(s$slope_field > 15, NA, s$argillic.horizon) # subset to look at just fans
-round(prop.table(table(s$hillslope_pos, s$argillic.horizon), 1) * 100)
-round(prop.table(table(paste(s$shapedown, s$shapeacross), s$argillic.horizon), 1) * 100)
+table(s$taxonname)
+```
+
+Another obvious place to look is at the geomorphic data in the site table. This information is intended to help differentiate where our soil observations exist on the landscape. If populated consistently if could be used in future dissaggregation efforts, as demonstrated by Nauman and Thompson, 2014.
+
+```{r}
+s$surface_gravel <- s$surface_gravel - s$surface_fgravel # recalculate gravel
+s$surface_total <- apply(s[grepl("surface", names(s))], 1, sum) # calculate the total rock fragments
+
+s_sub <- subset(s, select = c(taxonname, slope_field, elev_field, surface_total)) # subset quantitative columns and taxonname
+s_m <- melt(s_sub, id = "taxonname") # convert s_sub to wide data format
+head(s_m)
+bwplot(taxonname ~ value | variable, data = s_m, scales = list(x = "free"))
+
+table(s$landform.string, s$taxonname) # cross tabulate landform vs taxonname
+
+round(prop.table(table(s$hillslope_pos, s$taxonname), 2) * 100) # cross tabulate and calculate proportions, the "2" calculates the proportions relative to the column totals
+round(prop.table(table(paste(s$shapedown, s$shapeacross), s$taxonname), 2) * 100)
 
 
 # Argillic horizon by soil scientist, bias?
-# Argillic horizon by soil scientist, bias?
-# desc_test <- function(old) {
-#   old <- as.character(old)
-#   new <- NA
-#   if (is.na(old)) {new <- "other"}
-#   if (grepl("Stephen", old)) {new <- "Stephen"} 
-#   if (grepl("Paul", old)) {new <- "Paul"} 
-#   if (grepl("Peter", old)) {new <- "Peter"}
-#   if (is.na(new)) {new <- "other"}
-#  return(new)
-# }
-# 
-# s <- site(pedons)
-# s$describer <- sapply(s$describer, desc_test)
-# pedons$describer <- s$describer
-# 
-# table(s$describer, s$argillic.horizon)
-# 
-# round(prop.table(table(s$describer, s$argillic.horizon), 1) * 100)
-# 
+desc_test <- function(old) {
+  old <- as.character(old)
+  new <- NA
+  # ranked by seniority
+  if (is.na(old)) {new <- "other"}
+  if (grepl("Judith", old)) {new <- "Judith"}
+  if (grepl("Stephen", old)) {new <- "Stephen"} 
+  if (grepl("Paul", old)) {new <- "Paul"} 
+  if (grepl("Peter", old)) {new <- "Peter"}
+  if (is.na(new)) {new <- "other"}
+ return(new)
+}
+
+s$describer <- sapply(s$describer, desc_test)
+
+table(s$describer, s$taxonname)
+round(prop.table(table(s$describer, s$taxonname), 2) * 100)
 
 
-# # Plot coordinates
-# idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
-# pedons2 <- pedons[idx]
-# coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
-# proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
-# 
-# ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
-# ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+# Plot coordinates
+slot(pedons, "site") <- s
+idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
+pedons2 <- pedons[idx]
+coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
+proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
+ 
+ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
+ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
 plot(ca794)
-# pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
-# plot(pedons_sp, add = TRUE)
+pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
+plot(pedons_sp, add = TRUE)
 # Beware some points that fall outside of CA794 are not show here. Some are way outside of CA794.
 
-# pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
+pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
 # writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
 
 ```
@@ -199,35 +195,42 @@ files <- list(
 geodata <- lapply(files, function(x) paste0(folder, x)) 
 
 geodata_df <- data.frame(
-  as.data.frame(pedons_sp)[c("argillic.horizon", "x_std", "y_std", "describer")],
+  as.data.frame(pedons_sp)[c("taxonname", "argillic.horizon", "x_std", "y_std", "describer")],
   extract(stack(geodata), pedons_sp)
   )
 names(geodata_df)[names(geodata_df) == "ls_6"] <- "ls_7"
 
 data <- subset(geodata_df, select = - c(x_std, y_std))
-data[c("describer", "x_std", "y_std")] <- NULL
-site(pedons)[c("jumborox", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
-save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
+
+# site(pedons)[c("describer", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
+# data[c("describer", "x_std", "y_std")] <- NA
+# save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
 ```
 
 ```{r More }
 #load(file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
 data <- na.exclude(data)
-data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE # Subset out argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
-data_m <- subset(data, select = - c(describer))
-data_m <- melt(data_m, id = "argillic.horizon")
-bwplot(argillic.horizon ~ value | variable, data = data_m, scales = list(x = "free"), as.table = TRUE)
+data_m <- subset(data, select = - c(describer, argillic.horizon))
+data_m <- melt(data_m, id = "taxonname")
+bwplot(taxonname ~ value | variable, data = data_m, scales = list(x = "free"))
 
 # Argillic horizons seem to occur over a limited range of twi and z2str. So lets rescale those variables by substracting their median
-aggregate(data[c("twi", "z2str")], list(data$argillic.horizon), median)
+data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE # Subset out argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+aggregate(data[c("twi", "z2str", "tc_3")], list(data$argillic.horizon), median)
 data$twi_sc <- abs(data$twi - 13.7)
 data$z2str_sc <- abs(data$z2str - 12.9)
+data$tc_3_sc <- abs(data$tc_3 - 28)
 
-test <- glm(argillic.horizon ~., data = data, family = binomial())
+data$jumborox <- data$taxonname == "Jumborox"
+data$helendale <- data$taxonname == "Helendale"
+
+data2 <- subset(data, select = - c(describer, argillic.horizon, test, helendale, taxonname))
+
+test <- glm(jumborox ~ ., data = data2, family = binomial())
 summary(test)
 confusionMatrix(test$fitted.values > 0.5, as.logical(test$y), positive = "TRUE")
 
-test2 <- glm(argillic.horizon ~ twi_sc + slope + z2str_sc + tc_2 + describer, data = na.exclude(data), family = binomial())
+test2 <- glm(jumborox ~ twi_sc + z2str + precip, data = data, family = binomial())
 summary(test2)
 confusionMatrix(test2$fitted.values > 0.35, as.logical(test2$y), positive = "TRUE")
 ```
