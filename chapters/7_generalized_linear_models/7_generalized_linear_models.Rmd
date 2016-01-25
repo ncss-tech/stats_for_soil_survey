@@ -7,17 +7,6 @@ output:
     toc: yes
 ---
 
-```{r load packages, echo=FALSE, message=FALSE, warning=FALSE}
-library(aqp) # specialized soil classes and functions
-library(soilDB) # NASIS and SDA import functions
-library(raster) # guess
-library(rgdal) # spatial import
-library(lattice) # graphing
-library(reshape2) # data manipulation
-library(plyr) # data manipulation
-library(caret) # printing
-```
-
 
 # Introduction
 
@@ -38,7 +27,8 @@ Another alteration the classical linear model is that with GLM the coefficients 
 
 # Logistic regression
 
-Logistic regression is a specific type of GLM designed to model data that has a binomial distribution (i.e. presense/absense, yes/no, or proptional data). For binomial data the logit link transform is used. The effect of the logit transform can be seen in the following figure. It creates a sigmoidal curve, which enhances the separation between the two groups. It also has the effect of ensuring that the values range between 0 and 1.
+Logistic regression is a specific type of GLM designed to model data that has a binomial distribution (i.e. presence/absence, yes/no, or proportional data), which in statistical learning parlance is considered a classification problem. For binomial data the logit link transform is used. The effect of the logit transform can be seen in the following figure. It creates a sigmoidal curve, which enhances the separation between the two groups. It also has the effect of ensuring that the values range between 0 and 1.
+
 
 ```{r, echo=FALSE}
 p <- c(rbinom(100, 1:100, 1)) / 100
@@ -50,7 +40,7 @@ fit <- lm(p ~ logp, data = test)
 plot(logp, p, type = "l", ylab = "proportion (p)", xlab = "logit transform (log(p / (1 - p)))", ylim = c(0, 1))
 ```
 
-When comparing a simple linear model vs a simple logistic model we can see the effect of the logit transform on the relationship between the response and predictor variable. As before it follows a sigmoidal curve, and prevents predictions from exceeding 0 and 1. 
+When comparing a simple linear model vs a simple logistic model we can see the effect of the logit transform on the relationship between the response and predictor variable. As before it follows a sigmoidal curve and prevents predictions from exceeding 0 and 1. 
 
 ```{r, echo=FALSE}
 load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
@@ -72,11 +62,15 @@ par(mfrow = c(1, 3))
     boxplot(predictor ~ response, data = test, ylab = "predictor", xlab = "response", col = "grey")
 ```
 
+# Logistic regression example
+
+Now that we've got some of the basic GLM theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The example selected for this chapter comes from the Mojave desert (where I've dug a few holes). One of the frequent logistic problems encountered in the Mojave involves mapping argillic horizons given the subtle relief of expressed by most of the fan piedmonts. Generally argillic horizons in this environment are found on fan remnants, which is a stable landform that is a remnant of the Pleistocene. Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or deposition.
+
 # Load packages
 
 This is a necessary evil everytime you start R. Most of the basic functions we need to develop a logistic regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
 
-```{r, eval=FALSE}
+```{r load packages, echo=FALSE, message=FALSE, warning=FALSE}
 library(aqp) # specialized soil classes and functions
 library(soilDB) # NASIS and SDA import functions
 library(raster) # guess
@@ -183,37 +177,37 @@ plot(ca794)
 Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data locations. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract the geodata values where they intersect with your field data locations.
 
 ```{r geodata extract}
-# folder <- "M:/geodata/project_data/8VIC/"
-# files <- list(
-#   elev   = "ned30m_8VIC.tif",
-#   slope  = "ned30m_8VIC_slope5.tif",
-#   aspect = "ned30m_8VIC_aspect5.tif",
-#   twi    = "ned30m_8VIC_wetness.tif",
-#   z2str  = "ned30m_8VIC_z2stream.tif",
-#   mrrtf  = "ned30m_8VIC_mrrtf.tif",
-#   mrvbf  = "ned30m_8VIC_mrvbf.tif",
-#   solar  = "ned30m_8VIC_solar.tif",
-#   precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif",
-#   precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif",
-#   temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif",
-#   ls     = "landsat30m_8VIC_b123457.tif",
-#   tc     = "landsat30m_8VIC_tc123.tif",
-#   k      = "gamma30m_8VIC_namrad_k.tif",
-#   th     = "gamma30m_8VIC_namrad_th.tif",
-#   u      = "gamma30m_8VIC_namrad_u.tif"
-#   )
-# geodata <- lapply(files, function(x) paste0(folder, x)) 
-# 
-# geodata_df <- data.frame(
-#   as.data.frame(pedons_sp)[c("argillic.horizon", "x_std", "y_std", "describer")],
-#   extract(stack(geodata), pedons_sp)
-#   )
-# names(geodata_df)[names(geodata_df) == "ls_6"] <- "ls_7"
-# 
-# data <- subset(geodata_df, select = - c(x_std, y_std))
-#data[c("describer", "x_std", "y_std")] <- NULL
-#site(pedons)[c("describer", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
-#save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
+folder <- "M:/geodata/project_data/8VIC/"
+files <- list(
+  elev   = "ned30m_8VIC.tif",
+  slope  = "ned30m_8VIC_slope5.tif",
+  aspect = "ned30m_8VIC_aspect5.tif",
+  twi    = "ned30m_8VIC_wetness.tif",
+  z2str  = "ned30m_8VIC_z2stream.tif",
+  mrrtf  = "ned30m_8VIC_mrrtf.tif",
+  mrvbf  = "ned30m_8VIC_mrvbf.tif",
+  solar  = "ned30m_8VIC_solar.tif",
+  precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif",
+  precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif",
+  temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif",
+  ls     = "landsat30m_8VIC_b123457.tif",
+  tc     = "landsat30m_8VIC_tc123.tif",
+  k      = "gamma30m_8VIC_namrad_k.tif",
+  th     = "gamma30m_8VIC_namrad_th.tif",
+  u      = "gamma30m_8VIC_namrad_u.tif"
+  )
+geodata <- lapply(files, function(x) paste0(folder, x)) 
+
+geodata_df <- data.frame(
+  as.data.frame(pedons_sp)[c("argillic.horizon", "x_std", "y_std", "describer")],
+  extract(stack(geodata), pedons_sp)
+  )
+names(geodata_df)[names(geodata_df) == "ls_6"] <- "ls_7"
+
+data <- subset(geodata_df, select = - c(x_std, y_std))
+data[c("describer", "x_std", "y_std")] <- NULL
+site(pedons)[c("jumborox", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
+save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
 ```
 
 ```{r More }
