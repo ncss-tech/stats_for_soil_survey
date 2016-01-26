@@ -105,11 +105,11 @@ table(s$taxonname) # tabulate the number of soil series observed
 I count almost 200 series. Luckily we have a decent sample of Jumborox and Helendale. However you'll notice some are misspelled and other curiously labeled. Assuming the misspelled series belong in sample and in order to help boost our sample size, we'll temporarily adjust these series names. At a minimum for modeling purposes we probably need 10 pedons for the series we're interested in and a total of 100 pedons overall.
 
 ```{r}
-s$taxonname <- ifelse(grepl("Jumbo", s$taxonname), "Jumborox", s$taxonname) # search for the word "Jumbo" and if found replace with "Jumborox", otherwise keep the original taxonname
-s$taxonname <- ifelse(grepl("Helen", s$taxonname), "Helendale", s$taxonname)
-s$taxonname <- ifelse(s$taxonname == "Jumborox" | s$taxonname == "Helendale", s$taxonname, "other")
+s$taxonname2 <- ifelse(grepl("Jumbo", s$taxonname), "Jumborox", s$taxonname) # search for the word "Jumbo" and if found replace with "Jumborox", otherwise keep the original taxonname
+s$taxonname2 <- ifelse(grepl("Helen", s$taxonname), "Helendale", s$taxonname)
+s$taxonname2 <- ifelse(s$taxonname2 == "Jumborox" | s$taxonname2 == "Helendale", s$taxonname2, "other")
 
-table(s$taxonname)
+table(s$taxonname2)
 ```
 
 Another obvious place to look is at the geomorphic data in the site table. This information is intended to help differentiate where our soil observations exist on the landscape. If populated consistently if could be used in future dissaggregation efforts, as demonstrated by Nauman and Thompson, 2014.
@@ -118,15 +118,15 @@ Another obvious place to look is at the geomorphic data in the site table. This 
 s$surface_gravel <- s$surface_gravel - s$surface_fgravel # recalculate gravel
 s$surface_total <- apply(s[grepl("surface", names(s))], 1, sum) # calculate the total rock fragments
 
-s_sub <- subset(s, select = c(taxonname, slope_field, elev_field, surface_total)) # subset quantitative columns and taxonname
-s_m <- melt(s_sub, id = "taxonname") # convert s_sub to wide data format
+s_sub <- subset(s, select = c(taxonname2, slope_field, elev_field, surface_total)) # subset quantitative columns and taxonname
+s_m <- melt(s_sub, id = "taxonname2") # convert s_sub to wide data format
 head(s_m)
-bwplot(taxonname ~ value | variable, data = s_m, scales = list(x = "free"))
+bwplot(taxonname2 ~ value | variable, data = s_m, scales = list(x = "free"))
 
-table(s$landform.string, s$taxonname) # cross tabulate landform vs taxonname
+table(s$landform.string, s$taxonname2) # cross tabulate landform vs taxonname
 
-round(prop.table(table(s$hillslope_pos, s$taxonname), 2) * 100) # cross tabulate and calculate proportions, the "2" calculates the proportions relative to the column totals
-round(prop.table(table(paste(s$shapedown, s$shapeacross), s$taxonname), 2) * 100)
+round(prop.table(table(s$hillslope_pos, s$taxonname2), 2) * 100) # cross tabulate and calculate proportions, the "2" calculates the proportions relative to the column totals
+round(prop.table(table(paste(s$shapedown, s$shapeacross), s$taxonname2), 2) * 100)
 
 
 # Argillic horizon by soil scientist, bias?
@@ -143,28 +143,28 @@ desc_test <- function(old) {
  return(new)
 }
 
-s$describer <- sapply(s$describer, desc_test)
+s$describer2 <- sapply(s$describer, desc_test)
 
-table(s$describer, s$taxonname)
-round(prop.table(table(s$describer, s$taxonname), 2) * 100)
+table(s$describer2, s$taxonname2)
+round(prop.table(table(s$describer2, s$taxonname2), 2) * 100)
 
 
 # Plot coordinates
-slot(pedons, "site") <- s
+slot(pedons, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
 idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
 pedons2 <- pedons[idx]
 coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
 proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
  
 ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
-ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+ca794 <- subset(ssa, areasymbol == "CA794" | areasymbol == "CA698") # subset out Joshua Tree National Park
 plot(ca794)
 pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
 plot(pedons_sp, add = TRUE)
 # Beware some points that fall outside of CA794 are not show here. Some are way outside of CA794.
 
 pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
-# writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
+# writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations2", driver = "ESRI Shapefile") # write shapefile of pedons
 
 ```
 
@@ -195,7 +195,7 @@ files <- list(
 geodata <- lapply(files, function(x) paste0(folder, x)) 
 
 geodata_df <- data.frame(
-  as.data.frame(pedons_sp)[c("taxonname", "argillic.horizon", "x_std", "y_std", "describer")],
+  as.data.frame(pedons_sp)[c("taxonname2", "argillic.horizon", "x_std", "y_std", "describer2")],
   extract(stack(geodata), pedons_sp)
   )
 names(geodata_df)[names(geodata_df) == "ls_6"] <- "ls_7"
@@ -209,28 +209,28 @@ data <- subset(geodata_df, select = - c(x_std, y_std))
 
 ```{r More }
 #load(file = "C:/workspace/stats_for_soil_survey.git/trunk/data/ch7_data.Rdata")
-data <- na.exclude(data)
-data_m <- subset(data, select = - c(describer, argillic.horizon))
-data_m <- melt(data_m, id = "taxonname")
-bwplot(taxonname ~ value | variable, data = data_m, scales = list(x = "free"))
+data <- data[complete.cases(data[c(1, 4:26)]), ]
+data_m <- subset(data, select = - c(describer2))
+data_m <- melt(data_m, id = "taxonname2")
+bwplot(taxonname2 ~ value | variable, data = data_m, scales = list(x = "free"))
 
 # Argillic horizons seem to occur over a limited range of twi and z2str. So lets rescale those variables by substracting their median
 data$argillic.horizon <- data$mrvbf > 0.15 & data$argillic.horizon == TRUE # Subset out argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 aggregate(data[c("twi", "z2str", "tc_3")], list(data$argillic.horizon), median)
-data$twi_sc <- abs(data$twi - 13.7)
+data$twi_sc <- abs(data$twi - 13.9)
 data$z2str_sc <- abs(data$z2str - 12.9)
 data$tc_3_sc <- abs(data$tc_3 - 28)
 
-data$jumborox <- data$taxonname == "Jumborox"
-data$helendale <- data$taxonname == "Helendale"
+data$jumborox <- data$taxonname2 == "Jumborox"
+data$helendale <- data$taxonname2 == "Helendale"
 
-data2 <- subset(data, select = - c(describer, argillic.horizon, test, helendale, taxonname))
+data2 <- subset(data, select = - c(describer2, argillic.horizon, helendale, taxonname2))
 
-test <- glm(jumborox ~ ., data = data2, family = binomial())
+test <- glm(jumborox ~ ., data = data3, family = binomial(link = "cloglog"))
 summary(test)
 confusionMatrix(test$fitted.values > 0.5, as.logical(test$y), positive = "TRUE")
 
-test2 <- glm(jumborox ~ twi_sc + z2str + precip, data = data, family = binomial())
+test2 <- glm(jumborox ~ 1, data = data2, family = binomial(link = "cloglog"))
 summary(test2)
 confusionMatrix(test2$fitted.values > 0.35, as.logical(test2$y), positive = "TRUE")
 ```
