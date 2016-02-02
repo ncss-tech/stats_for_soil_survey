@@ -13,13 +13,13 @@ html_document:
 3. Open RStudio, verify that version 0.99.467 is installed (Help>About RStudio), and set working directory (Session>Set Working Directory) to "C:/workspace". If "C:/workspace" doesn't exist, create it.
 
 4. Install Packages
-Copy/paste the following code into the R console window.
+Copy/paste the following code into the R console window and hit enter. Depending on your network connection this could take a while.
 ```{r, warning=FALSE, message=FALSE, results="hide", eval=FALSE}
 ##Set CRAN mirror
 dir.create(path="C:/workspace", recursive = T)
 dir.create(path="C:/R/win-library/3.2", recursive = T)
 
-x <- '.libPaths(c("C:/R/win-library/3.2", "C:/Program Files/R/R-3.1.1/library"))'
+x <- '.libPaths(c("C:/R/win-library/3.2", "C:/Program Files/R/R-3.2.1/library"))'
 write(x, file = "C:/workspace/.Rprofile")
 
 local({
@@ -30,9 +30,9 @@ local({
 
 ## Install and packages and dependencies
 ipak <- function(pkg){
-    new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+    new.pkg <- pkg[!(pkg %in% installed.packages(lib.loc = "C:/R/win-library/3.2")[, "Package"])]
     if (length(new.pkg) > 0) 
-      install.packages(new.pkg, dependencies = TRUE)
+      install.packages(new.pkg, lib = "C:/R/win-library/3.2", dependencies = TRUE)
 }
 
 ## list of packages
@@ -52,7 +52,7 @@ sapply(packages, library, character.only = TRUE, quietly=TRUE, logical.return=TR
 
 5. Establish an ODBC connection to NASIS by following the directions at the following hyperlink ([ODBC Connection to NASIS](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/setup_local_nasis.html?root=aqp)).
 
-Once you've successfully established a connection, prove it by loading your NASIS selected set with the site and pedon tables for any user pedon id (e.g. 11CA794317), run `fetchNASIS()` in the R console, and submit our results to Tom D'Avello.
+Once you've successfully established a connection, prove it by loading your NASIS selected set with the site and pedon tables for any user pedon id (e.g. 11CA794317), run `fetchNASIS()` in the R console like the example below, and submit your results to Tom D'Avello.
 
 ```{r example, message=FALSE, warning=FALSE}
 # Example
