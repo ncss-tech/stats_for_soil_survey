@@ -10,12 +10,18 @@ html_document:
 
 2. Create a folder on your machine to be used as the working directory for this course, e.g. `E:/r-working-dir`.
 
-3. Open RStudio, verify that version 0.99.467 is installed (Help>About RStudio), and set working directory (Session>Set Working Directory)
+3. Open RStudio, verify that version 0.99.467 is installed (Help>About RStudio), and set working directory (Session>Set Working Directory) to "C:/workspace". If "C:/workspace" doesn't exist, create it.
 
 4. Install Packages
 Copy/paste the following code into the R console window.
-```{r, warning=FALSE, message=FALSE, results="hide"}
+```{r, warning=FALSE, message=FALSE, results="hide", eval=FALSE}
 ##Set CRAN mirror
+dir.create(path="C:/workspace", recursive = T)
+dir.create(path="C:/R/win-library/3.2", recursive = T)
+
+x <- '.libPaths(c("C:/R/win-library/3.2", "C:/Program Files/R/R-3.1.1/library"))'
+write(x, file = "C:/workspace/.Rprofile")
+
 local({
   r <- getOption("repos")
   r["CRAN"] <- "http://cran.mirrors.hoobly.com/"
@@ -48,29 +54,21 @@ sapply(packages, library, character.only = TRUE, quietly=TRUE, logical.return=TR
 
 Once you've successfully established a connection, prove it by loading your NASIS selected set with the site and pedon tables for any user pedon id (e.g. 11CA794317), run `fetchNASIS()` in the R console, and submit our results to Tom D'Avello.
 
-```{r example}
+```{r example, message=FALSE, warning=FALSE}
 # Example
+
+library(soilDB)
 
 test <- fetchNASIS()
 
 str(test, max.level = 2)
 ```
 
-Formal class 'SoilProfileCollection' [package "aqp"] with 7 slots
-  ..@ idcol     : chr "peiid"
-  ..@ depthcols : chr [1:2] "hzdept" "hzdepb"
-  ..@ metadata  :'data.frame':	1 obs. of  1 variable:
-  ..@ horizons  :'data.frame':	4 obs. of  43 variables:
-  ..@ site      :'data.frame':	1 obs. of  65 variables:
-  ..@ sp        :Formal class 'SpatialPoints' [package "sp"] with 3 slots
-  ..@ diagnostic:'data.frame':	1 obs. of  4 variables:
-
-
 6. Get Example Data ***this is close, review and edit as needed. I was thinking about only downloading non-ascii files...thoughts?***
 After making a working directory on your local machine (`E:/r-working-dir` used as an example here), copy / paste the following code into the R console.
 ```{r, warning=FALSE, message=FALSE, results="hide", eval=FALSE}
 # define working dir, this should already exist
-wd <- 'E:/r-working-dir'
+wd <- 'C:/workspace'
 
 # define function for getting files and organizing locally
 getData <- function(wd, files) {
