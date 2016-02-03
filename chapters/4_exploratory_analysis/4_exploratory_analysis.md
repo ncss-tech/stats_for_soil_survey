@@ -246,11 +246,22 @@ The median from the sample dataset may be determined:
 median(sand$sand)
 ```
 
+```
+## [1] 25
+```
+
 To determine the median by group or category, use the aggregate command as discussed in section 4.0:  
 
 
 ```r
 aggregate(sand ~ landuse, sand, median)
+```
+
+```
+##   landuse sand
+## 1    crop 26.0
+## 2 pasture 28.0
+## 3   range 23.5
 ```
 
 It is apparent that the mean and median are different. In a normal distribution, the mean and median would be equal. Normal distributions should not be assumed with soils data. A graphical examination of the sand is possible:  
