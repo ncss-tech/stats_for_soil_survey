@@ -73,35 +73,48 @@ Graphical methods represent an intuitive way to investigate data.
 
 Before starting EDA, look at your data to make sure there are no errors due to typos, coding, missing values or other countless possibilities for error. If we read the sample dataset:  
 
-```{r}
+
+```r
 sand <- read.csv("C:/workspace/sand_example.csv")
 ```
 
 As noted in Chapter 1, a visual examination of the raw data is possible by looking at the data object:  
 
-```{r, eval=FALSE}
+
+```r
 View(sand)
 ```
  
 This view is fine for a smaller dataset, but can be cumbersome for a large dataset. The check for missing data:  
 
-```{r}
+
+```r
 any(is.na(sand))
+```
+
+```
+## [1] FALSE
 ```
 
 R will return TRUE if there is a missing value within a given row and column or FALSE if there is not. In our sand example, there were no missing values.  
 
 Determining the missing element(s) using:
 
-```{r}
+
+```r
 which(is.na(sand))
+```
+
+```
+## integer(0)
 ```
 
 In our example dataset, "integer (0)" is returned because we do not have any missing values. A dataset with missing values would return something like this:  
 
-```{r, echo=FALSE}
-c(76, 83)
-```  
+
+```
+## [1] 76 83
+```
 
 This indicates that the 76<sup>th</sup> and 83<sup>rd</sup> elements in the data object are missing. If one started counting top-to-bottom and left-to-right, the 76th and 83rd elements are where the TRUE value appears in the output. You may choose to examine and deal with missing values using the software of your choice before importing into R.  
 
@@ -112,8 +125,16 @@ When you have missing data and the function you want to run will not run with mi
 
 A quick check for coding errors of categories would be to summarize by the category. In the sample dataset, summarizing mean sand content by landuse using the aggregate command:  
 
-```{r}
+
+```r
 aggregate(sand ~ landuse, sand, mean)
+```
+
+```
+##   landuse     sand
+## 1    crop 26.33333
+## 2 pasture 28.33333
+## 3   range 24.33333
 ```
 
 There should be three categories of landuse, which the output verifies. If the aggregate command returned the following, you could quickly fix the typos for "crops" and "Pasture":  
@@ -126,27 +147,36 @@ Now that missing values and coding errors have been checked and corrected, a gra
 
 An idealized histogram with a normal distribution is shown in Figure 1:  
 
-```{r}
+
+```r
 test <- rnorm(1000000)
 plot(density(test), main = "Normal Distribution: Mean = 0, Standard Deviation = 1")
-````
+```
+
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
 
 Figure 1. Normal Distribution
 
 
 Observing Figure 1 indicates the data is symmetrically distributed, there is an equal distribution on either side of the highest point on the graph. By contrast, Figures 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
 
-```{r}
+
+```r
 test <- rbeta(1000000, shape1 = 2, shape2 = 1000)
 plot(density(test), main = "Beta Distribution: Shape 1 = 2, Shape 2 = 1000")
 ```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
 Figure 2. Skewed example 1  
 
 
-```{r}
+
+```r
 test <- rbeta(1000000, shape1 = 1000, shape2 = 2)
 plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 ```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
 
 Figure 3. Skewed example 2  
 
@@ -155,9 +185,12 @@ Displaying data in this manner provides a visual means to determine if your data
 
 Using the "sand_example.csv" file as the sample data set, review the histogram command from Chapter 1. Remember to use the read.csv command and create the "sand" data object in R. The next command will create a histogram:  
 
-```{r}
+
+```r
 hist(sand$sand, col = "grey")
 ```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
 
 Figure 4. Histogram with 12 bins  
 
@@ -166,10 +199,13 @@ Since histograms are dependent on the number of bins, they may not be the best m
 
 A density estimation, also known as a Kernel density plot, may provide a better visualization of the shape of the distribution:  
  
-```{r}
+
+```r
 d <- density(sand$sand)
 plot(d)
 ```
+
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
 
 Figure 6. The Kernel density plot depicts a smoothed line of the distribution  
 
@@ -186,12 +222,18 @@ These are measures to determine the mid-point of the range of observed samples. 
 
 The mean sand content from the sample dataset may be determined:  
 
-```{r}
+
+```r
 mean(sand$sand)
 ```
 
+```
+## [1] 26.33333
+```
+
 To determine the mean by group or category, use the aggregate command as discussed in section 4.0:  
-```{r, eval=FALSE}
+
+```r
 aggregate( sand~landuse, sand, mean)
 ```
 
@@ -199,19 +241,22 @@ aggregate( sand~landuse, sand, mean)
 
 The median from the sample dataset may be determined:  
 
-```{r, eval=FALSE}
+
+```r
 median(sand$sand)
 ```
 
 To determine the median by group or category, use the aggregate command as discussed in section 4.0:  
 
-```{r, eval=FALSE}
+
+```r
 aggregate(sand ~ landuse, sand, median)
 ```
 
 It is apparent that the mean and median are different. In a normal distribution, the mean and median would be equal. Normal distributions should not be assumed with soils data. A graphical examination of the sand is possible:  
 
-```{r}
+
+```r
 d <- density(sand$sand)
 plot(d)
 amean <- mean(sand$sand)
@@ -219,6 +264,8 @@ amed <- median(sand$sand)
 abline(v = amed, col = "green") #plot the median as a gree vertical line 
 abline(v = amean, col = "red") #plot the mean as a red vertical line
 ```
+
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
 
 The green vertical line represents the breakpoint for the median and the red represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be normal. The further the data departs from normality, the less meaningful the mean becomes.  The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 indicates a greater proportion of the samples are less than the mean. Using the mean would be overestimating the sand content of the sample dataset in this case.  
 
@@ -228,13 +275,23 @@ These are measures to determine the spread of data around the mid-point. This is
 
 **Range**  The difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
 
-```{r}
+
+```r
 range(sand$sand)
 ```
 
+```
+## [1] 19 36
+```
+
 which returns the minimum and maximum values observed, or:  
-```{r}
+
+```r
 max(sand$sand) - min(sand$sand)
+```
+
+```
+## [1] 17
 ```
 
 which returns the value of the range  
@@ -243,39 +300,66 @@ which returns the value of the range
 
 This is the square of the sum of the deviations from the mean, divided by the number of samples  1. It is commonly referred to as the sum of squares. As the deviation increases, variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the _standard deviation_. Variance for the sample dataset is:  
 
-```{r}
+
+```r
 var(sand$sand)
+```
+
+```
+## [1] 26
 ```
 
 **Standard Deviation**  The square root of the variance:![R GUI image](figure/ch4_fig22.jpg)  
 
 The units of the standard deviation are the same as the units measured. Standard deviation for the sample dataset is:  
 
-```{r}
+
+```r
 sd(sand$sand)
+```
+
+```
+## [1] 5.09902
 ```
 
 **Coefficient of Variation** (CV)  A relative (i.e. unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
 
 CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, a relative measure is more useful when comparing variation of datasets. CV may be calculated for the sample dataset as:  
 
-```{r}
+
+```r
 cv <- sd(sand$sand/mean(sand$sand)) * 100
 cv
 ```
 
+```
+## [1] 19.36337
+```
+
 **Interquartile Range** (IQR)  The range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data.   IQR may be calculated for the sample dataset as:  
 
-```{r}
+
+```r
 quantile(sand$sand, c(0.25, 0.75))
+```
+
+```
+##   25%   75% 
+## 23.00 29.75
 ```
 
 **Quantiles (aka Percentiles)** - The percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.  
 
 Quantiles may be calculated for the 10%, 50% and 90% percentiles for the sample dataset as:  
 
-```{r}
+
+```r
 quantile(sand$sand, c(0.1, 0.5, 0.9))
+```
+
+```
+##  10%  50%  90% 
+## 21.0 25.0 34.3
 ```
 
 Thus, 80% of the observations have a sand content between 21.0% and 34.3%, while 10% are less than 21.0% and 10% are greater than 34.3%. Quantiles are robust measures, unaffected by data distributions.  
@@ -293,7 +377,8 @@ That is not to say the points are in error, just that they are extreme compared 
 A boxplot of sand content by horizon may be made for the sample dataset as:  
 
 
-```{r, eval=FALSE}
+
+```r
 boxplot(sand~ horizon, xlab="Master Horizon", ylab="Sand (%)", data=sand)
 ```
 
@@ -305,7 +390,8 @@ This plot shows us that B horizons typically contain more sand than A horizons a
 
 A boxplot of sand content by landuse may be made for the sample dataset as:  
 
-```{r, eval=FALSE}
+
+```r
 boxplot(sand~landuse, data = sand)
 ```
 
@@ -318,7 +404,8 @@ Notice that the boxplot for "range" has a single circle on the graph above it.  
 a plot of actual data values against a Gaussian distribution (normal distribution with a mean of 0 and standard deviation of 1).  
 
 A QQplot of sand content may be made for the sample dataset as:  
-```{r, eval=FALSE}
+
+```r
 qqnorm(sand$sand)
 qqline(sand$sand, col= "red")
 ```
@@ -380,7 +467,8 @@ Statistical tests for normality that utilize Kurtosis and Skewness are available
  
 Using the sample data. the default test uses the Shapiro-Wilk method:  
 
-```{r, eval=FALSE} 
+
+```r
 normalTest(sand$sand)
 ```
 Install or load the fBasics package if you receive an error:  
@@ -393,7 +481,8 @@ library(fBasics) # Add the fBasics package
 
 The null hypothesis for the test is: "this sample comes from a normal population". The output has a p value of 0.1867, which is fairly high, so the null hypothesis would not be rejected.  The Jarque-Bera test also returns a high p  
 
-```{r, eval=FALSE}
+
+```r
 jarqueberaTest(sand$sand)
 ```
 
@@ -401,7 +490,8 @@ jarqueberaTest(sand$sand)
 
 The Da'Agostino test returns:  
 
-```{r, eval=FALSE}
+
+```r
 dagoTest(sand$sand)
 ```
 
@@ -436,7 +526,8 @@ GRID_CODE
 51.9115  
 51.4930  
 
-```{r, eval=FALSE}
+
+```r
 aspect3 <- read.csv("C:/WorkSpace/stats/aspect/aspect_extract3.csv")
 require(circular)
 x=circular(aspect3, units="degrees", template= "geographics", zero= pi/2, rotation = "clock")
@@ -446,7 +537,8 @@ summary(x)
 ![R GUI image](figure/ch4_fig42.jpg)  
 
 The numeric output is fine, but a graphic is more revealing (Figure 15):  
-```{r, eval=FALSE}
+
+```r
 rose.diag(x, bins=12, col="gray 90", lwd=2, zero= pi/2, rotation = "clock")
 ```
  
@@ -516,18 +608,21 @@ Plotting points of one variable against another is a scatter plot. Plots can be 
 The purpose of a scatterplot is to see how one variable relates to another. With statistical modeling in particular and general development of a mental model in general, the goal is parsimony. The goal is to determine the fewest number of variables required to explain or describe a phenomenon. If two variables explain the same thing, i.e. they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.  
 
 Check to see if you have the lattice package installed using:  
-```{r, eval=FALSE}
+
+```r
 library()
 ```
 If lattice is not installed, use:  
 install.packages("lattice", dep=TRUE, repos='http://cran.case.edu/')
-```{r, eval=FALSE}  
+
+```r
 library(lattice)  #load the package
 ```
 Create a basic scatter plot using a dataset included with R that shows soil properties by depth for points collected along a transect in Australia. Information on the dataset is located here:  
 [http://vincentarelbundock.github.io/Rdatasets/doc/MASS/gilgais.html](http://vincentarelbundock.github.io/Rdatasets/doc/MASS/gilgais.html)  
 
-```{r, eval=FALSE}
+
+```r
 library(MASS)
 plot(e00~c00, data=gilgais)
 ```
@@ -538,7 +633,8 @@ This plots electrical conductivity at 0-10cm on the Y axis and chloride content 
 
 The function below produces a scatterplot matrix for all variables in the gilgais dataset. This is a good command to use for determining rough linear correlations for continuous variables.  
 
-```{r, eval=FALSE}
+
+```r
 pairs(gilgais)
 ```
 
@@ -548,7 +644,8 @@ pairs(gilgais)
 
 A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the gilgais dataset:  
 
-```{r, eval=FALSE}
+
+```r
 cor(gilgais)
 ```
 
