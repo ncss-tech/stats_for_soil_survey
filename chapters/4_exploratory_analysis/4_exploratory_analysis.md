@@ -109,7 +109,7 @@ When you do have missing data and the function you want to run will not run with
  1. Exclude all rows or columns that contain missing values using  the function `na.exclude()`.
  2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `sand[is.na(sand)] <- 0`.  
 
-A quick check for coding errors of factors would be to examine the list of levels, such as:  
+A quick check for typos would be to examine the list of levels for a factor, such as:  
 
 
 ```r
@@ -120,7 +120,7 @@ levels(sand$landuse)
 ## [1] "crop"    "pasture" "range"
 ```
 
-There should be three categories of landuse, which the output verifies. If the `levles` function returned the typo such as "crops" or "Pastures", you will have to fix your dataset.  
+There should be three levels of landuse, which the output verifies. If the `levels()` function returned typos such as "crops" or "Pastures", you would have to fix your dataset.  
 
 
 ###<a id="freq")></a>4.1  Frequency distribution  
@@ -140,7 +140,7 @@ plot(density(test), main = "Normal Distribution: Mean = 0, Standard Deviation = 
 Figure 1. Normal Distribution
 
 
-Observing Fig. 1 indicates the data is symmetrically distributed, there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
+Observing Fig. 1 indicates the data is symmetrically distributed, such that there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
 
 
 ```r
