@@ -151,7 +151,7 @@ unique(h$hzname) # for characters and factors
 ```
 
 ```r
-sort(unique(h$hzname)) # another alternative
+sort(unique(h$hzname)) # sort the results
 ```
 
 ```
@@ -238,10 +238,6 @@ plot(test)
 Figure 6. The Kernel density plot depicts a smoothed line of the distribution  
 
 
-ArcGIS also provides the capability of creating histograms for data associated with point files using the Geostatistical Analyst:  
-
-![R GUI image](figure/ch4_fig12.jpg)  
-
 ###<a id="cent")></a>4.2  Measures of central tendency  
 
 These are measures to determine the mid-point of the range of observed samples. The mean and median are the most commonly used measures for our purposes.
@@ -252,11 +248,21 @@ The mean clay content from the antigo dataset may be determined:
 
 
 ```r
-mean(h$clay)
+clay <- na.exclude(h$clay) # first remove missing values and create a new vector
+
+mean(clay) # or
 ```
 
 ```
-## [1] NA
+## [1] 22.04863
+```
+
+```r
+mean(h$clay, na.rm = TRUE)
+```
+
+```
+## [1] 22.04863
 ```
 
 To determine the mean by group or category, use the aggregate command as discussed in section 4.0:  
@@ -280,11 +286,11 @@ The median from the sample dataset may be determined:
 
 
 ```r
-median(h$clay)
+median(clay)
 ```
 
 ```
-## [1] NA
+## [1] 21
 ```
 
 To determine the median by group or category, use the aggregate command as discussed in section 4.0:  
@@ -326,10 +332,10 @@ In this example the mean and median are only slightly different, so we can safef
 
 
 ```r
-test <- density(h$clay, na.rm = TRUE)
+test <- density(clay)
 plot(test)
-amean <- mean(h$clay, na.rm = TRUE)
-amed <- median(h$clay, na.rm = TRUE)
+amean <- mean(clay)
+amed <- median(clay)
 abline(v = amed, col = "green") #plot the median as a gree vertical line 
 abline(v = amean, col = "red") #plot the mean as a red vertical line
 ```
@@ -337,10 +343,11 @@ abline(v = amean, col = "red") #plot the mean as a red vertical line
 ![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
 
 ```r
-test <- density(h$total_frags_pct, na.rm = TRUE)
+frags <- h$total_frags_pct
+test <- density(frags)
 plot(test)
-amean <- mean(h$total_frags_pct, na.rm = TRUE)
-amed <- median(h$total_frags_pct, na.rm = TRUE)
+amean <- mean(frags)
+amed <- median(frags)
 abline(v = amed, col = "green") #plot the median as a gree vertical line 
 abline(v = amean, col = "red") #plot the mean as a red vertical line
 ```
@@ -350,7 +357,7 @@ abline(v = amean, col = "red") #plot the mean as a red vertical line
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
 
 
-The green vertical line represents the breakpoint for the median and the red represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a bimodal distribution (i.e. two peaks). Using in this instance would overestimating the rock fragments content for this case. Odds are this dataset contains samples from different landuse (e.g. corn field and forest).
+The green vertical line represents the breakpoint for the median and the red represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a long tailed distribution (e.g. skewed). Using the mean in this instance would overestimating the rock fragments.
 
 ###<a id="disp")></a>4.3  Measures of Dispersion  
 
@@ -360,22 +367,22 @@ These are measures to determine the spread of data around the mid-point. This is
 
 
 ```r
-range(h$clay)
+range(clay)
 ```
 
 ```
-## [1] NA NA
+## [1] 10 48
 ```
 
 which returns the minimum and maximum values observed, or:  
 
 
 ```r
-max(h$clay) - min(h$clay)
+max(clay) - min(clay)
 ```
 
 ```
-## [1] NA
+## [1] 38
 ```
 
 which returns the value of the range  
@@ -386,11 +393,11 @@ This is the square of the sum of the deviations from the mean, divided by the nu
 
 
 ```r
-var(h$clay)
+var(clay)
 ```
 
 ```
-## [1] NA
+## [1] 45.53172
 ```
 
 **Standard Deviation**  The square root of the variance:![R GUI image](figure/ch4_fig22.jpg)  
@@ -399,19 +406,19 @@ The units of the standard deviation are the same as the units measured. From the
 
 
 ```r
-sd(h$clay) # or
+sd(clay) # or
 ```
 
 ```
-## [1] NA
+## [1] 6.74772
 ```
 
 ```r
-sqrt(var(h$clay))
+sqrt(var(clay))
 ```
 
 ```
-## [1] NA
+## [1] 6.74772
 ```
 
 **Coefficient of Variation** (CV)  A relative (i.e. unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
@@ -420,19 +427,19 @@ CV is calculated by dividing the standard deviation by the mean and multiplying 
 
 
 ```r
-cv <- sd(h$clay/mean(h$clay)) * 100
+cv <- sd(clay)/mean(clay) * 100
 cv
 ```
 
 ```
-## [1] NA
+## [1] 30.60381
 ```
 
 **Interquartile Range** (IQR)  The range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:  
 
 
 ```r
-quantile(h$clay, c(0.25, 0.75), na.rm = TRUE)
+quantile(clay, c(0.25, 0.75))
 ```
 
 ```
@@ -446,7 +453,7 @@ The default for the `quantile()` function returns the the min, 25th percentile, 
 
 
 ```r
-quantile(h$clay, na.rm = TRUE) # or
+quantile(clay) # or
 ```
 
 ```
@@ -455,7 +462,7 @@ quantile(h$clay, na.rm = TRUE) # or
 ```
 
 ```r
-quantile(h$clay, c(0.05, 0.5, 0.95), na.rm = TRUE)
+quantile(clay, c(0.05, 0.5, 0.95))
 ```
 
 ```
@@ -471,7 +478,7 @@ To summarize factors and characters we can examine their frequency or number of 
 
 
 ```r
-table(h$genhz) # generalized horizon labels
+table(h$genhz) # or
 ```
 
 ```
@@ -481,15 +488,12 @@ table(h$genhz) # generalized horizon labels
 ```
 
 ```r
-table(h$hzname) # original horizon designations
+summary(h$genhz)
 ```
 
 ```
-## 
-## 2BCt 2Bt2 2Bt3 2Bt4  2CB  2Cr 2Crt   2R    A   AB  ABt   Ad   Ap    B   BA 
-##    1    1    5    4    1    3    1    2   62    1    4    1    1    1   11 
-##  BAt  BCt   Bt  Bt1  Bt2  Bt3  Bt4   Bw    C  CBt   Cr  Crt   Oi    R   Rt 
-##    3    5    5   59   58   27    3    3    2    3   35   18   21   22    2
+##        A      Bt1      Bt2      Bt3       Cr        R not-used 
+##       64       59       58       52       57       26       49
 ```
 
 This gives us a count of the number of observations for each horizon. If we want to see the comparison two different factors or characters.
@@ -608,15 +612,22 @@ a plot of actual data values against a Gaussian distribution (normal distributio
 A QQplot of sand content may be made for the sample dataset as:  
 
 ```r
-qqnorm(h$clay)
+qqnorm(h$clay, main = "Normal Q-Q Plot for Clay")
 qqline(h$clay)
 ```
 
 ![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
 
+```r
+qqnorm(h$total_frags_pct, main = "Normal Q-Q Plot for Rock Fragments")
+qqline(h$total_frags_pct)
+```
+
+![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-2.png)
+
 Figure 11. QQplot  
 
-The red line represents the quantiles of a normal distribution. If the data set is perfectly normal, the data points will fall along the red line. This plot reinforces the slightly skewed distribution that was seen in the density plot of Figure 7.  
+The line represents the quantiles of a normal distribution. If the data set is perfectly normal, the data points will fall along the line. Overall this plot shows that our clay example is more or less normally distributed. However the second plot shows again that our rock fragments are far from normally distributed.
 
 ArcGIS also provides the capability of creating QQplots for data associated with point files using the Geostatistical Analyst:  
 
