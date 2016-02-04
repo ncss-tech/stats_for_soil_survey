@@ -85,61 +85,43 @@ As noted in Chapter 1, a visual examination of the raw data is possible by looki
 View(sand)
 ```
  
-This view is fine for a smaller dataset, but can be cumbersome for a large dataset. The check for missing data:  
+This view is fine for a smaller dataset, but can be cumbersome for a large dataset. In order to quickly summarize a dataset, simply use the `summary()` function:  
 
 
 ```r
-any(is.na(sand))
+summary(sand)
 ```
 
 ```
-## [1] FALSE
+##  location    landuse  master     depth            sand      
+##  city:6   crop   :6   A:9    Min.   :10.00   Min.   :19.00  
+##  farm:6   pasture:6   B:9    1st Qu.:14.00   1st Qu.:23.00  
+##  west:6   range  :6          Median :20.00   Median :25.00  
+##                              Mean   :20.06   Mean   :26.33  
+##                              3rd Qu.:25.75   3rd Qu.:29.75  
+##                              Max.   :31.00   Max.   :36.00
 ```
 
-In our sand example, there were no missing values. R will return TRUE if there is a missing value within a given row or column and FALSE if there is not. 
+This is a generic R function that will return a preprogrammed summary for any R object. Because *sand* is a dataframe, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary. The number of missing observations for any variable will also be printed. If some of these metrics look unfamiliar to you, don't worry. We'll cover they shortly.
 
-Determining the missing element(s) using:
-
-
-```r
-which(is.na(sand))
-```
-
-```
-## integer(0)
-```
-
-In our example dataset, "integer (0)" is returned because we do not have any missing values. A dataset with missing values would return something like this:  
-
-
-```
-## [1] 76 83
-```
-
-This indicates that the 76<sup>th</sup> and 83<sup>rd</sup> elements in the data object are missing. If one started counting top-to-bottom and left-to-right, the 76th and 83rd elements are where the TRUE value appears in the output. You may choose to examine and deal with missing values using the software of your choice before importing into R.  
-
-When you have missing data and the function you want to run will not run with missing values, the following options are available:  
+When you do have missing data and the function you want to run will not run with missing values, the following options are available:  
 
  1. Exclude all rows or columns that contain missing values using  the function `na.exclude()`.
- 2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `sand[is.na(sand)] <- 0`  
+ 2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `sand[is.na(sand)] <- 0`.  
 
-A quick check for coding errors of categories would be to summarize by the category. In the sample dataset, summarizing mean sand content by landuse using the aggregate command:  
+A quick check for coding errors of factors would be to examine the list of levels, such as:  
 
 
 ```r
-aggregate(sand ~ landuse, data = sand, mean)
+levels(sand$landuse)
 ```
 
 ```
-##   landuse     sand
-## 1    crop 26.33333
-## 2 pasture 28.33333
-## 3   range 24.33333
+## [1] "crop"    "pasture" "range"
 ```
 
-There should be three categories of landuse, which the output verifies. If the aggregate command returned the following, you could quickly fix the typos for "crops" and "Pasture":  
+There should be three categories of landuse, which the output verifies. If the `levles` function returned the typo such as "crops" or "Pastures", you will have to fix your dataset.  
 
-![R GUI image](figure/ch4_fig5.jpg)  
 
 ###<a id="freq")></a>4.1  Frequency distribution  
 
@@ -153,7 +135,7 @@ test <- rnorm(1000000)
 plot(density(test), main = "Normal Distribution: Mean = 0, Standard Deviation = 1")
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
 
 Figure 1. Normal Distribution
 
@@ -166,7 +148,7 @@ test <- rbeta(1000000, shape1 = 2, shape2 = 1000)
 plot(density(test), main = "Beta Distribution: Shape 1 = 2, Shape 2 = 1000")
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
 
 Figure 2. Skewed example 1  
 
@@ -177,7 +159,7 @@ test <- rbeta(1000000, shape1 = 1000, shape2 = 2)
 plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
 
 Figure 3. Skewed example 2  
 
@@ -191,7 +173,7 @@ Using the *sand_example.csv* file as the sample data set, review the histogram c
 hist(sand$sand, col = "grey")
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
 
 Figure 4. Histogram  
 
@@ -206,7 +188,7 @@ d <- density(sand$sand)
 plot(d)
 ```
 
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
 
 Figure 6. The Kernel density plot depicts a smoothed line of the distribution  
 
@@ -284,7 +266,7 @@ abline(v = amed, col = "green") #plot the median as a gree vertical line
 abline(v = amean, col = "red") #plot the mean as a red vertical line
 ```
 
-![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
 
 The green vertical line represents the breakpoint for the median and the red represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be normal. The further the data departs from normality, the less meaningful the mean becomes.  The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 indicates a greater proportion of the samples are less than the mean. Using the mean would be overestimating the sand content of the sample dataset in this case.  
 
@@ -402,7 +384,7 @@ A boxplot of sand content by horizon may be made for the sample dataset as:
 boxplot(sand ~ master, xlab = "Master Horizon", ylab="Sand (%)", data = sand)
 ```
 
-![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
+![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
 
 Figure 9. Box plot of sand by horizon  
 
@@ -417,7 +399,7 @@ A boxplot of sand content by landuse may be made for the sample dataset as:
 boxplot(sand ~ landuse, data = sand)
 ```
 
-![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
+![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23-1.png)
 
 Figure 10. Box plot of sand by landuse.  
 
@@ -434,7 +416,7 @@ qqnorm(sand$sand)
 qqline(sand$sand)
 ```
 
-![plot of chunk unnamed-chunk-26](figure/unnamed-chunk-26-1.png)
+![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
 
 Figure 11. QQplot  
 
@@ -580,7 +562,7 @@ The numeric output is fine, but a graphic is more revealing (Figure 15):
 rose.diag(aspect, bins = 12, col="grey")
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
 Figure 15. Rose Diagram  
 
 The graphic reveals a dominant Northeast exposure with a secondary Western slope aspect. This is expected from the sample map unit that occurs in the ridge and valley province with strong directional trends. Unfortunately, there is not a good way to convey bimodal slope aspect distributions in NASIS.  
@@ -655,7 +637,7 @@ data(sp4)
 plot(clay ~ CEC_7, data = sp4)
 ```
 
-![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
+![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
 
 Figure 16. Scatter Plot
 
@@ -668,7 +650,7 @@ The function below produces a scatterplot matrix for all the numeric variables i
 pairs(sp4[7:13])
 ```
 
-![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
 
 ###<a id="corr")></a>4.9  Correlation matrix  
 
