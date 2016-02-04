@@ -1,6 +1,6 @@
 ---
 title:
-author:
+author: Tom D'Avello and Stephen Roecker
 date: "Friday, February 27, 2015"
 output: html_document
 html_document:
@@ -23,7 +23,7 @@ html_document:
  * [4.10 Spatial auto-correlation](#auto)      
  * [4.11 References](#ref)   
 
-Before embarking on statistical tests and inferences, it is essential to understand your data. This will be done through conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
+Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This will be done through conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
 
 Filliben (2004), described EDA as: 
 *an approach/philosophy for data analysis that employs a variety of techniques (mostly  graphical) to maximize:*
@@ -45,7 +45,7 @@ Tukey (1980) summarized:
 
 *No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper  and transparencies  are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated.*
 
-Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the "pictures", i.e. graphical output, and descriptive statistics we will use to explore data.  
+Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the "pictures" (i.e. graphical output) and descriptive statistics we will use to explore our data.  
 
 Descriptive statistics include:  
 
@@ -71,61 +71,106 @@ Graphical methods represent an intuitive way to investigate data.
 
 ###<a id="exam")></a>4.0  Examine your data  
 
-Before starting EDA, look at your data to make sure there are no errors due to typos, coding, missing values or other countless possibilities for error. If we read the sample dataset:  
+Ideally before you start EDA, you should ensure that your data has no errors, typos, or other problems. However as is often the case, EDA is a useful tool to identify such errors before you move on to other statistical analyses. For this chapter we'll use the loafercreek dataset, from the CA630 Soil Survey Area.
 
 
 ```r
-sand <- read.csv("C:/workspace/sand_example.csv")
+library(soilDB)
+
+data("loafercreek")
+
+# save our GHL
+n <- c('A','Bt1','Bt2','Bt3','Cr','R')
+# REGEX rules
+p <- c('^A$|Ad|Ap',
+       'Bt1$',
+       '^Bt2$',
+       '^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$',
+       'Cr',
+       'R')
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+h <- horizons(loafercreek) # extract the horizon table
+s <- site(loafercreek) # extract the site table
 ```
 
-As noted in Chapter 1, a visual examination of the raw data is possible by looking at the data object:  
+As noted in Chapter 1, a visual examination of the raw data is possible by looking at the R object:  
 
 
 ```r
-View(sand)
+View(h)
 ```
  
-This view is fine for a smaller dataset, but can be cumbersome for a large dataset. In order to quickly summarize a dataset, simply use the `summary()` function:  
+This view is fine for a small dataset, but can be cumbersome for a larger ones. In order to quickly summarize a dataset, simply use the `summary()` function:  
 
 
 ```r
-summary(sand)
+vars <- c("genhz", "clay", "total_frags_pct", "effervescence")
+summary(h[vars])
 ```
 
 ```
-##  location    landuse  master     depth            sand      
-##  city:6   crop   :6   A:9    Min.   :10.00   Min.   :19.00  
-##  farm:6   pasture:6   B:9    1st Qu.:14.00   1st Qu.:23.00  
-##  west:6   range  :6          Median :20.00   Median :25.00  
-##                              Mean   :20.06   Mean   :26.33  
-##                              3rd Qu.:25.75   3rd Qu.:29.75  
-##                              Max.   :31.00   Max.   :36.00
+##       genhz         clay       total_frags_pct effervescence     
+##  A       :64   Min.   :10.00   Min.   : 0.00   Length:365        
+##  Bt1     :59   1st Qu.:17.00   1st Qu.: 0.00   Class :character  
+##  Bt2     :58   Median :21.00   Median : 5.00   Mode  :character  
+##  Bt3     :52   Mean   :22.05   Mean   :13.01                     
+##  Cr      :57   3rd Qu.:26.00   3rd Qu.:20.00                     
+##  R       :26   Max.   :48.00   Max.   :87.00                     
+##  not-used:49   NA's   :110
 ```
 
-This is a generic R function that will return a preprogrammed summary for any R object. Because *sand* is a dataframe, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary. The number of missing observations for any variable will also be printed. If some of these metrics look unfamiliar to you, don't worry. We'll cover they shortly.
+This is a generic R function that will return a preprogrammed summary for any R object. Because *h* is a dataframe, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If some of these metrics look unfamiliar to you, don't worry we'll cover they shortly.
 
 When you do have missing data and the function you want to run will not run with missing values, the following options are available:  
 
- 1. Exclude all rows or columns that contain missing values using  the function `na.exclude()`.
- 2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `sand[is.na(sand)] <- 0`.  
+ 1. Exclude all rows or columns that contain missing values using  the function `na.exclude()`, such as . This can be wasteful though because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value.
+ 2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h[is.na(h)] <- 0`.
+ 3. Read the help file for the function you're attempting to use. Many functions have additional arguements for dealing with missing values.
 
-A quick check for typos would be to examine the list of levels for a factor, such as:  
+A quick check for typos would be to examine the list of levels for a factor or character, such as:  
 
 
 ```r
-levels(sand$landuse)
+levels(h$genhz)  # just for factors
 ```
 
 ```
-## [1] "crop"    "pasture" "range"
+## [1] "A"        "Bt1"      "Bt2"      "Bt3"      "Cr"       "R"       
+## [7] "not-used"
 ```
 
-There should be three levels of landuse, which the output verifies. If the `levels()` function returned typos such as "crops" or "Pastures", you would have to fix your dataset.  
+```r
+unique(h$hzname) # for characters and factors
+```
+
+```
+##  [1] "Oi"   "A"    "BAt"  "Bt1"  "Bt2"  "Bt3"  "Crt"  "R"    "BA"   "Cr"  
+## [11] "2Bt3" "2Bt4" "2Cr"  "Bw"   "BCt"  "2BCt" "Bt"   "CBt"  "Bt4"  "2CB" 
+## [21] "2R"   "C"    "AB"   "2Bt2" "Ad"   "Ap"   "Rt"   "ABt"  "2Crt" "B"
+```
+
+```r
+sort(unique(h$hzname)) # another alternative
+```
+
+```
+##  [1] "2BCt" "2Bt2" "2Bt3" "2Bt4" "2CB"  "2Cr"  "2Crt" "2R"   "A"    "AB"  
+## [11] "ABt"  "Ad"   "Ap"   "B"    "BA"   "BAt"  "BCt"  "Bt"   "Bt1"  "Bt2" 
+## [21] "Bt3"  "Bt4"  "Bw"   "C"    "CBt"  "Cr"   "Crt"  "Oi"   "R"    "Rt"
+```
+
+If the `unique()` function returned typos such as "BT" or "B t", you would have to fix your original dataset or you could make as adjustment in R, such as:
+
+
+```r
+h$hzname[h$hzname == "BT"] <- "Bt"
+```
 
 
 ###<a id="freq")></a>4.1  Frequency distribution  
 
-Now that missing values and coding errors have been checked and corrected, a graphical depiction of the sample data distribution in the form of a bar graph, for nominal data, or a histogram, for continuous data conveys a wealth of information.  
+Now that missing values and coding errors have been checked and corrected, a graphical depiction of the sample data distribution in the form of a bar graph for nominal data, or a histogram for continuous data conveys a wealth of information.  
 
 An idealized normal distribution is shown in Figure 1:  
 
@@ -135,12 +180,12 @@ test <- rnorm(1000000)
 plot(density(test), main = "Normal Distribution: Mean = 0, Standard Deviation = 1")
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
 
 Figure 1. Normal Distribution
 
 
-Observing Fig. 1 indicates the data is symmetrically distributed, such that there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
+Figure 1 indicates that the data is symmetrically distributed, such that there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
 
 
 ```r
@@ -148,7 +193,7 @@ test <- rbeta(1000000, shape1 = 2, shape2 = 1000)
 plot(density(test), main = "Beta Distribution: Shape 1 = 2, Shape 2 = 1000")
 ```
 
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
 
 Figure 2. Skewed example 1  
 
@@ -159,36 +204,36 @@ test <- rbeta(1000000, shape1 = 1000, shape2 = 2)
 plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
 
 Figure 3. Skewed example 2  
 
 
-Displaying data in this manner provides a visual means to determine if your data has a wide, flat, narrow, peaked, normal, or skewed distribution as in Fig. 1 and 3.  
+Displaying data in this manner provides a visual means to determine if your data has a wide, flat, narrow, peaked, normal, or skewed distribution as in Fig. 1, 2 or 3.  
 
-Using the *sand_example.csv* file as the sample data set, review the histogram command from Chapter 1. Remember to use the read.csv command and create the "sand" data object in R. The next command will create a histogram:  
+Next will review the histogram function:  
 
 
 ```r
-hist(sand$sand, col = "grey")
+hist(h$clay, col = "grey")
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
 
 Figure 4. Histogram  
 
 
-Since histograms are dependent on the number of bins, for small datasets they may not be the best method of determining the shape of a distribution.  
+Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution.  
 
 A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution:  
  
 
 ```r
-d <- density(sand$sand)
-plot(d)
+test <- density(h$clay, na.rm = TRUE)
+plot(test)
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
 
 Figure 6. The Kernel density plot depicts a smoothed line of the distribution  
 
@@ -199,76 +244,113 @@ ArcGIS also provides the capability of creating histograms for data associated w
 
 ###<a id="cent")></a>4.2  Measures of central tendency  
 
-These are measures to determine the mid-point of the range of observed samples. The mean and median are the most commonly used measures for our purposes.  
+These are measures to determine the mid-point of the range of observed samples. The mean and median are the most commonly used measures for our purposes.
 
-**Mean** - The arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which means sum all X values in the sample and divide by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
+**Mean** - is the arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which sums all the X values in the sample and divide by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
 
-The mean sand content from the sample dataset may be determined:  
+The mean clay content from the antigo dataset may be determined:  
 
 
 ```r
-mean(sand$sand)
+mean(h$clay)
 ```
 
 ```
-## [1] 26.33333
+## [1] NA
 ```
 
 To determine the mean by group or category, use the aggregate command as discussed in section 4.0:  
 
 ```r
-aggregate(sand ~ landuse, data = sand, mean)
+aggregate(clay ~ genhz, data = h, mean)
 ```
 
 ```
-##   landuse     sand
-## 1    crop 26.33333
-## 2 pasture 28.33333
-## 3   range 24.33333
+##      genhz     clay
+## 1        A 15.47903
+## 2      Bt1 21.43390
+## 3      Bt2 25.26897
+## 4      Bt3 28.60577
+## 5 not-used 18.54167
 ```
 
-**Median**  The middle measurement of a sample set. This is known as the middle or 50% quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.  
+**Median**  The middle measurement of a sample set. This is known as the middle or 50th quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.  
 
 The median from the sample dataset may be determined:  
 
 
 ```r
-median(sand$sand)
+median(h$clay)
 ```
 
 ```
-## [1] 25
+## [1] NA
 ```
 
 To determine the median by group or category, use the aggregate command as discussed in section 4.0:  
 
 
 ```r
-aggregate(sand ~ landuse, data = sand, median)
+aggregate(clay ~ genhz, data = h, median) # or using the summary function we could get the mean and median
 ```
 
 ```
-##   landuse sand
-## 1    crop 26.0
-## 2 pasture 28.0
-## 3   range 23.5
+##      genhz clay
+## 1        A 15.0
+## 2      Bt1 20.0
+## 3      Bt2 24.5
+## 4      Bt3 28.0
+## 5 not-used 18.0
 ```
 
-It is apparent that the mean and median are different. In a normal distribution, the mean and median would be equal. Normal distributions should not be assumed with soils data. A graphical examination of the sand is possible:  
+```r
+aggregate(clay ~ genhz, data = h, summary)
+```
+
+```
+##      genhz clay.Min. clay.1st Qu. clay.Median clay.Mean clay.3rd Qu.
+## 1        A     10.00        13.00       15.00     15.48        16.93
+## 2      Bt1     14.00        18.00       20.00     21.43        24.50
+## 3      Bt2     17.00        21.25       24.50     25.27        28.00
+## 4      Bt3     10.00        26.00       28.00     28.61        31.25
+## 5 not-used     12.00        16.00       18.00     18.54        20.25
+##   clay.Max.
+## 1     23.00
+## 2     41.00
+## 3     43.00
+## 4     48.00
+## 5     27.00
+```
+
+In this example the mean and median are only slightly different, so we can safefully assume we have normal distribution. However many soil variables often have a non-normal distribution. A graphical examination of the mean vs median for clay and rock fragments is possible:  
 
 
 ```r
-d <- density(sand$sand)
-plot(d)
-amean <- mean(sand$sand)
-amed <- median(sand$sand)
+test <- density(h$clay, na.rm = TRUE)
+plot(test)
+amean <- mean(h$clay, na.rm = TRUE)
+amed <- median(h$clay, na.rm = TRUE)
 abline(v = amed, col = "green") #plot the median as a gree vertical line 
 abline(v = amean, col = "red") #plot the mean as a red vertical line
 ```
 
-![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
 
-The green vertical line represents the breakpoint for the median and the red represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be normal. The further the data departs from normality, the less meaningful the mean becomes.  The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 indicates a greater proportion of the samples are less than the mean. Using the mean would be overestimating the sand content of the sample dataset in this case.  
+```r
+test <- density(h$total_frags_pct, na.rm = TRUE)
+plot(test)
+amean <- mean(h$total_frags_pct, na.rm = TRUE)
+amed <- median(h$total_frags_pct, na.rm = TRUE)
+abline(v = amed, col = "green") #plot the median as a gree vertical line 
+abline(v = amean, col = "red") #plot the mean as a red vertical line
+```
+
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-2.png)
+
+Figure 7. Comparison of the mean vs median for clay and rock fragments.  
+
+
+The green vertical line represents the breakpoint for the median and the red represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a bimodal distribution (i.e. two peaks). Using in this instance would overestimating the rock fragments content for this case. Odds are this dataset contains samples from different landuse (e.g. corn field and forest).
 
 ###<a id="disp")></a>4.3  Measures of Dispersion  
 
@@ -278,92 +360,217 @@ These are measures to determine the spread of data around the mid-point. This is
 
 
 ```r
-range(sand$sand)
+range(h$clay)
 ```
 
 ```
-## [1] 19 36
+## [1] NA NA
 ```
 
 which returns the minimum and maximum values observed, or:  
 
+
 ```r
-max(sand$sand) - min(sand$sand)
+max(h$clay) - min(h$clay)
 ```
 
 ```
-## [1] 17
+## [1] NA
 ```
 
 which returns the value of the range  
 
 **Variance**  A positive value indicating deviation from the mean:![R GUI image](figure/ch4_fig20.jpg)  
 
-This is the square of the sum of the deviations from the mean, divided by the number of samples  1. It is commonly referred to as the sum of squares. As the deviation increases, variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the _standard deviation_. Variance for the sample dataset is:  
+This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the _standard deviation_. Variance for the sample dataset is:  
 
 
 ```r
-var(sand$sand)
+var(h$clay)
 ```
 
 ```
-## [1] 26
+## [1] NA
 ```
 
 **Standard Deviation**  The square root of the variance:![R GUI image](figure/ch4_fig22.jpg)  
 
-The units of the standard deviation are the same as the units measured. Standard deviation for the sample dataset is:  
+The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:  
 
 
 ```r
-sd(sand$sand)
+sd(h$clay) # or
 ```
 
 ```
-## [1] 5.09902
+## [1] NA
+```
+
+```r
+sqrt(var(h$clay))
+```
+
+```
+## [1] NA
 ```
 
 **Coefficient of Variation** (CV)  A relative (i.e. unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
 
-CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, a relative measure is more useful when comparing variation of datasets. CV may be calculated for the sample dataset as:  
+CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:  
 
 
 ```r
-cv <- sd(sand$sand/mean(sand$sand)) * 100
+cv <- sd(h$clay/mean(h$clay)) * 100
 cv
 ```
 
 ```
-## [1] 19.36337
+## [1] NA
 ```
 
-**Interquartile Range** (IQR)  The range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data.   IQR may be calculated for the sample dataset as:  
+**Interquartile Range** (IQR)  The range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:  
 
 
 ```r
-quantile(sand$sand, c(0.25, 0.75))
+quantile(h$clay, c(0.25, 0.75), na.rm = TRUE)
 ```
 
 ```
-##   25%   75% 
-## 23.00 29.75
+## 25% 75% 
+##  17  26
 ```
 
-**Quantiles (aka Percentiles)** - The percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.  
+**Quantiles (aka Percentiles)** - The percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
 
-Quantiles may be calculated for the 10%, 50% and 90% percentiles for the sample dataset as:  
+The default for the `quantile()` function returns the the min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summmery originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
 
 
 ```r
-quantile(sand$sand, c(0.1, 0.5, 0.9))
+quantile(h$clay, na.rm = TRUE) # or
 ```
 
 ```
-##  10%  50%  90% 
-## 21.0 25.0 34.3
+##   0%  25%  50%  75% 100% 
+##   10   17   21   26   48
 ```
 
-Thus, 80% of the observations have a sand content between 21.0% and 34.3%, while 10% are less than 21.0% and 10% are greater than 34.3%. Quantiles are robust measures, unaffected by data distributions.  
+```r
+quantile(h$clay, c(0.05, 0.5, 0.95), na.rm = TRUE)
+```
+
+```
+##   5%  50%  95% 
+## 12.7 21.0 33.3
+```
+
+Thus, for the five number summary 25% of the observations fall between each of the intervals. Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpetration.
+
+**Frequencies**
+
+To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using tables.
+
+
+```r
+table(h$genhz) # generalized horizon labels
+```
+
+```
+## 
+##        A      Bt1      Bt2      Bt3       Cr        R not-used 
+##       64       59       58       52       57       26       49
+```
+
+```r
+table(h$hzname) # original horizon designations
+```
+
+```
+## 
+## 2BCt 2Bt2 2Bt3 2Bt4  2CB  2Cr 2Crt   2R    A   AB  ABt   Ad   Ap    B   BA 
+##    1    1    5    4    1    3    1    2   62    1    4    1    1    1   11 
+##  BAt  BCt   Bt  Bt1  Bt2  Bt3  Bt4   Bw    C  CBt   Cr  Crt   Oi    R   Rt 
+##    3    5    5   59   58   27    3    3    2    3   35   18   21   22    2
+```
+
+This gives us a count of the number of observations for each horizon. If we want to see the comparison two different factors or characters.
+
+
+```r
+table(h$genhz, h$hzname)
+```
+
+```
+##           
+##            2BCt 2Bt2 2Bt3 2Bt4 2CB 2Cr 2Crt 2R  A AB ABt Ad Ap  B BA BAt
+##   A           0    0    0    0   0   0    0  0 62  0   0  1  1  0  0   0
+##   Bt1         0    0    0    0   0   0    0  0  0  0   0  0  0  0  0   0
+##   Bt2         0    0    0    0   0   0    0  0  0  0   0  0  0  0  0   0
+##   Bt3         1    1    5    4   1   0    0  0  0  0   0  0  0  0  0   0
+##   Cr          0    0    0    0   0   3    1  0  0  0   0  0  0  0  0   0
+##   R           0    0    0    0   0   0    0  2  0  0   0  0  0  0  0   0
+##   not-used    0    0    0    0   0   0    0  0  0  1   4  0  0  1 11   3
+##           
+##            BCt Bt Bt1 Bt2 Bt3 Bt4 Bw  C CBt Cr Crt Oi  R Rt
+##   A          0  0   0   0   0   0  0  0   0  0   0  0  0  0
+##   Bt1        0  0  59   0   0   0  0  0   0  0   0  0  0  0
+##   Bt2        0  0   0  58   0   0  0  0   0  0   0  0  0  0
+##   Bt3        5  0   0   0  27   3  0  2   3  0   0  0  0  0
+##   Cr         0  0   0   0   0   0  0  0   0 35  18  0  0  0
+##   R          0  0   0   0   0   0  0  0   0  0   0  0 22  2
+##   not-used   0  5   0   0   0   0  3  0   0  0   0 21  0  0
+```
+
+```r
+table(h$genhz, h$texture_class)
+```
+
+```
+##           
+##            br  c cl  l mpm scl sic sicl sil sl spm
+##   A         0  0  0 51   0   0   0    0   9  3   0
+##   Bt1       0  1  5 41   0   0   0    1  11  0   0
+##   Bt2       0  0 15 32   0   2   1    3   5  0   0
+##   Bt3       0  2 24 15   0   4   1    2   4  0   0
+##   Cr       51  0  0  0   0   0   0    0   0  0   0
+##   R        23  0  0  0   0   0   0    0   0  0   0
+##   not-used  0  0  1 20   1   1   0    1   2  1  18
+```
+
+We can also easily see add margins totals to the table or convert the table frequencies to proportions.
+
+
+```r
+addmargins(table(h$genhz, h$texture_class)) # appends the table with row and column sums
+```
+
+```
+##           
+##             br   c  cl   l mpm scl sic sicl sil  sl spm Sum
+##   A          0   0   0  51   0   0   0    0   9   3   0  63
+##   Bt1        0   1   5  41   0   0   0    1  11   0   0  59
+##   Bt2        0   0  15  32   0   2   1    3   5   0   0  58
+##   Bt3        0   2  24  15   0   4   1    2   4   0   0  52
+##   Cr        51   0   0   0   0   0   0    0   0   0   0  51
+##   R         23   0   0   0   0   0   0    0   0   0   0  23
+##   not-used   0   0   1  20   1   1   0    1   2   1  18  45
+##   Sum       74   3  45 159   1   7   2    7  31   4  18 351
+```
+
+```r
+round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) # margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
+```
+
+```
+##           
+##             br   c  cl   l mpm scl sic sicl sil  sl spm
+##   A          0   0   0  81   0   0   0    0  14   5   0
+##   Bt1        0   2   8  69   0   0   0    2  19   0   0
+##   Bt2        0   0  26  55   0   3   2    5   9   0   0
+##   Bt3        0   4  46  29   0   8   2    4   8   0   0
+##   Cr       100   0   0   0   0   0   0    0   0   0   0
+##   R        100   0   0   0   0   0   0    0   0   0   0
+##   not-used   0   0   2  44   2   2   0    2   4   2  40
+```
 
 ###<a id="box")></a>4.4  Box plots  
 
@@ -381,27 +588,16 @@ A boxplot of sand content by horizon may be made for the sample dataset as:
 
 
 ```r
-boxplot(sand ~ master, xlab = "Master Horizon", ylab="Sand (%)", data = sand)
+boxplot(clay ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
 ```
 
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
+![plot of chunk unnamed-chunk-26](figure/unnamed-chunk-26-1.png)
 
 Figure 9. Box plot of sand by horizon  
 
 The xlab and ylab parameters control the titles of the x and y axis.  
 
 This plot shows us that B horizons typically contain more sand than A horizons and that the median of sand in A horizons is around 23% and around 26% in B horizons.  
-
-A boxplot of sand content by landuse may be made for the sample dataset as:  
-
-
-```r
-boxplot(sand ~ landuse, data = sand)
-```
-
-![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23-1.png)
-
-Figure 10. Box plot of sand by landuse.  
 
 Notice that the boxplot for "range" has a single circle on the graph above it.  This indicates an outlier, or a value that is more than 1.5 x IQR.  You should evaluate this data point to ensure that the number measured and entered is correct.  
 
@@ -412,11 +608,11 @@ a plot of actual data values against a Gaussian distribution (normal distributio
 A QQplot of sand content may be made for the sample dataset as:  
 
 ```r
-qqnorm(sand$sand)
-qqline(sand$sand)
+qqnorm(h$clay)
+qqline(h$clay)
 ```
 
-![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
+![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
 
 Figure 11. QQplot  
 
@@ -477,7 +673,7 @@ Using the sample data. the default test uses the Shapiro-Wilk method:
 
 
 ```r
-normalTest(sand$sand)
+normalTest(h$clay)
 ```
 Install or load the fBasics package if you receive an error:  
 
@@ -491,7 +687,7 @@ The null hypothesis for the test is: "this sample comes from a normal population
 
 
 ```r
-jarqueberaTest(sand$sand)
+jarqueberaTest(h$clay)
 ```
 
 ![R GUI image](figure/ch4_fig39.jpg)  
@@ -500,7 +696,7 @@ The Da'Agostino test returns:
 
 
 ```r
-dagoTest(sand$sand)
+dagoTest(h$clay)
 ```
 
 ![R GUI image](figure/ch4_fig40.jpg)  
@@ -524,25 +720,13 @@ The two most common variables warranting special consideration for pedologists a
 
 **Slope aspect** - requires the use of circular statistics for summarizing numerically, or graphical interpretation using circular plots. For example, if soil map units being summarized have a uniform distribution of slope aspects ranging from 335 degrees to 25 degrees, the Zonal Statistics tool in ArcGIS would return a mean of 180.  
 
-The most intuitive means available for evaluating and describing slope aspect are circular plots available with the circular package in R and the radial plot option in the [TEUI](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html) Toolkit. The circular package in R will also calculate circular statistics like mean, median, quartiles etc. An example dataset with one column containing slope aspect values may be evaluated as: 
-
-The text file containing aspect values (aspect_extract3.csv) is similar to this sample:  
-
-GRID_CODE  
-51.4996  
-51.5852  
-51.5700  
-51.7099  
-51.9115  
-51.4930  
+The most intuitive means available for evaluating and describing slope aspect are circular plots available with the circular package in R and the radial plot option in the [TEUI](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html) Toolkit. The circular package in R will also calculate circular statistics like mean, median, quartiles etc.
 
 
 ```r
 library(circular)
-library(soilDB)
 
-data(loafercreek)
-aspect <- loafercreek$aspect_field
+aspect <- s$aspect_field
 
 aspect <- circular(aspect, template="geographic", units="degrees", modulo="2pi")
 summary(aspect)
@@ -562,7 +746,7 @@ The numeric output is fine, but a graphic is more revealing (Figure 15):
 rose.diag(aspect, bins = 12, col="grey")
 ```
 
-![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
+![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
 Figure 15. Rose Diagram  
 
 The graphic reveals a dominant Northeast exposure with a secondary Western slope aspect. This is expected from the sample map unit that occurs in the ridge and valley province with strong directional trends. Unfortunately, there is not a good way to convey bimodal slope aspect distributions in NASIS.  
@@ -628,16 +812,14 @@ Plotting points of one variable against another is a scatter plot. Plots can be 
 
 The purpose of a scatterplot is to see how one variable relates to another. With modeling in general the goal is parsimony (i.e. simple). The goal is to determine the fewest number of variables required to explain or describe a phenomenon. If two variables explain the same thing, i.e. they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.
 
-Create a basic scatter plot using a dataset included with the aqp package that shows soil properties for Serpentine soils from California (McGahan et al., 2009).
+Create a basic scatter plot using the antigo dataset.
 
 
 ```r
-library(aqp)
-data(sp4)
-plot(clay ~ CEC_7, data = sp4)
+plot(clay ~ phfield, data = h)
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
+![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
 
 Figure 16. Scatter Plot
 
@@ -647,10 +829,12 @@ The function below produces a scatterplot matrix for all the numeric variables i
 
 
 ```r
-pairs(sp4[7:13])
+h$hzdepm <- with(h, (hzdepb - hzdept) /2)
+vars <- c("hzdepm", "clay", "total_frags_pct", "phfield")
+pairs(h[vars])
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+![plot of chunk unnamed-chunk-34](figure/unnamed-chunk-34-1.png)
 
 ###<a id="corr")></a>4.9  Correlation matrix  
 
@@ -658,18 +842,15 @@ A correlation matrix is a table of the calculated correlation coefficients of al
 
 
 ```r
-round(cor(sp4[7:13]), 2)
+round(cor(h[vars], use = "complete.obs"), 2)
 ```
 
 ```
-##                Ca CEC_7 ex_Ca_to_Mg  sand  silt  clay    CF
-## Ca           1.00  0.23        0.90  0.26 -0.04 -0.25 -0.28
-## CEC_7        0.23  1.00        0.15 -0.52 -0.10  0.66 -0.32
-## ex_Ca_to_Mg  0.90  0.15        1.00  0.28  0.12 -0.41 -0.21
-## sand         0.26 -0.52        0.28  1.00 -0.51 -0.63  0.17
-## silt        -0.04 -0.10        0.12 -0.51  1.00 -0.36  0.13
-## clay        -0.25  0.66       -0.41 -0.63 -0.36  1.00 -0.31
-## CF          -0.28 -0.32       -0.21  0.17  0.13 -0.31  1.00
+##                 hzdepm clay total_frags_pct phfield
+## hzdepm            1.00 0.51            0.27    0.00
+## clay              0.51 1.00            0.28    0.18
+## total_frags_pct   0.27 0.28            1.00   -0.16
+## phfield           0.00 0.18           -0.16    1.00
 ```
 
 As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0.  
@@ -699,8 +880,6 @@ Filliben, J. J. 2004. NIST/SEMATECH e-Handbook of Statistical Methods. [http://w
 
 Lane, D.M. Online Statistics Education: A Multimedia Course of Study [(http://onlinestatbook.com/](http://onlinestatbook.com/) Project Leader: [David M. Lane](http://www.ruf.rice.edu/~lane/), Rice University
 
-McGahan, D.G., Southard, R.J, Claassen, V.P. 2009. Plant-Available Calcium Varies Widely in Soils on Serpentinite Landscapes. Soil Sci. Soc. Am. J. 73: 2087-2095. [https://dl.sciencesocieties.org/publications/sssaj/abstracts/73/6/2087](https://dl.sciencesocieties.org/publications/sssaj/abstracts/73/6/2087) 
-
 Seltman, H. 2009. Experimental Design and Analysis. Chapter 4: Exploratory Data Analysis. Carnegie Mellon University.  [http://www.stat.cmu.edu/~hseltman/309/Book/chapter4.pdf](http://www.stat.cmu.edu/~hseltman/309/Book/chapter4.pdf)    
 
 TEUI. USFS, [http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html)   
@@ -709,3 +888,4 @@ Tukey, John. 1977. Exploratory Data Analysis, Addison-Wesley
 
 Tukey, J. 1980. We need both exploratory and confirmatory. The American Statistician, 34:1, 23-25  
 
+Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340.
