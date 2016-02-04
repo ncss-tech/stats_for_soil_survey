@@ -672,7 +672,7 @@ pairs(sp4[7:13])
 
 ###<a id="corr")></a>4.9  Correlation matrix  
 
-A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the gilgais dataset:  
+A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:  
 
 
 ```r
