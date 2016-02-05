@@ -10,18 +10,18 @@ html_document:
 
 ##CHAPTER 4: EXPLORATORY DATA ANALYSIS  
  
- * [4.0 Examine your data](#exam)  
- * [4.1 Frequency distribution](#freq)       
- * [4.2 Measures of central tendency](#cent)        
- * [4.3 Measures of Dispersion](#disp)      
- * [4.4 Box plots](#box)       
- * [4.5 Quantile comparison plot](#qq)       
- * [4.6 Assessing normality](#norm)       	
- * [4.7 Special cases - Circular data and pH](#circ)       
- * [4.8 Scatterplot](#scat)       
- * [4.9 Correlation matrix](#corr)       
- * [4.10 Spatial auto-correlation](#auto)      
- * [4.11 References](#ref)   
+ - [4.0 Examine your data](#exam)  
+ - [4.1 Frequency distribution](#freq)       
+ - [4.2 Measures of central tendency](#cent)        
+ - [4.3 Measures of Dispersion](#disp)      
+ - [4.4 Box plots](#box)       
+ - [4.5 Quantile comparison plot](#qq)       
+ - [4.6 Transformations](#transform)       	
+ - [4.7 Special cases - Circular data and pH](#circ)       
+ - [4.8 Scatterplot](#scat)       
+ - [4.9 Correlation matrix](#corr)       
+ - [4.10 References](#ref)   
+ - [4.11 Additional reading](#add)
 
 Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This typcially done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
 
@@ -71,14 +71,14 @@ Graphical methods represent an intuitive way to investigate data.
 
 ###<a id="exam")></a>4.0  Examine your data  
 
-Ideally before you start EDA, you should ensure that your data has no errors, typos, or other problems. However as is often the case, EDA is a useful tool to identify such errors before you move on to other statistical analyses. For this chapter we'll use the loafercreek dataset, from the CA630 Soil Survey Area.
+Ideally before you start EDA, you should ensure that your data has no errors, typos, or other problems. However as is often the case, EDA is a useful tool/process to identify such errors before you move on to other statistical analyses. For this chapter we'll use the loafercreek dataset, from the CA630 Soil Survey Area.
 
 ```{r, warning=FALSE, message=FALSE}
 library(soilDB)
 
 data("loafercreek")
 
-# save our GHL
+# Generalized the horizon designations
 n <- c('A','Bt1','Bt2','Bt3','Cr','R')
 # REGEX rules
 p <- c('^A$|Ad|Ap',
@@ -129,41 +129,70 @@ If the `unique()` function returned typos such as "BT" or "B t", you could eithe
 h$hzname[h$hzname == "BT"] <- "Bt"
 ```
 
-Typo errors such as these are in old NASIS pedon data.
+Typo errors such as these are common found with old pedon data in NASIS.
 
 ###<a id="freq")></a>4.1  Frequency distribution  
 
-Now that we've checked for missing values and typos and made correcitons, we can graphically examine the sample data distribution of our integer and numeric data.
+Now that we've checked for missing values and typos and made correcitons, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center(e.g. RV) and spread or dispersion (e.g low and high) of our data. Typically in introductory statistics the normal (i.e. Gaussian) distribution is emphasized.
 
-An idealized normal distribution is shown in Figure 1:  
+What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Appling certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable, i.e. Low, RV and High values. Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, like Figure 7, using standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality, and will be addressed below. Significance tests for normal also exist and can be found in the fBasics package, but Webster (2001) cautions aganist...
 
-```{r}
+As the preceding sections and we will examine the alternative methods of...
+
+A normal distribution is also known as a Gaussian distribution or the colloquial "Bell Curve". A normal distribution has the following properties (Lane):  
+
+ 1. Normal distributions are symmetric around their mean 
+ 2.	The mean, median, and mode of a normal distribution are equal 
+ 3.	The area under the normal curve is equal to 1.0 
+ 4.	Normal distributions are denser in the center and less dense in the tails 
+ 5.	Normal distributions are defined by two parameters, the mean and the standard deviation
+ 6.	68% of the area of a normal distribution is within one standard deviation of the mean
+
+![R GUI image](figure/ch4_fig33.jpg)    
+
+ 7.7.  Approximately 95% of the area of a normal distribution is within two standard deviations of the mean.  
+
+![R GUI image](figure/ch4_fig34.jpg)  
+
+Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically Normal, Bimodal or Skewed:  
+
+![R GUI image](figure/ch4_fig35.jpg)
+
+Figure 12. Sample histograms    
+
+Occasionally distributions are Uniform, or nearly so:  
+
+![R GUI image](figure/ch4_fig36.jpg)
+
+Figure 13. Uniform distribution  
+
+
+
+ 
+
+```{r, eval=FALSE}
+# An idealized normal distribution is shown in Figure 1:
+
 test <- rnorm(1000000)
 plot(density(test), main = "Normal Distribution: Mean = 0, Standard Deviation = 1")
-```
 
-Figure 1. Normal Distribution
+# Figure 1. Normal Distribution
 
+# Figure 1 indicates that the data that is symmetrically distributed, such that there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
 
-Figure 1 indicates that the data that is symmetrically distributed, such that there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
-
-```{r}
 test <- rbeta(1000000, shape1 = 2, shape2 = 1000)
 plot(density(test), main = "Beta Distribution: Shape 1 = 2, Shape 2 = 1000")
-```
 
-Figure 2. Example of a positively skewed distribution.  
-
+# Figure 2. Example of a positively skewed distribution.  
 
 ```{r}
 test <- rbeta(1000000, shape1 = 1000, shape2 = 2)
 plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
+
+# Figure 3. Example of a negatively skewed distribution.
+
+# Displaying data in this manner provides a visual means to determine if your data has a wide, flat, narrow, peaked, normal, or skewed distribution.  
 ```
-
-Figure 3. Example of a negatively skewed distribution.
-
-
-Displaying data in this manner provides a visual means to determine if your data has a wide, flat, narrow, peaked, normal, or skewed distribution.  
 
 Next will review the `hist` function which plots a histogram.  
 
@@ -395,94 +424,8 @@ ArcGIS also provides the capability of creating QQplots for data associated with
 A more detailed explanation of QQplots may be found at the ESRI webpage:  
 [http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//00310000000q000000](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//00310000000q000000)  
 
-###<a id="norm")></a>4.6  Assessing normality  
+###<a id="transform")></a>4.6  Transformations
 
-What is a normal distribution and why should you care? Many statistical tests are based on the properties of a normal distribution. Using certain tests on data that are not normally distributed can be misleading or incorrect. Most tests that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help examine your data and proceed accordingly.  
-
-A normal distribution is also known as a Gaussian distribution or the colloquial "Bell Curve". A normal distribution has the following properties (Lane):  
-
- 1. Normal distributions are symmetric around their mean 
- 2.	The mean, median, and mode of a normal distribution are equal 
- 3.	The area under the normal curve is equal to 1.0 
- 4.	Normal distributions are denser in the center and less dense in the tails 
- 5.	Normal distributions are defined by two parameters, the mean and the standard deviation
- 6.	68% of the area of a normal distribution is within one standard deviation of the mean
-
-![R GUI image](figure/ch4_fig33.jpg)    
-
- 7.7.  Approximately 95% of the area of a normal distribution is within two standard deviations of the mean.  
-
-![R GUI image](figure/ch4_fig34.jpg)  
-
-Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically Normal, Bimodal or Skewed:  
-
-![R GUI image](figure/ch4_fig35.jpg)
-
-Figure 12. Sample histograms    
-
-Occasionally distributions are Uniform, or nearly so:  
-
-![R GUI image](figure/ch4_fig36.jpg)
-
-Figure 13. Uniform distribution  
-
-The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) may be used to bolster the graphical examination of your data and are available through Rcmdr,  
-
-![R GUI image](figure/ch4_fig37.jpg)  
-
-and the Geostatistical Analyst  Histogram Tool in ArcGIS. A rule of thumb for interpreting skewness suggested by Bulmer (1979) follows:  
-
- * If skewness is less than 1 or greater than +1, the distribution is highly skewed
- * If skewness is between 1 and ??? or between ??? and +1, the distribution is moderately skewed
- * If skewness is between ??? and ???, the distribution is approximately symetric  
- 
-Statistical tests for normality that utilize Kurtosis and Skewness are available with the fBasics package in R  including:  
-
- * Kolmogorov-Smirnov
- * Shapiro-Wilk
- * Jarque-Bera
- * Da'Agostino  
- 
-Using the sample data. the default test uses the Shapiro-Wilk method:  
-
-```{r, eval=FALSE} 
-normalTest(h$clay)
-```
-Install or load the fBasics package if you receive an error:  
-
-install.packages("fBasics", dep=TRUE, repos='http://cran.case.edu/')      
-library(fBasics) # Add the fBasics package  
-
-
-![R GUI image](figure/ch4_fig38.jpg)  
-
-The null hypothesis for the test is: "this sample comes from a normal population". The output has a p value of 0.1867, which is fairly high, so the null hypothesis would not be rejected.  The Jarque-Bera test also returns a high p  
-
-```{r, eval=FALSE}
-jarqueberaTest(h$clay)
-```
-
-![R GUI image](figure/ch4_fig39.jpg)  
-
-The Da'Agostino test returns:  
-
-```{r, eval=FALSE}
-dagoTest(h$clay)
-```
-
-![R GUI image](figure/ch4_fig40.jpg)  
-
-Which lets you know this test will only run when there are at least 20 sample points.  
-
-The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable, i.e. Low, RV and High values. Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, like Figure 14, using standard deviation as a parameter does not provide useful information of the data distribution.  
-
-![R GUI image](figure/ch4_fig41.jpg)
-
-Figure 14. Skewed distribution  
-
-The dataset for Figure 14 has a mean of ~6.9, a median of 5 and a standard deviation is ~6.1. Using the standard deviation or the mean to populate the low, rv and high values would not be appropriate. As mentioned in section 4.2 and 4.3, the median and a specified quantile(percentile) would be the most foolproof measures for assigning these values, performing uniformly well for normally as well as non-normally distributed data.  
-
-There is a suite of statistical tools available for data that is not normally distributed called nonparametric methods. These will be discussed in subsequent chapters.  
 
 
 ###<a id="circ")></a>4.7  Special cases - Circular data and pH
@@ -604,13 +547,8 @@ What is considered highly correlated? A good rule of thumb is anything with a va
 
 Negative values indicate a negative relationship between variables. In the case of pH80 and e80; as electrical conductivity increases, pH decreases. This is a strong negative correlation of ~ -0.85.  
 
-###<a id="auto")></a>4.10  Spatial auto-correlation  
 
-In progress  
-
-###<a id="ref")></a>4.11 References  
-
-Bulmer, M. G. 1979. Principal of Statistics  
+###<a id="ref")></a>4.10 References  
 
 deSmith, M. 2014. Statistical Analysis Handbook  
 [http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  
@@ -633,4 +571,9 @@ Tukey, John. 1977. Exploratory Data Analysis, Addison-Wesley
 
 Tukey, J. 1980. We need both exploratory and confirmatory. The American Statistician, 34:1, 23-25  
 
-Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340.
+Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract)
+
+
+###<a id="add")></a>4.11 Additional reading
+
+Diez, D.M., Barr, C.D., and Cetinkaya-Rundel, M., 2015. OpenIntro Statistics. 3rd edition. openintro.org. [https://www.openintro.org/stat/](https://www.openintro.org/stat/)
