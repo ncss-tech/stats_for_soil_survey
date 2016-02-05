@@ -19,11 +19,11 @@ Assuming that the rpart and randomForest packages are already installed on your 
 ```{r, warning=FALSE, message=FALSE}
 library(rpart)
 library(randomForest)
+library(rpart.plot)
 
 file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(file, destfile = "soildata.csv")
 soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
-
 
 ```
 
@@ -41,7 +41,7 @@ soildata$spodint<-ordered(soildata$spodint)
 
 ```
 
-If you wanted to create a classification tree for spodint using all of the variables, you would simply type: rpart(spodint ~ ., data=soildata). Since the soildata dataset contains variables such as FID and NASIS_Pedo that are site observation labels, it is not wise to include all variables in the model. Instead, you want to define which variables the model should use. 
+If you wanted to create a classification tree for spodint using all of the variables, you would simply type: `rpart(spodint ~ ., data=soildata)`. Since the soildata dataset contains variables such as FID and NASIS_Pedo that are site observation labels, it is not wise to include all variables in the model. Instead, you want to define which variables the model should use. 
 
 ```{r, fig.width=7, fig.height=8}
 spodintmodel<-rpart(spodint~x+y+Overtype+Underconifer+Oi+Oe+Oa+Otot+epipedon+subgroup+order+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "class")
@@ -65,7 +65,7 @@ text(spodintmodel2, cex=0.8)
 
 ```
 
-The decision tree got more complex when soil order and subgroup were omitted. Also, 0.5 and 1.5 were omitted from the terminal nodes. One way to compare the two models is to use the function: printcp ( ).
+The decision tree got more complex when soil order and subgroup were omitted. Also, 0.5 and 1.5 were omitted from the terminal nodes. One way to compare the two models is to use the function `printcp()`:
 
 ```{r}
 printcp(spodintmodel)
@@ -73,7 +73,7 @@ printcp(spodintmodel2)
 
 ```
 
-The printcp ( ) funtion generates a cost complexity parameter table that provides the complexity parameter value (CP), relative model error (1 - relative error = ~variance explained), error estimated from a 10-fold cross validation (xerror), and the standard error of the xerror (xstd). The CP values control the size of the tree; the greater the CP value, the fewer the number of splits in the tree. To determine the optimal CP value, rpart automatically performs a 10-fold cross validation. The optimal size of the tree is generally the row in the CP table that minimizes all error with the fewest branches. Another way to determine the optimal tree size is to use the plotcp ( ) function. This will plot the xerror versus cp value and tree size. 
+The `printcp()` funtion generates a cost complexity parameter table that provides the complexity parameter value (CP), relative model error (1 - relative error = ~variance explained), error estimated from a 10-fold cross validation (xerror), and the standard error of the xerror (xstd). The CP values control the size of the tree; the greater the CP value, the fewer the number of splits in the tree. To determine the optimal CP value, rpart automatically performs a 10-fold cross validation. The optimal size of the tree is generally the row in the CP table that minimizes all error with the fewest branches. Another way to determine the optimal tree size is to use the `plotcp()` function. This will plot the xerror versus cp value and tree size. 
 
 ```{r}
 plotcp(spodintmodel)
@@ -81,7 +81,7 @@ plotcp(spodintmodel2)
 
 ```
 
-The optimal CP value is 0.099 for spodintmodel and 0.034 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the prune ( ) function.
+The optimal CP value is 0.099 for spodintmodel and 0.034 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
 
 ```{r, fig.width=7, fig.height=8}
 pruned<-prune(spodintmodel, cp=0.099)
@@ -96,12 +96,35 @@ text(pruned2, cex=0.8)
 
 ```
 
-Spodintmodel explained approximately 83% of the variance in the data while spodintmodel2 only explained 41%. It is evident that soil order and subgroup greatly influence spodic intensity.  
+Spodintmodel explained approximately 83% of the variance in the data while spodintmodel2 only explained 41%. It is evident that soil order and subgroup greatly influence spodic intensity, but is that useful for prediction? 
+
+Another way to visualize rpart's decison tree and model performance is to use the rpart.plot package. 
+
+```{r, fig.width=6, fig.height=6}
+rpart.plot(pruned2, extra=3) #extra=3 displays the missclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
+
+rpart.plot(pruned2, extra=103) #adding 100 to the extra setting displays the percentage observations in the node
+
+```
+
+The rpart.plot package is recommended for plotting rpart trees. The examples above all deal with classification trees which result in categorical terminal nodes determined by majority votes. In a regression tree model, terminal nodes reflect the mean of the observations in that node. Let's build a regression tree using the soildata dataset to predict total O horizon thickness. 
+
+```{r}
+spodintmodel3<-rpart(Otot~x+y+Overtype+Underconifer+spodint+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "anova")
+
+printcp(spodintmodel3)
+pruned3<-prune(spodintmodel3, cp=0.050419)
+prp(pruned3,type=1,extra=1,branch=1) #prp is another function in the rpart.plot package that has numerous plot customization options
+
+printcp(pruned3)
+
+```
+
 
 <br/>
 
 ##8.2 Random Forest
-The randomForest algorithm fits hundreds to thousands of CART models to random subsets of input data and combines the trees for prediction. Similarly to rpart, randomForest allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. Unlike rpart, the randomForest algorithm does not straight forwardly handle missing values with surrogate splits. There is a function called rfImpute ( ) that uses a proximity matrix from the randomForest to populate missing values with either the weighted average of the non-missing observations (weighted by the proximities) for continuous predictors or the category with the largest average proximity for categorical predictors. 
+The randomForest algorithm fits hundreds to thousands of CART models to random subsets of input data and combines the trees for prediction. Similarly to rpart, randomForest allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. Unlike rpart, the randomForest algorithm does not straight forwardly handle missing values with surrogate splits. There is a function called `rfImpute()` that uses a proximity matrix from the randomForest to populate missing values with either the weighted average of the non-missing observations (weighted by the proximities) for continuous predictors or the category with the largest average proximity for categorical predictors. 
 
 Going back to the soildata dataset, it is also of particular interest to determine what properties best predict total O horizon thickness (Otot). Just like rpart, randomForest has the same basic model function: (y ~ x).
 
@@ -117,7 +140,11 @@ plot(rf)  ##out of bag (OOB) error rate versus number of trees
 
 ```
 
-The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 40% of the variance and produced a mean square error (sum of squared residuals divided by n) of 21 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly. This is due to the random subsetting and averaging in the randomForest algorithm. The defaults for the number of trees (ntree) and number of variables tried at each split (mtry) may need to be adjusted to explain more variance in the data. For most datasets, manually tweaking these parameters and examining the statistical summary is often sufficient. The tuneRF ( ) function can be used to determine the optimal mtry value, but some users have claimed that this algorithm leads to bias. Feel free to manually tweak the ntree and mtry settings to see how they effect the overall model performance. 
+The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 40% of the variance and produced a mean square error (sum of squared residuals divided by n) of 21 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly due to the random subsetting and averaging in the randomForest algorithm. 
+
+Recall that the rpart model that we constructed earlier for Otot produced a relative error of ~57%, meaning that the rpart model explained approximately 43% of the variance. In this example, the pruned rpart model performed slightly better (meaning that it was able to explain more variance) than the rf model. 
+
+The defaults for the number of trees (`ntree`) and number of variables tried at each split (`mtry`) may need to be adjusted in the `randomForest` command to explain more variance in the data and to reduce model over-fitting. For most datasets, manually tweaking these parameters and examining the statistical summary is often sufficient. The `tuneRF()` function can be used to determine the optimal `mtry` value, but some users have claimed that this algorithm leads to bias. Feel free to manually tweak the `ntree` and `mtry` settings to see how they effect the overall model performance. 
 
 Another way to assess the rf model is to look at the variable importance plot. 
 
@@ -137,7 +164,7 @@ In the rf model, it is apparent that spodint is the most important variable used
 <br/>
 
 ##8.3 Prediction using Tree-based Models
-As with any modeling technique, tree-based models can be used for prediction and can be spatially interpolated using environmental covariates. In order to spatially interpolate the model using environmental covariates, R requires a raster stack. Below is an example of how to perform a raster stack and use the predict ( ) function for our randomForest regression model:
+As with any modeling technique, tree-based models can be used for prediction and can be spatially interpolated using environmental covariates. In order to spatially interpolate the model using environmental covariates, R requires a raster stack. Below is an example of how to perform a raster stack and use the `predict()` function for our randomForest regression model:
 
 ```{r}
 rasters<-stack(list.files(getwd(),pattern="img$",full.names=FALSE)) ##combines rasters with a .img file extension stored in the working directory
