@@ -23,7 +23,7 @@ html_document:
  * [4.10 Spatial auto-correlation](#auto)      
  * [4.11 References](#ref)   
 
-Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This will be done through conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
+Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This typcially done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
 
 Filliben (2004), described EDA as: 
 *an approach/philosophy for data analysis that employs a variety of techniques (mostly  graphical) to maximize:*
@@ -43,9 +43,9 @@ Tukey (1980) summarized:
  2.	A flexibility, AND  
  3.	Some graph paper (or transparencies, or both)  
 
-*No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper  and transparencies  are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated.*
+*"No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper  and transparencies  are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated."*
 
-Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the "pictures" (i.e. graphical output) and descriptive statistics we will use to explore our data.  
+Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the 'pictures' (i.e. graphical output) and descriptive statistics we will use to explore our data.  
 
 Descriptive statistics include:  
 
@@ -99,20 +99,20 @@ As noted in Chapter 1, a visual examination of the raw data is possible by looki
 View(h)
 ```
  
-This view is fine for a small dataset, but can be cumbersome for a larger ones. In order to quickly summarize a dataset, simply use the `summary()` function:  
+This view is fine for a small dataset, but can be cumbersome for a larger ones. In order to quickly summarize a dataset, simply use the `summary()` function. However even for our small example dataset the output can be volumnous. Therefore in the interest of saving space we'll only look at a sample of columns.  
 
 ```{r}
 vars <- c("genhz", "clay", "total_frags_pct", "effervescence")
 summary(h[vars])
 ```
 
-This is a generic R function that will return a preprogrammed summary for any R object. Because *h* is a dataframe, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If some of these metrics look unfamiliar to you, don't worry we'll cover they shortly.
+The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because *h* is a dataframe, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If any of these metrics look unfamiliar to you, don't worry we'll cover they shortly.
 
 When you do have missing data and the function you want to run will not run with missing values, the following options are available:  
 
- 1. Exclude all rows or columns that contain missing values using  the function `na.exclude()`, such as `r h2 <- na.exclude(h)`. This can be wasteful though because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value.
+ 1. Exclude all rows or columns that contain missing values using  the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value.
  2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h[is.na(h)] <- 0`.
- 3. Read the help file for the function you're attempting to use. Many functions have additional arguements for dealing with missing values.
+ 3. Read the help file for the function you're attempting to use. Many functions have additional arguements for dealing with missing values, such as `na.rm`.
 
 A quick check for typos would be to examine the list of levels for a factor or character, such as:  
 
@@ -123,16 +123,17 @@ unique(h$hzname) # for characters and factors
 sort(unique(h$hzname)) # sort the results
 ```
 
-If the `unique()` function returned typos such as "BT" or "B t", you would have to fix your original dataset or you could make as adjustment in R, such as:
+If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make as adjustment in R, such as:
 
 ```{r, eval=FALSE}
 h$hzname[h$hzname == "BT"] <- "Bt"
 ```
 
+Typo errors such as these are in old NASIS pedon data.
 
 ###<a id="freq")></a>4.1  Frequency distribution  
 
-Now that missing values and coding errors have been checked and corrected, a graphical depiction of the sample data distribution in the form of a bar graph for nominal data, or a histogram for continuous data conveys a wealth of information.  
+Now that we've checked for missing values and typos and made correcitons, we can graphically examine the sample data distribution of our integer and numeric data.
 
 An idealized normal distribution is shown in Figure 1:  
 
@@ -144,14 +145,14 @@ plot(density(test), main = "Normal Distribution: Mean = 0, Standard Deviation = 
 Figure 1. Normal Distribution
 
 
-Figure 1 indicates that the data is symmetrically distributed, such that there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
+Figure 1 indicates that the data that is symmetrically distributed, such that there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
 
 ```{r}
 test <- rbeta(1000000, shape1 = 2, shape2 = 1000)
 plot(density(test), main = "Beta Distribution: Shape 1 = 2, Shape 2 = 1000")
 ```
 
-Figure 2. Skewed example 1  
+Figure 2. Example of a positively skewed distribution.  
 
 
 ```{r}
@@ -159,12 +160,12 @@ test <- rbeta(1000000, shape1 = 1000, shape2 = 2)
 plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 ```
 
-Figure 3. Skewed example 2  
+Figure 3. Example of a negatively skewed distribution.
 
 
-Displaying data in this manner provides a visual means to determine if your data has a wide, flat, narrow, peaked, normal, or skewed distribution as in Fig. 1, 2 or 3.  
+Displaying data in this manner provides a visual means to determine if your data has a wide, flat, narrow, peaked, normal, or skewed distribution.  
 
-Next will review the histogram function:  
+Next will review the `hist` function which plots a histogram.  
 
 ```{r}
 hist(h$clay, col = "grey")
@@ -185,19 +186,22 @@ plot(test)
 Figure 6. The Kernel density plot depicts a smoothed line of the distribution  
 
 
+Compared to the histogram where the y-axis represents the number (i.e. frequencey) of observations, the y-axis for the density plot represents the proportion or probability of observing any given value.
+
 ###<a id="cent")></a>4.2  Measures of central tendency  
 
 These are measures to determine the mid-point of the range of observed samples. The mean and median are the most commonly used measures for our purposes.
 
-**Mean** - is the arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which sums all the X values in the sample and divide by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
+**Mean** - is the arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which sums ( $\sum$ ) all the X values in the sample and divide by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
 
-The mean clay content from the antigo dataset may be determined:  
+The mean clay content from the loafercreek dataset may be determined:  
 
 ```{r}
 clay <- na.exclude(h$clay) # first remove missing values and create a new vector
 
-mean(clay) # or
+mean(clay)
 
+# or
 mean(h$clay, na.rm = TRUE)
 ```
 
@@ -217,8 +221,9 @@ median(clay)
 To determine the median by group or category, use the aggregate command as discussed in section 4.0:  
 
 ```{r}
-aggregate(clay ~ genhz, data = h, median) # or using the summary function we could get the mean and median
+aggregate(clay ~ genhz, data = h, median)
 
+# or using the summary function we could get the mean and median
 aggregate(clay ~ genhz, data = h, summary)
 
 
@@ -231,16 +236,16 @@ test <- density(clay)
 plot(test)
 amean <- mean(clay)
 amed <- median(clay)
-abline(v = amed, col = "green") #plot the median as a gree vertical line 
-abline(v = amean, col = "red") #plot the mean as a red vertical line
+abline(v = amed, col = "green") # plot the median as a gree vertical line 
+abline(v = amean, col = "red") # plot the mean as a red vertical line
 
 frags <- h$total_frags_pct
 test <- density(frags)
 plot(test)
 amean <- mean(frags)
 amed <- median(frags)
-abline(v = amed, col = "green") #plot the median as a gree vertical line 
-abline(v = amean, col = "red") #plot the mean as a red vertical line
+abline(v = amed, col = "green") # plot the median as a gree vertical line 
+abline(v = amean, col = "red") # plot the mean as a red vertical line
 ```
 
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
@@ -279,8 +284,9 @@ var(clay)
 The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:  
 
 ```{r}
-sd(clay) # or
+sd(clay)
 
+# or
 sqrt(var(clay))
 ```
 
@@ -304,8 +310,9 @@ quantile(clay, c(0.25, 0.75))
 The default for the `quantile()` function returns the the min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summmery originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
 
 ```{r}
-quantile(clay) # or
+quantile(clay)
 
+# or
 quantile(clay, c(0.05, 0.5, 0.95))
 ```
 
@@ -316,8 +323,9 @@ Thus, for the five number summary 25% of the observations fall between each of t
 To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using tables.
 
 ```{r}
-table(h$genhz) # or
+table(h$genhz)
 
+# or
 summary(h$genhz)
 ```
 
@@ -408,11 +416,15 @@ A normal distribution is also known as a Gaussian distribution or the colloquial
 
 Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically Normal, Bimodal or Skewed:  
 
-![R GUI image](figure/ch4_fig35.jpg)Figure 12. Sample histograms    
+![R GUI image](figure/ch4_fig35.jpg)
+
+Figure 12. Sample histograms    
 
 Occasionally distributions are Uniform, or nearly so:  
 
-![R GUI image](figure/ch4_fig36.jpg)Figure 13. Uniform distribution  
+![R GUI image](figure/ch4_fig36.jpg)
+
+Figure 13. Uniform distribution  
 
 The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) may be used to bolster the graphical examination of your data and are available through Rcmdr,  
 
