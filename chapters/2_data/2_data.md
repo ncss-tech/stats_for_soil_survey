@@ -1,6 +1,6 @@
 ---
-title:
-author:
+title: Chapter 2 The data we use
+author: Tom D'Avello, Jay Skovlin, Stephen Roecker
 date: "Friday, February 27, 2015"
 output: html_document
 html_document:
@@ -8,153 +8,392 @@ html_document:
 ---
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
-##CHAPTER 2: THE DATA WE USE
+# Chapter 2: The data we use
 
-- [2.1 Data Type](#datatype)
-- [2.2 Accuracy and Precision](#acc) 
-- [2.3 Preparing data for R](#data)
-- [2.4 Data in R](#datainR)
-- [2.4.1 Basic data objects](#dataobjects)
+- [2.1 Data Types](#datatypes)
+- [2.2 Accuracy, precision, and significant figures](#acc) 
+- [2.3 Data in R](#tidydata)
+- [2.3.1 Basic data objects](#datatypeinr)
 - [2.4 The soil project collection (spc) object](#aqp)
+- [2.6 R Tools](#rtools)   
 - [2.4 ArcGIS Tools](#tools)  
 - [2.5 TEUI Tools](#teui)       
-- [2.6 R Tools](#rtools)   
 - [2.7 References](#ref)
 
  
-###<a id="datatype")></a>2.1  Data Type   
+##<a id="datatypes")></a>2.1  Data types   
 
-Refers to the _measurement scale_ used. Four measurement scales, in order of decreasing precision are recognized:  
+Data type refers to the _measurement scale_ used. The data type controls the type of statistical operation that can be performed [(Stevens, 1946)](#ref). Four measurement scales, in order of decreasing precision are recognized:  
 
-**Ratio** - Measurements having a constant interval size and a true zero point. Examples include measurements of length, weight, volume, rates, length of time, counts of items and temperature in Kelvin  
+**Ratio** - measurements having a constant interval size and a true zero point. Examples include: measurements of length, weight, volume, rates, length of time, counts of items and temperature in Kelvin.
 
-**Interval** - Measurements having a constant interval size but no true zero point. Examples include Temperature (excluding Kelvin), direction (e.g. slope aspect), time of day. Specific statistical procedures are available to handle circular data like slop aspect  
+**Interval** - measurements having a constant interval size but no true zero point. Examples include: temperature (excluding Kelvin), direction (e.g. slope aspect), time of day. Specific statistical procedures are available to handle circular data like slop aspect.
 
-**Ordinal** - Members of a set are differentiated by rank. Examples include Soil interpretation classes (e.g., slight, moderate, severe), soil structure grade (e.g.,structureless, weak, moderate, strong)  
+**Ordinal** - members of a set are differentiated by rank. Examples include Soil interpretation classes (e.g., slight, moderate, severe), soil structure grade (e.g.,structureless, weak, moderate, strong) . 
 
-**Nominal** (Categorical) - Members of a set are differentiated by kind. Examples include Vegetation classes, soil map units, geologic units  
+**Nominal** - members of a set are differentiated by kind. Examples include: Vegetation classes, soil map units, geologic units.
 
-The data type controls the type of statistical operation that can be performed [(Stevens)](#ref), 1946.  
+In addition to measurement scale, data types can be categorized by whether their scales are continuous or discontinuous.
 
-####Continuous and Discrete Data 
+**Continuous data** - any measured value.  This includes: ratio and interval scales. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device.
 
-**Continuous Data** - Any measured value. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device  
+**Discrete data** - data with exact values. This includes: ordinal and nominal scales. For example, the number of Quercus alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon.
 
-**Discrete Data** - Data with exact values. For example, the number of Quercus alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon  
+##<a id="acc")></a>2.2  Accuracy, precision, and significant figures  
 
-###<a id="acc")></a>2.2  Accuracy and Precision  
+**Accuracy** - is the closeness of a number to its actual value.
 
-**Accuracy** is the closeness of a number to its actual value  
+**Precision** - is the closeness of repeated measurements to each other.
 
-**Precision** is the closeness of repeated measurements to each other  
+**Significant figures** - the digits in a number that define the precision of a measurement. The value of 6 cm has one significant digit. The implied range is 1 cm. The true value lies between 5.50 and 6.49. The value of 6.2 cm has two significant digits. The implied range is 0.1 cm. The true value lies between 6.150 and 6.249. The implied precision is greater for the number 6.0 cm than 6 cm. See page 37 of the [Keys to Soil Taxonomy](http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/class/taxonomy/?cid=nrcs142p2_053580) for a discussion of how significant figures are applied in Soil Taxonomy. 
 
-####Significant Figures  
+##<a id="tidydata")></a>2.3  Tidy data  
 
-The digits in a number that define the accuracy of a measurement. The value of 6 cm has one significant digit. The implied range is 1 cm. The true value lies between 5.50 and 6.49. The value of 6.2 cm has two significant digits. The implied range is 0.1 cm. The true value lies between 6.150 and 6.249. The implied accuracy is greater for the number 6.0 cm than 6 cm.  
-
-###<a id="data")></a>2.3  Preparing data for use in R  
-
-When preparing data for statistical analysis, a nicely formatted summary table is not appropriate. The data needs to be basic and compact.  The required configuration will be a comma delimited text file, where columns contain dependent and independent variables and rows contain individual observations of the variables.  Using sand content as an example, you might collect or present your data like this:  
+When preparing data for statistical analysis, a nicely formatted summary table is not appropriate. The data needs to be in its most raw format, similar to how many tables are structured in NASIS. The generally preferred configuration is a comma delimited text file, where columns contain variables and rows contain individual observations of the variables. Using sand content as an example, you might collect or present your data like this:  
 
 ![R GUI image](figure/ch2_fig1.jpg)  
 
-However, for use in R, the data needs to be organized with total sand content as one long column – with headers for organization.  Remove spaces from column headers, and simplify and standardize the coding of categorical variables.  There should be only 1 header row followed by data as noted in this formatted table.  
-![R GUI image](figure/ch2_fig2.jpg)  
+However, for analysis purpose the data needs to be organized with total sand content as one long column with headers for organization. It is also best to remove spaces from column headers beforehand, and simplify and standardize the coding of categorical variables.  There should be only 1 header row followed by data as noted in this formatted table. For an exhaustive discussion on tidy data see [Wickham (2014)](http://www.jstatsoft.org/article/view/v059i10).
 
+
+```r
+sand <- read.csv("C:/workspace/stats_for_soil_survey/trunk/data/sand_example.csv")
+
+library(knitr)
+
+kable(head(sand))
+```
+
+
+
+|location |landuse |master | depth| sand|
+|:--------|:-------|:------|-----:|----:|
+|city     |crop    |A      |    14|   19|
+|city     |crop    |B      |    25|   21|
+|city     |pasture |A      |    10|   23|
+|city     |pasture |B      |    27|   34|
+|city     |range   |A      |    15|   22|
+|city     |range   |B      |    23|   23|
 The same table in a format suitable for use by R  
 
-location,landuse,horizon,depth,sand  
-city,crop,A,14,19    
-city,crop,B,25,21  
-city,pasture,A,10,23    
-city,pasture,B,27,34  
-city,range,A,15,22  
-city,range,B,23,23  
-farm,crop,A,12,31  
-farm,crop,B,31,35  
-farm,pasture,A,17,30  
-farm,pasture,B,26,36  
-farm,range,A,15,25  
-farm,range,B,24,29  
-west,crop,A,13,27  
-west,crop,B,29,25  
-west,pasture,A,11,21  
-west,pasture,B,31,26  
-west,range,A,14,23  
-west,range,B,24,24  
 
-If you copy and paste the comma delimited text, starting with the header line of location, and save it as a text file named “sample_table.txt” in the \ C:/Temp\ folder, you can open R and run these commands by copying text from the boxes and pasting into the R prompt:  
+##<a id="dataobjects")></a>2.4 Data structures in R 
+
+R recognizes a dozen or so data structures including: vectors, lists, arrays, matrices, data frames, and several spatial data formats. As a soil scientist, we most often deal with data frames, like the sand file we imported into R in Chapter 1. It is important to understand what data structure you are using or creating and how it is handled in R. 
 
 
-###<a id="dataobjects")></a>2.4 Data Objects 
-
-R recognizes a dozen or so data objects (structures of data) including vectors, lists, arrays, matrices, and data frames. As a soil scientist, we most often deal with data frames, like the sand file we imported in R in the exercise above. It is important to understand what data object you are using or creating and how it is handled in R. 
-
-
-**VECTORS**  
-Vectors are the most fundamental datatype in R. All other datatypes are simply some combination of vectors. Vectors are 1-dimensional ordered collections of individual elements. You can think of these as a column from a table. These elements can be numerical, character, or logical. Examples include:
-
-![R GUI image](figure/ch1_fig5_rgui.jpg)  
-
-**LISTS**  
-Lists are ordered collections of multiple R objects. In the example below, the R objects created are x, y, and z. The list function ‘list ( )’ simply serves as a storage bin for x, y, and z. Many outputs of R functions are actually lists. In fact, data frames, like the sand dataset, are actually lists. 
-
-![R GUI image](figure/ch1_fig6_rgui.jpg)  
-
-**ARRAYS**    
-Arrays are multi-dimensional matrices that are limited to columns having the same data format (numeric, character, factor, etc.) and same length. The array( ) function creates arrays. The "dim" option gives the number of rows, columns, and layers, in that order.  
-
-![R GUI image](figure/ch1_fig7_rgui.jpg)  
-
-**MATRICES**  
-
-Matrices are 2-dimensional arrays that are limited to columns having the same data format (numeric, character, factor, etc.) and same length. A common command for creating a matrix in R is the matrix function that requires the following inputs: matrix (vector, number of rows, number of columns).  
-
-![R GUI image](figure/ch1_fig8_rgui.jpg)  
-
-**DATA FRAMES**  
-
-Data frames are matrices that allow different columns to have different data formats (numeric, character, factor, etc.) and lengths.  
-
-![R GUI image](figure/ch1_fig9_rgui.jpg)  
-
-MISSING DATA  
-
-In R, missing numerical and categorical values within a dataset are displayed with the symbol NA (not available). Impossible numerical and categorical values, like ones divided by 0, are represented by the symbol NaN (not a number). Some functions in R will not run if your data contain missing values. One way to test for missing values is to **type**:  
-
-```r
-any(is.na(sand))
-```
-
-```
-## [1] FALSE
-```
-
-R will return TRUE if there is a missing value within a given row and column or FALSE if there is not. In our sand example, there were no missing values, so R returned all combinations as FALSE. If you wanted to quickly find out which one is missing, type:  
+**Vectors**  
+Vectors are the most fundamental data structure in R. All other data structures are simply some combination of vectors. Vectors are 1-dimensional ordered collections of individual elements. You can think of these as a column from a table. These elements can be numerical, character, or logical. Examples include:
 
 
 ```r
-which(is.na(sand))
+vector1 <- c(0, 1, 2, 3, 4, 5, NA) # integers
+vector2 <- seq(1.1, 2, 0.1) # numeric
+vector3 <- c("a", "b", "c", "d", NA) # characters
+vector4 <- c(TRUE, FALSE, NA) # logical
+
+vector1
 ```
 
 ```
-## integer(0)
+## [1]  0  1  2  3  4  5 NA
 ```
 
-In our example with the sand dataset, `integer (0)` is returned because we do not have any missing values. When you have missing data and the function you want to run will not run with missing values, you have the following options:  
+```r
+vector2
+```
 
- 1. Exclude all rows or columns that contain missing values `na.exclude()`.
- 2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column `sand[is.na(sand)]<- 0)` (in this example df represents data with NA values and the function is recoding all NA values as 0).
- 3.	Use data mining algorithm to predict missing value (data mining algorithms include decision trees, clustering, regression, etc.; see Ch. 9-11).
-These options will be further explored in Ch. 2, 9-11.  
+```
+##  [1] 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0
+```
 
-**Using data from NASIS**  
+```r
+vector3
+```
 
-Data from a selected set of NASIS may be used as described in this [Job Aid](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1237479&ext=pdf) on “How to Create an ODBC Connection and Setup SoilDB for Use with R”.  
+```
+## [1] "a" "b" "c" "d" NA
+```
 
-**Using data from associated raster layer**  
+```r
+vector4
+```
 
-Assume you have 50 observations across your area of interest contained in a point file in ArcGIS with numerous observed soil properties. You would also like to consider variables like slope, profile curvature, solar insolation, topographic wetness index, relative position and elevation in your analysis. Before proceeding, it is preferable to meet the following conditions:  
+```
+## [1]  TRUE FALSE    NA
+```
+
+**Matrices**  
+
+Matrices are 2-dimensional vectors that are limited to columns having the same mode (e.g. numeric, character, logical, etc.) and same length. A common command for creating a matrix in R is the `matrix()` function that requires the following inputs: matrix (vector, number of rows, number of columns).  
+
+
+```r
+m <- matrix(1:10, nrow = 5, ncol = 2)
+m
+```
+
+```
+##      [,1] [,2]
+## [1,]    1    6
+## [2,]    2    7
+## [3,]    3    8
+## [4,]    4    9
+## [5,]    5   10
+```
+
+**Arrays**    
+Arrays are multi-dimensional matrices that are also limited to columns having the same mode (e.g. numeric, character, logical, etc.) and length. The `array()` function creates arrays. The "dim" option gives the number of rows, columns, and layers, in that order.  
+
+
+```r
+a <- array(1:8, dim = c(4, 2, 2))
+a
+```
+
+```
+## , , 1
+## 
+##      [,1] [,2]
+## [1,]    1    5
+## [2,]    2    6
+## [3,]    3    7
+## [4,]    4    8
+## 
+## , , 2
+## 
+##      [,1] [,2]
+## [1,]    1    5
+## [2,]    2    6
+## [3,]    3    7
+## [4,]    4    8
+```
+
+**Lists**  
+Lists are ordered collections of multiple R objects. In the example below, the R objects created are land use, location, and sand. The `list()` function simply serves as a storage bin for land use, location, and sand. Many outputs of R functions are actually lists.
+
+
+```r
+landuse <- sand$landuse
+location <- sand$location
+sand2 <- sand$sand
+
+sand_list <- list(landuse, location, sand2)
+sand_list
+```
+
+```
+## [[1]]
+##  [1] crop    crop    pasture pasture range   range   crop    crop   
+##  [9] pasture pasture range   range   crop    crop    pasture pasture
+## [17] range   range  
+## Levels: crop pasture range
+## 
+## [[2]]
+##  [1] city city city city city city farm farm farm farm farm farm west west
+## [15] west west west west
+## Levels: city farm west
+## 
+## [[3]]
+##  [1] 19 21 23 34 22 23 31 35 30 36 25 29 27 25 21 26 23 24
+```
+
+
+**Data frames**  
+
+Data frames, like the sand data set, are actually lists that are formatted to resemble tables. Data frames are similar to matrices, but allow different columns to have different modes (e.g. numeric, character, factor, etc.).
+
+
+```r
+sand
+```
+
+```
+##    location landuse master depth sand
+## 1      city    crop      A    14   19
+## 2      city    crop      B    25   21
+## 3      city pasture      A    10   23
+## 4      city pasture      B    27   34
+## 5      city   range      A    15   22
+## 6      city   range      B    23   23
+## 7      farm    crop      A    12   31
+## 8      farm    crop      B    31   35
+## 9      farm pasture      A    17   30
+## 10     farm pasture      B    26   36
+## 11     farm   range      A    15   25
+## 12     farm   range      B    24   29
+## 13     west    crop      A    13   27
+## 14     west    crop      B    29   25
+## 15     west pasture      A    11   21
+## 16     west pasture      B    31   26
+## 17     west   range      A    14   23
+## 18     west   range      B    24   24
+```
+
+##<a id="rtools")></a>2.4  R tools for extracting spatial data
+
+In soil survey we're typically interested in the values for spatial data at point locations or whole polygons. This gives us information the geomorphic setting of our soil observations. With this information we would like to predicts the spatial distribution of soil properties and classes at unobserved sites.
+
+### Extracting point data from a raster
+
+The examples presented in sections 5.1 and 5.2 summarize using traditional metrics like, mean and standard deviation. Other statistics like quantiles are more robust for soil survey purposes. The following script will generate a statistical summary of slope by MUSYM for a SSURGO shapefile. The raster data should be in a common GDAL format like IMAGINE (img) or TIFF.  
+
+**Step 1.**  
+
+Copy this script and paste to an empty Notepad document and save as *��mapunit\_summary\_slope.R* in the same folder where your SSURGO shapefile and slope layer resides.  
+
+
+```r
+# R function to generate statistical summary of MUSYM elevation, slope, aspect, etc. 
+# S. Roecker NRCS
+# set the following parameters accordingly
+# shapefile = shapefile of MUSYM polygons to sample
+# sampleSize = number of samples to systematically (e.g. grids) select from MUSYM polygons
+# Increasing the sampleSize will increase processing time.
+# Excessive sampleSize of 100,000 will generally yield similar statistics as a sampleSize of 10,000 depending on the size of area sampled. 
+# Example 
+# MUSYM.summary("smr_ca795_a.shp", 10000)
+
+MUSYM.summary=function(shapefile,sampleSize){
+  # Import shapefile
+  library(maptools)
+  gpclibPermit()
+  mapunit=readShapePoly("coshocton_mapunits.shp") # Replace this shapfile with your shapefile of interest
+
+  # Sample systemtic regular grid
+  library(sp)
+  mapunit.sample=spsample(mapunit,n=10000,"regular")
+  mapunit.table=cbind(mapunit.sample,over(mapunit.sample,mapunit))
+  mapunit.df=as.data.frame(mapunit.sample)
+
+  # Load grids
+  grid.list=c("slope30.img") # Replace this slope raster with your slope layer 
+
+  library(raster)
+  geodata=stack(c(grid.list))
+  NAvalue(geodata)=-99999
+
+  grid.names=c("Gradient")
+  names(geodata)=c(grid.names)
+
+  # Extract geodata
+  musym.geodata.sample=cbind(extract(geodata,mapunit.sample))
+  
+  # Prep data
+  data<-cbind(mapunit.table,musym.geodata.sample)
+  data$MUSYM=as.factor(data$MUSYM)
+  data$Gradient<-round(data$Gradient,0);  
+  Gradient_levels<-c(0,3,8,15,25,35,70,350); data$Gradient_levels<-cut(data$Gradient,breaks=Gradient_levels); levels(data$Gradient_levels)<-c("0-3","3-8","8-15","15-25","25-35","35-70","70-350")
+  write.csv(data,file="data.csv")
+  
+  ###Create descriptive and graphical summary of map unit###
+  print(summary(data))
+  library(Rcmdr)
+  library(abind)  
+  MUSYM.gradient.percentages=round(rowPercents(xtabs(~MUSYM+Gradient_levels, data=data)),0)
+    
+  write.csv(MUSYM.gradient.percentages,file="MUSYM.gradient.percentages.csv")
+  
+  print(MUSYM.gradient.percentages)
+    
+  library(plyr)
+  MUSYM.gradient.quantiles<-ddply(data,.(MUSYM),function (x) round(quantile(x$Gradient,probs=c(0,0.05,0.5,0.95,1),na.rm=TRUE),0))
+
+  write.csv(MUSYM.gradient.quantiles,file="MUSYM.gradient.quantiles.csv")
+
+  print(MUSYM.gradient.quantiles)
+}
+
+# R function to plot graphical summary of MUSYM elevation, slope, aspect, etc. 
+# set the following parameters accordingly
+# mapunit = data frame generated from MUSYM.summary() function
+# Example - copy and paste the next two lines at R prompt
+# data<-read.csv("data.csv")
+# MUSYM.plot(data)
+#
+# Different break methods
+#Hist(data.sub$Gradient,scale="percent",breaks="Sturges",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
+#Hist(data.sub$Gradient,scale="percent",breaks="scott",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
+
+
+MUSYM.plot=function(mapunit){
+  library(Rcmdr)
+  data=mapunit
+  data$MUSYM=as.factor(data$MUSYM)
+  MUSYM.list=levels(data$MUSYM)
+  for(i in 1:length(MUSYM.list)){
+    data.sub=subset(data,MUSYM==MUSYM.list[i])
+    png(file=paste(MUSYM.list[i],".png",sep=""),width=8.5,heigh=11,units="in",res=200,pointsize=10)
+    par(mfcol=c(3,3))
+    par(pty="m")
+    par(cex=0.8)
+    par(cex.axis=0.8)
+  
+    Hist(data.sub$Gradient,scale="percent",breaks="FD",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
+    dev.off()
+    }
+} 
+```
+
+**Step 2.**  
+
+Edit the script to make sure the shapefile (coshocton_mapunits.shp in this example) and slope layer (slope30.img in this example) names match your file names. There are two places, noted by comments, where the edits should be made. In addition, portions of the script related to Gradient Levels should be edited to match your slope breaks. The script uses slope break of 0-3, 3-8, 8-15, 15-25, 25-35, 35-70, 70-350) 
+
+**Step 3.**  
+
+Open R  
+C
+hange the Directory to the location of your data and script  
+
+Source R code  
+
+![R GUI image](figure/ch5_fig52.jpg)  
+
+At the R prompt type (make sure you use the filename that matches your script and data)  
+
+>MUSYM.summary("coshocton_mapunits", 10000)  
+
+**Step 4.**  
+
+The script creates three *csv* files:  
+
+**data.csv** summary by polygon of mean gradient and gradient level the polygon fits. An excerpt of the table from Excel with polygons highlighted that are outside the range of the named slope class:  
+
+![R GUI image](figure/ch5_fig53.jpg)  
+
+**MUSYM.gradient.percentages.csv** –  percent composition of the map unit by slope class. Values of NaN indicate an insufficient population to sample.  
+
+![R GUI image](figure/ch5_fig54.jpg)  
+
+**MUSYM.gradient.quantiles.csv** – slope value of corresponding quantile. Using CnB in the example below, the minimum slope is 1%, the median is 6%, and the maximum is 30%. The data range for the 5th to 95th quantile (percentile) is 2-14. This indicates that 90% of the map unit has a slope between 2 – 14%.  
+
+![R GUI image](figure/ch5_fig55.jpg)  
+
+**Step 5.**  
+
+Optional histogram representation of slope distribution by mapunit  
+
+At the R prompt type  
+
+```r
+data<-read.csv("data.csv")
+MUSYM.plot(data)
+```
+
+This will produce “png” files for all MUSYMS:  
+
+![R GUI image](figure/ch5_fig56.jpg)  
+
+
+##<a id="tools")></a>2.5  ArcGIS tools for extracting spatial data
+
+### Extracting point data from a raster
+
+This section discusses the use of *Extract Multi Values to Points*, which assigns the cell value of specified raster datasets to existing points. *Extract Values to Points* and *Sample* achieve similar results. These tools are described in the ESRI help section:  
+
+[An_overview_of_the_Extraction_tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/)  
+
+To start assume you have 50 observations across your area of interest contained in a point file in ArcGIS with numerous observed soil properties. You would also like to consider variables like slope, profile curvature, solar insolation, topographic wetness index, relative position and elevation in your analysis. Before proceeding, it is preferable to meet the following conditions:  
 
  - All data conforms to a common projection and datum
  - All raster data have a common cell resolution
@@ -174,20 +413,20 @@ The resulting point file will have the corresponding cell values for slope, prof
 
 ![R GUI image](figure/ch2_fig5.jpg)  
 
-Save the point file as a text file for use in R..
+The resulting point file may also be saved as a text file for use in R.
+
+ArcGIS also provides the capability of creating histograms for data associated with point files using the Geostatistical Analyst:  
+
+![R GUI image](figure/ch4_fig12.jpg)  
 
 
-###<a id="tools")></a>2.4  ArcGIS Tools
+### Extracting zonal statistics from a raster
 
-Section 2.3 discussed the use of “Extract Multi Values to Points”, which assigns the cell value of specified raster datasets to existing points. “Extract Values to Points” and “Sample” achieve similar results. These tools are described in the ESRI help section:  
-
-[http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/)  
-
-Gathering statistics of associated spatial data, for example slope gradient, for a vector dataset like SSURGO is typically achieved by the use of the “Zonal Statistics as Table” tool. The output will be a tabular summary for the specified “Zone”, usually map unit symbol or individual features, i.e. polygons.  
+Gathering statistics of raster for polygons datasets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
 
 Example for summarizing by Map Unit Symbol:  
 
-Open the Zonal Statistics as Table Tool in the Zonal Toolbox  
+Open the Zonal Statistics as Table Tool in the Zonal Toolbox.
 
 ![R GUI image](figure/ch5_fig1.jpg)  
 
@@ -217,7 +456,7 @@ Which lets you view results by polygon and search for outliers or polygons that 
 
 ![R GUI image](figure/ch5_fig8.jpg)  
 
-In this example, 4 polygons of “ChC2”, “Coshocton silt loam, 6 to 15 percent slopes, eroded”, have an average slope greater than 15 percent. Discrepancies like this will need to be investigated and resolved.  
+In this example, 4 polygons of *ChC2*, *Coshocton silt loam, 6 to 15 percent slopes, eroded*, have an average slope greater than 15 percent. Discrepancies like this will need to be investigated and resolved.  
 
 ![R GUI image](figure/ch5_fig9.jpg)  
 
@@ -226,9 +465,9 @@ In another example using a Box plot for assessment of a map unit with a slope cl
 ![R GUI image](figure/ch5_fig10.jpg)  
 
 
-###<a id="teui")></a>2.5  TEUI Tools
+##<a id="teui")></a>2.6  TEUI tools
 
-The TEUI Toolkit works in a similar manner to “Zonal Statistics as Table”, with the added benefit of interactive graphics to aid in the assessment. TEUI is an ArcGIS Add-in and may be installed without Administrator privilege. Additional information and downloads are available here:  
+The TEUI toolkit works in a similar manner to *Zonal Statistics as Table*, with the added benefit of interactive graphics to aid in the assessment. TEUI is an ArcGIS Add-in and may be installed without Administrator privilege. Additional information and downloads are available here:  
 
 [http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html)  
 
@@ -264,7 +503,7 @@ The Toolkit requires the user to specify a folder location to store the database
  
  1.  If the project was recent, click on the project in the Recent dialog box and click Open.  
 
- 2.	If it is older and does not appear in the dialog box, select Browse….and navigate to the project folder location. Select the project and click OK.  
+ 2.	If it is older and does not appear in the dialog box, select **Browse**.and navigate to the project folder location. Select the project and click OK.  
 
 **SECTION 3. Manage geospatial data and calculate statistics**
 
@@ -488,171 +727,14 @@ The statistical data summaries produced by the toolkit can be exported to excel 
 
  2.	Navigate to the location you would like to save the .CSV file. Give the file a name and click **Save**  .  
  
-###<a id="rtools")></a>2.6  R Tools  
 
-The examples presented in sections 5.1 and 5.2 summarize using traditional metrics like, mean and standard deviation. Other statistics like quantiles are more robust for soil survey purposes. The following script will generate a statistical summary of slope by MUSYM for a SSURGO shapefile. The raster data should be in a common GDAL format like IMAGINE (img) or TIFF.  
-
-**Step 1.**  
-
-Copy this script and paste to an empty Notepad document and save as “mapunit\_summary\_slope.R” in the same folder where your SSURGO shapefile and slope layer resides.  
-
-
-```r
-# R function to generate statistical summary of MUSYM elevation, slope, aspect, etc. 
-# S. Roecker NRCS
-# set the following parameters accordingly
-# shapefile = shapefile of MUSYM polygons to sample
-# sampleSize = number of samples to systematically (e.g. grids) select from MUSYM polygons
-# Increasing the sampleSize will increase processing time.
-# Excessive sampleSize of 100,000 will generally yield similar statistics as a sampleSize of 10,000 depending on the size of area sampled. 
-# Example 
-# MUSYM.summary("smr_ca795_a.shp", 10000)
-
-MUSYM.summary=function(shapefile,sampleSize){
-  # Import shapefile
-  library(maptools)
-  gpclibPermit()
-  mapunit=readShapePoly("coshocton_mapunits.shp") ##Replace this shapfile with your shapefile of interest
-
-  # Sample systemtic regular grid
-  library(sp)
-  mapunit.sample=spsample(mapunit,n=10000,"regular")
-  mapunit.table=cbind(mapunit.sample,over(mapunit.sample,mapunit))
-  mapunit.df=as.data.frame(mapunit.sample)
-
-  # Load grids
-  grid.list=c("slope30.img") ##Replace this slope raster with your slope layer 
-
-  library(raster)
-  geodata=stack(c(grid.list))
-  NAvalue(geodata)=-99999
-
-  grid.names=c("Gradient")
-  names(geodata)=c(grid.names)
-
-  # Extract geodata
-  musym.geodata.sample=cbind(extract(geodata,mapunit.sample))
-  
-  # Prep data
-  data<-cbind(mapunit.table,musym.geodata.sample)
-  data$MUSYM=as.factor(data$MUSYM)
-  data$Gradient<-round(data$Gradient,0);  
-  Gradient_levels<-c(0,3,8,15,25,35,70,350); data$Gradient_levels<-cut(data$Gradient,breaks=Gradient_levels); levels(data$Gradient_levels)<-c("0-3","3-8","8-15","15-25","25-35","35-70","70-350")
-  write.csv(data,file="data.csv")
-  
-  ###Create descriptive and graphical summary of map unit###
-  print(summary(data))
-  library(Rcmdr)
-  library(abind)  
-  MUSYM.gradient.percentages=round(rowPercents(xtabs(~MUSYM+Gradient_levels, data=data)),0)
-    
-  write.csv(MUSYM.gradient.percentages,file="MUSYM.gradient.percentages.csv")
-  
-  print(MUSYM.gradient.percentages)
-    
-  library(plyr)
-  MUSYM.gradient.quantiles<-ddply(data,.(MUSYM),function (x) round(quantile(x$Gradient,probs=c(0,0.05,0.5,0.95,1),na.rm=TRUE),0))
-
-  write.csv(MUSYM.gradient.quantiles,file="MUSYM.gradient.quantiles.csv")
-
-  print(MUSYM.gradient.quantiles)
-}
-
-# R function to plot graphical summary of MUSYM elevation, slope, aspect, etc. 
-# set the following parameters accordingly
-# mapunit = dataframe generated from MUSYM.summary() function
-# Example - copy and paste the next two lines at R prompt
-# data<-read.csv("data.csv")
-# MUSYM.plot(data)
-#
-# Different break methods
-#Hist(data.sub$Gradient,scale="percent",breaks="Sturges",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-#Hist(data.sub$Gradient,scale="percent",breaks="scott",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-
-
-MUSYM.plot=function(mapunit){
-  library(Rcmdr)
-  data=mapunit
-  data$MUSYM=as.factor(data$MUSYM)
-  MUSYM.list=levels(data$MUSYM)
-  for(i in 1:length(MUSYM.list)){
-    data.sub=subset(data,MUSYM==MUSYM.list[i])
-    png(file=paste(MUSYM.list[i],".png",sep=""),width=8.5,heigh=11,units="in",res=200,pointsize=10)
-    par(mfcol=c(3,3))
-    par(pty="m")
-    par(cex=0.8)
-    par(cex.axis=0.8)
-  
-    Hist(data.sub$Gradient,scale="percent",breaks="FD",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-    dev.off()
-    }
-} 
-```
-
-**Step 2.**  
-
-Edit the script to make sure the shapefile (coshocton_mapunits.shp in this example) and slope layer (slope30.img in this example) names match your file names. There are two places, noted by comments, where the edits should be made. In addition, portions of the script related to Gradient Levels should be edited to match your slope breaks. The script uses slope break of 0-3, 3-8, 8-15, 15-25, 25-35, 35-70, 70-350) 
-
-**Step 3.**  
-
-Open R  
-C
-hange the Directory to the location of your data and script  
-
-Source R code  
-
-![R GUI image](figure/ch5_fig52.jpg)  
-
-At the R prompt type (make sure you use the filename that matches your script and data)  
-
->MUSYM.summary("coshocton_mapunits", 10000)  
-
-**Step 4.**  
-
-The script creates three “csv” files:  
-
-**data.csv** – summary by polygon of mean gradient and gradient level the polygon fits. An excerpt of the table from Excel with polygons highlighted that are outside the range of the named slope class:  
-
-![R GUI image](figure/ch5_fig53.jpg)  
-
-**MUSYM.gradient.percentages.csv** –  percent composition of the map unit by slope class. Values of NaN indicate an insufficient population to sample.  
-
-![R GUI image](figure/ch5_fig54.jpg)  
-
-**MUSYM.gradient.quantiles.csv** – slope value of corresponding quantile. Using CnB in the example below, the minimum slope is 1%, the median is 6%, and the maximum is 30%. The data range for the 5th to 95th quantile (percentile) is 2-14. This indicates that 90% of the map unit has a slope between 2 – 14%.  
-
-![R GUI image](figure/ch5_fig55.jpg)  
-
-**Step 5.**  
-
-Optional histogram representation of slope distribution by mapunit  
-
-At the R prompt type  
-
-```r
-data<-read.csv("data.csv")
-MUSYM.plot(data)
-```
-
-This will produce “png” files for all MUSYMS:  
-
-![R GUI image](figure/ch5_fig56.jpg)  
-
-
-###<a id="ref")></a>2.4  References  
+##<a id="ref")></a>2.7  References  
 
 Stevens, S. S. (1946). [On the theory of measurement scales. Science, 103(2684)](http://www.sciencemag.org/content/103/2684/677.full.pdf)  
 
 
+##<a id="ref")></a>2.8  Additional reading
 
-
-
-
-
-
-
-
-
-
+[Venables, W. N., D. M. Smith and the R Core Team, 2015. Introduction to R, Notes on R: A Programming Environment for Data Analysis and Graphics Version. (3.2.3, 2015-12-10)](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
 
 
