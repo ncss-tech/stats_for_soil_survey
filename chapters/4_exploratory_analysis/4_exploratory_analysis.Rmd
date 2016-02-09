@@ -75,6 +75,7 @@ Ideally before you start EDA, you should ensure that your data has no errors, ty
 
 ```{r, warning=FALSE, message=FALSE}
 library(soilDB)
+library(lattice)
 
 data("loafercreek")
 
@@ -102,7 +103,7 @@ View(h)
 This view is fine for a small dataset, but can be cumbersome for a larger ones. In order to quickly summarize a dataset, simply use the `summary()` function. However even for our small example dataset the output can be volumnous. Therefore in the interest of saving space we'll only look at a sample of columns.  
 
 ```{r}
-vars <- c("genhz", "clay", "total_frags_pct", "effervescence")
+vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effervescence")
 summary(h[vars])
 ```
 
@@ -127,6 +128,11 @@ If the `unique()` function returned typos such as "BT" or "B t", you could eithe
 
 ```{r, eval=FALSE}
 h$hzname[h$hzname == "BT"] <- "Bt"
+
+# or
+
+# h$hzname <- if(h$hzname == "BT", "Bt", h$hzname)
+
 ```
 
 Typo errors such as these are common found with old pedon data in NASIS.
@@ -193,7 +199,21 @@ plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 Next will review the `hist` and `density` functions which plot a histogram and density curve respectively.  
 
 ```{r}
-hist(h$clay, col = "grey")
+test <- with(h, make.groups(clay, sand, total_frags_pct))
+
+histogram(~ data | which, data = test, scales = list(y = "free"))
+
+# or individually
+
+# histogram(~ clay, data = h)
+
+# or using graphics package
+
+# par(mfrow = c(1, 3))
+# hist(h$clay, col = "grey")
+# hist(h$sand, col = "grey")
+# hist(h$total_frags_pct, col = "grey")
+# dev.off()
 ```
 
 Figure 4. Histogram  
@@ -202,16 +222,22 @@ Figure 4. Histogram
 Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution. A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram.  
  
 ```{r}
-test <- density(h$clay, na.rm = TRUE)
-xlim <- range(test$x)
-ylim <- range(test$y)
 
-hist(h$clay, xlim = xlim, ylim = ylim, probability = TRUE, col = "grey")
+test <- reshape(h, varying = c("clay", "sand"), timevar = "phiid", direction = "long")
 
-lines(test)
+histogram(~ clay + sand + total_frags_pct, data = h,
+          type = "density",
+          panel = function(x, ...) {
+            panel.histogram(x, ...)
+            panel.densityplot(x, ..., darg = list(na.rm  = TRUE))
+            }
+          )
 
-# or
-# plot(test) # would give us density curve by itself 
+densityplot(~ clay + sand + total_frags_pct, data = h, auto.key = TRUE)
+
+# or using graphics package
+# test <- density(h$clay, na.rm = TRUE)
+# plot(test) 
 ```
 
 Figure 6. The Kernel density plot depicts a smoothed line of the distribution  
@@ -403,7 +429,11 @@ A boxplot of sand content by horizon may be made for the sample dataset as:
 
 
 ```{r}
-boxplot(clay ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
+bwplot(clay + sand ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
+
+# or
+
+# boxplot(clay ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
 ```
 
 Figure 9. Box plot of sand by horizon  
