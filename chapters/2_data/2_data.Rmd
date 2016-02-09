@@ -37,7 +37,7 @@ In addition to measurement scale, data types can be categorized by whether their
 
 **Continuous data** - any measured value.  This includes: ratio and interval scales. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device.
 
-**Discrete data** - data with exact values. This includes: ordinal and nominal scales. For example, the number of Quercus alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon.
+**Discrete data** - data with exact values. This includes: ordinal and nominal scales. For example, the number of Quercus Alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon.
 
 ##<a id="acc")></a>2.2  Accuracy, precision, and significant figures  
 
@@ -62,7 +62,7 @@ library(knitr)
 
 kable(head(sand))
 ```
-The same table in a format suitable for use by R  
+The same table in a format suitable for use by R.
 
 
 ##<a id="dataobjects")></a>2.4 Data structures in R 
@@ -123,161 +123,87 @@ Data frames, like the sand data set, are actually lists that are formatted to re
 sand
 ```
 
+** Rasters**
+The raster data should be in a common GDAL format like IMAGINE (img) or TIFF. 
+
+
 ##<a id="rtools")></a>2.4  R tools for extracting spatial data
 
-In soil survey we're typically interested in the values for spatial data at point locations or whole polygons. This gives us information the geomorphic setting of our soil observations. With this information we would like to predicts the spatial distribution of soil properties and classes at unobserved sites.
+In soil survey we're typically interested in the values for spatial data at point locations or whole polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites. To extract spatial data R has several packages which provide similar functionality to other GIS programs, but also significantly streamline the process for generating raster maps from statistical models.
+
 
 ### Extracting point data from a raster
 
-The examples presented in sections 5.1 and 5.2 summarize using traditional metrics like, mean and standard deviation. Other statistics like quantiles are more robust for soil survey purposes. The following script will generate a statistical summary of slope by MUSYM for a SSURGO shapefile. The raster data should be in a common GDAL format like IMAGINE (img) or TIFF.  
+To extract point data using R, either the sp or raster packages can be used. For large datasets it is best to use the raster package, because it doesn't require reading the raster files into the computer's random access memory (RAM).
 
-**Step 1.**  
+```{r, warning=FALSE, message=FALSE}
+library(soilDB)
+library(raster)
 
-Copy this script and paste to an empty Notepad document and save as *��mapunit\_summary\_slope.R* in the same folder where your SSURGO shapefile and slope layer resides.  
+# p <- fetchNASIS()
+load(file = "C:/workspace/ca794_pedons.Rdata")
+s <- site(p)
+idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
+p2 <- p[idx] # subset pedon using idx
+coordinates(p2) <- ~ x + y # add coordinates to the pedon object
+proj4string(p2) <- CRS("+init=epsg:4326") # add projection to the pedon object
+p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
 
-```{r, eval=FALSE}
+setwd("M:/geodata/project_data/8VIC/")
 
-# R function to generate statistical summary of MUSYM elevation, slope, aspect, etc. 
-# S. Roecker NRCS
-# set the following parameters accordingly
-# shapefile = shapefile of MUSYM polygons to sample
-# sampleSize = number of samples to systematically (e.g. grids) select from MUSYM polygons
-# Increasing the sampleSize will increase processing time.
-# Excessive sampleSize of 100,000 will generally yield similar statistics as a sampleSize of 10,000 depending on the size of area sampled. 
-# Example 
-# MUSYM.summary("smr_ca795_a.shp", 10000)
+rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
 
-MUSYM.summary=function(shapefile,sampleSize){
-  # Import shapefile
-  library(maptools)
-  gpclibPermit()
-  mapunit=readShapePoly("coshocton_mapunits.shp") # Replace this shapfile with your shapefile of interest
+test <- data.frame(p_sp$site_id, extract(rs, p_sp))
 
-  # Sample systemtic regular grid
-  library(sp)
-  mapunit.sample=spsample(mapunit,n=10000,"regular")
-  mapunit.table=cbind(mapunit.sample,over(mapunit.sample,mapunit))
-  mapunit.df=as.data.frame(mapunit.sample)
-
-  # Load grids
-  grid.list=c("slope30.img") # Replace this slope raster with your slope layer 
-
-  library(raster)
-  geodata=stack(c(grid.list))
-  NAvalue(geodata)=-99999
-
-  grid.names=c("Gradient")
-  names(geodata)=c(grid.names)
-
-  # Extract geodata
-  musym.geodata.sample=cbind(extract(geodata,mapunit.sample))
-  
-  # Prep data
-  data<-cbind(mapunit.table,musym.geodata.sample)
-  data$MUSYM=as.factor(data$MUSYM)
-  data$Gradient<-round(data$Gradient,0);  
-  Gradient_levels<-c(0,3,8,15,25,35,70,350); data$Gradient_levels<-cut(data$Gradient,breaks=Gradient_levels); levels(data$Gradient_levels)<-c("0-3","3-8","8-15","15-25","25-35","35-70","70-350")
-  write.csv(data,file="data.csv")
-  
-  ###Create descriptive and graphical summary of map unit###
-  print(summary(data))
-  library(Rcmdr)
-  library(abind)  
-  MUSYM.gradient.percentages=round(rowPercents(xtabs(~MUSYM+Gradient_levels, data=data)),0)
-    
-  write.csv(MUSYM.gradient.percentages,file="MUSYM.gradient.percentages.csv")
-  
-  print(MUSYM.gradient.percentages)
-    
-  library(plyr)
-  MUSYM.gradient.quantiles<-ddply(data,.(MUSYM),function (x) round(quantile(x$Gradient,probs=c(0,0.05,0.5,0.95,1),na.rm=TRUE),0))
-
-  write.csv(MUSYM.gradient.quantiles,file="MUSYM.gradient.quantiles.csv")
-
-  print(MUSYM.gradient.quantiles)
-}
-
-# R function to plot graphical summary of MUSYM elevation, slope, aspect, etc. 
-# set the following parameters accordingly
-# mapunit = data frame generated from MUSYM.summary() function
-# Example - copy and paste the next two lines at R prompt
-# data<-read.csv("data.csv")
-# MUSYM.plot(data)
-#
-# Different break methods
-#Hist(data.sub$Gradient,scale="percent",breaks="Sturges",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-#Hist(data.sub$Gradient,scale="percent",breaks="scott",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-
-
-MUSYM.plot=function(mapunit){
-  library(Rcmdr)
-  data=mapunit
-  data$MUSYM=as.factor(data$MUSYM)
-  MUSYM.list=levels(data$MUSYM)
-  for(i in 1:length(MUSYM.list)){
-    data.sub=subset(data,MUSYM==MUSYM.list[i])
-    png(file=paste(MUSYM.list[i],".png",sep=""),width=8.5,heigh=11,units="in",res=200,pointsize=10)
-    par(mfcol=c(3,3))
-    par(pty="m")
-    par(cex=0.8)
-    par(cex.axis=0.8)
-  
-    Hist(data.sub$Gradient,scale="percent",breaks="FD",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-    dev.off()
-    }
-} 
-
-
+str(test)
 ```
 
-**Step 2.**  
+### Extracting zonal statistics from a raster for polygons
 
-Edit the script to make sure the shapefile (coshocton_mapunits.shp in this example) and slope layer (slope30.img in this example) names match your file names. There are two places, noted by comments, where the edits should be made. In addition, portions of the script related to Gradient Levels should be edited to match your slope breaks. The script uses slope break of 0-3, 3-8, 8-15, 15-25, 25-35, 35-70, 70-350) 
+Zonal statistics summarize the contents of a polygon. This can be accomplished via two methods. The most traditional method simply counts the number of occurances of each value within a polygon.
 
-**Step 3.**  
+```{r}
+load("C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+ca794 <- soilmu_a_ca794
+ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+ca794$mukey2 <- as.integer(as.character(ca794$MUKEY))
+writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile")
 
-Open R  
-C
-hange the Directory to the location of your data and script  
+library(gdalUtils)
+library(RSAGA)
+gdal_setInstallation(search_path = "C:/Program Files/QGIS/QGIS Wien/bin", rescan = TRUE)
+myenv <- rsaga.env(path = "C:/Program Files/QGIS Wien/apps/saga")
+test <- raster(extent(ca794), ext = extent(rs), crs = crs(rs), res = res(rs))  # create blank raster
+writeRaster(test, file = "M:/geodata/project_data/8VIC/sdat/ca794.tif", progress = "text", overwrite = TRUE)
+gdal_rasterize("C:/workspace/ca794.shp", "M:/geodata/project_data/8VIC/sdat/ca794.tif", a = "mukey2", verbose = TRUE)
+gdal_translate("M:/geodata/project_data/8VIC/sdat/ca794.tif", "M:/geodata/project_data/8VIC/sdat/ca794_new.tif", of = "GTiff", verbose = TRUE)
+gdal_translate("M:/geodata/project_data/8VIC/sdat/ca794_new.tif", "M:/geodata/project_data/8VIC/sdat/ca794_new.sdat", of = "SAGA", verbose = TRUE)
 
-Source R code  
 
-![R GUI image](figure/ch5_fig52.jpg)  
+rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
+  INPUT = "C:/workspace/ca794.shp",
+  FIELD = "mukey2",
+  OUTPUT = "2",
+  TARGET = "0",
+  GRID_TYPE = "2",
+  USER_GRID = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+  USER_XMIN = extent(test)[1],
+  USER_XMAX = extent(test)[2],
+  USER_YMIN = extent(test)[3],
+  USER_YMAX = extent(test)[4],
+  USER_SIZE = res(test)[1]
+)
+)
+rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
+  ZONES = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+  STATLIST = paste(c("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "M:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
+  OUTTAB = "C:/workspace/test.csv"
+))
 
-At the R prompt type (make sure you use the filename that matches your script and data)  
+test <- read.csv("C:/workspace/test.csv")
+str(test)
 
->MUSYM.summary("coshocton_mapunits", 10000)  
-
-**Step 4.**  
-
-The script creates three *csv* files:  
-
-**data.csv** summary by polygon of mean gradient and gradient level the polygon fits. An excerpt of the table from Excel with polygons highlighted that are outside the range of the named slope class:  
-
-![R GUI image](figure/ch5_fig53.jpg)  
-
-**MUSYM.gradient.percentages.csv** –  percent composition of the map unit by slope class. Values of NaN indicate an insufficient population to sample.  
-
-![R GUI image](figure/ch5_fig54.jpg)  
-
-**MUSYM.gradient.quantiles.csv** – slope value of corresponding quantile. Using CnB in the example below, the minimum slope is 1%, the median is 6%, and the maximum is 30%. The data range for the 5th to 95th quantile (percentile) is 2-14. This indicates that 90% of the map unit has a slope between 2 – 14%.  
-
-![R GUI image](figure/ch5_fig55.jpg)  
-
-**Step 5.**  
-
-Optional histogram representation of slope distribution by mapunit  
-
-At the R prompt type  
-```{r, eval=FALSE}
-data<-read.csv("data.csv")
-MUSYM.plot(data)
 ```
-
-This will produce “png” files for all MUSYMS:  
-
-![R GUI image](figure/ch5_fig56.jpg)  
-
 
 ##<a id="tools")></a>2.5  ArcGIS tools for extracting spatial data
 
