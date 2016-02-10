@@ -15,15 +15,15 @@ html_document:
 - [2.3 Data in R](#tidydata)
 - [2.3.1 Basic data objects](#datatypeinr)
 - [2.4 The soil project collection (spc) object](#aqp)
-- [2.6 R Tools](#rtools)   
-- [2.4 ArcGIS Tools](#tools)  
-- [2.5 TEUI Tools](#teui)       
+- [2.6 Extracting spatial data](#extract)   
+- [2.6.1 R tools](#rtools)
+- [2.6.2 ArcGIS Tools](#argistools)  
+- [2.6.3 TEUI Tools](#teuitools)       
 - [2.7 References](#ref)
 
  
-##<a id="datatypes")></a>2.1  Data types   
-
-Data type refers to the _measurement scale_ used. The data type controls the type of statistical operation that can be performed [(Stevens, 1946)](#ref). Four measurement scales, in order of decreasing precision are recognized:  
+##<a id="datatypes")></a>2.1  Measurement scales   
+Data types can be classified according to the measurement scale of their units. Measurement scales are important to consider because they can affect the types of statistical operations that can be performed. [Stevens (1946)](#ref) was the first to propose a topology of the four measurement scales listed below, in order of decreasing precision. For an exhaustive discussion of measurement scales see [Wikipedia](https://en.wikipedia.org/wiki/Level_of_measurement).   
 
 **Ratio** - measurements having a constant interval size and a true zero point. Examples include: measurements of length, weight, volume, rates, length of time, counts of items and temperature in Kelvin.
 
@@ -33,9 +33,9 @@ Data type refers to the _measurement scale_ used. The data type controls the typ
 
 **Nominal** - members of a set are differentiated by kind. Examples include: Vegetation classes, soil map units, geologic units.
 
-In addition to measurement scale, data types can be categorized by whether their scales are continuous or discontinuous.
+Stevens (1946) measurements scales can also be categorized as to whether their scales are continuous or discontinuous.
 
-**Continuous data** - any measured value.  This includes: ratio and interval scales. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device.
+**Continuous data** - any measured value. This includes: ratio and interval scales. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device.
 
 **Discrete data** - data with exact values. This includes: ordinal and nominal scales. For example, the number of Quercus Alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon.
 
@@ -123,25 +123,37 @@ Data frames, like the sand data set, are actually lists that are formatted to re
 sand
 ```
 
-** Rasters**
+**Rasters**
+...
 The raster data should be in a common GDAL format like IMAGINE (img) or TIFF. 
 
 
-##<a id="rtools")></a>2.4  R tools for extracting spatial data
+##<a id="rtools")></a>2.4 Extracting spatial data
 
-In soil survey we're typically interested in the values for spatial data at point locations or whole polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites. To extract spatial data R has several packages which provide similar functionality to other GIS programs, but also significantly streamline the process for generating raster maps from statistical models.
+In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
+
+To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. map unit). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However for skewed data sets the mean and standard deviation are unreliable. Instead for skewed data sets, non-parametric statistics like quantiles are preferred. Examples of non-parametric statistics are covered in Chapter 4. Therefore an advantages to the sample approach is that it allows us to utilize alternative statistics, such as quantiles. In addition it allows us the flexibility cross tabulate the different variables within each zone. For example, suppose you're mapping a soil complex and wish to know the slope range for north aspects. A sample approach would more easily allow the analyst to interact with the data in an exploratory analysis (Chapter 4). Lastly, while some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember the all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
+
+Before extracting spatial data for the purpose of spatial prediction, it is also necessary that the data meet the following conditions:  
+
+ - All data conforms to a common projection and datum
+ - All raster data have a common cell resolution
+ - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the Snap Raster in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+
+### R tools for extracting spatial data
+
+To extract spatial data R has several spatial packages which provide similar functionality to other GIS programs, but also significantly streamline the process for generating raster maps from statistical models.
 
 
-### Extracting point data from a raster
+#### Extracting point data from spatial data
 
-To extract point data using R, either the sp or raster packages can be used. For large datasets it is best to use the raster package, because it doesn't require reading the raster files into the computer's random access memory (RAM).
+To extract point data using R, either the sp or raster packages can be used. For large raster data sets it is best to use the `extract()` function form the raster package, because the raster package doesn't require the raster files to be read into the computer's random access memory (RAM).
 
-```{r, warning=FALSE, message=FALSE}
+```{r r_point_extract, warning=FALSE, message=FALSE}
 library(soilDB)
 library(raster)
 
 # p <- fetchNASIS()
-# load(file = "C:/workspace/ca794_pedons.Rdata")
 # s <- site(p)
 # idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
 # p2 <- p[idx] # subset pedon using idx
@@ -152,17 +164,24 @@ library(raster)
 # setwd("F:/geodata/project_data/8VIC/")
 # 
 # rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
+# proj4string(rs) <- CRS("+init=epsg:5070")
 # 
 # test <- data.frame(p_sp$site_id, extract(rs, p_sp))
 # 
-# str(test)
+# save(p, p_sp, test, file = "C:/workspace/ca794_pedons.Rdata")
+
+load(file = "C:/workspace/ca794_pedons.Rdata")
+
+str(test)
 ```
 
-### Extracting zonal statistics from a raster for polygons
 
-Zonal statistics summarize the spatial data that overlay a polygon. This can be accomplished via two methods. The most common method (i.e. census survey) provided by most GIS computes a statistical summary of the rasters that overlay a polygon. This approach is generally faster and computes a summary each cell within a raster. An alternative approach is too take a collection of random samples from each polygon. While this approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages.
+#### Extracting zonal statistics from a raster for polygons
 
-```{r}
+Insert example and link to the newest Rmarkdown reports developed for this purpose.
+
+
+```{r r_poly_extract}
 # library(rgdal)
 # 
 # load("C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
@@ -173,7 +192,7 @@ Zonal statistics summarize the spatial data that overlay a polygon. This can be 
 # 
 # library(RSAGA)
 # myenv <- rsaga.env(path = "C:/Program Files/QGIS Lyon/apps/saga")
-# test <- raster("F:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat", ext = extent(rs), crs = crs(rs), res = res(rs))  # create blank raster
+# test <- raster("F:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat")
 # 
 # rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
 #   INPUT = "C:/workspace/ca794.shp",
@@ -198,22 +217,18 @@ Zonal statistics summarize the spatial data that overlay a polygon. This can be 
 test <- read.csv("C:/workspace/test.csv")
 names(test)[1] <- "mukey"
 str(test)
-
 ```
 
-##<a id="tools")></a>2.5  ArcGIS tools for extracting spatial data
+
+###<a id="tools")></a>2.6.2  ArcGIS tools for extracting spatial data
 
 ### Extracting point data from a raster
 
-This section discusses the use of *Extract Multi Values to Points*, which assigns the cell value of specified raster datasets to existing points. *Extract Values to Points* and *Sample* achieve similar results. These tools are described in the ESRI help section:  
+This section discusses the use of *Extract Multi Values to Points*, which assigns the cell value of specified raster data sets to existing points. *Extract Values to Points* and *Sample* achieve similar results. These tools are described in the ESRI help section:  
 
 [An_overview_of_the_Extraction_tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/)  
 
-To start assume you have 50 observations across your area of interest contained in a point file in ArcGIS with numerous observed soil properties. You would also like to consider variables like slope, profile curvature, solar insolation, topographic wetness index, relative position and elevation in your analysis. Before proceeding, it is preferable to meet the following conditions:  
-
- - All data conforms to a common projection and datum
- - All raster data have a common cell resolution
- - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the Snap Raster in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+To start assume you have 50 observations across your area of interest contained in a point file in ArcGIS with numerous observed soil properties. You would also like to consider variables like slope, profile curvature, solar insolation, topographic wetness index, relative position and elevation in your analysis.
  
 Using Extract Multi Values to Points is the most expedient way to populate raster values to a point file. _If your spatial extent is large and you have many raster layers, e.g. 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times_.  
 
@@ -238,7 +253,7 @@ ArcGIS also provides the capability of creating histograms for data associated w
 
 ### Extracting zonal statistics from a raster
 
-Gathering statistics of raster for polygons datasets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
+Gathering statistics of raster for polygons data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
 
 Example for summarizing by Map Unit Symbol:  
 
@@ -281,7 +296,7 @@ In another example using a Box plot for assessment of a map unit with a slope cl
 ![R GUI image](figure/ch5_fig10.jpg)  
 
 
-##<a id="teui")></a>2.6  TEUI tools
+###<a id="teuitools")></a>2.6.3  TEUI tools for extracting and summarizing spatial data
 
 The TEUI toolkit works in a similar manner to *Zonal Statistics as Table*, with the added benefit of interactive graphics to aid in the assessment. TEUI is an ArcGIS Add-in and may be installed without Administrator privilege. Additional information and downloads are available here:  
 
@@ -301,7 +316,7 @@ The Toolkit requires the user to specify a folder location to store the database
  2. A dialog window will appear.  
 ![R GUI image](figure/ch5_fig12.jpg)
  
- 3.  Select Browse‚Ä¶.  
+ 3.  Select BrowseÄ¶.  
 
  4.	In the Browse for Folder dialog, navigate to a location of your choice and select ‚ÄúMake New Folder‚Äù  
 

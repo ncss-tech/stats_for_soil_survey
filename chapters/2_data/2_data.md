@@ -15,15 +15,15 @@ html_document:
 - [2.3 Data in R](#tidydata)
 - [2.3.1 Basic data objects](#datatypeinr)
 - [2.4 The soil project collection (spc) object](#aqp)
-- [2.6 R Tools](#rtools)   
-- [2.4 ArcGIS Tools](#tools)  
-- [2.5 TEUI Tools](#teui)       
+- [2.6 Extracting spatial data](#extract)   
+- [2.6.1 R tools](#rtools)
+- [2.6.2 ArcGIS Tools](#argistools)  
+- [2.6.3 TEUI Tools](#teuitools)       
 - [2.7 References](#ref)
 
  
-##<a id="datatypes")></a>2.1  Data types   
-
-Data type refers to the _measurement scale_ used. The data type controls the type of statistical operation that can be performed [(Stevens, 1946)](#ref). Four measurement scales, in order of decreasing precision are recognized:  
+##<a id="datatypes")></a>2.1  Measurement scales   
+Data types can be classified according to the measurement scale of their units. Measurement scales are important to consider because they can affect the types of statistical operations that can be performed. [Stevens (1946)](#ref) was the first to propose a topology of the four measurement scales listed below, in order of decreasing precision. For an exhaustive discussion of measurement scales see [Wikipedia](https://en.wikipedia.org/wiki/Level_of_measurement).   
 
 **Ratio** - measurements having a constant interval size and a true zero point. Examples include: measurements of length, weight, volume, rates, length of time, counts of items and temperature in Kelvin.
 
@@ -33,11 +33,11 @@ Data type refers to the _measurement scale_ used. The data type controls the typ
 
 **Nominal** - members of a set are differentiated by kind. Examples include: Vegetation classes, soil map units, geologic units.
 
-In addition to measurement scale, data types can be categorized by whether their scales are continuous or discontinuous.
+Stevens (1946) measurements scales can also be categorized as to whether their scales are continuous or discontinuous.
 
-**Continuous data** - any measured value.  This includes: ratio and interval scales. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device.
+**Continuous data** - any measured value. This includes: ratio and interval scales. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device.
 
-**Discrete data** - data with exact values. This includes: ordinal and nominal scales. For example, the number of Quercus alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon.
+**Discrete data** - data with exact values. This includes: ordinal and nominal scales. For example, the number of Quercus Alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon.
 
 ##<a id="acc")></a>2.2  Accuracy, precision, and significant figures  
 
@@ -74,7 +74,7 @@ kable(head(sand))
 |city     |pasture |B      |    27|   34|
 |city     |range   |A      |    15|   22|
 |city     |range   |B      |    23|   23|
-The same table in a format suitable for use by R  
+The same table in a format suitable for use by R.
 
 
 ##<a id="dataobjects")></a>2.4 Data structures in R 
@@ -230,174 +230,139 @@ sand
 ## 18     west   range      B    24   24
 ```
 
-##<a id="rtools")></a>2.4  R tools for extracting spatial data
-
-In soil survey we're typically interested in the values for spatial data at point locations or whole polygons. This gives us information the geomorphic setting of our soil observations. With this information we would like to predicts the spatial distribution of soil properties and classes at unobserved sites.
-
-### Extracting point data from a raster
-
-The examples presented in sections 5.1 and 5.2 summarize using traditional metrics like, mean and standard deviation. Other statistics like quantiles are more robust for soil survey purposes. The following script will generate a statistical summary of slope by MUSYM for a SSURGO shapefile. The raster data should be in a common GDAL format like IMAGINE (img) or TIFF.  
-
-**Step 1.**  
-
-Copy this script and paste to an empty Notepad document and save as *��mapunit\_summary\_slope.R* in the same folder where your SSURGO shapefile and slope layer resides.  
+**Rasters**
+...
+The raster data should be in a common GDAL format like IMAGINE (img) or TIFF. 
 
 
-```r
-# R function to generate statistical summary of MUSYM elevation, slope, aspect, etc. 
-# S. Roecker NRCS
-# set the following parameters accordingly
-# shapefile = shapefile of MUSYM polygons to sample
-# sampleSize = number of samples to systematically (e.g. grids) select from MUSYM polygons
-# Increasing the sampleSize will increase processing time.
-# Excessive sampleSize of 100,000 will generally yield similar statistics as a sampleSize of 10,000 depending on the size of area sampled. 
-# Example 
-# MUSYM.summary("smr_ca795_a.shp", 10000)
+##<a id="rtools")></a>2.4 Extracting spatial data
 
-MUSYM.summary=function(shapefile,sampleSize){
-  # Import shapefile
-  library(maptools)
-  gpclibPermit()
-  mapunit=readShapePoly("coshocton_mapunits.shp") # Replace this shapfile with your shapefile of interest
+In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
 
-  # Sample systemtic regular grid
-  library(sp)
-  mapunit.sample=spsample(mapunit,n=10000,"regular")
-  mapunit.table=cbind(mapunit.sample,over(mapunit.sample,mapunit))
-  mapunit.df=as.data.frame(mapunit.sample)
+To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. map unit). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However for skewed data sets the mean and standard deviation are unreliable. Instead for skewed data sets, non-parametric statistics like quantiles are preferred. Examples of non-parametric statistics are covered in Chapter 4. Therefore an advantages to the sample approach is that it allows us to utilize alternative statistics, such as quantiles. In addition it allows us the flexibility cross tabulate the different variables within each zone. For example, suppose you're mapping a soil complex and wish to know the slope range for north aspects. A sample approach would more easily allow the analyst to interact with the data in an exploratory analysis (Chapter 4). Lastly, while some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember the all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
 
-  # Load grids
-  grid.list=c("slope30.img") # Replace this slope raster with your slope layer 
-
-  library(raster)
-  geodata=stack(c(grid.list))
-  NAvalue(geodata)=-99999
-
-  grid.names=c("Gradient")
-  names(geodata)=c(grid.names)
-
-  # Extract geodata
-  musym.geodata.sample=cbind(extract(geodata,mapunit.sample))
-  
-  # Prep data
-  data<-cbind(mapunit.table,musym.geodata.sample)
-  data$MUSYM=as.factor(data$MUSYM)
-  data$Gradient<-round(data$Gradient,0);  
-  Gradient_levels<-c(0,3,8,15,25,35,70,350); data$Gradient_levels<-cut(data$Gradient,breaks=Gradient_levels); levels(data$Gradient_levels)<-c("0-3","3-8","8-15","15-25","25-35","35-70","70-350")
-  write.csv(data,file="data.csv")
-  
-  ###Create descriptive and graphical summary of map unit###
-  print(summary(data))
-  library(Rcmdr)
-  library(abind)  
-  MUSYM.gradient.percentages=round(rowPercents(xtabs(~MUSYM+Gradient_levels, data=data)),0)
-    
-  write.csv(MUSYM.gradient.percentages,file="MUSYM.gradient.percentages.csv")
-  
-  print(MUSYM.gradient.percentages)
-    
-  library(plyr)
-  MUSYM.gradient.quantiles<-ddply(data,.(MUSYM),function (x) round(quantile(x$Gradient,probs=c(0,0.05,0.5,0.95,1),na.rm=TRUE),0))
-
-  write.csv(MUSYM.gradient.quantiles,file="MUSYM.gradient.quantiles.csv")
-
-  print(MUSYM.gradient.quantiles)
-}
-
-# R function to plot graphical summary of MUSYM elevation, slope, aspect, etc. 
-# set the following parameters accordingly
-# mapunit = data frame generated from MUSYM.summary() function
-# Example - copy and paste the next two lines at R prompt
-# data<-read.csv("data.csv")
-# MUSYM.plot(data)
-#
-# Different break methods
-#Hist(data.sub$Gradient,scale="percent",breaks="Sturges",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-#Hist(data.sub$Gradient,scale="percent",breaks="scott",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-
-
-MUSYM.plot=function(mapunit){
-  library(Rcmdr)
-  data=mapunit
-  data$MUSYM=as.factor(data$MUSYM)
-  MUSYM.list=levels(data$MUSYM)
-  for(i in 1:length(MUSYM.list)){
-    data.sub=subset(data,MUSYM==MUSYM.list[i])
-    png(file=paste(MUSYM.list[i],".png",sep=""),width=8.5,heigh=11,units="in",res=200,pointsize=10)
-    par(mfcol=c(3,3))
-    par(pty="m")
-    par(cex=0.8)
-    par(cex.axis=0.8)
-  
-    Hist(data.sub$Gradient,scale="percent",breaks="FD",col="light green",xlab="Slope gradient (%)",ylab="Percent",main=paste("Map Unit ",MUSYM.list[i],sep=""))
-    dev.off()
-    }
-} 
-```
-
-**Step 2.**  
-
-Edit the script to make sure the shapefile (coshocton_mapunits.shp in this example) and slope layer (slope30.img in this example) names match your file names. There are two places, noted by comments, where the edits should be made. In addition, portions of the script related to Gradient Levels should be edited to match your slope breaks. The script uses slope break of 0-3, 3-8, 8-15, 15-25, 25-35, 35-70, 70-350) 
-
-**Step 3.**  
-
-Open R  
-C
-hange the Directory to the location of your data and script  
-
-Source R code  
-
-![R GUI image](figure/ch5_fig52.jpg)  
-
-At the R prompt type (make sure you use the filename that matches your script and data)  
-
->MUSYM.summary("coshocton_mapunits", 10000)  
-
-**Step 4.**  
-
-The script creates three *csv* files:  
-
-**data.csv** summary by polygon of mean gradient and gradient level the polygon fits. An excerpt of the table from Excel with polygons highlighted that are outside the range of the named slope class:  
-
-![R GUI image](figure/ch5_fig53.jpg)  
-
-**MUSYM.gradient.percentages.csv** –  percent composition of the map unit by slope class. Values of NaN indicate an insufficient population to sample.  
-
-![R GUI image](figure/ch5_fig54.jpg)  
-
-**MUSYM.gradient.quantiles.csv** – slope value of corresponding quantile. Using CnB in the example below, the minimum slope is 1%, the median is 6%, and the maximum is 30%. The data range for the 5th to 95th quantile (percentile) is 2-14. This indicates that 90% of the map unit has a slope between 2 – 14%.  
-
-![R GUI image](figure/ch5_fig55.jpg)  
-
-**Step 5.**  
-
-Optional histogram representation of slope distribution by mapunit  
-
-At the R prompt type  
-
-```r
-data<-read.csv("data.csv")
-MUSYM.plot(data)
-```
-
-This will produce “png” files for all MUSYMS:  
-
-![R GUI image](figure/ch5_fig56.jpg)  
-
-
-##<a id="tools")></a>2.5  ArcGIS tools for extracting spatial data
-
-### Extracting point data from a raster
-
-This section discusses the use of *Extract Multi Values to Points*, which assigns the cell value of specified raster datasets to existing points. *Extract Values to Points* and *Sample* achieve similar results. These tools are described in the ESRI help section:  
-
-[An_overview_of_the_Extraction_tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/)  
-
-To start assume you have 50 observations across your area of interest contained in a point file in ArcGIS with numerous observed soil properties. You would also like to consider variables like slope, profile curvature, solar insolation, topographic wetness index, relative position and elevation in your analysis. Before proceeding, it is preferable to meet the following conditions:  
+Before extracting spatial data for the purpose of spatial prediction, it is also necessary that the data meet the following conditions:  
 
  - All data conforms to a common projection and datum
  - All raster data have a common cell resolution
  - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the Snap Raster in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+
+### R tools for extracting spatial data
+
+To extract spatial data R has several spatial packages which provide similar functionality to other GIS programs, but also significantly streamline the process for generating raster maps from statistical models.
+
+
+#### Extracting point data from spatial data
+
+To extract point data using R, either the sp or raster packages can be used. For large raster data sets it is best to use the `extract()` function form the raster package, because the raster package doesn't require the raster files to be read into the computer's random access memory (RAM).
+
+
+```r
+library(soilDB)
+library(raster)
+
+# p <- fetchNASIS()
+# s <- site(p)
+# idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
+# p2 <- p[idx] # subset pedon using idx
+# coordinates(p2) <- ~ x + y # add coordinates to the pedon object
+# proj4string(p2) <- CRS("+init=epsg:4326") # add projection to the pedon object
+# p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
+# 
+# setwd("F:/geodata/project_data/8VIC/")
+# 
+# rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
+# proj4string(rs) <- CRS("+init=epsg:5070")
+# 
+# test <- data.frame(p_sp$site_id, extract(rs, p_sp))
+# 
+# save(p, p_sp, test, file = "C:/workspace/ca794_pedons.Rdata")
+
+load(file = "C:/workspace/ca794_pedons.Rdata")
+
+str(test)
+```
+
+```
+## 'data.frame':	1014 obs. of  3 variables:
+##  $ p_sp.site_id: Factor w/ 942 levels "0107201101","050510-3",..: 832 822 825 821 824 823 826 859 752 760 ...
+##  $ elev        : num  525 780 696 757 754 ...
+##  $ slope       : num  11.8 28.8 51.1 23.4 6.5 ...
+```
+
+
+#### Extracting zonal statistics from a raster for polygons
+
+Insert example and link to the newest Rmarkdown reports developed for this purpose.
+
+
+
+```r
+# library(rgdal)
+# 
+# load("C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# ca794 <- soilmu_a_ca794
+# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+# ca794$mukey2 <- as.integer(as.character(ca794$MUKEY))
+# writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile")
+# 
+# library(RSAGA)
+# myenv <- rsaga.env(path = "C:/Program Files/QGIS Lyon/apps/saga")
+# test <- raster("F:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat")
+# 
+# rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
+#   INPUT = "C:/workspace/ca794.shp",
+#   FIELD = "mukey2",
+#   OUTPUT = "2",
+#   TARGET = "0",
+#   GRID_TYPE = "2",
+#   USER_GRID = "F:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   USER_XMIN = extent(test)[1] + 15,
+#   USER_XMAX = extent(test)[2] - 15,
+#   USER_YMIN = extent(test)[3] + 15,
+#   USER_YMAX = extent(test)[4] - 15,
+#   USER_SIZE = res(test)[1]
+# )
+# )
+# rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
+#   ZONES = "F:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   STATLIST = paste(c("F:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "F:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
+#   OUTTAB = "C:/workspace/test.csv"
+# ))
+
+test <- read.csv("C:/workspace/test.csv")
+names(test)[1] <- "mukey"
+str(test)
+```
+
+```
+## 'data.frame':	143 obs. of  14 variables:
+##  $ mukey                   : int  -2147483647 470107 470108 470109 470110 470112 470113 470114 470115 470118 ...
+##  $ Count.UCU               : int  467334827 120351 23991 8895 12220 68200 207535 41353 35845 34697 ...
+##  $ ned30m_8VICN            : int  444720051 120351 23991 8895 12220 68200 207535 41353 35845 34697 ...
+##  $ ned30m_8VICMIN          : num  -85.6 331.9 470.3 486.5 301.6 ...
+##  $ ned30m_8VICMAX          : num  4412 729 782 828 669 ...
+##  $ ned30m_8VICMEAN         : num  1019 466 580 638 514 ...
+##  $ ned30m_8VICSTDDEV       : num  718.3 81.5 56.3 87.9 89.7 ...
+##  $ ned30m_8VICSUM          : num  4.53e+11 5.61e+07 1.39e+07 5.67e+06 6.29e+06 ...
+##  $ ned30m_8VIC_slope5N     : int  444639237 120351 23991 8895 12220 68200 207535 41353 35845 34697 ...
+##  $ ned30m_8VIC_slope5MIN   : num  0 0.000748 0.004123 0.205433 0.227526 ...
+##  $ ned30m_8VIC_slope5MAX   : num  504.3 16.1 29.2 43.7 52.4 ...
+##  $ ned30m_8VIC_slope5MEAN  : num  13.32 1.68 4.69 3.81 14.04 ...
+##  $ ned30m_8VIC_slope5STDDEV: num  18.11 0.78 3.2 3.97 8.9 ...
+##  $ ned30m_8VIC_slope5SUM   : num  5.92e+09 2.02e+05 1.12e+05 3.39e+04 1.72e+05 ...
+```
+
+
+###<a id="tools")></a>2.6.2  ArcGIS tools for extracting spatial data
+
+### Extracting point data from a raster
+
+This section discusses the use of *Extract Multi Values to Points*, which assigns the cell value of specified raster data sets to existing points. *Extract Values to Points* and *Sample* achieve similar results. These tools are described in the ESRI help section:  
+
+[An_overview_of_the_Extraction_tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/)  
+
+To start assume you have 50 observations across your area of interest contained in a point file in ArcGIS with numerous observed soil properties. You would also like to consider variables like slope, profile curvature, solar insolation, topographic wetness index, relative position and elevation in your analysis.
  
 Using Extract Multi Values to Points is the most expedient way to populate raster values to a point file. _If your spatial extent is large and you have many raster layers, e.g. 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times_.  
 
@@ -422,7 +387,7 @@ ArcGIS also provides the capability of creating histograms for data associated w
 
 ### Extracting zonal statistics from a raster
 
-Gathering statistics of raster for polygons datasets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
+Gathering statistics of raster for polygons data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
 
 Example for summarizing by Map Unit Symbol:  
 
@@ -465,7 +430,7 @@ In another example using a Box plot for assessment of a map unit with a slope cl
 ![R GUI image](figure/ch5_fig10.jpg)  
 
 
-##<a id="teui")></a>2.6  TEUI tools
+###<a id="teuitools")></a>2.6.3  TEUI tools for extracting and summarizing spatial data
 
 The TEUI toolkit works in a similar manner to *Zonal Statistics as Table*, with the added benefit of interactive graphics to aid in the assessment. TEUI is an ArcGIS Add-in and may be installed without Administrator privilege. Additional information and downloads are available here:  
 
@@ -485,7 +450,7 @@ The Toolkit requires the user to specify a folder location to store the database
  2. A dialog window will appear.  
 ![R GUI image](figure/ch5_fig12.jpg)
  
- 3.  Select Browse….  
+ 3.  Select Browse��.  
 
  4.	In the Browse for Folder dialog, navigate to a location of your choice and select “Make New Folder”  
 
