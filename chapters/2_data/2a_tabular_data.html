@@ -8,7 +8,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
-<meta name="author" content="Jay Skovlin and D.E. Beaudette" />
+<meta name="author" content="Jay Skovlin, D.E. Beaudette, Stephen Roecker" />
 
 
 <title>Chapter 2 - Tabular data we use</title>
@@ -62,8 +62,8 @@ img {
 
 <div id="header">
 <h1 class="title">Chapter 2 - Tabular data we use</h1>
-<h4 class="author"><em>Jay Skovlin and D.E. Beaudette</em></h4>
-<h4 class="date"><em>Friday, February 9, 2016</em></h4>
+<h4 class="author"><em>Jay Skovlin, D.E. Beaudette, Stephen Roecker</em></h4>
+<h4 class="date"><em>February 2016</em></h4>
 </div>
 
 
@@ -73,18 +73,10 @@ img {
 <h2>Objectives:</h2>
 <ul>
 <li>Use the soilDB package to load NASIS pedon data into R</li>
-<li>Examine the data and understand its structure</li>
-<li>Learn ways to work with and inspect pedon data in R</li>
-</ul>
-</div>
-<div id="steps" class="section level2">
-<h2>Steps:</h2>
-<ul>
-<li>Establish an ODBC connection to view NASIS data in R</li>
-<li>Understand the basic structure of pedon data stored in a Soil Profile Collection (SPC)</li>
 <li>Learn about the checks run by the fetch functions when pulling data into R</li>
-<li>View a set of pedon data from a selected set in NASIS in R</li>
 <li>Learn basic commands for inspecting objects and data types</li>
+<li>Understand the basic structure of pedon data stored in a Soil Profile Collection (SPC)</li>
+<li>Learn ways to work with and inspect pedon data in R</li>
 <li>Learn basic checks that you can do to filter and inspect the consistency of a pedon dataset</li>
 <li>Not finding the data you need? Joining additional data to an SPC via extended data functions</li>
 </ul>
@@ -98,8 +90,8 @@ img {
 <li><a href="#view">2.4 Viewing pedon data</a></li>
 <li><a href="#basicR">2.5 Working with SPC data in R</a></li>
 <li><a href="#check">2.6 Consistency checking pedon data in R</a></li>
-<li><a href="#data">2.7 Preparing other data sources for R</a></li>
-<li><a href="#ref">2.8 References</a></li>
+<li><a href="#ref">2.7 References</a></li>
+<li><a href="#resources">2.8 Additional resources</a></li>
 </ul>
 <div id="r-fundamentals" class="section level3">
 <h3>R fundamentals</h3>
@@ -124,8 +116,10 @@ img {
  c &lt;- c(TRUE,FALSE,TRUE) 
  c</code></pre>
 <pre><code>## [1]  TRUE FALSE  TRUE</code></pre>
-<pre class="r"><code> # Referencing elements of a vector
- # 2nd and 4th elements of vector 'a' from above
+</div>
+<div id="referencing-elements-of-a-vector" class="section level4">
+<h4>Referencing elements of a vector</h4>
+<pre class="r"><code> # 2nd and 4th elements of vector 'a' from above
  a</code></pre>
 <pre><code>## [1] 10 12 15 26 30</code></pre>
 <pre class="r"><code> a[c(2,4)] </code></pre>
@@ -139,9 +133,8 @@ img {
 </div>
 <div id="dataframes" class="section level4">
 <h4>Dataframes</h4>
+<p>Dataframes are a common format that is easily crossed over to from spreadsheet formats where we are used to thinking in terms of rows and columns of data.</p>
 <pre class="r"><code>  # Take our two character and logical vectors we created above and convert them into a more useful dataframe.
-  # Dataframes are a common format that is easily crossed over to from spreadsheet format where we are 
-  # used to thinking in terms of rows and columns of data.
   # we'll use the data.frame() function to glue these two vectors together into object 'd'
   d &lt;- data.frame(b, c)
   d</code></pre>
@@ -149,9 +142,8 @@ img {
 ## 1  typic haplocryepts  TRUE
 ## 2  andic haplocryepts FALSE
 ## 3 typic dystrocryepts  TRUE</code></pre>
-<pre class="r"><code>  # we can see that it worked but the vector names are not very informative
-  # here are a couple of useful functions for working with column names
-  # we can use 'names()' and 'c()' to rename the vectors within the dataframe
+<p>We can see that the dataframe was created and it worked but the vector names are not very informative. A couple of useful functions for working with column names are <code>names()</code> which renames column names and <code>colnames()</code> which creates a vector of column names.</p>
+<pre class="r"><code>  # we can use 'names()' and 'c()' to rename the vectors within the dataframe
   names(d) &lt;- c('tax_subgroup', 'andic.soil.properties')
   d</code></pre>
 <pre><code>##          tax_subgroup andic.soil.properties
@@ -195,6 +187,7 @@ img {
 </div>
 <div id="other-less-commonly-used-data-types" class="section level4">
 <h4>Other less commonly used data types</h4>
+<p>TODO: expand on these…..see Stephen’s additions to the spatial data part of chapter 2</p>
 <ul>
 <li><p><strong>Lists</strong></p></li>
 <li><p><strong>Matrices</strong></p></li>
@@ -203,16 +196,18 @@ img {
 </ul>
 </div>
 </div>
-<div id="using-the-soildb-package-to-load-nasis-pedon-data-into-r" class="section level3">
-<h3><a id="ODBC" )></a>2.1 Using the soilDB package to load NASIS pedon data into R</h3>
-<p><strong>First step - set up an Open Database Connectivity (ODBC) connection to NASIS on your computer</strong></p>
+<div id="using-the-soildb-package-to-load-nasis-pedon-data" class="section level3">
+<h3><a id="ODBC" )></a>2.1 Using the soilDB package to load NASIS pedon data</h3>
+<div id="set-up-an-open-database-connectivity-odbc-connection-to-nasis-on-your-computer" class="section level4">
+<h4>set up an Open Database Connectivity (ODBC) connection to NASIS on your computer</h4>
 <p>Data from a selected set of NASIS may be used as described in this job aid <a href="http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1237479&amp;ext=pdf"><strong>How to Create an ODBC Connection and Setup SoilDB for Use with R</strong></a>.</p>
-<p><strong>Query and load some pedon data into your NASIS selected set</strong> show screen shots of the results returned. may need to re-organize the order of the sections/material presented here….to make it flow logically.</p>
+<p><strong>Query and load some pedon data into your NASIS selected set</strong> TODO: show screen shots of the results returned - necessary?</p>
+</div>
 <div id="what-is-the-soildb-package-and-what-does-it-do" class="section level4">
 <h4>What is the soilDB package and what does it do?</h4>
 <p>The soilDB package is an R package that is designed for extracting and importing soil data from NASIS. The package has a series of different fetch functions which pull data via Structured Query Language (SQL) queries of data in a NASIS selected set. Scripting within the fetch functions then does some basic data checks and assembles the data into site-level and horizon-level data structures within a custom R object called a <code>Soil Profile Collection (SPC)</code> that is specifically designed to accommodate the basic structure of soil data - site data with corresponding horizon data. It is important to mention that this process is not comprehensive, soilDB does not pull all of the data for every table out of NASIS. In addition, various complexities of the NASIS data structure have been simplified in creating the SPC object that results from a function like <code>fetchNASIS()</code>. Higher level functions like the <code>fetchNASIS()</code> bundle a series of lower level functions which get specific parts of the data structure.</p>
 <p>One-to-many relationships are flattened where possible by soilDB fetch functions to aggregate the data to one site record. Additional data that may have a one-to-many relationship to a site or pedon can be gathered from the data via <code>get_extended_data</code> functions.</p>
-<p>The following is from another tutorial…..in the aqp package. This is a very basic introduction to the <code>SoilProfileCollection</code> class object defined in the <code>aqp</code> package for <strong>R</strong>. The <code>SoilProfileCollection</code> class was designed to simplify the process of working with collections of data associated with soil profiles: site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc. Examples listed below are meant to be copied/pasted from this document and interactively run within <strong>R</strong>. Comments (green text) briefly describe what the code in each line does. This document assumes a basic level of proficiency with <strong>R</strong> which can be gained by reviewing some of the material in <a href="http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf">tutorials like this</a>. Further documentation on objects and functions from the <code>aqp</code> package can be accessed by typing <code>help(aqp)</code> (or more generally, <code>?function_name</code>) at the <strong>R</strong> console.</p>
+<p>The following is from another tutorial…..in the aqp package….rework and include portions of this? This is a very basic introduction to the <code>SoilProfileCollection</code> class object defined in the <code>aqp</code> package for <strong>R</strong>. The <code>SoilProfileCollection</code> class was designed to simplify the process of working with collections of data associated with soil profiles: site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc. Examples listed below are meant to be copied/pasted from this document and interactively run within <strong>R</strong>. Comments (green text) briefly describe what the code in each line does. This document assumes a basic level of proficiency with <strong>R</strong> which can be gained by reviewing some of the material in <a href="http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf">tutorials like this</a>. Further documentation on objects and functions from the <code>aqp</code> package can be accessed by typing <code>help(aqp)</code> (or more generally, <code>?function_name</code>) at the <strong>R</strong> console.</p>
 <p><strong>In short…..it greatly simplifies the process of getting data from NASIS into R for further analysis.</strong></p>
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAHgCAMAAABNUi8GAAAAdVBMVEUAAAAAADoAAGYAOpAAZmYAZrY6AAA6ADo6AGY6OmY6OpA6kJA6kNtmAABmADpmAGZmOgBmZmZmtv+QOgCQOjqQkDqQtpCQ2/+2ZgC2Zjq225C2/7a2/9u2//++vr7bkDrb/9vb////tmb/25D//7b//9v///98E3S/AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAMU0lEQVR4nO3dDVcadxrG4TFZk2w2trva1nS7xsQXvv9H3BlAInFISP/zwA1c1zlVQM/jNPM784I4dDMI1u17AeB7BEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEq0SQLt2k2xGByhCcqYIE+BssEkgSaM4DgJlGgpgX761L4gHCGBEk2gRBMo0QRKNIESTaBEqwv08arruvPZ7P7dzRYjBMqoukA/ng+Rng83f9ioQNmgLNCHX65nT2kKlL+rLNDlxnOo86+L7ux69nDRvdrUqUDZoG4X3wc5HIIOm89hC/p4dTm7ff1l0wiBMqr0LL5v9Pwp0OG/xW5/dIRAGVX8NNP92+unQN/0J/VnAuXnlAV6Nz/g7Hfsz7ag3xkhUEYVniQNB5z9UecQ6Nvr+THoxkgFygaFu/iP/T69j7Sv8vGquxwOSDft4QXKJn7VSTSBEk2gRBMo0QRKNIESLeXKIgJllECJNtElPT61m2ZBODICJVrtRZFccolGRx7oJMfHG+37/+4UHHWgtXkKdBdK/5H3vQZrExLoLlT9I3frH/ZDoIevLNBh9XXLz/si0MNX9o+ccKBWHagnx+qVB1o1f7tlqJ0u0Hp1q1CgTECgDdMFWq9wFe69T4EeAYE2TBdovcpVuO8+BXoEBNowXaD1BNowXaD1BNowXaD1vFikYbpA6wm0YbpA6wm0YbpA6wm0YbpA6wm0YbpA6wm0YbpA6wm0YbpA6wm0YbpA6wm0YbpA6x31X+0I9PAd+d/F104XaD2BNkwXaD2BNkwXaL1JVmHqVWQEevhSLmDbvhijS1YydjVdoPVSrlHfvhi7G7uaLtB6Am2YLtB6KYGWrGqBHr5TDPTxqj/oPZ+NvPny+Nsxb3iTZoHuwikG+vF8iPR8uPlNewKNc4KBPvwyvCv4ojqBpjvBQJcbzyG8v+bvYf9w0b26WT5ys7g33Hi8ulx8RaB7dIKBDgkOh6BDeMsQZ7evv8wWjyzufe4/3r//vPiKQPfoFAOdzRs9fwp0vtmc7/afHunv3Z7Pbj8sbwt0j6YOdPMZ8vyLl5tG7Pxppvu310+BvukX+ez6tl/u4ZHFvX7z+dv1022B7s/UgW4+Q56lBHo3P+Dsl+XZFnRp+cjgzz/eP+3bBbpHEwf6nTPkWUqgj1fDAefi2LLfjs6X6muKT/fuug9PXxHoHk0c6KYz5H5neTak8J+uX+/9yh/urY3Y6S7+Y7/n7iOd59hdDsu4XJzlWfxw7+HXm9nytkD3aOpd/PgZ8sPF5bBnHbZd/c1hM3u3OG1ejfCrTkYVnMWPnCEvP8138R/Ph1y/HSFQRpU8zfTiDHnYXvZ1zgO9PZ9vZi/XRwiUURMHuuEMeW0L+uHrN34dIVBGTX6SNHqG/OwY9P7N5fAFgbKVyXfx42fIWWfxU00XaL0T/VXnNNMFWk+gDdMFWk+gDdMFWk+gDdMFWk+gDdMFWk+gDdMFWi/lyiICZZRAG6YLtN5Eq/BTu2kWZI1AD59AG6YLtJ7rgzZMF2g9gTZMF2g9gTZMF2g9b0PTMF2g9apWYbf+YT8EevjKAh3i6Jaf90Wgh69sFa6egq/6AVstQ+10gdYrD7Rq/nbLUDtdoPXqVqFAmYBAG6YLtF7hKtx7nwI9AgJtmC7QepWrcN99TvNCwO++RlCg1QQq0GhHHejcBK8E3O2LBHlOoAKNdtQvFtksd8lYJ1CiCZRoAiWaQIkmUKIJlGinGWjEE7Rs40QD3fcCsK3i1/tUTm+Quly8cNR/F79R6nLxgkCJdmqBdl8/5i0cL02yliZ4aeUUi7Hlss4W/9exB8g8l3IB2/bF+Oml3dmPpEHKNerbF2P7n6XPA3J6gSb8PTRbSwl0h69NF+ghOdlAd/bjaHKCgQb8wT5bO9VAd/fTaCJQogmUaAIl2vSB3r8ZAji7fv7Ywy9rd0dG7PQSCPo8HAWBvrvpP96tFSpQ/qaqQB+vLp89JlD+pspAHy66V/3tu677Rx9ov+vvt6r3737vug8vRwiUUWW7+Fc3Q6O3r788XPSfzq6HT/2D928+DJ9ejBAoowpPkoZS+3373esvw6flvfu318uE10cIlFFVW9DZstSz69tFoEOn/TZ1+OreA/Vi+sNRGejixjdbUIHyMwoDHY5B+zvfHIMKlJ9RGOhwFj88G9rv6v/17CxeoPyEU/xVp0APiECJdqKBKvRQnGagNqEHQ6BEEyjRUq4sIlBGCZRoE62pQ3tTQYEeCoES7dSuD7rkidBDceSBTnJ8vNG+/+9OwVEHWpunQHfhqN+GpjYhge5C1T9yt/5hPwR6+MoCHVZft/y8LwI9fGX/yAkHatWB7vrJsVNUHmjV/O2WoXa6QOvVrUKBMgGBNkwXaL3CVbj3PgV6BATaMF2g9SpX4b77FOgREGjDdIHWE2jDdIHWE2jDdIHW82KRhukCrSfQhukCrSfQhukCrSfQhukCrSfQhukCrSfQhukCrSfQhukCrSfQhukCrSfQhukCrXfUf7Uj0MN35H8XXztdoPUE2jBdoPUE2jBdoPUmWYWpV5ER6OFLuYBt+2KMLlnJ2NV0gdZLuUZ9+2LsbuxqukDrCbRhukDrpQRasqoFevhOJdDFG9iuv43tyze1/dHX1h4V6C6ccqDfI9AQAh0n0BCnF+jyfev/+e9X/313czd/juty9Wb2v3fdh9X3P1x0r26GG49Xl/PbAt29kwn0zTzFVzcPF5ezu767N5dPuX08n60e/DB8mn//u5s+y9nt68/9x/v3n+e3vwh0504m0Kct6HzT+Mv1/dvr5WMfX3+ZvXjw2Xfens9uPzx9g0B3beJAf/ZkeTViZ4He9T3228b5zn54rN8uzmbrD9523fkQ6LDRPbvuN5+/XT/dFuiu7SDQrUbsfAu6DHSxR//mwa/fOfjzj/dfvj66vtACrXZygT4dbi5avOtPjXrrDy6/fzgGnTfcnzctbwt058oC3e5keTVi52fx8xb/d9XNd91rD662lf2Z+9Dvw683s+Vtge7c1IH+5MnyaoRfdTKqagu65cnyaoRAGVUV6BYny2sjBMqo6i3oD06WVyMEyqiqQLc8WV6NECijqs/if3CyvBohUEadyq86S6YLtJ5AG6YLtJ5AG6YLtJ5AG6YLtJ5AG6YLtJ5AG6YLtF7KlUUEyiiBNkwXaL2JVuGndtMsyBqBHj6BNkwXaL19X0a+lEAPn0Abpgu0nkAbpgu0nkAbpgu0nkAbpgu0nkAbpgu0nkAbpgu0nkAbpgu0nkAbpgu0nkAbpgu0nkAbpgu0nkAbpgu03pEHWkug9QQq0GhHHSiHT6BEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKNIESTaBEEyjRBEo0gRJNoEQTKNEESjSBEk2gRBMo0QRKtP8DKGWjLSHavR4AAAAASUVORK5CYII=" title alt style="display: block; margin: auto;" /></p>
 </div>
@@ -248,7 +243,7 @@ img {
 ## 2    Bt1  38  56
 ## 3    Bt2  56 135
 ## 4     Bk 135 152</code></pre>
-<p>Bottom depth of the A horizon and the upper depth of the Bt1 horizons should be the same - either be 30 or 38 cm? Need to determine which to correct this issue.</p>
+<p>Notice the issue here? Bottom depth of the A horizon and the upper depth of the Bt1 horizons should be the same - either be 30 or 38 cm? Need to determine which to correct this issue.</p>
 <ul>
 <li><p><strong>missing lower horizon depths:</strong> offending horizons are fixed by replacing the missing bottom depth with the top depth + 2cm</p></li>
 <li><p><strong>sites missing pedon records:</strong> data without corresponding horizons are not loaded</p></li>
@@ -267,6 +262,9 @@ img {
 </ul></li>
 </ul>
 <p>For more information on the design of soilDB functions use the following link to the soilDB documentation - <a href="https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/soilDB-Intro.html?root=aqp"><strong>Introduction to soilDB</strong></a></p>
+</div>
+<div id="todo-add-section-on-options-that-can-be-set-within-fetchnasis" class="section level4">
+<h4>TODO: add section on options that can be set within fetchNASIS()</h4>
 </div>
 </div>
 <div id="the-structure-of-pedon-data-stored-in-the-soil-profile-collection-spc-object" class="section level3">
@@ -411,7 +409,7 @@ class(f)
 names(f@site)
 names(f@horizons)
 
-# look at the first 2 lines of the data
+# look at the first 2 sites of the data
 head(f, 2)</code></pre>
 </div>
 <div id="question" class="section level3">
@@ -471,6 +469,33 @@ box()</code></pre>
 <div id="exporting-pedon-data-to-an-esri-shapefile" class="section level4">
 <h4>Exporting pedon data to an ESRI shapefile</h4>
 <p>Another way we could view the data is to export a shapefile from R. Further information on how to do this can be found in this tutorial <a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/export-points-from-NASIS.html?root=aqp">Export Pedons to Shapefile</a>.</p>
+</div>
+<div id="exercise-use-the-following-script-to-make-an-r-plot-of-the-pedon-data-youve-loaded-from-your-nasis-selected-set." class="section level4">
+<h4>Exercise: Use the following script to make an R plot of the pedon data you’ve loaded from your NASIS selected set.</h4>
+<p>The following script is plotting the standard lat/long fields from NASIS. In some cases you might find that these fields are incomplete due to insufficient data to calculate or have not been calculated in NASIS. In these cases there are a couple of ways that you can omit sites with ‘NA’ values in the coordinates. <code>na.omit()</code> or <code>complete.cases()</code> functions will remove any rows in a dataframe that have ‘NA’ values.</p>
+<pre class="r"><code># load libraries
+library(sp)
+library(maps)
+
+# subset standard WGS84 decimal degree coordinates from the gopheridge SPC by specifying column names
+f.locations &lt;- site(f)[, c('site_id', 'x_std', 'y_std')]
+
+# remove any sites lacking standard coordinates
+f.locations &lt;- na.omit(f.locations)
+
+# initialize coordinates in an SPDF
+coordinates(f.locations) &lt;- ~ x_std + y_std
+
+# set plot margins
+par(mar=c(0,0,0,0))
+
+# plot pedon locations
+plot(f.locations)
+
+# plot again this time with county boundaries for your state - enter your state!!!
+map('county', 'Montana', fill = FALSE)
+# add plot of pedon locations
+plot(f.locations, add = TRUE)</code></pre>
 </div>
 </div>
 <div id="working-with-spc-data-in-r" class="section level3">
@@ -650,8 +675,7 @@ f &lt;- f[idx, ]</code></pre>
 <p>Functions can bundle a series of operations and then be applied to an SPC using <code>profileApply()</code>. Say we wanted use some pedon data to model the depth to calcium carbonate. One way to do this would be to look through horizon designations to derive a depth to calcium carbonate using the ‘k’ suffix designation. A first step to doing something like this would be to think about outlining the steps involved in the process.</p>
 <p>What steps would be needed to accomplish this task and return an upper depth to carbonates for each site?</p>
 <ul>
-<li>extract the horizon data</li>
-<li>Would we want to remove organic horizons? Starting our depth to carbonates at the mineral soil surface.</li>
+<li>extract the horizon data for each profile</li>
 <li>iterate through the horizon designations(hzname) pattern matching for ‘k’</li>
 <li>apply the function to each profile via <code>profileApply()</code></li>
 <li>summarize the data returned by the function to one value per profile</li>
@@ -663,14 +687,12 @@ library(plyr)
 f.limy &lt;- function(i) {
   # extract horizons
   h &lt;- horizons(i) 
-  # filter O horizons to remove them
-  h &lt;- h[grep('O', h$hzname, invert=TRUE), ]  
+  
   # pattern match for 'k' horizon designations in horizon data
   h2 &lt;- h[grep('k', h$hzname, invert=FALSE), ] 
-  min_depth &lt;- min(h2$hzdept)
-  
+
   # return data
-  return(data.frame(peiid=h2$peiid, phiid=h2$phiid, hzname=h2$hzname, hzdept=h2$hzdept, hzdepb=h2$hzdepb, ph_0_18=h2$phfield, efferv_0_18=h2$effervescence))
+  return(data.frame(peiid=h2$peiid, phiid=h2$phiid, hzname=h2$hzname, hzdept=h2$hzdept, hzdepb=h2$hzdepb, ph=h2$phfield, efferv=h2$effervescence))
 }
 
 # apply function to each profile, results are a list of data.frames
@@ -680,29 +702,59 @@ l &lt;- profileApply(f, FUN=f.limy, simplify=FALSE)
 limy &lt;- ldply(l)
 
 # show contents of the limy dataframe
-head(limy)</code></pre>
-<pre><code>## data frame with 0 columns and 0 rows</code></pre>
-<pre class="r"><code># example of data returned - you can see that we still need to summarize this to get the upper depth from multiple 'Bk' horizons
+head(limy)
+
+# example of data returned - you can see that we still need to summarize this to get the upper depth from multiple 'Bk' horizons
 # notice that a couple of additional variable were return by the function
 #     .id  peiid   phiid hzname hzdept hzdepb ph_0_18 efferv_0_18
 #1 828198 828198 4268004    Bk1     91    152     8.2     violent
 #2 828198 828198 4268003    Bk2    152    182     8.2      strong
+#3 828209 828209 4268070    Btk    104    152     7.6       &lt;NA&gt;
 
 # still need to reduce this down to one depth value for each profile
 # summarize this dataframe using summarise() in the plyr package
-limy1 &lt;- ddply(limy, 'peiid', summarise, depth_to_caco3_cm=min(hzdept))
+limy1 &lt;- ddply(limy, 'peiid', summarise, depth_to_carbonates_cm=min(hzdept))
 
 # since we have peiid in the limy1 dataframe we can easy join it back to site data in the SPC
 site(f) &lt;- limy1
+
 # summary of depth to carbonates in the data
 table(f$depth_to_caco3_cm)</code></pre>
-<pre><code>## &lt; table of extent 0 &gt;</code></pre>
+<p>Question: What is a potential problem with this operation? What has not been accounted for?</p>
+</div>
+<div id="extended-data-functions-in-soildb" class="section level3">
+<h3>Extended data functions in soilDB</h3>
+<p>Additional data related to both site and horizon information can be fetched using the <code>get_extended_data_from_NASIS()</code> function. The reason that this data is not automatically brought into R is that in most cases these data elements are related to the site or horizon data as one to many relationships. Multiple diagnostic features could exist within one pedon for example.</p>
+<p>TODO: show summary of all the extended date elements that are currently pulled into R. These function examples will only work if your pedon data has carbonates or argillic horizons…..work up a parallel example going for depth to argillic using gopheridge or loafercreek datasets (neither of these sets have carbonates).</p>
+</div>
+<div id="thicknesses-of-diagnostic-features" class="section level3">
+<h3>Thicknesses of diagnostic features</h3>
+<div id="todo-explain-the-treatment-of-diagnostic-features-as-boolean-fields-in-the-site-data" class="section level4">
+<h4>TODO: explain the treatment of diagnostic features as boolean fields in the site data</h4>
+<p>We could have used the following code to pull the upper depth to calcium carbonates using the calcic diagnostic feature or the secondary carbonates diagnostic feature. However, this is where data consistency hits home. We could use those fields if they have been consistently populated for all pedons that we are working with in our selected set. As you start working with larger pedon data sets you will quickly see there can be great inconsistencies in the way that the data was populated by different people in different offices on different surveys over different timeframes.</p>
+<p>The following is an example of how you could use the diagnostic features (if fully populated) to determine feature thicknesses:</p>
+<pre class="r"><code># fetch extended site and horizon data
+e &lt;- get_extended_data_from_NASIS_db()
+
+# get the thickness of a diagnostic feature - in this case an argillic horizon
+###get upper and lower depths for a diagnostic
+d &lt;- e$diagnostic[e$diagnostic$diag_kind == 'argillic horizon', c('peiid', 'featdept', 'featdepb')]
+# create a column of argillic thickness
+d$argillic_thickness_cm &lt;- d$featdepb - d$featdept
+# omit NA values
+d &lt;- na.omit(d)
+# subset to remove featdept and featdepb columns from the dataframe
+d &lt;- d[, c('peiid', 'argillic_thickness_cm')]
+# join these data with existing site data
+site(f) &lt;- d$argillic_thickness_cm</code></pre>
+</div>
 </div>
 <div id="consistency-checking-pedon-data-using-r" class="section level3">
 <h3><a id="check" )></a>2.6 Consistency checking pedon data using R</h3>
 <div id="assumptions" class="section level4">
 <h4>assumptions:</h4>
 <p><a href="https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/dealing-with-bad-data.html?root=aqp">Dealing with Troublesome data</a></p>
+<p>TODO: points to touch on further……</p>
 <ul>
 <li>some common pit falls of working with pedon data</li>
 <li>consistency in data population is key!</li>
@@ -711,17 +763,12 @@ table(f$depth_to_caco3_cm)</code></pre>
 </ul>
 </div>
 </div>
-<div id="preparing-other-data-sources-for-use-in-r" class="section level3">
-<h3><a id="data" )></a>2.7 Preparing other data sources for use in R</h3>
-<p>When preparing data for statistical analysis, a nicely formatted summary table is not appropriate. The data needs to be basic and compact. The required configuration will be a comma delimited text file, where columns contain dependent and independent variables and rows contain individual observations of the variables. Using sand content as an example, you might collect or present your data like this:</p>
-<p>However, for use in R, the data needs to be organized with total sand content as one long column – with headers for organization. Remove spaces from column headers, and simplify and standardize the coding of categorical variables. There should be only 1 header row followed by data as noted in this formatted table.</p>
-<p>The same table in a format suitable for use by R</p>
-<p>location,landuse,horizon,depth,sand<br />city,crop,A,14,19<br />city,crop,B,25,21<br />city,pasture,A,10,23<br />city,pasture,B,27,34<br />city,range,A,15,22<br />city,range,B,23,23<br />farm,crop,A,12,31<br />farm,crop,B,31,35<br />farm,pasture,A,17,30<br />farm,pasture,B,26,36<br />farm,range,A,15,25<br />farm,range,B,24,29<br />west,crop,A,13,27<br />west,crop,B,29,25<br />west,pasture,A,11,21<br />west,pasture,B,31,26<br />west,range,A,14,23<br />west,range,B,24,24</p>
-<p>If you copy and paste the comma delimited text, starting with the header line of location, and save it as a text file named “sample_table.txt” in the  C:/Temp folder, you can open R and run these commands by copying text from the boxes and pasting into the R prompt:</p>
-</div>
 <div id="references-and-useful-links" class="section level3">
-<h3><a id="refs" )></a>2.8 References and useful links</h3>
-<p><a href="http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf">tutorials like this</a></p>
+<h3><a id="refs" )></a>2.7 References and useful links</h3>
+</div>
+<div id="additional-resources" class="section level3">
+<h3><a id="resources" )></a>2.8 Additional resources</h3>
+<p><a href="http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf">R tutorials</a></p>
 </div>
 </div>
 </div>
