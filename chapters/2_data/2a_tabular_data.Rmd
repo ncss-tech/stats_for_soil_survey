@@ -1,7 +1,7 @@
 ---
-title:
+title: Chapter 2 - Tabular data we use
 author: Jay Skovlin and D.E. Beaudette
-date: "Friday, January 15, 2016"
+date: "Friday, February 9, 2016"
 output: html_document
 html_document:
     keep_md: yes
@@ -21,8 +21,6 @@ options(width=100, stringsAsFactors=FALSE)
 # blocked for now - remove later went I post to github!!!
 #![Statistics for pedologists course banner image](figure/logo.jpg)  
 ```
-
-##CHAPTER 2a: TABULAR DATA WE USE
 
 #Getting acquainted with the soilDB package
 ##Objectives:
@@ -233,11 +231,8 @@ bot <- as.integer(c(30,56,135,152))
 hzname <- c('A', 'Bt1', 'Bt2', 'Bk')
 d <- data.frame(hzname, top, bot)
 d
-
 ```
-<center><img src="./fig_1.jpg"></center>
-<center>Example horizon depth issues</center>
-
+Bottom depth of the A horizon and the upper depth of the Bt1 horizons should be the same - either be 30 or 38 cm?  Need to determine which to correct this issue.
 
 - **missing lower horizon depths:** offending horizons are fixed by replacing the missing bottom depth with the top depth + 2cm
 
@@ -251,29 +246,25 @@ Should errors in the pedon data be detected when loading data using fetchNASIS()
   - returns user site ID's for sites missing pedons
   
 - **get('dup.pedon.ids', envir=soilDB.env)**
-  - returns pedon ID's for sites with duplicate pedon ID's - does this also return pedon_id?
+  - returns pedon ID's for sites with duplicate pedon ID's
   
 - **get('bad.pedon.ids', envir=soilDB.env)**
     - returns user pedon ID's for pedons with inconsistent horizon depths - modify to return site id's as well.
     
-TODO: example of what is returned by these get()'s    
+
 
 For more information on the design of soilDB functions use the following link to the soilDB documentation - [**Introduction to soilDB**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/soilDB-Intro.html?root=aqp)
 
-####TODO: include example code block in a lower section of the document once the user has brought some data in via fetchNASIS()
 
 ###<a id="SPC")></a>2.3  The structure of pedon data stored in the Soil Profile Collection (SPC) object
-####TODO: Briefly explain this then go into demonstrations and some exercises which folks load some of their own data:
-
-####TODO: MODIFY CODE which runs on package sample datasets and include additional code sections that run directly on any user loaded SPC!!!
-
 
 #### The `Gopheridge` Sample Dataset
 The `gopheridge` sample dataset is very similar to the type of data returned from `fetchNASIS()`. The following demonstration is intended to show the structure of the Soil Profile Collection (SPC) object that is returned by 'fetchNASIS()'. 
 
 Before proceeding it may be helpful to review the `aqp` manual pages: `library(aqp) ; help(aqp)`, or the [**SoilProfileCollection object introduction**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).  This tutorial provides an excellent overview of how the SPC object is constructed.
 
-Open R, and setup the environment by loading packages and the sample dataset.
+Open R, and setup the environment by loading packages and the Gopheridge sample dataset.
+
 ```{r gopheridge_a}
 library(soilDB)
 
@@ -294,6 +285,7 @@ head(gopheridge, 2)
 
 ```{r owndata_a, results='hide'}
 library(soilDB)
+library(aqp)
 
 # load data from a NASIS selected set
 f <- fetchNASIS()
@@ -308,6 +300,13 @@ names(f@horizons)
 # look at the first 2 lines of the data
 head(f, 2)
 ```
+
+###Question:
+####How can we find out how many site and horizon records we have in the data we've just loaded?
+uoᴉʇɔunɟ ()ɹʇs ǝɥʇ ǝsn
+
+
+
 
 ###<a id="view")></a>2.4  Viewing pedon locations
 ####Plotting geographic data directly in R
@@ -380,17 +379,25 @@ sort(table(f$tax_subgroup), decreasing=TRUE)
 table(is.na(f$tax_subgroup))
 table(!is.na(f$tax_subgroup))
 
-# it can also be applied to horizon level columns
+# it can also be applied to horizon level columns in the SPC
   sort(table(f$texture), decreasing=TRUE)
 ```
 
 ####Filtering data using pattern matching
 
-A collection of soil profiles or an SPC can be subset using a variety of methods and then the results can be placed into another SPC. The following examples use the `grep()` function to pattern match within the data and create an index of the SPC for records that match the specified pattern and then use that to filter to specific sites and their corresponding profiles.
+A collection of soil profiles or an SPC can be subset using a variety of methods and then the results can be placed into another SPC. The following examples use the `grep()` function to pattern match within the data and create an index of the SPC for records that match the specified pattern within that column and then use that index to filter to specific sites and their corresponding profiles.
 
--- mention invert option in grep() - very useful!
+This process can be applied to many different columns in the SPC based on how you need to filter the data.  This example pattern matches on the `tax_subgroup` column, but another useful application might be to pattern match on geomorphic or parent material information.
 
-```{r owndata_c, results='hide'}
+The soilDB package flattens the nested table structure of parent material and geomorphic description within NASIS into single strings per site-level record.  Pattern matching can be used to select profiles based on parts of these strings. 
+
+```{r owndata_c, results='show'} 
+sort(table(f$landform.string), decreasing=TRUE)
+```
+
+Notice below that the `grep()` also has an ***invert option***, which is specified as either TRUE or FALSE (the default when unspecified is FALSE).  This option is very useful for excluding the results of the pattern matching process by inverting the selection.
+
+```{r owndata_d, results='hide'}
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # use of grep() to filter and create an index, then apply that index to the SPC 
 # and create a new SPC called 'f1' using the square bracket notation
@@ -399,68 +406,149 @@ idx <- grep('lithic', f$tax_subgroup, invert=FALSE)
 f1 <- f[idx, ]
 # or use the index directly to summarize a field
 sort(table(f$part_size_class[idx]), decreasing=TRUE)
+```
+Let's do a quick graphical check that we've selected the 'lithic*' profiles by plotting them in R using the AQP package `plot()` function.
 
-# getting some graphics among all this code might be helpful - plot these?
-
+```{r owndata_e, results='show'}
+# plot the first 10 profiles of the 'f1' subset
+plot(f1[1:10, ], label='site_id')
 ```
 
 ####Filtering data by specifying a criteria using the `which()`
 
 Another method of subsetting a collection of soil profiles is to specify a criteria using the `which()` function. The following examples use the `which()` and `grep()` functions to reference the indexing of the SPC to create subsets and to filter to specific sites or their corresponding profiles.
 
-```{r owndata_c, results='hide'}
+```{r owndata_f, results='show'}
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
-# use of grep() to filter and create an index, then apply that index to the SPC 
-# and create a new SPC called 'f1' using the square bracket notation
-idx <- which(f$tax_subgroup == 'lithic%')
-# save this subset of 'lithic' soils for later use  
+# first: use grep to pattern match the tax_subgroup field for the string 'aqu'
+idx <- grep('aqu', f$tax_subgroup)
+# save this subset
 f1 <- f[idx, ]
+# check taxonomic range of particle size classes in the data
+sort(table(f1$tax_subgroup), decreasing=TRUE)
+sort(table(f1$part_size_class), decreasing=TRUE)
+
+# then further query the subset for only those profiles with PSC of 'sandy-skeletal'
+idx <- which(f1$part_size_class == 'sandy-skeletal')
+# save this subset
+f2 <- f1[idx, ]
 # or use the index directly to summarize a field
-sort(table(f$part_size_class[idx]), decreasing=TRUE)
+sort(table(f2$part_size_class), decreasing=TRUE)
+# plot  profiles 1 thru 10
+plot(f1[1:10, ], label='site_id')
+```
 
+###Extracting Site and Horizon data
 
+Soil Profile Collections are designed to be dismantled in order to work with either site or horizon data more easily.  Within the SPC there is a slot for site-level data and a slot for horizon-level data.  We can reference these slots using the `site()` and `horizons()` functions within the AQP package.  These getter functions will extract all the site or horizon variables as a dataframe for further use.  
 
+```{r owndata_g, results='show'}
+# extract site data from SPC into dataframe 's'
+s <- site(f)
+names(s)
+# extract horizon data from SPC into dataframe 'h'
+h <- horizons(f)
+names(h)
+```
+We can also use these functions in referencing the data within an SPC to specify that we want to look specifically in the site or horizon data. 
 
-####IDEAS: Overview of some common R methods that can be used to inspect pedon data:
-- str()
-- head()
-- colnames(), names()
-- summaries via table()
-- levels()
-- factor()
-- order()
-- sort()
-- dput()
-- paste()
-- rm()
-- is.na() and !is.na()
-- save()
-- write.csv()
+###Review of data checks run by `fetchNASIS()`
+Now that we've loaded some data and learned a little about how to filter data in the SPC, let's quickly review some of the `get()` functions used to track data issues detected in the process of loading back to records in our selected set.
 
-####subsetting options using:
-- filters by indexing
-- which()
-- pattern matching - grep()
-- ifelse() operations
-- custom function examples - drilling into and filtering horizon-level data
+```{r owndata_a1, results='hide'}
+# use each one of these to return a vector of the pedons where errors were detected
+#get('sites.missing.pedons', envir=soilDB.env)
+#get('dup.pedon.ids', envir=soilDB.env)
+#get('bad.pedon.ids', envir=soilDB.env)
+# example of pedon_id's returned
+#[1] "2011MT0810001" "2011MT0810009" "2011MT00810015" "2011MT0810027" "2011MT0810034"
 
-#### Accessors - more in tutorials....
-- units(spc) # the units for depths
-- depths(spc) # get depth matrix
-- depthsnames(spc) # get names of depth columns
-- profile_id(spc) # get profile IDs
-- horizons(spc) # get horizon data as dataframe
+# How could you then remove these from your SPC?
+# assign these 'bad' ids to a vector
+get('bad.pedon.ids', envir=soilDB.env)
+# since the get() returns the string of bad pedon id's we can use a which() to query pedon id's that don't match the bad id's
+idx <- which(horizons(f)$pedon_id != get('bad.pedon.ids', envir=soilDB.env))
+f <- f[idx, ]
+```
+Another useful function is `dput()` which will concatenate a variable converting something like this:\
+"2011MT0810001" "2011MT0810009" "2011MT00810015" "2011MT0810027" "2011MT0810034"\
+Into this:\
+c("2011MT0810001", "2011MT0810009", "2011MT00810015", "2011MT0810027", "2011MT0810034")
 
-### Overloads
-- min(spc) # min depth within collection
-- max(spc) # max depth within collection
-- length(spc) # number of profiles
+###Logical evaluations using `ifelse()`
 
+Often there are operations in which we need to evaluate the site or horizon data and assign some variable using a logic statment.  One way to do this is to use the `ifelse()` function.  The following shows some examples of how to do this.
+
+```{r owndata_h, results='show'}
+# assigning a variable using a logical statement
+# standard format
+#    ifelse(variable == '', then do, else do)
+# can also nest these statements
+#     ifelse(variable == '', then do...., ifelse(variable == '', then do..., else do....)) 
+
+```
+
+###Custom functions
+
+Functions can bundle a series of operations and then be applied to an SPC using `profileApply()`.  Say we wanted use some pedon data to model the depth to calcium carbonate.  One way to do this would be to look through horizon designations to derive a depth to calcium carbonate using the 'k' suffix designation.  A first step to doing something like this would be to think about outlining the steps involved in the process.  
+
+What steps would be needed to accomplish this task and return an upper depth to carbonates for each site?
+
+ - extract the horizon data for each profile
+ - Would we want to remove organic horizons?  Starting our depth to carbonates at the mineral soil surface.
+ - iterate through the horizon designations(hzname) pattern matching for 'k'
+ - apply the function to each profile via `profileApply()`
+ - summarize the data returned by the function to one value per profile
+ - join the summarized depth value back to the site data
+ 
+```{r owndata_i, results='show'}
+# load library
+library(plyr)
+
+f.limy <- function(i) {
+  # extract horizons
+  h <- horizons(i) 
+  # filter O horizons to remove them
+  h <- h[grep('O', h$hzname, invert=TRUE), ]  
+  # pattern match for 'k' horizon designations in horizon data
+  h2 <- h[grep('k', h$hzname, invert=FALSE), ] 
+  min_depth <- min(h2$hzdept)
+  
+  # return data
+  return(data.frame(peiid=h2$peiid, phiid=h2$phiid, hzname=h2$hzname, hzdept=h2$hzdept, hzdepb=h2$hzdepb, ph_0_18=h2$phfield, efferv_0_18=h2$effervescence))
+}
+
+# apply function to each profile, results are a list of data.frames
+l <- profileApply(f, FUN=f.limy, simplify=FALSE)
+
+# convert list into a dataframe
+limy <- ldply(l)
+
+# show contents of the limy dataframe
+head(limy)
+
+# example of data returned - you can see that we still need to summarize this to get the upper depth from multiple 'Bk' horizons
+# notice that a couple of additional variable were return by the function
+#     .id  peiid   phiid hzname hzdept hzdepb ph_0_18 efferv_0_18
+#1 828198 828198 4268004    Bk1     91    152     8.2     violent
+#2 828198 828198 4268003    Bk2    152    182     8.2      strong
+
+# still need to reduce this down to one depth value for each profile
+# summarize this dataframe using summarise() in the plyr package
+limy1 <- ddply(limy, 'peiid', summarise, depth_to_caco3_cm=min(hzdept))
+
+# since we have peiid in the limy1 dataframe we can easy join it back to site data in the SPC
+site(f) <- limy1
+
+# summary of depth to carbonates in the data
+table(f$depth_to_caco3_cm)
+```
 
 ###<a id="check")></a>2.6  Consistency checking pedon data using R
 ####assumptions:
 
 [Dealing with Troublesome data](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/dealing-with-bad-data.html?root=aqp)
+
 - some common pit falls of working with pedon data
 - consistency in data population is key!
 - horizonation issues, etc
