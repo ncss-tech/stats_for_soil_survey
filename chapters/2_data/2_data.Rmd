@@ -141,66 +141,62 @@ library(soilDB)
 library(raster)
 
 # p <- fetchNASIS()
-load(file = "C:/workspace/ca794_pedons.Rdata")
-s <- site(p)
-idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
-p2 <- p[idx] # subset pedon using idx
-coordinates(p2) <- ~ x + y # add coordinates to the pedon object
-proj4string(p2) <- CRS("+init=epsg:4326") # add projection to the pedon object
-p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
-
-setwd("M:/geodata/project_data/8VIC/")
-
-rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
-
-test <- data.frame(p_sp$site_id, extract(rs, p_sp))
-
-str(test)
+# load(file = "C:/workspace/ca794_pedons.Rdata")
+# s <- site(p)
+# idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
+# p2 <- p[idx] # subset pedon using idx
+# coordinates(p2) <- ~ x + y # add coordinates to the pedon object
+# proj4string(p2) <- CRS("+init=epsg:4326") # add projection to the pedon object
+# p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
+# 
+# setwd("F:/geodata/project_data/8VIC/")
+# 
+# rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
+# 
+# test <- data.frame(p_sp$site_id, extract(rs, p_sp))
+# 
+# str(test)
 ```
 
 ### Extracting zonal statistics from a raster for polygons
 
-Zonal statistics summarize the contents of a polygon. This can be accomplished via two methods. The most traditional method simply counts the number of occurances of each value within a polygon.
+Zonal statistics summarize the spatial data that overlay a polygon. This can be accomplished via two methods. The most common method (i.e. census survey) provided by most GIS computes a statistical summary of the rasters that overlay a polygon. This approach is generally faster and computes a summary each cell within a raster. An alternative approach is too take a collection of random samples from each polygon. While this approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages.
 
 ```{r}
-load("C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
-ca794 <- soilmu_a_ca794
-ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
-ca794$mukey2 <- as.integer(as.character(ca794$MUKEY))
-writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile")
-
-library(gdalUtils)
-library(RSAGA)
-gdal_setInstallation(search_path = "C:/Program Files/QGIS/QGIS Wien/bin", rescan = TRUE)
-myenv <- rsaga.env(path = "C:/Program Files/QGIS Wien/apps/saga")
-test <- raster(extent(ca794), ext = extent(rs), crs = crs(rs), res = res(rs))  # create blank raster
-writeRaster(test, file = "M:/geodata/project_data/8VIC/sdat/ca794.tif", progress = "text", overwrite = TRUE)
-gdal_rasterize("C:/workspace/ca794.shp", "M:/geodata/project_data/8VIC/sdat/ca794.tif", a = "mukey2", verbose = TRUE)
-gdal_translate("M:/geodata/project_data/8VIC/sdat/ca794.tif", "M:/geodata/project_data/8VIC/sdat/ca794_new.tif", of = "GTiff", verbose = TRUE)
-gdal_translate("M:/geodata/project_data/8VIC/sdat/ca794_new.tif", "M:/geodata/project_data/8VIC/sdat/ca794_new.sdat", of = "SAGA", verbose = TRUE)
-
-
-rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
-  INPUT = "C:/workspace/ca794.shp",
-  FIELD = "mukey2",
-  OUTPUT = "2",
-  TARGET = "0",
-  GRID_TYPE = "2",
-  USER_GRID = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-  USER_XMIN = extent(test)[1],
-  USER_XMAX = extent(test)[2],
-  USER_YMIN = extent(test)[3],
-  USER_YMAX = extent(test)[4],
-  USER_SIZE = res(test)[1]
-)
-)
-rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
-  ZONES = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-  STATLIST = paste(c("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "M:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
-  OUTTAB = "C:/workspace/test.csv"
-))
+# library(rgdal)
+# 
+# load("C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# ca794 <- soilmu_a_ca794
+# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+# ca794$mukey2 <- as.integer(as.character(ca794$MUKEY))
+# writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile")
+# 
+# library(RSAGA)
+# myenv <- rsaga.env(path = "C:/Program Files/QGIS Lyon/apps/saga")
+# test <- raster("F:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat", ext = extent(rs), crs = crs(rs), res = res(rs))  # create blank raster
+# 
+# rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
+#   INPUT = "C:/workspace/ca794.shp",
+#   FIELD = "mukey2",
+#   OUTPUT = "2",
+#   TARGET = "0",
+#   GRID_TYPE = "2",
+#   USER_GRID = "F:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   USER_XMIN = extent(test)[1] + 15,
+#   USER_XMAX = extent(test)[2] - 15,
+#   USER_YMIN = extent(test)[3] + 15,
+#   USER_YMAX = extent(test)[4] - 15,
+#   USER_SIZE = res(test)[1]
+# )
+# )
+# rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
+#   ZONES = "F:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   STATLIST = paste(c("F:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "F:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
+#   OUTTAB = "C:/workspace/test.csv"
+# ))
 
 test <- read.csv("C:/workspace/test.csv")
+names(test)[1] <- "mukey"
 str(test)
 
 ```
