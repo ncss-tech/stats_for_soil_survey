@@ -269,12 +269,7 @@ desc_test <- function(old) {
 #  
 # ssa <- readOGR(dsn = "M:/geodata/soils", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
 # ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
-plot(ca794)
-```
-
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
-
-```r
+# plot(ca794)
 # pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
 # plot(pedons_sp, add = TRUE) # Beware some points that fall outside of CA794 are not show here. Some are way outside of CA794.
 # 
@@ -445,39 +440,101 @@ confusionMatrix(test$fitted.values > 0.5, as.logical(test$y), positive = "TRUE")
 ```
 
 ```r
-test2 <- glm(argillic.horizon2 ~ 1, data = data2, family = binomial(link = "cloglog"))
+test2 <- glm(argillic.horizon2 ~ twi_sc + slope + z2str + tc_2, data = data2, family = binomial(link = "cloglog"))
 summary(test2)
 ```
 
 ```
 ## 
 ## Call:
-## glm(formula = argillic.horizon2 ~ 1, family = binomial(link = "cloglog"), 
-##     data = data2)
+## glm(formula = argillic.horizon2 ~ twi_sc + slope + z2str + tc_2, 
+##     family = binomial(link = "cloglog"), data = data2)
 ## 
 ## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -0.5983  -0.5983  -0.5983  -0.5983   1.9019  
+##      Min        1Q    Median        3Q       Max  
+## -1.56417  -0.62277  -0.15310  -0.00965   2.49635  
 ## 
 ## Coefficients:
-##             Estimate Std. Error z value Pr(>|z|)    
-## (Intercept) -1.72053    0.07772  -22.14   <2e-16 ***
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -0.785513   0.443639  -1.771 0.076625 .  
+## twi_sc      -0.517477   0.074887  -6.910 4.84e-12 ***
+## slope       -0.175815   0.034932  -5.033 4.83e-07 ***
+## z2str       -0.010738   0.004210  -2.550 0.010757 *  
+## tc_2         0.027834   0.008115   3.430 0.000604 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 903.66  on 1012  degrees of freedom
-## Residual deviance: 903.66  on 1012  degrees of freedom
-##   (1 observation deleted due to missingness)
-## AIC: 905.66
+##     Null deviance: 901.14  on 1005  degrees of freedom
+## Residual deviance: 643.07  on 1001  degrees of freedom
+##   (8 observations deleted due to missingness)
+## AIC: 653.07
 ## 
-## Number of Fisher Scoring iterations: 5
+## Number of Fisher Scoring iterations: 8
 ```
 
 ```r
-#confusionMatrix(test2$fitted.values > 0.5, as.logical(test2$y), positive = "TRUE")
+confusionMatrix(test2$fitted.values > 0.35, as.logical(test2$y), positive = "TRUE")
+```
+
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction FALSE TRUE
+##      FALSE   746   80
+##      TRUE     94   86
+##                                           
+##                Accuracy : 0.827           
+##                  95% CI : (0.8022, 0.8499)
+##     No Information Rate : 0.835           
+##     P-Value [Acc > NIR] : 0.7662          
+##                                           
+##                   Kappa : 0.3929          
+##  Mcnemar's Test P-Value : 0.3244          
+##                                           
+##             Sensitivity : 0.51807         
+##             Specificity : 0.88810         
+##          Pos Pred Value : 0.47778         
+##          Neg Pred Value : 0.90315         
+##              Prevalence : 0.16501         
+##          Detection Rate : 0.08549         
+##    Detection Prevalence : 0.17893         
+##       Balanced Accuracy : 0.70308         
+##                                           
+##        'Positive' Class : TRUE            
+## 
+```
+
+```r
+table(data2$cluster, predict(test2, data2, type = "response") > 0.35)
+```
+
+```
+##     
+##      FALSE TRUE
+##   2    135   16
+##   3     63   16
+##   4      2    0
+##   5     79   46
+##   6     58    7
+##   7     65   11
+##   8     20    6
+##   9      1    0
+##   10    57    0
+##   11   120    0
+##   12    72    0
+##   13    33   11
+##   14    55   30
+##   15    66   37
 ```
 
 
+## Additional reading
 
+Lane, P.W., 2002. Generalized linear models in soil science. European Journal of Soil Science 53, 241- 251. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2002.00440.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2002.00440.x/abstract)
+
+Gareth, J., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+
+Hengl, T. 2009. A Practical Guide to Geostatistical Mapping, 2nd Edt. University of Amsterdam, www.lulu.com, 291 p. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf)
