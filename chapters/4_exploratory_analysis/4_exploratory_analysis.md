@@ -76,6 +76,8 @@ Ideally before you start EDA, you should ensure that your data has no errors, ty
 
 ```r
 library(soilDB)
+library(lattice)
+library(reshape2)
 
 data("loafercreek")
 
@@ -105,19 +107,27 @@ This view is fine for a small dataset, but can be cumbersome for a larger ones. 
 
 
 ```r
-vars <- c("genhz", "clay", "total_frags_pct", "effervescence")
+vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effervescence")
 summary(h[vars])
 ```
 
 ```
-##       genhz         clay       total_frags_pct effervescence     
-##  A       :64   Min.   :10.00   Min.   : 0.00   Length:365        
-##  Bt1     :59   1st Qu.:17.00   1st Qu.: 0.00   Class :character  
-##  Bt2     :58   Median :21.00   Median : 5.00   Mode  :character  
-##  Bt3     :52   Mean   :22.05   Mean   :13.01                     
-##  Cr      :57   3rd Qu.:26.00   3rd Qu.:20.00                     
-##  R       :26   Max.   :48.00   Max.   :87.00                     
-##  not-used:49   NA's   :110
+##       genhz         clay       total_frags_pct    phfield     
+##  A       :64   Min.   :10.00   Min.   : 0.00   Min.   :4.900  
+##  Bt1     :59   1st Qu.:17.00   1st Qu.: 0.00   1st Qu.:6.000  
+##  Bt2     :58   Median :21.00   Median : 5.00   Median :6.200  
+##  Bt3     :52   Mean   :22.05   Mean   :13.01   Mean   :6.135  
+##  Cr      :57   3rd Qu.:26.00   3rd Qu.:20.00   3rd Qu.:6.500  
+##  R       :26   Max.   :48.00   Max.   :87.00   Max.   :6.900  
+##  not-used:49   NA's   :110                     NA's   :204    
+##  effervescence     
+##  Length:365        
+##  Class :character  
+##  Mode  :character  
+##                    
+##                    
+##                    
+## 
 ```
 
 The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because *h* is a dataframe, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If any of these metrics look unfamiliar to you, don't worry we'll cover they shortly.
@@ -165,6 +175,10 @@ If the `unique()` function returned typos such as "BT" or "B t", you could eithe
 
 ```r
 h$hzname[h$hzname == "BT"] <- "Bt"
+
+# or
+
+# h$hzname <- if(h$hzname == "BT", "Bt", h$hzname)
 ```
 
 Typo errors such as these are common found with old pedon data in NASIS.
@@ -211,10 +225,26 @@ Next will review the `hist` and `density` functions which plot a histogram and d
 
 
 ```r
-hist(h$clay, col = "grey")
+test <- with(h, make.groups(clay, sand, total_frags_pct))
+
+histogram(~ data | which, data = test, scales = list(y = "free"))
 ```
 
 ![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+
+```r
+# or individually
+
+# histogram(~ clay, data = h)
+
+# or using graphics package
+
+# par(mfrow = c(1, 3))
+# hist(h$clay, col = "grey")
+# hist(h$sand, col = "grey")
+# hist(h$total_frags_pct, col = "grey")
+# dev.off()
+```
 
 Figure 4. Histogram  
 
@@ -223,20 +253,29 @@ Since histograms are dependent on the number of bins, for small datasets they're
  
 
 ```r
-test <- density(h$clay, na.rm = TRUE)
-xlim <- range(test$x)
-ylim <- range(test$y)
+test <- melt(h, measure.vars = c("clay", "sand"), idvars = "phiid")
 
-hist(h$clay, xlim = xlim, ylim = ylim, probability = TRUE, col = "grey")
-
-lines(test)
+histogram(~ clay + sand + total_frags_pct, data = h,
+          type = "density",
+          panel = function(x, ...) {
+            panel.histogram(x, ...)
+            panel.densityplot(x, ..., darg = list(na.rm  = TRUE))
+            }
+          )
 ```
 
 ![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
 
 ```r
-# or
-# plot(test) # would give us density curve by itself 
+densityplot(~ clay + sand + total_frags_pct, data = h, auto.key = TRUE)
+```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-2.png)
+
+```r
+# or using graphics package
+# test <- density(h$clay, na.rm = TRUE)
+# plot(test) 
 ```
 
 Figure 6. The Kernel density plot depicts a smoothed line of the distribution  
@@ -648,10 +687,16 @@ A boxplot of sand content by horizon may be made for the sample dataset as:
 
 
 ```r
-boxplot(clay ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
+bwplot(clay + sand ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
 ```
 
 ![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
+
+```r
+# or
+
+# boxplot(clay ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
+```
 
 Figure 9. Box plot of sand by horizon  
 
@@ -729,7 +774,7 @@ Figure 15. Rose Diagram
 
 The graphic reveals a dominant Northeast exposure with a secondary Western slope aspect. This is expected from the sample map unit that occurs in the ridge and valley province with strong directional trends. Unfortunately, there is not a good way to convey bimodal slope aspect distributions in NASIS.  
 
-**pH**  since pH is logarithmic, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.  
+**pH**  since pH is logarithmic, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the range of pH the greater the difference between the geometric and arithmetic mean becomes. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
 
 If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:  
 
@@ -867,3 +912,5 @@ Webster, R. 2001. Statistics to support soil research and their presentation. Eu
 ##<a id="add")></a>4.11 Additional reading
 
 Diez, D.M., Barr, C.D., and Cetinkaya-Rundel, M., 2015. OpenIntro Statistics. 3rd edition. openintro.org. [https://www.openintro.org/stat/](https://www.openintro.org/stat/)
+
+Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)

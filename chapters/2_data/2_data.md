@@ -10,7 +10,7 @@ html_document:
 
 # Chapter 2: The data we use
 
-- [2.1 Data Types](#datatypes)
+- [2.1 Measurement scales](#datatypes)
 - [2.2 Accuracy, precision, and significant figures](#acc) 
 - [2.3 Tidy data](#tidydata)
 - [2.4 Data structures in R](#datastructures)
@@ -23,7 +23,7 @@ html_document:
 
  
 ##<a id="datatypes")></a>2.1  Measurement scales   
-Data types can be classified according to the measurement scale of their units. Measurement scales are important to consider because they can affect the types of statistical operations that can be performed. [Stevens (1946)](#ref) was the the measurement scales listed below, in the order of decreasing precision. Althougth their is a fierce debate as to Stevens's statistical interpretation of the the proposed scales. See [Wikipedia (2016)](https://en.wikipedia.org/wiki/Level_of_measurement) and [Velleman and Wilkinson (1993)](https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf) for more details.
+Data types can be classified according to the measurement scale of their units. Measurement scales are important to consider because they can affect the types of statistical operations that can be performed. [Stevens (1946)](#ref) was the first to propose the measurement scales listed below in the order of decreasing precision. Althougth their is a fierce debate as to Stevens's statistical interpretation of the the proposed scales. See [Wikipedia (2016)](https://en.wikipedia.org/wiki/Level_of_measurement) and [Velleman and Wilkinson (1993)](https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf) for more details.
 
 **Ratio** - measurements having a constant interval size and a true zero point. Examples include: measurements of length, weight, volume, rates, length of time, counts of items and temperature in Kelvin.
 
@@ -261,9 +261,9 @@ To extract point data using R, either the sp or raster packages can be used. For
 
 
 ```r
-library(soilDB)
-library(raster)
-
+# library(soilDB)
+# library(raster)
+# 
 # p <- fetchNASIS()
 # s <- site(p)
 # idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
@@ -272,7 +272,7 @@ library(raster)
 # proj4string(p2) <- CRS("+init=epsg:4326") # add projection to the pedon object
 # p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
 # 
-# setwd("F:/geodata/project_data/8VIC/")
+# setwd("M:/geodata/project_data/8VIC/")
 # 
 # rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
 # proj4string(rs) <- CRS("+init=epsg:5070")
@@ -287,14 +287,14 @@ summary(test)
 ```
 
 ```
-##      p_sp.site_id      elev             slope        
-##  1249515815:  3   Min.   :  18.74   Min.   : 0.2441  
-##  1249704903:  3   1st Qu.: 560.21   1st Qu.: 3.7603  
-##  1249704905:  3   Median : 766.46   Median : 6.7417  
-##  1249713101:  3   Mean   : 850.83   Mean   :15.1356  
-##  1249713104:  3   3rd Qu.:1187.82   3rd Qu.:26.1443  
-##  1249713106:  3   Max.   :1816.41   Max.   :70.0182  
-##  (Other)   :996   NA's   :6         NA's   :6
+##      p_sp.site_id       elev             slope        
+##  1249515815:   3   Min.   :  18.74   Min.   : 0.2441  
+##  1249704903:   3   1st Qu.: 560.21   1st Qu.: 3.7603  
+##  1249704905:   3   Median : 766.46   Median : 6.7417  
+##  1249713101:   3   Mean   : 850.83   Mean   :15.1356  
+##  1249713104:   3   3rd Qu.:1187.82   3rd Qu.:26.1443  
+##  1249713106:   3   Max.   :1816.41   Max.   :70.0182  
+##  (Other)   :1001   NA's   :11        NA's   :11
 ```
 
 
@@ -342,14 +342,8 @@ test[test$mukey == 2480977, ] # examine mukey 2480977
 ```
 
 ```
-##      mukey Count.UCU ned30m_8VICN ned30m_8VICMIN ned30m_8VICMAX
-## 76 2480977    204460       204460       503.1204       1687.588
-##    ned30m_8VICMEAN ned30m_8VICSTDDEV ned30m_8VICSUM ned30m_8VIC_slope5N
-## 76        942.5077          206.0661      192705133              204460
-##    ned30m_8VIC_slope5MIN ned30m_8VIC_slope5MAX ned30m_8VIC_slope5MEAN
-## 76              0.195744              94.46768               38.52244
-##    ned30m_8VIC_slope5STDDEV ned30m_8VIC_slope5SUM
-## 76                 16.73909               7876299
+##      mukey Count.UCU
+## 76 2480977    204453
 ```
 
 To implement the sample approach to zonal statistics we can use the sp and raster packages.
@@ -362,7 +356,7 @@ To implement the sample approach to zonal statistics we can use the sp and raste
 # 
 # s <- spsample(ca794, n = 100000, type = "stratified")
 # 
-# setwd("F:/geodata/project_data/8VIC/")
+# setwd("M:/geodata/project_data/8VIC/")
 # 
 # rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
 # proj4string(rs) <- CRS("+init=epsg:5070")
@@ -380,20 +374,20 @@ summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
 
 ```
 ##  AREASYMBOL     SPATIALVER     MUSYM          MUKEY           elev       
-##  CA794:5768   Min.   :2    1255   :5768   2480977:5768   Min.   : 507.6  
-##               1st Qu.:2    1220   :   0   1910055:   0   1st Qu.: 786.7  
-##               Median :2    1225   :   0   1910056:   0   Median : 922.5  
-##               Mean   :2    1230   :   0   1910058:   0   Mean   : 943.7  
-##               3rd Qu.:2    1240   :   0   1910059:   0   3rd Qu.:1078.9  
-##               Max.   :2    1241   :   0   1910060:   0   Max.   :1626.0  
+##  CA794:5777   Min.   :2    1255   :5777   2480977:5777   Min.   : 517.7  
+##               1st Qu.:2    1220   :   0   1910055:   0   1st Qu.: 786.2  
+##               Median :2    1225   :   0   1910056:   0   Median : 923.7  
+##               Mean   :2    1230   :   0   1910058:   0   Mean   : 944.1  
+##               3rd Qu.:2    1240   :   0   1910059:   0   3rd Qu.:1082.2  
+##               Max.   :2    1241   :   0   1910060:   0   Max.   :1667.6  
 ##                            (Other):   0   (Other):   0                   
 ##      slope        
-##  Min.   : 0.2546  
-##  1st Qu.:25.7811  
-##  Median :37.5076  
-##  Mean   :38.4175  
-##  3rd Qu.:50.7169  
-##  Max.   :92.2601  
+##  Min.   : 0.3631  
+##  1st Qu.:25.1525  
+##  Median :37.8202  
+##  Mean   :38.2551  
+##  3rd Qu.:50.6459  
+##  Max.   :85.8705  
 ## 
 ```
 
@@ -741,15 +735,15 @@ The statistical data summaries produced by the toolkit can be exported to excel 
 
 ##<a id="ref")></a>2.7  References  
 
-Stevens, S. S. (1946). [On the theory of measurement scales. Science, 103(2684)](http://www.sciencemag.org/content/103/2684/677.full.pdf) 
+Stevens, S. S. (1946). On the theory of measurement scales. Science, 103(2684). [http://www.sciencemag.org/content/103/2684/677.full.pdf](http://www.sciencemag.org/content/103/2684/677.full.pdf) 
 
-[Velleman, P.F., and L. Wilkinson, 1993. Nominal, Ordinal, Interval, and Ratio Typologies are Misleading. The American Statistician 47(1)65:72.](https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf)
+Velleman, P.F., and L. Wilkinson, 1993. Nominal, Ordinal, Interval, and Ratio Typologies are Misleading. The American Statistician 47(1)65:72. [https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf](https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf)
 
-["Level of measurement" Wikipedia: The Free Encyclopedia. Wikimedia Foundation, Inc. 7 Feb. 2016. Web. 10 Feb. 2016.](https://en.wikipedia.org/wiki/Level_of_measurement)
+"Level of measurement" Wikipedia: The Free Encyclopedia. Wikimedia Foundation, Inc. 7 Feb. 2016. Web. 10 Feb. 2016. [https://en.wikipedia.org/wiki/Level_of_measurement](https://en.wikipedia.org/wiki/Level_of_measurement)
 
 
 ##<a id="ref")></a>2.8  Additional reading
 
-[Venables, W. N., D. M. Smith and the R Core Team, 2015. Introduction to R, Notes on R: A Programming Environment for Data Analysis and Graphics Version. (3.2.3, 2015-12-10)](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
+Venables, W. N., D. M. Smith and the R Core Team, 2015. Introduction to R, Notes on R: A Programming Environment for Data Analysis and Graphics Version. (3.2.3, 2015-12-10) [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
 
-
+Wickham, H., 2014. Advanced R. CRC Press, New York. [http://adv-r.had.co.nz/](http://adv-r.had.co.nz/)
