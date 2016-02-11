@@ -76,6 +76,7 @@ Ideally before you start EDA, you should ensure that your data has no errors, ty
 ```{r, warning=FALSE, message=FALSE}
 library(soilDB)
 library(lattice)
+library(reshape2)
 
 data("loafercreek")
 
@@ -222,8 +223,7 @@ Figure 4. Histogram
 Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution. A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram.  
  
 ```{r}
-
-test <- reshape(h, varying = c("clay", "sand"), timevar = "phiid", direction = "long")
+test <- melt(h, measure.vars = c("clay", "sand"), idvars = "phiid")
 
 histogram(~ clay + sand + total_frags_pct, data = h,
           type = "density",
@@ -494,7 +494,7 @@ Figure 15. Rose Diagram
 
 The graphic reveals a dominant Northeast exposure with a secondary Western slope aspect. This is expected from the sample map unit that occurs in the ridge and valley province with strong directional trends. Unfortunately, there is not a good way to convey bimodal slope aspect distributions in NASIS.  
 
-**pH**  since pH is logarithmic, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.  
+**pH**  since pH is logarithmic, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the range of pH the greater the difference between the geometric and arithmetic mean becomes. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
 
 If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:  
 
@@ -617,3 +617,5 @@ Webster, R. 2001. Statistics to support soil research and their presentation. Eu
 ##<a id="add")></a>4.11 Additional reading
 
 Diez, D.M., Barr, C.D., and Cetinkaya-Rundel, M., 2015. OpenIntro Statistics. 3rd edition. openintro.org. [https://www.openintro.org/stat/](https://www.openintro.org/stat/)
+
+Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)

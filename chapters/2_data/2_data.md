@@ -1,6 +1,6 @@
 ---
 title: Chapter 2 The data we use
-author: Tom D'Avello, Jay Skovlin, Stephen Roecker
+author: Jay Skovlin, Dylan Beaudette, Stephen Roecker, Skye Wills, Tom D'Avello
 date: "Friday, February 27, 2015"
 output: html_document
 html_document:
@@ -10,34 +10,34 @@ html_document:
 
 # Chapter 2: The data we use
 
-- [2.1 Data Types](#datatypes)
+- [2.1 Measurement scales](#datatypes)
 - [2.2 Accuracy, precision, and significant figures](#acc) 
-- [2.3 Data in R](#tidydata)
-- [2.3.1 Basic data objects](#datatypeinr)
-- [2.4 The soil project collection (spc) object](#aqp)
+- [2.3 Tidy data](#tidydata)
+- [2.4 Data structures in R](#datastructures)
+- [2.5 The soil project collection (spc) object](#aqp)
 - [2.6 Extracting spatial data](#extract)   
 - [2.6.1 R tools](#rtools)
-- [2.6.2 ArcGIS Tools](#argistools)  
+- [2.6.2 ArcGIS Tools](#arcgistools)  
 - [2.6.3 TEUI Tools](#teuitools)       
 - [2.7 References](#ref)
 
  
 ##<a id="datatypes")></a>2.1  Measurement scales   
-Data types can be classified according to the measurement scale of their units. Measurement scales are important to consider because they can affect the types of statistical operations that can be performed. [Stevens (1946)](#ref) was the first to propose a topology of the four measurement scales listed below, in order of decreasing precision. For an exhaustive discussion of measurement scales see [Wikipedia](https://en.wikipedia.org/wiki/Level_of_measurement).   
+Data types can be classified according to the measurement scale of their units. Measurement scales are important to consider because they can affect the types of statistical operations that can be performed. [Stevens (1946)](#ref) was the first to propose the measurement scales listed below in the order of decreasing precision. Althougth their is a fierce debate as to Stevens's statistical interpretation of the the proposed scales. See [Wikipedia (2016)](https://en.wikipedia.org/wiki/Level_of_measurement) and [Velleman and Wilkinson (1993)](https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf) for more details.
 
 **Ratio** - measurements having a constant interval size and a true zero point. Examples include: measurements of length, weight, volume, rates, length of time, counts of items and temperature in Kelvin.
 
-**Interval** - measurements having a constant interval size but no true zero point. Examples include: temperature (excluding Kelvin), direction (e.g. slope aspect), time of day. Specific statistical procedures are available to handle circular data like slop aspect.
+**Interval** - measurements having a constant interval size but no true zero point. Examples include: temperature (excluding Kelvin), direction (e.g. slope aspect), time of day. Specific statistical procedures are available to handle circular data like slope aspect.
 
-**Ordinal** - members of a set are differentiated by rank. Examples include Soil interpretation classes (e.g., slight, moderate, severe), soil structure grade (e.g.,structureless, weak, moderate, strong) . 
+**Ordinal** - members of a set that are differentiated by their order or rank. Examples include soil interpretation classes (e.g., slight, moderate, severe), soil structure grade (e.g.,structureless, weak, moderate, strong). 
 
-**Nominal** - members of a set are differentiated by kind. Examples include: Vegetation classes, soil map units, geologic units.
+**Nominal** - members of a set that are differentiated by kind. Examples include: vegetation classes, soil map units, geologic units.
 
-Stevens (1946) measurements scales can also be categorized as to whether their scales are continuous or discontinuous.
+Stevens's (1946) measurements scales can also be categorized as to whether their scales are continuous or discontinuous.
 
 **Continuous data** - any measured value. This includes: ratio and interval scales. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device.
 
-**Discrete data** - data with exact values. This includes: ordinal and nominal scales. For example, the number of Quercus Alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon.
+**Discrete data** - data with exact values. This includes: ordinal and nominal scales. For example, the number of Quercus Alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of an attribute (e.g. argillic horizon).
 
 ##<a id="acc")></a>2.2  Accuracy, precision, and significant figures  
 
@@ -49,11 +49,11 @@ Stevens (1946) measurements scales can also be categorized as to whether their s
 
 ##<a id="tidydata")></a>2.3  Tidy data  
 
-When preparing data for statistical analysis, a nicely formatted summary table is not appropriate. The data needs to be in its most raw format, similar to how many tables are structured in NASIS. The generally preferred configuration is a comma delimited text file, where columns contain variables and rows contain individual observations of the variables. Using sand content as an example, you might collect or present your data like this:  
+When preparing data for statistical analysis, a nicely formatted summary table is not appropriate. The data needs to be in formated similarly to how many tables in NASIS are structured. The generally preferred configuration is a comma delimited text file, where columns contain variables and rows contain individual observations of the variables. Using sand content as an example, you might collect or present your data like this:  
 
 ![R GUI image](figure/ch2_fig1.jpg)  
 
-However, for analysis purpose the data needs to be organized with total sand content as one long column with headers for organization. It is also best to remove spaces from column headers beforehand, and simplify and standardize the coding of categorical variables.  There should be only 1 header row followed by data as noted in this formatted table. For an exhaustive discussion on tidy data see [Wickham (2014)](http://www.jstatsoft.org/article/view/v059i10).
+However, for purpose of analysis the data needs to be organized with total sand content as one long column with headers for organization. It is also best to remove spaces from column headers beforehand, and simplify and standardize the coding of categorical variables. There should be only 1 header row followed by data as noted in the following table. For an exhaustive discussion on tidy data see [Wickham (2014)](http://www.jstatsoft.org/article/view/v059i10).
 
 
 ```r
@@ -77,9 +77,9 @@ kable(head(sand))
 The same table in a format suitable for use by R.
 
 
-##<a id="dataobjects")></a>2.4 Data structures in R 
+##<a id="datastructures")></a>2.4 Data structures in R 
 
-R recognizes a dozen or so data structures including: vectors, lists, arrays, matrices, data frames, and several spatial data formats. As a soil scientist, we most often deal with data frames, like the sand file we imported into R in Chapter 1. It is important to understand what data structure you are using or creating and how it is handled in R. 
+R recognizes a dozen or so data structures including: vectors, lists, arrays, matrices, data frames, factor, tables and several spatial data formats. As a soil scientist, we most often deal with data frames, like the sand file we imported into R in Chapter 1. It is important to understand what data structure you are using or creating and how it is handled in R. 
 
 
 **Vectors**  
@@ -142,6 +142,7 @@ m
 ## [5,]    5   10
 ```
 
+
 **Arrays**    
 Arrays are multi-dimensional matrices that are also limited to columns having the same mode (e.g. numeric, character, logical, etc.) and length. The `array()` function creates arrays. The "dim" option gives the number of rows, columns, and layers, in that order.  
 
@@ -168,6 +169,7 @@ a
 ## [3,]    3    7
 ## [4,]    4    8
 ```
+
 
 **Lists**  
 Lists are ordered collections of multiple R objects. In the example below, the R objects created are land use, location, and sand. The `list()` function simply serves as a storage bin for land use, location, and sand. Many outputs of R functions are actually lists.
@@ -230,24 +232,25 @@ sand
 ## 18     west   range      B    24   24
 ```
 
+
 **Rasters**
 ...
 The raster data should be in a common GDAL format like IMAGINE (img) or TIFF. 
 
 
-##<a id="rtools")></a>2.4 Extracting spatial data
+##<a id="extract")></a>2.6 Extracting spatial data
 
 In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
 
 To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. map unit). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However for skewed data sets the mean and standard deviation are unreliable. Instead for skewed data sets, non-parametric statistics like quantiles are preferred. Examples of non-parametric statistics are covered in Chapter 4. Therefore an advantages to the sample approach is that it allows us to utilize alternative statistics, such as quantiles. In addition it allows us the flexibility cross tabulate the different variables within each zone. For example, suppose you're mapping a soil complex and wish to know the slope range for north aspects. A sample approach would more easily allow the analyst to interact with the data in an exploratory analysis (Chapter 4). Lastly, while some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember the all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
 
-Before extracting spatial data for the purpose of spatial prediction, it is also necessary that the data meet the following conditions:  
+Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
 
  - All data conforms to a common projection and datum
  - All raster data have a common cell resolution
  - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the Snap Raster in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
 
-### R tools for extracting spatial data
+###<a id="rtools")></a>2.6.1 R tools for extracting spatial data
 
 To extract spatial data R has several spatial packages which provide similar functionality to other GIS programs, but also significantly streamline the process for generating raster maps from statistical models.
 
@@ -258,9 +261,9 @@ To extract point data using R, either the sp or raster packages can be used. For
 
 
 ```r
-library(soilDB)
-library(raster)
-
+# library(soilDB)
+# library(raster)
+# 
 # p <- fetchNASIS()
 # s <- site(p)
 # idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
@@ -269,7 +272,7 @@ library(raster)
 # proj4string(p2) <- CRS("+init=epsg:4326") # add projection to the pedon object
 # p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
 # 
-# setwd("F:/geodata/project_data/8VIC/")
+# setwd("M:/geodata/project_data/8VIC/")
 # 
 # rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
 # proj4string(rs) <- CRS("+init=epsg:5070")
@@ -280,21 +283,24 @@ library(raster)
 
 load(file = "C:/workspace/ca794_pedons.Rdata")
 
-str(test)
+summary(test)
 ```
 
 ```
-## 'data.frame':	1014 obs. of  3 variables:
-##  $ p_sp.site_id: Factor w/ 942 levels "0107201101","050510-3",..: 832 822 825 821 824 823 826 859 752 760 ...
-##  $ elev        : num  525 780 696 757 754 ...
-##  $ slope       : num  11.8 28.8 51.1 23.4 6.5 ...
+##      p_sp.site_id       elev             slope        
+##  1249515815:   3   Min.   :  18.74   Min.   : 0.2441  
+##  1249704903:   3   1st Qu.: 560.21   1st Qu.: 3.7603  
+##  1249704905:   3   Median : 766.46   Median : 6.7417  
+##  1249713101:   3   Mean   : 850.83   Mean   :15.1356  
+##  1249713104:   3   3rd Qu.:1187.82   3rd Qu.:26.1443  
+##  1249713106:   3   Max.   :1816.41   Max.   :70.0182  
+##  (Other)   :1001   NA's   :11        NA's   :11
 ```
 
 
 #### Extracting zonal statistics from a raster for polygons
 
-Insert example and link to the newest Rmarkdown reports developed for this purpose.
-
+Zonal statistics in R can be implemented using either the census or sample approach. While R can compute zonal statistics using the census approach with the `zonal()` function in the raster package, it is considerable faster to call another GIS via either the RSAGA or spgrass6 packages. These additional GIS packages provide R functions to access SAGA and GRASS commands. For this example the RSAGA package will be used.
 
 
 ```r
@@ -332,29 +338,63 @@ Insert example and link to the newest Rmarkdown reports developed for this purpo
 
 test <- read.csv("C:/workspace/test.csv")
 names(test)[1] <- "mukey"
-str(test)
+test[test$mukey == 2480977, ] # examine mukey 2480977
 ```
 
 ```
-## 'data.frame':	143 obs. of  14 variables:
-##  $ mukey                   : int  -2147483647 470107 470108 470109 470110 470112 470113 470114 470115 470118 ...
-##  $ Count.UCU               : int  467334827 120351 23991 8895 12220 68200 207535 41353 35845 34697 ...
-##  $ ned30m_8VICN            : int  444720051 120351 23991 8895 12220 68200 207535 41353 35845 34697 ...
-##  $ ned30m_8VICMIN          : num  -85.6 331.9 470.3 486.5 301.6 ...
-##  $ ned30m_8VICMAX          : num  4412 729 782 828 669 ...
-##  $ ned30m_8VICMEAN         : num  1019 466 580 638 514 ...
-##  $ ned30m_8VICSTDDEV       : num  718.3 81.5 56.3 87.9 89.7 ...
-##  $ ned30m_8VICSUM          : num  4.53e+11 5.61e+07 1.39e+07 5.67e+06 6.29e+06 ...
-##  $ ned30m_8VIC_slope5N     : int  444639237 120351 23991 8895 12220 68200 207535 41353 35845 34697 ...
-##  $ ned30m_8VIC_slope5MIN   : num  0 0.000748 0.004123 0.205433 0.227526 ...
-##  $ ned30m_8VIC_slope5MAX   : num  504.3 16.1 29.2 43.7 52.4 ...
-##  $ ned30m_8VIC_slope5MEAN  : num  13.32 1.68 4.69 3.81 14.04 ...
-##  $ ned30m_8VIC_slope5STDDEV: num  18.11 0.78 3.2 3.97 8.9 ...
-##  $ ned30m_8VIC_slope5SUM   : num  5.92e+09 2.02e+05 1.12e+05 3.39e+04 1.72e+05 ...
+##      mukey Count.UCU
+## 76 2480977    204453
 ```
 
+To implement the sample approach to zonal statistics we can use the sp and raster packages.
 
-###<a id="tools")></a>2.6.2  ArcGIS tools for extracting spatial data
+
+```r
+# load("C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# ca794 <- soilmu_a_ca794
+# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+# 
+# s <- spsample(ca794, n = 100000, type = "stratified")
+# 
+# setwd("M:/geodata/project_data/8VIC/")
+# 
+# rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
+# proj4string(rs) <- CRS("+init=epsg:5070")
+# 
+# 
+# test1 <- over(s, ca794)
+# test2 <- data.frame(extract(rs, s))
+# test2 <- cbind(test1, test2)
+# save(test2, file = "C:/workspace/ch2_sample.Rdata")
+
+load(file = "C:/workspace/ch2_sample.Rdata")
+
+summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
+```
+
+```
+##  AREASYMBOL     SPATIALVER     MUSYM          MUKEY           elev       
+##  CA794:5777   Min.   :2    1255   :5777   2480977:5777   Min.   : 517.7  
+##               1st Qu.:2    1220   :   0   1910055:   0   1st Qu.: 786.2  
+##               Median :2    1225   :   0   1910056:   0   Median : 923.7  
+##               Mean   :2    1230   :   0   1910058:   0   Mean   : 944.1  
+##               3rd Qu.:2    1240   :   0   1910059:   0   3rd Qu.:1082.2  
+##               Max.   :2    1241   :   0   1910060:   0   Max.   :1667.6  
+##                            (Other):   0   (Other):   0                   
+##      slope        
+##  Min.   : 0.3631  
+##  1st Qu.:25.1525  
+##  Median :37.8202  
+##  Mean   :38.2551  
+##  3rd Qu.:50.6459  
+##  Max.   :85.8705  
+## 
+```
+
+Insert example and link to the newest Rmarkdown reports developed for this purpose.
+
+
+###<a id="arcgistools")></a>2.6.2  ArcGIS tools for extracting spatial data
 
 ### Extracting point data from a raster
 
@@ -695,11 +735,15 @@ The statistical data summaries produced by the toolkit can be exported to excel 
 
 ##<a id="ref")></a>2.7  References  
 
-Stevens, S. S. (1946). [On the theory of measurement scales. Science, 103(2684)](http://www.sciencemag.org/content/103/2684/677.full.pdf)  
+Stevens, S. S. (1946). On the theory of measurement scales. Science, 103(2684). [http://www.sciencemag.org/content/103/2684/677.full.pdf](http://www.sciencemag.org/content/103/2684/677.full.pdf) 
+
+Velleman, P.F., and L. Wilkinson, 1993. Nominal, Ordinal, Interval, and Ratio Typologies are Misleading. The American Statistician 47(1)65:72. [https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf](https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf)
+
+"Level of measurement" Wikipedia: The Free Encyclopedia. Wikimedia Foundation, Inc. 7 Feb. 2016. Web. 10 Feb. 2016. [https://en.wikipedia.org/wiki/Level_of_measurement](https://en.wikipedia.org/wiki/Level_of_measurement)
 
 
 ##<a id="ref")></a>2.8  Additional reading
 
-[Venables, W. N., D. M. Smith and the R Core Team, 2015. Introduction to R, Notes on R: A Programming Environment for Data Analysis and Graphics Version. (3.2.3, 2015-12-10)](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
+Venables, W. N., D. M. Smith and the R Core Team, 2015. Introduction to R, Notes on R: A Programming Environment for Data Analysis and Graphics Version. (3.2.3, 2015-12-10) [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
 
-
+Wickham, H., 2014. Advanced R. CRC Press, New York. [http://adv-r.had.co.nz/](http://adv-r.had.co.nz/)
