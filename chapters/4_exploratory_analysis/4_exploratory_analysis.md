@@ -719,7 +719,7 @@ A boxplot of sand content by horizon may be made for the sample dataset as:
 
 
 ```r
-bwplot(clay + sand ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
+bwplot(clay ~ genhz, xlab = "Master Horizon", ylab = "Clay (%)", data = h)
 ```
 
 ![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
