@@ -17,11 +17,11 @@ html_document:
  - [4.4 Box plots](#box)       
  - [4.5 Quantile comparison plot](#qq)       
  - [4.6 Transformations](#transform)       	
- - [4.7 Special cases - Circular data and pH](#circ)       
- - [4.8 Scatterplot](#scat)       
- - [4.9 Correlation matrix](#corr)       
- - [4.10 References](#ref)   
- - [4.11 Additional reading](#add)
+ - [4.6.1 Special cases - Circular data and pH](#circ)       
+ - [4.7 Scatterplot](#scat)       
+ - [4.8 Correlation matrix](#corr)       
+ - [4.9 References](#ref)   
+ - [4.10 Additional reading](#add)
 
 Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This typcially done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
 
@@ -113,12 +113,12 @@ vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effervescence")
 summary(h[vars])
 ```
 
-The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because *h* is a dataframe, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If any of these metrics look unfamiliar to you, don't worry we'll cover they shortly.
+The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because *h* is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
 
 When you do have missing data and the function you want to run will not run with missing values, the following options are available:  
 
- 1. **Exclude** all rows or columns that contain missing values using  the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value.
- 2.	**Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h[is.na(h)] <- 0`.
+ 1. **Exclude** all rows or columns that contain missing values using  the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such `clay <- na.exclude(h$clay)`.
+ 2.	**Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$clay <- ifelse(is.na(h$clay), 0, h$clay) # or h[is.na(h$clay), ] <- 0`.
  3. **Read** the help file for the function you're attempting to use. Many functions have additional arguements for dealing with missing values, such as `na.rm`.
 
 A quick check for typos would be to examine the list of levels for a factor or character, such as:  
@@ -131,7 +131,7 @@ unique(h$hzname) # for characters and factors
 sort(unique(h$hzname)) # sort the results
 ```
 
-If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make as adjustment in R, such as:
+If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make an adjustment in R, such as:
 
 ```{r, eval=FALSE}
 h$hzname[h$hzname == "BT"] <- "Bt"
@@ -145,12 +145,12 @@ h$hzname[h$hzname == "BT"] <- "Bt"
 # edit(h)
 ```
 
-Typo errors such as these are commonly found with old pedon data in NASIS.
+Typo errors such as these are common problem with old pedon data in NASIS.
 
 ## Exercise: fetch and inspect
 
-- Load the gopheridge dataset found within the soilDB package and inspect the dataset. 
-- Apply the generalized horizon rules.
+- Load the gopheridge dataset found within the soilDB package or your own data (highly encouraged) and inspect the dataset. 
+- Apply the generalized horizon rules below or develop your own.
 - Summarize the depths, genhz, texture class, sand, and fine gravel
 - Submit the results to your coach.
 
@@ -164,7 +164,7 @@ p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
 
 ##<a id="freq")></a>4.1  Frequency distributions  
 
-Now that we've checked for missing values and typos and made correcitons, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center(e.g. RV) and spread or dispersion (e.g low and high) of our data. Typically in introductory statistics the normal (i.e. Gaussian) distribution is emphasized.
+Now that we've checked for missing values and typos and made correcitons, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center (e.g. RV) and spread or dispersion (e.g low and high) of our data. Typically in introductory statistics the normal (i.e. Gaussian) distribution is emphasized.
 
 What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Appling certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e. Low, RV and High values). Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, like Figure 7, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality, and will be addressed below. Significance tests for normality also exist and can be found in the fBasics package, but Webster (2001) cautions aganist using signficance tests for accessing normality. Then preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
 
@@ -177,11 +177,27 @@ A Gaussian distribution is often referred too as "Bell Curve", and has the follo
  5.	Gaussian distributions are **defined** by two parameters, the mean and the standard deviation
  6.	**68%** of the area under the curve is within one standard deviation of the mean
 
-![R GUI image](figure/ch4_fig33.jpg)    
+```{r, echo=FALSE, fig.align="center"}
+r <- rnorm(1:1000000, sd = 2)
+d <- density(r)
 
- 7.7.  Approximately 95% of the area of a Gaussian distribution is within two standard deviations of the mean.  
+par(mfrow = c(1, 2))
+par(pty = "s")
+plot(d, main = "68% highlighted", xlab = "")
+q <- quantile(r, prob = c(0.16, 0.84)) 
+select <- q[1] <= d$x & d$x <= q[2]
+polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
+abline(v = quantile(r, p = 0.5), lty =2)
 
-![R GUI image](figure/ch4_fig34.jpg)  
+plot(d, main = "95% highlighted", xlab = "")
+q <- quantile(r, prob = c(0.025, 0.975)) 
+select <- q[1] <= d$x & d$x <= q[2]
+polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
+abline(v = quantile(r, p = 0.5), lty = 2)
+```
+
+7.7.  Approximately 95% of the area of a Gaussian distribution is within two standard deviations of the mean.  
+
 
 Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically normal, Bimodal or Skewed:  
 
@@ -339,7 +355,6 @@ The green vertical line represents the breakpoint for the median and the red rep
 ```{r}
 table(h$clay) # show a frequency table
 
-
 # table(as.integer(h$clay)) # we can fix the rounding error like so
 
 # or
@@ -367,7 +382,7 @@ max(clay) - min(clay)
 
 # or
 
-diff(range(clay))
+# diff(range(clay))
 ```
 
 which returns the value of the range  
@@ -389,7 +404,7 @@ sd(clay)
 
 # or
 
-sqrt(var(clay))
+# sqrt(var(clay))
 ```
 
 **Coefficient of Variation** (CV)  A relative (i.e. unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
@@ -404,11 +419,11 @@ cv
 **Interquartile Range** (IQR)  The range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:  
 
 ```{r}
-quantile(clay, c(0.25, 0.75))
+IQR(clay)
 
 # or
 
-IQR(clay)
+# diff(quantile(clay, c(0.25, 0.75)))
 ```
 
 **Quantiles (aka Percentiles)** - The percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
@@ -434,7 +449,7 @@ table(h$genhz)
 
 # or
 
-summary(h$genhz)
+# summary(h$genhz)
 ```
 
 This gives us a count of the number of observations for each horizon. If we want to see the comparison two different factors or characters.
@@ -504,11 +519,10 @@ The line represents the quantiles of a normal distribution. If the data set is p
 A more detailed explanation of QQplots may be found on Wikipedia:  
 [https://en.wikipedia.org/wiki/QQ_plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)  
 
-##<a id="transform")></a>4.6  Transformations
+## <a id="transform")></a>4.6  Transformations
 
 
-
-##<a id="circ")></a>4.7  Special cases - Circular data and pH
+### <a id="circ")></a>4.6.1  Special cases - Circular data and pH
 
 The two most common variables warranting special consideration for pedologists are:  
 
@@ -550,7 +564,7 @@ If spatial interpolation is going to be performed, the following steps should be
  2.	interpolate
  3.	back transform to log value
 
-Here is a brief example for interpolating pH using common software:    
+Here is a brief example for interpolating pH using common software:
 
 1. Assume a comma delimited text file with pH, and x and y coordinates named "Excel_ph2.csv"
 2.	Open the file in Excel and it looks similar to this:  
@@ -589,7 +603,7 @@ Opening the table for the Event layer:
 
 ![R GUI image](figure/ch4_fig53.jpg)  
 
-##<a id="scat")></a>4.8  Scatterplots
+##<a id="scat")></a>4.7  Scatterplots
 
 Plotting points of one variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. It is assumed that these plots are for ratio or interval data types. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offer the potential to correlate soil attributes with a large variety of raster datasets.  
 
@@ -622,7 +636,7 @@ splom(h[vars])
 # pairs(h[vars])
 ```
 
-##<a id="corr")></a>4.9  Correlation matrix  
+##<a id="corr")></a>4.8  Correlation matrix  
 
 A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:  
 
@@ -637,7 +651,7 @@ What is considered highly correlated? A good rule of thumb is anything with a va
 Negative values indicate a negative relationship between variables. In the case of pH80 and e80; as electrical conductivity increases, pH decreases. This is a strong negative correlation of ~ -0.85.  
 
 
-##<a id="ref")></a>4.10 References  
+##<a id="ref")></a>4.9 References  
 
 FAO Corporate Document Repository. 
 [http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm)    
@@ -657,7 +671,7 @@ Tukey, J. 1980. We need both exploratory and confirmatory. The American Statisti
 Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract)
 
 
-##<a id="add")></a>4.11 Additional reading
+##<a id="add")></a>4.10 Additional reading
 
 de Smith, M.J., 2015. STATSREF: Statistical Analysis Handbook: a web-based statistics
 resource. The Winchelsea Press, Winchelsea, UK.  [http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  

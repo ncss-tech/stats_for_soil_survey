@@ -17,11 +17,11 @@ html_document:
  - [4.4 Box plots](#box)       
  - [4.5 Quantile comparison plot](#qq)       
  - [4.6 Transformations](#transform)       	
- - [4.7 Special cases - Circular data and pH](#circ)       
- - [4.8 Scatterplot](#scat)       
- - [4.9 Correlation matrix](#corr)       
- - [4.10 References](#ref)   
- - [4.11 Additional reading](#add)
+ - [4.6.1 Special cases - Circular data and pH](#circ)       
+ - [4.7 Scatterplot](#scat)       
+ - [4.8 Correlation matrix](#corr)       
+ - [4.9 References](#ref)   
+ - [4.10 Additional reading](#add)
 
 Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This typcially done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
 
@@ -49,29 +49,27 @@ Fortunately, we can dispense with the graph paper and transparencies and use sof
 
 Descriptive statistics include:  
 
- - Mean - arithmetic average  
- - Median - middle value  
- - Mode - most frequent value  
- - Standard Deviation - variation about the mean  
- - Interquartile Range - range encompasses 50% of the values  
- - Kurtosis - peakedness of the data distribution  
- - Skewness - symmetry of the data distribution  
+ - **Mean** - arithmetic average  
+ - **Median** - middle value  
+ - **Mode** - most frequent value  
+ - **Standard Deviation** - variation about the mean  
+ - **Interquartile Range** - range encompasses 50% of the values  
+ - **Kurtosis** - peakedness of the data distribution  
+ - **Skewness** - symmetry of the data distribution  
 
 Graphical methods include:  
 
- - Histogram - a bar plot where each bar represents the frequency of observations for a given range of values
- - Density estimation - an estimation of the frequency distribution based on the sample data
- - Quantile-quantile plot - plot of actual data values against a normal distribution
- - Box plots - a visual representation of median, quartiles, symmetry, skewness, and outliers
- - Scatter plots - graphical display of one variable plotted on the x axis and another on the y axis
- - Radial plots - plots formatted for the representation of circular data 
-
-Graphical methods represent an intuitive way to investigate data.   
+ - **Histogram** - a bar plot where each bar represents the frequency of observations for a given range of values
+ - **Density estimation** - an estimation of the frequency distribution based on the sample data
+ - **Quantile-quantile plot** - plot of actual data values against a normal distribution
+ - **Box plots** - a visual representation of median, quartiles, symmetry, skewness, and outliers
+ - **Scatter plots** - graphical display of one variable plotted on the x axis and another on the y axis
+ - **Radial plots** - plots formatted for the representation of circular data 
 
 
 ##<a id="exam")></a>4.0  Examine your data  
 
-Ideally before you start EDA, you should ensure that your data has no errors, typos, or other problems. However as is often the case, EDA is a useful tool/process to identify such errors before you move on to other statistical analyses. For this chapter we'll use the loafercreek dataset, from the CA630 Soil Survey Area.
+Ideally before you start an EDA, you should ensure that your data has no errors, typos, or other problems. However as is often the case, EDA is a useful tool/process to identify such errors before you move on to other statistical analyses. For this chapter we'll use the loafercreek dataset, from the CA630 Soil Survey Area.
 
 
 ```r
@@ -79,10 +77,15 @@ library(soilDB)
 library(lattice)
 library(reshape2)
 
-data("loafercreek")
+data("loafercreek") # load from the soilDB package
 
 # Generalized the horizon designations
-n <- c('A','Bt1','Bt2','Bt3','Cr','R')
+n <- c('A',
+       'Bt1',
+       'Bt2',
+       'Bt3',
+       'Cr',
+       'R')
 # REGEX rules
 p <- c('^A$|Ad|Ap',
        'Bt1$',
@@ -101,9 +104,11 @@ As noted in Chapter 1, a visual examination of the raw data is possible by looki
 
 ```r
 View(h)
+
+# or by clicking on the dataset in the environment tab
 ```
  
-This view is fine for a small dataset, but can be cumbersome for a larger ones. In order to quickly summarize a dataset, simply use the `summary()` function. However even for our small example dataset the output can be volumnous. Therefore in the interest of saving space we'll only look at a sample of columns.  
+This view is fine for a small dataset, but can be cumbersome for a larger ones. In order to quickly summarize a dataset, can simply use the `summary()` function. However even for our small example dataset the output can be volumnous. Therefore in the interest of saving space we'll only look at a sample of columns.  
 
 
 ```r
@@ -130,13 +135,13 @@ summary(h[vars])
 ## 
 ```
 
-The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because *h* is a dataframe, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If any of these metrics look unfamiliar to you, don't worry we'll cover they shortly.
+The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because *h* is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
 
 When you do have missing data and the function you want to run will not run with missing values, the following options are available:  
 
- 1. Exclude all rows or columns that contain missing values using  the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value.
- 2.	Replace missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h[is.na(h)] <- 0`.
- 3. Read the help file for the function you're attempting to use. Many functions have additional arguements for dealing with missing values, such as `na.rm`.
+ 1. **Exclude** all rows or columns that contain missing values using  the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such `clay <- na.exclude(h$clay)`.
+ 2.	**Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$clay <- ifelse(is.na(h$clay), 0, h$clay) # or h[is.na(h$clay), ] <- 0`.
+ 3. **Read** the help file for the function you're attempting to use. Many functions have additional arguements for dealing with missing values, such as `na.rm`.
 
 A quick check for typos would be to examine the list of levels for a factor or character, such as:  
 
@@ -170,7 +175,7 @@ sort(unique(h$hzname)) # sort the results
 ## [21] "Bt3"  "Bt4"  "Bw"   "C"    "CBt"  "Cr"   "Crt"  "Oi"   "R"    "Rt"
 ```
 
-If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make as adjustment in R, such as:
+If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make an adjustment in R, such as:
 
 
 ```r
@@ -178,31 +183,50 @@ h$hzname[h$hzname == "BT"] <- "Bt"
 
 # or
 
-# h$hzname <- if(h$hzname == "BT", "Bt", h$hzname)
+# h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
+
+# or as a last resort we could manually edit the spreadsheet in R
+
+# edit(h)
 ```
 
-Typo errors such as these are common found with old pedon data in NASIS.
+Typo errors such as these are common problem with old pedon data in NASIS.
+
+## Exercise: fetch and inspect
+
+- Load the gopheridge dataset found within the soilDB package or your own data (highly encouraged) and inspect the dataset. 
+- Apply the generalized horizon rules below or develop your own.
+- Summarize the depths, genhz, texture class, sand, and fine gravel
+- Submit the results to your coach.
+
+
+
+```r
+# gopheridge rules
+n <- c('A', 'Bt1', 'Bt2', 'Bt3','Cr','R')
+p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
+```
+
 
 ##<a id="freq")></a>4.1  Frequency distributions  
 
-Now that we've checked for missing values and typos and made correcitons, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center(e.g. RV) and spread or dispersion (e.g low and high) of our data. Typically in introductory statistics the normal (i.e. Gaussian) distribution is emphasized.
+Now that we've checked for missing values and typos and made correcitons, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center (e.g. RV) and spread or dispersion (e.g low and high) of our data. Typically in introductory statistics the normal (i.e. Gaussian) distribution is emphasized.
 
-What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Appling certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable, i.e. Low, RV and High values. Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, like Figure 7, using standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality, and will be addressed below. Significance tests for normal also exist and can be found in the fBasics package, but Webster (2001) cautions aganist using signficance tests for accessing normality. Preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
+What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Appling certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e. Low, RV and High values). Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, like Figure 7, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality, and will be addressed below. Significance tests for normality also exist and can be found in the fBasics package, but Webster (2001) cautions aganist using signficance tests for accessing normality. Then preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
 
-A Gaussian distribution is often referred too as "Bell Curve". A Gaussian distribution has the following properties (Lane):  
+A Gaussian distribution is often referred too as "Bell Curve", and has the following properties (Lane):  
 
- 1. Gaussian distributions are symmetric around their mean 
- 2.	The mean, median, and mode of a Gaussian distribution are equal 
- 3.	The area under the curve is equal to 1.0 
- 4.	Gaussian distributions are denser in the center and less dense in the tails 
- 5.	Gaussian distributions are defined by two parameters, the mean and the standard deviation
- 6.	68% of the area under the curve is within one standard deviation of the mean
+ 1. Gaussian distributions are **symmetric** around their mean 
+ 2.	The mean, median, and mode of a Gaussian distribution are **equal** 
+ 3.	The area under the curve is equal to **1.0** 
+ 4.	Gaussian distributions are **denser** in the center and less dense in the tails 
+ 5.	Gaussian distributions are **defined** by two parameters, the mean and the standard deviation
+ 6.	**68%** of the area under the curve is within one standard deviation of the mean
 
-![R GUI image](figure/ch4_fig33.jpg)    
+<img src="figure/unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" style="display: block; margin: auto;" />
 
- 7.7.  Approximately 95% of the area of a Gaussian distribution is within two standard deviations of the mean.  
+7.7.  Approximately 95% of the area of a Gaussian distribution is within two standard deviations of the mean.  
 
-![R GUI image](figure/ch4_fig34.jpg)  
 
 Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically normal, Bimodal or Skewed:  
 
@@ -225,19 +249,19 @@ Next will review the `hist` and `density` functions which plot a histogram and d
 
 
 ```r
-test <- with(h, make.groups(clay, sand, total_frags_pct))
+test <- melt(h, measure.vars = c("clay", "sand", "total_frags_pct"), id.vars = "phiid")
 
-histogram(~ data | which, data = test, scales = list(y = "free"))
+histogram(~ value | variable, data = test, scales = list(y = "free"))
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
 
 ```r
 # or individually
 
 # histogram(~ clay, data = h)
 
-# or using graphics package
+# or using the graphics package
 
 # par(mfrow = c(1, 3))
 # hist(h$clay, col = "grey")
@@ -264,16 +288,17 @@ histogram(~ clay + sand + total_frags_pct, data = h,
           )
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
 
 ```r
 densityplot(~ clay + sand + total_frags_pct, data = h, auto.key = TRUE)
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-2.png)
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-2.png)
 
 ```r
 # or using graphics package
+
 # test <- density(h$clay, na.rm = TRUE)
 # plot(test) 
 ```
@@ -357,6 +382,7 @@ aggregate(clay ~ genhz, data = h, median)
 
 ```r
 # or we could use the summary() function to get both the mean and median
+
 aggregate(clay ~ genhz, data = h, summary)
 ```
 
@@ -387,7 +413,7 @@ abline(v = amed, col = "green") # plot the median as a gree vertical line
 abline(v = amean, col = "red") # plot the mean as a red vertical line
 ```
 
-![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png)
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
 
 ```r
 frags <- h$total_frags_pct
@@ -399,7 +425,7 @@ abline(v = amed, col = "green") # plot the median as a gree vertical line
 abline(v = amean, col = "red") # plot the mean as a red vertical line
 ```
 
-![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-2.png)
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-2.png)
 
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
 
@@ -438,9 +464,10 @@ table(h$clay) # show a frequency table
 ```
 
 ```r
-# we can fix the rounding error like so
-# table(as.integer(h$clay))
+# table(as.integer(h$clay)) # we can fix the rounding error like so
+
 # or
+
 # table(round(h$clay))
 
 sort(table(h$clay), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
@@ -477,6 +504,12 @@ max(clay) - min(clay)
 ## [1] 38
 ```
 
+```r
+# or
+
+# diff(range(clay))
+```
+
 which returns the value of the range  
 
 **Variance**  A positive value indicating deviation from the mean:![R GUI image](figure/ch4_fig20.jpg)  
@@ -507,11 +540,8 @@ sd(clay)
 
 ```r
 # or
-sqrt(var(clay))
-```
 
-```
-## [1] 6.74772
+# sqrt(var(clay))
 ```
 
 **Coefficient of Variation** (CV)  A relative (i.e. unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
@@ -532,12 +562,17 @@ cv
 
 
 ```r
-quantile(clay, c(0.25, 0.75))
+IQR(clay)
 ```
 
 ```
-## 25% 75% 
-##  17  26
+## [1] 9
+```
+
+```r
+# or
+
+# diff(quantile(clay, c(0.25, 0.75)))
 ```
 
 **Quantiles (aka Percentiles)** - The percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
@@ -556,6 +591,7 @@ quantile(clay)
 
 ```r
 # or
+
 quantile(clay, c(0.05, 0.5, 0.95))
 ```
 
@@ -583,12 +619,8 @@ table(h$genhz)
 
 ```r
 # or
-summary(h$genhz)
-```
 
-```
-##        A      Bt1      Bt2      Bt3       Cr        R not-used 
-##       64       59       58       52       57       26       49
+# summary(h$genhz)
 ```
 
 This gives us a count of the number of observations for each horizon. If we want to see the comparison two different factors or characters.
@@ -690,7 +722,7 @@ A boxplot of sand content by horizon may be made for the sample dataset as:
 bwplot(clay + sand ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
 ```
 
-![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
+![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
 
 ```r
 # or
@@ -710,21 +742,22 @@ Notice that the boxplot for "range" has a single circle on the graph above it.  
 
 a plot of actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).  
 
-A QQplot of sand content may be made for the sample dataset as:  
+A QQplot of sand content may be made for the sample dataset as: 
+
 
 ```r
 qqnorm(h$clay, main = "Normal Q-Q Plot for Clay")
 qqline(h$clay)
 ```
 
-![plot of chunk unnamed-chunk-26](figure/unnamed-chunk-26-1.png)
+![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
 
 ```r
 qqnorm(h$total_frags_pct, main = "Normal Q-Q Plot for Rock Fragments")
 qqline(h$total_frags_pct)
 ```
 
-![plot of chunk unnamed-chunk-26](figure/unnamed-chunk-26-2.png)
+![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-2.png)
 
 Figure 11. QQplot  
 
@@ -733,11 +766,10 @@ The line represents the quantiles of a normal distribution. If the data set is p
 A more detailed explanation of QQplots may be found on Wikipedia:  
 [https://en.wikipedia.org/wiki/QQ_plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)  
 
-##<a id="transform")></a>4.6  Transformations
+## <a id="transform")></a>4.6  Transformations
 
 
-
-##<a id="circ")></a>4.7  Special cases - Circular data and pH
+### <a id="circ")></a>4.6.1  Special cases - Circular data and pH
 
 The two most common variables warranting special consideration for pedologists are:  
 
@@ -750,8 +782,8 @@ The most intuitive means available for evaluating and describing slope aspect ar
 library(circular)
 
 aspect <- s$aspect_field
-
 aspect <- circular(aspect, template="geographic", units="degrees", modulo="2pi")
+
 summary(aspect)
 ```
 
@@ -762,17 +794,17 @@ summary(aspect)
 ##   4.0000
 ```
 
-The numeric output is fine, but a graphic is more revealing (Figure 15):  
+The numeric output is fine, but a following graphic is more revealing, which shows the dominant Southwest slope aspect.  
 
 
 ```r
-rose.diag(aspect, bins = 12, col="grey")
+rose.diag(aspect, bins = 8, col="grey")
 ```
 
-![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
+
 Figure 15. Rose Diagram  
 
-The graphic reveals a dominant Northeast exposure with a secondary Western slope aspect. This is expected from the sample map unit that occurs in the ridge and valley province with strong directional trends. Unfortunately, there is not a good way to convey bimodal slope aspect distributions in NASIS.  
 
 **pH**  since pH is logarithmic, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the range of pH the greater the difference between the geometric and arithmetic mean becomes. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
 
@@ -786,11 +818,11 @@ If there is a need to create a surface of pH values, i.e. interpolate values fro
 
 If spatial interpolation is going to be performed, the following steps should be executed:  
 
- 1.  transform pH to the actual H+ concentration 
+ 1. transform pH to the actual H+ concentration 
  2.	interpolate
  3.	back transform to log value
 
-Here is a brief example for interpolating pH using common software:    
+Here is a brief example for interpolating pH using common software:
 
 1. Assume a comma delimited text file with pH, and x and y coordinates named "Excel_ph2.csv"
 2.	Open the file in Excel and it looks similar to this:  
@@ -829,20 +861,26 @@ Opening the table for the Event layer:
 
 ![R GUI image](figure/ch4_fig53.jpg)  
 
-##<a id="scat")></a>4.8  Scatterplots
+##<a id="scat")></a>4.7  Scatterplots
 
 Plotting points of one variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. It is assumed that these plots are for ratio or interval data types. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offer the potential to correlate soil attributes with a large variety of raster datasets.  
 
 The purpose of a scatterplot is to see how one variable relates to another. With modeling in general the goal is parsimony (i.e. simple). The goal is to determine the fewest number of variables required to explain or describe a phenomenon. If two variables explain the same thing, i.e. they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.
 
-Create a basic scatter plot using the antigo dataset.
+Create a basic scatter plot using the loafercreek dataset.
 
 
 ```r
-plot(clay ~ phfield, data = h)
+xyplot(clay ~ phfield, data = h)
 ```
 
-![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+
+```r
+# or
+
+# plot(clay ~ phfield, data = h)
+```
 
 Figure 16. Scatter Plot
 
@@ -854,12 +892,19 @@ The function below produces a scatterplot matrix for all the numeric variables i
 ```r
 h$hzdepm <- with(h, (hzdepb - hzdept) /2)
 vars <- c("hzdepm", "clay", "total_frags_pct", "phfield")
-pairs(h[vars])
+
+splom(h[vars])
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
+![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
 
-##<a id="corr")></a>4.9  Correlation matrix  
+```r
+# or
+
+# pairs(h[vars])
+```
+
+##<a id="corr")></a>4.8  Correlation matrix  
 
 A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:  
 
@@ -883,13 +928,7 @@ What is considered highly correlated? A good rule of thumb is anything with a va
 Negative values indicate a negative relationship between variables. In the case of pH80 and e80; as electrical conductivity increases, pH decreases. This is a strong negative correlation of ~ -0.85.  
 
 
-##<a id="ref")></a>4.10 References  
-
-deSmith, M. 2014. Statistical Analysis Handbook  
-[http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  
-
-ESRI ArcGIS. Normal QQ plot and general QQ plot.  
-[http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//00310000000q000000](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//00310000000q000000)    
+##<a id="ref")></a>4.9 References  
 
 FAO Corporate Document Repository. 
 [http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm)    
@@ -898,7 +937,7 @@ Filliben, J. J. 2004. NIST/SEMATECH e-Handbook of Statistical Methods. [http://w
 
 Lane, D.M. Online Statistics Education: A Multimedia Course of Study [(http://onlinestatbook.com/](http://onlinestatbook.com/) Project Leader: [David M. Lane](http://www.ruf.rice.edu/~lane/), Rice University
 
-Seltman, H. 2009. Experimental Design and Analysis. Chapter 4: Exploratory Data Analysis. Carnegie Mellon University.  [http://www.stat.cmu.edu/~hseltman/309/Book/chapter4.pdf](http://www.stat.cmu.edu/~hseltman/309/Book/chapter4.pdf)    
+Seltman, H. 2009. Experimental Design and Analysis. Chapter 4: Exploratory Data Analysis. Carnegie Mellon University.  [http://www.stat.cmu.edu/~hseltman/309/Book/](http://www.stat.cmu.edu/~hseltman/309/Book/)    
 
 TEUI. USFS, [http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html)   
 
@@ -909,7 +948,10 @@ Tukey, J. 1980. We need both exploratory and confirmatory. The American Statisti
 Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract)
 
 
-##<a id="add")></a>4.11 Additional reading
+##<a id="add")></a>4.10 Additional reading
+
+de Smith, M.J., 2015. STATSREF: Statistical Analysis Handbook: a web-based statistics
+resource. The Winchelsea Press, Winchelsea, UK.  [http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  
 
 Diez, D.M., Barr, C.D., and Cetinkaya-Rundel, M., 2015. OpenIntro Statistics. 3rd edition. openintro.org. [https://www.openintro.org/stat/](https://www.openintro.org/stat/)
 
