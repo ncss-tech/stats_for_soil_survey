@@ -722,7 +722,7 @@ A boxplot of sand content by horizon may be made for the sample dataset as:
 bwplot(clay ~ genhz, xlab = "Master Horizon", ylab = "Clay (%)", data = h)
 ```
 
-![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
+![plot of chunk boxplots](figure/boxplots-1.png)
 
 ```r
 # or
@@ -750,14 +750,14 @@ qqnorm(h$clay, main = "Normal Q-Q Plot for Clay")
 qqline(h$clay)
 ```
 
-![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
 
 ```r
 qqnorm(h$total_frags_pct, main = "Normal Q-Q Plot for Rock Fragments")
 qqline(h$total_frags_pct)
 ```
 
-![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-2.png)
+![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-2.png)
 
 Figure 11. QQplot  
 
@@ -801,7 +801,7 @@ The numeric output is fine, but a following graphic is more revealing, which sho
 rose.diag(aspect, bins = 8, col="grey")
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
+![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
 
 Figure 15. Rose Diagram  
 
@@ -874,7 +874,7 @@ Create a basic scatter plot using the loafercreek dataset.
 xyplot(clay ~ phfield, data = h)
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
 
 ```r
 # or
@@ -896,7 +896,7 @@ vars <- c("hzdepm", "clay", "total_frags_pct", "phfield")
 splom(h[vars])
 ```
 
-![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
 
 ```r
 # or
