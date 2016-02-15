@@ -16,7 +16,8 @@ html_document:
 
 ![Console](figure/rconsole.png)  
 
-```{r, warning=FALSE, message=FALSE, results="hide", eval=FALSE}
+
+```r
 ## Create new folders to reroute the location of the R packages. This is a work around for the problems caused by ITs file redirection of the My Documents folder. The .Rprofile file will inform RStudio were your packages are located each time it's opened.
 dir.create(path="C:/workspace", recursive = T)
 dir.create(path="C:/R/win-library/3.2", recursive = T)
@@ -58,7 +59,8 @@ sapply(packages, library, character.only = TRUE, quietly = TRUE, logical.return 
 
 Once you've successfully established a ODBC connection, prove it by loading your NASIS selected set with the site and pedon tables for any user pedon id (e.g. 11CA794317), run `fetchNASIS()` in the R console like the example below, and submit your results to Tom D'Avello.
 
-```{r example, message=FALSE, warning=FALSE, eval=FALSE}
+
+```r
 # Example
 
 library(soilDB)
@@ -70,34 +72,12 @@ str(test, max.level = 2)
 
 6. Get Example Data. Development in progress. ***this is close, review and edit as needed. I was thinking about only downloading non-ascii files...thoughts?***
 After making a working directory on your local machine (`E:/r-working-dir` used as an example here), copy / paste the following code into the R console.
-```{r, echo=FALSE, eval=FALSE, warning=FALSE, message=FALSE, results="hide"}
-# define working dir, this should already exist
-wd <- 'E:/r-working-dir'
 
-# define function for getting files and organizing locally
-getData <- function(wd, files) {
-  # base data URL
-  base.url <- 'https://github.com/ncss-tech/stats_for_soil_survey/blob/master/data/'
-  
-  # make data path using first file
-  wd.data <- paste0(wd, '/', strsplit(files[1], '/')[[1]][[1]])
-  
-  # make a sub-folder for data files
-  if(!dir.exists(wd.data))
-    dir.create(wd.data)
-  
-  # iterate over files and download
-  for(f in files) {
-    f.remote <- paste0(base.url, f)
-    f.local <- paste0(wd.data, '/', basename(f))
-    download.file(f.remote, f.local, quiet = TRUE)
-  }
-}
-```
 
 7. Follow the one line example below, copy the output, and submit the results to Tom D'Avello. This should spit back a report of all the packages you downloaded.
 
-```{r, eval=FALSE}
+
+```r
 # Example
 sessionInfo()
 ```
