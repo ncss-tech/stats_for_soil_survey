@@ -1,10 +1,11 @@
 ---
-title: Chapter 2 The data we use
+html_document:
+    toc: yes
+    keep_md: yes
 author: Jay Skovlin, Dylan Beaudette, Stephen Roecker, Skye Wills, Tom D'Avello
 date: "Friday, February 27, 2015"
 output: html_document
-html_document:
-    keep_md: yes
+title: Chapter 2 The data we use
 ---
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
@@ -242,7 +243,7 @@ The raster data should be in a common GDAL format like IMAGINE (img) or TIFF.
 
 In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
 
-To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. map unit). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However for skewed data sets the mean and standard deviation are unreliable. Instead for skewed data sets, non-parametric statistics like quantiles are preferred. Examples of non-parametric statistics are covered in Chapter 4. Therefore an advantages to the sample approach is that it allows us to utilize alternative statistics, such as quantiles. In addition it allows us the flexibility cross tabulate the different variables within each zone. For example, suppose you're mapping a soil complex and wish to know the slope range for north aspects. A sample approach would more easily allow the analyst to interact with the data in an exploratory analysis (Chapter 4). Lastly, while some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember the all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
+To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. map unit). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However for skewed data sets the mean and standard deviation are unreliable. Instead for skewed data sets, non-parametric statistics like quantiles are preferred. Examples of non-parametric statistics are covered in Chapter 4. Therefore an advantages to the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember the all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
 
 Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
 
@@ -274,10 +275,10 @@ To extract point data using R, either the sp or raster packages can be used. For
 # 
 # setwd("M:/geodata/project_data/8VIC/")
 # 
-# rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
+# rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif")) # create a raster stack
 # proj4string(rs) <- CRS("+init=epsg:5070")
 # 
-# test <- data.frame(p_sp$site_id, extract(rs, p_sp))
+# test <- data.frame(p_sp$site_id, extract(rs, p_sp)) # extract data from the stack
 # 
 # save(p, p_sp, test, file = "C:/workspace/ca794_pedons.Rdata")
 
@@ -306,15 +307,16 @@ Zonal statistics in R can be implemented using either the census or sample appro
 ```r
 # library(rgdal)
 # 
-# load("C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
-# ca794 <- soilmu_a_ca794
+# ca794 <- readOGR(dsn = "M:/geodata/soils/CA794/spatial", layer = "soilmu_a_ca794")
 # ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
 # ca794$mukey2 <- as.integer(as.character(ca794$MUKEY))
-# writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile")
+# writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 # 
 # library(RSAGA)
-# myenv <- rsaga.env(path = "C:/Program Files/QGIS Lyon/apps/saga")
-# test <- raster("F:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat")
+# myenv <- rsaga.env(path = "C:/Program Files/QGIS Wien/apps/saga")
+# ned <- raster("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat")
+# test <- raster(extent(ca794), ext = extent(ned), crs = crs(ned), res = res(ned))  # create a blank raster
+# writeRaster(test, file = "M:/geodata/project_data/8VIC/sdat/ca794.sdat", format = "SAGA", progress = "text", overwrite = TRUE)
 # 
 # rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
 #   INPUT = "C:/workspace/ca794.shp",
@@ -322,7 +324,7 @@ Zonal statistics in R can be implemented using either the census or sample appro
 #   OUTPUT = "2",
 #   TARGET = "0",
 #   GRID_TYPE = "2",
-#   USER_GRID = "F:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   USER_GRID = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
 #   USER_XMIN = extent(test)[1] + 15,
 #   USER_XMAX = extent(test)[2] - 15,
 #   USER_YMIN = extent(test)[3] + 15,
@@ -330,9 +332,10 @@ Zonal statistics in R can be implemented using either the census or sample appro
 #   USER_SIZE = res(test)[1]
 # )
 # )
+# 
 # rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
-#   ZONES = "F:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-#   STATLIST = paste(c("F:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "F:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
+#   ZONES = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   STATLIST = paste(c("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "M:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
 #   OUTTAB = "C:/workspace/test.csv"
 # ))
 
@@ -342,16 +345,21 @@ test[test$mukey == 2480977, ] # examine mukey 2480977
 ```
 
 ```
-##      mukey Count.UCU
-## 76 2480977    204453
+##      mukey Count.UCU ned30m_8VICN ned30m_8VICMIN ned30m_8VICMAX
+## 76 2480977    204460       204460       503.1204       1687.588
+##    ned30m_8VICMEAN ned30m_8VICSTDDEV ned30m_8VICSUM ned30m_8VIC_slope5N
+## 76        942.5077          206.0661      192705133              204460
+##    ned30m_8VIC_slope5MIN ned30m_8VIC_slope5MAX ned30m_8VIC_slope5MEAN
+## 76              0.195744              94.46768               38.52244
+##    ned30m_8VIC_slope5STDDEV ned30m_8VIC_slope5SUM
+## 76                 16.73909               7876299
 ```
 
-To implement the sample approach to zonal statistics we can use the sp and raster packages.
+To implement the sample approach to zonal statistics we can `extract()` and `over()` functions in the raster and sp packages respectively.
 
 
 ```r
-# load("C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
-# ca794 <- soilmu_a_ca794
+# ca794 <- readOGR(dsn = "M:/geodata/soils/CA794/spatial", layer = "soilmu_a_ca794")
 # ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
 # 
 # s <- spsample(ca794, n = 100000, type = "stratified")
@@ -391,7 +399,20 @@ summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
 ## 
 ```
 
-Insert example and link to the newest Rmarkdown reports developed for this purpose.
+Compare the results of the census and sample approaches above. While the census approach surveyed 204460 cells, the sample approach only surveyed 5777. However we can see the results are largely similar between the 2 approaches.
+
+
+#### Extracting zonal statistics via R Markdown
+
+R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text can be mingled in the same document and executed like an R function. This allows R the to generate reports similar to NASIS. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint link, [hyperlink](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). We'll demonstrate these reports in Chapter 4 as part of exploratory data analysis.
+
+## Exercise: extracting spatial data
+
+Using your own data.
+
+- Extracting spatial data from the point locations of your pedons.
+- Using the sample approach, extract the zonal statistics for one soil survey area.
+- Submit the results to your coach.
 
 
 ###<a id="arcgistools")></a>2.6.2  ArcGIS tools for extracting spatial data
