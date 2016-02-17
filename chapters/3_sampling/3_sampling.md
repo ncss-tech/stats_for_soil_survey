@@ -1,7 +1,7 @@
 ---
 html_document:
     keep_md: yes
-author: Skye Wills, Tom D'Avello, Stephen Roecker
+author: Tom D'Avello, Stephen Roecker, Skye Wills
 date: "Monday, February 14, 2016"
 output: 
   html_document: 
@@ -18,17 +18,15 @@ Sampling is a fundamental part of statistics. Samples are collected to achieve a
 
 **Define your purpose** - are you investigating soil properties, soil classes, plant productivity, etc.?   
 
-**Expected variability** - The number of samples required increases with increasing variability    
+**Expected variability** - the number of samples required increases with increasing variability.
 
-**Acceptable variation** - The number of samples required corresponds to the acceptable confidence level. Sampling at the 85% confidence level will be less intensive than the 95% confidence level.  
+**Acceptable variation** - the number of samples required corresponds to the acceptable confidence level. Sampling at the 85% confidence level will be less intensive than the 95% confidence level.  
 
 ## Sampling Strategies
  
 ### Simple random 
 
 In simple random sampling, all samples within the region have an equal chance of being selected. A simple random selection of points can be made using either the `spsample()` function within the sp R package, or the Create Random Points tool in ArcGIS.
-
-![R GUI image](figure/ch3_fig2.jpg)  
 
 **Advantages**
 
@@ -72,7 +70,7 @@ In stratifed random sampling, the sampling region is spatially subset into diffe
 
 **Disadvantages**
 
- - Inappropriate stratification is possible. If a stratum is used that is of no significance or lesser importance than another, the sampling would be compromised  
+ - Existing knowledge used to construct strata maybe flawed
 
 
 ```r
@@ -115,7 +113,7 @@ points(sample(s, 1)[[1]]) # randomly select 1 square and plot
 
 ### Systematic
 
-In systematic sampling, a sample taken according to a regularized pattern. This approach insures even spatial coverage. Patterns may be rectilinear, triangular or hexagonal. This sampling strategy can be a problem if the variation of the population is cyclical.  
+In systematic sampling, a sample is taken according to a regularized pattern. This approach insures even spatial coverage. Patterns may be rectilinear, triangular or hexagonal. This sampling strategy can be a problem if the variation of the population is cyclical.  
 
 **Advantages**
 
@@ -140,7 +138,7 @@ points(test)
 
 ### Cluster sampling
 
-In cluster sampling, a cluster or group of points selected at 1 or several sites. The transect is a example of this strategy, although others shapes are possible(e.g. square, triangle or cross shapes). It is common to orient the transect in direction of greatest variability.
+In cluster sampling, a cluster or group of points is selected at 1 or several sites. The transect is a example of this strategy, although others shapes are possible(e.g. square, triangle or cross shapes). It is common to orient the transect in direction of greatest variability.
 
 **Advantages**
 
@@ -165,16 +163,76 @@ points(test)
 
 ### Conditioned Latin hypercube (cLHS) 
 
-A stratified random sampling technique that strives to obtain representative samples from feature (attribute) space (Minasny and McBratney, 2006). For example, assume you have prior knowledge of a study area, have the time and resources to collect 120 points and know the following variables (strata), represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
+Conditioned Latin hypercube sampling is a stratified random sampling technique that strives to obtain representative samples from feature (attribute) space (Minasny and McBratney, 2006). For example, assume you have prior knowledge of a study area, have the time and resources to collect 120 points and know the following variables (strata), represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
 
  - Normalized Difference Vegetation Index (NDVI)  
  - Topographic Wetness Index (aka, Wetness Index, Compound topographic index)  
  - Solar insolation (Potential incoming solar radiation)  
  - Relative elevation (aka relative position, normalized slope height)  
  
-The cLHS procedure will iteratively select samples with the goal of having the data ranges of the samples correspond to the data ranges of the population for each stratum. Obtaining a sample that is representative of the feature space becomes increasingly difficult as the number of variables (strata) increase, unless one employs the specialized technique of the cLHS tool.
+The cLHS procedure will iteratively select samples from the strata variables such that they replicate the range of values from each stratum. Obtaining a sample that is representative of the feature space becomes increasingly difficult as the number of variables (strata) increase, unless one employs a technique such as cLHS.
 
 
+```r
+library(clhs)
+library(raster)
+
+data(volcano) # http://geomorphometry.org/content/volcano-maungawhau
+volcano_r <- raster(as.matrix(volcano[87:1, 61:1]), crs = CRS("+init=epsg:27200"), xmn = 2667405, xmx = 2667405 + 61*10, ymn = 6478705, ymx = 6478705 + 87*10)
+names(volcano_r) <- "elev"
+slope_r <- terrain(volcano_r, opt = "slope", unit = "radians")
+
+rs <- stack(volcano_r, slope_r)
+
+s <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+
+plot(volcano_r)
+points(s$sampled_data)
+```
+
+![plot of chunk clhs](figure/clhs-1.png)
+
+```r
+# Summary of clhs object
+summary(s$sampled_data)
+```
+
+```
+## Object of class SpatialPointsDataFrame
+## Coordinates:
+##       min     max
+## x 2667420 2667980
+## y 6478740 6479560
+## Is projected: TRUE 
+## proj4string :
+## [+init=epsg:27200 +proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000
+## +y_0=6023150 +datum=nzgd49 +units=m +no_defs +ellps=intl
+## +towgs84=59.47,-5.04,187.44,0.47,-0.1,1.024,-4.5993]
+## Number of points: 20
+## Data attributes:
+##       elev           slope        
+##  Min.   : 96.0   Min.   :0.01768  
+##  1st Qu.:109.5   1st Qu.:0.14679  
+##  Median :124.0   Median :0.25028  
+##  Mean   :130.5   Mean   :0.26558  
+##  3rd Qu.:150.2   3rd Qu.:0.37999  
+##  Max.   :184.0   Max.   :0.55860
+```
+
+```r
+# Summary of raster objects
+cbind(summary(volcano_r), summary(slope_r))
+```
+
+```
+##         elev       slope
+## Min.      94   0.0000000
+## 1st Qu.  108   0.1231178
+## Median   124   0.2461519
+## 3rd Qu.  150   0.3781388
+## Max.     195   0.7510583
+## NA's       0 292.0000000
+```
 
 
 ## Tools for selecting Random features  
@@ -235,7 +293,7 @@ The results compare well to the extent of the population:
 
 ### cLHS using TEUI  
 
-Page 42 of the TEUI [User Guide](http://www.fs.fed.us/eng/rsac/programs/teui/assets/downloads/The%20Terrestrial%20Ecologic%20Unit%20Inventory%20Geospatial%20Toolkit%20User%20Guide.pdf) describes the use of the cLHS tool. The cLHS tool in TEUI is based on the cLHS package in R (Roudier, 2011).  
+In addition to performing zonal statistics, the TEUI toolkit also includes a tools for cLHS based on the clhs package in R (Roudier, 2011).
 
  - Relative Elevation (aka relative position)  
  - Northwestness  
