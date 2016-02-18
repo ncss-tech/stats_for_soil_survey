@@ -8,6 +8,10 @@ output:
     toc: yes
 title: Chapter 3 - Sampling Design
 ---
+
+
+
+
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
 # CHAPTER 3: Sampling Design
@@ -18,9 +22,80 @@ Sampling is a fundamental part of statistics. Samples are collected to achieve a
 
 **Define your purpose** - are you investigating soil properties, soil classes, plant productivity, etc.?   
 
-**Expected variability** - the number of samples required increases with increasing variability.
+**How many samples are needed**  
 
-**Acceptable variation** - the number of samples required corresponds to the acceptable confidence level. Sampling at the 85% confidence level will be less intensive than the 95% confidence level.  
+Because in most cases we're interested in using our field point data to construct statistical models, we need enough samples to construct reliable models. In the case of calibrating a laboratory device we might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that the sample size is intimately related the inherent variability in the data. Thus, the number of samples required increases with increasing variability. Also the more samples we have the greater confidience level will be able to achieve. For example, sampling at the 85% confidence level will be less intensive than the 95% confidence level.
+
+If we have prior  knowledge about the soil attribute we'd like to sample we can estimate the number (n) of samples we'd need to detect a significant difference using a t-test, using either the `power.t.test()`  or `power.prop.tes()` functions. See the fictitious clay example below.
+
+
+```r
+# Clay example. Test to see the number of samples necessary to detect a 3 percent difference in clay
+power.t.test(power = 0.95, sd = 2, delta = 28 - 31) # delta = the difference between the two means
+```
+
+```
+## 
+##      Two-sample t test power calculation 
+## 
+##               n = 12.59872
+##           delta = 3
+##              sd = 2
+##       sig.level = 0.05
+##           power = 0.95
+##     alternative = two.sided
+## 
+## NOTE: n is number in *each* group
+```
+
+```r
+power.t.test(power = 0.95, sd = 3, delta = 28 - 31) # delta = the difference between the two means
+```
+
+```
+## 
+##      Two-sample t test power calculation 
+## 
+##               n = 26.98922
+##           delta = 3
+##              sd = 3
+##       sig.level = 0.05
+##           power = 0.95
+##     alternative = two.sided
+## 
+## NOTE: n is number in *each* group
+```
+
+```r
+# Generate a graphical comparison of the fictitious clay example for 2 standard deviations
+test1 <- rnorm(1:1000000, mean = 28, sd = 2)
+test2 <- rnorm(1:1000000, mean = 31, sd = 2)
+
+summary(c(test1, test2))
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   18.07   27.74   29.50   29.50   31.26   40.22
+```
+
+```r
+plot(density(test1), xlim = range(c(test1, test2)), main = "Overlapping Populations", xlab = "Clay %")
+lines(density(test2))
+abline(v = mean(c(test1, test2)), lty = 2)
+```
+
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
+
+From the figure above you can see how diffifcult it is to separate two overlapping populations (e.g. horizons). Also the number of samples required doubles with a 1 unit increase in the standard deviation. This simplistic example though, while enlightening, is hard to implement in practice and for our purposes only serves as an theoretical exercise. 
+
+Some rules of thumb for developing regression models do exist and are as follows:
+
+- \> 10 observations (n) per predictor (m) (Hengl, 2007)
+- \> 20 n per m and n > 104 + m to test regression coefficients (Rossiter, 2015; Franklin, 2009)
+- never use n < 5*m (Rossiter, 2015)
+
+Note about tree models...
 
 ## Sampling Strategies
  
@@ -61,7 +136,7 @@ points(test)
 
 ### Stratified random
 
-In stratifed random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area it can be used to develop the strata. Strata may be sampled equally or in proportion to area, however if the target or interest is rare in the population it maybe preferrable to sample the strata equally (Franklin, 2009).
+In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area it can be used to develop the strata. Strata may be sampled equally or in proportion to area, however if the target or interest is rare in the population it maybe preferable to sample the strata equally (Franklin, 2009).
 
 **Advantages**
 
@@ -103,7 +178,7 @@ In multistage random sampling, the region is separated into different subsets th
 plot(polys, main = "Two-stage random")
 
 # Select 8 samples from each square
-s <- sapply(slot(polys, 'polygons'), function(x) spsample(x, n = 8, type= "random"))
+s <- sapply(slot(polys, 'polygons'), function(x) spsample(x, n = 8, type = "random"))
 points(sample(s, 1)[[1]]) # randomly select 1 square and plot
 points(sample(s, 1)[[1]]) # randomly select 1 square and plot
 ```
@@ -201,8 +276,8 @@ summary(s$sampled_data)
 ## Object of class SpatialPointsDataFrame
 ## Coordinates:
 ##       min     max
-## x 2667420 2667980
-## y 6478740 6479560
+## x 2667410 2667970
+## y 6478740 6479540
 ## Is projected: TRUE 
 ## proj4string :
 ## [+init=epsg:27200 +proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000
@@ -211,12 +286,13 @@ summary(s$sampled_data)
 ## Number of points: 20
 ## Data attributes:
 ##       elev           slope        
-##  Min.   : 96.0   Min.   :0.01768  
-##  1st Qu.:109.5   1st Qu.:0.14679  
-##  Median :124.0   Median :0.25028  
-##  Mean   :130.5   Mean   :0.26558  
-##  3rd Qu.:150.2   3rd Qu.:0.37999  
-##  Max.   :184.0   Max.   :0.55860
+##  Min.   : 96.0   Min.   :0.03534  
+##  1st Qu.:109.2   1st Qu.:0.14938  
+##  Median :125.0   Median :0.26784  
+##  Mean   :131.5   Mean   :0.27256  
+##  3rd Qu.:150.2   3rd Qu.:0.38919  
+##  Max.   :190.0   Max.   :0.60832  
+##                  NA's   :1
 ```
 
 ```r
@@ -335,32 +411,16 @@ Comparing the frequency distribution of the samples to the population shows a re
 
 ![R GUI image](figure/ch3_fig23.jpg)  
 
-## How many samples are needed?  
-
-If there is prior general knowledge of the mean and variance of the property being investigated, the following equation may be used:  
-
-Number of samples = (t value)<sup>2</sup> (variance) / (estimated mean)(preceision)<sup>2</sup>  
-
-For example, based on 20 previous samples, the thickness of loess in the study area is estimated to be 100 cm with a variance of 25 cm. How many samples are needed to be 95% sure of being within 5% of the mean?  
-
-The t values for 95% confidence and 20 samples is (20 - 1) degrees of freedom = 2.093    
-The level of precision is 5%, or 0.05 
-
-The calculation follows:  
-
-Number of samples = (2.093)<sup>2</sup> (25) / (100)(0.05)<sup>2</sup>  = 438  
-
-Reducing the level of precision to 10%, the number of samples needed falls to 110. 
 
 ## References
 
 Franklin, J., & Miller, J. A. (2009). Mapping species distributions: Spatial inference and prediction. Cambridge: Cambridge University Press. [http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction](http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction)
 
-Roudier, P. clhs: a R package for conditioned Latin hypercube sampling. 2011. [https://cran.r-project.org/web/packages/clhs/index.html](https://cran.r-project.org/web/packages/clhs/index.html)
+Roudier, P., 2011. clhs: a R package for conditioned Latin hypercube sampling. [https://cran.r-project.org/web/packages/clhs/index.html](https://cran.r-project.org/web/packages/clhs/index.html)
 
 Minasny, B., & McBratney, A. B. 2006. A conditioned Latin hypercube method for sampling in the presence of ancillary information. Computers & Geosciences, 32(9), 1378-1388. [http://www.sciencedirect.com/science/article/pii/S009830040500292X](http://www.sciencedirect.com/science/article/pii/S009830040500292X)  
 
-TEUI. USFS. [http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html)
+Vaughan, R., & Megown, K., 2015. The Terrestrial Ecological Unit Inventory (TEUI) Geospatial Toolkit: user guide v5.2. RSAC-10117-MAN1. Salt Lake City, UT: U.S. Department of Agriculture, Forest Service, Remote Sensing Applications Center. 40 p. [http://www.fs.fed.us/eng/rsac/programs/teui/about.html](http://www.fs.fed.us/eng/rsac/programs/teui/about.html)
 
 ## Additional reading
 
@@ -370,6 +430,3 @@ Schreuder, H.T., R. Ernst, H. Ramirez-Maldonado, 2004. Statistical techniques fo
 
 U.S. Environmental Protection Agency. (2002). Guidance for choosing a
 sampling design for environmental data collection. Washington, DC: US EPA. [http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality](http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality)
-
-
-
