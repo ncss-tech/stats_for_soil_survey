@@ -136,13 +136,13 @@ The raster data should be in a common GDAL format like IMAGINE (img) or TIFF.
 
 In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
 
-To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. map unit). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However for skewed data sets the mean and standard deviation are unreliable. Instead for skewed data sets, non-parametric statistics like quantiles are preferred. Examples of non-parametric statistics are covered in Chapter 4. Therefore an advantages to the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember the all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
+To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
 
 Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
 
  - All data conforms to a common projection and datum
  - All raster data have a common cell resolution
- - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the Snap Raster in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+ - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
 
 ###<a id="rtools")></a>2.6.1 R tools for extracting spatial data
 
@@ -224,7 +224,7 @@ names(test)[1] <- "mukey"
 test[test$mukey == 2480977, ] # examine mukey 2480977
 ```
 
-To implement the sample approach to zonal statistics we can `extract()` and `over()` functions in the raster and sp packages respectively.
+To implement the sample approach to zonal statistics we can use the `extract()` and `over()` functions in the raster and sp packages respectively.
 
 ```{r}
 # ca794 <- readOGR(dsn = "M:/geodata/soils/CA794/spatial", layer = "soilmu_a_ca794")
@@ -248,12 +248,12 @@ load(file = "C:/workspace/ch2_sample.Rdata")
 summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
 ```
 
-Compare the results of the census and sample approaches above. While the census approach surveyed 204460 cells, the sample approach only surveyed 5777. However we can see the results are largely similar between the 2 approaches.
+Compare the results of the census and sample approaches above. While the census approach surveyed 204,460 cells, the sample approach only surveyed 5,777. However we can see that the results are largely similar between the two approaches.
 
 
 #### Extracting zonal statistics via R Markdown
 
-R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text can be mingled in the same document and executed like an R function. This allows R the to generate reports similar to NASIS. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint link, [hyperlink](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). We'll demonstrate these reports in Chapter 4 as part of exploratory data analysis.
+R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint link, [hyperlink](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). We'll demonstrate these reports in Chapter 4 as part of exploratory data analysis.
 
 ## Exercise: extracting spatial data
 
@@ -268,15 +268,15 @@ Using your own data.
 
 ### Extracting point data from a raster
 
-This section discusses the use of *Extract Multi Values to Points*, which assigns the cell value of specified raster data sets to existing points. *Extract Values to Points* and *Sample* achieve similar results. These tools are described in the ESRI help section:  
+This section discusses the use of the *Extract Multi Values to Points* tool, which assigns the cell value of specified raster data sets to existing points. *Extract Values to Points* and *Sample* tools will achieve similar results. These tools are described in the ESRI help section:  
 
 [An_overview_of_the_Extraction_tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/)  
 
 To start assume you have 50 observations across your area of interest contained in a point file in ArcGIS with numerous observed soil properties. You would also like to consider variables like slope, profile curvature, solar insolation, topographic wetness index, relative position and elevation in your analysis.
  
-Using Extract Multi Values to Points is the most expedient way to populate raster values to a point file. _If your spatial extent is large and you have many raster layers, e.g. 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times_.  
+Using the **Extract Multi Values to Points** tool is the most expedient way to populate raster values to a point file. _If your spatial extent is large and you have many raster layers, e.g. 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times_.  
 
-The Extract Multi Values to Points is found in the Extraction Tool Box in Spatial Analyst Tools  
+The Extract Multi Values to Points tool is found in the Extraction Tool Box in Spatial Analyst Tools  
 
 ![R GUI image](figure/ch2_fig3.jpg)  
 
@@ -297,7 +297,7 @@ ArcGIS also provides the capability of creating histograms for data associated w
 
 ### Extracting zonal statistics from a raster
 
-Gathering statistics of raster for polygons data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
+Gathering statistics of raster data cells for polygon data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
 
 Example for summarizing by Map Unit Symbol:  
 
@@ -350,7 +350,7 @@ One advantage of TEUI is the ability to output tabular data at both the map unit
 
 **SECTION 2. Creating and opening an existing project**
 
-The Toolkit requires the user to specify a folder location to store the database that contains the statistics and the file location of the data used to create them. This database can be an existing project folder location, but it is recommended that a new folder be created to reduce the number of extraneous file in a folder with other data.  
+The Toolkit requires the user to specify a folder location to store the database that contains the statistics and the file location of the data used to create them. This database can be an existing project folder location, but it is recommended that a new folder be created to reduce the number of extraneous files in a folder with other data.  
 
 **Create a New Toolkit Project**  
 
@@ -360,7 +360,7 @@ The Toolkit requires the user to specify a folder location to store the database
  2. A dialog window will appear.  
 ![R GUI image](figure/ch5_fig12.jpg)
  
- 3.  Select Browse€¦.  
+ 3.  Select Browse??.  
 
  4.	In the Browse for Folder dialog, navigate to a location of your choice and select â€œMake New Folderâ€  
 
@@ -407,7 +407,7 @@ can be feature classes such polygons or points (line features will be available 
 ![R GUI image](figure/ch5_fig17.jpg)  
 
 Note:_All data layers to be analyzed (analysis features and raster data) must have the same
-geographic coordinate system and projection as each other You will receive a warning if they are different._   
+geographic coordinate system and projection as each other. You will receive a warning if they are different._   
 
 **Remove Analysis Features from a Toolkit Project**  
 
@@ -458,7 +458,7 @@ _In some instances, such as TEUI mapping or Soil Survey, you may wish to identif
 
 **Calculate Statistics**  
 
- 1.  To calculate statistics, you must first select the analysis feature layers and raster data layers you wish to run statistics on by **checking the box next each layer**.  
+ 1.  To calculate statistics, you must first select the analysis feature layers and raster data layers you wish to run statistics on by **checking the box next to each layer**.  
  
 ![R GUI image](figure/ch5_fig25.jpg)    
 
@@ -466,7 +466,7 @@ _In some instances, such as TEUI mapping or Soil Survey, you may wish to identif
  
 ![R GUI image](figure/ch5_fig26.jpg)  
 
- 3.  A dialog will appear which informs the user of the duration, features rasters being used, and the progress. The tool can calculate more than 1 million cells a second.  
+ 3.  A dialog will appear which informs the user of the duration, features or rasters being used, and the progress. The tool can calculate more than 1 million cells a second.  
  
 ![R GUI image](figure/ch5_fig27.jpg)  
 
@@ -474,7 +474,7 @@ _In some instances, such as TEUI mapping or Soil Survey, you may wish to identif
  
 **SECTION 4. Create and Visualize Graphs and Tables**  
 
-A primary Toolkit feature is to be able to visualize the generated statistics in both a graph and table format. The Toolkit creates zonal statistics for the analysis features and raster data selected in the data manager. The results can be visualized in graph form or as summary table both by individual feature or by map unit if one was chosen.  
+A primary Toolkit feature is the ability to view the generated statistics in both a graph and table format. The Toolkit creates zonal statistics for the analysis features and raster data selected in the data manager. The results can be visualized in graph form or as summary table both by individual feature or by map unit if one was chosen.  
 
 **Open a graph window**  
 
@@ -500,7 +500,7 @@ MU Comparison: This data view type contains unique default graphs when comparing
 
 ![R GUI image](figure/ch5_fig32.jpg)  
 
-Chart type: You can choose the type of graph that best represents your data. The default is the area chart  
+Chart type: You can choose the type of graph that best represents your data. The default is the area chart type.  
  
 **Area chart**  
 ![R GUI image](figure/ch5_fig33.jpg)    
