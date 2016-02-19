@@ -18,8 +18,8 @@ title: Chapter 2 The data we use
 - [2.5 The soil project collection (spc) object](#aqp)
 - [2.6 Extracting spatial data](#extract)
     - [2.6.1 R tools](#rtools)
+    - [Exercise: extracting spatial data](#ex1)
     - [2.6.2 ArcGIS Tools](#arcgistools)  
-- [Exercise: extracting spatial data](#ex1)
 - [2.7 References](#ref)
 
  
@@ -288,14 +288,14 @@ summary(test)
 ```
 
 ```
-##      p_sp.site_id      elev             slope        
-##  1249515815:  3   Min.   :  18.74   Min.   : 0.2441  
-##  1249704903:  3   1st Qu.: 560.21   1st Qu.: 3.7603  
-##  1249704905:  3   Median : 766.46   Median : 6.7417  
-##  1249713101:  3   Mean   : 850.83   Mean   :15.1356  
-##  1249713104:  3   3rd Qu.:1187.82   3rd Qu.:26.1443  
-##  1249713106:  3   Max.   :1816.41   Max.   :70.0182  
-##  (Other)   :996   NA's   :6         NA's   :6
+##      p_sp.site_id       elev             slope        
+##  1249515815:   3   Min.   :  18.74   Min.   : 0.2441  
+##  1249704903:   3   1st Qu.: 560.21   1st Qu.: 3.7603  
+##  1249704905:   3   Median : 766.46   Median : 6.7417  
+##  1249713101:   3   Mean   : 850.83   Mean   :15.1356  
+##  1249713104:   3   3rd Qu.:1187.82   3rd Qu.:26.1443  
+##  1249713106:   3   Max.   :1816.41   Max.   :70.0182  
+##  (Other)   :1001   NA's   :11        NA's   :11
 ```
 
 
@@ -382,20 +382,20 @@ summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
 
 ```
 ##  AREASYMBOL     SPATIALVER     MUSYM          MUKEY           elev       
-##  CA794:5768   Min.   :2    1255   :5768   2480977:5768   Min.   : 507.6  
-##               1st Qu.:2    1220   :   0   1910055:   0   1st Qu.: 786.7  
-##               Median :2    1225   :   0   1910056:   0   Median : 922.5  
-##               Mean   :2    1230   :   0   1910058:   0   Mean   : 943.7  
-##               3rd Qu.:2    1240   :   0   1910059:   0   3rd Qu.:1078.9  
-##               Max.   :2    1241   :   0   1910060:   0   Max.   :1626.0  
+##  CA794:5777   Min.   :2    1255   :5777   2480977:5777   Min.   : 517.7  
+##               1st Qu.:2    1220   :   0   1910055:   0   1st Qu.: 786.2  
+##               Median :2    1225   :   0   1910056:   0   Median : 923.7  
+##               Mean   :2    1230   :   0   1910058:   0   Mean   : 944.1  
+##               3rd Qu.:2    1240   :   0   1910059:   0   3rd Qu.:1082.2  
+##               Max.   :2    1241   :   0   1910060:   0   Max.   :1667.6  
 ##                            (Other):   0   (Other):   0                   
 ##      slope        
-##  Min.   : 0.2546  
-##  1st Qu.:25.7811  
-##  Median :37.5076  
-##  Mean   :38.4175  
-##  3rd Qu.:50.7169  
-##  Max.   :92.2601  
+##  Min.   : 0.3631  
+##  1st Qu.:25.1525  
+##  Median :37.8202  
+##  Mean   :38.2551  
+##  3rd Qu.:50.6459  
+##  Max.   :85.8705  
 ## 
 ```
 
@@ -406,7 +406,7 @@ Compare the results of the census and sample approaches above. While the census 
 
 R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint link, [hyperlink](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). We'll demonstrate these reports in Chapter 4 as part of exploratory data analysis.
 
-## <a id="ex1")></a> Exercise: extracting spatial data
+### <a id="ex1")></a> Exercise: extracting spatial data
 
 Using your own data.
 
