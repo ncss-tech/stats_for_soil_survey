@@ -41,7 +41,7 @@ ipak <- function(pkg){
 }
 
 ## list of packages
-packages <- c("aqp", "soilDB", "sharpshootR", "Rcpp", "clhs", "circular", "Rcmdr", "fBasics", "car", "rms", "randomForest", "rpart", "caret", "knitr", "markdown", "gdalUtils", "raster", "rgdal", "sp", "spatial", "shape", "shapefiles", "plyr", "dplyr", "reshape2", "httr", "cluster", "ape", "lattice", "latticeExtra", "ggplot2", "RColorBrewer", "plotrix", "rpart.plot")
+packages <- c("aqp", "soilDB", "sharpshootR", "Rcpp", "clhs", "circular", "Rcmdr", "fBasics", "car", "rms", "randomForest", "rpart", "caret", "knitr", "markdown", "gdalUtils", "raster", "rgdal", "sp", "spatial", "shape", "shapefiles", "digest", "plyr", "dplyr", "httr", "reshape", "reshape2", "stringr", "cluster", "ape", "lattice", "latticeExtra", "ggplot2", "RColorBrewer", "plotrix", "rpart.plot")
 
 ## install
 ipak(packages)
