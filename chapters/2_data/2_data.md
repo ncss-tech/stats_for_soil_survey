@@ -16,10 +16,10 @@ title: Chapter 2 The data we use
 - [2.3 Tidy data](#tidydata)
 - [2.4 Data structures in R](#datastructures)
 - [2.5 The soil project collection (spc) object](#aqp)
-- [2.6 Extracting spatial data](#extract)   
-- [2.6.1 R tools](#rtools)
-- [2.6.2 ArcGIS Tools](#arcgistools)  
-- [2.6.3 TEUI Tools](#teuitools)       
+- [2.6 Extracting spatial data](#extract)
+    - [2.6.1 R tools](#rtools)
+    - [2.6.2 ArcGIS Tools](#arcgistools)  
+- [Exercise: extracting spatial data](#ex1)
 - [2.7 References](#ref)
 
  
@@ -243,13 +243,13 @@ The raster data should be in a common GDAL format like IMAGINE (img) or TIFF.
 
 In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
 
-To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. map unit). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample ever cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However for skewed data sets the mean and standard deviation are unreliable. Instead for skewed data sets, non-parametric statistics like quantiles are preferred. Examples of non-parametric statistics are covered in Chapter 4. Therefore an advantages to the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember the all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
+To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
 
 Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
 
  - All data conforms to a common projection and datum
  - All raster data have a common cell resolution
- - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the Snap Raster in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+ - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
 
 ###<a id="rtools")></a>2.6.1 R tools for extracting spatial data
 
@@ -288,14 +288,14 @@ summary(test)
 ```
 
 ```
-##      p_sp.site_id       elev             slope        
-##  1249515815:   3   Min.   :  18.74   Min.   : 0.2441  
-##  1249704903:   3   1st Qu.: 560.21   1st Qu.: 3.7603  
-##  1249704905:   3   Median : 766.46   Median : 6.7417  
-##  1249713101:   3   Mean   : 850.83   Mean   :15.1356  
-##  1249713104:   3   3rd Qu.:1187.82   3rd Qu.:26.1443  
-##  1249713106:   3   Max.   :1816.41   Max.   :70.0182  
-##  (Other)   :1001   NA's   :11        NA's   :11
+##      p_sp.site_id      elev             slope        
+##  1249515815:  3   Min.   :  18.74   Min.   : 0.2441  
+##  1249704903:  3   1st Qu.: 560.21   1st Qu.: 3.7603  
+##  1249704905:  3   Median : 766.46   Median : 6.7417  
+##  1249713101:  3   Mean   : 850.83   Mean   :15.1356  
+##  1249713104:  3   3rd Qu.:1187.82   3rd Qu.:26.1443  
+##  1249713106:  3   Max.   :1816.41   Max.   :70.0182  
+##  (Other)   :996   NA's   :6         NA's   :6
 ```
 
 
@@ -355,7 +355,7 @@ test[test$mukey == 2480977, ] # examine mukey 2480977
 ## 76                 16.73909               7876299
 ```
 
-To implement the sample approach to zonal statistics we can `extract()` and `over()` functions in the raster and sp packages respectively.
+To implement the sample approach to zonal statistics we can use the `extract()` and `over()` functions in the raster and sp packages respectively.
 
 
 ```r
@@ -382,31 +382,31 @@ summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
 
 ```
 ##  AREASYMBOL     SPATIALVER     MUSYM          MUKEY           elev       
-##  CA794:5777   Min.   :2    1255   :5777   2480977:5777   Min.   : 517.7  
-##               1st Qu.:2    1220   :   0   1910055:   0   1st Qu.: 786.2  
-##               Median :2    1225   :   0   1910056:   0   Median : 923.7  
-##               Mean   :2    1230   :   0   1910058:   0   Mean   : 944.1  
-##               3rd Qu.:2    1240   :   0   1910059:   0   3rd Qu.:1082.2  
-##               Max.   :2    1241   :   0   1910060:   0   Max.   :1667.6  
+##  CA794:5768   Min.   :2    1255   :5768   2480977:5768   Min.   : 507.6  
+##               1st Qu.:2    1220   :   0   1910055:   0   1st Qu.: 786.7  
+##               Median :2    1225   :   0   1910056:   0   Median : 922.5  
+##               Mean   :2    1230   :   0   1910058:   0   Mean   : 943.7  
+##               3rd Qu.:2    1240   :   0   1910059:   0   3rd Qu.:1078.9  
+##               Max.   :2    1241   :   0   1910060:   0   Max.   :1626.0  
 ##                            (Other):   0   (Other):   0                   
 ##      slope        
-##  Min.   : 0.3631  
-##  1st Qu.:25.1525  
-##  Median :37.8202  
-##  Mean   :38.2551  
-##  3rd Qu.:50.6459  
-##  Max.   :85.8705  
+##  Min.   : 0.2546  
+##  1st Qu.:25.7811  
+##  Median :37.5076  
+##  Mean   :38.4175  
+##  3rd Qu.:50.7169  
+##  Max.   :92.2601  
 ## 
 ```
 
-Compare the results of the census and sample approaches above. While the census approach surveyed 204460 cells, the sample approach only surveyed 5777. However we can see the results are largely similar between the 2 approaches.
+Compare the results of the census and sample approaches above. While the census approach surveyed 204,460 cells, the sample approach only surveyed 5,777. However we can see that the results are largely similar between the two approaches.
 
 
 #### Extracting zonal statistics via R Markdown
 
-R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text can be mingled in the same document and executed like an R function. This allows R the to generate reports similar to NASIS. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint link, [hyperlink](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). We'll demonstrate these reports in Chapter 4 as part of exploratory data analysis.
+R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint link, [hyperlink](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). We'll demonstrate these reports in Chapter 4 as part of exploratory data analysis.
 
-## Exercise: extracting spatial data
+## <a id="ex1")></a> Exercise: extracting spatial data
 
 Using your own data.
 
@@ -419,15 +419,15 @@ Using your own data.
 
 ### Extracting point data from a raster
 
-This section discusses the use of *Extract Multi Values to Points*, which assigns the cell value of specified raster data sets to existing points. *Extract Values to Points* and *Sample* achieve similar results. These tools are described in the ESRI help section:  
+This section discusses the use of the *Extract Multi Values to Points* tool, which assigns the cell value of specified raster data sets to existing points. *Extract Values to Points* and *Sample* tools will achieve similar results. These tools are described in the ESRI help section:  
 
 [An_overview_of_the_Extraction_tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/)  
 
 To start assume you have 50 observations across your area of interest contained in a point file in ArcGIS with numerous observed soil properties. You would also like to consider variables like slope, profile curvature, solar insolation, topographic wetness index, relative position and elevation in your analysis.
  
-Using Extract Multi Values to Points is the most expedient way to populate raster values to a point file. _If your spatial extent is large and you have many raster layers, e.g. 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times_.  
+Using the **Extract Multi Values to Points** tool is the most expedient way to populate raster values to a point file. _If your spatial extent is large and you have many raster layers, e.g. 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times_.  
 
-The Extract Multi Values to Points is found in the Extraction Tool Box in Spatial Analyst Tools  
+The Extract Multi Values to Points tool is found in the Extraction Tool Box in Spatial Analyst Tools  
 
 ![R GUI image](figure/ch2_fig3.jpg)  
 
@@ -448,7 +448,7 @@ ArcGIS also provides the capability of creating histograms for data associated w
 
 ### Extracting zonal statistics from a raster
 
-Gathering statistics of raster for polygons data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
+Gathering statistics of raster data cells for polygon data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
 
 Example for summarizing by Map Unit Symbol:  
 
@@ -491,269 +491,6 @@ In another example using a Box plot for assessment of a map unit with a slope cl
 ![R GUI image](figure/ch5_fig10.jpg)  
 
 
-###<a id="teuitools")></a>2.6.3  TEUI tools for extracting and summarizing spatial data
-
-The TEUI toolkit works in a similar manner to *Zonal Statistics as Table*, with the added benefit of interactive graphics to aid in the assessment. TEUI is an ArcGIS Add-in and may be installed without Administrator privilege. Additional information and downloads are available here:  
-
-[http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html)  
-
-One advantage of TEUI is the ability to output tabular data at both the map unit and polygon level with one operation. SECTIONS 2 - 5 of the TEUI User Guide are excerpted below.  
-
-**SECTION 2. Creating and opening an existing project**
-
-The Toolkit requires the user to specify a folder location to store the database that contains the statistics and the file location of the data used to create them. This database can be an existing project folder location, but it is recommended that a new folder be created to reduce the number of extraneous file in a folder with other data.  
-
-**Create a New Toolkit Project**  
-
- 1.  On the TEUI Toolbar, select the Folder icon.
-![R GUI image](figure/ch5_fig11.jpg)  
-
- 2. A dialog window will appear.  
-![R GUI image](figure/ch5_fig12.jpg)
- 
- 3.  Select Browse��.  
-
- 4.	In the Browse for Folder dialog, navigate to a location of your choice and select “Make New Folder”  
-
- 5.	Type in an appropriate name for your project  
-
- 6.	Click **OK**
-  
-**Open an Existing Toolkit Project**  
-
- 1.  On the TEUI Toolbar, select the Folder icon ![R GUI image](figure/ch5_fig11.jpg)  
- 
- 
- 2.  A dialog window will appear.  
- ![R GUI image](figure/ch5_fig13.jpg)  
- 
- 1.  If the project was recent, click on the project in the Recent dialog box and click Open.  
-
- 2.	If it is older and does not appear in the dialog box, select **Browse**.and navigate to the project folder location. Select the project and click OK.  
-
-**SECTION 3. Manage geospatial data and calculate statistics**
-
-Managing project data with version 5.0 is very simple. The user simply points the program to the file location of the data on your computer that is to be used in the analysis.  
-
-Note: _If you move the geospatial data used in an existing Toolkit project, you will need to re-link the Toolkit to the data when opening that project._  
-
-**Add Analysis Features to a Toolkit Project**  
-
- 1.  On the TEUI Toolbar, select the Data Manager icon. ![R GUI image](figure/ch5_fig14.jpg)  
- 2.  The Data Manager dialog window will appear.  
- 
- ![R GUI image](figure/ch5_fig15.jpg)  
- 
-**Analysis Features**: are zones within which you would like to generate statistics. These features
-can be feature classes such polygons or points (line features will be available soon) as a shapefile (.shp), as a feature class within a file geodatabase, or within a feature dataset within a file geodatabase. Analysis features can also be a in the form of a discrete raster. The value field will be used as the identifier.  
-
-**Rasters**: are the raster data that are to be used to generate the descriptive statistics. An example would be a digital elevation model (DEM), percent slope, aspect, or land use for a discrete raster.  
-
- 3.  In the Analysis Features area, click on the Add Layer button.    
- 
-![R GUI image](figure/ch5_fig16.jpg)  
-
- 4.  A data navigation window will appear. Navigate to the analysis layer you wish to use and select **Add**. You can add as many data layers as you wish to analyze.  
-
-![R GUI image](figure/ch5_fig17.jpg)  
-
-Note:_All data layers to be analyzed (analysis features and raster data) must have the same
-geographic coordinate system and projection as each other You will receive a warning if they are different._   
-
-**Remove Analysis Features from a Toolkit Project**  
-
- 1. To remove an analysis layer from the Data Manager, click on the layer you wish to remove in the grey layer list, and click Remove. Click OK when prompted that this is correct.  
- 
-![R GUI image](figure/ch5_fig18.jpg)  
-![R GUI image](figure/ch5_fig19.jpg)  
-
-**Add Analysis Features to the ArcMap Table of Contents**  
-
- 1.  To add the selected layer to the ArcMap table of contents, **select the layer you wish to add** by clicking on it in the grey layer list, and click the **Add to Table of Contents** button.    
- 
-![R GUI image](figure/ch5_fig20.jpg)  
-
-**Choose a Map Unit**
-
-_In some instances, such as TEUI mapping or Soil Survey, you may wish to identify individual polygon features as belonging to a specific map unit. This is simply a repeating identifying symbol or value which will be used to aggregate the statistics of the polygons belonging to that group. You do not need to select a map unit column in order to run the Toolkit. The symbol must be present as an attribute column in either the feature class layer or as an attribute in the VAT table of a discrete raster._  
-
- 1.  Select the Analysis Feature layer that you wish to add a Map Unit symbol for.  
-
- 2.	Select the appropriate map unit column attribute name for your map unit symbol in the drop down menu    
-  
-![R GUI image](figure/ch5_fig21.jpg) 
-
-**Add Raster Data to the Toolkit Project**  
-
- 1.  To add raster data to your Toolkit project, select the Add Layer button under the Raster heading  
-![R GUI image](figure/ch5_fig22.jpg)  
-
-  2.  In the Browse to Raster file location dialog window, navigate to the file location of the raster data you wish to add to the Toolkit project.  
-  
-![R GUI image](figure/ch5_fig23.jpg)  
-
- 3.  Select the layer you wish to add and select the **Add** button.    
-
-**Add Raster Data to the ArcMap Table of Contents**  
-
-
-1.  To add raster data to your ArcMap Table of Contents, first select the layer or layers you wish to add by clicking on them in the grey layer list under the **Rasters** section.    
-
-
-![R GUI image](figure/ch5_fig24.jpg)  
-
-2.  Click the **Add to Table of Contents** button.  
-
-3.	To add multiple raster data layers at once, hold down the **control button** while
-**selecting the individual layers** you wish to add.  
-
-**Calculate Statistics**  
-
- 1.  To calculate statistics, you must first select the analysis feature layers and raster data layers you wish to run statistics on by **checking the box next each layer**.  
- 
-![R GUI image](figure/ch5_fig25.jpg)    
-
- 2.  Click on the **Generate Stats** button. Select **Yes** when prompted by the time warning that appears. This process may take a significant amount of time depending on the amount of data selected to be run.  
- 
-![R GUI image](figure/ch5_fig26.jpg)  
-
- 3.  A dialog will appear which informs the user of the duration, features rasters being used, and the progress. The tool can calculate more than 1 million cells a second.  
- 
-![R GUI image](figure/ch5_fig27.jpg)  
-
- 4.  When finished click **OK** when the statistics run is done.  
- 
-**SECTION 4. Create and Visualize Graphs and Tables**  
-
-A primary Toolkit feature is to be able to visualize the generated statistics in both a graph and table format. The Toolkit creates zonal statistics for the analysis features and raster data selected in the data manager. The results can be visualized in graph form or as summary table both by individual feature or by map unit if one was chosen.  
-
-**Open a graph window**  
-
- 1.  To create a graph, click on the **graph button** on the Toolkit Toolbar.  
- 
-![R GUI image](figure/ch5_fig28.jpg)  
-
- 2.  A blank graph window will appear. You can open as many individual graph windows as you want.  
- 
-![R GUI image](figure/ch5_fig29.jpg)  
-
- 3.  Click on the **Add Series** Tab in the upper left corner of the graph window.  
- 
-![R GUI image](figure/ch5_fig30.jpg)  
-
- 4.  The Add Series window pane will open up. You can **pin the window open** by clicking on the sideways pin in the upper right hand of the Add Series window pane or close it by clicking on the vertical pin.  
- 
-![R GUI image](figure/ch5_fig31.jpg)  
-
- 5.  In a step wise fashion, select… MUP\MU Comparison: This is the default option. This allows the greatest flexibility when comparing individual polygons against other individual polygons, individual polygons against map units, or map units against map units (if chosen).  
- 
-MU Comparison: This data view type contains unique default graphs when comparing map units or other aggregated statistics types. These graphs have the mean (solid line), range (darker colored area), and standard deviation (lighter colored area) on the same graph, for each polygon within a map unit.  
-
-![R GUI image](figure/ch5_fig32.jpg)  
-
-Chart type: You can choose the type of graph that best represents your data. The default is the area chart  
- 
-**Area chart**  
-![R GUI image](figure/ch5_fig33.jpg)    
-
-**Bar chart**  
-
-![R GUI image](figure/ch5_fig34.jpg)    
-
-**Point chart**  
-
-![R GUI image](figure/ch5_fig35.jpg)  
-
-**Line chart**  
-
-![R GUI image](figure/ch5_fig36.jpg)  
-
-**Radial chart**  
-
-![R GUI image](figure/ch5_fig37.jpg)  
-
-Feature Source: Choose which feature analysis layer you would like to graph. Polygons or discrete raster  
-
-![R GUI image](figure/ch5_fig38.jpg)  
-
-Map Unit: Chose from which map unit you would like to select a polygon. Alternatively, select just
-the map unit you want to graph as a whole (i.e. don’t select an individual feature below). Also, you can leave this option blank which is the default.  
-
-![R GUI image](figure/ch5_fig39a.jpg)  
-
-Feature: Select the individual feature you would like to view statistics for. This is the Feature ID or FID  
-
-![R GUI image](figure/ch5_fig39.jpg)  
-
-Raster Source: Select the raster layer you wish to view the statistics from.  
-
-![R GUI image](figure/ch5_fig40.jpg)  
-
-Raster Band: Select the raster band from the raster layer.  
-
-![R GUI image](figure/ch5_fig41.jpg)  
-
-Set Graph: Click once finished.  
-
-![R GUI image](figure/ch5_fig42.jpg)  
-
-**Common tasks with graphs**
-
-**How do I add more individual features or map units to same graph?**
-Within the Add Series pane, simply select a new feature source (if desired), map unit, feature, or raster source. Click Set Graph and the new feature or map unit will be added to the graph and the legend in a new color.  
-
-![R GUI image](figure/ch5_fig43.jpg)  
-
-**Can I add multiple axes to the graph? For example, a graph of elevation and percent slope?**  
-To add another axis to your graph window, simply select the feature source, a map unit if desired, or a feature if desired, but select a new raster data source. You will notice in the graph legend map units and features are separated by the raster layer.  
-
-![R GUI image](figure/ch5_fig44.jpg)  
-
-**Is there a way to find a specific value on the graph?**  
-If you hover over a specific spot in the graph, a line and window will appear with the specific values that your cursor is on. This is valuable if you are trying to identify outliers in our data.  
-
-![R GUI image](figure/ch5_fig45.jpg)  
-
-**Can I normalize the data ranges?**  
-To normalize data so that the data ranges are comparable within the graph window, check the normalize button at the top of the graph.  
-
-![R GUI image](figure/ch5_fig46.jpg)  
-
-**How do I remove a graph series from the graph window?**  
-Simply hit the red X next to the graph series you would like to remove in the graph legend.  
-
-![R GUI image](figure/ch5_fig47.jpg)  
-
-**How do I view the tabular data associated with each map unit or feature in the graph window?**  
-To view the tabular and descriptive statistics of each map unit or feature in the graph window,
-simply select the table icon next to the data series in the graph legend.  
-
-![R GUI image](figure/ch5_fig48.jpg)  
-
-**SECTION 5. Exporting Statistics Data to Excel**  
-
-The statistical data summaries produced by the toolkit can be exported to excel as a .CSV file for further use.  
-
-**Export individual feature statistics**  
-
-![R GUI image](figure/ch5_fig49.jpg)  
-
- 1.  On the main menu bar, click the **export table button** with the green arrow. Note this may take a little while as the program is gathering up the data.  
-
- 2.	Navigate to the location you would like to save the .CSV file. Give the file a name and click
-**Save**.  
-
-![R GUI image](figure/ch5_fig50.jpg)  
-
-**Export map unit feature statistics**  
-
-![R GUI image](figure/ch5_fig51.jpg)  
-
- 1.  On the main Toolkit menu bar, click the **export map unit table button** with the blue arrow. Note this may take a little while as the program is gathering up the data.  
-
- 2.	Navigate to the location you would like to save the .CSV file. Give the file a name and click **Save**  .  
- 
-
 ##<a id="ref")></a>2.7  References  
 
 Stevens, S. S. (1946). On the theory of measurement scales. Science, 103(2684). [http://www.sciencemag.org/content/103/2684/677.full.pdf](http://www.sciencemag.org/content/103/2684/677.full.pdf) 
@@ -764,6 +501,12 @@ Velleman, P.F., and L. Wilkinson, 1993. Nominal, Ordinal, Interval, and Ratio Ty
 
 
 ##<a id="ref")></a>2.8  Additional reading
+
+Brenning, A., and D. Bangs, 2015. Introduction to Terrain Analysis with RSAGA: Landslide Susceptibility Modeling. [https://cran.r-project.org/web/packages/RSAGA/vignettes/RSAGA-landslides.pdf](https://cran.r-project.org/web/packages/RSAGA/vignettes/RSAGA-landslides.pdf)
+
+Hijmans, R.J., 2015. Introduction to the 'raster' package. [https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf)
+
+Pebesma, E., and R.S. Bivand, 2005. Classes and Methods for Spatial Data: the sp Package. [https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf)
 
 Venables, W. N., D. M. Smith and the R Core Team, 2015. Introduction to R, Notes on R: A Programming Environment for Data Analysis and Graphics Version. (3.2.3, 2015-12-10) [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
 
