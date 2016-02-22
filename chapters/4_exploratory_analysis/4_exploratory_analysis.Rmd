@@ -12,7 +12,7 @@ html_document:
  
  - [4.0 Introduction](#intro)  
  - [4.1 Data inspection](#data)  
-     - [Exercise: fetch and inspect](#ex1)
+     - [Exercise 1: fetch and inspect](#ex1)
  - [4.2 Examining distributions](#dist)
       - [4.2.1 The normal distribution](#norm)       
       - [4.2.2 Histograms & density curves](#hist) 
@@ -28,7 +28,7 @@ html_document:
      - [4.6.2 Circular data](#circular)       
   - [4.7 Additional tools](#tools)
      - [4.7.1 R markdown reports](#rmd)
-         -[Exercise 2: run the pedon\_summary\_by\_taxonname.Rmd](#ex2)
+          - [Exercise 2: run the pedon_summary_by_taxonname.Rmd](#ex2)
      - [4.7.2 TEUI toolkit](#teui)
  - [4.8 References](#ref)   
  - [4.9 Additional reading](#add)
@@ -37,7 +37,7 @@ html_document:
 
 Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This typcially done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
 
-Filliben (2004), described EDA as: 
+Filliben (2004), describes EDA as: 
 *"an approach/philosophy for data analysis that employs a variety of techniques (mostly  graphical) to maximize":*
 
  1. insight into a data set  
@@ -55,7 +55,7 @@ Tukey (1980) summarized:
  2.	A flexibility, AND  
  3.	Some graph paper (or transparencies, or both)  
 
-*"No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper  and transparencies  are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated."*
+*"No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper and transparencies  are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated."*
 
 Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the 'pictures' (i.e. graphical output) and descriptive statistics we will use to explore our data.  
 
@@ -73,9 +73,9 @@ Graphical methods include:
 
  - **Histogram** - a bar plot where each bar represents the frequency of observations for a given range of values
  - **Density estimation** - an estimation of the frequency distribution based on the sample data
- - **Quantile-quantile plot** - plot of actual data values against a normal distribution
+ - **Quantile-quantile plot** - a plot of the actual data values against a normal distribution
  - **Box plots** - a visual representation of median, quartiles, symmetry, skewness, and outliers
- - **Scatter plots** - graphical display of one variable plotted on the x axis and another on the y axis
+ - **Scatter plots** - a graphical display of one variable plotted on the x axis and another on the y axis
  - **Radial plots** - plots formatted for the representation of circular data 
 
 
@@ -125,11 +125,11 @@ vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effervescence")
 summary(h[vars])
 ```
 
-The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because `h` is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they're present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
+The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because `h` is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they are present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
 
 When you do have missing data and the function you want to run will not run with missing values, the following options are available:  
 
- 1. **Exclude** all rows or columns that contain missing values using  the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such `clay <- na.exclude(h$clay)`.
+ 1. **Exclude** all rows or columns that contain missing values using  the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such as `clay <- na.exclude(h$clay)`.
  2.	**Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$clay <- ifelse(is.na(h$clay), 0, h$clay) # or h[is.na(h$clay), ] <- 0`.
  3. **Read** the help file for the function you're attempting to use. Many functions have additional arguements for dealing with missing values, such as `na.rm`.
 
@@ -161,7 +161,7 @@ Typo errors such as these are common problem with old pedon data in NASIS.
 
 ### <a id="ex1")></a> Exercise: fetch and inspect
 
-- Load the gopheridge dataset found within the soilDB package or your own data (highly encouraged) and inspect the dataset. 
+- Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset. 
 - Apply the generalized horizon rules below or develop your own.
 - Summarize the depths, genhz, texture class, sand, and fine gravel
 - Submit the results to your coach.
@@ -181,7 +181,7 @@ Now that we've checked for missing values and typos and made correcitons, we can
 
 ### <a id="norm")></a> 4.2.1  The normal distribution
 
-What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Appling certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e. Low, RV and High values). Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality, and will be addressed below. Significance tests for normality also exist and can be found in the fBasics package, but Webster (2001) cautions aganist using signficance tests for accessing normality. Then preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
+What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Applying certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e. Low, RV and High values). Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality and can be found in the fBasics package, but Webster (2001) cautions aganist using signficance tests for assessing normality. Then preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
 
 A Gaussian distribution is often referred too as "Bell Curve", and has the following properties (Lane):  
 
@@ -194,6 +194,8 @@ A Gaussian distribution is often referred too as "Bell Curve", and has the follo
  7. Approximately **95%** of the area of a Gaussian distribution is within two standard deviations of the mean
 
 ```{r, echo=FALSE, fig.align="center"}
+# http://www.alisonsinclair.ca/2011/03/shading-between-curves-in-r/
+
 r <- rnorm(1:1000000, sd = 2)
 d <- density(r)
 
@@ -212,16 +214,18 @@ polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
 abline(v = quantile(r, p = 0.5), lty = 2)
 ```
 
-
 Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically normal, Bimodal or Skewed:  
 
 ![R GUI image](figure/ch4_fig35.jpg)
 
 Figure 2. Sample histograms    
 
-Occasionally distributions are Uniform, or nearly so:  
+Occasionally distributions are Uniform, or nearly so:
 
-![R GUI image](figure/ch4_fig36.jpg)
+```{r, echo = FALSE, warning=FALSE}
+test <- data.frame(x = seq(0, 1, by = 0.1), y = rep(1, 11))
+plot(test, type = "line", main = "Uniform Distribution: Minimum = 0, Maximum = 1")
+```
 
 Figure 3. Uniform distribution  
 
@@ -252,12 +256,14 @@ plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 
 ### <a id="hist")></a> 4.2.2  Histograms and denisty curves  
 
-Next will review the `hist` and `density` functions which plot a histogram and density curve respectively.  
+Next will review the `histogram()` and `densityplot()` functions which plot a histogram and density curve respectively.  
 
 ```{r}
-test <- melt(h, measure.vars = c("clay", "sand", "total_frags_pct"), id.vars = "phiid")
+histogram(~ clay + sand + total_frags_pct, data = h, scales = list(relation = "free"))
 
-histogram(~ value | variable, data = test, scales = list(relation = "free"))
+# or
+
+histogram(~ clay | genhz, data = h) # grouped by genhz
 
 # or individually
 
@@ -278,8 +284,6 @@ Figure 4. Histogram
 Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution. A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram.  
  
 ```{r}
-test <- melt(h, measure.vars = c("clay", "sand"), idvars = "phiid")
-
 histogram(~ clay + sand + total_frags_pct, data = h,
           type = "density",
           panel = function(x, ...) {
@@ -290,7 +294,7 @@ histogram(~ clay + sand + total_frags_pct, data = h,
 
 densityplot(~ clay + sand + total_frags_pct, data = h, auto.key = TRUE)
 
-# or using graphics package
+# or using the graphics package
 
 # test <- density(h$clay, na.rm = TRUE)
 # plot(test) 
@@ -299,12 +303,12 @@ densityplot(~ clay + sand + total_frags_pct, data = h, auto.key = TRUE)
 Figure 5. The Kernel density plot depicts a smoothed line of the distribution  
 
 
-Compared to the histogram where the y-axis represents the number (i.e. frequencey) of observations, the y-axis for the density plot represents the proportion or probability of observing any given value. Notice how the histogram seems to emphasis long right tail of values, which might question whether we have a normal distribution. One curious feature that this density curve does show is the hint of a bimodal distribution. Given that our sample does include a mixture of surface and subsurface horizons it may be we have have two different populations. However considering how much the two distributions overlap it seems impractical to separate them in this instance.
+Compared to the histogram where the y-axis represents the number or percent (i.e. frequencey) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. Notice how the histogram of clay seems to emphasis the long right tail of values, which we might question as to whether we have a normal distribution. One curious feature that the density curve is that shows the hint of a bimodal distribution. Given that our sample includes a mixture of surface and subsurface horizons it may be we have have two different populations. However considering how much the two distributions overlap it seems impractical to separate them in this instance.
 
 
 ### <a id="qq")></a> 4.2.3  Quantile comparison plots (QQplot)  
 
-a plot of actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).  
+A QQplot is a plot of the actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).  
 
 A QQplot of sand content may be made for the sample dataset as: 
 
@@ -318,7 +322,7 @@ qqline(h$total_frags_pct)
 
 Figure 6. QQplot  
 
-The line represents the quantiles of a normal distribution. If the data set is perfectly normal, the data points will fall along the line. Overall this plot shows that our clay example is more or less normally distributed. However the second plot shows again that our rock fragments are far from normally distributed.
+The line represents the quantiles of a normal distribution. If the data set is perfectly normal, the data points will fall along the line. Overall this plot shows that our clay example is more or less normally distributed. However the second plot again shows that our rock fragments are far from normally distributed.
 
 A more detailed explanation of QQplots may be found on Wikipedia:  
 [https://en.wikipedia.org/wiki/QQ_plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)  
@@ -328,7 +332,7 @@ A more detailed explanation of QQplots may be found on Wikipedia:
 
 These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used measures for our purposes.
 
-**Mean** - is the arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which sums ( $\sum$ ) all the X values in the sample and divide by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
+**Mean** - is the arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which sums ( $\sum$ ) all the X values in the sample and divides by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
 
 The mean clay content from the loafercreek dataset may be determined:  
 
@@ -341,12 +345,13 @@ mean(clay)
 mean(h$clay, na.rm = TRUE)
 ```
 
-To determine the mean by group or category, use the aggregate command:  
+To determine the mean by a group or category, use the aggregate command:
+
 ```{r}
 aggregate(clay ~ genhz, data = h, mean)
 ```
 
-**Median**  The middle measurement of a sample set, and as such is a more robust estimate of central tendency than the mean. This is known as the middle or 50th quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.
+**Median**  is the middle measurement of a sample set, and as such is a more robust estimate of central tendency than the mean. This is known as the middle or 50th quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.
 
 The median from the sample dataset may be determined:  
 
@@ -368,55 +373,56 @@ In this example the mean and median are only slightly different, so we can safef
 
 ```{r}
 test <- density(clay)
-plot(test)
+plot(test, main = "Clay")
 amean <- mean(clay)
 amed <- median(clay)
-abline(v = amed, col = "green") # plot the median as a gree vertical line 
-abline(v = amean, col = "red") # plot the mean as a red vertical line
+abline(v = amed, col = "blue") # plot the median as a gree vertical line 
+abline(v = amean, col = "orange") # plot the mean as a red vertical line
 
 frags <- h$total_frags_pct
 test <- density(frags)
-plot(test)
+plot(test, main = "Rock Fragments")
 amean <- mean(frags)
 amed <- median(frags)
-abline(v = amed, col = "green") # plot the median as a gree vertical line 
-abline(v = amean, col = "red") # plot the mean as a red vertical line
+abline(v = amed, col = "blue") # plot the median as a gree vertical line 
+abline(v = amean, col = "orange") # plot the mean as a red vertical line
 ```
 
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
 
 
-The green vertical line represents the breakpoint for the median and the red represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a long tailed distribution (e.g. skewed). Using the mean in this instance would overestimating the rock fragments. Although in this instance the difference between the mean and median is only `r round(amean - amed)` percent.
+The blue vertical line represents the breakpoint for the median and the orange represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a long tailed distribution (e.g. skewed). Using the mean in this instance would overestimate the rock fragments. Although in this instance the difference between the mean and median is only `r round(amean - amed)` percent.
 
-**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode, is that with numeric data you need to round the data to the level of precision you're interested in. In following example you can see where it looks like someone entered the laboratory data into the pedon horizon data. It hard to tell from the example, but the first column in each sequence shows the values and the following columns show the number occurences of that value.
+**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode, is that with numeric data you need to round the data to the level of precision you're interested in. In following example you can see where it looks like someone entered the laboratory data into the pedon horizon data. It hard to tell from the example, but the first column in each sequence shows the values and the following columns show the number occurences for that value.
 
 ```{r}
 table(h$clay) # show a frequency table
 
-# table(as.integer(h$clay)) # we can fix the rounding error like so
-
-# or
+# we can fix the rounding error like so
 
 # table(round(h$clay))
 
-sort(table(h$clay), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
+# or
 
+# table(as.integer(h$clay)) 
+
+sort(table(h$clay), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
 ```
 
 ## <a id="disp")></a> 4.4  Measures of dispersion  
 
-These are measures to determine the spread of data around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point. In NASIS speak these values might equate to the low (L) and high (H) values for numeric and integer data.
+These are measures used to determine the spread of values around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point. In NASIS speak these values might equate to the low (L) and high (H) values for numeric and integer data.
 
 
-**Variance**  A positive value indicating deviation from the mean:![R GUI image](figure/ch4_fig20.jpg)  
+**Variance**  is a positive value indicating deviation from the mean:![R GUI image](figure/ch4_fig20.jpg)  
 
-This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the _standard deviation_. Variance for the sample dataset is:  
+This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the *standard deviation*. Variance for the sample dataset is:  
 
 ```{r}
 var(clay)
 ```
 
-**Standard Deviation**  The square root of the variance:![R GUI image](figure/ch4_fig22.jpg)  
+**Standard Deviation**  is the square root of the variance:![R GUI image](figure/ch4_fig22.jpg)  
 
 The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:  
 
@@ -428,17 +434,17 @@ sd(clay)
 # sqrt(var(clay))
 ```
 
-**Coefficient of Variation** (CV)  A relative (i.e. unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
+**Coefficient of Variation** (CV)  is a relative (i.e. unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
 
 CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:  
 
 ```{r}
-cv <- sd(clay)/mean(clay) * 100
+cv <- sd(clay) / mean(clay) * 100
 cv
 ```
 
 
-**Quantiles (aka Percentiles)** - The percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
+**Quantiles (aka Percentiles)** - the percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
 
 The default for the `quantile()` function returns the the min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summmery originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
 
@@ -453,7 +459,7 @@ quantile(clay, c(0.05, 0.5, 0.95))
 Thus, for the five number summary 25% of the observations fall between each of the intervals. Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpetration.
 
 
-**Range**  The difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
+**Range**  is the difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
 
 ```{r}
 range(clay)
@@ -462,17 +468,17 @@ range(clay)
 which returns the minimum and maximum values observed, or:  
 
 ```{r}
-max(clay) - min(clay)
+diff(range(clay))
 
 # or
 
-# diff(range(clay))
+# max(clay) - min(clay)
 ```
 
 which returns the value of the range  
 
 
-**Interquartile Range** (IQR)  The range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:  
+**Interquartile Range** (IQR)  is the range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:  
 
 ```{r}
 IQR(clay)
@@ -485,11 +491,12 @@ IQR(clay)
 
 ### <a id="box")></a>4.3.1  Box plots  
 
-A graphical representation that shows the quartiles, minimum, maximum and outliers, if present, of the data.  Boxplots convey the shape of the data distribution, the presence of extreme values, and the ability to compare with other variables using the same scale, providing an excellent tool for screening data quality, determining thresholds for variables or developing working hypotheses.  
+Box plots area a graphical representation that shows the quartiles, minimum, maximum and outliers, if present, of the data.  Boxplots convey the shape of the data distribution, the presence of extreme values, and the ability to compare with other variables using the same scale, providing an excellent tool for screening data quality, determining thresholds for variables or developing working hypotheses.  
 
 The parts of the boxplot are shown in Figure 8. The "box" of the boxplot is defined as the 1st quartile, (Q1 in the figure) and the 3rd quartile, (Q3 in the figure). The median, or 2nd quartile, is the dark line in the box. The whiskers show data that is 1.5 * IQR above and below the 3rd and 1st quartile. Any data point that is beyond a whisker is considered an outlier.  
 
-That is not to say the points are in error, just that they are extreme compared to the rest of the dataset. This is a good visual cue to verify any data points that show as outliers to make sure there are no errors in data entry or measurement.  
+That is not to say the points are in error, just that they are extreme compared to the rest of the dataset. However, you may want to evaluate these points to ensure that they are correct.  
+
 
 ![R GUI image](figure/ch4_fig28.jpg)
 Figure 8. Boxplot description (Seltman, 2009)  
@@ -498,25 +505,22 @@ A boxplot of sand content by horizon may be made for the sample dataset as:
 
 
 ```{r boxplots}
-bwplot(clay ~ genhz, xlab = "Master Horizon", ylab = "Clay (%)", data = h)
+bwplot(clay ~ genhz, xlab = "Horizon", ylab = "Clay (%)", data = h)
 
-# or
+# or using the graphics package
 
-# boxplot(clay ~ genhz, xlab = "Master Horizon", ylab="Clay (%)", data = h)
+# boxplot(clay ~ genhz, xlab = "Horizon", ylab="Clay (%)", data = h)
 ```
 
-Figure 9. Box plot of sand by horizon  
+Figure 9. Box plot of clay by horizon  
 
 The xlab and ylab parameters control the titles of the x and y axis.  
 
-This plot shows us that B horizons typically contain more sand than A horizons and that the median of sand in A horizons is around 23% and around 26% in B horizons.  
-
-Notice that the boxplot for "range" has a single circle on the graph above it.  This indicates an outlier, or a value that is more than 1.5 x IQR.  You should evaluate this data point to ensure that the number measured and entered is correct.  
-
+The above box plot shows us a steady increase in clay content with depth. Notice the outliers in the box plots identified by the individual circles.
 
 **Frequencies**
 
-To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using tables.
+To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using the `table()` function.
 
 ```{r}
 table(h$genhz)
@@ -526,7 +530,7 @@ table(h$genhz)
 # summary(h$genhz)
 ```
 
-This gives us a count of the number of observations for each horizon. If we want to see the comparison two different factors or characters.
+This gives us a count of the number of observations for each horizon. If we want to see the comparison between two different factors or characters, we can include two variables.
 
 ```{r}
 table(h$genhz, h$hzname)
@@ -534,12 +538,16 @@ table(h$genhz, h$hzname)
 table(h$genhz, h$texture_class)
 ```
 
-We can also easily see add margins totals to the table or convert the table frequencies to proportions.
+We can also easily see add margin totals to the table or convert the table frequencies to proportions.
 
 ```{r}
-addmargins(table(h$genhz, h$texture_class)) # appends the table with row and column sums
+# append the table with row and column sums
 
-round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) # margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
+addmargins(table(h$genhz, h$texture_class))
+
+# calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
+
+round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) 
 ```
 
 
@@ -552,32 +560,29 @@ A correlation matrix is a table of the calculated correlation coefficients of al
 
 ```{r}
 h$hzdepm <- with(h, (hzdepb - hzdept) /2)
-vars <- c("hzdepm", "clay", "total_frags_pct", "phfield")
+vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
 
 round(cor(h[vars], use = "complete.obs"), 2)
 ```
 
-As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0.  
+As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0. Negative values indicate a negative relationship between variables. What is considered highly correlated? A good rule of thumb is anything with a value of **0.7** or greater is considered highly correlated. 
 
-What is considered highly correlated? A good rule of thumb is anything with a value of **0.7** or greater is considered highly correlated.  The scatterplot shows a tight, linear relationship between e00 and c00, which is corroborated with the correlation matrix showing a correlation coefficient of ~0.96.  
-
-Negative values indicate a negative relationship between variables. In the case of pH80 and e80; as electrical conductivity increases, pH decreases. This is a strong negative correlation of ~ -0.85.  
 
 
 ### <a id="splom")></a> 4.5.2 Scatterplots
 
 Plotting points of one variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. It is assumed that these plots are for ratio or interval data types. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offer the potential to correlate soil attributes with a large variety of raster datasets.  
 
-The purpose of a scatterplot is to see how one variable relates to another. With modeling in general the goal is parsimony (i.e. simple). The goal is to determine the fewest number of variables required to explain or describe a phenomenon. If two variables explain the same thing, i.e. they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.
+The purpose of a scatterplot is to see how one variable relates to another. With modeling in general the goal is parsimony (i.e. simple). The goal is to determine the fewest number of variables required to explain or describe a relationship. If two variables explain the same thing, i.e. they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.
 
 Create a basic scatter plot using the loafercreek dataset.
 
 ```{r}
-xyplot(clay ~ phfield, data = h)
+xyplot(clay ~ sand, data = h)
 
 # or
 
-# plot(clay ~ phfield, data = h)
+# plot(clay ~ sand, data = h)
 ```
 
 Figure 10. Scatter Plot
@@ -597,11 +602,11 @@ splom(h[vars])
 
 ## <a id="transform")></a> 4.6  Transformations
 
-The pH and slope aspect are two common variables warranting special consideration for pedologists.  
+Slope aspect and pH are two common variables warranting special consideration for pedologists.  
 
 ### <a id="ph")></a> 4.6.1  pH
 
-**pH**  since pH is logarithmic, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the range of pH the greater the difference between the geometric and arithmetic mean becomes. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
+Since **pH** has a logarithmic distribution, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The higher pH the greater the difference between the geometric and arithmetic mean becomes. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
 
 If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:
 
@@ -612,8 +617,6 @@ If you have a table with pH values and wish to calculate the arithmetic mean usi
 # geometric mean
 mean(h$phfield, na.rm = TRUE) 
 ```
-
-In this example, datatbl is the data object and ph is the column containing pH values.  
 
 If there is a need to create a surface of pH values, i.e. interpolate values from point observations, the operation of determining values at unknown points is analogous to determining an average and the use of hydrogen ion concentration would be the proper input.  
 
@@ -691,32 +694,31 @@ Figure 11. Rose Diagram
 
 ### <a id="rmd")></a> 4.7.1 R Markdown reports (.Rmd)
 
-R Markdown (.Rmd) is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. Because soil scientists have many of the same questions when exami
+R Markdown (.Rmd) is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. 
 
-
-Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint [link](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). Here we'll demonstrate how to use run an existing .Rmd to summarize a series of pedons for a given soil series.
+To generate summarizes of pedon and GIS data, several reports have been developed. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint [link](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). Here we'll demonstrate how to run an existing .Rmd to summarize a series of pedons for a given soil series.
 
 **Objectives**
 
 -	Load your NASIS selected set with Pedon and Site tables (both are required)
--	Run R setup file
+-	Run the R setup file
 -	Run knitr report
-Requirements
+
+**Requirements**
+
 -	Data is properly populated, otherwise the report may fail. Common examples include:
     -	Horizon depths don't lineup
     -	Both the Pedon and Site tables aren't loaded
--	The user is familiar with Rstudio, if not see the Job-Aids webpage for an introduction
+-	The user is familiar with RStudio, if not see the Job-Aids webpage for an introduction
 -	ODBC connection to NASIS is setup, if not see the Job-Aids webpage for instructions
--	The user has assigned generalized horizon labels (GHL) to the "Comp_Layer_ID" column within the pedon horizon table within NASIS, or setup GHL using pattern matching. For an introduction to pattern matching see the Job-Aid, Assigning Generalized Horizon Labels.
+-	The user has assigned generalized horizon labels (GHL) to the "Comp_Layer_ID" column within the pedon horizon table within NASIS, or setup a GHL using pattern matching. For an introduction to pattern matching see the Job-Aid, [Assigning Generalized Horizon Labels.](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 
 **Instructions**
+
 1. **Load** NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by upedonid and Taxon Name" to load your selected set. Be sure to target both the pedon and site tables. **Remove** from your selected set the pedons and sites you wish to exclude from the report.
-2.	**Open** Rstudio  and run setup file. **Copy and paste** the box below into the R console. 
+2.	**Open** RStudio  and the run setup file. **Copy and paste** the box below into the R console. 
 
 ```{r, eval=FALSE}
-# Create directory
-dir.create(path="C:/workspace/soil-pit/reports", recursive=T)`
-
 # Download .Rprofile and setup
 download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/sandbox/stephen/r_setup.R", "C:/workspace/soil-pit/r_setup.R", method = "libcurl")
 
@@ -724,31 +726,25 @@ download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/sandb
 source("C:/workspace/soil-pit/r_setup.R")
 ```
 
-This step only need run once. Afterwards you only need to update your R packages intermittently, by clicking the update button on the Packages tab in the lower right hand window. The first time can be a bit lengthy, so go get some coffee or bug your boss. 
-
-**Set** your working directory to `"C:/workspace/soil-pit"`.
-
-```{r, eval=FALSE}
-setwd("C:/workspace/soil-pit")
-```
+The setup only needs to be run once. Afterwards you only need to update your R packages intermittently, by clicking the update button on the Packages tab in the lower right hand window. The first time can be a bit lengthy, so go get some coffee or bug your boss. 
 
 3. **Open** the pedon report. **Navigate** to the file path specified above and **open** the pedon_summary_by_taxonname.Rmd or lab_summary_by_taxonname.Rmd file in Rstudio.
  
-4. **Check** or **create** a genhz\_rules file for your soil series. In order to aggregate the pedons by horizon designation, a genhz\_rules file (e.g. Genesee_rules.R) is needed. See below.
+4. **Check** or **create** a genhz_rules file for your soil series. In order to aggregate the pedons by horizon designation, a genhz_rules file (e.g. Genesee_rules.R) is needed. See below.
 
 ![](figure/ghl_folder.png)
 
 If none exists see the following job aid on how to create one, [Assigning Generalized Horizon Labels](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp).
- 
+
 ![](figure/ghl_rules.png)
 
 Pay special attention to how carrot "^" and dollar "\$" symbols are used. They function as anti-wildcards. For example, a "^" placed before an A horizon, "^A", will match any horizon designation that follows A, such as Ap, Ap1, etc. Also, placing a "\$" after a Bt horizon, "Bt\$", will match any horizon designation that precedes Bt, such as 2Bt or 3Bt. Encapsulating a horizon with both "^" and "\$" symbols will result only in exact matches. For example ^A$, will only match A, not Ap or A1.
 
-5.	**Enter** your Soil Series and Knit. **Enter/replace** the soil series of interest, and **hit** the knit button. Be sure to encase the soil series name in quotations, using either "name" or 'name'.
+5.	**Enter/replace** the soil series of interest, and **hit** the knit button. Be sure to encase the soil series name in quotations, using either double or single quotations, such as `"series"` or `'series'`.
 
 ![](figure/genesee.png)
 
-6.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e. C:/workspace/soil-pit/reports/pedon_summary_by_taxonname.html), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing. Also when reopening the .html with Internet Explorer, click on "Allow blocked content" if prompted. Otherwise Internet Explorer may alter the formatting within the document.
+6.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e. C:/workspace/soil-pit/reports/pedon_summary_by_taxonname.html), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing, or convert it to a pdf. Also when reopening the .html with Internet Explorer, click on "Allow blocked content" if prompted. Otherwise Internet Explorer may alter the formatting within the document.
 
 **Sample pedon report**
  
@@ -758,10 +754,8 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 ### <a id="ex2")></a> Exercise 2: run the pedon\_summary\_by\_taxonname.Rmd
 
-Using your own data.
-
-- Use an existing GHL file, or make your own (highly encouraged)
-- Run the pedon\_summary\_by\_taxonname.Rmd report on a soil series.
+- Load your selected set with the pedon and site table for an existing GHL file, or make your own (highly encouraged)
+- Run the pedon_summary_by_taxonname.Rmd report on a soil series of your choice.
 - Submit the results to your coach.
 
 
@@ -1033,11 +1027,11 @@ The statistical data summaries produced by the toolkit can be exported to excel 
 FAO Corporate Document Repository. 
 [http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm)    
 
-Filliben, J. J. 2004. NIST/SEMATECH e-Handbook of Statistical Methods. [http://www.itl.nist.gov/div898/handbook/eda/section1/eda11.htm](http://www.itl.nist.gov/div898/handbook/eda/section1/eda11.htm])    
+Filliben, J. J. 2004. NIST/SEMATECH e-Handbook of Statistical Methods. [http://www.itl.nist.gov/div898/handbook/index.htm](http://www.itl.nist.gov/div898/handbook/index.htm)    
 
 Lane, D.M. Online Statistics Education: A Multimedia Course of Study [(http://onlinestatbook.com/](http://onlinestatbook.com/) Project Leader: [David M. Lane](http://www.ruf.rice.edu/~lane/), Rice University
 
-Seltman, H. 2009. Experimental Design and Analysis. Chapter 4: Exploratory Data Analysis. Carnegie Mellon University.  [http://www.stat.cmu.edu/~hseltman/309/Book/](http://www.stat.cmu.edu/~hseltman/309/Book/)    
+Seltman, H. 2009. Experimental Design and Analysis. Chapter 4: Exploratory Data Analysis. Carnegie Mellon University.  [http://www.stat.cmu.edu/~hseltman/309/Book/](http://www.stat.cmu.edu/~hseltman/309/Book/)
 
 Vaughan, R., & Megown, K., 2015. The Terrestrial Ecological Unit Inventory (TEUI) Geospatial Toolkit: user guide v5.2. RSAC-10117-MAN1. Salt Lake City, UT: U.S. Department of Agriculture, Forest Service, Remote Sensing Applications Center. 40 p. [http://www.fs.fed.us/eng/rsac/programs/teui/about.html](http://www.fs.fed.us/eng/rsac/programs/teui/about.html)
 
