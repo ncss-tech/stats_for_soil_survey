@@ -13,7 +13,8 @@ Tuesday, February 24, 2015
 - [1.6 A Graphical User Interface for R - Rcmdr](#cmdr)
 - [1.7 RStudio](#studio)
 - [1.8 Introduction to the soilDB package](#soilDB)
-- [1.9 Additional Resources](#additional)
+- [1.9 Review](#review)
+- [1.10 Additional Resources](#additional)
 
  
 ##<a id="intro")></a>1.1  Introduction
@@ -605,10 +606,11 @@ help.search("histogram")
 
 ##<a id="soilDB")></a>1.8  Introduction to the soilDB package
 
-Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
+The soilDB package was created to more readily analyze data from USDA-NCSS soil databases in R. There are a series of `fetch()` commands that allow the user to specify what NRCS soil database they are wanting to extract data from (NASIS, KSSL, OSD, etc.). In this module, we are only going to focus on the `fetchKSSL()` funtion. Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
 
 
 ```r
+#load soilDB, aqp, and lattice packages
 library(soilDB, quietly=TRUE)
 ```
 
@@ -620,7 +622,7 @@ library(soilDB, quietly=TRUE)
 library(aqp, quietly=TRUE)
 library(lattice, quietly=TRUE)
 
-#fetch all KSSL data 'correlate as' Hartleton from the June 2015 snapshot
+#fetch all KSSL data 'correlated as' Hartleton from the June 2015 snapshot
 Hartleton<-fetchKSSL(series='Hartleton') 
 ```
 
@@ -643,7 +645,7 @@ plot(Hartleton, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='cl
 sdc <- getSoilDepthClass(Hartleton, name='hzn_desgn', top='hzn_top', bottom='hzn_bot') 
 site(Hartleton) <- sdc
 
-#summary statistics of soil depth class
+#summary statistics for soil depth
 tapply(Hartleton$depth, Hartleton$taxonname, summary) 
 ```
 
@@ -684,7 +686,20 @@ xyplot(top ~ p.q50 | variable, data=h.slab, ylab='Depth',
 
 Check out [fetchKSSL Example](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp) for more details. 
 
-### <a id="additional")></a>1.9 Additional Resources  
+### <a id="review")></a>1.9 Review
+Given what you now know about R and RStudio, try to answer the following questions:
+1. How can the `str()` function be used?
+????n????n????s ??????p ????i??
+2. What are packages?
+s????sn ??? ??q p??do????????p ??po?? ??o suoi??????????o??
+3. What R function do you use to load packages?
+()????????qi??
+4. 
+
+
+
+
+### <a id="additional")></a>1.10 Additional Resources  
 - [R Manuals](http://cran.r-project.org/manuals.html)
 - [Comprehensive R Archive Network (CRAN) Task View](https://cran.r-project.org/web/views/)
 - [Quick R](http://www.statmethods.net/)  
