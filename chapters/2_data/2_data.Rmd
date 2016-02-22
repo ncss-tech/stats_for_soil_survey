@@ -128,9 +128,51 @@ sand
 
 
 **Rasters**
-...
-The raster data should be in a common GDAL format like IMAGINE (img) or TIFF. 
 
+Raster are a common GIS format primarily designed for displaying continuous numeric data. They are similar to matrices in R, although they contain additional information such as their spatial projection and resolution. To import raster data, R uses the Geospatial Data Abstraction Library (GDAL), similar many other GIS, including ArcGIS. GDAL supports a wide variety of raster formats. Popular formats include GeoTIFF (.tif) and Erdas Imagine (.img), but exclude rasters stored in ESRI's propriety file geodatabase format. To import raster data either the `readGDAL()` or `raster()` functions can used, which come from the rgdal and raster packages respectively. In the case large raster datasets the raster package is preferred because it doesn't require reading the raster files into the computer's random access memory (RAM). The raster package also contains a wider variety of functions.
+
+```{r raster, message=FALSE, warning=FALSE}
+# Example 1: importing raster data
+library(sp)
+library(rgdal)
+library(raster)
+library(gdalUtils)
+
+f <- system.file("external/tahoe_lidar_highesthit.tif", package="gdalUtils")
+
+# import data using the raster package
+r <- raster(f)
+
+s <- stack(f, f) # create raster stack of multiple rasters
+
+str(r, max.level = 2)
+proj4string(r) # get or set the coordinate reference system
+bbox(r) # get bounding box
+
+plot(r)
+
+plot(s)
+
+# or import data using the rgdal package
+r2 <- readGDAL(f)
+
+str(r2, max.level = 2)
+
+spplot(r2) # sp package plotting method based on lattice package
+
+
+# Example 2: exporting raster data
+
+# raster package
+writeRaster(r, filename = "C:/workspace/test.tif", format = "GTiff", progress = "text", overwrite = TRUE) # for large datasets the progess option is helpful
+
+# rgdal package
+writeGDAL(r2, fname = "C:/workspace/test.tif", drivername = "GTiff")
+```
+
+**Vector**
+
+Vectors are a common GIS format designed for displaying points, lines, polygons. 
 
 ##<a id="extract")></a>2.6 Extracting spatial data
 
@@ -151,7 +193,7 @@ To extract spatial data R has several spatial packages which provide similar fun
 
 #### Extracting point data from spatial data
 
-To extract point data using R, either the sp or raster packages can be used. For large raster data sets it is best to use the `extract()` function form the raster package, because the raster package doesn't require the raster files to be read into the computer's random access memory (RAM).
+To extract point data using R, either the sp or raster packages can be used. For large raster data sets it is best to use the `extract()` function form the raster package.
 
 ```{r r_point_extract, warning=FALSE, message=FALSE}
 # library(soilDB)
@@ -161,8 +203,8 @@ To extract point data using R, either the sp or raster packages can be used. For
 # s <- site(p)
 # idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
 # p2 <- p[idx] # subset pedon using idx
-# coordinates(p2) <- ~ x + y # add coordinates to the pedon object
-# proj4string(p2) <- CRS("+init=epsg:4326") # add projection to the pedon object
+# coordinates(p2) <- ~ x + y # set coordinates to the pedon object
+# proj4string(p2) <- CRS("+init=epsg:4326") # set projection to the pedon object
 # p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
 # 
 # setwd("M:/geodata/project_data/8VIC/")
