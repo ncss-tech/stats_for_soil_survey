@@ -235,21 +235,106 @@ sand
 
 
 **Rasters**
-...
-The raster data should be in a common GDAL format like IMAGINE (img) or TIFF. 
+
+Raster are a common GIS format primarily designed for displaying continuous numeric data. They are similar to matrices in R, although they contain additional information such as their spatial projection and resolution. To import raster data, R uses the Geospatial Data Abstraction Library (GDAL), similar many other GIS, including ArcGIS. GDAL supports a wide variety of raster formats. Popular formats include GeoTIFF (.tif) and Erdas Imagine (.img), but exclude rasters stored in ESRI's propriety file geodatabase format. To import raster data either the `readGDAL()` or `raster()` functions can used, which come from the rgdal and raster packages respectively. In the case large raster datasets the raster package is preferred because it doesn't require reading the raster files into the computer's random access memory (RAM). The raster package also contains a wider variety of functions.
 
 
-##<a id="extract")></a>2.6 Extracting spatial data
+```r
+# Example 1: importing raster data
+library(sp)
+library(rgdal)
+library(raster)
+library(gdalUtils)
 
-In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
+f <- system.file("external/tahoe_lidar_highesthit.tif", package="gdalUtils")
 
-To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
+# import data using the raster package
+r <- raster(f)
 
-Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
+s <- stack(f, f) # create raster stack of multiple rasters
 
- - All data conforms to a common projection and datum
- - All raster data have a common cell resolution
- - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+str(r, max.level = 2)
+```
+
+```
+## Formal class 'RasterLayer' [package "raster"] with 12 slots
+##   ..@ file    :Formal class '.RasterFile' [package "raster"] with 13 slots
+##   ..@ data    :Formal class '.SingleLayerData' [package "raster"] with 13 slots
+##   ..@ legend  :Formal class '.RasterLegend' [package "raster"] with 5 slots
+##   ..@ title   : chr(0) 
+##   ..@ extent  :Formal class 'Extent' [package "raster"] with 4 slots
+##   ..@ rotated : logi FALSE
+##   ..@ rotation:Formal class '.Rotation' [package "raster"] with 2 slots
+##   ..@ ncols   : int 400
+##   ..@ nrows   : int 400
+##   ..@ crs     :Formal class 'CRS' [package "sp"] with 1 slot
+##   ..@ history : list()
+##   ..@ z       : list()
+```
+
+```r
+proj4string(r) # get or set the coordinate reference system
+```
+
+```
+## [1] "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+```
+
+```r
+bbox(r) # get bounding box
+```
+
+```
+##           min        max
+## s1 -119.93281 -119.93062
+## s2   39.28922   39.29141
+```
+
+```r
+plot(r)
+```
+
+![plot of chunk raster](figure/raster-1.png)
+
+```r
+plot(s)
+```
+
+![plot of chunk raster](figure/raster-2.png)
+
+```r
+# or import data using the rgdal package
+
+# r2 <- readGDAL(f)
+
+# str(r2, max.level = 2)
+
+# spplot(r2) # sp package plotting method based on lattice package
+
+
+# Example 2: exporting raster data
+
+# raster package
+writeRaster(r, filename = "C:/workspace/test.tif", format = "GTiff", progress = "text", overwrite = TRUE) # for large datasets the progess option is helpful
+```
+
+```
+##   |                                                                         |                                                                 |   0%  |                                                                         |================                                                 |  25%  |                                                                         |================================                                 |  50%  |                                                                         |=================================================                |  75%  |                                                                         |=================================================================| 100%
+## 
+```
+
+```r
+# rgdal package
+# writeGDAL(r2, fname = "C:/workspace/test.tif", drivername = "GTiff")
+```
+
+**Vector**
+
+Vectors are a common GIS format designed for displaying points, lines, polygons. 
+
+
+
+## <a id="extract")></a> 2.6 Extracting spatial data
 
 ###<a id="rtools")></a>2.6.1 R tools for extracting spatial data
 
@@ -258,7 +343,7 @@ To extract spatial data R has several spatial packages which provide similar fun
 
 #### Extracting point data from spatial data
 
-To extract point data using R, either the sp or raster packages can be used. For large raster data sets it is best to use the `extract()` function form the raster package, because the raster package doesn't require the raster files to be read into the computer's random access memory (RAM).
+To extract point data using R, either the sp or raster packages can be used. For large raster data sets it is best to use the `extract()` function form the raster package.
 
 
 ```r
@@ -269,8 +354,8 @@ To extract point data using R, either the sp or raster packages can be used. For
 # s <- site(p)
 # idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
 # p2 <- p[idx] # subset pedon using idx
-# coordinates(p2) <- ~ x + y # add coordinates to the pedon object
-# proj4string(p2) <- CRS("+init=epsg:4326") # add projection to the pedon object
+# coordinates(p2) <- ~ x + y # set coordinates to the pedon object
+# proj4string(p2) <- CRS("+init=epsg:4326") # set projection to the pedon object
 # p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
 # 
 # setwd("M:/geodata/project_data/8VIC/")
@@ -297,122 +382,6 @@ summary(test)
 ##  1249713106:   3   Max.   :1816.41   Max.   :70.0182  
 ##  (Other)   :1001   NA's   :11        NA's   :11
 ```
-
-
-#### Extracting zonal statistics from a raster for polygons
-
-Zonal statistics in R can be implemented using either the census or sample approach. While R can compute zonal statistics using the census approach with the `zonal()` function in the raster package, it is considerable faster to call another GIS via either the RSAGA or spgrass6 packages. These additional GIS packages provide R functions to access SAGA and GRASS commands. For this example the RSAGA package will be used.
-
-
-```r
-# library(rgdal)
-# 
-# ca794 <- readOGR(dsn = "M:/geodata/soils/CA794/spatial", layer = "soilmu_a_ca794")
-# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
-# ca794$mukey2 <- as.integer(as.character(ca794$MUKEY))
-# writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile", overwrite_layer = TRUE)
-# 
-# library(RSAGA)
-# myenv <- rsaga.env(path = "C:/Program Files/QGIS Wien/apps/saga")
-# ned <- raster("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat")
-# test <- raster(extent(ca794), ext = extent(ned), crs = crs(ned), res = res(ned))  # create a blank raster
-# writeRaster(test, file = "M:/geodata/project_data/8VIC/sdat/ca794.sdat", format = "SAGA", progress = "text", overwrite = TRUE)
-# 
-# rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
-#   INPUT = "C:/workspace/ca794.shp",
-#   FIELD = "mukey2",
-#   OUTPUT = "2",
-#   TARGET = "0",
-#   GRID_TYPE = "2",
-#   USER_GRID = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-#   USER_XMIN = extent(test)[1] + 15,
-#   USER_XMAX = extent(test)[2] - 15,
-#   USER_YMIN = extent(test)[3] + 15,
-#   USER_YMAX = extent(test)[4] - 15,
-#   USER_SIZE = res(test)[1]
-# )
-# )
-# 
-# rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
-#   ZONES = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-#   STATLIST = paste(c("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "M:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
-#   OUTTAB = "C:/workspace/test.csv"
-# ))
-
-test <- read.csv("C:/workspace/test.csv")
-names(test)[1] <- "mukey"
-test[test$mukey == 2480977, ] # examine mukey 2480977
-```
-
-```
-##      mukey Count.UCU ned30m_8VICN ned30m_8VICMIN ned30m_8VICMAX
-## 76 2480977    204460       204460       503.1204       1687.588
-##    ned30m_8VICMEAN ned30m_8VICSTDDEV ned30m_8VICSUM ned30m_8VIC_slope5N
-## 76        942.5077          206.0661      192705133              204460
-##    ned30m_8VIC_slope5MIN ned30m_8VIC_slope5MAX ned30m_8VIC_slope5MEAN
-## 76              0.195744              94.46768               38.52244
-##    ned30m_8VIC_slope5STDDEV ned30m_8VIC_slope5SUM
-## 76                 16.73909               7876299
-```
-
-To implement the sample approach to zonal statistics we can use the `extract()` and `over()` functions in the raster and sp packages respectively.
-
-
-```r
-# ca794 <- readOGR(dsn = "M:/geodata/soils/CA794/spatial", layer = "soilmu_a_ca794")
-# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
-# 
-# s <- spsample(ca794, n = 100000, type = "stratified")
-# 
-# setwd("M:/geodata/project_data/8VIC/")
-# 
-# rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif"))
-# proj4string(rs) <- CRS("+init=epsg:5070")
-# 
-# 
-# test1 <- over(s, ca794)
-# test2 <- data.frame(extract(rs, s))
-# test2 <- cbind(test1, test2)
-# save(test2, file = "C:/workspace/ch2_sample.Rdata")
-
-load(file = "C:/workspace/ch2_sample.Rdata")
-
-summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
-```
-
-```
-##  AREASYMBOL     SPATIALVER     MUSYM          MUKEY           elev       
-##  CA794:5777   Min.   :2    1255   :5777   2480977:5777   Min.   : 517.7  
-##               1st Qu.:2    1220   :   0   1910055:   0   1st Qu.: 786.2  
-##               Median :2    1225   :   0   1910056:   0   Median : 923.7  
-##               Mean   :2    1230   :   0   1910058:   0   Mean   : 944.1  
-##               3rd Qu.:2    1240   :   0   1910059:   0   3rd Qu.:1082.2  
-##               Max.   :2    1241   :   0   1910060:   0   Max.   :1667.6  
-##                            (Other):   0   (Other):   0                   
-##      slope        
-##  Min.   : 0.3631  
-##  1st Qu.:25.1525  
-##  Median :37.8202  
-##  Mean   :38.2551  
-##  3rd Qu.:50.6459  
-##  Max.   :85.8705  
-## 
-```
-
-Compare the results of the census and sample approaches above. While the census approach surveyed 204,460 cells, the sample approach only surveyed 5,777. However we can see that the results are largely similar between the two approaches.
-
-
-#### Extracting zonal statistics via R Markdown
-
-R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint link, [hyperlink](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). We'll demonstrate these reports in Chapter 4 as part of exploratory data analysis.
-
-### <a id="ex1")></a> Exercise: extracting spatial data
-
-Using your own data.
-
-- Extracting spatial data from the point locations of your pedons.
-- Using the sample approach, extract the zonal statistics for one soil survey area.
-- Submit the results to your coach.
 
 
 ###<a id="arcgistools")></a>2.6.2  ArcGIS tools for extracting spatial data
@@ -445,50 +414,6 @@ ArcGIS also provides the capability of creating histograms for data associated w
 
 ![R GUI image](figure/ch4_fig12.jpg)  
 
-
-### Extracting zonal statistics from a raster
-
-Gathering statistics of raster data cells for polygon data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* tool. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
-
-Example for summarizing by Map Unit Symbol:  
-
-Open the Zonal Statistics as Table Tool in the Zonal Toolbox.
-
-![R GUI image](figure/ch5_fig1.jpg)  
-
-The input zone field is MUSYM and the input raster is slope:  
-
-![R GUI image](figure/ch5_fig2.jpg)  
-
-Which produces a table with the following output:  
-
-![R GUI image](figure/ch5_fig3.jpg)  
-
-The use of the Mean and Standard Deviation are acceptable, provided the distributions are close to normal and the interest is in summarizing the entire population of map units. To get a closer look at individual polygons, summarize using the FID:  
-
-![R GUI image](figure/ch5_fig4.jpg)  
-
-Which produces a table with the following output:  
-
-![R GUI image](figure/ch5_fig5.jpg)  
-
-Use the Join capability to associate the table of statistics to the spatial data:  
-
-![R GUI image](figure/ch5_fig6.jpg)  
-
-![R GUI image](figure/ch5_fig7.jpg)  
-
-Which lets you view results by polygon and search for outliers or polygons that require further investigation:  
-
-![R GUI image](figure/ch5_fig8.jpg)  
-
-In this example, 4 polygons of *ChC2*, *Coshocton silt loam, 6 to 15 percent slopes, eroded*, have an average slope greater than 15 percent. Discrepancies like this will need to be investigated and resolved.  
-
-![R GUI image](figure/ch5_fig9.jpg)  
-
-In another example using a Box plot for assessment of a map unit with a slope class of 15 to 25 percent slopes, indicates half of the polygons with an average slope less than 15 percent:  
-
-![R GUI image](figure/ch5_fig10.jpg)  
 
 
 ##<a id="ref")></a>2.7  References  
