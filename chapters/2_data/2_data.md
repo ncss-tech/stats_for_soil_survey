@@ -336,6 +336,15 @@ Vectors are a common GIS format designed for displaying points, lines, polygons.
 
 ## <a id="extract")></a> 2.6 Extracting spatial data
 
+In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
+
+Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
+
+ - All data conforms to a common projection and datum
+ - All raster data have a common cell resolution
+ - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+
+
 ###<a id="rtools")></a>2.6.1 R tools for extracting spatial data
 
 To extract spatial data R has several spatial packages which provide similar functionality to other GIS programs, but also significantly streamline the process for generating raster maps from statistical models.
@@ -382,6 +391,11 @@ summary(test)
 ##  1249713106:   3   Max.   :1816.41   Max.   :70.0182  
 ##  (Other)   :1001   NA's   :11        NA's   :11
 ```
+
+#### <a id="ex1")></a> Exercise 1: extracting spatial data
+
+- Using your own data, extract the raster values for several pedons
+- Submit the results to your coach.
 
 
 ###<a id="arcgistools")></a>2.6.2  ArcGIS tools for extracting spatial data
