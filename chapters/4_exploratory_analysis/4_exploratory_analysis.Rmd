@@ -26,12 +26,15 @@ html_document:
  - [4.6 Transformations](#transform)       	
      - [4.6.1 pH](#ph)       
      - [4.6.2 Circular data](#circular)       
-  - [4.7 Additional tools](#tools)
-     - [4.7.1 R markdown reports](#rmd)
-          - [Exercise 2: run the pedon_summary_by_taxonname.Rmd](#ex2)
-     - [4.7.2 TEUI toolkit](#teui)
- - [4.8 References](#ref)   
- - [4.9 Additional reading](#add)
+ - [4.7 R markdown reports](#rmd)
+     - [Exercise 2: run the pedon_summary_by_taxonname.Rmd](#ex2)
+ - [4.8 Zonal Statistics](#zonal)
+     - [4.8.1 Zonal Statistics in R](#rtools)
+          - [Exercise 3: calculating zonal statistics](#ex3)
+     - [4.8.2 TEUI toolkit](#teui)
+     - [4.8.3 ArcGIS tools](#arcgis)
+ - [4.9 References](#ref)   
+ - [4.10 Additional reading](#add)
 
 ##<a id="intro")></a>4.0  Introduction
 
@@ -161,10 +164,10 @@ Typo errors such as these are common problem with old pedon data in NASIS.
 
 ### <a id="ex1")></a> Exercise: fetch and inspect
 
-- Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset. 
-- Apply the generalized horizon rules below or develop your own.
+- Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset 
+- Apply the generalized horizon rules below or develop your own
 - Summarize the depths, genhz, texture class, sand, and fine gravel
-- Submit the results to your coach.
+- Show your work and submit the results to your coach
 
 
 ```{r}
@@ -690,9 +693,8 @@ rose.diag(aspect, bins = 8, col="grey")
 Figure 11. Rose Diagram  
 
 
-## <a id="tools")></a> 4.7 Additional tools
 
-### <a id="rmd")></a> 4.7.1 R Markdown reports (.Rmd)
+## <a id="rmd")></a> 4.7 R Markdown reports (.Rmd)
 
 R Markdown (.Rmd) is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. 
 
@@ -756,10 +758,103 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 - Load your selected set with the pedon and site table for an existing GHL file, or make your own (highly encouraged)
 - Run the pedon_summary_by_taxonname.Rmd report on a soil series of your choice.
-- Submit the results to your coach.
+- Show your work and submit the results to your coach.
 
 
-### <a id="teui")></a> 4.7.2  TEUI toolkit
+
+## <a id="zonal")></a> 4.8 Zonal Statistics
+
+In soil survey we're typically interested in the values for spatial data that overlap point locations or polygons. This gives us information on the geomorphic setting of our soil observations. With this information we would like to predict the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
+
+To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
+
+Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
+
+ - All data conforms to a common projection and datum
+ - All raster data have a common cell resolution
+ - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+
+### <a id="rtools")></a> 4.8.1 Zonal Statistics in R
+
+Zonal statistics in R can be implemented using either the census or sample approach. While R can compute zonal statistics using the census approach with the `zonal()` function in the raster package, it is considerable faster to call another GIS via either the RSAGA or spgrass6 packages. These additional GIS packages provide R functions to access SAGA and GRASS commands. For this example the RSAGA package will be used.
+
+```{r r_poly_extract}
+# library(rgdal)
+# 
+# ca794 <- readOGR(dsn = "M:/geodata/soils/CA794/spatial", layer = "soilmu_a_ca794") # import CA794 map unit polygons
+# ca794 <- spTransform(ca794, CRS("+init=epsg:5070")) # reproject
+# ca794$mukey2 <- as.integer(as.character(ca794$MUKEY)) # convert MUKEY to  an integer
+# writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile", overwrite_layer = TRUE) # export shapefile
+# 
+# library(RSAGA)
+# myenv <- rsaga.env(path = "C:/Program Files/QGIS Wien/apps/saga") # set rsaga path
+# ned <- raster("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat") # load DEM
+# test <- raster(extent(ca794), ext = extent(ned), crs = crs(ned), res = res(ned))  # create a blank raster that matches the DEM
+# writeRaster(test, file = "M:/geodata/project_data/8VIC/sdat/ca794.sdat", format = "SAGA", progress = "text", overwrite = TRUE) # export the raster
+# 
+# Convert the CA794 shapefile to a rsaga raster
+#
+# rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
+#   INPUT = "C:/workspace/ca794.shp",
+#   FIELD = "mukey2",
+#   OUTPUT = "2",
+#   TARGET = "0",
+#   GRID_TYPE = "2",
+#   USER_GRID = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   USER_XMIN = extent(test)[1] + 15,
+#   USER_XMAX = extent(test)[2] - 15,
+#   USER_YMIN = extent(test)[3] + 15,
+#   USER_YMAX = extent(test)[4] - 15,
+#   USER_SIZE = res(test)[1]
+# )
+# )
+# 
+# Extract the zonal statistics for 2 rasters
+#
+# rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
+#   ZONES = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   STATLIST = paste(c("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "M:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
+#   OUTTAB = "C:/workspace/test.csv"
+# ))
+
+test <- read.csv("C:/workspace/test.csv") # import the results
+names(test)[1] <- "mukey" # rename the mukey column
+test[test$mukey == 2480977, ] # examine mukey 2480977
+```
+
+To implement the sample approach to zonal statistics we can use the `extract()` and `over()` functions in the raster and sp packages respectively.
+
+```{r}
+# s <- spsample(ca794, n = 100000, type = "stratified") # take a stratified random sample
+# 
+# setwd("M:/geodata/project_data/8VIC/")
+# 
+# rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif")) # create a raster stack
+# proj4string(rs) <- CRS("+init=epsg:5070") # set the spatial projection
+# 
+# 
+# test1 <- over(s, ca794) # extract the map unit polygon values
+# test2 <- data.frame(extract(rs, s)) # extract the raster values
+# test2 <- cbind(test1, test2) # combine the two datasets
+# save(test2, file = "C:/workspace/ch2_sample.Rdata")
+
+load(file = "C:/workspace/ch2_sample.Rdata")
+
+summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
+```
+
+Compare the results of the census and sample approaches above. While the census approach surveyed 204,460 cells, the sample approach only surveyed 5,777. However we can see that the results are largely similar between the two approaches.
+
+
+#### <a id="ex3")></a> Exercise 3: calculating zonal statistics
+
+- Use your own data
+- Extract the zonal statistics for one soil survey area or several polygons, using the sample approach
+- Show your work and submit the results to your coach
+
+
+
+### <a id="teui")></a> 4.8.2  TEUI toolkit
 
 The TEUI toolkit works in a similar manner to *Zonal Statistics as Table* within ArcGIS, with the added benefit of interactive graphics to aid in the assessment. TEUI is an ArcGIS Add-in and may be installed without Administrator privilege. Additional information and downloads are available here:  
 
@@ -1019,10 +1114,57 @@ The statistical data summaries produced by the toolkit can be exported to excel 
 
  1.  On the main Toolkit menu bar, click the **export map unit table button** with the blue arrow. Note this may take a little while as the program is gathering up the data.  
 
- 2.	Navigate to the location you would like to save the .CSV file. Give the file a name and click **Save**  .  
+ 2.	Navigate to the location you would like to save the .CSV file. Give the file a name and click **Save**.  
 
 
-## <a id="ref")></a> 4.8 References  
+
+### <a id="arcgis")></a> 4.8.3 ArcGIS tools
+
+Gathering statistics of raster data cells for polygon data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* function from the *Spatial Analyst toolbox*. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
+
+Example for summarizing by Map Unit Symbol:  
+
+Open the Zonal Statistics as Table Tool in the Zonal Toolbox.
+
+![R GUI image](figure/ch5_fig1.jpg)  
+
+The input zone field is MUSYM and the input raster is slope:  
+
+![R GUI image](figure/ch5_fig2.jpg)  
+
+Which produces a table with the following output:  
+
+![R GUI image](figure/ch5_fig3.jpg)  
+
+The use of the Mean and Standard Deviation are acceptable, provided the distributions are close to normal and the interest is in summarizing the entire population of map units. To get a closer look at individual polygons, summarize using the FID:  
+
+![R GUI image](figure/ch5_fig4.jpg)  
+
+Which produces a table with the following output:  
+
+![R GUI image](figure/ch5_fig5.jpg)  
+
+Use the Join capability to associate the table of statistics to the spatial data:  
+
+![R GUI image](figure/ch5_fig6.jpg)  
+
+![R GUI image](figure/ch5_fig7.jpg)  
+
+Which lets you view results by polygon and search for outliers or polygons that require further investigation:  
+
+![R GUI image](figure/ch5_fig8.jpg)  
+
+In this example, 4 polygons of *ChC2*, *Coshocton silt loam, 6 to 15 percent slopes, eroded*, have an average slope greater than 15 percent. Discrepancies like this will need to be investigated and resolved.  
+
+![R GUI image](figure/ch5_fig9.jpg)  
+
+In another example using a Box plot for assessment of a map unit with a slope class of 15 to 25 percent slopes, indicates half of the polygons with an average slope less than 15 percent:  
+
+![R GUI image](figure/ch5_fig10.jpg)  
+
+
+
+## <a id="ref")></a> 4.9 References  
 
 FAO Corporate Document Repository. 
 [http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm)    
@@ -1042,7 +1184,7 @@ Tukey, J. 1980. We need both exploratory and confirmatory. The American Statisti
 Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract)
 
 
-## <a id="add")></a> 4.9 Additional reading
+## <a id="add")></a> 4.10 Additional reading
 
 de Smith, M.J., 2015. STATSREF: Statistical Analysis Handbook: a web-based statistics
 resource. The Winchelsea Press, Winchelsea, UK.  [http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  
