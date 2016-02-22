@@ -10,8 +10,9 @@ Tuesday, February 24, 2015
 - [1.3 Data Management in R](#datamanagement)
 - [1.4 Saving R Files](#saving)
 - [1.5 Installing and Loading Packages](#packages)
-- [1.7 A Graphical User Interface for R - Rcmdr](#cmdr)
-- [1.8 RStudio](#studio)
+- [1.6 A Graphical User Interface for R - Rcmdr](#cmdr)
+- [1.7 RStudio](#studio)
+- [1.8 Introduction to the soilDB package](#soilDB)
 - [1.9 Additional Resources](#additional)
 
  
@@ -333,7 +334,7 @@ When the R Console window is active in the R GUI (simply click on the Console wi
 You can select more than one package to install at a time by holding down the Ctrl key.  
 
 
-## <a id="cmdr")></a>1.7  A Graphical user interface for R: Rcmdr (R COMMANDER)  
+## <a id="cmdr")></a>1.6  A Graphical user interface for R: Rcmdr (R COMMANDER)  
 
 R Commander (Rcmdr) is an expanded GUI in R that allows users to run basic statistical functions in R using menu bars, icons, and information fields.  It was created for students in introductory statistics courses so they could see how the software worked without learning a large number of command line scripts.  Rcmdr is a great way to begin familiarizing yourself with R and statistics within a standardized framework.   
 
@@ -526,7 +527,7 @@ Hist(sand2$sand, scale="frequency", breaks="Sturges", col="lightblue", xlab = "T
 
 At the top of the R editor window enter: #this is a demo of how to use R editor with an R Commander Script. Now select all and run the entire script. Save your R script using the file icon or in the File menu and close R. 
 
-### <a id="studio")></a>1.8 RStudio  
+### <a id="studio")></a>1.7 RStudio  
 
 RStudio is a integrated development environment (IDE) that allows you to interact with R more readily. RStudio is similar to the R GUI, but is more user friendly with more drop down menus, windows, and customization options. When you open Rstudio on your machine, you will see 3 windows: the console window, just like in the R GUI and two other windows composed of multiple tabs. The upper right window has two tabs: environment and history. The environment tab will keep track of the datasets that you import and objects that you create while the history tab keeps a history of all of the commands you've executed during your Rstudio session. The lower right window is composed of 5 tabs:
 
@@ -582,26 +583,106 @@ To learn more about the function you are using and the options/arguments availab
 
 Look through the usage and arguments. Re-enter the `hist` function; evaluate the effects of changing color, breaks, freq, and labels.  
 
-
 ```r
 hist(sand$sand, freq=TRUE, breaks=12, xlim = c(15, 40), main = "Histogram of Sand", sub = "with 12 bins", col ="lightblue", ylab = "Counts", xlab = "Total Sand") 
 ```
 
 ![](1_introduction_files/figure-html/unnamed-chunk-30-1.png)
+
 Notice how changing the breaks argument alters the appearance of the graph. The breaks argument tells R how the individual values should be counted in bins or groups. The xlim argument tells R where to set the upper and lower limit of the x-axis.  
 
-Note that this arbitrarily sets the bin breaks using a list c(x1,x2,x3..). This can be a good way to separate groups, but in a way that may alter the way you visualize the distribution. This will work for any function in the console command prompt. You can also search for help on any function (even if you don't have the package installed) by typing:  
+Note that this arbitrarily sets the bin breaks using a list c(x1,x2,x3..). This can be a good way to separate groups, but in a way that may alter the way you visualize the distribution. This will work for any function in the console command prompt. 
+
+**How would you change the chart title to "Histogram" and change the number of break (and there sub title) to 6 bins? Plot and examine the results.**
+
+You can also search for help on any function (even if you don't have the package installed) by typing:  
 
 
 ```r
 help.search("histogram")
 ```
 
-###Exercise
-Using the sand dataset, 
+
+##<a id="soilDB")></a>1.8  Introduction to the soilDB package
+
+Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
 
 
+```r
+library(soilDB, quietly=TRUE)
+```
 
+```
+## This is aqp 1.9.3
+```
+
+```r
+library(aqp, quietly=TRUE)
+library(lattice, quietly=TRUE)
+
+#fetch all KSSL data 'correlate as' Hartleton from the June 2015 snapshot
+Hartleton<-fetchKSSL(series='Hartleton') 
+```
+
+```
+## 5 pedons loaded (0.03 Mb transferred)
+```
+
+```r
+#set plot parameters
+par(mar=c(0,0,0,0)) 
+
+#soil profile plot
+plot(Hartleton, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='clay') 
+```
+
+![](1_introduction_files/figure-html/unnamed-chunk-32-1.png)
+
+```r
+#soil depth class
+sdc <- getSoilDepthClass(Hartleton, name='hzn_desgn', top='hzn_top', bottom='hzn_bot') 
+site(Hartleton) <- sdc
+
+#summary statistics of soil depth class
+tapply(Hartleton$depth, Hartleton$taxonname, summary) 
+```
+
+```
+## $Hartleton
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    79.0   102.0   118.0   114.2   122.0   150.0
+```
+
+
+```r
+#data structure and variable names
+str(Hartleton) 
+```
+
+
+```r
+# slab() is used to aggregate selected variables within collections of soil profiles along depth-slices; in this example we are aggregating clay, sand, and organic carbon
+h.slab <- slab(Hartleton, taxonname ~ clay+sand+oc)
+
+#specify color and line width to be used in plot
+tps <- list(superpose.line=list(col='RoyalBlue', lwd=2)) 
+
+# slice-wise median and 25th/75th percentiles are reasonable estimations of central tendency and spread
+xyplot(top ~ p.q50 | variable, data=h.slab, ylab='Depth',
+        xlab='median bounded by 5th and 95th percentiles',
+        lower=h.slab$p.q25, upper=h.slab$p.q75, ylim=c(155,-5),
+        panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
+        prepanel=prepanel.depth_function,
+        cf=h.slab$contributing_fraction,
+        par.strip.text=list(cex=0.8),
+        strip=strip.custom(bg=grey(0.85)),
+        layout=c(3,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+        par.settings=tps, auto.key=list(columns=1, lines=TRUE, points=FALSE))
+```
+
+![](1_introduction_files/figure-html/unnamed-chunk-34-1.png)
+
+Check out [fetchKSSL Example](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp) for more details. 
 
 ### <a id="additional")></a>1.9 Additional Resources  
 - [R Manuals](http://cran.r-project.org/manuals.html)
