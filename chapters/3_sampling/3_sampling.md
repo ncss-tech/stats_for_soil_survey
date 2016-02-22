@@ -21,7 +21,8 @@ title: Chapter 3 - Sampling Design
     - [3.2.3 Multistage stratified random](#ms)
     - [3.2.4 Systematic](#reg)
     - [3.2.5 Cluster](#cluster)
-    - [3.2.6 Conditioned Latin hypercube](#clhs)  
+    - [3.2.6 Conditioned Latin hypercube](#clhs) 
+    - [Exercise 1: design a sampling strategy](#ex1)
 - [3.3 Other tools for selecting random samples](#tools)
     - [3.3.1 cLHS using TEUI](#teui)
     - [3.3.2 Two-stage stratified random sample design using ArcGIS](#arcgis)
@@ -89,7 +90,7 @@ summary(c(test1, test2))
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    6.32   15.74   17.50   17.50   19.26   28.06
+##   6.131  15.740  17.500  17.500  19.260  29.890
 ```
 
 ```r
@@ -250,7 +251,7 @@ points(test)
 ![plot of chunk clustered](figure/clustered-1.png)
 
 
-### <a id="clhs")></a>3.2.5 Conditioned Latin hypercube (cLHS) 
+### <a id="clhs")></a> 3.2.5 Conditioned Latin hypercube (cLHS)
 
 Conditioned Latin hypercube sampling is a stratified random sampling technique that strives to obtain representative samples from feature (attribute) space (Minasny and McBratney, 2006). For example, assume you have prior knowledge of a study area, have the time and resources to collect 120 points and know the following variables (strata), represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
 
@@ -292,8 +293,8 @@ summary(s$sampled_data)
 ## Object of class SpatialPointsDataFrame
 ## Coordinates:
 ##       min     max
-## x 2667460 2667990
-## y 6478730 6479540
+## x 2667460 2667960
+## y 6478800 6479520
 ## Is projected: TRUE 
 ## proj4string :
 ## [+init=epsg:27200 +proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000
@@ -303,11 +304,11 @@ summary(s$sampled_data)
 ## Data attributes:
 ##       elev           slope       
 ##  Min.   : 96.0   Min.   :0.0000  
-##  1st Qu.:108.5   1st Qu.:0.1340  
-##  Median :125.5   Median :0.2467  
-##  Mean   :130.6   Mean   :0.2580  
-##  3rd Qu.:150.0   3rd Qu.:0.3795  
-##  Max.   :184.0   Max.   :0.5618
+##  1st Qu.:109.2   1st Qu.:0.1224  
+##  Median :125.0   Median :0.2443  
+##  Mean   :130.9   Mean   :0.2575  
+##  3rd Qu.:147.5   3rd Qu.:0.3751  
+##  Max.   :186.0   Max.   :0.5697
 ```
 
 ```r
@@ -339,6 +340,13 @@ points(s$sampled_data)
 
 ![plot of chunk clhs_sub](figure/clhs_sub-1.png)
 
+## Insert section comparing back to back histograms
+
+
+### <a id="ex1")></a> Exercise 1: design a sampling strategy
+
+- 
+
 
 ## <a id="tools")></a>3.3 Other tools for selecting random features  
 
@@ -368,13 +376,13 @@ Open the Latin Hyper Cube Generator Tool
 
 ![R GUI image](figure/ch3_fig21.jpg)  
 
-The Tool requires that all raster data is in Imagine format (“img” extension) and share a common projection and resolution. 
+The Tool requires that all raster data is in Imagine format (img extension) and share a common projection and resolution. 
 
 The tool adds all raster layers in the Table of Contents to the Layers section. The layers to be used are checked.  
 
 An exclusion layer will be used in this example. An exclusion layer is a binary raster with values of 0/1. Using an exclusion layer confines the selection of points to those areas with a raster value of 1.  
 
-The output file will be a shapefile named “samples.shp”, and the Number of Points will be 30.  
+The output file will be a shapefile named samples.shp, and the Number of Points will be 30.  
 
 The number of iterations has been increased from the default of 100 to 300. Increasing the number of iterations increases the processing time, but also increases the likelihood that the samples selected are representative of the selected strata.  
 
@@ -439,6 +447,7 @@ A check to see if the sample points adequately represent the proportionate exten
 The results compare well to the extent of the population:  
 
 ![R GUI image](figure/ch3_fig16.jpg)
+
 
 
 ## <a id="ref")></a>3.4 References
