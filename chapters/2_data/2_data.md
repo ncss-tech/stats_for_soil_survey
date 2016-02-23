@@ -236,22 +236,24 @@ sand
 
 **Rasters**
 
-Raster are a common GIS format primarily designed for displaying continuous numeric data. They are similar to matrices in R, although they contain additional information such as their spatial projection and resolution. To import raster data, R uses the Geospatial Data Abstraction Library (GDAL), similar many other GIS, including ArcGIS. GDAL supports a wide variety of raster formats. Popular formats include GeoTIFF (.tif) and Erdas Imagine (.img), but exclude rasters stored in ESRI's propriety file geodatabase format. To import raster data either the `readGDAL()` or `raster()` functions can used, which come from the rgdal and raster packages respectively. In the case large raster datasets the raster package is preferred because it doesn't require reading the raster files into the computer's random access memory (RAM). The raster package also contains a wider variety of functions.
+Raster are a common GIS format primarily designed for displaying continuous data. They are similar to matrices in R, although they contain additional information such as their spatial projection and resolution. To import raster data, R uses the Geospatial Data Abstraction Library (GDAL), similar many other GIS, including ArcGIS. GDAL supports a wide variety of raster formats. Popular formats include GeoTIFF (.tif) and Erdas Imagine (.img), but exclude rasters stored in ESRI's propriety file geodatabase format. To import raster data either the `readGDAL()` or `raster()` functions can used, which come from the rgdal and raster packages respectively. When working with large raster datasets the raster package is preferred because it doesn't require reading the raster files into the computer's random access memory (RAM). The raster package also contains a wider variety of functions, similar to those found in ArcGIS's Spatial Analyst extension.
 
 
 ```r
-# Example 1: importing raster data
+# Example importing raster data
+
 library(sp)
 library(rgdal)
 library(raster)
 library(gdalUtils)
 
-f <- system.file("external/tahoe_lidar_highesthit.tif", package="gdalUtils")
+f <- system.file("external/tahoe_lidar_highesthit.tif", package="gdalUtils") # pointer to example raster file
 
-# import data using the raster package
+# import raster data using the raster package
 r <- raster(f)
 
-s <- stack(f, f) # create raster stack of multiple rasters
+# create a raster stack of multiple rasters
+s <- stack(f, f) 
 
 str(r, max.level = 2)
 ```
@@ -303,7 +305,7 @@ plot(s)
 ![plot of chunk raster](figure/raster-2.png)
 
 ```r
-# or import data using the rgdal package
+# or import raster data using the rgdal package
 
 # r2 <- readGDAL(f)
 
@@ -312,7 +314,7 @@ plot(s)
 # spplot(r2) # sp package plotting method based on lattice package
 
 
-# Example 2: exporting raster data
+# Example exporting raster data
 
 # raster package
 writeRaster(r, filename = "C:/workspace/test.tif", format = "GTiff", progress = "text", overwrite = TRUE) # for large datasets the progess option is helpful
@@ -330,9 +332,69 @@ writeRaster(r, filename = "C:/workspace/test.tif", format = "GTiff", progress = 
 
 **Vector**
 
-Vectors are a common GIS format designed for displaying points, lines, polygons. 
+Vectors are a common GIS format designed for displaying points, lines, and polygons. To import vector files R uses the rgdal package, which is a wrapper for GDAL. However during the import process R converts all vector files to its own format, which is a complicated series of lists. This makes R impractical for large vector datasets. However, R can call other GIS and spatial databases, such as SAGA, GRASS, and PostGIS.
 
 
+```r
+# Example importing vector data
+
+library(sp)
+library(rgdal)
+
+pol <- readOGR(dsn = "C:/workspace/ca794.shp", layer = "ca794")
+```
+
+```
+## OGR data source with driver: ESRI Shapefile 
+## Source: "C:/workspace/ca794.shp", layer: "ca794"
+## with 719 features
+## It has 5 fields
+```
+
+```r
+str(pol, max.level  = 2)
+```
+
+```
+## Formal class 'SpatialPolygonsDataFrame' [package "sp"] with 5 slots
+##   ..@ data       :'data.frame':	719 obs. of  5 variables:
+##   ..@ polygons   :List of 719
+##   .. .. [list output truncated]
+##   ..@ plotOrder  : int [1:719] 419 448 95 185 89 451 9 447 334 253 ...
+##   ..@ bbox       : num [1:2, 1:2] -1862018 1365854 -1754262 1425526
+##   .. ..- attr(*, "dimnames")=List of 2
+##   ..@ proj4string:Formal class 'CRS' [package "sp"] with 1 slot
+```
+
+```r
+proj4string(pol)
+```
+
+```
+## [1] "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"
+```
+
+```r
+bbox(pol)
+```
+
+```
+##        min      max
+## x -1862018 -1754262
+## y  1365854  1425526
+```
+
+```r
+plot(pol, axes = TRUE)
+```
+
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+
+```r
+# Example exporting vector data
+
+writeOGR(pol, dsn = "C:/workspace/test.shp", layer = "test", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+```
 
 ## <a id="extract")></a> 2.6 Extracting spatial data
 
@@ -347,12 +409,7 @@ Before extracting spatial data for the purpose of spatial prediction, it is nece
 
 ###<a id="rtools")></a>2.6.1 R tools for extracting spatial data
 
-To extract spatial data R has several spatial packages which provide similar functionality to other GIS programs, but also significantly streamline the process for generating raster maps from statistical models.
-
-
-#### Extracting point data from spatial data
-
-To extract point data using R, either the sp or raster packages can be used. For large raster data sets it is best to use the `extract()` function form the raster package.
+To extract point data using R, either the sp or raster packages can be used. For large raster data sets it is best to use the `extract()` function from the raster package.
 
 
 ```r
@@ -363,9 +420,9 @@ To extract point data using R, either the sp or raster packages can be used. For
 # s <- site(p)
 # idx <- complete.cases(s[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
 # p2 <- p[idx] # subset pedon using idx
-# coordinates(p2) <- ~ x + y # set coordinates to the pedon object
-# proj4string(p2) <- CRS("+init=epsg:4326") # set projection to the pedon object
-# p_sp <- as(p2, "SpatialPointsDataFrame") # extract SpatialPointsDataFrame
+# coordinates(p2) <- ~ x + y # set the coordinates to the pedon object
+# proj4string(p2) <- CRS("+init=epsg:4326") # set the projection of the pedon object
+# p_sp <- as(p2, "SpatialPointsDataFrame") # extract a SpatialPointsDataFrame
 # 
 # setwd("M:/geodata/project_data/8VIC/")
 # 
@@ -382,14 +439,14 @@ summary(test)
 ```
 
 ```
-##      p_sp.site_id       elev             slope        
-##  1249515815:   3   Min.   :  18.74   Min.   : 0.2441  
-##  1249704903:   3   1st Qu.: 560.21   1st Qu.: 3.7603  
-##  1249704905:   3   Median : 766.46   Median : 6.7417  
-##  1249713101:   3   Mean   : 850.83   Mean   :15.1356  
-##  1249713104:   3   3rd Qu.:1187.82   3rd Qu.:26.1443  
-##  1249713106:   3   Max.   :1816.41   Max.   :70.0182  
-##  (Other)   :1001   NA's   :11        NA's   :11
+##      p_sp.site_id      elev             slope        
+##  1249515815:  3   Min.   :  18.74   Min.   : 0.2441  
+##  1249704903:  3   1st Qu.: 560.21   1st Qu.: 3.7603  
+##  1249704905:  3   Median : 766.46   Median : 6.7417  
+##  1249713101:  3   Mean   : 850.83   Mean   :15.1356  
+##  1249713104:  3   3rd Qu.:1187.82   3rd Qu.:26.1443  
+##  1249713106:  3   Max.   :1816.41   Max.   :70.0182  
+##  (Other)   :996   NA's   :6         NA's   :6
 ```
 
 #### <a id="ex1")></a> Exercise 1: extracting spatial data
@@ -423,10 +480,6 @@ The resulting point file will have the corresponding cell values for slope, prof
 ![R GUI image](figure/ch2_fig5.jpg)  
 
 The resulting point file may also be saved as a text file for use in R.
-
-ArcGIS also provides the capability of creating histograms for data associated with point files using the Geostatistical Analyst:  
-
-![R GUI image](figure/ch4_fig12.jpg)  
 
 
 
