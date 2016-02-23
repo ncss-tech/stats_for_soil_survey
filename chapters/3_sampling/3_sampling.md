@@ -91,7 +91,7 @@ summary(c(test1, test2))
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   6.718  15.740  17.500  17.500  19.260  29.170
+##   6.187  15.740  17.500  17.500  19.260  28.940
 ```
 
 ```r
@@ -280,19 +280,36 @@ rs <- stack(volcano_r, slope_r)
 cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
 
 plot(volcano_r)
-points(s$sampled_data)
+points(cs$sampled_data)
 ```
 
 ![plot of chunk clhs](figure/clhs-1.png)
 
 ```r
 # Summary of clhs object
-summary(s$sampled_data)
+summary(cs$sampled_data)
 ```
 
 ```
-## Length  Class   Mode 
-##      0   NULL   NULL
+## Object of class SpatialPointsDataFrame
+## Coordinates:
+##       min     max
+## x 2667460 2667980
+## y 6478740 6479560
+## Is projected: TRUE 
+## proj4string :
+## [+init=epsg:27200 +proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000
+## +y_0=6023150 +datum=nzgd49 +units=m +no_defs +ellps=intl
+## +towgs84=59.47,-5.04,187.44,0.47,-0.1,1.024,-4.5993]
+## Number of points: 20
+## Data attributes:
+##       elev           slope       
+##  Min.   : 96.0   Min.   :0.0000  
+##  1st Qu.:111.5   1st Qu.:0.1211  
+##  Median :129.0   Median :0.2452  
+##  Mean   :131.8   Mean   :0.2590  
+##  3rd Qu.:150.2   3rd Qu.:0.3735  
+##  Max.   :187.0   Max.   :0.5697
 ```
 
 ```r
@@ -316,13 +333,8 @@ While the above example works well on our small volcano dataset, the clhs packag
 ```r
 sub_s <- sampleRandom(volcano_r, size = 200, sp = TRUE) # random sample function from the raster package
 
-s <- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)
-
-plot(volcano_r)
-points(s$sampled_data)
+# s <- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)
 ```
-
-![plot of chunk clhs_sub](figure/clhs_sub-1.png)
 
 
 ## <a id="eval")></a> 3.3 Evaluating a sampling strategy
@@ -365,12 +377,12 @@ cbind(sr400 = summary(sr400$elev), sr = summary(s$sr.elev), str = summary(s$str.
 
 ```
 ##         sr400    sr   str    cs
-## Min.     94.0  96.0  96.0  95.0
-## 1st Qu. 107.0 118.5 118.8 108.8
-## Median  119.0 137.0 135.5 124.0
-## Mean    126.8 136.2 135.5 130.2
-## 3rd Qu. 144.0 150.2 152.2 150.2
-## Max.    195.0 183.0 176.0 180.0
+## Min.     94.0  95.0  99.0  96.0
+## 1st Qu. 108.0 108.8 114.0 111.5
+## Median  120.0 120.0 131.5 129.0
+## Mean    129.6 130.4 130.7 131.8
+## 3rd Qu. 150.0 142.2 142.8 150.2
+## Max.    193.0 184.0 170.0 187.0
 ```
 
 ```r
