@@ -425,9 +425,9 @@ RStudio is an integrated development environment (IDE) that allows you to intera
 
 **Files** - shows all the files and folders in your default workspace as if you were in windows explorer
 
-**Plots** - displays figure generated through the R Console (for example, the results of `plot()` would be displayed here)
+**Plots** - displays figures generated through the R Console (for example, the results of `plot()` would be displayed here)
 
-**Packages** - shows the list of add-ons included in the installation of RStudio. If checked, the package is loaded into R, if not, any command related to that package won't work, you will need select it. You can also install other add-ons by clicking on the Install Packages icon.
+**Packages** - shows the list of add-ons included in the installation of RStudio. If checked, the package is loaded into R, if not, any command related to that package won't work, you will need to select it. You can also install other add-ons by clicking on the Install Packages icon.
 
 **Help** - allows the user to search for help regarding R functions, packages, or topics 
 
@@ -435,7 +435,7 @@ RStudio is an integrated development environment (IDE) that allows you to intera
 
 ![R GUI image](figure/ch1_fig32_rgui.jpg)  
 
-Notice that in the figure above, there is a 4th window open called "Untitled1". This is a R script window, very similar to the one we looked at in RGui. To open the R script window in RStudio, simply use the File drop down menu to select New File and then R Script. 
+Notice that in the figure above, there is a 4th window open called "Untitled1". This is a R script window, very similar to the one we looked at in RGui. To open the R script window in RStudio, simply use the File dropdown menu to select New File and then R Script. 
 
 For further information on how to use RStudio, visit: <a href="https://support.rstudio.com/hc/en-us/sections/200107586-Using-RStudio">Using RStudio</a>
 
@@ -447,7 +447,7 @@ In RStudio, set your working directory to C:/workspace by either using the drop 
 setwd("C:/workspace")
 ```
 
-Next, open the script you created in R commander and edited in R editor by navigating to the File menu, Open File..., and then select sand_rcmdr.R. Run commands from within the script by selecting the first command (first two lines) and hit Run from the task bar above the script. 
+Next, open the script you created in R commander and edited in R editor by navigating to the File menu, Open File..., and then select sand_rcmdr.R. Run commands from within the script by selecting the first command (first two lines of code) and hit Run from the task bar above the script. 
 
 ![R GUI image](figure/ch1_fig33_rgui.jpg)  
 
@@ -455,7 +455,7 @@ Notice that the command line is passed to the console (lower left) and the data 
 
 ![R GUI image](figure/ch1_fig34_rgui.jpg)
 
-Switch back to the sand_rcmdr.R script window and select the command to create a histogram (begins with hist) and hit Run. You will get an error message "Error: could not find function 'Hist.'" 
+Switch back to the sand_rcmdr.R script window and select the command to create a histogram (begins with Hist) and hit Run. You will get an error message "Error: could not find function 'Hist.'" 
 
 **What happened?**
 
@@ -468,11 +468,19 @@ Select both commands (hist and boxplot) and hit Run again. Ignore the warning me
 
 ### Help features 
 
-To learn more about the function you are using and the options/arguments available; take advantage of some of the help functions in RStudio. Place your cursor next to the command prompt (>) in the console (lower left) and type: `hist()`. Place your cursor at the end of hist and select the `hist` function from the menu that appears. You'll see a brief explanation of the functions and the name of the package it comes from (this can be handy for searching). Hit the F1 key on your keyboard to get further explanation (this is equivalent to help(hist) in the console and searching for hist in the help window in the lower right). Information will appear in the Help window (lower right).  
+To learn more about the function you are using and the options/arguments available, take advantage of some of the help functions in RStudio:
+
+1. Use the Help tab in the lower right to search commands (such as hist) or objects (such as histogram). 
+2. When you type a command (such as hist) in the Console window, place your cursor at the end of the function and press F1 on your keyboard to bring up more information about the command. Information will appear under the Help tab on the lower right. 
+3. Just like in R, you can type `?hist` in the Console window to bring up a help page. This will also be displayed under the Help tab in the lower right. 
+4. Finally, you can also search for help on any function (even if you don't have the package installed) by typing:  
+```{r, eval=FALSE}
+help.search("histogram")
+``` 
 
 ![R GUI image](figure/ch1_fig36_rgui.jpg)  
 
-Look through the usage and arguments. Re-enter the `hist` function; evaluate the effects of changing color, breaks, freq, and labels.  
+Look through the usage and arguments in the help documents. Re-enter the `hist` function; evaluate the effects of changing color, breaks, freq, and labels.  
 ```{r}
 hist(sand$sand, freq=TRUE, breaks=12, xlim = c(15, 40), main = "Histogram of Sand", sub = "with 12 bins", col ="lightblue", ylab = "Counts", xlab = "Total Sand") 
 ```
@@ -481,18 +489,12 @@ Notice how changing the breaks argument alters the appearance of the graph. The 
 
 Note that this arbitrarily sets the bin breaks using a list c(x1,x2,x3..). This can be a good way to separate groups, but in a way that may alter the way you visualize the distribution. This will work for any function in the console command prompt. 
 
-**How would you change the chart title to "Histogram" and change the number of break (and there sub title) to 6 bins? Plot and examine the results.**
-
-You can also search for help on any function (even if you don't have the package installed) by typing:  
-
-```{r, eval=FALSE}
-help.search("histogram")
-``` 
+**How would you change the chart title to "Histogram" and change the number of breaks (and therefore sub title) to 6 bins? Plot and examine the results.**
 
 
 ##<a id="soilDB")></a>1.8  Introduction to the soilDB Package
 
-The soilDB package was created to more readily analyze data from USDA-NCSS soil databases in R. There are a series of `fetch()` commands that allow the user to specify what NRCS soil database they are wanting to extract data from (NASIS, KSSL, OSD, etc.). In this module, we are only going to focus on the `fetchKSSL()` funtion. Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
+The soilDB package was created to more readily analyze data from USDA-NCSS soil databases in R. There are a series of `fetch()` commands that allow the user to specify what NRCS soil database they are wanting to extract data from (NASIS, KSSL, OSD, etc.). In this module, we are only going to focus on the `fetchKSSL()` function. Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
 
 ```{r, warning=FALSE}
 #load soilDB, aqp, and lattice packages
