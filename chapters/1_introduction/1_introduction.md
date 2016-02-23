@@ -672,11 +672,17 @@ Check out [fetchKSSL Example](https://r-forge.r-project.org/scm/viewvc.php/*chec
 
 ### <a id="review")></a>1.9 Review
 Given what you now know about R and RStudio, try to answer the following questions:
+
 1. How can the `str()` function be used?
+
 2. What are packages?
+
 3. Which R function is used to load packages?
+
 4. What can the Rcmdr package be used for?
+
 5. What types of files can you save in R? 
+
 6. What would be the result of `plot(clay ~ organiccarbon, data=KSSL)`? 
 
 
