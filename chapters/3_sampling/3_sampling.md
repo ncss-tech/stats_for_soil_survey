@@ -22,12 +22,13 @@ title: Chapter 3 - Sampling Design
     - [3.2.4 Systematic](#reg)
     - [3.2.5 Cluster](#cluster)
     - [3.2.6 Conditioned Latin hypercube](#clhs) 
-    - [Exercise 1: design a sampling strategy](#ex1)
-- [3.3 Other tools for selecting random samples](#tools)
-    - [3.3.1 cLHS using TEUI](#teui)
-    - [3.3.2 Two-stage stratified random sample design using ArcGIS](#arcgis)
-- [3.4 References](#ref)
-- [3.5 Additional reading](#add)
+- [3.3 Evaluating a sampling strategy](#eval)
+- [Exercise 1: design a sampling strategy](#ex1)
+- [3.4 Other tools for selecting random samples](#tools)
+    - [3.4.1 cLHS using TEUI](#teui)
+    - [3.4.2 Two-stage stratified random sample design using ArcGIS](#arcgis)
+- [3.5 References](#ref)
+- [3.6 Additional reading](#add)
 
 
 ## <a id="intro")></a>3.1 Introduction   
@@ -90,7 +91,7 @@ summary(c(test1, test2))
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   6.131  15.740  17.500  17.500  19.260  29.890
+##   6.718  15.740  17.500  17.500  19.260  29.170
 ```
 
 ```r
@@ -276,7 +277,7 @@ slope_r <- terrain(volcano_r, opt = "slope", unit = "radians")
 
 rs <- stack(volcano_r, slope_r)
 
-s <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
 
 plot(volcano_r)
 points(s$sampled_data)
@@ -290,25 +291,8 @@ summary(s$sampled_data)
 ```
 
 ```
-## Object of class SpatialPointsDataFrame
-## Coordinates:
-##       min     max
-## x 2667460 2667960
-## y 6478800 6479520
-## Is projected: TRUE 
-## proj4string :
-## [+init=epsg:27200 +proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000
-## +y_0=6023150 +datum=nzgd49 +units=m +no_defs +ellps=intl
-## +towgs84=59.47,-5.04,187.44,0.47,-0.1,1.024,-4.5993]
-## Number of points: 20
-## Data attributes:
-##       elev           slope       
-##  Min.   : 96.0   Min.   :0.0000  
-##  1st Qu.:109.2   1st Qu.:0.1224  
-##  Median :125.0   Median :0.2443  
-##  Mean   :130.9   Mean   :0.2575  
-##  3rd Qu.:147.5   3rd Qu.:0.3751  
-##  Max.   :186.0   Max.   :0.5697
+## Length  Class   Mode 
+##      0   NULL   NULL
 ```
 
 ```r
@@ -340,19 +324,88 @@ points(s$sampled_data)
 
 ![plot of chunk clhs_sub](figure/clhs_sub-1.png)
 
-## Insert section comparing back to back histograms
+
+## <a id="eval")></a> 3.3 Evaluating a sampling strategy
 
 
-### <a id="ex1")></a> Exercise 1: design a sampling strategy
+```r
+library(Hmisc)
 
-- 
+test <- as(extent(volcano_r), "SpatialPolygons") # create a polygon from the spatial extent of volcano
+
+sr400 <- spsample(test, n = 400, type = "random")
+sr <- spsample(test, n = 20, type = "random")
+str <- spsample(test, n = 23, type = "stratified", iter = 1000)
+str <- str[1:20]
+# cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+
+sr400 <- data.frame(extract(rs, sr400))
+s <- data.frame(sr = extract(rs, sr), str = extract(rs, str), cs = cs$sampled_data) 
+
+histbackback(sr400$elev, s$sr.elev, probability = TRUE)
+```
+
+![plot of chunk seval](figure/seval-1.png)
+
+```r
+histbackback(sr400$elev, s$str.elev, probability = TRUE)
+```
+
+![plot of chunk seval](figure/seval-2.png)
+
+```r
+histbackback(sr400$elev, s$cs.elev, probability = TRUE)
+```
+
+![plot of chunk seval](figure/seval-3.png)
+
+```r
+cbind(sr400 = summary(sr400$elev), sr = summary(s$sr.elev), str = summary(s$str.elev), cs = summary(cs$sampled_data$elev))
+```
+
+```
+##         sr400    sr   str    cs
+## Min.     94.0  96.0  96.0  95.0
+## 1st Qu. 107.0 118.5 118.8 108.8
+## Median  119.0 137.0 135.5 124.0
+## Mean    126.8 136.2 135.5 130.2
+## 3rd Qu. 144.0 150.2 152.2 150.2
+## Max.    195.0 183.0 176.0 180.0
+```
+
+```r
+par(mfrow = c(1, 3))
+plot(volcano_r, main = "Simple random")
+points(sr, pch = 1)
+
+plot(volcano_r, main = "Stratified random")
+points(str, pch = 2)
+
+plot(volcano_r, main = "cLHS")
+points(cs$sampled_data, pch = 3)
+```
+
+![plot of chunk seval](figure/seval-4.png)
+
+```r
+dev.off()
+```
+
+```
+## RStudioGD 
+##         2
+```
 
 
-## <a id="tools")></a>3.3 Other tools for selecting random features  
+
+## <a id="ex1")></a> Exercise 1: design a sampling strategy
+
+
+## <a id="tools")></a> 3.4 Other tools for selecting random features  
 
 An ArcGIS tool is available for selecting random features from the [Job Aids page](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&ext=pdf). This tool will randomly select the specified number of features from a dataset or set of selected features in ArcGIS. It would be an ideal tool for the first stage of a two stage random sample.  
 
-### <a id="teui")></a>3.3.1 cLHS using TEUI  
+### <a id="teui")></a> 3.4.1 cLHS using TEUI  
 
 The TEUI toolkit includes a tools for generating cLHS samples, based on the clhs R package (Roudier, 2011), but modified to work on large raster datasets.
 
@@ -397,7 +450,7 @@ Comparing the frequency distribution of the samples to the population shows a re
 ![R GUI image](figure/ch3_fig23.jpg) 
 
 
-### <a id="arcgis")></a>3.3.2 Two-stage stratified random sample design using ArcGIS
+### <a id="arcgis")></a> 3.4.2 Two-stage stratified random sample design using ArcGIS
 
 Purpose - Investigators in the Monongahela National Forest were interested in quantifying the depth of organic surface horizons in soils correlated to the Mandy soil series  that formed under red spruce canopy on back slopes in the Upper Greenbrier Watershed (HUC 8 -05050003).  
 
@@ -450,7 +503,7 @@ The results compare well to the extent of the population:
 
 
 
-## <a id="ref")></a>3.4 References
+## <a id="ref")></a> 3.5 References
 
 Franklin, J., & Miller, J. A. (2009). Mapping species distributions: Spatial inference and prediction. Cambridge: Cambridge University Press. [http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction](http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction)
 
@@ -460,16 +513,15 @@ Roudier, P., 2011. clhs: a R package for conditioned Latin hypercube sampling. [
 
 Rossiter, D., 2005. Spatial Modelling and Analysis applied to agronomic and environmental systems [Lecture notes]. Retrieved from [http://www.css.cornell.edu/faculty/dgr2/teach/CSS6200.html](http://www.css.cornell.edu/faculty/dgr2/teach/CSS6200.html)
 
-Minasny, B., & McBratney, A. B. 2006. A conditioned Latin hypercube method for sampling in the presence of ancillary information. Computers & Geosciences, 32(9), 1378-1388. [http://www.sciencedirect.com/science/article/pii/S009830040500292X](http://www.sciencedirect.com/science/article/pii/S009830040500292X)  
+Minasny, B., & McBratney, A. B. 2006. A conditioned Latin hypercube method for sampling in the presence of ancillary information. Computers & Geosciences, 32(9), 1378-1388. [http://www.sciencedirect.com/science/article/pii/S009830040500292X](http://www.sciencedirect.com/science/article/pii/S009830040500292X)
 
 Vaughan, R., & Megown, K., 2015. The Terrestrial Ecological Unit Inventory (TEUI) Geospatial Toolkit: user guide v5.2. RSAC-10117-MAN1. Salt Lake City, UT: U.S. Department of Agriculture, Forest Service, Remote Sensing Applications Center. 40 p. [http://www.fs.fed.us/eng/rsac/programs/teui/about.html](http://www.fs.fed.us/eng/rsac/programs/teui/about.html)
 
 
-## <a id="add")></a>3.5 Additional reading
+## <a id="add")></a> 3.6 Additional reading
 
 de Gruijter, J., Brus, D. J., Bierkens, M. F. P., & Knotters, M. (2006). Sampling for Natural Resource Monitoring: Springer. [http://www.springer.com/us/book/9783540224860](http://www.springer.com/us/book/9783540224860)
 
 Schreuder, H.T., R. Ernst, H. Ramirez-Maldonado, 2004. Statistical techniques for sampling and monitoring natural resources. Gen. Tech. Rep. RMRS-GTR-126. Fort Collins, CO: U.S. Department of Agriculture, Forest Service, Rocky Mountain Research Station. 111 p. [http://www.fs.fed.us/rm/pubs/rmrs_gtr126.html](http://www.fs.fed.us/rm/pubs/rmrs_gtr126.html)
 
-U.S. Environmental Protection Agency. (2002). Guidance for choosing a
-sampling design for environmental data collection. Washington, DC: US EPA. [http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality](http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality)
+U.S. Environmental Protection Agency. (2002). Guidance for choosing a sampling design for environmental data collection. Washington, DC: US EPA. [http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality](http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality)
