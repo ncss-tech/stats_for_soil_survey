@@ -8,8 +8,9 @@ Tuesday, February 24, 2015
 - [1.1 Introduction](#intro)
 - [1.2 R Interface](#gui) 
 - [1.3 Data Management in R](#datamanagement)
-     - [1.3.1 Working Directory](#wd)
-     - [1.3.2 Importing Data](#data)
+     - [1.3.1 Importing Data](#dataimport)
+     - [1.3.2 Exporting Data](#dataexport)
+     - [1.3.3 Viewing Data](#viewingdata)
 - [1.4 Saving R Files](#saving)
 - [1.5 Installing and Loading Packages](#packages)
 - [1.6 A Graphical User Interface for R - Rcmdr](#cmdr)
@@ -60,7 +61,7 @@ Commands in R can range from simple mathematical equations to complex statistica
 
 ## <a id="datamanagement")></a>1.3  Data Management in R  
 
-### <a id="wd")></a> 1.3.1 Working Directory 
+At the beginning of each R session, whether you are using R or Rstudio, you want to make sure that you set your working directory. This directory should be where your input datasets are stored, R files are located, and will also serve as the default storage of plots or exported objects from R. 
 
 Before working in R, create a folder to keep all R files in, such as "C:/workspace". Change the working directory in R to the new folder you set up using the following command:   
 
@@ -76,12 +77,10 @@ To check the filepath of the current working directory, which should now be "C:/
 getwd()
 ```
 
-
 The working directory can also be changed and set by clicking on File > Change dir... from the menu bar. Setting a working directory allows you to import data into R with just a file name, not an entire folder path and file name. It also is the default folder for when you save or export data out of R. Every time you start an R session, you should set your working directory. 
 
-### <a id="data")></a> 1.3.2 Importing Data
-
-One basic command for importing data into R is `read.csv()`. The command is followed by the file name and then some optional instructions for how to read the file.    
+### <a id="dataimport")></a> 1.3.1 Importing Data
+After your working directory is set, you can import data from .txt, .csv, etc. One basic command for importing data into R is `read.csv()`. The command is followed by the file name and then some optional instructions for how to read the file.    
 
 First, create an example file by copying the following contents below, starting with location, paste it into Notepad and save to a file named sand_example.txt, into the C:/workspace folder:  
 
@@ -119,18 +118,20 @@ help(read.csv) # or
 
 These commands will bring up a webpage that describes all of the possible arguments for a command and usually provides examples. You should also notice by reading the help page for `read.csv()` that it is just one of several functions for reading text files.
 
-### Exporting data
+### <a id="dataexport")></a> 1.3.2 Exporting Data
 
 To export data from R, use the command `write.csv`. Since we have already set our working directory, R will automatically save our file into the folder that we specified as our working directory.  
 
 
 ```r
 write.csv(sand, file = "sand_example2.csv")
+
+#for other output file types, use the write.table() function
 ```
 
-### Viewing data 
+### <a id="viewingdata")></a> 1.3.3 Viewing Data
 
-A few commands that you can use to view your data in R are `str()`, `names()` and `head()`. `str()` shows the structure of the data object, while `names()` shows the column names (i.e. headers) of your data, and `head` prints the first 6 lines of data. You can also enter the name of the table next to the command prompt to print the entire table; however avoid doing this if your table is large. Instead for large tables try `View(sand)`, this will open the dataset in a separate window.   
+Once imported, it is imperative that you check to make sure that R correctly imported your data (ie: making sure numerical data are correctly imported as numerical, your column headings are kept as headings, etc.). A few commands that you can use to view your data in R are `str()`, `names()` and `head()`. `str()` shows the structure of the data object, while `names()` shows the column names (i.e. headers) of your data, and `head` prints the first 6 lines of data. You can also enter the name of the table next to the command prompt to print the entire table; however avoid doing this if your table is large. Instead for large tables try `View(sand)`, this will open the dataset in a separate window.   
 
 Enter the following commands to view your dataset in R:  
 
