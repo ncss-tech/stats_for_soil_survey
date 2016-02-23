@@ -8,6 +8,8 @@ Tuesday, February 24, 2015
 - [1.1 Introduction](#intro)
 - [1.2 R Interface](#gui) 
 - [1.3 Data Management in R](#datamanagement)
+     - [1.3.1 Working Directory](#wd)
+     - [1.3.2 Importing Data](#data)
 - [1.4 Saving R Files](#saving)
 - [1.5 Installing and Loading Packages](#packages)
 - [1.6 A Graphical User Interface for R - Rcmdr](#cmdr)
@@ -58,7 +60,7 @@ Commands in R can range from simple mathematical equations to complex statistica
 
 ## <a id="datamanagement")></a>1.3  Data Management in R  
 
-### Working directory  
+### <a id="wd")></a> 1.3.1 Working Directory 
 
 Before working in R, create a folder to keep all R files in, such as "C:/workspace". Change the working directory in R to the new folder you set up using the following command:   
 
@@ -77,7 +79,7 @@ getwd()
 
 The working directory can also be changed and set by clicking on File > Change dir... from the menu bar. Setting a working directory allows you to import data into R with just a file name, not an entire folder path and file name. It also is the default folder for when you save or export data out of R. Every time you start an R session, you should set your working directory. 
 
-### Importing data
+### <a id="data")></a> 1.3.2 Importing Data
 
 One basic command for importing data into R is `read.csv()`. The command is followed by the file name and then some optional instructions for how to read the file.    
 
