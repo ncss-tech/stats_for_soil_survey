@@ -12,7 +12,7 @@ Tuesday, February 24, 2015
 - [1.5 Installing and Loading Packages](#packages)
 - [1.6 A Graphical User Interface for R - Rcmdr](#cmdr)
 - [1.7 RStudio](#studio)
-- [1.8 Introduction to the soilDB package](#soilDB)
+- [1.8 Introduction to the soilDB Package](#soilDB)
 - [1.9 Review](#review)
 - [1.10 Additional Resources](#additional)
 
@@ -48,7 +48,7 @@ Navigate to R (in the start and program menus) and open R (3.2.2, or latest vers
 
 ![R GUI image](figure/ch1_fig1_rgui.jpg)  
 
-The R GUI contains 3 main windows: R console, R editor, and R graphics:  
+The RGui contains 3 main windows: R console, R editor, and R graphics:  
 
 ![R GUI image](figure/ch1_fig2_rgui.jpg)  
 
@@ -79,7 +79,7 @@ The working directory can also be changed and set by clicking on File > Change d
 
 ### Importing data
 
-One basic command for importing data into R is `read.csv()`.  The command is followed by the file name and then some optional instructions for how to read the file.    
+One basic command for importing data into R is `read.csv()`. The command is followed by the file name and then some optional instructions for how to read the file.    
 
 First, create an example file by copying the following contents below, starting with location, paste it into Notepad and save to a file named sand_example.txt, into the C:/workspace folder:  
 
@@ -106,13 +106,6 @@ west,range,B,24,24
 The sand_example.txt file can then imported into R by typing:  
 
 
-
-
-```r
-sand <- read.csv("sand_example.txt")
-
-# use the read.table() function to import other types of table formatted files
-```
 
 There are other arguments that you might want to use with `read.csv()`. A quick way to find out what arguments are available for a given command is to type `help(command)`. In this example, you would type:
 
@@ -208,7 +201,7 @@ save.image(file="workspace.RData")
 
 ### R script (.R)  
 
-A R script is simply a text file of R commands that you've typed. You may want to save your scripts (whether they were written in R Editor or an ancillary program like Notepad) so that you can reference them in the future, edit them if needed, and keep track of what you've done. In order to save R scripts in the R GUI, make sure the R Editor window is active and go to File > Save as on the menu bar. Save scripts with the .R extension. R assumes that script files are saved with only that extension. If you are using another text editor you won't need to worry about saving your scripts in R. You can always copy and paste them in to the R Console or R Editor from your text editor.  
+A R script is simply a text file of R commands that you've typed. You may want to save your scripts (whether they were written in R Editor or an ancillary program like Notepad) so that you can reference them in the future, edit them if needed, and keep track of what you've done. In order to save R scripts in the RGui, make sure the R Editor window is active and go to File > Save as on the menu bar. Save scripts with the .R extension. R assumes that script files are saved with only that extension. If you are using another text editor you won't need to worry about saving your scripts in R. You can always copy and paste them in to the R Console or R Editor from your text editor.  
 
 ![R GUI image](figure/ch1_fig13_rgui.jpg)  
 
@@ -261,11 +254,13 @@ The first line of this command creates a blank file named sand with a JPEG exten
 
 ## <a id="packages")></a>1.5   Installing and Loading Packages
 
-Packages are collections of well-defined and referenced code developed by R users that run specific functions. They often include example data that can be used when executing those functions. While R comes with some standard, basic statistical functions; most of our work will require additional packages. In order to use a package, you must install and then load it. This can be done through command line or using the R GUI. Examples of both are provided below. R packages only need to be installed on your computer once unless R is upgraded or re-installed. Every time you start a new R session, you will have to load every package that you intend to use in that session.  
+Packages are collections of well-defined and referenced code developed by R users that run specific functions. They often include example data that can be used when executing those functions. While R comes with some standard, basic statistical functions; most of our work will require additional packages. In order to use a package, you must install and then load it. This can be done through command line or using the RGui. Examples of both are provided below. R packages only need to be installed once on your computer unless R is upgraded or re-installed. Every time you start a new R session, you will have to load every package that you intend to use in that session.  
 
-### Commandline
+When the R Console window is active in the RGui (simply click on the Console window if it is not currently active), you can navigate to the Packages dropdown menu on the menu bar. You will see options to set your CRAN mirror (physical location used to transmit data to select the location closest to you) and load, install, and update packages. You can select more than one package to install at a time by holding down the Ctrl key.     
 
-First, find out what packages have been installed by typing:
+![R GUI image](figure/ch1_fig10_rgui.jpg)  
+
+To find out what packages have been installed:
 
 
 ```r
@@ -273,23 +268,21 @@ library() #or
 installed.packages()
 ```
 
-To install a package that you do not have currently downloaded, type the following command:  
+Prior to installing the package you will be asked which CRAN mirror site you would like to download from. Simply select the CRAN mirror closest to your physical location and click OK.The Comprehensive R Archive Network (CRAN) is a collection of sites that carry identical material for R. The maps package will allow us to create nice base maps in R. To install a package that you do not have currently downloaded, type the following command:  
 
 
 ```r
 install.packages("maps", dep=TRUE) #dep=TRUE will install all packages that "maps" depends on to work correctly
 ```
 
-Prior to installing the package you will be asked which CRAN mirror site you would like to download from. Simply select the CRAN mirror closest to your physical location and click OK.The Comprehensive R Archive Network (CRAN) is a collection of sites that carry identical material for R. The maps package will allow us to create nice base maps in R. 
-
-To use the installed package, we must load it to our current library by typing: 
+Once a package is installed, it must be loaded into the R session to be utlized: 
 
 
 ```r
 library(maps)
 ```
 
-To find more documentation about the maps package; request more information from R: 
+You can also install and load packages using the Packages dropdown menu. To find more documentation about the maps package, request more information from R: 
 
 
 ```r
@@ -304,7 +297,7 @@ database specifies a character string naming a geographical database, or a list 
 
 and
 
-regions  specifies a character vector that names the polygons to draw. Each database is composed of a collection of polygons, and each polygon has a unique name. When a region is composed of more than one polygon, the individual polygons have the name of the region, followed by a colon and a qualifier, as in michigan:north and michigan:south. Each element of regions is matched against the polygon names in the database and, according to exact, a subset is selected for drawing. The default selects all polygons in the database.  
+regions specifies a character vector that names the polygons to draw. Each database is composed of a collection of polygons, and each polygon has a unique name. When a region is composed of more than one polygon, the individual polygons have the name of the region, followed by a colon and a qualifier, as in michigan:north and michigan:south. Each element of regions is matched against the polygon names in the database and, according to exact, a subset is selected for drawing. The default selects all polygons in the database.  
 
 Now we can call the `map` function from the maps package:  
 
@@ -326,18 +319,9 @@ Now try your home state.
 
 Try some of the examples included at the end of the map {maps} documentation, from the previous search, or [http://cran.r-project.org/web/packages/maps/maps.pdf](http://cran.r-project.org/web/packages/maps/maps.pdf)  
 
-### R GUI
-
-When the R Console window is active in the R GUI (simply click on the Console window if it is not currently active), you can navigate to the Packages drop-down menu on the menu bar. You will see options to set your CRAN mirror (physical location used to transmit data to select the location closest to you) and load, install, and update packages.   
-
-![R GUI image](figure/ch1_fig10_rgui.jpg)  
-
-You can select more than one package to install at a time by holding down the Ctrl key.  
-
-
 ## <a id="cmdr")></a>1.6  A Graphical user interface for R: Rcmdr (R COMMANDER)  
 
-R Commander (Rcmdr) is an expanded GUI in R that allows users to run basic statistical functions in R using menu bars, icons, and information fields.  It was created for students in introductory statistics courses so they could see how the software worked without learning a large number of command line scripts.  Rcmdr is a great way to begin familiarizing yourself with R and statistics within a standardized framework.   
+R Commander (Rcmdr) is an expanded RGui that allows users to run basic statistical functions in R using menu bars, icons, and information fields. It was created for students in introductory statistics courses so they could see how the software worked without learning a large number of command line scripts. Rcmdr is a great way to begin familiarizing yourself with R and statistics within a standardized framework.   
 
 To install and load Rcmdr from the R console:  
 
@@ -347,73 +331,60 @@ install.packages("Rcmdr", dep = TRUE)
 library(Rcmdr)  
 ```
 
-This should open the R Commander window. If it is not visible, select it from you toolbar (it may be in a list with other R windows).  
+This should open the R Commander GUI. 
 
 ### Importing data with Rcmdr  
 
-Navigate to the Data toolbar and scroll down to Import data and then select from Excel, Access or dBase data set...  
+Navigate to the Data toolbar and scroll down to Import data and then select from text file, clipboard, or URL...
 
 ![R GUI image](figure/ch1_fig19_rgui.jpg)
 
-Replace Dataset with sand2 and select OK.  
+Replace Dataset with sand2 and make sure that the Field Seperator field is set to Commas. 
 
-![R GUI image](figure/ch1_fig20_rgui.jpg)  
+![R GUI image](figure/ch1_fig21_rgui.jpg)  
 
-Navigate to file location using window explorer, select the proper excel file. If we wanted to import a text file, navigate menus and select:  Data, Import data, from text file, clipboard or url...  
-
-Complete the import box: change name to sand and check the box variable names in file, location = local file system, field separator = commas, decimal-point character = period.
-
-![R GUI image](figure/ch1_fig21_rgui.jpg)
-
-Pay attention to the field separator (csv files use commas); decimal point (Americans typically use periods) and variable names in file (checking this box means that the header names will be included in the dataframe).  
-
-Navigate to csv file location using Windows explorer. Now use the R Commander GUI functions to View Dataset and confirm that data imported with 5 columns.  
+Once you select OK, a windows explorer box will appear for you to select the file you wish to import. For this example, you want to select the sand.txt file. Now use the R Commander GUI functions to View Dataset and confirm that the data imported with 5 columns.  
 
 ![R GUI image](figure/ch1_fig22_rgui.jpg)  
 
+A quicker way to import data if it is already imported as an object in R is to simply click on the box next to Data set in the Rcmdr GUI. This will open a window that will list all of the dataset objects that have been created during your R session. In our case, we want to select the sand dataset. 
+
+![R GUI image](figure/ch1_fig5_rgui.jpg)
 
 ### Creating graphs 
 
-Navigate Graphs menu from the menu bar and select Histogram...  
+Use the Graphs dropdown menu in the Rcmdr GUI and select Histogram...  
 
 ![R GUI image](figure/ch1_fig23_rgui.jpg)
 
-Select sand as the variable and then click on the Option Tab and make sure the Number of bins is set to  auto for the first time, edit later. Click OK. A plot will appear in a separate window within the R GUI. 
+Select sand as the variable and then click on the Option Tab and make sure the Number of bins is set to  auto for the first time, edit later. Click OK. A plot will appear in a separate window within the RGui. 
 
-Navigate back to R Commander from toolbar (may be within the R list) and select the Graphs menu again. This time select Boxplot... and choose sand as the variable. Finally, click on the Options Tab and make sure that Identify outliers is set to automatically. 
-
-![R GUI image](figure/ch1_fig24_rgui.jpg)  
-
-Click back to the Data Tab and select Plot by Groups. Choose landuse as the variable and click the OK button twice. The plot will appear in a separate window within the R GUI:  
+Navigate back to R Commander window and select the Graphs menu again. This time select Boxplot... and choose sand as the variable. Click on Plot by Groups and select landuse as the variable. Next, switch to the Options Tab to ensure that outliers are identified automatically. Click OK. 
 
 ![R GUI image](figure/ch1_fig25_rgui.jpg)  
 
-
-Boxplot output:  
-
-![](1_introduction_files/figure-html/unnamed-chunk-19-1.png)
+![](1_introduction_files/figure-html/unnamed-chunk-18-1.png)
 
 ![R GUI image](figure/ch1_fig27_rgui.jpg)  
 
-If you want to change something slightly, edit the command line in the script window, select the entire command and hit Submit.  Notice that commands in the R Commander script window are not preceded by > like in the R Console.  
+If you want to change something slightly, edit the command line in the script window, select the entire command and hit Submit. Notice that commands in the R Commander script window are not preceded by > like in the R Console.  
 
-Use R help or use an online search engine to find information about the desired function.  
-For instance, if you would like to change the colors of the bars in the histogram, edit the `col` command:  
+Use R help or use an online search engine to find information about the desired function. For instance, if you would like to change the color of the bars in the histogram to red, you would edit the `col` option in the `hist()` command:  
 
 
 ```r
-hist(sand$sand, col="grey")  
+hist(sand$sand, col="red")  
 ```
 
-![](1_introduction_files/figure-html/unnamed-chunk-20-1.png)
+![](1_introduction_files/figure-html/unnamed-chunk-19-1.png)
   
 Select the line and then click the Submit button.  
 
 ### Simple statistics 
 
-To calculate basic summary statistics use the options in the Statistics menu.  A couple of examples are provided below:  
+To calculate basic summary statistics use the options in the Statistics menu. A couple of examples are provided below:  
 
-Navigate to Statistics menu and select Summary - Active dataset.  
+Navigate to the Statistics dropdown menu and select Summary - Active dataset.  
 
 Results are returned in the Output Window and consist of a summary of the number of records for each categorical (name) variable and some basic measures of the continuous (numeric) variables.  
 
@@ -465,26 +436,21 @@ with(sand, numSummary(sand, groups=landuse, statistics = c("mean", "sd")))
 
 This result indicates that the sand content of these landuses are not significantly different (Pr = 0.422).  It should be noted that this simple analysis has not accounted for the two kinds of horizons analyzed (A and B) or the non-independent nature of multiple samples collected at each location. It also doesn't tell you if comparing sand content between land uses was a reasonable thing to do.  
 
-### Saving R scripts  
+Just like in the R editor window, you can save the Rcmdr script that you generate by using the File drop down menu in the Rcmdr GUI and selecting Save script as...
 
-For record keeping, you can copy and paste scripts and the results into Excel or other compatible software. You can also save your script for later use in R commander or R Console. To Save a script: Edit the Script Window to reflect the analyses you want to recreate (including the data import steps). 
-
-To do this, navigate to the File menu and select Save script as... Rename sand_rcmdr.R and save in your working directory. The same steps can be used to save the output window using save ouput as... Minimize the R Commander window and move to the next section.  
-
+Save the Rcmdr script that you just created as **sand_rcmdr.R** in your working directory. You can also save your workspace, markdown file, and output if desired using the File drop down menu. 
 
 ### Importing and executing a saved Rcmdr script  
 
 **Rcmdr**  
 
-You can open a saved R commander script in R commander or in R editor. Sometimes, however, scripts saved with R Commander will have things encoded for R commander that aren't apparent and won't run directly from R editor. First we'll open the script with R commander that we just saved and then open it in the R editor. Using the saved R commander script in R Commander,   
-
-Open and view R Commander and navigate to File, Open Script file, and select sand_rcmdr.R. It will ask you if you want to save the current log file (hit no to clear without saving). Your saved script now appears in the Script Window.  
+You can open a saved R commander script in R commander or in R editor. Sometimes, however, scripts saved with R Commander will have things encoded for R commander that aren't apparent and won't run directly from R editor. First we'll open the script with R commander that we just saved and then open it in the R editor. Using the saved R commander script in R Commander, open and view R Commander and navigate to File, Open Script file, and select sand_rcmdr.R. It will ask you if you want to save the current log file (hit no to clear without saving). Your saved script now appears in the Script Window.  
 
 Place your cursor on any command line and hit submit. You will see the output and graphs display as they did when you first executed them through the menu system of R Commander.  
 
 **R Console**
 
-Open the RGui console and navigate to the File menu and select Open script. Next, use windows explorer to navigate to the previously saved script sand_rcmdr.R. A new R editor window will open up within R. Select the first two lines of the script using your mouse to left-click and drag. Then right click with your mouse and select Run line or section. 
+Open the RGui console and navigate to the File dropdown menu and select Open script. A windows explorer box will appear. Navigate to sand_rcmdr.R. A new R editor window will open up within R. Select the first two lines of the script using your mouse to left-click and drag. Then right click with your mouse and select Run line or section. 
 
 
 ```r
@@ -493,21 +459,20 @@ sand2<-read.csv("C:/workspace/sand_example.txt")
 
 ![R GUI image](figure/ch1_fig31_rgui.jpg)  
 
-
 This is a data input step. Next time you open R, you will need to import the dataset again. If you update the file sand_example.csv, the changes will be reflected when you rerun the analysis.  
 
 Select the next line and select run. 
 
 
 ```r
-library(relimp, pos=4)
+library(relimp, pos=15)
 ```
 
 This loads a package that R Commander used to run the script. Next, select the lines for any command that you wish to execute, for instance:
 
 
 ```r
-Hist(sand2$sand, col="grey")
+Hist(sand2$sand, col="red")
 ```
 
 This recreates the histogram graph. To get more information about how to use this function, including its usage and arguments, and how you can modify the default output, enter the command:
@@ -530,7 +495,7 @@ At the top of the R editor window enter: #this is a demo of how to use R editor 
 
 ### <a id="studio")></a>1.7 RStudio  
 
-RStudio is a integrated development environment (IDE) that allows you to interact with R more readily. RStudio is similar to the R GUI, but is more user friendly with more drop down menus, windows, and customization options. When you open Rstudio on your machine, you will see 3 windows: the console window, just like in the R GUI and two other windows composed of multiple tabs. The upper right window has two tabs: environment and history. The environment tab will keep track of the datasets that you import and objects that you create while the history tab keeps a history of all of the commands you've executed during your Rstudio session. The lower right window is composed of 5 tabs:
+RStudio is an integrated development environment (IDE) that allows you to interact with R more readily. RStudio is similar to the RGui, but is more user friendly with more drop down menus, windows, and customization options. When you open RStudio on your machine, you will see 3 windows: the console window, just like in the RGui and two other windows composed of multiple tabs. The upper right window has two tabs: environment and history. The environment tab will keep track of the datasets that you import and objects that you create while the history tab keeps a history of all of the commands you've executed during your Rstudio session. The lower right window is composed of 5 tabs:
 
 **Files** - shows all the files and folders in your default workspace as if you were in windows explorer
 
@@ -544,7 +509,7 @@ RStudio is a integrated development environment (IDE) that allows you to interac
 
 ![R GUI image](figure/ch1_fig32_rgui.jpg)  
 
-Notice that in the figure above, there is a 4th window open called "Untitled1". This is a R script window, very similar to the one we looked at in R GUI. To open the R script window in RStudio, simply use the File drop down menu to select New File and then R Script. 
+Notice that in the figure above, there is a 4th window open called "Untitled1". This is a R script window, very similar to the one we looked at in RGui. To open the R script window in RStudio, simply use the File drop down menu to select New File and then R Script. 
 
 For further information on how to use RStudio, visit: <a href="https://support.rstudio.com/hc/en-us/sections/200107586-Using-RStudio">Using RStudio</a>
 
@@ -588,7 +553,7 @@ Look through the usage and arguments. Re-enter the `hist` function; evaluate the
 hist(sand$sand, freq=TRUE, breaks=12, xlim = c(15, 40), main = "Histogram of Sand", sub = "with 12 bins", col ="lightblue", ylab = "Counts", xlab = "Total Sand") 
 ```
 
-![](1_introduction_files/figure-html/unnamed-chunk-30-1.png)
+![](1_introduction_files/figure-html/unnamed-chunk-29-1.png)
 
 Notice how changing the breaks argument alters the appearance of the graph. The breaks argument tells R how the individual values should be counted in bins or groups. The xlim argument tells R where to set the upper and lower limit of the x-axis.  
 
@@ -604,14 +569,18 @@ help.search("histogram")
 ```
 
 
-##<a id="soilDB")></a>1.8  Introduction to the soilDB package
+##<a id="soilDB")></a>1.8  Introduction to the soilDB Package
 
 The soilDB package was created to more readily analyze data from USDA-NCSS soil databases in R. There are a series of `fetch()` commands that allow the user to specify what NRCS soil database they are wanting to extract data from (NASIS, KSSL, OSD, etc.). In this module, we are only going to focus on the `fetchKSSL()` funtion. Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
 
 
 ```r
 #load soilDB, aqp, and lattice packages
-library(soilDB, quietly=TRUE)
+library(soilDB)
+```
+
+```
+## Loading required package: aqp
 ```
 
 ```
@@ -619,8 +588,8 @@ library(soilDB, quietly=TRUE)
 ```
 
 ```r
-library(aqp, quietly=TRUE)
-library(lattice, quietly=TRUE)
+library(aqp)
+library(lattice)
 
 #fetch all KSSL data 'correlated as' Hartleton from the June 2015 snapshot
 Hartleton<-fetchKSSL(series='Hartleton') 
@@ -638,7 +607,7 @@ par(mar=c(0,0,0,0))
 plot(Hartleton, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='clay') 
 ```
 
-![](1_introduction_files/figure-html/unnamed-chunk-32-1.png)
+![](1_introduction_files/figure-html/unnamed-chunk-31-1.png)
 
 ```r
 #soil depth class
@@ -682,21 +651,18 @@ xyplot(top ~ p.q50 | variable, data=h.slab, ylab='Depth',
         par.settings=tps, auto.key=list(columns=1, lines=TRUE, points=FALSE))
 ```
 
-![](1_introduction_files/figure-html/unnamed-chunk-34-1.png)
+![](1_introduction_files/figure-html/unnamed-chunk-33-1.png)
 
 Check out [fetchKSSL Example](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp) for more details. 
 
 ### <a id="review")></a>1.9 Review
 Given what you now know about R and RStudio, try to answer the following questions:
 1. How can the `str()` function be used?
-????n????n????s ??????p ????i??
 2. What are packages?
-s????sn ??? ??q p??do????????p ??po?? ??o suoi??????????o??
-3. What R function do you use to load packages?
-()????????qi??
-4. 
-
-
+3. Which R function is used to load packages?
+4. What can the Rcmdr package be used for?
+5. What types of files can you save in R? 
+6. What would be the result of `plot(clay ~ organiccarbon, data=KSSL)`? 
 
 
 ### <a id="additional")></a>1.10 Additional Resources  
