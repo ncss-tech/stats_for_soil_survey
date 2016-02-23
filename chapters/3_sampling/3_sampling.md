@@ -9,7 +9,6 @@ title: Chapter 3 - Sampling Design
 
 
 
-
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
 # CHAPTER 3: Sampling Design
@@ -39,7 +38,7 @@ Sampling is a fundamental part of statistics. Samples are collected to achieve a
 
 **How many samples are needed**  
 
-Because in most cases we're interested in using our field point data to derive inferences, we need enough samples to be confident that they approximate the target population. In the case of calibrating a laboratory device we might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that the sample size is intimately related the inherent variability in the data. Thus, the number of samples required increases with increasing variability. Also the more samples we have the greater confident level will be able to achieve. For example, sampling at the 85% confidence level will be less intensive than the 95% confidence level.
+Because in most cases we're interested in using our field point data to derive inferences, we need enough samples to be confident that they approximate the target population. In the case of calibrating a laboratory device we might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that the sample size is intimately related the inherent variability in the data. Thus, the number of samples required increases with increasing variability. Also the more samples we have the greater the confident level we will be able to achieve. For example, sampling at the 85% confidence level will be less intensive than the 95% confidence level.
 
 If we have prior knowledge about the soil attribute we'd like to sample we can estimate the number (n) of samples we'd need to detect a significant difference using a t-test, using either the `power.t.test()`  or `power.prop.tes()` functions. See the fictitious clay example below.
 
@@ -82,7 +81,7 @@ power.t.test(power = 0.95, sd = 3, delta = 16 - 19)
 ```
 
 ```r
-# Generate a graphical comparison of the fictitious clay example for 2 standard deviations
+# Generate a graphical comparison of the fictitious clay example with 2 standard deviations
 test1 <- rnorm(1:1000000, mean = 16, sd = 2)
 test2 <- rnorm(1:1000000, mean = 19, sd = 2)
 
@@ -91,7 +90,7 @@ summary(c(test1, test2))
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   6.187  15.740  17.500  17.500  19.260  28.940
+##   5.954  15.740  17.500  17.500  19.260  28.890
 ```
 
 ```r
@@ -167,12 +166,14 @@ In stratified random sampling, the sampling region is spatially subset into diff
 ```r
 plot(polys, main = "Stratified random sample")
 
-# Generate stratified random sample
+# Generate a spatially stratified random sample
 test <- spsample(polys, n = 16, type = "stratified")
 points(test)
 ```
 
 ![plot of chunk stratified](figure/stratified-1.png)
+
+Note that the `spsample()` function only stratifies the points spatially. Other more sophistocates designs can be implemented using the spsurvey, spcosa, or clhs packages respectively.
 
 
 ### <a id="ms")></a>3.2.3 Multistage stratified random
@@ -204,7 +205,7 @@ points(sample(s, 1)[[1]]) # randomly select 1 square and plot
 
 ### <a id="reg")></a>3.2.4 Systematic
 
-In systematic sampling, a sample is taken according to a regularized pattern. This approach insures even spatial coverage. Patterns may be rectilinear, triangular or hexagonal. This sampling strategy can be a problem if the variation of the population is cyclical.  
+In systematic sampling, a sample is taken according to a regularized pattern. This approach insures even spatial coverage. Patterns may be rectilinear, triangular or hexagonal. This sampling strategy can be a problem if the variation in the population doesn't coincide with the regular pattern (e.g. exhibits periodicity).  
 
 **Advantages**
 
@@ -229,7 +230,7 @@ points(test)
 
 ### <a id="cluster")></a>3.2.5 Cluster
 
-In cluster sampling, a cluster or group of points is selected at 1 or several sites. The transect is a example of this strategy, although others shapes are possible(e.g. square, triangle or cross shapes). It is common to orient the transect in direction of greatest variability.
+In cluster sampling, a cluster or group of points is selected at 1 or several sites. The transect is a example of this strategy, although others shapes are possible(e.g. square, triangle or cross shapes). It is common to orient the transect in the direction of greatest variability.
 
 **Advantages**
 
@@ -270,14 +271,14 @@ To perform cLHS using R we can use the clhs package (Roudier, 2011).
 library(clhs)
 library(raster)
 
-data(volcano) # http://geomorphometry.org/content/volcano-maungawhau
-volcano_r <- raster(as.matrix(volcano[87:1, 61:1]), crs = CRS("+init=epsg:27200"), xmn = 2667405, xmx = 2667405 + 61*10, ymn = 6478705, ymx = 6478705 + 87*10)
+data(volcano) # details at http://geomorphometry.org/content/volcano-maungawhau
+volcano_r <- raster(as.matrix(volcano[87:1, 61:1]), crs = CRS("+init=epsg:27200"), xmn = 2667405, xmx = 2667405 + 61*10, ymn = 6478705, ymx = 6478705 + 87*10) # import volcano DEM
 names(volcano_r) <- "elev"
-slope_r <- terrain(volcano_r, opt = "slope", unit = "radians")
+slope_r <- terrain(volcano_r, opt = "slope", unit = "radians") # calculate slope from the DEM
 
 rs <- stack(volcano_r, slope_r)
 
-cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE) # generate cLHS design
 
 plot(volcano_r)
 points(cs$sampled_data)
@@ -294,8 +295,8 @@ summary(cs$sampled_data)
 ## Object of class SpatialPointsDataFrame
 ## Coordinates:
 ##       min     max
-## x 2667460 2667980
-## y 6478740 6479560
+## x 2667420 2667980
+## y 6478740 6479550
 ## Is projected: TRUE 
 ## proj4string :
 ## [+init=epsg:27200 +proj=nzmg +lat_0=-41 +lon_0=173 +x_0=2510000
@@ -303,13 +304,13 @@ summary(cs$sampled_data)
 ## +towgs84=59.47,-5.04,187.44,0.47,-0.1,1.024,-4.5993]
 ## Number of points: 20
 ## Data attributes:
-##       elev           slope       
-##  Min.   : 96.0   Min.   :0.0000  
-##  1st Qu.:111.5   1st Qu.:0.1211  
-##  Median :129.0   Median :0.2452  
-##  Mean   :131.8   Mean   :0.2590  
-##  3rd Qu.:150.2   3rd Qu.:0.3735  
-##  Max.   :187.0   Max.   :0.5697
+##       elev           slope        
+##  Min.   : 96.0   Min.   :0.02499  
+##  1st Qu.:109.5   1st Qu.:0.12405  
+##  Median :125.0   Median :0.24647  
+##  Mean   :130.8   Mean   :0.26137  
+##  3rd Qu.:149.8   3rd Qu.:0.38031  
+##  Max.   :180.0   Max.   :0.58634
 ```
 
 ```r
@@ -339,53 +340,60 @@ sub_s <- sampleRandom(volcano_r, size = 200, sp = TRUE) # random sample function
 
 ## <a id="eval")></a> 3.3 Evaluating a sampling strategy
 
+To gauge how representative a sampling strategy is we can compare it to other variables we think might coincide with the soil properties or classes we're intereted in, such as slope gradient, slope aspect and vegetative cover. These other variables may have been used to stratify the sampling design, or we may use them to assess how representativeness of our existing samples (e.g. NASIS pedons). In addition, if the samples are going to be used for spatial interpolation we could assess the geometry of the spatial coordinates using spatial metrics (Hengl, 2009), which has special significance when determining the spatial resolution of the predictions (Hengl, 2006).
+
+The simple example below demonstrates how to compare several sampling strategies, by evaluating how well they replicate the distribution of elevation. 
+
 
 ```r
 library(Hmisc)
 
-test <- as(extent(volcano_r), "SpatialPolygons") # create a polygon from the spatial extent of volcano
+test <- as(extent(volcano_r), "SpatialPolygons") # create a polygon from the spatial extent of the volcano dataset
 
-sr400 <- spsample(test, n = 400, type = "random")
-sr <- spsample(test, n = 20, type = "random")
-str <- spsample(test, n = 23, type = "stratified", iter = 1000)
+sr400 <- spsample(test, n = 400, type = "random") # take a large random sample
+sr <- spsample(test, n = 20, type = "random") # take a small random sample
+str <- spsample(test, n = 23, type = "stratified", iter = 1000) # take a small stratified random sample
 str <- str[1:20]
-# cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+# cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE) # take a cLHS sample
 
-sr400 <- data.frame(extract(rs, sr400))
-s <- data.frame(sr = extract(rs, sr), str = extract(rs, str), cs = cs$sampled_data) 
+sr400 <- data.frame(extract(rs, sr400)) # extract the raster values from the sample locations
+s <- data.frame(sr = extract(rs, sr), str = extract(rs, str), cs = cs$sampled_data)
 
-histbackback(sr400$elev, s$sr.elev, probability = TRUE)
+# Plot back to back histograms to compare the distributions between the large and small samples
+histbackback(sr400$elev, s$sr.elev, probability = TRUE, main = "Simple random comparison")
 ```
 
 ![plot of chunk seval](figure/seval-1.png)
 
 ```r
-histbackback(sr400$elev, s$str.elev, probability = TRUE)
+histbackback(sr400$elev, s$str.elev, probability = TRUE, main = "Stratified random comparison")
 ```
 
 ![plot of chunk seval](figure/seval-2.png)
 
 ```r
-histbackback(sr400$elev, s$cs.elev, probability = TRUE)
+histbackback(sr400$elev, s$cs.elev, probability = TRUE, main = "cLHS comparison")
 ```
 
 ![plot of chunk seval](figure/seval-3.png)
 
 ```r
-cbind(sr400 = summary(sr400$elev), sr = summary(s$sr.elev), str = summary(s$str.elev), cs = summary(cs$sampled_data$elev))
+# Summarize the sample values
+cbind(sr400 = summary(sr400$elev), sr = summary(s$sr.elev), str = summary(s$str.elev), clhs = summary(cs$sampled_data$elev))
 ```
 
 ```
-##         sr400    sr   str    cs
-## Min.     94.0  95.0  99.0  96.0
-## 1st Qu. 108.0 108.8 114.0 111.5
-## Median  120.0 120.0 131.5 129.0
-## Mean    129.6 130.4 130.7 131.8
-## 3rd Qu. 150.0 142.2 142.8 150.2
-## Max.    193.0 184.0 170.0 187.0
+##         sr400    sr   str  clhs
+## Min.     94.0  96.0 100.0  96.0
+## 1st Qu. 110.0 101.0 119.2 109.5
+## Median  128.0 121.0 130.0 125.0
+## Mean    131.5 129.4 135.8 130.8
+## 3rd Qu. 150.0 151.0 150.8 149.8
+## Max.    194.0 185.0 189.0 180.0
 ```
 
 ```r
+# plot the spatial locations
 par(mfrow = c(1, 3))
 plot(volcano_r, main = "Simple random")
 points(sr, pch = 1)
@@ -404,18 +412,24 @@ dev.off()
 ```
 
 ```
-## RStudioGD 
-##         2
+## null device 
+##           1
 ```
 
+The back to back histogram figures above illustrate the differences between a large and small samples using several sampling designs. Clearly the cLHS approach does the best job because duplicating the distribution of elevation, because elevation is explicitly used in the stratification process. The comparsion is less severe when simply examining the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible, via the approaches demonstrated in the following chapters.
 
 
 ## <a id="ex1")></a> Exercise 1: design a sampling strategy
 
+- Using the "tahoe\_lidar\_highesthit.tif" data set in the gdalUtils package, or using your own (highly encouraged), compare two or more sampling approaches
+- Show your work and submit the results to your coach
+
+
 
 ## <a id="tools")></a> 3.4 Other tools for selecting random features  
 
-An ArcGIS tool is available for selecting random features from the [Job Aids page](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&ext=pdf). This tool will randomly select the specified number of features from a dataset or set of selected features in ArcGIS. It would be an ideal tool for the first stage of a two stage random sample.  
+An ArcGIS tool is available for selecting random features from the [Job Aids page](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&ext=pdf). This tool will randomly select the specified number of features from a data set or set of selected features in ArcGIS. It would be an ideal tool for the first stage of a two stage random sample.  
+
 
 ### <a id="teui")></a> 3.4.1 cLHS using TEUI  
 
@@ -518,6 +532,10 @@ The results compare well to the extent of the population:
 ## <a id="ref")></a> 3.5 References
 
 Franklin, J., & Miller, J. A. (2009). Mapping species distributions: Spatial inference and prediction. Cambridge: Cambridge University Press. [http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction](http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction)
+
+Hengl, T., 2006. Finding the right pixel size. Computers & Geosciences. 32(9): 1283-1298. [http://www.sciencedirect.com/science/article/pii/S0098300405002657](http://www.sciencedirect.com/science/article/pii/S0098300405002657)
+
+Hengl, T. 2009. A Practical Guide to Geostatistical Mapping, 2nd Edt. University of Amsterdam, www.lulu.com, 291 p. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf)
 
 Kutner, M. H., Nachtsheim, C. J., Neter, J., Li, W. (Eds.), 2005. Applied Linear Statistical Models, 5th Edition. McGraw-Hill, p. 1396.
 
