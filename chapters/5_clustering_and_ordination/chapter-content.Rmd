@@ -27,6 +27,48 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
     paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
     }
     })
+
+# compaire pair-wise distances between 3 individuals
+distPlot <- function(ex, vars, individuals, id, scale.data=FALSE, show.distances=TRUE, ...) {
+  par(mar=c(5,5,1,1))
+  # optionally scale
+  if(scale.data) {
+    ex.scaled <- scale(ex[, vars], center = TRUE, scale = TRUE)
+    ex[[vars[1]]] <- ex.scaled[, 1]
+    ex[[vars[2]]] <- ex.scaled[, 2]
+  }
+    
+  
+  x.data <- ex[[vars[1]]]
+  y.data <- ex[[vars[2]]]
+  
+  d <- dist(ex[, vars])
+  m <- round(as.matrix(d), 1)
+  dimnames(m) <- list(ex[[id]], ex[[id]])
+  
+  plot(ex[[vars[1]]], ex[[vars[2]]], las=1, type='n', ...)
+  # plot(x.data, y.data, las=1, type='n')
+  grid()
+  
+  if(show.distances) {
+    arrows(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col='RoyalBlue', length = 0.1, code = 3)
+    arrows(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col='Orange', length = 0.1, code = 3)
+    
+    segments(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[3]], y.data[individuals[2]], lwd=1, lty=2, col='Orange')
+    segments(x.data[individuals[3]], y.data[individuals[2]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col='Orange')
+    segments(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[1]], lwd=1, lty=2, col='RoyalBlue')
+    segments(x.data[individuals[2]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col='RoyalBlue')
+    
+    legend('topright', legend=c(m[individuals[1], individuals[2]], m[individuals[3], individuals[2]]), col=c('RoyalBlue', 'Orange'), lty=1, lwd=2, bty='n', title = 'Distance', cex=1.5)
+  }
+  
+  text(x.data, y.data, ex[[id]], col='black', cex=1.5, font=1, pos = 4)
+  points(x.data, y.data, pch=16, col='black', cex=0.75)
+  
+  return(m)
+}
+
+
 ```
 
 # Ideas:
@@ -63,44 +105,117 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
 
 
 ## Introduction
+
+### Similarity, Disimilarty, and Distance
+
 There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column. For example:
 
 ```{r, echo=FALSE}
 data('sp4', package = 'aqp')
-ex <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
-d <- dist(ex[, c('clay', 'sand')])
-m <- round(as.matrix(d))
-knitr::kable(ex, caption='A matrix of data: soil horizons (individuals) and associated characteristics.', align = 'c')
+sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+knitr::kable(sp4, caption='A matrix of data: soil horizons (individuals) and associated characteristics.', align = 'c')
 ```
 
-Similarity among individuals is more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the Euclidean distance between individuals in property-space. Using two characteristics (dimensions) from the data above, distance is represented as the line connecting any two individuals in property space:
+Similarity among individuals is more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the **Euclidean distance**. Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
+
+$$D(p,q) = \sqrt{(p_{1} - q_{1})^{2} + (p_{2} - q_{2})^{2}}$$
+
+where $p_{1}$ is the 1st characteristic (or dimension) of individual $p$. There are many other ways to define "distance" (e.g. *distance metrics*), but we will cover those later.
+
+Using sand and clay percentages from the data above, dissimilarity is represented as the length of the line connecting any two individuals in property space:
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
-par(mar=c(5,5,1,1))
-plot(clay ~ sand, data=ex, las=1, type='n', xlim=c(10, 60), ylim=c(10, 60), xlab='% Sand', ylab='% Clay')
-grid()
-
-segments(ex$sand[4], ex$clay[4], ex$sand[4], ex$clay[2], lwd=1, lty=2, col='Orange')
-segments(ex$sand[2], ex$clay[2], ex$sand[4], ex$clay[2], lwd=1, lty=2, col='Orange')
-segments(ex$sand[1], ex$clay[1], ex$sand[2], ex$clay[1], lwd=1, lty=2, col='RoyalBlue')
-segments(ex$sand[2], ex$clay[2], ex$sand[2], ex$clay[1], lwd=1, lty=2, col='RoyalBlue')
-arrows(ex$sand[4], ex$clay[4], ex$sand[2], ex$clay[2], lwd=2, col='Orange', length = 0.1, code = 3)
-arrows(ex$sand[1], ex$clay[1], ex$sand[2], ex$clay[2], lwd=2, col='RoyalBlue', length = 0.1, code = 3)
-
-text(ex$sand, ex$clay, ex$name, col='black', cex=1.5, font=1, pos = 3)
-points(clay ~ sand, data=ex, pch=16, col='black', cex=0.75)
-
-legend('topright', legend=c(m[1,2], m[4,2]), col=c('RoyalBlue', 'Orange'), lty=1, lwd=2, bty='n', title = 'Distance', cex=1.5)
+m <- distPlot(sp4, vars=c('sand', 'clay'), individuals=c(1,2,4), id='name', xlim=c(10, 60), ylim=c(10, 60), xlab='Sand (%)', ylab='Clay (%)')
 ```
 
-A matrix of all pair-wise distances (the distance matrix) looks something like this:
+A matrix of all pair-wise distances (the **distance matrix**) looks something like this:
+
+|    |    A|  ABt|  Bt1|  Bt2|
+|:---|----:|----:|----:|----:|
+|A   |  0.0|  <b>7.2</b>| 12.5| 38.9|
+|ABt |  <b>7.2</b>|  0.0|  5.4| <b>31.8</b>|
+|Bt1 | 12.5|  5.4|  0.0| 26.4|
+|Bt2 | 38.9| <b>31.8</b>| 26.4|  0.0|
+
+Note that this is the "full" form of the **distance matrix**, with 0s on the diagonal (e.g. the distance between individual 'A' and itself is 0) and upper and lower "triangles" symmetric. Tpically only the lower triangle is used to describe pair-wise distances.
+
+|    |    A|  ABt|  Bt1|
+|:---|----:|----:|----:|
+|ABt |  <b>7.2</b>|  |  |
+|Bt1 | 12.5|  5.4|  |
+|Bt2 | 38.9| <b>31.8</b>| 26.4|
+
+Interpretation is simple: individual "A" is more like "ABt" than "Bt1". It is important to note that quantification of disimilarity (distance) among individuals is always relative: *"X is more like Y, as compared to Z"*. More on this later.
+
+
+### Characteristics, Units of Measure, and Standardization
+
+Euclidean distance doesn't make much sense when characteristics do not share a common unit of measure, range of values, or when some characteristics are categorical vs. continuous. For example, distances are distorted when computed from clay (%) and exchangeable Ca (cmol/kg):
+
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
-dimnames(m) <- list(ex$name, ex$name)
-m
+m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', xlim=c(0, 60), ylim=c(0, 60), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
 ```
 
+In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of Ex-Ca. Typically, characteristics are given equal weight (why?).
 
-This simplistic notion of distance doesn't make much sense when characteristics do not share a common unit of measure, range of values, or when some characteristics are categorical vs. continuous.
+**Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation:
+
+$$x_{scaled} = \frac{x - mean(x)}{sd(x)}$$
+
+There are many other **standardization** methods which we will cover later. The new data matrix looks like this:
+
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
+sp4.scaled
+```
+
+Using the standardized data matrix, distances computed in the property space of clay and exchangeable calcium are unbiased by the unique central tendency or spread of each character.
+
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', scale=TRUE, xlim=c(-1.5, 1.5), ylim=c(-1.5, 1.5), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
+```
+
+It is rare that the question of "dissimilarity" can be answered with only two characteristcs (dimensions). Euclidean distance can be extended to an arbitrary number of $n$ dimensions:
+
+$$D(p,q) = \sqrt{ \sum_{i=1}^{n}{(p_{i} - q_{i})^{2}} }$$
+
+where $i$ is one of $n$ total characteristics. It is hard to imagine what distance "looks like" when there are > 3 dimensions, so lets look at the distance matrix calculated using all five characteristics.
+
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+d <- dist(sp4.scaled[, -1])
+m <- as.matrix(d)
+dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
+round(m, 2)
+```
+
+We can now begin to describe disimilarity between individuals using an arbitrary number of (relevant!) characteristics and make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon". While this may be a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
+
+> **Review:** what is are the "data matrix" and "distance matrix"?
+> **Review:** what is standardization and why is it important?
+   
+
+### Visualizing Pair-Wise Distances: The Dendrogram
+
+```{r, echo=FALSE, fig.width=10, fig.height=5}
+par(mar=c(1,1,1,1), mfcol=c(1,2))
+
+m <- distPlot(sp4, vars=c('sand', 'clay'), individuals=c(1,2,4), id='name', show.distances=FALSE, xlim=c(10, 60), ylim=c(10, 60), xlab='Sand (%)', ylab='Clay (%)')
+d <- as.dist(m)
+dd <- cluster::diana(d)
+h <- as.hclust(dd)
+p <- ape::as.phylo(h)
+
+plot(p, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
+axis(2, las=1, line=1.5)
+mtext('Dendrogram Representation of Distance Matrix', side=1, line=2)
+```
+
+### Ordination: Visualization in a Reduced Space
+
+
+
+
+
 
 
 ### Follow Along in R
