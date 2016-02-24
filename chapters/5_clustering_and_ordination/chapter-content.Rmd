@@ -4,15 +4,9 @@ author: "D.E. Beaudette"
 date: "Winter 2015/2016"
 output:
   html_document:
-    fig_caption: yes
     keep_md: no
     number_sections: yes
-    theme: journal
     toc: yes
-  pdf_document:
-    fig_caption: yes
-  word_document:
-    fig_caption: yes
 bibliography: bibliography.bib
 ---
 
@@ -22,7 +16,7 @@ bibliography: bibliography.bib
 # setup
 library(knitr, quietly=TRUE)
 library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype')
 
 # options for R functions
 options(width=100, stringsAsFactors=FALSE)
@@ -56,8 +50,53 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
 
 # Clustering and Ordination
 
+## Objectives
+* Learn essential vocabulary used in the field of numerical taxonomy, review some of the literature
+* Gain experience with R functions and packages commonly used for clustering / ordination
+* Learn how to create and interpret a distance matrix, and appropriate distance metrics
+* Learn how to create and interpret a dendrogram
+* Lean the basics and application of heirarchical clustering methods
+* Lean the basics and application of partitioning clustering methods
+* Learn the basics and application of ordination methods
+* Apply skils to a range of soil, vegetation, and similar data sources
+* Apply techniques from numerical taxonomy to addressing the "similar/disimilar" question
+
+
 ## Introduction
-example reference [@OSD_reference]
+There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column. For example:
+
+```{r, echo=FALSE}
+data('sp4', package = 'aqp')
+ex <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+d <- dist(ex[, c('clay', 'sand')])
+m <- round(as.matrix(d))
+knitr::kable(ex, caption='A matrix of data: soil horizons (individuals) and associated characteristics.', align = 'c')
+```
+
+Similarity among individuals is more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the Euclidean distance between individuals in property-space.
+
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+par(mar=c(5,5,1,1))
+plot(clay ~ sand, data=ex, las=1, type='n', xlim=c(10, 60), ylim=c(10, 60))
+grid()
+
+arrows(ex$sand[1], ex$clay[1], ex$sand[2], ex$clay[2], lwd=2, col='RoyalBlue', length = 0.1, code = 3)
+arrows(ex$sand[4], ex$clay[4], ex$sand[2], ex$clay[2], lwd=2, col='Orange', length = 0.1, code = 3)
+
+text(ex$sand, ex$clay, ex$name, col='black', cex=1.5, font=1, pos = 3)
+points(clay ~ sand, data=ex, pch=16, col='black', cex=0.75)
+
+legend('topright', legend=c(m[1,2], m[4,2]), col=c('RoyalBlue', 'Orange'), lty=1, lwd=2, bty='n', title = 'Distance', cex=1.5)
+```
+
+A matrix of all pair-wise distances (the distance matrix) looks something like this:
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+dimnames(m) <- list(ex$name, ex$name)
+m
+```
+
+
+This simplistic notion of distance doesn't make much sense when characteristics do not share a common unit of measure, range of values, or when some characteristics are categorical vs. continuous.
 
 
 ### Follow Along in R
@@ -279,6 +318,8 @@ variance-based
 distance-based
 
 ### Interpretation
+
+example reference [@OSD_reference]
 
 # References
 fake text here
