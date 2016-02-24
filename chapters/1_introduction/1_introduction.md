@@ -704,23 +704,3 @@ Given what you now know about R and RStudio, try to answer the following questio
 ### <a id="ref")></a>1.10 References
 
 Ihaka, R., and Gentleman, R. (1996). R: a language for data analysis and graphics. Journal of Computational and Graphical Statistics, 5(3):399-314. [https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf)  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
