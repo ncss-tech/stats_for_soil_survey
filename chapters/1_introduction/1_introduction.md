@@ -391,17 +391,18 @@ with(sand2, Hist(sand, scale="frequency", breaks="Sturges", col="red")) #command
 
 
 ```r
-hist(sand$sand, col="red")  #the function `hist` in a R base package
+hist(sand$sand, col="red", xlab="sand", ylab="frequency", main="")  #the function `hist` in a R base package
 ```
 
 ![](1_introduction_files/figure-html/unnamed-chunk-20-1.png)
 
-Edit the Rcmdr script and select the line. Click Submit to plot the updated histogram.  
+Edit the Rcmdr script and select the line. Click **Submit** to plot the updated histogram.  
 
 ### <a id="statistics")></a> 1.5.3 Simple Statistics
 
 To calculate basic summary statistics use the options in the Statistics menu. A couple of examples are provided below:  
-Navigate to the Statistics dropdown menu and select Summary - Active dataset.  
+
+Navigate to the **Statistics** dropdown menu and select **Summary - Active dataset**.  
 
 Results are returned in the Output Window and consist of a summary of the number of records for each categorical (name) variable and some basic measures of the continuous (numeric) variables.  
 
@@ -420,7 +421,7 @@ summary(sand)
 ##                               Max.   :31.00   Max.   :36.00
 ```
   
-Navigate back to the Statistics menu and select Means - One-way ANOVA. If you wish to reuse your model, give it a unique name in the Enter name for model: field. Select landuse in the Groups field and set sand as the Response Variable. Click OK. 
+Navigate back to the **Statistics** menu and select **Means - One-way ANOVA**. If you wish to reuse your model, give it a unique name in the Enter name for model: field. Select **landuse** in the **Groups** field and set **sand** as the Response Variable. Click **OK**. 
 
 ![R GUI image](figure/ch1_fig29_rgui.jpg)  
 
@@ -463,7 +464,7 @@ Save the Rcmdr script that you just created as **sand_rcmdr.R** in your working 
 
 You can open a saved R commander script in R commander or in R editor. Sometimes, however, scripts saved with R Commander will have things encoded for R commander that aren't apparent and won't run directly from R editor. First we'll open the script with R commander that we just saved and then open it in the R editor. Using the saved R commander script in R Commander, open and view R Commander and navigate to File, Open Script file, and select sand_rcmdr.R. It will ask you if you want to save the current log file (hit no to clear without saving). Your saved script now appears in the Script Window.  
 
-Place your cursor on any command line and hit submit. You will see the output and graphs display as they did when you first executed them through the menu system of R Commander.  
+Place your cursor on any command line and hit **submit**. You will see the output and graphs display as they did when you first executed them through the menu system of R Commander.  
 
 **R Console**
 
@@ -473,18 +474,18 @@ Click on the RGui console and navigate to the File dropdown menu and select Open
 
 This is a data input step. Next time you open R, you will need to import the dataset again. If you update the file sand_example.csv, the changes will be reflected when you rerun the analysis.  
 
-Select the next line and select run. 
+Select the next line and select **run**. 
 
 
 ```r
-library(relimp, pos=15)
+library(relimp, pos=14)
 ```
 
 This loads a package that R Commander used to run the script. Next, select the lines for any command that you wish to execute, for instance:
 
 
 ```r
-Hist(sand2$sand, col="red")
+with(sand2, Hist(sand, scale="frequency", breaks="Sturges", col="darkgray"))
 ```
 
 This recreates the histogram graph. To get more information about how to use this function, including its usage and arguments, and how you can modify the default output, enter the command:
