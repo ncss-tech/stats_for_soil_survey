@@ -366,37 +366,41 @@ A quicker way to import data if it is already imported as an object in R is to s
 
 ### <a id="graphs")></a> 1.5.2 Creating Graphs 
 
-Use the Graphs dropdown menu in the Rcmdr GUI and select Histogram...  
+Use the **Graphs** dropdown menu in the Rcmdr GUI and select **Histogram...**  
 
 ![R GUI image](figure/ch1_fig23_rgui.jpg)
 
-Select sand as the variable and then click on the Option Tab and make sure the Number of bins is set to  auto for the first time, edit later. Click OK. A plot will appear in a separate window within the RGui. 
-
-Navigate back to R Commander window and select the Graphs menu again. This time select Boxplot... and choose sand as the variable. Click on Plot by Groups and select landuse as the variable. Next, switch to the Options Tab to ensure that outliers are identified automatically. Click OK. 
-
-![R GUI image](figure/ch1_fig25_rgui.jpg)  
+Select sand as the variable and then click on the Option Tab and make sure the Number of bins is set to auto for the first time, edit later. Click OK. A plot will appear in a separate window within the RGui. 
 
 ![](1_introduction_files/figure-html/unnamed-chunk-18-1.png)
 
-![R GUI image](figure/ch1_fig27_rgui.jpg)  
+Navigate back to R Commander window and select the **Graphs** menu again. This time select **Boxplot...** and choose **sand** as the variable. Click on **Plot by Groups** and select **landuse** as the variable. Next, switch to the **Options Tab** to ensure that outliers are identified **automatically**. Click **OK**. 
+
+![R GUI image](figure/ch1_fig25_rgui.jpg)  
 
 If you want to change something slightly, edit the command line in the script window, select the entire command and hit Submit. Notice that commands in the R Commander script window are not preceded by > like in the R Console.  
 
-Use R help or use an online search engine to find information about the desired function. For instance, if you would like to change the color of the bars in the histogram to red, you would edit the `col` option in the `hist()` command:  
+Use R help or an online search engine to find information about the desired function. For instance, if you would like to change the color of the bars in the histogram to red, you would edit the `col` argument in the `Hist()` command:  
 
 
 ```r
-hist(sand$sand, col="red")  
+with(sand2, Hist(sand, scale="frequency", breaks="Sturges", col="red")) #command used by Rcmdr; notice the function `Hist`
+
+#or
 ```
 
-![](1_introduction_files/figure-html/unnamed-chunk-19-1.png)
-  
-Select the line and then click the Submit button.  
+
+```r
+hist(sand$sand, col="red")  #the function `hist` in a R base package
+```
+
+![](1_introduction_files/figure-html/unnamed-chunk-20-1.png)
+
+Edit the Rcmdr script and select the line. Click Submit to plot the updated histogram.  
 
 ### <a id="statistics")></a> 1.5.3 Simple Statistics
 
 To calculate basic summary statistics use the options in the Statistics menu. A couple of examples are provided below:  
-
 Navigate to the Statistics dropdown menu and select Summary - Active dataset.  
 
 Results are returned in the Output Window and consist of a summary of the number of records for each categorical (name) variable and some basic measures of the continuous (numeric) variables.  
@@ -463,12 +467,7 @@ Place your cursor on any command line and hit submit. You will see the output an
 
 **R Console**
 
-Open the RGui console and navigate to the File dropdown menu and select Open script. A windows explorer box will appear. Navigate to sand_rcmdr.R. A new R editor window will open up within R. Select the first two lines of the script using your mouse to left-click and drag. Then right click with your mouse and select Run line or section. 
-
-
-```r
-sand2<-read.csv("C:/workspace/sand_example.txt")
-```
+Click on the RGui console and navigate to the File dropdown menu and select Open script. A windows explorer box will appear. Navigate to sand_rcmdr.R. A new R editor window will open up within R. Select the first two lines of the script using your mouse, right click, and select **Run line or selection**.
 
 ![R GUI image](figure/ch1_fig31_rgui.jpg)  
 
