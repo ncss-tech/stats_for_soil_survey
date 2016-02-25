@@ -57,7 +57,7 @@ Tips for using R:
 
 ## <a id="gui")></a>1.1  R Graphical User Interface
  
-Navigate to R (in the start and program menus) and open R (3.2.2, or latest version). When you first open R, the R console window below appears:  
+Navigate to R (in the start and program menus) and open R (64 bit, version 3.2.2 or later). When you first open R, the R console window below appears:  
 
 ![R GUI image](figure/ch1_fig1_rgui.jpg)  
 
@@ -73,14 +73,16 @@ Commands in R can range from simple mathematical equations to complex statistica
 
 At the beginning of each R session, whether you are using R or Rstudio, you want to make sure that you set your working directory. This directory should be where your input datasets are stored, R files are located, and will also serve as the default storage of plots or exported objects from R. 
 
-Before working in R, create a folder to keep all R files in, such as "C:/workspace". Change the working directory in R to the new folder you set up using the following command:   
+Before working in R, create a folder to keep all R files in, such as "C:\workspace". Change the working directory in R to the new folder you set up using the following command:   
 
 
 ```r
 setwd("C:/workspace")
+
+#R uses / instead of \ for file paths
 ```
 
-To check the filepath of the current working directory, which should now be "C:/workspace", type:
+To check the filepath of the current working directory, which should now be "C:\workspace", type:
 
 
 ```r
@@ -141,7 +143,7 @@ write.csv(sand, file = "sand_example2.csv")
 
 ### <a id="viewingdata")></a> 1.2.3 Viewing Data
 
-Once imported, it is imperative that you check to make sure that R correctly imported your data (ie: making sure numerical data are correctly imported as numerical, your column headings are kept as headings, etc.). A few commands that you can use to view your data in R are `str()`, `names()` and `head()`. `str()` shows the structure of the data object, while `names()` shows the column names (i.e. headers) of your data, and `head` prints the first 6 lines of data. You can also enter the name of the table next to the command prompt to print the entire table; however avoid doing this if your table is large. Instead for large tables try `View(sand)`, this will open the dataset in a separate window.   
+Once imported, it is imperative that you check to make sure that R correctly imported your data (ie: making sure numerical data are correctly imported as numerical, your column headings are kept as headings, etc.). A few commands that you can use to view your data in R are `str()`, `names()` and `head()`. `str()` shows the structure of the data object, while `names()` shows the column names (i.e. headers) of your data, and `head` prints the first 6 lines of data. You can also enter the name of the table next to the command prompt to print the entire table; however, avoid doing this if your table is large. Instead for large tables try `View(sand)`, this will open the dataset in a separate window.   
 
 Enter the following commands to view your dataset in R:  
 
@@ -528,7 +530,7 @@ For further information on how to use RStudio, visit: <a href="https://support.r
 
 ### <a id="rscript")></a> 1.6.1 Working with Scripts  
 
-In RStudio, set your working directory to C:/workspace by either using the drop down menus (Session, Set Working Directory, Choose Directory) or by typing the following into the RStudio Console window and pressing Enter: 
+In RStudio, set your working directory to C:\workspace by either using the drop down menus (Session, Set Working Directory, Choose Directory) or by typing the following into the RStudio Console window and pressing Enter: 
 
 
 ```r
@@ -679,11 +681,9 @@ Given what you now know about R and RStudio, try to answer the following questio
 
 3. Which R function is used to load packages?
 
-4. What can the Rcmdr package be used for?
+4. What types of files can you save in R? 
 
-5. What types of files can you save in R? 
-
-6. What would be the result of `plot(clay ~ organiccarbon, data=KSSL)`? 
+5. What would be the result of `plot(clay ~ organiccarbon, data=KSSL)`? 
 
 
 ### <a id="additional")></a>1.9 Additional Resources  
