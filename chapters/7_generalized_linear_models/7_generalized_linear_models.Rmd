@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, echo=FALSE, warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background="#F7F7F7", fig.retina=1, dev="png", tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background="#F7F7F7", fig.retina=2, dev="png", tidy=FALSE, verbose=FALSE)
 ```
 
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
@@ -62,12 +62,12 @@ logp <- log(p / (1 - p))
 test <- data.frame(p = p, logp = logp)[-length(p), ]
 fit <- lm(p ~ logp, data = test)
 
-plot(logp, p, type = "l", ylab = "proportion (p)", xlab = "logit transform (log(p / (1 - p)))", ylim = c(0, 1))
+plot(logp, p, type = "l", ylab = "proportion (p)", xlab = "logit transform (log(p / (1 - p)))", ylim = c(0, 1), las=1)
 ```
 
 When comparing a simple linear model vs a simple logistic model we can see the effect of the logit transform on the relationship between the response and predictor variable. As before it follows a sigmoidal curve and prevents predictions from exceeding 0 and 1.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.width=8, fig.height=4}
 library(sp)
 
 data(meuse)
@@ -78,11 +78,11 @@ lm_fit <- lm(as.numeric(lime) ~ dist.m, data = meuse)
 glm_fit <- glm(lime ~ dist.m, data = meuse, family = binomial())
 
 par(mfrow = c(1, 3))
-    plot(meuse$dist.m, lm_fit$fitted.values, type = "l", ylim = c(0, 1), ylab = "linear fit", xlab = "predictor")
+    plot(meuse$dist.m, lm_fit$fitted.values, type = "l", ylim = c(0, 1), ylab = "linear fit", xlab = "predictor", las=1)
     with(meuse, points(dist.m, lime))
-    plot(meuse$dist.m, glm_fit$fitted.values, type = "l", ylim = c(0, 1), ylab = "logistic fit", xlab = "predictor")
+    plot(meuse$dist.m, glm_fit$fitted.values, type = "l", ylim = c(0, 1), ylab = "logistic fit", xlab = "predictor", las=1)
     with(meuse, points(dist.m, lime))
-    boxplot(dist.m ~ lime, data = meuse, ylab = "predictor", xlab = "response", col = "grey")
+    boxplot(dist.m ~ lime, data = meuse, ylab = "predictor", xlab = "response", col = "grey", las=1)
 ```
 
 ## <a id="example")></a> 7.3 Logistic regression example
@@ -243,8 +243,9 @@ pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to sp object
 plot(ca794, axes = TRUE)
 plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # reproject coordinate system 
-# writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
+pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # transform between coordinate systems
+# optionally write shapefile of pedons
+# writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") 
 ```
 
 Notice in the above figure the number of points that fall outside the survey boundary. What it doesn't show is the points in the Ocean or Mexico.
@@ -322,7 +323,7 @@ test$twi_sc <- abs(test$twi - 13.8)
 - Discuss how the correlation amongst or between the variables affects the model selection process
 - Discourage stepwise methods, instead encourage expert guided process
 
-```{r fitting}
+```{r fitting, fig.width=10, fig.height=4}
 full <- glm(argillic ~ ., data = test, family = binomial(link = "cloglog"))
 null <- glm(argillic ~ 1, data = test, family = binomial(link = "cloglog"))
 # add1(null, full, test = "Chisq")
