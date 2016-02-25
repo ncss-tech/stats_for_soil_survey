@@ -29,7 +29,9 @@ opts_chunk$set(message=FALSE, warning=FALSE, background="#F7F7F7", fig.retina=1,
 - [7.5 Modeling](#glm)
     - [7.5.1 Model fitting and selection](#fit)
     - [7.5.2 Modeling evaluation](#eval)
-
+- [7.6 References](#ref)
+- [7.7 Additional references](#add)
+ 
 
 ## <a id="intro")></a> 7.1 Introduction
 
@@ -50,7 +52,7 @@ Another alteration the classical linear model is that with GLM the coefficients 
 
 ## <a id="logistic")></a> 7.2 Logistic regression
 
-Logistic regression is a specific type of GLM designed to model data that has a binomial distribution (i.e. presence/absence, yes/no, or proportional data), which in statistical learning parlance is considered a classification problem. For binomial data the logit link transform is used. The effect of the logit transform can be seen in the following figure. It creates a sigmoidal curve, which enhances the separation between the two groups. It also has the effect of ensuring that the values range between 0 and 1.
+Logistic regression is a specific type of GLM designed to model data that has a binomial distribution (i.e. presence/absence, yes/no, or proportional data), which in statistical learning parlance is considered a classification problem. For binomial data the logit link transform is generally used. The effect of the logit transform can be seen in the following figure. It creates a sigmoidal curve, which enhances the separation between the two groups. It also has the effect of ensuring that the values range between 0 and 1.
 
 
 ```{r, echo=FALSE}
@@ -85,15 +87,15 @@ par(mfrow = c(1, 3))
 
 ## <a id="example")></a> 7.3 Logistic regression example
 
-Now that we've got some of the basic GLM theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter comes from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert (where full disclosure I've dug a few holes). The problem tackled here is a familiar one, where can I expect to find argillic horizons on fan piedmonts. Argillic horizons within the Mojave are typically found on fan remnants, which are a stable landform that is a remnant of the Pleistocene (Peterson, 1981). Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or deposition.
+Now that we've got some of the basic GLM theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter comes from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert. The problem tackled here is a familiar one, where can I expect to find argillic horizons on fan piedmonts. Argillic horizons within the Mojave are typically found on fan remnants, which are a stable landform that is a remnant of the Pleistocene (Peterson, 1981). Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or deposition.
 
-With this dataset we'll encounter some challenges. To start with, fan piedmont landscapes typically have relatively little relief. Since most of our predictors will be derivatives of elevation, that won't leave us much to work with. Also, our elevation data comes from the USGS National Elevation dataset (NED), which provides considerable less detail than say LiDAR or IFSAR (Shi et al., 2012). Lastly our pedon dataset like most in NASIS, hasn't receive near as much quality control as have the components. So we'll need to massage some of the pedon data before we can analyze it. These are all typical problems encountered in any data analysis and should be good practice. Ideally it would be more interesting to try and model individual soil series with argillic horizons, but do to some challenges just mentioned this is difficult with this dataset. However, at the end we'll look at one simple approach to try and separate individual soil series with argillic horizons.
+With this dataset we'll encounter some challenges. To start with, fan piedmont landscapes typically have relatively little relief. Since most of our predictors will be derivatives of elevation, that won't leave us much to work with. Also, our elevation data comes from the USGS National Elevation dataset (NED), which provides considerable less detail than say LiDAR or IFSAR (Shi et al., 2012). Lastly our pedon dataset like most in NASIS, hasn't receive near as much quality control as have the components. So we'll need to wrangle some of the pedon data before we can analyze it. These are all typical problems encountered in any data analysis and should be good practice. Ideally it would be more interesting to try and model individual soil series with argillic horizons, but do to some challenges just mentioned this is difficult with this dataset. However, at the end we'll look at one simple approach to try and separate individual soil series with argillic horizons.
 
 ### Load packages
 
 To start, as always we need to load some extra packages. This is a necessary evil every time you start R. Most of the basic functions we need to develop a logistic regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
 
-```{r load packages, echo=FALSE, message=FALSE, warning=FALSE}
+```{r load packages, message=FALSE, warning=FALSE}
 library(aqp) # specialized soil classes and functions
 library(soilDB) # NASIS and SDA import functions
 library(raster) # guess
@@ -101,6 +103,7 @@ library(rgdal) # spatial import
 library(lattice) # graphing
 library(reshape2) # data manipulation
 library(plyr) # data manipulation
+library(dplyr)
 library(caret) # printing
 library(rms) # additional regression modeling tools
 ```
@@ -110,8 +113,8 @@ library(rms) # additional regression modeling tools
 Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you. Once data is captured in NASIS it much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS it may as well not exist, and will it haunt you for the rest of your life.
 
 ```{r import data}
-pedons <- fetchNASIS(rmHzErrors = FALSE) # beware the error messages, by default they don't get imported unless you override the default, which in our chase shouldn't cause any problems
-#load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# pedons <- fetchNASIS(rmHzErrors = FALSE) # beware the error messages, by default they don't get imported unless you override the default, which in our chase shouldn't cause any problems
+load(file = "C:/workspace/ch7_data.Rdata")
 
 str(pedons, max.level = 2) # Examine the makeup of the data we imported from NASIS.
 ```
@@ -126,7 +129,8 @@ Generally before we begin modeling its good to explore the data. By using a simp
 # Check consistency of argillic horizon population
 
 s <- site(pedons) # get the site table
-table(s$argillic.horizon) # tabulate the number of argillic horizons observed
+
+table(s$argillic.horizon, useNA = "ifany") # tabulate the number of argillic horizons observed
 
 # or
 
@@ -135,7 +139,8 @@ table(s$argillic.horizon) # tabulate the number of argillic horizons observed
 # Extract argillic presense from the taxonomic subgroup
 
 s$argillic <- grepl("arg", s$tax_subgroup)
-table(s$argillic)
+
+table(s$argillic, useNA = "ifany")
 ```
 
 Ideally if the diagnostic horizon table were populated we could also filter out argillic horizons that start below 50cm, which may not be representative of "good" argillic horizons and may therefore have gotten correlated to a Torripsamments anyway. Not only are unrepresentative sites confusing for scientists, they're equally confusing for models. However as we saw earlier some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name, since it gives us the biggest sample.
@@ -254,7 +259,7 @@ Notice in the above figure the number of points that fall outside the survey bou
 
 Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data locations. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract the geodata values where they intersect with field data.
 
-```{r extract}
+```{r extract, eval=FALSE}
 folder <- "M:/geodata/project_data/8VIC/ca794/"
 files <- c(
   elev   = "ned30m_8VIC.tif",
@@ -262,6 +267,7 @@ files <- c(
   aspect = "ned30m_8VIC_aspect5.tif",
   twi    = "ned30m_8VIC_wetness.tif",
   twi_sc = "ned30m_8VIC_wetness_sc.tif",
+  ch     = "ned30m_8VIC_cheight.tif",
   z2str  = "ned30m_8VIC_z2stream.tif",
   mrrtf  = "ned30m_8VIC_mrrtf.tif",
   mrvbf  = "ned30m_8VIC_mrvbf.tif",
@@ -288,7 +294,7 @@ data <- data.frame(
 # s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
 # slot(pedons, "site") <- s
 # data[c("describer2", "x_std", "y_std")] <- NA
-# save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
 ```
 
 ### <a id="spatial")></a> 7.4.6 Examine spatial data 
@@ -296,15 +302,16 @@ data <- data.frame(
 With out spatial data in hand, we can now see whether any of the varibles will help us separate the presense/absense of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. greatest separation in their median values).  
 
 ```{r spatial}
-data$argillic2 <- data$argillic == TRUE & data$mrvbf > 0.15 # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+load(file = "C:/workspace/ch7_data.Rdata")
+test <- subset(data, select = - c(pedon_id, describer2, taxonname, x_std, y_std))
+test$argillic <- with(test, argillic == TRUE & mrvbf > 0.15) # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 
-data_m <- subset(data, select = - c(pedon_id, taxonname, x_std, y_std, describer2))
-data_m <- melt(data_m, id = "argillic2")
-bwplot(argillic2 ~ value | variable, data = data_m, scales = list(x = "free"))
+data_m <- melt(test, id = "argillic")
+bwplot(argillic ~ value | variable, data = data_m, scales = list(x = "free"))
 
 # Argillic horizons seem to occur over a limited range of twi. So lets rescale twi by substracting its median
-aggregate(twi ~ argillic2, data = data, summary)
-data$twi_sc <- abs(data$twi - 13.8)
+aggregate(twi ~ argillic, data = test, summary)
+test$twi_sc <- abs(test$twi - 13.8)
 ```
 
 ## <a id="glm")></a> 7.5 Modeling
@@ -316,14 +323,21 @@ data$twi_sc <- abs(data$twi - 13.8)
 - Discourage stepwise methods, instead encourage expert guided process
 
 ```{r fitting}
-test <- glm(argillic2 ~ ., data = data, family = binomial(link = "cloglog"))
-summary(test)
-confusionMatrix(test$fitted.values > 0.5, as.logical(test$y), positive = "TRUE")
+full <- glm(argillic ~ ., data = test, family = binomial(link = "cloglog"))
+null <- glm(argillic ~ 1, data = test, family = binomial(link = "cloglog"))
+# add1(null, full, test = "Chisq")
 
-test1 <- glm(argillic2 ~ 1, data = data, family = binomial(link = "cloglog"))
+argi_glm <- glm(argillic ~ twi_sc + slope + ls_1 + ch + z2str + mrvbf, data = test, family = binomial(link = "cloglog"))
+summary(argi_glm)
+anova(argi_glm)
 
-test2 <- glm(argillic2 ~ twi_sc + slope + z2str + ls_1, data = data, family = binomial(link = "cloglog"))
-summary(test2)
+par(mfrow = c(1, 4))
+plot(argi_glm)
+dev.off()
+
+par(mfrow = c(1, length(argi_glm$coefficients)/2))
+termplot(argi_glm, partial.resid = TRUE)
+dev.off()
 ```
 
 
@@ -334,28 +348,29 @@ summary(test2)
 - Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some cluster appear to be dominanted by specific soil series, this data isn't clean enough (nor are concepts usually) to model series separately however we could use the cluster as an additional model to separate the series. Cluster 2, 6, 7, 8, 13 and 15 all appear to be hyperthermic
 
 ```{r evaluation}
-comp <- cbind(data2[c("argillic2", "cluster")], pred = predict(test2, data2, type = "response") > 0.5)
-comp <- na.exclude(comp)
-confusionMatrix(comp$pred, comp$argillic2, positive = "TRUE")
+comp <- cbind(test[c("argillic", "cluster")], pred = predict(argi_glm, test, type = "response") > 0.5)
+confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
 
-comp2 <- comp[comp$argillic2 == TRUE, ]
-group_by(comp2, cluster) %>% summarize(sum(argillic2), sum(pred), recall = round(sum(pred == argillic2) / length(argillic2), 2))
+comp_sub <- subset(comp, argillic == TRUE)
+temp <- by(comp_sub, list(comp_sub$cluster), FUN = function(x) with(x, data.frame(cluster = unique(cluster), sum_arg = sum(argillic, na.rm = T), sum_pred = sum(pred, na.rm = T), recall = round(sum(pred == argillic) / length(argillic), 2))))
+do.call(rbind, temp)
 
 
-data3 <- subset(data2, !(cluster %in% c(2, 6, 7, 8, 13, 15)))
-aggregate(twi ~ argillic2, data = data2, summary)
-data3$twi_sc2 <- abs(data3$twi - 13.8)
+test_sub <- subset(test, !(cluster %in% c(2, 6, 7, 8, 13, 15)))
 
-test <- glm(argillic2 ~ ., data = data3, family = binomial(link = "cloglog"))
+# full <- glm(argillic ~ ., data = test_sub, family = binomial(link = "cloglog"))
+# null <- glm(argillic ~ 1, data = test_sub, family = binomial(link = "cloglog"))
+# add1(null, full, test = "Chisq")
 
-test2 <- glm(argillic2 ~ slope + twi_sc2 + ls_1 + mrvbf + z2str, data = data3, family = binomial(link = "cloglog"))
-summary(test2)
-comp <- cbind(data3[c("argillic2", "cluster")], pred = predict(test2, data3, type = "response") > 0.5)
-comp <- na.exclude(comp)
-confusionMatrix(comp$pred, comp$argillic2, positive = "TRUE")
-comp2 <- comp[comp$argillic2 == TRUE, ]
-group_by(comp2, cluster) %>% summarize(sum(argillic2), sum(pred), recall = round(sum(pred == argillic2) / length(argillic2), 2))
+sub_glm <- glm(argillic ~ slope + twi_sc + ls_1 + mrvbf + z2str, data = test_sub, family = binomial(link = "cloglog"))
+# summary(sub_glm)
 
+comp <- cbind(test_sub[c("argillic", "cluster")], pred = predict(sub_glm, test_sub, type = "response") > 0.5)
+confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
+
+comp_sub <- subset(comp, argillic == TRUE)
+temp <- by(comp_sub, list(comp_sub$cluster), FUN = function(x) with(x, data.frame(cluster = unique(cluster), sum_arg = sum(argillic, na.rm = T), sum_pred = sum(pred, na.rm = T), recall = round(sum(pred == argillic) / length(argillic), 2))))
+do.call(rbind, temp)
 ```
 
 - View the results in ArcGIS and examine the accuracy at individual points
@@ -363,12 +378,23 @@ group_by(comp2, cluster) %>% summarize(sum(argillic2), sum(pred), recall = round
 - Discuss how the modeling process isn't an end in itself, but serves to uncover trends, possibly generate additional questions and direct future investigations
 
 ```{r prediction}
-r <- predict(geodata_r, test2, progress="text", type = "response")
-writeRaster(r, "test.tif", overwrite = T, progress = "text")
+# r <- predict(geodata_r, sub_glm, progress="text", type = "response")
+# writeRaster(r, "test3.tif", overwrite = T, progress = "text")
+
+plot(raster("C:/workspace/test3.tif"))
+plot(ca794, add = TRUE)
 ```
 
+## <a id="ref")></a> 7.6 References
 
-## Additional reading
+Nauman, T. W., and J. A. Thompson, 2014. Semi-automated disaggregation of conventional soil maps using knowledge driven data mining and classification trees. Geoderma 213:385-399.
+
+Peterson, F.F., 1981. Landforms of the basin and range province: defined for soil survey. Nevada Agricultural Experiment Station Technical Bulletin 28, University of Nevada - Reno, NV. 52 p.
+
+Shi, X., L. Girod, R. Long, R. DeKett, J. Philippe, and T. Burke, 2012. A comparison of LiDAR-based DEMs and USGS-sourced DEMs in terrain analysis for knowledge-based digital soil mapping. Geoderma 170:217-226.
+
+
+## <a id="add")></a> 7.7 Additional reading
 
 Lane, P.W., 2002. Generalized linear models in soil science. European Journal of Soil Science 53, 241- 251. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2002.00440.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2002.00440.x/abstract)
 
