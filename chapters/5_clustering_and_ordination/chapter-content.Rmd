@@ -1,7 +1,7 @@
 ---
 title: "Clustering and Ordination"
 author: "D.E. Beaudette"
-date: "Winter 2015/2016"
+date: "March 2016"
 output:
   html_document:
     keep_md: no
@@ -12,7 +12,7 @@ bibliography: bibliography.bib
 
 
 
-```{r setup, echo=FALSE, results='hide', warning=FALSE}
+```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 # setup
 library(knitr, quietly=TRUE)
 library(printr, quietly=TRUE)
@@ -68,25 +68,17 @@ distPlot <- function(ex, vars, individuals, id, scale.data=FALSE, show.distances
   return(m)
 }
 
-
+# load libs for examples
+library(aqp)
+library(cluster)
+library(ape)
+library(RColorBrewer)
+library(MASS)
 ```
 
-# Ideas:
- * http://www.davidzeleny.net/anadat-r/doku.php/en:ordination
- * http://ordination.okstate.edu/overview.htm
- 
-# Things to cluster:
- * simple matrix of continuous soil properties
- * simple matrix of continuous environmental properties
- * categorical data: sub-group level taxa
- * categorical data: diagnostic properties
- * soil-profiles!
- * species composition matrix
 
-# visuals / tangibles
- * old papers
- * article by Sokal
- * article by Arkley
+![alt.text](static-figures/soils-by-pigments.png)
+
 
 
 
@@ -190,31 +182,141 @@ round(m, 2)
 
 We can now begin to describe disimilarity between individuals using an arbitrary number of (relevant!) characteristics and make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon". While this may be a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
-> **Review:** 
-> * what is are the "data matrix" and "distance matrix"?
-> * what is standardization and why is it important?
+**Review**
+
+ * What is are the "data matrix" and "distance matrix"?
+ * What is standardization and why is it important?
    
 
 ### Visualizing Pair-Wise Distances: The Dendrogram
 
+[Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way visualizaing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Disimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
+
 ```{r, echo=FALSE, fig.width=10, fig.height=5}
-par(mar=c(1,1,1,1), mfcol=c(1,2))
+par(mar=c(1,1,1,0), mfcol=c(1,2))
 
 m <- distPlot(sp4, vars=c('sand', 'clay'), individuals=c(1,2,4), id='name', show.distances=FALSE, xlim=c(10, 60), ylim=c(10, 60), xlab='Sand (%)', ylab='Clay (%)')
 d <- as.dist(m)
-dd <- cluster::diana(d)
+dd <- diana(d)
 h <- as.hclust(dd)
-p <- ape::as.phylo(h)
+p <- as.phylo(h)
+
+plot(p, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
+# axis(2, las=1, line=1.5)
+mtext('Dendrogram Representation of Distance Matrix\n(sand and clay %)', side=1, line=2)
+```
+
+Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corrosponding dendrogram. Visualizing the geometry of pair-wise distances in > 3 dimensions is difficult, however, a the dendrogram can conveniently summarize a distance matrix created from an arbitrary number of characteristics.
+
+```{r, echo=FALSE, fig.width=10, fig.height=4}
+par(mfcol=c(1,2))
+
+d <- dist(sp4.scaled[, -1])
+m <- as.matrix(d)
+dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
+d <- as.dist(m)
+dd <- diana(d)
+h <- as.hclust(dd)
+p.all <- as.phylo(h)
 
 plot(p, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
 axis(2, las=1, line=1.5)
-mtext('Dendrogram Representation of Distance Matrix', side=1, line=2)
+mtext('Dendrogram Representation of Distance Matrix\n(sand and clay %)', side=1, line=2)
+
+plot(p.all, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
+axis(2, las=1, line=1.5)
+mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=2)
 ```
+
+There isn't much difference between these two figures, because most of the characteristics in this example dataset are highly correlated with soil texture. More on this later.
+
+
+### Cluster Analysis: Finding Groups
+
+```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
+
+# distance matrix
+d <- dist(sp4.scaled[, -1])
+m <- as.matrix(d)
+dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
+d <- as.dist(m)
+# dendrogram from divisive clustering
+dd <- diana(d)
+h <- as.hclust(dd)
+p <- as.phylo(h)
+
+# define colors based on natural groupings
+cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
+
+par(mar=c(0,0,0,0), mfcol=c(1,2))
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
+abline(v=2.3, col='orange', lty=2, lwd=2)
+# mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
+
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
+abline(v=2.3, col='orange', lty=2, lwd=2)
+tiplabels(pch=15, col=cols)
+# mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
+```
+
 
 ### Ordination: Visualization in a Reduced Space
 
+|name |  clay|  sand|    Mg|    Ca| CEC_7|
+|:----|-----:|-----:|-----:|-----:|-----:|
+|A    | -0.41|  0.21|  0.06|  0.44| -0.23|
+|ABt  |  0.04| -0.07| -0.06| -0.13| -0.38|
+|Bt1  |  0.41| -0.21| -0.09| -0.74| -0.16|
+| <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
 
+```{r, echo=FALSE, results='hide', fig.width=10, fig.height=5}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
 
+# distance matrix
+d <- dist(sp4.scaled[, -1])
+m <- as.matrix(d)
+dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
+d <- as.dist(m)
+# dendrogram from divisive clustering
+dd <- diana(d)
+h <- as.hclust(dd)
+p <- as.phylo(h)
+
+# define colors based on natural groupings
+cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
+
+# MDS
+s <- MASS::sammon(d)
+
+par(mar=c(3,0,0,3), mfcol=c(1,2))
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
+tiplabels(pch=15, col=cols)
+mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
+
+plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
+abline(v=0, h=0, col='grey', lty=3)
+text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
+axis(1, cex.axis=0.75, line=-2)
+axis(4, cex.axis=0.75, line=0, las=1)
+mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
+```
+
+```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
+# re-init sp4, copy clustering colors to hz attribute
+data('sp4', package = 'aqp')
+sp4$cl <- cols
+depths(sp4) <- id ~ top + bottom
+
+par(mar=c(0,0,0,0))
+plot(sp4, color='cl', cex.names=0.75)
+```
 
 
 
@@ -235,7 +337,7 @@ library(plotrix)
 
 [Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way of depicting [pair-wise dissimilarity](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) between objects, commonly associated with the topic of [cluster analysis](http://en.wikipedia.org/wiki/Cluster_analysis). This is a complex subject that is best left to [experts](http://www.amazon.com/Finding-Groups-Data-Introduction-Analysis/dp/0471878766) and [textbooks](http://www.amazon.com/Principles-Numerical-Taxonomy-Books-Biology/dp/B0006AYNO8), so I won't even attempt to cover it here. Unfortunately the interpretation of dendrograms is not very intuitive, especially when the source data are complex. In addition, pair-wise dissimilarity computed between soil profiles and visualized via dendrogram should not be confused with the use of dendrograms in the field of [cladistics](http://en.wikipedia.org/wiki/Cladistics)-- where relation to a common ancestor is depicted.
 
-An example is presented below that illustrates the relationship between dendrogram and dissimilarity as evaluated between objects with 2 variables. Essentially, the level at which branches merge (relative to the "root" of the tree) is related to their similarity. In the example below it is clear that (in terms of clay and rock fragment content) soils 4 and 5 are more similar to each other than to soil 2. In addition, soils 1 and 3 are more similar to each other than soils 4 and 5 are to soil 2. Recall that in this case pair-wise dissimilarity is based on the Euclidean distance between soils in terms of their clay content and rock fragment content. Therefore proximity in the scatter plot of frock frags vs. clay is directly related to our simple evaluation of "dissimilarity". Inline-comments in the code below elaborate further.
+
 
 ```{r, fig.width=8, fig.height=4, htmlcap='xxx'}
 # simulate some aggregate profile data
