@@ -16,7 +16,7 @@ bibliography: bibliography.bib
 # setup
 library(knitr, quietly=TRUE)
 library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype')
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=TRUE)
 
 # options for R functions
 options(width=100, stringsAsFactors=FALSE)
@@ -346,6 +346,7 @@ library(vegan)
 # dist()
 # daisy()
 # vegdist()
+# vegemite and related
 ```
 
 ### Distance calculations with categorical data
@@ -375,6 +376,7 @@ library(vegan)
 
 ```{r, }
 # as.phylo()
+# other ways to plot dendrogram
 ```
 
 ## Partitioning into clusters
@@ -395,6 +397,12 @@ library(vegan)
 
 ```{r, }
 # fanny()
+```
+
+### How many clusters?
+
+```{r, }
+# silhouette()
 ```
 
 
@@ -418,6 +426,144 @@ library(vegan)
 
 
 # Practical applications
+
+Review:
+ * [SoilProfileCollection object tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)
+
+
+## Pair-wise distances between soil profiles 
+
+[relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
+
+[relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
+
+```{r, }
+# init example data
+data(sp4)
+depths(sp4) <- id ~ top + bottom
+
+# eval dissimilarity:
+# using Ex-Ca:Mg and CEC at pH 7
+# with no depth-weighting (k=0)
+# to a maximum depth of 40 cm
+d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
+
+# check distance matrix:
+round(d, 1)
+```
+
+```{r, fig.width=5, fig.height=4}
+# vizualize dissimilarity matrix via hierarchical clustering
+p <- as.phylo(as.hclust(diana(d)))
+plot(p, font=2)
+```
+
+demo new functions for plotting profiles below dendrogram
+
+## Soil color
+
+```{r, fig.width=6, fig.height=6}
+library(colorspace)
+data(munsell)
+m <- subset(munsell, subset=hue %in% c('5YR', '2.5Y') & value < 10 & chroma < 10)
+# m <- munsell[sample(1:nrow(munsell), size = 100), ]
+
+lab.data <- as(with(m, RGB(r, g, b)), 'LAB')
+pairs(lab.data@coords, col=rgb(m$r, m$g, m$b), pch=16, cex=2)
+
+# standardize?
+d <- daisy(lab.data@coords, stand = TRUE)
+h <- as.hclust(diana(d))
+# h$labels <- paste0(m$hue, ' ', m$value, '/', m$chroma)
+p <- as.phylo(h)
+plot(p, font=2, cex=0.5, no.margin=TRUE, type='fan', show.tip.label=FALSE)
+tiplabels(pch=16, cex=1.25, col=rgb(m$r, m$g, m$b))
+```
+
+## Component interpretations
+[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
+
+**use the same list of soil series as above**
+
+```{r}
+library(reshape2)
+# set list of soil series (component names)
+soil.list <- c('Pardee', 'Yolo', 'Capay', 'Aiken', 'Amador', 'Pentz', 'Sobrante',
+'Argonaut', 'Toomes', 'Jocal', 'Holland', 'Auburn', 'Dunstone', 
+'Hanford', 'Redding', 'Columbia', 'San Joaquin', 'Fresno')
+
+# set list of relevant interpretations
+interp.list <- c('ENG - Construction Materials; Topsoil', 
+'ENG - Sewage Lagoons', 'ENG - Septic Tank Absorption Fields', 
+'ENG - Unpaved Local Roads and Streets', 
+'AGR - California Revised Storie Index (CA)')
+
+# compose query
+q <- paste0("SELECT compname, mrulename, AVG(interplr) as interplr_mean
+FROM component INNER JOIN cointerp ON component.cokey = cointerp.cokey
+WHERE compname IN ", format_SQL_in_statement(soil.list), "
+AND seqnum = 0
+AND mrulename IN ", format_SQL_in_statement(interp.list), "
+AND interplr IS NOT NULL
+GROUP BY compname, mrulename;")
+
+# send query
+x <- SDA_query(q)
+
+# reshape long -> wide
+x.wide <- dcast(x, compname ~ mrulename, value.var = 'interplr_mean')
+knitr::kable(x.wide, digits = 3, caption="Mean Fuzzy Ratings for Select Soil Series")
+```
+
+```{r}
+# create distance matrix
+d <- daisy(x.wide[, -1])
+
+# cluster via divisive hierachical method
+h <- as.hclust(diana(d))
+
+# transfer compname labels and convert to 'ape' class for plotting
+h$labels <- x.wide$compname
+h <- as.phylo(h)
+
+# plot as dendrogram
+par(mar=c(1,1,3,1))
+plot(h)
+title('Component Similarity via Select Interpretation Fuzzy Values')
+```
+
+
+
+## Diagnostic features
+[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp)
+
+```{r}
+# load some example NASIS data
+data(loafercreek, package='soilDB')
+
+# cut-down to a subset
+loafercreek <- loafercreek[1:20, ]
+
+# get depth class
+sdc <- getSoilDepthClass(loafercreek)
+site(loafercreek) <- sdc
+
+# diagnostic properties to consider, no need to convert to factors
+v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
+       'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
+       'shallow', 'mod.deep', 'deep', 'very.deep')
+
+
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
+```
+
+
+## Species composition
+
+
+## Component relation graphs
+[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/component-relation-graph.html?root=aqp)
+
 
 
 # References
