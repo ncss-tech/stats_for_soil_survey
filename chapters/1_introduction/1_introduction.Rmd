@@ -5,6 +5,8 @@ date: "Tuesday, February 24, 2015"
 output:
   html_document:
     keep_md: yes
+    toc: yes
+    toc_depth: 3
 ---
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
@@ -507,59 +509,60 @@ Note that this arbitrarily sets the bin breaks using a list c(x1,x2,x3..). This 
 
 ##<a id="soilDB")></a>1.7  Introduction to the soilDB Package
 
-The soilDB package was created to more readily analyze data from USDA-NCSS soil databases in R. There are a series of `fetch()` commands that allow the user to specify what NRCS soil database they are wanting to extract data from (NASIS, KSSL, OSD, etc.). In this module, we are only going to focus on the `fetchKSSL()` function. Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
+The [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package was created to more readily analyze data from USDA-NCSS soil databases in R. There are a series of convenience functions that allow the user quickly access soil data from a wide range of source including: NASIS, KSSL, OSDs, and several others. The convenience functions typically return data as a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)-- a special datatype designed specificly for soil information. In this module, we are only going to focus on the `fetchKSSL()` function. Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
 
-```{r, warning=FALSE}
-#load soilDB, aqp, and lattice packages
+```{r, message=FALSE, warning=FALSE, results='hide'}
+# load required packages
 library(soilDB)
 library(aqp)
 library(lattice)
 
-#fetch all KSSL data 'correlated as' Hartleton from the June 2015 snapshot
-Hartleton<-fetchKSSL(series='Hartleton') 
+# fetch all KSSL data 'correlated as' Hartleton from the December 2015 snapshot
+# details on the data processing: https://github.com/dylanbeaudette/process-kssl-snapshot
+pedons <- fetchKSSL(series='Hartleton') 
 
-#set plot parameters
-par(mar=c(0,0,0,0)) 
+# reduce margins for a bigger figure
+par(mar=c(0,0,3,0)) 
 
-#soil profile plot
-plot(Hartleton, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='clay') 
+# default plot method for SoilProfileCollection objects
+plot(pedons, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='clay') 
 
-#soil depth class
-sdc <- getSoilDepthClass(Hartleton, name='hzn_desgn', top='hzn_top', bottom='hzn_bot') 
-site(Hartleton) <- sdc
+# compute soil depth class
+sdc <- getSoilDepthClass(pedons, name='hzn_desgn', top='hzn_top', bottom='hzn_bot') 
+site(pedons) <- sdc
+```
 
+```{r}
 #summary statistics for soil depth
-tapply(Hartleton$depth, Hartleton$taxonname, summary) 
-
+tapply(pedons$depth, pedons$taxonname, summary) 
 ``` 
 
 ```{r, eval=FALSE}
 #data structure and variable names
 str(Hartleton) 
-
 ``` 
 
 ```{r, warning=FALSE}
-# slab() is used to aggregate selected variables within collections of soil profiles along depth-slices; in this example we are aggregating clay, sand, and organic carbon
-h.slab <- slab(Hartleton, taxonname ~ clay+sand+oc)
+# slab() is used to aggregate selected variables within a collections of soil profiles along depth-slices; in this example we are aggregating clay, sand, and organic carbon
+s <- slab(pedons, taxonname ~ clay + sand + oc)
 
 #specify color and line width to be used in plot
 tps <- list(superpose.line=list(col='RoyalBlue', lwd=2)) 
 
 # slice-wise median and 25th/75th percentiles are reasonable estimations of central tendency and spread
-xyplot(top ~ p.q50 | variable, data=h.slab, ylab='Depth',
+xyplot(top ~ p.q50 | variable, data=s, ylab='Depth',
         xlab='median bounded by 5th and 95th percentiles',
-        lower=h.slab$p.q25, upper=h.slab$p.q75, ylim=c(155,-5),
+        lower=s$p.q25, upper=s$p.q75, ylim=c(155,-5),
         panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
         prepanel=prepanel.depth_function,
-        cf=h.slab$contributing_fraction,
+        cf=s$contributing_fraction,
         par.strip.text=list(cex=0.8),
         strip=strip.custom(bg=grey(0.85)),
         layout=c(3,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
         par.settings=tps, auto.key=list(columns=1, lines=TRUE, points=FALSE))
 ``` 
 
-Check out [fetchKSSL Example](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp) for more details. 
+Check out the realted [tutorial on fetchKSSL()](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp) for more details. 
 
 ### <a id="review")></a>1.8 Review
 Given what you now know about R and RStudio, try to answer the following questions:
