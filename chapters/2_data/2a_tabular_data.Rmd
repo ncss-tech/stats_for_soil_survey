@@ -18,7 +18,7 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=1, dev='png', tidy=FALSE, verbose=FALSE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
@@ -96,11 +96,9 @@ One of the most versatile things about R is that there are many ways manipulate 
 Specific elements from a vector are accessed with square brackets, e.g. `clay[i]`. Note that the examples below use vectors to reference elements of another vector.
 ```{r datatype1.1, eval=TRUE}
  # 2nd and 4th elements of vector 'clay' from above
- clay
  clay[c(2, 4)] 
 
  # 1st and 3rd elements of vector 'subgroup' from above
- subgroup
  subgroup[c(1, 3)]
  
  # everything but the first element of vector 'andic'
@@ -119,7 +117,6 @@ So what's the deal with the square bracket notation?
 Most functions in R are *vectorized*. This means that operations such as addition (the `+` function) on vectors will automatically iterate through every element. Let's look at some examples to demonstrate these concepts.
 ```{r datatype1.2, eval=TRUE}
  # clay values from above
- clay
  # divide by 100, notice that iteration over the elements of 'clay' is implicit
  clay / 100
  
@@ -216,14 +213,18 @@ l
 # access the first element of the list, note the double square brackets
 l[[1]]
 
-# access the element named 'drinks'
-l[['drinks']]
+# access the element named 'food'
+l[['food']]
 
 # convert a dataframe into a list
 as.list(d)
 
 # a list of lists
-list('pedon_1'=list('top'=c(0,10,25,55), 'bottom'=c(10,25,55,76), 'pH'=c(6.8,6.6,6.5,6.4)))
+list.of.lists <- list('pedon_1'=list('top'=c(0,10,25,55), 'bottom'=c(10,25,55,76), 'pH'=c(6.8,6.6,6.5,6.4)))
+list.of.lists
+
+# convert list of elements with equal length into a data.frame
+as.data.frame(list.of.lists)
 ```
 
 ### Matrix
@@ -234,11 +235,17 @@ m <- matrix(0, nrow=5, ncol=5)
 
 # operations by scalar (single value) are vectorized
 m <- m + 1
-m
+m * 5
 
 # square braket notation is used to get / set values: m[row, col]
 # set row 1, col 1 to 0
 m[1,1] <- 0
+m
+
+# access diagonal and upper/lower triangles, useful for chapter 5
+m[upper.tri(m)] <- 'U'
+m[lower.tri(m)] <- 'L'
+diag(m) <- 'D'
 m
 
 # many functions return matrix objects
@@ -262,7 +269,7 @@ No, `fetchNASIS()` will work when the NASIS application is not running. You just
 
 
 ## What is the soilDB package and what does it do?
-The soilDB package is an R package that is designed for working with soil resource related data sources.  The package has a series of convenience functions for accessing data in NASIS, KSSL, SDA, and other sources. The `fetchNASIS` convenience function extracts data from a NASIS selected set via Structured Query Language (SQL) queries.  Some basic data checks are run within the fetch functions then the data is assembled into a combined site-level and horizon-level data structure within a custom R object called a `Soil Profile Collection (SPC)`.  The [`SoilProfileCollection`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) class was designed to simplify the process of working with collections of data associated with soil profiles: site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc.  
+The soilDB package for R was designed for working with soil resource related data sources.  The package has a series of convenience functions for accessing data in NASIS, KSSL, SDA, and other sources. The `fetchNASIS` convenience function extracts data from a NASIS selected set via Structured Query Language (SQL) queries.  Some basic data checks are run within the fetch functions then the data is assembled into a combined site-level and horizon-level data structure within a custom R object called a `Soil Profile Collection (SPC)`.  The [`SoilProfileCollection`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) class was designed to simplify the process of working with collections of data associated with soil profiles: site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc.  
 
 It is important to mention that the import process built into `fetchNASIS()` is not comprehensive and does not pull all of the data for every table related to pedon data out of NASIS.  However, it pulls much of the most often used pedon and horizon data.  In addition, much of the nested complexity of the NASIS data structure have been simplified in creating the SPC object that results from the `fetchNASIS()` function.  Higher level functions like `fetchNASIS()` bundle a series of lower level functions which get specific parts of the data structure. 
 
@@ -388,21 +395,22 @@ The `gopheridge` sample dataset is very similar to the type of data returned fro
 
 Before proceeding it may be helpful to review the [**SoilProfileCollection object introduction**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).  This tutorial provides an excellent overview of how the SPC object is constructed.  Also the `soilDB` and `aqp` manual pages are accessible (click on the 'index' at the bottom of the Help tab in RStudio) by entering the following into the R console: 
 
-```{r example_a1, echo=FALSE, results='show', warning=FALSE}
-### not run
-#library(soilDB)
-#help(soilDB)
+```{r, eval=FALSE}
+# not run
+library(soilDB)
+help(soilDB)
 
-### for links to lots of great examples look here!
-#library(aqp)
-#help(aqp)
+# for links to lots of great examples look here!
+library(aqp)
+help(aqp)
 ```
 
 
 Open RStudio, and setup the environment by loading packages and the Gopheridge sample dataset.
 
+
+```{r gopheridge_a}
 options(width=95, stringsAsFactors=FALSE)
-```{r gopheridge_a,}
 library(soilDB)
 library(aqp)
 
@@ -419,6 +427,7 @@ str(gopheridge, 2)
 siteNames(gopheridge)
 horizonNames(gopheridge)
 ```
+
 #### Subset example of the data in the site-level portion of the SPC:
 
 ```{r gopheridge_a1, eval=TRUE, echo=FALSE, results='show', warning=FALSE, collapse=TRUE}
@@ -617,11 +626,11 @@ sort(table(f$part_size_class[idx]), decreasing=TRUE)
 ```
 Let's do a quick graphical check that we've selected the 'lithic*' profiles by plotting them in R using the AQP package `plot()` function.
 
-```{r owndata_e, results='show'}
+```{r owndata_e, results='show', fig.width=8, fig.height=4}
 # adjust margins
-par(mar=c(0,1,1,1))
+par(mar=c(1,0,1,1))
 # plot the first 10 profiles of the 'f1' subset
-plot(f1[1:10, ], label='site_id')
+plot(f1[1:10, ], label='site_id', max.depth=100)
 ```
 For more information on using regular expressions in `grep()` for pattern matching operations: [Regular-expression-syntax](https://www.gnu.org/software/findutils/manual/html_node/find_html/grep-regular-expression-syntax.html)
 
@@ -630,7 +639,7 @@ For more information on using regular expressions in `grep()` for pattern matchi
 
 Another method of subsetting a collection of soil profiles is to specify a criteria using the `which()` function. The following examples use the `which()` and `grep()` functions to reference the indexing of the SPC to create subsets and to filter to specific sites or their corresponding profiles.
 
-```{r owndata_f, results='show'}
+```{r owndata_f, results='show', fig.width=8, fig.height=4}
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # first: use grep to pattern match the tax_subgroup field for the string 'aqu'
 idx <- grep('aqu', f$tax_subgroup)
@@ -645,11 +654,11 @@ sort(table(f1$part_size_class), decreasing=TRUE)
 idx <- which(f1$part_size_class == 'sandy-skeletal')
 # save this subset
 f2 <- f1[idx, ]
-# or use the index directly to summarize a field
-sort(table(f2$part_size_class), decreasing=TRUE)
+table(f2$part_size_class)
 # plot  profiles 1 thru 10
-par(mar=c(0,1,1,1))
-plot(f1[1:10, ], label='site_id')
+par(mar=c(0,0,2,1))
+plot(f2[1:10, ], label='site_id')
+title('Sandy-Skeletal Particle Size Control Section Class')
 ```
 
 #### Additional syntax options for use in `which()` criteria
@@ -1030,13 +1039,14 @@ We could have used the following code to pull the upper depth to calcium carbona
 
 The following is an example of how you could use the diagnostic features (if populated!) from the extended data to determine the thickness of some diagnostic feature of interest:
 
-```{r owndata_j3, eval=TRUE, echo=TRUE, results='show', warning=FALSE}
+```{r owndata_j3, results='show', warning=FALSE, fig.width=6, fig.height=4}
 # rename gopheridge data
 f <- gopheridge
 # get diagnostic features associated with pedons loaded from selected set
 d <- diagnostic_hz(f)
 # summary of the diagnostic features in your data!
-levels(factor(d$diag_kind))
+unique(d$diag_kind)
+sort(table(d$diag_kind), decreasing = TRUE)
 # subset argillic horizons
 d <- d[which(d$diag_kind == 'argillic horizon'), ]
 # create a new column and subtract the upper from the lower depth
@@ -1059,7 +1069,10 @@ f <- fetchNASIS()
 # get diagnostic features associated with pedons loaded from selected set
 d <- diagnostic_hz(f)
 # summary of the diagnostic features in your data!
-levels(factor(d$diag_kind))
+unique(d$diag_kind)
+# top 5 most frequent
+sort(table(d$diag_kind), decreasing = TRUE)[1:5]
+
 # subset argillic horizons - or choose your own diagnostic feature and modify this script!
 #idx <- which(d$diag_kind == 'your_diagnostic')
 #d <- d[idx, ]
@@ -1147,22 +1160,18 @@ For more information regarding working with difficult pedon data see the followi
 
 # References
 
-Tutorials on the AQP website - (http://aqp.r-forge.r-project.org/)
-
-Package 'AQP' manual - (https://cran.r-project.org/web/packages/aqp/aqp.pdf)
-
-Package 'soilDB' manual - (https://cran.r-project.org/web/packages/aqp/soilDB.pdf)
-
-Package 'sharpshootR' manual - (https://cran.r-project.org/web/packages/aqp/sharpshootR.pdf)
-
-Package 'plyr' manual - (https://cran.r-project.org/web/packages/plyr/plyr.pdf)
+ * [Tutorials on the AQP website](http://aqp.r-forge.r-project.org/)
+ * [Package 'aqp' manual](https://cran.r-project.org/web/packages/aqp/aqp.pdf)
+ * [Package 'soilDB' manual](https://cran.r-project.org/web/packages/aqp/soilDB.pdf)
+ * [Package 'sharpshootR' manual](https://cran.r-project.org/web/packages/aqp/sharpshootR.pdf)
+ * [Package 'plyr' manual](https://cran.r-project.org/web/packages/plyr/plyr.pdf)
 
 
 ## Additional resources
 
-**Quick R website**(http://www.statmethods.net/)
+ * [**Quick R website**](http://www.statmethods.net/)
+ * [**Simple R tutorial**](http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf)
 
-**Simple R tutorial**(http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf)
 
 
 
