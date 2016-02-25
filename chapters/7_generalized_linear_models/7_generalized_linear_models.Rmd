@@ -230,7 +230,7 @@ pedons2 <- pedons[idx]
 coordinates(pedons2) <- ~ x + y # set the coordinates
 proj4string(pedons2) <- CRS("+init=epsg:4326") # set the projection
 
-ssa <- readOGR(dsn = "L:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
 ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
 # ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
 pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to sp object
@@ -239,7 +239,7 @@ plot(ca794, axes = TRUE)
 plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 
 pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # reproject coordinate system 
-# writeOGR(pedons_sp, dsn = "L:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
+# writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") # write shapefile of pedons
 ```
 
 Notice in the above figure the number of points that fall outside the survey boundary. What it doesn't show is the points in the Ocean or Mexico.
@@ -255,7 +255,7 @@ Notice in the above figure the number of points that fall outside the survey bou
 Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data locations. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract the geodata values where they intersect with field data.
 
 ```{r extract}
-folder <- "L:/geodata/project_data/8VIC/ca794/"
+folder <- "M:/geodata/project_data/8VIC/ca794/"
 files <- c(
   elev   = "ned30m_8VIC.tif",
   slope  = "ned30m_8VIC_slope5.tif",
@@ -284,7 +284,6 @@ data <- data.frame(
    as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "argillic", "x_std", "y_std", "describer2")],
    extract(geodata_r, pedons_sp)
    )
-names(data)[names(data) == "ls_6"] <- "ls_7"
 
 # s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
 # slot(pedons, "site") <- s
@@ -297,15 +296,15 @@ names(data)[names(data) == "ls_6"] <- "ls_7"
 With out spatial data in hand, we can now see whether any of the varibles will help us separate the presense/absense of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. greatest separation in their median values).  
 
 ```{r spatial}
-data$argillic <- data$argillic == TRUE & data$mrvbf > 0.15 # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+data$argillic2 <- data$argillic == TRUE & data$mrvbf > 0.15 # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 
 data_m <- subset(data, select = - c(pedon_id, taxonname, x_std, y_std, describer2))
-data_m <- melt(data_m, id = "argillic")
-bwplot(argillic ~ value | variable, data = data_m, scales = list(x = "free"))
+data_m <- melt(data_m, id = "argillic2")
+bwplot(argillic2 ~ value | variable, data = data_m, scales = list(x = "free"))
 
 # Argillic horizons seem to occur over a limited range of twi. So lets rescale twi by substracting its median
-aggregate(twi ~ argillic, data = data, median, na.rm = TRUE)
-data$twi_sc <- abs(data$twi - 13.7)
+aggregate(twi ~ argillic2, data = data, summary)
+data$twi_sc <- abs(data$twi - 13.8)
 ```
 
 ## <a id="glm")></a> 7.5 Modeling
@@ -317,14 +316,13 @@ data$twi_sc <- abs(data$twi - 13.7)
 - Discourage stepwise methods, instead encourage expert guided process
 
 ```{r fitting}
-data2 <- subset(data, select = - c(pedon_id, describer2, taxonname, x_std, y_std))
-data2 <- na.exclude(data2)
-
-test <- glm(argillic ~ ., data = data2, family = binomial(link = "cloglog"))
+test <- glm(argillic2 ~ ., data = data, family = binomial(link = "cloglog"))
 summary(test)
 confusionMatrix(test$fitted.values > 0.5, as.logical(test$y), positive = "TRUE")
 
-test2 <- glm(argillic ~ twi_sc + slope + z2str + tc_2, data = data2, family = binomial(link = "cloglog"))
+test1 <- glm(argillic2 ~ 1, data = data, family = binomial(link = "cloglog"))
+
+test2 <- glm(argillic2 ~ twi_sc + slope + z2str + ls_1, data = data, family = binomial(link = "cloglog"))
 summary(test2)
 ```
 
@@ -333,15 +331,31 @@ summary(test2)
 
 - Discuss the different accuracy metrics
 - Discuss the effect of setting a threshold
-- Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some cluster appear to be dominanted by specific soil series, this data isn't clean enough (nor are concepts usually) to model series separately however we could use the cluster as an additional model to separate the series
+- Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some cluster appear to be dominanted by specific soil series, this data isn't clean enough (nor are concepts usually) to model series separately however we could use the cluster as an additional model to separate the series. Cluster 2, 6, 7, 8, 13 and 15 all appear to be hyperthermic
 
 ```{r evaluation}
-comp <- cbind(data3[c("argillic", "cluster")], pred = predict(test_glm, data3, type = "response") > 0.5)
+comp <- cbind(data2[c("argillic2", "cluster")], pred = predict(test2, data2, type = "response") > 0.5)
 comp <- na.exclude(comp)
-confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
+confusionMatrix(comp$pred, comp$argillic2, positive = "TRUE")
 
-comp2 <- comp[comp$argillic == TRUE, ]
-group_by(comp2, cluster) %>% summarize(sum(argillic), sum(pred), recall = round(sum(pred == argillic) / length(argillic), 2))
+comp2 <- comp[comp$argillic2 == TRUE, ]
+group_by(comp2, cluster) %>% summarize(sum(argillic2), sum(pred), recall = round(sum(pred == argillic2) / length(argillic2), 2))
+
+
+data3 <- subset(data2, !(cluster %in% c(2, 6, 7, 8, 13, 15)))
+aggregate(twi ~ argillic2, data = data2, summary)
+data3$twi_sc2 <- abs(data3$twi - 13.8)
+
+test <- glm(argillic2 ~ ., data = data3, family = binomial(link = "cloglog"))
+
+test2 <- glm(argillic2 ~ slope + twi_sc2 + ls_1 + mrvbf + z2str, data = data3, family = binomial(link = "cloglog"))
+summary(test2)
+comp <- cbind(data3[c("argillic2", "cluster")], pred = predict(test2, data3, type = "response") > 0.5)
+comp <- na.exclude(comp)
+confusionMatrix(comp$pred, comp$argillic2, positive = "TRUE")
+comp2 <- comp[comp$argillic2 == TRUE, ]
+group_by(comp2, cluster) %>% summarize(sum(argillic2), sum(pred), recall = round(sum(pred == argillic2) / length(argillic2), 2))
+
 ```
 
 - View the results in ArcGIS and examine the accuracy at individual points
@@ -350,7 +364,7 @@ group_by(comp2, cluster) %>% summarize(sum(argillic), sum(pred), recall = round(
 
 ```{r prediction}
 r <- predict(geodata_r, test2, progress="text", type = "response")
-writeRaster(r1, "test.tif", overwrite = T, progress = "text")
+writeRaster(r, "test.tif", overwrite = T, progress = "text")
 ```
 
 
