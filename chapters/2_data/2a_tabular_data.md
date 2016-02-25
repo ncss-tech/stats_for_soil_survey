@@ -1,5 +1,5 @@
 # Chapter 2 - Tabular data we use
-Jay Skovlin, D.E. Beaudette, Stephen Roecker  
+Jay Skovlin, Dylan Beaudette, Stephen Roecker  
 February 2016  
 
 
@@ -8,6 +8,20 @@ February 2016
 
 
 # Getting acquainted with the soilDB package
+
+What if you could extract, organize, and visualize data from NASIS (or many other commonly used sources) with a couple of lines of code? You can! 
+
+
+```r
+library(soilDB)
+pedons <- fetchNASIS()
+# a couple more steps ...
+plot(pedons)
+```
+
+<img src="figure/aqp_profile_plot_example_sjer.png" border="0">
+
+
 ## Objectives:
 - Use the soilDB package to load NASIS pedon data into R
 -	Learn about the checks run by the fetch functions when pulling data into R
@@ -41,7 +55,7 @@ Examples in the sections below are meant to be copied/pasted from this document 
   
 ## Classes of objects used in R
  
-One of the most versatile things about R is that there are many ways manipulate and work with data.  Below are examples of how to create and reference information in several data types that are commonly used in working with soil data. Within the R session, *objects* contain information: loaded from files, extracted from NASIS, created on the fly, or calculated by some function.
+One of the most versatile things about R is that there are many ways manipulate and work with data.  Below are examples of how to create and reference information in several data types that are commonly used in working with soil data. Within the R session, *objects* contain information: loaded from files, extracted from NASIS, created on the fly, or calculated by some function. If none of the base classes are sufficient for a tast, it is possible to define custom classes. The `SoilProfileCollection` is one such example. More on this later.
  
 ### Vectors
 *Vectors* are a fundamental object in the R language that represent a set of 1 or more numbers, characters (commonly called strings), or boolean (TRUE/FALSE) values.
@@ -967,17 +981,21 @@ f1 <- f[idx, ]
 # or use the index directly to summarize a field
 sort(table(f$part_size_class[idx]), decreasing=TRUE)
 ```
-Let's do a quick graphical check that we've selected the 'lithic*' profiles by plotting them in R using the AQP package `plot()` function.
+
+Let's do a quick graphical check that we've selected the 'lithic' profiles by plotting them in R using the `SoilProfileCollection` "plot" method (e.g. specialized version of the generic `plot()` function).
 
 
 ```r
 # adjust margins
-par(mar=c(1,0,1,1))
+par(mar=c(1,0,2,1))
 # plot the first 10 profiles of the 'f1' subset
-plot(f1[1:10, ], label='site_id', max.depth=100)
+# limit plotting to a depth of about 60cm
+plot(f1[1:10, ], label='site_id', max.depth=60)
+title('Pedons with the word "lithic" at subgroup-level of Soil Taxonomy')
 ```
 
 <img src="2a_tabular_data_files/figure-html/owndata_e-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+
 For more information on using regular expressions in `grep()` for pattern matching operations: [Regular-expression-syntax](https://www.gnu.org/software/findutils/manual/html_node/find_html/grep-regular-expression-syntax.html)
 
 
