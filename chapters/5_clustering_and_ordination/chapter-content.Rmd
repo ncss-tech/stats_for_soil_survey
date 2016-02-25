@@ -1,5 +1,5 @@
 ---
-title: "Clustering and Ordination"
+title: "Numerical Taxonomy, Clustering, Ordination"
 author: "D.E. Beaudette"
 date: "March 2016"
 output:
@@ -76,13 +76,15 @@ library(RColorBrewer)
 library(MASS)
 ```
 
+<!-- This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`. -->
+
+
+
+# Introduction
+
 
 ![alt.text](static-figures/soils-by-pigments.png)
 
-
-
-
-# Clustering and Ordination
 
 ## Objectives
 * Learn essential vocabulary used in the field of numerical taxonomy, review some of the literature
@@ -96,9 +98,9 @@ library(MASS)
 * Apply techniques from numerical taxonomy to addressing the "similar/disimilar" question
 
 
-## Introduction
+## A whirlwind tour
 
-### Similarity, Disimilarty, and Distance
+### Similarity, disimilarty, and distance
 
 There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column. For example:
 
@@ -140,7 +142,7 @@ Note that this is the "full" form of the **distance matrix**, with 0s on the dia
 Interpretation is simple: individual "A" is more like "ABt" than "Bt1". It is important to note that quantification of disimilarity (distance) among individuals is always relative: *"X is more like Y, as compared to Z"*. More on this later.
 
 
-### Characteristics, Units of Measure, and Standardization
+### Standardization of characteristics
 
 Euclidean distance doesn't make much sense when characteristics do not share a common unit of measure, range of values, or when some characteristics are categorical vs. continuous. For example, distances are distorted when computed from clay (%) and exchangeable Ca (cmol/kg):
 
@@ -188,7 +190,7 @@ We can now begin to describe disimilarity between individuals using an arbitrary
  * What is standardization and why is it important?
    
 
-### Visualizing Pair-Wise Distances: The Dendrogram
+### Visualizing pair-wise distances: the dendrogram
 
 [Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way visualizaing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Disimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
 
@@ -231,7 +233,7 @@ mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, stand
 There isn't much difference between these two figures, because most of the characteristics in this example dataset are highly correlated with soil texture. More on this later.
 
 
-### Cluster Analysis: Finding Groups
+### Cluster analysis: finding groups
 
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
 # re-make data, this time with all profiles
@@ -264,7 +266,7 @@ tiplabels(pch=15, col=cols)
 ```
 
 
-### Ordination: Visualization in a Reduced Space
+### Ordination: visualization in a reduced space
 
 |name |  clay|  sand|    Mg|    Ca| CEC_7|
 |:----|-----:|-----:|-----:|-----:|-----:|
@@ -320,26 +322,111 @@ plot(sp4, color='cl', cex.names=0.75)
 
 
 
+# Learn by doing
 
-### Follow Along in R
+## Setup the R session
 Install R packages as needed. Open a new R script file to use as you follow along.
 ```{r, results='hide'}
 # load libraries
 library(aqp)
+library(soilDB)
+library(sharpshootR)
 library(cluster)
 library(ape)
 library(RColorBrewer)
-library(latticeExtra)
-library(plotrix)
+library(vegan)
 ```
 
-## The Distance Matrix
-
-[Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way of depicting [pair-wise dissimilarity](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) between objects, commonly associated with the topic of [cluster analysis](http://en.wikipedia.org/wiki/Cluster_analysis). This is a complex subject that is best left to [experts](http://www.amazon.com/Finding-Groups-Data-Introduction-Analysis/dp/0471878766) and [textbooks](http://www.amazon.com/Principles-Numerical-Taxonomy-Books-Biology/dp/B0006AYNO8), so I won't even attempt to cover it here. Unfortunately the interpretation of dendrograms is not very intuitive, especially when the source data are complex. In addition, pair-wise dissimilarity computed between soil profiles and visualized via dendrogram should not be confused with the use of dendrograms in the field of [cladistics](http://en.wikipedia.org/wiki/Cladistics)-- where relation to a common ancestor is depicted.
+### Example data and following along with your own data
 
 
+## More on the distance matrix and how to make one
 
-```{r, fig.width=8, fig.height=4, htmlcap='xxx'}
+```{r, }
+# dist()
+# daisy()
+# vegdist()
+```
+
+### Distance calculations with categorical data
+
+```{r, }
+# SoilTaxonomyDendrogram()
+# component.adj.matrix()
+```
+
+
+## Hierachrical clustering
+
+### Agglomerative methods
+
+```{r, }
+# hclust()
+# agnes()
+```
+
+### Divisive methods
+
+```{r, }
+# dianna()
+```
+
+### Advanced plotting functions
+
+```{r, }
+# as.phylo()
+```
+
+## Partitioning into clusters
+
+```{r, }
+# 1D example
+# 2D example
+```
+
+### Hard classes
+
+```{r, }
+# pam()
+# clara()
+```
+
+### Fuzzy classes
+
+```{r, }
+# fanny()
+```
+
+
+
+## Interpretation / application
+
+```{r, }
+# Hmisc::
+# varclus()
+# naclus()
+```
+
+
+## Ordination (Non-metric multidimensional scaling)
+
+### Sammon's non-linear mapping
+
+### MDS with the `vegan` package
+
+### Interpretation
+
+
+# Practical applications
+
+
+# References
+
+
+
+
+
+```{r, echo=FALSE, eval=FALSE, fig.width=8, fig.height=4}
 # simulate some aggregate profile data
 frags <- c(16, 5, 25, 6, 3) # rock fragments
 clay <- c(8, 15, 17, 25, 31) # clay contents
@@ -373,92 +460,7 @@ text(s$clay, s$frags, row.names(s), font=2)
 plot(d.phylo, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90, y.lim=c(-1, 15))
 ```
 
-
-### A Soils Example
-```{r fig.width=9, fig.height=3}
-# setup some colors
-cols <- brewer.pal(3, 'Set1')
-
-# setup horizon-level data: data are from lab sampled pedons
-d <- read.csv(
-	textConnection('
-series,name,top,bottom,clay,frags,pH
-auburn,A,0,3,15,6,5.6
-auburn,Bw1,3,15,15,13,5.6
-auburn,Bw2,15,38,18,9,5.8
-dunstone,A,0,5,16,13,6
-dunstone,Bt1,5,17,17,19,6.3
-dunstone,Bt2,17,31,20,6,6.3
-dunstone,Bt3,31,41,21,15,6.3
-sobrante,A1,0,5,18,0,5.8
-sobrante,A2,5,10,16,2,5.7
-sobrante,Bt1,10,28,15,21,5.8
-sobrante,Bt2,28,51,18,13,6.2
-sobrante,Bt3,51,74,20,12,6.2
-'))
-
-# establish site-level data
-s <- data.frame(
-	series=c('auburn', 'dunstone', 'sobrante'), 
-	precip=c(24, 30, 32),
-	stringsAsFactors=FALSE
-	)
-
-# generate fake horizon names with clay / frags / ph
-# d$fake.name <- with(d, paste(clay, frags, pH, sep='/'))
-
-# upgrade to SoilProfile Collection object
-depths(d) <- series ~ top + bottom
-site(d) <- s
-
-# plot profiles, coloring horizons based on soil property
-par(mfcol=c(1,3), mar=c(0,0,4,0))
-plot(d, color='clay', cex.names=0.85, axis.line.offset=-3.5)
-plot(d, color='frags', cex.names=0.85, axis.line.offset=-3.5)
-plot(d, color='pH', cex.names=0.85, axis.line.offset=-3.5)
-```
-
-```{r fig.width=5, fig.height=5, htmlcap='xxx'}
-# inspect variables used to determine dissimilarity
-h <- horizons(d)
-splom(~ h[, c('clay', 'pH', 'frags')], groups=series, data=h, type=c('p', 'g'),
-auto.key=list(columns=3, points=TRUE, lines=FALSE), 
-par.settings=list(superpose.symbol=list(pch=16, col=cols, cex=1)))
-```
-
-```{r compute-distance, fig.width=8, fig.height=4}
-# compute betwee-profile dissimilarity, no depth weighting
-d.dis <- profile_compare(d, vars=c('clay', 'pH', 'frags'), k=0, 
-max_d=61, replace_na=TRUE, add_soil_flag=TRUE)
-
-# check total, between-profile dissimilarity, normalized to maximum
-d.m <- signif(as.matrix(d.dis / max(d.dis)), 2)
-print(d.m)
-
-# group via divisive hierarchical clustering
-d.diana <- diana(d.dis)
-# convert classes, for better plotting
-d.phylo <- as.phylo(as.hclust(d.diana))
-
-
-# plot: 2 figures side-by-side
-par(mfcol=c(1,2), mar=c(2,2,2,2))
-# profiles
-plot(d, width=0.1, name='name')
-# annotate shallow-mod.deep break
-abline(h=50, col='red', lty=2)
-# add dissimilarity matrix
-addtable2plot(0.2, 70, format(d.m, digits=2), display.rownames=TRUE, 
-xjust=0, yjust=0, cex=0.6, title='Total Dissimilarity')
-# plot dendrogram in next panel
-plot(d.phylo, direction='down', adj=0.5, srt=0, 
-label.offset=0.5, font=1, y.lim=c(-5, 25), cex=0.7)
-```
-
-
-***********
-
-```{r demo-2}
+```{r demo-2, echo=FALSE, eval=FALSE}
 # continuing from example above...
 	
 # return dissimilarity matrices at each depth slice
@@ -501,53 +503,85 @@ p.3 <- c('Slice-Wise Distance'=p.1, 'Cumulative Distance'=p.2)
 update(p.3, par.settings=list(superpose.line=list(col=cols, lwd=2, lty=c(1,2,4)), strip.background=list(col=grey(0.85))))
 ```
 
+```{r  echo=FALSE, fig.width=9, eval=FALSE, fig.height=3}
+# setup some colors
+cols <- brewer.pal(3, 'Set1')
+
+# setup horizon-level data: data are from lab sampled pedons
+d <- read.csv(
+	textConnection('
+series,name,top,bottom,clay,frags,pH
+auburn,A,0,3,15,6,5.6
+auburn,Bw1,3,15,15,13,5.6
+auburn,Bw2,15,38,18,9,5.8
+dunstone,A,0,5,16,13,6
+dunstone,Bt1,5,17,17,19,6.3
+dunstone,Bt2,17,31,20,6,6.3
+dunstone,Bt3,31,41,21,15,6.3
+sobrante,A1,0,5,18,0,5.8
+sobrante,A2,5,10,16,2,5.7
+sobrante,Bt1,10,28,15,21,5.8
+sobrante,Bt2,28,51,18,13,6.2
+sobrante,Bt3,51,74,20,12,6.2
+'))
+
+# establish site-level data
+s <- data.frame(
+	series=c('auburn', 'dunstone', 'sobrante'), 
+	precip=c(24, 30, 32),
+	stringsAsFactors=FALSE
+	)
+
+# generate fake horizon names with clay / frags / ph
+# d$fake.name <- with(d, paste(clay, frags, pH, sep='/'))
+
+# upgrade to SoilProfile Collection object
+depths(d) <- series ~ top + bottom
+site(d) <- s
+
+# plot profiles, coloring horizons based on soil property
+par(mfcol=c(1,3), mar=c(0,0,4,0))
+plot(d, color='clay', cex.names=0.85, axis.line.offset=-3.5)
+plot(d, color='frags', cex.names=0.85, axis.line.offset=-3.5)
+plot(d, color='pH', cex.names=0.85, axis.line.offset=-3.5)
+```
+
+```{r  echo=FALSE,fig.width=5, eval=FALSE, fig.height=5}
+# inspect variables used to determine dissimilarity
+h <- horizons(d)
+splom(~ h[, c('clay', 'pH', 'frags')], groups=series, data=h, type=c('p', 'g'),
+auto.key=list(columns=3, points=TRUE, lines=FALSE), 
+par.settings=list(superpose.symbol=list(pch=16, col=cols, cex=1)))
+```
+
+```{r  echo=FALSE, compute-distance, eval=FALSE, fig.width=8, fig.height=4}
+# compute betwee-profile dissimilarity, no depth weighting
+d.dis <- profile_compare(d, vars=c('clay', 'pH', 'frags'), k=0, 
+max_d=61, replace_na=TRUE, add_soil_flag=TRUE)
+
+# check total, between-profile dissimilarity, normalized to maximum
+d.m <- signif(as.matrix(d.dis / max(d.dis)), 2)
+print(d.m)
+
+# group via divisive hierarchical clustering
+d.diana <- diana(d.dis)
+# convert classes, for better plotting
+d.phylo <- as.phylo(as.hclust(d.diana))
 
 
-### Measures of Disimilarity
-
-### Interpretation
-
-### The Dendrogram
-
-
-## Hierachrical Clustering
-
-### Agglomerative Methods
-
-### Divisive Methods
-
-### Interpretation and Caveats
-
-
-## Partitioning Methods
-
-### Hard Classes
-
-### Fuzzy Classes
-
-### Visualization Methods
-
-### Interpretation
-
-
-
-## The Curse of Dimensionality
-
-### Principal Component Analysis
-variance-based
-
-### Non-Metric Multidimensional Scaling
-distance-based
-
-### Interpretation
-
-example reference [@OSD_reference]
-
-# References
-fake text here
-
-
-
+# plot: 2 figures side-by-side
+par(mfcol=c(1,2), mar=c(2,2,2,2))
+# profiles
+plot(d, width=0.1, name='name')
+# annotate shallow-mod.deep break
+abline(h=50, col='red', lty=2)
+# add dissimilarity matrix
+addtable2plot(0.2, 70, format(d.m, digits=2), display.rownames=TRUE, 
+xjust=0, yjust=0, cex=0.6, title='Total Dissimilarity')
+# plot dendrogram in next panel
+plot(d.phylo, direction='down', adj=0.5, srt=0, 
+label.offset=0.5, font=1, y.lim=c(-5, 25), cex=0.7)
+```
 
 
 
