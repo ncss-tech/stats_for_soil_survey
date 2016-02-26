@@ -769,10 +769,10 @@ title('Pedons from the `gopheridge` sample dataset', line=-0.5)
 #### Subset example of the data in the site-level portion of the SPC:
 
 
-peiid    pedon_id    siteiid  site_id         obs_date      utmzone   utmeasting   utmnorthing           x          y
--------  ---------  --------  --------------  -----------  --------  -----------  ------------  ----------  ---------
-242808   07JCR002     244384  07CA630JCR002   2007-04-02         10     700783.0       4201935   -120.7150   37.94286
-268791   07JCR003     269602  07CA630JCR003   2007-05-14         10     714552.7       4191747   -120.5614   37.84805
+peiid    pedon_id    siteiid  site_id         obs_date               utmzone   utmeasting   utmnorthing           x          y
+-------  ---------  --------  --------------  --------------------  --------  -----------  ------------  ----------  ---------
+242808   07JCR002     244384  07CA630JCR002   2007-04-02 01:00:00         10     700783.0       4201935   -120.7150   37.94286
+268791   07JCR003     269602  07CA630JCR003   2007-05-14 01:00:00         10     714552.7       4191747   -120.5614   37.84805
 
 
 
@@ -792,8 +792,8 @@ Blue Oak Woodland   NA                      60  Metavolcanics   Extremely weakly
 
 shapeacross   shapedown   slopecomplex   drainagecl     classdate             classifier   class_type   taxonname    taxon_kind 
 ------------  ----------  -------------  -------------  --------------------  -----------  -----------  -----------  -----------
-Linear        Linear      complex        Well drained   2012-01-24 00:00:00   NA           series       GOPHERIDGE   series     
-Convex        Convex      NA             Well drained   2012-01-24 23:15:24   NA           series       GOPHERIDGE   series     
+Linear        Linear      complex        Well drained   2012-01-24 01:00:00   NA           series       GOPHERIDGE   series     
+Convex        Convex      NA             Well drained   2012-01-25 00:15:24   NA           series       GOPHERIDGE   series     
 
 #### Subset example of the data in the horizon-level portion of the SPC:
 
@@ -1046,32 +1046,14 @@ sort(table(f1$tax_subgroup), decreasing=TRUE)
 
 ```
 ## 
-##       oxyaquic humicryepts          histic cryaquepts    fluvaquentic cryaquepts 
-##                         14                         13                          8 
-##      oxyaquic cryofluvents       oxyaquic humixerepts       oxyaquic cryorthents 
-##                          7                          7                          6 
-##     oxyaquic dystrocryepts           typic cryaquents         aquic xerofluvents 
-##                          6                          6                          4 
-##           humic cryaquepts          aquic humicryepts          aquic humixerepts 
-##                          4                          3                          3 
-##         cumulic humaquepts   fluvaquentic humicryepts          histic humaquepts 
-##                          3                          3                          3 
-##      oxyaquic xerofluvents           typic humaquepts         aquic cryofluvents 
-##                          3                          3                          2 
-##         aquic haploxerepts fluvaquentic haplosaprists       oxyaquic xerorthents 
-##                          2                          2                          2 
-##  thapto-histic fluvaquents           aeric cryaquepts          aquic cryorthents 
-##                          2                          1                          1 
-##        aquic dystrocryepts        aquic xeropsamments   fluvaquentic cryohemists 
-##                          1                          1                          1 
-##  fluvaquentic cryosaprists fluvaquentic dystrocryepts  fluvaquentic haplohemists 
-##                          1                          1                          1 
-##    fluvaquentic humaquepts      fluventic endoaquepts    humaqueptic endoaquents 
-##                          1                          1                          1 
-##    humaqueptic fluvaquents     oxyaquic cryopsamments           typic cryaquepts 
-##                          1                          1                          1 
-##          typic endoaquents          typic fluvaquents 
-##                          1                          1
+##       typic cryaquents      histic cryaquepts  oxyaquic cryofluvents    aquandic cryaquepts 
+##                      8                      6                      4                      2 
+##   oxyaquic cryochrepts oxyaquic dystrocryepts       aeric cryaquepts     histic endoaquolls 
+##                      2                      2                      1                      1 
+##       humic cryaquepts    oxyaquic hapludolls   oxyaquic haplustalfs  oxyaquic vitricryands 
+##                      1                      1                      1                      1 
+##       typic cryaquepts      typic endoaquolls 
+##                      1                      1
 ```
 
 ```r
@@ -1081,17 +1063,15 @@ sort(table(f1$part_size_class), decreasing=TRUE)
 ```
 ## 
 ##                            sandy-skeletal                              coarse-loamy 
-##                                        30                                        26 
-##                                     sandy                            loamy-skeletal 
-##                                        26                                        21 
-##                                  not used coarse-loamy over sandy or sandy-skeletal 
-##                                         6                                         5 
-##                              coarse-silty coarse-silty over sandy or sandy-skeletal 
-##                                         2                                         2 
-##   fine-silty over sandy or sandy-skeletal                   sandy or sandy-skeletal 
+##                                        11                                         6 
+##                            loamy-skeletal                                fine-loamy 
+##                                         5                                         3 
+##                                fine-silty                clayey over loamy-skeletal 
+##                                         2                                         1 
+## coarse-loamy over sandy or sandy-skeletal   fine-loamy over sandy or sandy-skeletal 
 ##                                         1                                         1 
-##                          sandy over loamy 
-##                                         1
+##   fine-silty over sandy or sandy-skeletal                                     sandy 
+##                                         1                                         1
 ```
 
 ```r
@@ -1106,7 +1086,7 @@ table(f2$part_size_class)
 ```
 ## 
 ## sandy-skeletal 
-##             30
+##             11
 ```
 
 ```r
@@ -1139,51 +1119,29 @@ names(s)
 ```
 
 ```
-##  [1] "peiid"                                    "pedon_id"                                
-##  [3] "siteiid"                                  "site_id"                                 
-##  [5] "obs_date"                                 "utmzone"                                 
-##  [7] "utmeasting"                               "utmnorthing"                             
-##  [9] "x"                                        "y"                                       
-## [11] "datum"                                    "x_std"                                   
-## [13] "y_std"                                    "gpspositionalerror"                      
-## [15] "describer"                                "pedon_purpose"                           
-## [17] "pedon_type"                               "pedlabsampnum"                           
-## [19] "labdatadescflag"                          "elev_field"                              
-## [21] "slope_field"                              "aspect_field"                            
-## [23] "plantassocnm"                             "coverkind_1"                             
-## [25] "bedrckdepth"                              "bedrock_kind"                            
-## [27] "bedrock_hardness"                         "hillslope_pos"                           
-## [29] "slope_position"                           "shapeacross"                             
-## [31] "shapedown"                                "slopecomplex"                            
-## [33] "drainagecl"                               "classdate"                               
-## [35] "classifier"                               "class_type"                              
-## [37] "taxonname"                                "taxon_kind"                              
-## [39] "series_status"                            "part_size_class"                         
-## [41] "tax_order"                                "tax_suborder"                            
-## [43] "tax_grtgroup"                             "tax_subgroup"                            
-## [45] "tax_edition"                              "osdtypelocflag"                          
-## [47] "tax_moistureclass"                        "temp_class"                              
-## [49] "tax_fam_other"                            "psctopdepth"                             
-## [51] "pscbotdepth"                              "selection_method"                        
-## [53] "umbric.epipedon"                          "lithic.contact"                          
-## [55] "cambic.horizon"                           "histic.epipedon"                         
-## [57] "mollic.epipedon"                          "aquic.conditions"                        
-## [59] "ochric.epipedon"                          "argillic.horizon"                        
-## [61] "redox.concentrations"                     "reduced.matrix"                          
-## [63] "paralithic.contact"                       "abrupt.textural.change"                  
-## [65] "fibric.soil.materials"                    "hemic.soil.materials"                    
-## [67] "sapric.soil.materials"                    "redox.depletions.with.chroma.2.or.less"  
-## [69] "densic.materials"                         "lithologic.discontinuity"                
-## [71] "paralithic.materials"                     "densic.contact"                          
-## [73] "strongly.contrasting.particle.size.class" "calcic.horizon"                          
-## [75] "folistic.epipedon"                        "andic.soil.properties"                   
-## [77] "human.transported.material"               "surface_fgravel"                         
-## [79] "surface_gravel"                           "surface_cobbles"                         
-## [81] "surface_stones"                           "surface_boulders"                        
-## [83] "surface_channers"                         "surface_flagstones"                      
-## [85] "surface_paragravel"                       "surface_paracobbles"                     
-## [87] "landform.string"                          "pmkind"                                  
-## [89] "pmorigin"
+##  [1] "peiid"                 "pedon_id"              "siteiid"              
+##  [4] "site_id"               "obs_date"              "utmzone"              
+##  [7] "utmeasting"            "utmnorthing"           "x"                    
+## [10] "y"                     "datum"                 "x_std"                
+## [13] "y_std"                 "gpspositionalerror"    "describer"            
+## [16] "pedon_purpose"         "pedon_type"            "pedlabsampnum"        
+## [19] "labdatadescflag"       "elev_field"            "slope_field"          
+## [22] "aspect_field"          "plantassocnm"          "coverkind_1"          
+## [25] "bedrckdepth"           "bedrock_kind"          "bedrock_hardness"     
+## [28] "hillslope_pos"         "slope_position"        "shapeacross"          
+## [31] "shapedown"             "slopecomplex"          "drainagecl"           
+## [34] "classdate"             "classifier"            "class_type"           
+## [37] "taxonname"             "taxon_kind"            "series_status"        
+## [40] "part_size_class"       "tax_order"             "tax_suborder"         
+## [43] "tax_grtgroup"          "tax_subgroup"          "tax_edition"          
+## [46] "osdtypelocflag"        "tax_moistureclass"     "temp_class"           
+## [49] "tax_fam_other"         "psctopdepth"           "pscbotdepth"          
+## [52] "selection_method"      "andic.soil.properties" "mollic.epipedon"      
+## [55] "cambic.horizon"        "surface_fgravel"       "surface_gravel"       
+## [58] "surface_cobbles"       "surface_stones"        "surface_boulders"     
+## [61] "surface_channers"      "surface_flagstones"    "surface_paragravel"   
+## [64] "surface_paracobbles"   "landform.string"       "pmkind"               
+## [67] "pmorigin"
 ```
 
 ```r
@@ -1521,7 +1479,7 @@ How about examples where we truncate the thickness or we're interested in summar
 Simple example: `slab(f, fm= peiid ~ clay, slab.structure=c(25,100), slab.fun=mean, na.rm=TRUE)`
 
 Some excellent examples using the `slice()` and `slab()` functions in the AQP package can be found here:
-[`Introduction to SoilProfileCollection`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)
+[**Introduction to SoilProfileCollection**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)
 
 ## Getting additional data: Extended data functions in soilDB
 
@@ -1688,19 +1646,7 @@ unique(d$diag_kind)
 ```
 
 ```
-##  [1] "umbric epipedon"                          "lithic contact"                          
-##  [3] "cambic horizon"                           "histic epipedon"                         
-##  [5] "mollic epipedon"                          "aquic conditions"                        
-##  [7] "ochric epipedon"                          "argillic horizon"                        
-##  [9] "redox concentrations"                     "reduced matrix"                          
-## [11] "paralithic contact"                       "abrupt textural change"                  
-## [13] "fibric soil materials"                    "hemic soil materials"                    
-## [15] "sapric soil materials"                    "redox depletions with chroma 2 or less"  
-## [17] "densic materials"                         NA                                        
-## [19] "lithologic discontinuity"                 "paralithic materials"                    
-## [21] "densic contact"                           "strongly contrasting particle size class"
-## [23] "calcic horizon"                           "folistic epipedon"                       
-## [25] "andic soil properties"                    "human-transported material"
+## [1] "andic soil properties" "mollic epipedon"       "cambic horizon"
 ```
 
 ```r
@@ -1710,10 +1656,10 @@ sort(table(d$diag_kind), decreasing = TRUE)[1:5]
 
 ```
 ## 
-##      umbric epipedon      ochric epipedon       cambic horizon       lithic contact 
-##                  319                  300                  210                  134 
-## redox concentrations 
-##                   72
+## andic soil properties        cambic horizon       mollic epipedon                  <NA> 
+##                    83                     1                     1                    NA 
+##                  <NA> 
+##                    NA
 ```
 
 ```r
@@ -1844,7 +1790,7 @@ For more information regarding working with difficult pedon data see the followi
 
 
 ----------------------------
-This document is based on `aqp` version 1.9.7 and `soilDB` version 1.7 and `sharpshootR` version 0.9.6.
+This document is based on `aqp` version 1.9.5 and `soilDB` version 1.7 and `sharpshootR` version 0.9.4.
 
 
 
