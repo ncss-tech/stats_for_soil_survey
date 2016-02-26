@@ -205,9 +205,9 @@ printcp(spodintmodel)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.432099      0   1.00000 1.00000 0.046614
-## 2 0.395062      1   0.56790 0.60494 0.047649
-## 3 0.024691      2   0.17284 0.17901 0.031254
-## 4 0.010000      3   0.14815 0.17284 0.030780
+## 2 0.395062      1   0.56790 0.59877 0.047561
+## 3 0.024691      2   0.17284 0.17284 0.030780
+## 4 0.010000      3   0.14815 0.16049 0.029794
 ```
 
 ```r
@@ -236,13 +236,13 @@ printcp(spodintmodel2)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.253086      0   1.00000 1.00000 0.046614
-## 2 0.058642      1   0.74691 0.78395 0.048794
-## 3 0.037037      3   0.62963 0.88272 0.048292
-## 4 0.030864      4   0.59259 0.81481 0.048724
-## 5 0.018519      5   0.56173 0.85802 0.048494
-## 6 0.015432      6   0.54321 0.82716 0.048674
-## 7 0.012346      8   0.51235 0.82716 0.048674
-## 8 0.010000     12   0.45679 0.79630 0.048776
+## 2 0.058642      1   0.74691 0.77778 0.048799
+## 3 0.037037      3   0.62963 0.79012 0.048787
+## 4 0.030864      4   0.59259 0.76543 0.048799
+## 5 0.018519      5   0.56173 0.72840 0.048724
+## 6 0.015432      6   0.54321 0.77160 0.048801
+## 7 0.012346      8   0.51235 0.77160 0.048801
+## 8 0.010000     12   0.45679 0.77778 0.048799
 ```
 
 The `printcp()` funtion generates a cost complexity parameter table that provides the complexity parameter value (CP), relative model error (1 - relative error = ~variance explained), error estimated from a 10-fold cross validation (xerror), and the standard error of the xerror (xstd). The CP values control the size of the tree; the greater the CP value, the fewer the number of splits in the tree. To determine the optimal CP value, rpart automatically performs a 10-fold cross validation. The optimal size of the tree is generally the row in the CP table that minimizes all error with the fewest branches. Another way to determine the optimal tree size is to use the `plotcp()` function. This will plot the xerror versus cp value and tree size. 
@@ -290,8 +290,8 @@ printcp(pruned)
 ## 
 ##        CP nsplit rel error  xerror     xstd
 ## 1 0.43210      0   1.00000 1.00000 0.046614
-## 2 0.39506      1   0.56790 0.60494 0.047649
-## 3 0.09900      2   0.17284 0.17901 0.031254
+## 2 0.39506      1   0.56790 0.59877 0.047561
+## 3 0.09900      2   0.17284 0.17284 0.030780
 ```
 
 ```r
@@ -327,9 +327,9 @@ printcp(pruned2)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.253086      0   1.00000 1.00000 0.046614
-## 2 0.058642      1   0.74691 0.78395 0.048794
-## 3 0.037037      3   0.62963 0.88272 0.048292
-## 4 0.034000      4   0.59259 0.81481 0.048724
+## 2 0.058642      1   0.74691 0.77778 0.048799
+## 3 0.037037      3   0.62963 0.79012 0.048787
+## 4 0.034000      4   0.59259 0.76543 0.048799
 ```
 
 ```r
@@ -385,17 +385,17 @@ printcp(spodintmodel3)
 ## 
 ## n= 250 
 ## 
-##          CP nsplit rel error  xerror     xstd
-## 1  0.318266      0   1.00000 1.00868 0.166369
-## 2  0.111721      1   0.68173 0.69460 0.115716
-## 3  0.050419      2   0.57001 0.73020 0.101976
-## 4  0.043957      3   0.51959 0.70155 0.102489
-## 5  0.031130      4   0.47564 0.67155 0.093714
-## 6  0.019235      5   0.44451 0.64760 0.093663
-## 7  0.013928      6   0.42527 0.69026 0.095812
-## 8  0.010851      7   0.41134 0.70506 0.094276
-## 9  0.010394      8   0.40049 0.72575 0.094627
-## 10 0.010000      9   0.39010 0.73546 0.094788
+##          CP nsplit rel error  xerror    xstd
+## 1  0.318266      0   1.00000 1.01149 0.16640
+## 2  0.111721      1   0.68173 0.70332 0.11678
+## 3  0.050419      2   0.57001 0.72342 0.10459
+## 4  0.043957      3   0.51959 0.71140 0.11279
+## 5  0.031130      4   0.47564 0.70792 0.11470
+## 6  0.019235      5   0.44451 0.74678 0.11608
+## 7  0.013928      6   0.42527 0.77474 0.12470
+## 8  0.010851      7   0.41134 0.80748 0.12713
+## 9  0.010394      8   0.40049 0.81461 0.12707
+## 10 0.010000      9   0.39010 0.82614 0.12740
 ```
 
 ```r
@@ -428,10 +428,10 @@ printcp(pruned3)
 ## 
 ## n= 250 
 ## 
-##         CP nsplit rel error xerror    xstd
-## 1 0.318266      0   1.00000 1.0087 0.16637
-## 2 0.111721      1   0.68173 0.6946 0.11572
-## 3 0.050419      2   0.57001 0.7302 0.10198
+##         CP nsplit rel error  xerror    xstd
+## 1 0.318266      0   1.00000 1.01149 0.16640
+## 2 0.111721      1   0.68173 0.70332 0.11678
+## 3 0.050419      2   0.57001 0.72342 0.10459
 ```
 
 **Was the majority of the variance in total O horizon thickness captured with the rpart model?**
@@ -466,8 +466,8 @@ rf # statistical summary
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 13
 ## 
-##           Mean of squared residuals: 21.93302
-##                     % Var explained: 39.01
+##           Mean of squared residuals: 21.11634
+##                     % Var explained: 41.28
 ```
 
 ```r
@@ -497,46 +497,46 @@ importance(rf) #tabular summary
 
 ```
 ##                  %IncMSE IncNodePurity
-## x             1.21316498     187.25956
-## y             7.24248984     330.03019
-## Overtype      5.95464478     389.11794
-## Underconifer  0.81415110      37.49917
-## spodint      17.25066611    1594.26080
-## ps           -1.20629093      64.59759
-## drainage      1.47339743      12.00898
-## slope         3.48618983     112.65918
-## surfacetex    3.96231867     954.89770
-## stoniness    -0.44763946      62.78559
-## depthclass   -2.06812327      23.66309
-## bedrockdepth  1.22293352      13.82726
-## hillslope     4.43954951      61.98412
-## tipmound      0.41775798      28.45415
-## rainfall      4.91323165      87.22477
-## geology       1.26125467      19.44021
-## aachn         1.22859848     113.98313
-## dem10m        4.06783337     148.63635
-## downslpgra    2.59368825      94.97222
-## eastness     -4.36386853     596.13658
-## greenrefl    -0.73096339     208.31853
-## landsatb1     1.53891132      93.88309
-## landsatb2    -0.77428941      93.61265
-## landsatb3    -1.39258360      54.57483
-## landsatb7     5.65916071     557.47261
-## maxc100       2.31736808     126.14196
-## maxent        4.62283454     485.93235
-## minc100       1.04408863      92.19421
-## mirref        1.48418035     255.69950
-## ndvi         -1.21950605     136.69247
-## northeastn    1.59853131     310.91954
-## northness     1.05230477     110.39169
-## northwestn    2.70518537     258.19417
-## planc100      3.14205987     143.64244
-## proc100       1.42358355     126.51475
-## protection    4.34801652     159.64752
-## relpos11      0.22688231     140.68987
-## slp50         3.74014962     115.05532
-## solar         2.69262221     137.61983
-## tanc75       -0.07905218     171.28525
+## x             2.91197257    207.999510
+## y             9.00858831    338.881114
+## Overtype      6.06275937    371.632399
+## Underconifer  2.67108636     37.126784
+## spodint      18.61679604   1582.580405
+## ps            0.37523379     48.788814
+## drainage      1.54810435     12.684980
+## slope         1.25318594    124.809347
+## surfacetex    5.77180564   1003.070239
+## stoniness     1.04069660     56.378365
+## depthclass   -0.09575845     25.668700
+## bedrockdepth -0.19455779      9.696075
+## hillslope     1.49330537     45.205384
+## tipmound      0.52438955     26.167524
+## rainfall      5.80410132     88.738570
+## geology       2.04477928     17.290261
+## aachn         3.04951721    115.998258
+## dem10m        2.20708301    148.477479
+## downslpgra    2.79468598     99.007120
+## eastness     -2.76881634    586.970974
+## greenrefl     2.21559323    205.546792
+## landsatb1     2.02389238     99.980715
+## landsatb2     1.34065068    127.949417
+## landsatb3     0.48246359     65.092315
+## landsatb7     6.23849834    507.746533
+## maxc100       1.80808064    122.372852
+## maxent        5.83055505    504.266387
+## minc100      -0.13209048    103.679890
+## mirref        1.57648402    273.278975
+## ndvi          0.04375298    135.836337
+## northeastn   -0.02215932    320.603275
+## northness     2.34930513    121.010503
+## northwestn    3.58000234    241.672938
+## planc100      0.87544287    143.175404
+## proc100       1.34622020    112.860853
+## protection    4.69546498    147.486210
+## relpos11      1.53006070    118.224244
+## slp50         2.04845337    121.539067
+## solar         1.79653127    151.090754
+## tanc75       -0.15265347    149.319513
 ```
 
 For each tree, each predictor in the OOB sample is randomly permuted and passed through the tree to obtain an error rate (mean square error (MSE) for regression and Gini index for classification). The error rate from the unpermuted OOB is then subtracted from the error rate of the permuted OOB data, and averaged across all trees. When this value is large, it implies that a variable is highly correlated to the dependent variable and is needed in the model. 
