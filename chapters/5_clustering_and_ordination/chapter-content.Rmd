@@ -91,7 +91,6 @@ TODO:
  * missing data: bain of numerical taxonomy... strategies
  * color clustering of entire profiles
  * profile_compare() details
- * clustering of map unit GIS data -> post sample data
  * add discussion points to each section
  * add questions
  * adapt to use 'pedons' through entire document for simple use of student's data
@@ -465,8 +464,29 @@ Tinker with some `SoilProfileCollection` objects:
 
 ### nMDS with the `vegan` package
 
-### Interpretation
+### Interpretation and goodness of fit
 
+```{r, eval=FALSE}
+# MASS library
+d.shep <- Shepard(d, d.sammon$points)
+plot(d.shep, pch='.')
+lines(d.shep$x, d.shep$yf, type = 'S', col='blue', lwd=2)
+
+## vegan library
+# compute distance between ES
+d <- metaMDSdist(m[, -1])
+
+# try ordination: non-metrix multidimensional scaling with default distance metric and standardization
+# use all columns except first: the ES ID
+nmds <- metaMDS(m[, -1])
+
+# evaluate nmMDS fit
+stressplot(nmds)
+
+# GOF by site, smaller = better
+hist(goodness(nmds))
+
+```
 
 
 
@@ -678,7 +698,7 @@ x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend
 
 ## GIS Data
 
-TODO: subset ~ 10 map units and describe general idea
+TODO: give credit to SEKI crew
 
 ```{r, fig.width=8, fig.height=8, results='hide'}
 library(plyr)
@@ -709,31 +729,107 @@ head(x.summary)
 x.wide <- dcast(x.summary, MUSYM ~ variable, value.var = 'm')
 row.names(x.wide) <- x.wide$MUSYM
 
-## eval signatures from LHS samples
-d <- daisy(x.wide[, -1], stand=TRUE)
-dd <- agnes(d, method = 'ward')
+head(x.wide, 2)
 
-nmds <- metaMDS(x.wide[, -1], distance = 'gower', autotransform = FALSE)
+# generate lookup table of MUSYM - MU groups
+lut <- unique(x[, c('MUSYM', 'gensym')])
 
+# join data matrix with lut
+x.wide <- join(x.wide, lut, by='MUSYM', type='left', match='first')
+x.wide$gensym <- factor(x.wide$gensym, levels = c("riparian", "xx10", "xx20", "xx30", "xx40", "xx50"), labels = c("riparian", "basins and cirques", "glacial valleys", "bedrock controlled mountain slopes and valley walls", "non bedrock controlled slopes", "plateaus, till plains, outwash plains"))
+
+head(x.wide, 2)
+
+# eval signatures from LHS samples
+nmds <- metaMDS(x.wide[, vars], distance = 'gower', autotransform = FALSE, wascores=FALSE)
+
+cols <- c('RoyalBlue', 'black', 'DarkGreen', 'orange3', 'red', 'brown')
+site.colors <- cols[as.numeric(x.wide$gensym)]
 
 # plot
 par(mar=c(1,1,1,1))
 # clusters connected with orange lines
 fig <- ordiplot(nmds, type='none', cex.axis=0.75, axes=FALSE)
 abline(h=0, v=0, lty=2, col='grey')
-ordicluster(fig, dd, prune=3, col = "orange")
-text(fig, "sites", col="black", cex=0.65, font=2)
+text(fig, "sites", cex=0.65, font=2, col=site.colors)
+legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, bty='n', cex=1)
+title('Map Unit Terrain Signatures')
 ```
 
 
 ## Species composition
 
+TODO: give credit to CA630 ESD crew
 
+```{r}
+# library(reshape2)
+# library(vegan)
 
+# read species data from online CSV
+# init a temp file
+tf <- tempfile()
+setInternet2(TRUE)
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/ca630-22A-species.csv', destfile = tf, quiet = TRUE)
 
+x <- read.csv(tf, stringsAsFactors = FALSE)
 
-## Component relation graphs
-[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/component-relation-graph.html?root=aqp)
+# check: long-format
+head(x)
+
+# keep only tree species
+idx <- which(grepl('^T', x$stratum))
+x <- x[idx, ]
+
+# add stratum as a suffix for tree species (^T*)
+x$symbol <- ifelse(grepl('^T', x$stratum), paste0(x$plantsym, '/', x$stratum), x$plantsym)
+
+# convert "long" format to full community matrix, "wide" format using the mean pct cover
+# 1 row / ES ID, each column is a species
+m <- dcast(x, site_id ~ symbol, value.var = 'cover', fun.aggregate = mean)
+
+# assign abbreviated user site ID to row names
+row.names(m) <- gsub('CA630', '', m$site_id) 
+
+# convert to matrix, excluding the first column (site id)
+m <- as.matrix(m[, -1])
+
+# replace NA in the community matrix with 0
+m[is.na(m)] <- 0
+
+# check: looks good, except missing data (NA) should be 0
+head(m, 1)[, 1:20]
+
+# compute distance between ES
+d <- metaMDSdist(m)
+
+# try ordination: non-metrix multidimensional scaling with default distance metric and standardization
+nmds <- metaMDS(m)
+```
+
+```{r, fig.width=5, fig.height=5}
+# evaluate nmMDS fit
+par(mar=c(5,5,1,1))
+stressplot(nmds, cex=0.5)
+```
+
+```{r, fig.width=10, fig.height=5}
+# plot
+par(mar=c(1,1,1,1), mfcol=c(1,2))
+
+# "species"
+fig <- ordiplot(nmds, type='none', axes=FALSE)
+abline(h=0, v=0, lty=2, col='grey')
+text(fig, "species", col="blue", cex=0.5)
+title('Species', line=-0.5)
+
+# "sites"
+# re-use the ordination object 'fig'
+ordiplot(fig, type='none', axes=FALSE)
+abline(h=0, v=0, lty=2, col='grey')
+text(fig, "sites", col="black", cex=0.5)
+title('Sites', line=-0.5)
+```
+
 
 
 ----------------------------
