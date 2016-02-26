@@ -374,6 +374,15 @@ Most of the examples used in this module come from the following sources:
 In most cases, you can edit the examples to swap-in just about any data that is or has been upgraded to a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp). For example, pedons from **your** local NASIS selected set can be loaded with `fetchNASIS()`.
 
 
+#### Your turn
+Tinker with some `SoilProfileCollection` objects:
+
+ * Get some data using one of the methods listed above, if you need help see the manual pages for examples (`?fetchKSSL`) or the [SoilProfileCollection tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).
+ * Determine the number of profiles and horizons within the collection.
+ * View and extract some *site* and *horizon* attributes.
+ * Generate some soil profile sketches.
+
+
 ## More on the distance matrix and how to make one
 
 ```{r, }
@@ -454,7 +463,7 @@ In most cases, you can edit the examples to swap-in just about any data that is 
 
 ### Sammon's non-linear mapping
 
-### MDS with the `vegan` package
+### nMDS with the `vegan` package
 
 ### Interpretation
 
@@ -669,9 +678,13 @@ x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend
 
 ## GIS Data
 
-```{r, fig.width=8, fig.height=8}
+TODO: subset ~ 10 map units and describe general idea
+
+```{r, fig.width=8, fig.height=8, results='hide'}
 library(plyr)
 library(reshape2)
+library(vegan)
+library(cluster)
 
 # init a temp file
 tf <- tempfile()
@@ -698,7 +711,7 @@ row.names(x.wide) <- x.wide$MUSYM
 
 ## eval signatures from LHS samples
 d <- daisy(x.wide[, -1], stand=TRUE)
-dd <- diana(d)
+dd <- agnes(d, method = 'ward')
 
 nmds <- metaMDS(x.wide[, -1], distance = 'gower', autotransform = FALSE)
 
@@ -708,7 +721,7 @@ par(mar=c(1,1,1,1))
 # clusters connected with orange lines
 fig <- ordiplot(nmds, type='none', cex.axis=0.75, axes=FALSE)
 abline(h=0, v=0, lty=2, col='grey')
-ordicluster(fig, agnes(d, method='ward'), prune=3, col = "orange")
+ordicluster(fig, dd, prune=3, col = "orange")
 text(fig, "sites", col="black", cex=0.65, font=2)
 ```
 
