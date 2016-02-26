@@ -1,4 +1,4 @@
-# Chapter 1 - Introduction
+# Chapter 1 - Introduction to R and RStudio
 Katey Yoast, Skye Wills, Stephen Roecker  
 Tuesday, February 24, 2015  
 
