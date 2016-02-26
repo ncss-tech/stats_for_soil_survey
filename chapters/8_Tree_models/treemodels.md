@@ -1,12 +1,16 @@
-# Chapter 8: Tree-based Models
+# Chapter 8 - Tree-based Models
 Katey Yoast  
-January 14, 2016  
+Thursday, January 14, 2016  
 
-##Introduction
+
+![Statistics for pedologists course banner image](figure/logo.jpg)
+
+
+## 8.0  Introduction
 Tree-based models are a supervised machine learning method commonly used in soil survey and ecology for exploratory data analysis and prediction due to their simplistic nonparametric design. Instead of fitting a model to the data, tree-based models recursively partition the data into increasingly homogenous groups based on values that minimize a loss function (such as Sum of Squared Errors (SSE) for regression or Gini Index for classification) (McBratney et al., 2003). The two most common packages for generating tree-based models in R are rpart and randomForest. The rpart package creates a regression or classification tree based on binary splits that maximize homogeneity and minimize impurity. The output is a single decision tree that can be further "pruned" or trimmed back using the cross-validation error statistic to reduce over-fitting. The randomForest package is similar to rpart, but is double random in that each node is split using a random subset of predictors AND observations at each node and this process is repeated hundreds of times (as specified by the user). Unlike rpart, random forests do not produce a graphical decision tree since the predictions are averaged across hundreds or thousands of trees. Instead, random forests produce a variable importance plot and a tabular statistical summary. 
 <br/>
 
-##8.1 Classification and Regression Trees (CART)
+##<a id="cart")></a>8.1 Classification and Regression Trees (CART)
 The basic function for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
 
 Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the library( ) function.
@@ -29,13 +33,9 @@ str(soildata)
 ```
 
 ```
-## 'data.frame':	250 obs. of  58 variables:
-##  $ FID         : int  0 1 2 3 4 5 6 7 8 9 ...
+## 'data.frame':	250 obs. of  50 variables:
 ##  $ x           : num  -79.7 -79.7 -79.7 -79.8 -79.7 ...
 ##  $ y           : num  38.6 38.6 38.6 38.6 38.6 ...
-##  $ NASIS_Pedo  : Factor w/ 236 levels " ","10WV075HLRSP006",..: 108 103 105 93 116 112 96 75 83 98 ...
-##  $ overstory   : Factor w/ 199 levels "--","ACRU,ACSA3,PRSE2,BELE",..: 184 181 139 17 95 108 45 24 93 182 ...
-##  $ undrstry    : Factor w/ 114 levels "--","(plantation)",..: 47 56 42 11 37 36 9 3 6 46 ...
 ##  $ Overtype    : Factor w/ 3 levels "Conifer","Hardwood",..: 2 2 2 2 3 3 3 2 3 2 ...
 ##  $ Underconifer: Factor w/ 2 levels "n","y": 1 2 1 2 2 2 2 1 2 2 ...
 ##  $ Oi          : num  3 4 3 4 3 2 2 2 4 3 ...
@@ -56,12 +56,8 @@ str(soildata)
 ##  $ depthclass  : Factor w/ 4 levels "d","md","sh",..: 2 2 2 2 2 2 2 2 2 2 ...
 ##  $ bedrockdepth: int  200 200 200 200 200 200 200 200 200 200 ...
 ##  $ depth_cm    : int  67 69 52 95 93 81 86 90 75 92 ...
-##  $ aspect      : Factor w/ 124 levels "--","1","11",..: 32 3 121 124 1 42 7 108 77 14 ...
 ##  $ hillslope   : Factor w/ 4 levels "backslope","footslope",..: 1 1 1 1 1 1 1 1 3 1 ...
-##  $ slopeshape  : Factor w/ 12 levels "","cc","cl","cv",..: 7 6 6 9 10 7 9 7 10 6 ...
 ##  $ tipmound    : int  0 0 0 0 0 0 0 0 0 0 ...
-##  $ musym       : Factor w/ 14 levels "BgC","BgD","BgE",..: 14 14 14 14 14 14 14 14 13 14 ...
-##  $ asym        : Factor w/ 3 levels "WV075","WV083",..: 1 1 1 1 1 1 1 1 1 1 ...
 ##  $ rainfall    : int  51 51 51 51 51 51 51 51 51 51 ...
 ##  $ geology     : Factor w/ 2 levels "Dch","Dhs": 1 2 2 2 1 2 1 1 1 2 ...
 ##  $ aachn       : num  27.46 81.7 2.59 43.36 70.75 ...
@@ -90,12 +86,14 @@ str(soildata)
 ##  $ tanc75      : num  0.0511 0.0279 0.0553 -0.0187 -0.0346 ...
 ```
 
-The example dataset, soildata, consists of 250 observations and 58 variables that were collected in the field or derived from geospatial data to identify spodic soil properties in West Virginia. Of particular interest is determining best splits for spodic intensity (relative spodicity index). As you can see in that data structure, R interpreted the spodint field as numeric. Since spodint is an index, it will need to be changed to a factor and then to an ordered factor. 
+The example dataset, soildata, consists of 250 observations and 58 variables that were collected in the field or derived from geospatial data to identify spodic soil properties in West Virginia. Of particular interest is determining best splits for spodic intensity (relative spodicity index). As you can see in that data structure, R interpreted the spodint field as numeric. Since spodint is an index, it will need to be changed to a factor and then to an ordered factor. The same will need to be done for tipmound (a tip and mound microtopography index).
 
 
 ```r
 soildata$spodint<-as.factor(soildata$spodint)
 soildata$spodint<-ordered(soildata$spodint)
+soildata$tipmound<-as.factor(soildata$tipmound)
+soildata$tipmound<-ordered(soildata$tipmound)
 ```
 
 If you wanted to create a classification tree for spodint using all of the variables, you would simply type: `rpart(spodint ~ ., data=soildata)`. Since the soildata dataset contains variables such as FID and NASIS_Pedo that are site observation labels, it is not wise to include all variables in the model. Instead, you want to define which variables the model should use. 
@@ -124,7 +122,7 @@ spodintmodel
 
 ```r
 plot(spodintmodel)
-text(spodintmodel, cex=0.8) ##cex is text size
+text(spodintmodel, cex=0.8) #cex is text size
 ```
 
 ![](treemodels_files/figure-html/unnamed-chunk-4-1.png)
@@ -162,8 +160,8 @@ spodintmodel2
 ##        11) eastness< -0.0713796 78  43 1 (0.21 0.13 0.45 0.051 0.17)  
 ##          22) surfacetex=cnhosil,cnl,cnsil,cnxl,cnxsl,flsil,grl,grvl,hosil,sil 62  31 1 (0.21 0.16 0.5 0.065 0.065)  
 ##            44) surfacetex=cnhosil,cnsil,flsil,grl,hosil,sil 48  28 1 (0.27 0.17 0.42 0.083 0.062)  
-##              88) tipmound< 0.5 19   9 0 (0.53 0.11 0.26 0 0.11) *
-##              89) tipmound>=0.5 29  14 1 (0.1 0.21 0.52 0.14 0.034) *
+##              88) tipmound=0 19   9 0 (0.53 0.11 0.26 0 0.11) *
+##              89) tipmound=1,2,3 29  14 1 (0.1 0.21 0.52 0.14 0.034) *
 ##            45) surfacetex=cnl,cnxl,cnxsl,grvl 14   3 1 (0 0.14 0.79 0 0.071) *
 ##          23) surfacetex=cnvhol,cnvl,cnvsil,grsil,hol,l 16   7 2 (0.19 0 0.25 0 0.56) *
 ##     3) Oa>=3.5 66  17 2 (0.12 0.015 0.12 0 0.74)  
@@ -207,9 +205,9 @@ printcp(spodintmodel)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.432099      0   1.00000 1.00000 0.046614
-## 2 0.395062      1   0.56790 0.61111 0.047733
+## 2 0.395062      1   0.56790 0.60494 0.047649
 ## 3 0.024691      2   0.17284 0.17901 0.031254
-## 4 0.010000      3   0.14815 0.17901 0.031254
+## 4 0.010000      3   0.14815 0.17284 0.030780
 ```
 
 ```r
@@ -238,13 +236,13 @@ printcp(spodintmodel2)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.253086      0   1.00000 1.00000 0.046614
-## 2 0.058642      1   0.74691 0.76543 0.048799
-## 3 0.037037      3   0.62963 0.79012 0.048787
-## 4 0.030864      4   0.59259 0.80864 0.048744
-## 5 0.018519      5   0.56173 0.81481 0.048724
-## 6 0.015432      6   0.54321 0.83333 0.048644
-## 7 0.012346      8   0.51235 0.83333 0.048644
-## 8 0.010000     12   0.45679 0.80864 0.048744
+## 2 0.058642      1   0.74691 0.78395 0.048794
+## 3 0.037037      3   0.62963 0.88272 0.048292
+## 4 0.030864      4   0.59259 0.81481 0.048724
+## 5 0.018519      5   0.56173 0.85802 0.048494
+## 6 0.015432      6   0.54321 0.82716 0.048674
+## 7 0.012346      8   0.51235 0.82716 0.048674
+## 8 0.010000     12   0.45679 0.79630 0.048776
 ```
 
 The `printcp()` funtion generates a cost complexity parameter table that provides the complexity parameter value (CP), relative model error (1 - relative error = ~variance explained), error estimated from a 10-fold cross validation (xerror), and the standard error of the xerror (xstd). The CP values control the size of the tree; the greater the CP value, the fewer the number of splits in the tree. To determine the optimal CP value, rpart automatically performs a 10-fold cross validation. The optimal size of the tree is generally the row in the CP table that minimizes all error with the fewest branches. Another way to determine the optimal tree size is to use the `plotcp()` function. This will plot the xerror versus cp value and tree size. 
@@ -292,7 +290,7 @@ printcp(pruned)
 ## 
 ##        CP nsplit rel error  xerror     xstd
 ## 1 0.43210      0   1.00000 1.00000 0.046614
-## 2 0.39506      1   0.56790 0.61111 0.047733
+## 2 0.39506      1   0.56790 0.60494 0.047649
 ## 3 0.09900      2   0.17284 0.17901 0.031254
 ```
 
@@ -329,9 +327,9 @@ printcp(pruned2)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.253086      0   1.00000 1.00000 0.046614
-## 2 0.058642      1   0.74691 0.76543 0.048799
-## 3 0.037037      3   0.62963 0.79012 0.048787
-## 4 0.034000      4   0.59259 0.80864 0.048744
+## 2 0.058642      1   0.74691 0.78395 0.048794
+## 3 0.037037      3   0.62963 0.88272 0.048292
+## 4 0.034000      4   0.59259 0.81481 0.048724
 ```
 
 ```r
@@ -387,17 +385,17 @@ printcp(spodintmodel3)
 ## 
 ## n= 250 
 ## 
-##          CP nsplit rel error  xerror    xstd
-## 1  0.318266      0   1.00000 1.00911 0.16568
-## 2  0.111721      1   0.68173 0.70743 0.11741
-## 3  0.050419      2   0.57001 0.68499 0.10227
-## 4  0.043957      3   0.51959 0.66428 0.11103
-## 5  0.031130      4   0.47564 0.62900 0.11069
-## 6  0.019235      5   0.44451 0.67840 0.13085
-## 7  0.013928      6   0.42527 0.70011 0.13126
-## 8  0.010851      7   0.41134 0.71711 0.12920
-## 9  0.010394      8   0.40049 0.72606 0.12934
-## 10 0.010000      9   0.39010 0.72903 0.12929
+##          CP nsplit rel error  xerror     xstd
+## 1  0.318266      0   1.00000 1.00868 0.166369
+## 2  0.111721      1   0.68173 0.69460 0.115716
+## 3  0.050419      2   0.57001 0.73020 0.101976
+## 4  0.043957      3   0.51959 0.70155 0.102489
+## 5  0.031130      4   0.47564 0.67155 0.093714
+## 6  0.019235      5   0.44451 0.64760 0.093663
+## 7  0.013928      6   0.42527 0.69026 0.095812
+## 8  0.010851      7   0.41134 0.70506 0.094276
+## 9  0.010394      8   0.40049 0.72575 0.094627
+## 10 0.010000      9   0.39010 0.73546 0.094788
 ```
 
 ```r
@@ -430,16 +428,23 @@ printcp(pruned3)
 ## 
 ## n= 250 
 ## 
-##         CP nsplit rel error  xerror    xstd
-## 1 0.318266      0   1.00000 1.00911 0.16568
-## 2 0.111721      1   0.68173 0.70743 0.11741
-## 3 0.050419      2   0.57001 0.68499 0.10227
+##         CP nsplit rel error xerror    xstd
+## 1 0.318266      0   1.00000 1.0087 0.16637
+## 2 0.111721      1   0.68173 0.6946 0.11572
+## 3 0.050419      2   0.57001 0.7302 0.10198
 ```
 
+**Was the majority of the variance in total O horizon thickness captured with the rpart model?**
 
-<br/>
 
-##8.2 Random Forest
+### Exercise 1: rpart
+Using the soildata dataset, construct a rpart model to predict tipmound. Prune the model if necessary and answer the following questions:
+
+1) What are the most important variables for seperating tip and mound ratings?
+2) What is the cross-validation error of the pruned model?
+3) How could you improve this model?
+
+## 8.2 Random Forest
 The randomForest algorithm fits hundreds to thousands of CART models to random subsets of input data and combines the trees for prediction. Similarly to rpart, randomForest allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. Unlike rpart, the randomForest algorithm does not straight forwardly handle missing values with surrogate splits. There is a function called `rfImpute()` that uses a proximity matrix from the randomForest to populate missing values with either the weighted average of the non-missing observations (weighted by the proximities) for continuous predictors or the category with the largest average proximity for categorical predictors. 
 
 Going back to the soildata dataset, it is also of particular interest to determine what properties best predict total O horizon thickness (Otot). Just like rpart, randomForest has the same basic model function: (y ~ x).
@@ -447,10 +452,10 @@ Going back to the soildata dataset, it is also of particular interest to determi
 
 ```r
 rf<-randomForest(Otot~x+y+Overtype+Underconifer+spodint+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE) 
-##Oi, Oe, Oa, order, subgroup, and epipedon were omitted as independent variables
-##importance=TRUE will allow the generation of a variable importance plot
+#Oi, Oe, Oa, order, subgroup, and epipedon were omitted as independent variables
+#importance=TRUE will allow the generation of a variable importance plot
 
-rf ## statistical summary
+rf # statistical summary
 ```
 
 ```
@@ -461,12 +466,12 @@ rf ## statistical summary
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 13
 ## 
-##           Mean of squared residuals: 21.51444
-##                     % Var explained: 40.17
+##           Mean of squared residuals: 21.93302
+##                     % Var explained: 39.01
 ```
 
 ```r
-plot(rf)  ##out of bag (OOB) error rate versus number of trees
+plot(rf)  #out of bag (OOB) error rate versus number of trees
 ```
 
 ![](treemodels_files/figure-html/unnamed-chunk-11-1.png)
@@ -487,51 +492,51 @@ varImpPlot(rf)
 ![](treemodels_files/figure-html/unnamed-chunk-12-1.png)
 
 ```r
-importance(rf) ##tabular summary
+importance(rf) #tabular summary
 ```
 
 ```
 ##                  %IncMSE IncNodePurity
-## x             3.28257615     199.35328
-## y             7.17100102     336.58842
-## Overtype      5.14300037     446.71563
-## Underconifer  1.75429791      31.19195
-## spodint      18.91216858    1593.08813
-## ps           -1.29298992      58.34954
-## drainage     -0.84803224      11.85798
-## slope         0.56328985     125.53699
-## surfacetex    6.13917137     976.53048
-## stoniness     0.69020781      66.19976
-## depthclass   -0.50078007      20.79324
-## bedrockdepth  0.66954834      11.32672
-## hillslope     3.16762676      56.34166
-## tipmound     -0.49489400      21.59420
-## rainfall      3.79821204      92.06732
-## geology       1.59046332      20.79488
-## aachn         2.28582446     114.22365
-## dem10m        2.78350354     143.43488
-## downslpgra    2.09129760      99.51279
-## eastness     -3.46660226     595.29591
-## greenrefl     0.32890123     181.36945
-## landsatb1     0.35382084     100.45330
-## landsatb2     0.09221051     100.78320
-## landsatb3     0.09614239      67.21341
-## landsatb7     5.74539877     468.60131
-## maxc100       1.58276295     134.52238
-## maxent        3.17549213     470.29330
-## minc100       1.95759197      95.89183
-## mirref        1.05008265     243.54495
-## ndvi          1.57280502     137.75784
-## northeastn    2.29788050     306.69968
-## northness     1.70086197     117.74092
-## northwestn    3.96655336     226.69798
-## planc100      1.41265481     144.64841
-## proc100      -0.79536977     121.46112
-## protection    2.88349538     139.99972
-## relpos11      1.02798744     127.17726
-## slp50         0.91585966     106.19261
-## solar         2.37391730     172.10324
-## tanc75       -1.43045378     161.35905
+## x             1.21316498     187.25956
+## y             7.24248984     330.03019
+## Overtype      5.95464478     389.11794
+## Underconifer  0.81415110      37.49917
+## spodint      17.25066611    1594.26080
+## ps           -1.20629093      64.59759
+## drainage      1.47339743      12.00898
+## slope         3.48618983     112.65918
+## surfacetex    3.96231867     954.89770
+## stoniness    -0.44763946      62.78559
+## depthclass   -2.06812327      23.66309
+## bedrockdepth  1.22293352      13.82726
+## hillslope     4.43954951      61.98412
+## tipmound      0.41775798      28.45415
+## rainfall      4.91323165      87.22477
+## geology       1.26125467      19.44021
+## aachn         1.22859848     113.98313
+## dem10m        4.06783337     148.63635
+## downslpgra    2.59368825      94.97222
+## eastness     -4.36386853     596.13658
+## greenrefl    -0.73096339     208.31853
+## landsatb1     1.53891132      93.88309
+## landsatb2    -0.77428941      93.61265
+## landsatb3    -1.39258360      54.57483
+## landsatb7     5.65916071     557.47261
+## maxc100       2.31736808     126.14196
+## maxent        4.62283454     485.93235
+## minc100       1.04408863      92.19421
+## mirref        1.48418035     255.69950
+## ndvi         -1.21950605     136.69247
+## northeastn    1.59853131     310.91954
+## northness     1.05230477     110.39169
+## northwestn    2.70518537     258.19417
+## planc100      3.14205987     143.64244
+## proc100       1.42358355     126.51475
+## protection    4.34801652     159.64752
+## relpos11      0.22688231     140.68987
+## slp50         3.74014962     115.05532
+## solar         2.69262221     137.61983
+## tanc75       -0.07905218     171.28525
 ```
 
 For each tree, each predictor in the OOB sample is randomly permuted and passed through the tree to obtain an error rate (mean square error (MSE) for regression and Gini index for classification). The error rate from the unpermuted OOB is then subtracted from the error rate of the permuted OOB data, and averaged across all trees. When this value is large, it implies that a variable is highly correlated to the dependent variable and is needed in the model. 
@@ -540,27 +545,47 @@ In a regression tree analysis, randomForest uses %IncMSE and IncNodePurity to ra
 
 In the rf model, it is apparent that spodint is the most important variable used in the model, followed by y, landsatb7, Overtype, surfacetex, maxent, hillslope, slp50, rainfall, and protection index. 
 
-<br/>
+### Exercise 2: randomForest
+Using the soildata dataset, construct a randomForest model to predict soil order. Hint: remove the one histosol observation before constructing the model (`soildata2<-droplevels(subset(soildata, order!="histosol")) `) and do not include spodint, series, taxon, or subgroup. When finished, answer the following questions:
 
-##8.3 Prediction using Tree-based Models
+1) What are the most important variables for seperating Inceptisols from Spodosols from Ultisols?
+2) What is the out-of-bag error rate?
+3) Which soil order was best predicted by the model?
+
+## 8.3 Prediction using Tree-based Models
 As with any modeling technique, tree-based models can be used for prediction and can be spatially interpolated using environmental covariates. In order to interpolate a model, R requires that all raster images have a common datum, common cell resolution, are coregistered, and are preferably .img files. The function `stack()` combines all of the rasters into a "raster stack." The `predict()` function is then used in the form of: `predict(rasterstack, fittedmodel, type="")`. Follow along through the example below to interpolate the rpart total O horizon thickness model:
-![R GUI image](treemodels_files/ch8_predicted.jpg)  
 
+
+```r
+library(raster)
+rasters<-stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines rasters with a .img file extension stored in the working directory
+
+rasters 
+
+model<-rpart(Otot~maxent+slp50+protection, data=soildata)
+
+predict(rasters,model, type="vector",progress="window",overwrite=TRUE,filename="rpartpredict.img") #type: "vector" for mean response at the node, "prob" for matrix of class probabilities, or "class" for a factor of classifications based on the responses
+```
 
 The output raster "rpartpredict.img" can be added and viewed in ArcMap. 
 
+![R GUI image](figure/ch8_predicted.jpg)  
 
 
+You can also view the interpolated model in R:
 
-You can also view the interpolated model in R  by:
+```r
+rpartpredict <- raster("rpartpredict.img")
+plot(rpartpredict, xlab="Easting (m)", ylab="Northing (m)", main="Total O Horizon Thickness (cm)")
+```
 
-
-
-
-##8.4 Summary
+## 8.4 Summary
 Tree-based models are intuitive, quick to run, nonparametric, and are often ideal for exploratory data analysis and prediction. Both rpart and randomForest produce graphical and tabular outputs to aid interpretation. Both packages also perform internal validataion (rpart=10-fold cross validation; randomForest=OOB error estimates) to assess model performance. Tree-based models do require pruning and/or tweaking of model parameters to reduce over-fitting and are unstable in that removing observations (especially outliers) or independent predictors can greatly alter the tree structure. In general,  tree-based models are robust against multicollinearity and low n, high p datasets (low sample size and many predictors).
 
 
-## Additional reading
+## 8.5 Additional Reading
 
 Gareth, J., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+
+Rad, M.R.P., N. Toomanian, F. Khormali, C.W. Brungard, C.B. Komaki, and P. Bogaert. 2014. Updating soil survey maps using random forest and conditioned Latin hypercube sampling in the loess derived soils of northern Iran. Geoderma. 232-234: 97-106. 
+
