@@ -368,6 +368,8 @@ Most of the examples used in this module come from the following sources:
 3. results from [`fetchKSSL()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp): lab characterization data from the SoilWeb snapshot
 4. results from [`fetchOSD()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/OSD-dendrogram.html?root=aqp): basic morphologic and taxonmic data from the SoilWeb snapshot 
 5. results from [`SDA_query()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp): *live* SSURGO spatial and tabular data from [Soil Data Access](http://sdmdataaccess.nrcs.usda.gov/)
+6. data from SSR 2, as CSV, downloaded from class [GitHub site](https://github.com/ncss-tech/stats_for_soil_survey/tree/master/data/clustering_and_ordination)
+
 
 In most cases, you can edit the examples to swap-in just about any data that is or has been upgraded to a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp). For example, pedons from **your** local NASIS selected set can be loaded with `fetchNASIS()`.
 
@@ -665,7 +667,56 @@ x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend
 ```
 
 
+## GIS Data
+
+```{r, fig.width=8, fig.height=8}
+library(plyr)
+library(reshape2)
+
+# init a temp file
+tf <- tempfile()
+# download compressed CSV to temp file
+setInternet2(TRUE)
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/seki-mu-gis-samples.csv.gz', destfile = tf, quiet = TRUE)
+# read-in from compressed CSV to data.frame object
+x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
+
+# check
+head(x)
+
+# get terrain variable names
+vars <- c('elev', 'solar', 'slope', 'tci', 'ppt', 'maat', 'tpi', 'tri', 'pi')
+
+x.long <- melt(x, id.vars = 'MUSYM', measure.vars = vars)
+
+x.summary <- ddply(x.long, c('MUSYM', 'variable'), .fun=plyr::summarize, m=median(value, na.rm = TRUE))
+
+head(x.summary)
+
+x.wide <- dcast(x.summary, MUSYM ~ variable, value.var = 'm')
+row.names(x.wide) <- x.wide$MUSYM
+
+## eval signatures from LHS samples
+d <- daisy(x.wide[, -1], stand=TRUE)
+dd <- diana(d)
+
+nmds <- metaMDS(x.wide[, -1], distance = 'gower', autotransform = FALSE)
+
+
+# plot
+par(mar=c(1,1,1,1))
+# clusters connected with orange lines
+fig <- ordiplot(nmds, type='none', cex.axis=0.75, axes=FALSE)
+abline(h=0, v=0, lty=2, col='grey')
+ordicluster(fig, agnes(d, method='ward'), prune=3, col = "orange")
+text(fig, "sites", col="black", cex=0.65, font=2)
+```
+
+
 ## Species composition
+
+
+
 
 
 ## Component relation graphs
