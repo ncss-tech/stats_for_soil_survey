@@ -1,36 +1,12 @@
-# Introduction
+# Chapter 1 - Introduction
 Katey Yoast, Skye Wills, Stephen Roecker  
 Tuesday, February 24, 2015  
-![Statistics for pedologists course banner image](figure/logo.jpg)  
 
-#CHAPTER 1: INTRODUCTION TO R
 
-- [1.0 Introduction](#intro)
-- [1.1 R Interface](#gui) 
-- [1.2 Data Management in R](#datamanagement)
-     - [1.2.1 Importing Data](#dataimport)
-     - [1.2.2 Exporting Data](#dataexport)
-     - [1.2.3 Viewing Data](#viewingdata)
-- [1.3 Saving R Files](#saving)
-     - [1.3.1 Workspace](#workspace)
-     - [1.3.2 R Script](#script)
-     - [1.3.3 R History](#history)
-     - [1.3.4 R Graphics](#graphics)
-- [1.4 Installing and Loading Packages](#packages)
-- [1.5 A Graphical User Interface for R - Rcmdr](#cmdr)
-     - [1.5.1 Importing Data with Rcmdr](#importrcmdr)
-     - [1.5.2 Creating Graphs](#graphs)
-     - [1.5.3 Simple Statistics](#statistics)
-     - [1.5.4 Importing and Executing a Saved Rcmdr Script](#rcmdrscript)
-- [1.6 RStudio](#studio)
-     - [1.6.1 Working with Scripts](#rscript)
-     - [1.6.2 Help Features](#help)
-- [1.7 Introduction to the soilDB Package](#soilDB)
-- [1.8 Review](#review)
-- [1.9 Additional Resources](#additional)
-- [1.10 References](#ref)
- 
-##<a id="intro")></a>1.0  Introduction
+![Statistics for pedologists course banner image](figure/logo.jpg)
+
+
+## 1.0  Introduction
 
 R is a free, open-source software and programming language developed in 1995 at the University of Auckland that is capable of executing simple and complex mathematical, statistical, and graphical functions [(Ikaha and Gentleman, 1996)](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf).  It is a dialect of the S language and is case sensitive. The R interface allows you to execute functions using a command prompt (>). To date R has become popular amongst soil scientists and ecologists for exploring data, modeling soil and plant relationships, generating raster-based model predictions, and developing new R functions.  
 
@@ -55,7 +31,7 @@ Tips for using R:
 `plot(x ~ y) # This text will not affect the plot function because of the comment`
 
 
-## <a id="gui")></a>1.1  R Graphical User Interface
+## 1.1  R Graphical User Interface
  
 Navigate to R (in the start and program menus) and open R (64 bit, version 3.2.2 or later). When you first open R, the R console window below appears:  
 
@@ -69,7 +45,7 @@ To use R, you type commands after the command prompt `>`. In the R Console windo
 
 Commands in R can range from simple mathematical equations to complex statistical functions and models. As an example of simple math, if you type:  `9 * 8 + 6 - 1` in R and hit ENTER, R will act as a calculator and return the answer `77`.  
 
-## <a id="datamanagement")></a>1.2  Data Management in R  
+## 1.2  Data Management in R  
 
 At the beginning of each R session, whether you are using R or Rstudio, you want to make sure that you set your working directory. This directory should be where your input datasets are stored, R files are located, and will also serve as the default storage of plots or exported objects from R. 
 
@@ -91,7 +67,7 @@ getwd()
 
 The working directory can also be changed and set by clicking on File > Change dir... from the menu bar. Setting a working directory allows you to import data into R with just a file name, not an entire folder path and file name. It also is the default folder for when you save or export data out of R. Every time you start an R session, you should set your working directory. 
 
-### <a id="dataimport")></a> 1.2.1 Importing Data
+### 1.2.1 Importing Data
 After your working directory is set, you can import data from .txt, .csv, etc. One basic command for importing data into R is `read.csv()`. The command is followed by the file name and then some optional instructions for how to read the file.    
 
 First, create an example file by copying the following contents below, starting with location, paste it into Notepad and save to a file named sand_example.txt, into the C:/workspace folder:  
@@ -130,7 +106,7 @@ help(read.csv) # or
 
 These commands will bring up a webpage that describes all of the possible arguments for a command and usually provides examples. You should also notice by reading the help page for `read.csv()` that it is just one of several functions for reading text files.
 
-### <a id="dataexport")></a> 1.2.2 Exporting Data
+### 1.2.2 Exporting Data
 
 To export data from R, use the command `write.csv`. Since we have already set our working directory, R will automatically save our file into the folder that we specified as our working directory.  
 
@@ -141,7 +117,7 @@ write.csv(sand, file = "sand_example2.csv")
 #for other output file types, use the write.table() function
 ```
 
-### <a id="viewingdata")></a> 1.2.3 Viewing Data
+### 1.2.3 Viewing Data
 
 Once imported, it is imperative that you check to make sure that R correctly imported your data (ie: making sure numerical data are correctly imported as numerical, your column headings are kept as headings, etc.). A few commands that you can use to view your data in R are `str()`, `names()` and `head()`. `str()` shows the structure of the data object, while `names()` shows the column names (i.e. headers) of your data, and `head` prints the first 6 lines of data. You can also enter the name of the table next to the command prompt to print the entire table; however, avoid doing this if your table is large. Instead for large tables try `View(sand)`, this will open the dataset in a separate window.   
 
@@ -196,11 +172,11 @@ The `ls()` and `rm()` functions are also available in the RGui under the menu ba
 
 ![R GUI image](figure/ch1_fig4_rgui.jpg)  
 
-## <a id="saving")></a>1.3  Saving R Files  
+## 1.3  Saving R Files  
 
 In R, there are several types of files that you can save to keep track of the work you do in R: workspace, script, history, and graphics. It is important to save often because R, like other software, may crash periodically especially when working with large files. Saving your work in R can be done via command line or file menu selection.  
 
-### <a id="workspace")></a> 1.3.1 Workspace (.Rdata)  
+### 1.3.1 Workspace (.Rdata)  
 
 The R workspace consists of all the data objects you've created or loaded during your R session. When you quit R by either typing `q()` or exiting out of the application window, R will prompt you to save your workspace. If you choose yes, R will save a file called .RData to your working directory. The next time you open R and link to the same working directory that the .RData file is saved to, all of your data objects will be available in R and all of the commands that you've typed will be accessible by using the up-arrow and down-arrow keys on your keyboard. You can also save or load your workspace at any time during your R session by clicking on File tab on the menu bar.   
 
@@ -214,7 +190,7 @@ The R command for saving your workspace is:
 save.image(file="workspace.RData")
 ```
 
-### <a id="script")></a> 1.3.2 R script (.R)  
+### 1.3.2 R script (.R)  
 
 A R script is simply a text file of R commands that you've typed. You may want to save your scripts (whether they were written in R Editor or an ancillary program like Notepad) so that you can reference them in the future, edit them if needed, and keep track of what you've done. In order to save R scripts in the RGui, make sure the R Editor window is active and go to File > Save as on the menu bar. Save scripts with the .R extension. R assumes that script files are saved with only that extension. If you are using another text editor you won't need to worry about saving your scripts in R. You can always copy and paste them in to the R Console or R Editor from your text editor.  
 
@@ -224,7 +200,7 @@ To open a R script, go to File > Open script:
 
 ![R GUI image](figure/ch1_fig14_rgui.jpg)  
 
-### <a id="history")></a> 1.3.3 R history (.Rhistory) 
+### 1.3.3 R history (.Rhistory) 
 
 R history files are a copy of all your key strokes. You might think of it as brute force way of saving your work. This can often be useful if you didn't document all your steps in an .R script file. Like an .R file, a .Rhistory is simply a text file that lists all of the commands that you've executed. It does not keep a record of the results. To load or save your R history from the menu bar select: File > Load History or File > Save History. If you load a .Rhistory file, your previous commands will again become available with the up-arrow and down-arrow keys.
 
@@ -238,7 +214,7 @@ savehistory(file = "sand.Rhistory")
 loadhistory(file = "sand.Rhistory")  
 ```
 
-### <a id="graphics")></a> 1.3.4 R Graphics   
+### 1.3.4 R Graphics   
 
 Graphic outputs can be saved in one of many formats: 
  
@@ -267,7 +243,7 @@ dev.off()
 
 The first line of this command creates a blank file named sand with a JPEG extension.  The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the jpeg file we are creating). The third line closes the graphics device.  
 
-## <a id="packages")></a>1.4   Installing and Loading Packages
+## 1.4 Installing and Loading Packages
 
 Packages are collections of well-defined and referenced code developed by R users that run specific functions. They often include example data that can be used when executing those functions. While R comes with some standard, basic statistical functions; most of our work will require additional packages. In order to use a package, you must install and then load it. This can be done through command line or using the RGui. Examples of both are provided below. R packages only need to be installed once on your computer unless R is upgraded or re-installed. Every time you start a new R session, you will have to load every package that you intend to use in that session.  
 
@@ -334,7 +310,7 @@ Now try your home state.
 
 Try some of the examples included at the end of the map {maps} documentation, from the previous search, or [http://cran.r-project.org/web/packages/maps/maps.pdf](http://cran.r-project.org/web/packages/maps/maps.pdf)  
 
-## <a id="cmdr")></a>1.5  A Graphical user interface for R: Rcmdr (R COMMANDER)  
+## 1.5  A Graphical user interface for R: Rcmdr (R COMMANDER)  
 
 R Commander (Rcmdr) is an expanded RGui that allows users to run basic statistical functions in R using menu bars, icons, and information fields. It was created for students in introductory statistics courses so they could see how the software worked without learning a large number of command line scripts. Rcmdr is a great way to begin familiarizing yourself with R and statistics within a standardized framework.   
 
@@ -348,7 +324,7 @@ library(Rcmdr)
 
 This should open the R Commander GUI. 
 
-### <a id="importrcmdr")></a> 1.5.1 Importing Data with Rcmdr  
+### 1.5.1 Importing Data with Rcmdr  
 
 Navigate to the Data toolbar and scroll down to Import data and then select from text file, clipboard, or URL...
 
@@ -366,7 +342,7 @@ A quicker way to import data if it is already imported as an object in R is to s
 
 ![R GUI image](figure/ch1_fig5_rgui.jpg)
 
-### <a id="graphs")></a> 1.5.2 Creating Graphs 
+### 1.5.2 Creating Graphs 
 
 Use the **Graphs** dropdown menu in the Rcmdr GUI and select **Histogram...**  
 
@@ -400,7 +376,7 @@ hist(sand$sand, col="red", xlab="sand", ylab="frequency", main="")  #the functio
 
 Edit the Rcmdr script and select the line. Click **Submit** to plot the updated histogram.  
 
-### <a id="statistics")></a> 1.5.3 Simple Statistics
+###1.5.3 Simple Statistics
 
 To calculate basic summary statistics use the options in the Statistics menu. A couple of examples are provided below:  
 
@@ -460,7 +436,7 @@ Just like in the R editor window, you can save the Rcmdr script that you generat
 
 Save the Rcmdr script that you just created as **sand_rcmdr.R** in your working directory. You can also save your workspace, markdown file, and output if desired using the File drop down menu. 
 
-### <a id="rcmdrscript")></a> 1.5.4 Importing and Executing a Saved Rcmdr Script  
+### 1.5.4 Importing and Executing a Saved Rcmdr Script  
 
 **Rcmdr**  
 
@@ -508,7 +484,7 @@ Hist(sand2$sand, scale="frequency", breaks="Sturges", col="lightblue", xlab = "T
 
 At the top of the R editor window enter: #this is a demo of how to use R editor with an R Commander Script. Now select all and run the entire script. Save your R script using the file icon or in the File menu and close R. 
 
-### <a id="studio")></a>1.6 RStudio  
+## 1.6 RStudio  
 
 RStudio is an integrated development environment (IDE) that allows you to interact with R more readily. RStudio is similar to the RGui, but is more user friendly with more drop down menus, windows, and customization options. When you open RStudio on your machine, you will see 3 windows: the console window, just like in the RGui and two other windows composed of multiple tabs. The upper right window has two tabs: environment and history. The environment tab will keep track of the datasets that you import and objects that you create while the history tab keeps a history of all of the commands you've executed during your Rstudio session. The lower right window is composed of 5 tabs:
 
@@ -528,7 +504,7 @@ Notice that in the figure above, there is a 4th window open called "Untitled1". 
 
 For further information on how to use RStudio, visit: <a href="https://support.rstudio.com/hc/en-us/sections/200107586-Using-RStudio">Using RStudio</a>
 
-### <a id="rscript")></a> 1.6.1 Working with Scripts  
+### 1.6.1 Working with Scripts  
 
 In RStudio, set your working directory to C:\workspace by either using the drop down menus (Session, Set Working Directory, Choose Directory) or by typing the following into the RStudio Console window and pressing Enter: 
 
@@ -556,7 +532,7 @@ The Hist function is only available through the Rcmdr package. Since Rcmdr is no
 Select both commands (hist and boxplot) and hit Run again. Ignore the warning message. You will see the most recent graph in the Plot window; use the arrows to scroll through all graphs produced during this session. Save your script by first clicking in the R script window and then navigating to File > Save As... Name the file: sand_studio.R.  
 
 
-### <a id="help")></a> 1.6.2 Help Features 
+### 1.6.2 Help Features 
 
 To learn more about the function you are using and the options/arguments available, take advantage of some of the help functions in RStudio:
 
@@ -586,53 +562,40 @@ Note that this arbitrarily sets the bin breaks using a list c(x1,x2,x3..). This 
 **How would you change the chart title to "Histogram" and change the number of breaks (and therefore sub title) to 6 bins? Plot and examine the results.**
 
 
-##<a id="soilDB")></a>1.7  Introduction to the soilDB Package
+## 1.7  Introduction to the soilDB Package
 
-The soilDB package was created to more readily analyze data from USDA-NCSS soil databases in R. There are a series of `fetch()` commands that allow the user to specify what NRCS soil database they are wanting to extract data from (NASIS, KSSL, OSD, etc.). In this module, we are only going to focus on the `fetchKSSL()` function. Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
+The [soilDB](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/soilDB-Intro.html?root=aqp) package was created to more readily analyze data from USDA-NCSS soil databases in R. There are a series of convenience functions that allow the user to quickly access soil data from a wide range of sources including: NASIS, KSSL, OSDs, and several others. The convenience functions typically return data as a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)-- a special datatype designed specificly for soil information. In this module, we are only going to focus on the `fetchKSSL()` function. Use the following script to examine KSSL data for the Hartleton soil series. Feel free to replace Hartleton with a soil series in your MLRA. 
 
 
 ```r
-#load soilDB, aqp, and lattice packages
+# load required packages
 library(soilDB)
-```
-
-```
-## Loading required package: aqp
-```
-
-```
-## This is aqp 1.9.3
-```
-
-```r
 library(aqp)
 library(lattice)
 
-#fetch all KSSL data 'correlated as' Hartleton from the June 2015 snapshot
-Hartleton<-fetchKSSL(series='Hartleton') 
-```
+# fetch all KSSL data 'correlated as' Hartleton from the December 2015 snapshot
+# details on the data processing: https://github.com/dylanbeaudette/process-kssl-snapshot
+pedons <- fetchKSSL(series='Hartleton') 
 
-```
-## 5 pedons loaded (0.03 Mb transferred)
-```
+# reduce margins for a bigger figure
+par(mar=c(0,0,3,0)) 
 
-```r
-#set plot parameters
-par(mar=c(0,0,0,0)) 
-
-#soil profile plot
-plot(Hartleton, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='clay') 
+# default plot method for SoilProfileCollection objects
+plot(pedons, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='clay') 
 ```
 
 ![](1_introduction_files/figure-html/unnamed-chunk-31-1.png)
 
 ```r
-#soil depth class
-sdc <- getSoilDepthClass(Hartleton, name='hzn_desgn', top='hzn_top', bottom='hzn_bot') 
-site(Hartleton) <- sdc
+# compute soil depth class
+sdc <- getSoilDepthClass(pedons, name='hzn_desgn', top='hzn_top', bottom='hzn_bot') 
+site(pedons) <- sdc
+```
 
+
+```r
 #summary statistics for soil depth
-tapply(Hartleton$depth, Hartleton$taxonname, summary) 
+tapply(pedons$depth, pedons$taxonname, summary) 
 ```
 
 ```
@@ -649,30 +612,30 @@ str(Hartleton)
 
 
 ```r
-# slab() is used to aggregate selected variables within collections of soil profiles along depth-slices; in this example we are aggregating clay, sand, and organic carbon
-h.slab <- slab(Hartleton, taxonname ~ clay+sand+oc)
+# slab() is used to aggregate selected variables within a collections of soil profiles along depth-slices; in this example we are aggregating clay, sand, and organic carbon
+s <- slab(pedons, taxonname ~ clay + sand + oc)
 
 #specify color and line width to be used in plot
 tps <- list(superpose.line=list(col='RoyalBlue', lwd=2)) 
 
 # slice-wise median and 25th/75th percentiles are reasonable estimations of central tendency and spread
-xyplot(top ~ p.q50 | variable, data=h.slab, ylab='Depth',
+xyplot(top ~ p.q50 | variable, data=s, ylab='Depth',
         xlab='median bounded by 5th and 95th percentiles',
-        lower=h.slab$p.q25, upper=h.slab$p.q75, ylim=c(155,-5),
+        lower=s$p.q25, upper=s$p.q75, ylim=c(155,-5),
         panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
         prepanel=prepanel.depth_function,
-        cf=h.slab$contributing_fraction,
+        cf=s$contributing_fraction,
         par.strip.text=list(cex=0.8),
         strip=strip.custom(bg=grey(0.85)),
         layout=c(3,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
         par.settings=tps, auto.key=list(columns=1, lines=TRUE, points=FALSE))
 ```
 
-![](1_introduction_files/figure-html/unnamed-chunk-33-1.png)
+![](1_introduction_files/figure-html/unnamed-chunk-34-1.png)
 
-Check out [fetchKSSL Example](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp) for more details. 
+Check out the realted [tutorial on fetchKSSL()](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp) for more details. 
 
-### <a id="review")></a>1.8 Review
+## 1.8 Review
 Given what you now know about R and RStudio, try to answer the following questions:
 
 1. How can the `str()` function be used?
@@ -686,7 +649,7 @@ Given what you now know about R and RStudio, try to answer the following questio
 5. What would be the result of `plot(clay ~ organiccarbon, data=KSSL)`? 
 
 
-### <a id="additional")></a>1.9 Additional Resources  
+## 1.9 Additional Resources  
 - [R Manuals](http://cran.r-project.org/manuals.html)
 - [Comprehensive R Archive Network (CRAN) Task View](https://cran.r-project.org/web/views/)
 - [Quick R](http://www.statmethods.net/)  
@@ -701,6 +664,6 @@ Given what you now know about R and RStudio, try to answer the following questio
 - [Google](www.google.com) (this will usually lead you to Stack Overflow)  
 - [Stay connected with the latest discussions of Soil Survey R Users on Google+](https://plus.google.com/u/0/communities/101713042265696005456)  
 
-### <a id="ref")></a>1.10 References
+## 1.10 References
 
 Ihaka, R., and Gentleman, R. (1996). R: a language for data analysis and graphics. Journal of Computational and Graphical Statistics, 5(3):399-314. [https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf)  
