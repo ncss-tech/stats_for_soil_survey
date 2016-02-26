@@ -753,13 +753,26 @@ horizonNames(gopheridge)
 ## [41] "paracobbles"         "channers"            "flagstones"
 ```
 
+#### Quickly generate sketches from a `SoilProfileCollection` object
+The `plot()` function applied to a `SoilProfileCollection` object will generate sketches based on horizon depths, designations, and colors. The `fetchNASIS()` function automatically converts moist Munsell colors into R-style colors. Multiple colors per horizon are mixed. See `?plotSPC` for a detailed list of arguments and examples.
+
+
+```r
+par(mar=c(1,1,1,1))
+plot(gopheridge, print.id=FALSE)
+title('Pedons from the `gopheridge` sample dataset', line=-0.5)
+```
+
+<img src="2a_tabular_data_files/figure-html/unnamed-chunk-3-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+
+
 #### Subset example of the data in the site-level portion of the SPC:
 
 
-peiid    pedon_id    siteiid  site_id         obs_date               utmzone   utmeasting   utmnorthing           x          y
--------  ---------  --------  --------------  --------------------  --------  -----------  ------------  ----------  ---------
-242808   07JCR002     244384  07CA630JCR002   2007-04-02 01:00:00         10     700783.0       4201935   -120.7150   37.94286
-268791   07JCR003     269602  07CA630JCR003   2007-05-14 01:00:00         10     714552.7       4191747   -120.5614   37.84805
+peiid    pedon_id    siteiid  site_id         obs_date      utmzone   utmeasting   utmnorthing           x          y
+-------  ---------  --------  --------------  -----------  --------  -----------  ------------  ----------  ---------
+242808   07JCR002     244384  07CA630JCR002   2007-04-02         10     700783.0       4201935   -120.7150   37.94286
+268791   07JCR003     269602  07CA630JCR003   2007-05-14         10     714552.7       4191747   -120.5614   37.84805
 
 
 
@@ -779,8 +792,8 @@ Blue Oak Woodland   NA                      60  Metavolcanics   Extremely weakly
 
 shapeacross   shapedown   slopecomplex   drainagecl     classdate             classifier   class_type   taxonname    taxon_kind 
 ------------  ----------  -------------  -------------  --------------------  -----------  -----------  -----------  -----------
-Linear        Linear      complex        Well drained   2012-01-24 01:00:00   NA           series       GOPHERIDGE   series     
-Convex        Convex      NA             Well drained   2012-01-25 00:15:24   NA           series       GOPHERIDGE   series     
+Linear        Linear      complex        Well drained   2012-01-24 00:00:00   NA           series       GOPHERIDGE   series     
+Convex        Convex      NA             Well drained   2012-01-24 23:15:24   NA           series       GOPHERIDGE   series     
 
 #### Subset example of the data in the horizon-level portion of the SPC:
 
@@ -1033,14 +1046,32 @@ sort(table(f1$tax_subgroup), decreasing=TRUE)
 
 ```
 ## 
-##       typic cryaquents      histic cryaquepts  oxyaquic cryofluvents    aquandic cryaquepts 
-##                      8                      6                      4                      2 
-##   oxyaquic cryochrepts oxyaquic dystrocryepts       aeric cryaquepts     histic endoaquolls 
-##                      2                      2                      1                      1 
-##       humic cryaquepts    oxyaquic hapludolls   oxyaquic haplustalfs  oxyaquic vitricryands 
-##                      1                      1                      1                      1 
-##       typic cryaquepts      typic endoaquolls 
-##                      1                      1
+##       oxyaquic humicryepts          histic cryaquepts    fluvaquentic cryaquepts 
+##                         14                         13                          8 
+##      oxyaquic cryofluvents       oxyaquic humixerepts       oxyaquic cryorthents 
+##                          7                          7                          6 
+##     oxyaquic dystrocryepts           typic cryaquents         aquic xerofluvents 
+##                          6                          6                          4 
+##           humic cryaquepts          aquic humicryepts          aquic humixerepts 
+##                          4                          3                          3 
+##         cumulic humaquepts   fluvaquentic humicryepts          histic humaquepts 
+##                          3                          3                          3 
+##      oxyaquic xerofluvents           typic humaquepts         aquic cryofluvents 
+##                          3                          3                          2 
+##         aquic haploxerepts fluvaquentic haplosaprists       oxyaquic xerorthents 
+##                          2                          2                          2 
+##  thapto-histic fluvaquents           aeric cryaquepts          aquic cryorthents 
+##                          2                          1                          1 
+##        aquic dystrocryepts        aquic xeropsamments   fluvaquentic cryohemists 
+##                          1                          1                          1 
+##  fluvaquentic cryosaprists fluvaquentic dystrocryepts  fluvaquentic haplohemists 
+##                          1                          1                          1 
+##    fluvaquentic humaquepts      fluventic endoaquepts    humaqueptic endoaquents 
+##                          1                          1                          1 
+##    humaqueptic fluvaquents     oxyaquic cryopsamments           typic cryaquepts 
+##                          1                          1                          1 
+##          typic endoaquents          typic fluvaquents 
+##                          1                          1
 ```
 
 ```r
@@ -1050,15 +1081,17 @@ sort(table(f1$part_size_class), decreasing=TRUE)
 ```
 ## 
 ##                            sandy-skeletal                              coarse-loamy 
-##                                        11                                         6 
-##                            loamy-skeletal                                fine-loamy 
-##                                         5                                         3 
-##                                fine-silty                clayey over loamy-skeletal 
-##                                         2                                         1 
-## coarse-loamy over sandy or sandy-skeletal   fine-loamy over sandy or sandy-skeletal 
+##                                        30                                        26 
+##                                     sandy                            loamy-skeletal 
+##                                        26                                        21 
+##                                  not used coarse-loamy over sandy or sandy-skeletal 
+##                                         6                                         5 
+##                              coarse-silty coarse-silty over sandy or sandy-skeletal 
+##                                         2                                         2 
+##   fine-silty over sandy or sandy-skeletal                   sandy or sandy-skeletal 
 ##                                         1                                         1 
-##   fine-silty over sandy or sandy-skeletal                                     sandy 
-##                                         1                                         1
+##                          sandy over loamy 
+##                                         1
 ```
 
 ```r
@@ -1073,7 +1106,7 @@ table(f2$part_size_class)
 ```
 ## 
 ## sandy-skeletal 
-##             11
+##             30
 ```
 
 ```r
@@ -1106,29 +1139,51 @@ names(s)
 ```
 
 ```
-##  [1] "peiid"                 "pedon_id"              "siteiid"              
-##  [4] "site_id"               "obs_date"              "utmzone"              
-##  [7] "utmeasting"            "utmnorthing"           "x"                    
-## [10] "y"                     "datum"                 "x_std"                
-## [13] "y_std"                 "gpspositionalerror"    "describer"            
-## [16] "pedon_purpose"         "pedon_type"            "pedlabsampnum"        
-## [19] "labdatadescflag"       "elev_field"            "slope_field"          
-## [22] "aspect_field"          "plantassocnm"          "coverkind_1"          
-## [25] "bedrckdepth"           "bedrock_kind"          "bedrock_hardness"     
-## [28] "hillslope_pos"         "slope_position"        "shapeacross"          
-## [31] "shapedown"             "slopecomplex"          "drainagecl"           
-## [34] "classdate"             "classifier"            "class_type"           
-## [37] "taxonname"             "taxon_kind"            "series_status"        
-## [40] "part_size_class"       "tax_order"             "tax_suborder"         
-## [43] "tax_grtgroup"          "tax_subgroup"          "tax_edition"          
-## [46] "osdtypelocflag"        "tax_moistureclass"     "temp_class"           
-## [49] "tax_fam_other"         "psctopdepth"           "pscbotdepth"          
-## [52] "selection_method"      "andic.soil.properties" "mollic.epipedon"      
-## [55] "cambic.horizon"        "surface_fgravel"       "surface_gravel"       
-## [58] "surface_cobbles"       "surface_stones"        "surface_boulders"     
-## [61] "surface_channers"      "surface_flagstones"    "surface_paragravel"   
-## [64] "surface_paracobbles"   "landform.string"       "pmkind"               
-## [67] "pmorigin"
+##  [1] "peiid"                                    "pedon_id"                                
+##  [3] "siteiid"                                  "site_id"                                 
+##  [5] "obs_date"                                 "utmzone"                                 
+##  [7] "utmeasting"                               "utmnorthing"                             
+##  [9] "x"                                        "y"                                       
+## [11] "datum"                                    "x_std"                                   
+## [13] "y_std"                                    "gpspositionalerror"                      
+## [15] "describer"                                "pedon_purpose"                           
+## [17] "pedon_type"                               "pedlabsampnum"                           
+## [19] "labdatadescflag"                          "elev_field"                              
+## [21] "slope_field"                              "aspect_field"                            
+## [23] "plantassocnm"                             "coverkind_1"                             
+## [25] "bedrckdepth"                              "bedrock_kind"                            
+## [27] "bedrock_hardness"                         "hillslope_pos"                           
+## [29] "slope_position"                           "shapeacross"                             
+## [31] "shapedown"                                "slopecomplex"                            
+## [33] "drainagecl"                               "classdate"                               
+## [35] "classifier"                               "class_type"                              
+## [37] "taxonname"                                "taxon_kind"                              
+## [39] "series_status"                            "part_size_class"                         
+## [41] "tax_order"                                "tax_suborder"                            
+## [43] "tax_grtgroup"                             "tax_subgroup"                            
+## [45] "tax_edition"                              "osdtypelocflag"                          
+## [47] "tax_moistureclass"                        "temp_class"                              
+## [49] "tax_fam_other"                            "psctopdepth"                             
+## [51] "pscbotdepth"                              "selection_method"                        
+## [53] "umbric.epipedon"                          "lithic.contact"                          
+## [55] "cambic.horizon"                           "histic.epipedon"                         
+## [57] "mollic.epipedon"                          "aquic.conditions"                        
+## [59] "ochric.epipedon"                          "argillic.horizon"                        
+## [61] "redox.concentrations"                     "reduced.matrix"                          
+## [63] "paralithic.contact"                       "abrupt.textural.change"                  
+## [65] "fibric.soil.materials"                    "hemic.soil.materials"                    
+## [67] "sapric.soil.materials"                    "redox.depletions.with.chroma.2.or.less"  
+## [69] "densic.materials"                         "lithologic.discontinuity"                
+## [71] "paralithic.materials"                     "densic.contact"                          
+## [73] "strongly.contrasting.particle.size.class" "calcic.horizon"                          
+## [75] "folistic.epipedon"                        "andic.soil.properties"                   
+## [77] "human.transported.material"               "surface_fgravel"                         
+## [79] "surface_gravel"                           "surface_cobbles"                         
+## [81] "surface_stones"                           "surface_boulders"                        
+## [83] "surface_channers"                         "surface_flagstones"                      
+## [85] "surface_paragravel"                       "surface_paracobbles"                     
+## [87] "landform.string"                          "pmkind"                                  
+## [89] "pmorigin"
 ```
 
 ```r
@@ -1225,11 +1280,12 @@ Functions bundle operations and can come in the form of small helper functions o
 
 ### Function examples
 
-Functions can bundle a series of operations and then be applied to an SPC using `profileApply()`.  Say we wanted to use some pedon data to model the depth to the top of an argillic horizon.  One way to do this would be to look through horizon designations to derive a depth to argillic horizons using the 't' suffix horizon designation.  A first step would be to think about outlining the steps involved in the process.  
+Functions can bundle a series of operations and then be applied to each profile within a collection (SPC) using `profileApply()`.  Say we wanted to use some pedon data to model the depth to the top of an argillic horizon.  One way to do this would be to look through horizon designations to derive a depth using the 't' suffix horizon designation. Ideally, this task would be performed using data from the pedon diagnostic features table. However, these records are not always populated and besides--this is an example!
+
 What steps would be needed to accomplish this task and return an upper depth to carbonates for each site?
 
  - *extract* the horizon data for each profile
- - *iterate* through the horizon designations(hzname) pattern matching for **'t'**
+ - *iterate* through the horizon designations(hzname) and search for the pattern **'t'**
  - *apply* the function to each profile via `profileApply()`
  - *summarize* the data returned by the function to one value per profile
  - *join* the summarized depth value back to the site data
@@ -1250,7 +1306,7 @@ data(gopheridge)
 f <- gopheridge
 
 # the argument 'i' is a single soil profile
-f.clay <- function(i) {
+findBtHorizons <- function(i) {
   # extract horizons for current profile
   h <- horizons(i) 
   # search for pattern 't' in horizon designations
@@ -1263,37 +1319,45 @@ f.clay <- function(i) {
   return(res)
 }
 
-# apply function to each profile, results are a list of dataframes
-l <- profileApply(f, FUN=f.clay, simplify=FALSE)
+# apply function to a single profile as a demonstration
+findBtHorizons(f[1, ])
+```
+
+```
+##    peiid   phiid hzname hzdept hzdepb clay phfield
+## 5 242808 1148309    Bt1     18     36   25     6.1
+## 6 242808 1148308    Bt2     36     53   30     6.0
+## 7 242808 1148307    Bt3     53     81   35     5.7
+```
+
+You can see that we still need to summarize this to get the upper depth from multiple 'Bt' horizons per profile. Also, notice that a couple of additional variable were returned by the function.
+
+Next, apply our function to all profiles in our collection; results are a list of dataframes.
+
+```r
+l <- profileApply(f, FUN=findBtHorizons, simplify=FALSE)
 
 # convert list into a dataframe, dropping all pedons with no 't' horizons 
-clay <- ldply(l)
+Bt.horizons <- ldply(l)
+```
 
-# view the top 6 rows
-head(clay)
 
-# example of data returned - you can see that we still need to summarize this to get the upper depth from multiple 'Bt' horizons
-# notice that a couple of additional variable were return by the function
-#      .id  peiid   phiid hzname hzdept hzdepb clay phfield 
-#1 242808 242808 1148309    Bt1     18     36   25     6.1  
-#2 242808 242808 1148308    Bt2     36     53   30     6.0  
-#3 242808 242808 1148307    Bt3     53     81   35     5.7 
-#4 268791 268791 1258250    Bt1     15     33   18     6.8 
-#5 268791 268791 1258251    Bt2     33     58   28     6.5 
+We still need to reduce this down to one depth value per profile. The `ddply()` function is a convenient way to iterate over groups of rows in a dataframe and compute summaries (similar to `GROUP BY` in SQL). The group-wise summaries are re-combined into a new dataframe along with ids for each group.
 
-# still need to reduce this down to one depth value for each profile
-## ddply() will apply a function (summarise the min(hzdept)) then combine the results into a data frame.
-## standard ddply syntax is as follows (type '??ddply' into the R console):
-## ddply(.data, .variables, .fun = NULL....)
+```r
+# standard ddply syntax is as follows (type '?ddply' into the R console):
+# ddply(.data, .variables, .fun)
+Bt.horizons.top <- ddply(Bt.horizons, 'peiid', summarise, depth_to_argillic_cm=min(hzdept))
 
-clay1 <- ddply(clay, 'peiid', summarise, depth_to_argillic_cm=min(hzdept))
-
-# since we have peiid in the 'clay1' dataframe we can easy join it back to site data in the SPC
-site(f) <- clay1
+# since we have peiid in the 'Bt.horizons.top' dataframe we can easy join it back to site data in the SPC
+# NOTE: the when used in conjunction with site(), the assignment operator performs a left-join
+site(f) <- Bt.horizons.top
 
 # summary of depth to carbonates in the data using a histogram
-hist(f$depth_to_argillic_cm)
+hist(f$depth_to_argillic_cm, xlab='Depth to Bt Horizon (cm)', main='')
 ```
+
+<img src="2a_tabular_data_files/figure-html/unnamed-chunk-6-1.png" title="" alt="" width="432" style="display: block; margin: auto;" />
 **Question:**                                                                                                                                          
 **What is a potential problem with this operation?  What was not accounted for?**
 
@@ -1400,6 +1464,7 @@ head(limy)
 limy1 <- ddply(limy, 'peiid', summarise, depth_to_carbonates_cm=min(hzdept))
 
 # since we have peiid in the 'limy1' dataframe we can easy join it back to site data in the SPC
+# this won't work if there were no horizons with 'k' suffice
 site(f) <- limy1
 
 # summary of depth to carbonates in the data using a histogram
@@ -1524,6 +1589,7 @@ colnames(e$struct)
 ## [1] "phiid"           "structure_grade" "structure_size"  "structure_type"  "structid"       
 ## [6] "structpartsto"
 ```
+
 Geomorphic description and parent materials are important attributes in soil data and can be useful as handles in exploring data.  The soilDB package flattens the nested table structure of parent material and geomorphic description within NASIS into single strings for each site-level record.  The pattern matching concepts demostrated above can be used to select profiles based on parts of these strings. Here we generate a handy graphical summary of the 10 most commonly occurring landforms in `fetchNASIS()` data so you can see their frequency of occurrence. 
 
 
@@ -1622,7 +1688,19 @@ unique(d$diag_kind)
 ```
 
 ```
-## [1] "andic soil properties" "mollic epipedon"       "cambic horizon"
+##  [1] "umbric epipedon"                          "lithic contact"                          
+##  [3] "cambic horizon"                           "histic epipedon"                         
+##  [5] "mollic epipedon"                          "aquic conditions"                        
+##  [7] "ochric epipedon"                          "argillic horizon"                        
+##  [9] "redox concentrations"                     "reduced matrix"                          
+## [11] "paralithic contact"                       "abrupt textural change"                  
+## [13] "fibric soil materials"                    "hemic soil materials"                    
+## [15] "sapric soil materials"                    "redox depletions with chroma 2 or less"  
+## [17] "densic materials"                         NA                                        
+## [19] "lithologic discontinuity"                 "paralithic materials"                    
+## [21] "densic contact"                           "strongly contrasting particle size class"
+## [23] "calcic horizon"                           "folistic epipedon"                       
+## [25] "andic soil properties"                    "human-transported material"
 ```
 
 ```r
@@ -1632,10 +1710,10 @@ sort(table(d$diag_kind), decreasing = TRUE)[1:5]
 
 ```
 ## 
-## andic soil properties        cambic horizon       mollic epipedon                  <NA> 
-##                    83                     1                     1                    NA 
-##                  <NA> 
-##                    NA
+##      umbric epipedon      ochric epipedon       cambic horizon       lithic contact 
+##                  319                  300                  210                  134 
+## redox concentrations 
+##                   72
 ```
 
 ```r
@@ -1737,7 +1815,7 @@ For more information on generating diagnostic feature diagrams use the following
     
 ### Meeting the challenges
   
-  - Graphical display of the data and summary outputs
+  - Graphical display of the data and summary outputs ([**slice-wise aggregation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/profile-summary.html?root=aqp))
   - Generalized Horizon Labels(GHL) - deriving an aggregate soil profile for multiple similar soils
       - more on that process can be found in the following tutorial:
       [**GHL Aggregation Presentation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/ghl-aggregation.html?root=aqp) and [**GHL Aggregation Tutorial**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-application.html?root=aqp)
@@ -1765,13 +1843,8 @@ For more information regarding working with difficult pedon data see the followi
 
 
 
-
-
-
-
-
 ----------------------------
-This document is based on `aqp` version 1.9.5 and `soilDB` version 1.7 and `sharpshootR` version 0.9.4.
+This document is based on `aqp` version 1.9.7 and `soilDB` version 1.7 and `sharpshootR` version 0.9.6.
 
 
 

@@ -16,7 +16,7 @@ output:
 
 ![Statistics for pedologists course banner image](figure/logo.jpg)
 
-```{r setup, echo=FALSE, results='hide', warning=FALSE}
+```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 library(knitr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
 options(width=100, stringsAsFactors=FALSE)
@@ -445,6 +445,16 @@ siteNames(gopheridge)
 horizonNames(gopheridge)
 ```
 
+#### Quickly generate sketches from a `SoilProfileCollection` object
+The `plot()` function applied to a `SoilProfileCollection` object will generate sketches based on horizon depths, designations, and colors. The `fetchNASIS()` function automatically converts moist Munsell colors into R-style colors. Multiple colors per horizon are mixed. See `?plotSPC` for a detailed list of arguments and examples.
+
+```{r, fig.width=10, fig.height=4}
+par(mar=c(1,1,1,1))
+plot(gopheridge, print.id=FALSE)
+title('Pedons from the `gopheridge` sample dataset', line=-0.5)
+```
+
+
 #### Subset example of the data in the site-level portion of the SPC:
 
 ```{r gopheridge_a1, eval=TRUE, echo=FALSE, results='show', warning=FALSE, collapse=TRUE}
@@ -782,18 +792,19 @@ Functions bundle operations and can come in the form of small helper functions o
 
 ### Function examples
 
-Functions can bundle a series of operations and then be applied to an SPC using `profileApply()`.  Say we wanted to use some pedon data to model the depth to the top of an argillic horizon.  One way to do this would be to look through horizon designations to derive a depth to argillic horizons using the 't' suffix horizon designation.  A first step would be to think about outlining the steps involved in the process.  
+Functions can bundle a series of operations and then be applied to each profile within a collection (SPC) using `profileApply()`.  Say we wanted to use some pedon data to model the depth to the top of an argillic horizon.  One way to do this would be to look through horizon designations to derive a depth using the 't' suffix horizon designation. Ideally, this task would be performed using data from the pedon diagnostic features table. However, these records are not always populated and besides--this is an example!
+
 What steps would be needed to accomplish this task and return an upper depth to carbonates for each site?
 
  - *extract* the horizon data for each profile
- - *iterate* through the horizon designations(hzname) pattern matching for **'t'**
+ - *iterate* through the horizon designations(hzname) and search for the pattern **'t'**
  - *apply* the function to each profile via `profileApply()`
  - *summarize* the data returned by the function to one value per profile
  - *join* the summarized depth value back to the site data
  
 #### Example using the Gopheridge sample dataset
 
-```{r owndata_i_gopher, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
+```{r owndata_i_gopher, echo=TRUE, results='show', warning=FALSE}
 # load required libraries
 library(aqp)
 library(soilDB)
@@ -806,7 +817,7 @@ data(gopheridge)
 f <- gopheridge
 
 # the argument 'i' is a single soil profile
-f.clay <- function(i) {
+findBtHorizons <- function(i) {
   # extract horizons for current profile
   h <- horizons(i) 
   # search for pattern 't' in horizon designations
@@ -819,36 +830,33 @@ f.clay <- function(i) {
   return(res)
 }
 
-# apply function to each profile, results are a list of dataframes
-l <- profileApply(f, FUN=f.clay, simplify=FALSE)
+# apply function to a single profile as a demonstration
+findBtHorizons(f[1, ])
+```
+
+You can see that we still need to summarize this to get the upper depth from multiple 'Bt' horizons per profile. Also, notice that a couple of additional variable were returned by the function.
+
+Next, apply our function to all profiles in our collection; results are a list of dataframes.
+```{r}
+l <- profileApply(f, FUN=findBtHorizons, simplify=FALSE)
 
 # convert list into a dataframe, dropping all pedons with no 't' horizons 
-clay <- ldply(l)
+Bt.horizons <- ldply(l)
+```
 
-# view the top 6 rows
-head(clay)
 
-# example of data returned - you can see that we still need to summarize this to get the upper depth from multiple 'Bt' horizons
-# notice that a couple of additional variable were return by the function
-#      .id  peiid   phiid hzname hzdept hzdepb clay phfield 
-#1 242808 242808 1148309    Bt1     18     36   25     6.1  
-#2 242808 242808 1148308    Bt2     36     53   30     6.0  
-#3 242808 242808 1148307    Bt3     53     81   35     5.7 
-#4 268791 268791 1258250    Bt1     15     33   18     6.8 
-#5 268791 268791 1258251    Bt2     33     58   28     6.5 
+We still need to reduce this down to one depth value per profile. The `ddply()` function is a convenient way to iterate over groups of rows in a dataframe and compute summaries (similar to `GROUP BY` in SQL). The group-wise summaries are re-combined into a new dataframe along with ids for each group.
+```{r fig.width=4.5, fig.height=3.5}
+# standard ddply syntax is as follows (type '?ddply' into the R console):
+# ddply(.data, .variables, .fun)
+Bt.horizons.top <- ddply(Bt.horizons, 'peiid', summarise, depth_to_argillic_cm=min(hzdept))
 
-# still need to reduce this down to one depth value for each profile
-## ddply() will apply a function (summarise the min(hzdept)) then combine the results into a data frame.
-## standard ddply syntax is as follows (type '??ddply' into the R console):
-## ddply(.data, .variables, .fun = NULL....)
-
-clay1 <- ddply(clay, 'peiid', summarise, depth_to_argillic_cm=min(hzdept))
-
-# since we have peiid in the 'clay1' dataframe we can easy join it back to site data in the SPC
-site(f) <- clay1
+# since we have peiid in the 'Bt.horizons.top' dataframe we can easy join it back to site data in the SPC
+# NOTE: the when used in conjunction with site(), the assignment operator performs a left-join
+site(f) <- Bt.horizons.top
 
 # summary of depth to carbonates in the data using a histogram
-hist(f$depth_to_argillic_cm)
+hist(f$depth_to_argillic_cm, xlab='Depth to Bt Horizon (cm)', main='')
 ```
 **Question:**                                                                                                                                          
 **What is a potential problem with this operation?  What was not accounted for?**
@@ -954,6 +962,7 @@ head(limy)
 limy1 <- ddply(limy, 'peiid', summarise, depth_to_carbonates_cm=min(hzdept))
 
 # since we have peiid in the 'limy1' dataframe we can easy join it back to site data in the SPC
+# this won't work if there were no horizons with 'k' suffice
 site(f) <- limy1
 
 # summary of depth to carbonates in the data using a histogram
@@ -1051,6 +1060,7 @@ colnames(e$texmodifier)
 # soil structure data
 colnames(e$struct) 
 ```
+
 Geomorphic description and parent materials are important attributes in soil data and can be useful as handles in exploring data.  The soilDB package flattens the nested table structure of parent material and geomorphic description within NASIS into single strings for each site-level record.  The pattern matching concepts demostrated above can be used to select profiles based on parts of these strings. Here we generate a handy graphical summary of the 10 most commonly occurring landforms in `fetchNASIS()` data so you can see their frequency of occurrence. 
 
 ```{r owndata_c, results='show'} 
@@ -1194,7 +1204,7 @@ For more information on generating diagnostic feature diagrams use the following
     
 ### Meeting the challenges
   
-  - Graphical display of the data and summary outputs
+  - Graphical display of the data and summary outputs ([**slice-wise aggregation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/profile-summary.html?root=aqp))
   - Generalized Horizon Labels(GHL) - deriving an aggregate soil profile for multiple similar soils
       - more on that process can be found in the following tutorial:
       [**GHL Aggregation Presentation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/ghl-aggregation.html?root=aqp) and [**GHL Aggregation Tutorial**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-application.html?root=aqp)
@@ -1215,11 +1225,6 @@ For more information regarding working with difficult pedon data see the followi
 
  * [**Quick R website**](http://www.statmethods.net/)
  * [**Simple R tutorial**](http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf)
-
-
-
-
-
 
 
 
