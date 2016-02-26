@@ -56,6 +56,8 @@ Examples in the sections below are meant to be copied/pasted from this document 
 ## Classes of objects used in R
  
 One of the most versatile things about R is that there are many ways manipulate and work with data.  Below are examples of how to create and reference information in several data types that are commonly used in working with soil data. Within the R session, *objects* contain information: loaded from files, extracted from NASIS, created on the fly, or calculated by some function. If none of the base classes are sufficient for a tast, it is possible to define custom classes. The `SoilProfileCollection` is one such example. More on this later.
+
+Objects in R are analgous to *nouns* in a spoken language: labels for things we encounter in life. While nouns in a spoken language are mostly immutable (e.g. the meaning of the word "apple" doesn't randomly change), the contents of objects in R can be modified at any time with the assignment operator `<-`.
  
 ### Vectors
 *Vectors* are a fundamental object in the R language that represent a set of 1 or more numbers, characters (commonly called strings), or boolean (TRUE/FALSE) values.
@@ -905,6 +907,9 @@ Working with the data loaded from your local NASIS selected set.
 library(sp)
 library(maps)
 
+# get pedons from the selected set
+f <- fetchNASIS()
+
 # subset standard WGS84 decimal degree coordinates from the gopheridge SPC by specifying column names
 f.locations <- site(f)[, c('site_id', 'x_std', 'y_std')]
 nrow(f.locations)
@@ -987,11 +992,11 @@ Let's do a quick graphical check that we've selected the 'lithic' profiles by pl
 
 ```r
 # adjust margins
-par(mar=c(1,0,2,1))
+par(mar=c(1,0,0,1))
 # plot the first 10 profiles of the 'f1' subset
 # limit plotting to a depth of about 60cm
 plot(f1[1:10, ], label='site_id', max.depth=60)
-title('Pedons with the word "lithic" at subgroup-level of Soil Taxonomy')
+title('Pedons with the word "lithic" at subgroup-level of Soil Taxonomy', line=-2)
 ```
 
 <img src="2a_tabular_data_files/figure-html/owndata_e-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
@@ -1083,7 +1088,7 @@ table(f2$part_size_class)
 # plot  profiles 1 thru 10
 par(mar=c(0,0,2,1))
 plot(f2[1:10, ], label='site_id')
-title('Sandy-Skeletal Particle Size Control Section Class')
+title('Sandy-skeletal particle size control section class')
 ```
 
 <img src="2a_tabular_data_files/figure-html/owndata_f-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
@@ -1206,20 +1211,45 @@ c("2011MT0810001", "2011MT0810009", "2011MT00810015", "2011MT0810027", "2011MT08
 Such a string can then be copied/pasted back as a concatenated string or could even be used as string for NASIS list queries. The `dput()` function is also helpful when sending questions or examples to colleagues via email.
 
 
-## Custom functions
+## Functions
+If objects are analogous to *nouns* in a spoken language, then functions are analagous to *verbs*. A function defines an action that (usually) results in the creation of an object. An object that is "acted on" by a function is called an "argument" to said function. Examples are most informative:
+
+
+```r
+# make a new object with a sequence of values from 1 to 10
+a <- seq(from=1, to=10, by=1)
+
+# define a function that performs a simple action on a vector of numbers
+# "i" is a temporary object created inside of the context of this function based on the argument supplied
+aFunction <- function(i) {
+  # do something
+  res <- i * 10
+  # send the results back to the calling context
+  return(res)
+}
+
+# apply our new function to object "a"
+aFunction(a)
+```
+
+```
+##  [1]  10  20  30  40  50  60  70  80  90 100
+```
+
 
 ### Defining a function
-Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes to be run on the SPC data.  Here we focus on functions that work with the site and horizon data in the SPC.  The general workflow typically goes like this:
+Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes that can be re-used.  Here we focus on functions that work with the site and horizon data in the SPC.  The general workflow typically goes like this:
 
 - *the need for a function is realized*
 
 - *steps for a function are defined*
 
-- *function is then applied iteratively to each profile and each horizon*
+- *function is then applied iteratively to each soil profile*
 
 - *results are returned*
 
-- *in many cases function results many need to be further summarized to join them back to the SPC for further use*
+- *in many cases results many need to be further summarized in order to join them back to the original SPC*
+
 
 ### Function examples
 
