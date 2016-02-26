@@ -1,4 +1,4 @@
-# Numerical Taxonomy, Clustering, Ordination
+# Numerical Taxonomy
 D.E. Beaudette  
 March 2016  
 
@@ -12,6 +12,7 @@ March 2016
 
 # Introduction
 
+Nearly every aspect of soil survey involves the question: "*is A more similar to B or to C?*". The quantification of *similarity* within a collection of horizons, pedons, components, map units, or even landscapes represents an exciting new way to enhance the precision and accuracy of our day to day work. After completing this module you should be able to replicate (some of) our innate ability to organize objects based on measured or observed characteristics of those objects.
 
 ![alt.text](static-figures/soils-by-pigments.png)
 
@@ -44,7 +45,7 @@ Table: A matrix of data: soil horizons (individuals) and associated characterist
  Bt1      32      40     23.2    1.9    23.7  
  Bt2      55      27     44.3    0.3    43.0  
 
-Similarity among individuals is more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the **Euclidean distance**. Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
+Quantitative measures of similarity are more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
 
 $$D(p,q) = \sqrt{(p_{1} - q_{1})^{2} + (p_{2} - q_{2})^{2}}$$
 
@@ -269,10 +270,61 @@ library(vegan)
 ### Interpretation
 
 
+
+
 # Practical applications
 
 Review:
  * [SoilProfileCollection object tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)
+
+
+## Pair-wise distances between subgroup level taxa
+
+
+```r
+# define a vector of series
+s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 'hanford', 'cecil', 'sycamore', 'KLAMATH', 'MOGLIA', 'drummer', 'musick', 'zook', 'argonaut', 'PALAU')
+
+# get and SPC object with basic data on these series
+s <- fetchOSD(s.list)
+
+# graphical check
+par(mar=c(0,0,2,0))
+plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-23-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+
+```r
+# check structure of some site-level attributes
+head(site(s))[, c('id', 'soilorder', 'suborder', 'greatgroup', 'subgroup')]
+```
+
+
+
+id         soilorder     suborder   greatgroup      subgroup            
+---------  ------------  ---------  --------------  --------------------
+AMADOR     inceptisols   xerepts    haploxerepts    typic haploxerepts  
+ARGONAUT   alfisols      xeralfs    haploxeralfs    mollic haploxeralfs 
+CECIL      ultisols      udults     kanhapludults   typic kanhapludults 
+DRUMMER    mollisols     aquolls    endoaquolls     typic endoaquolls   
+HANFORD    entisols      orthents   xerorthents     typic xerorthents   
+KLAMATH    mollisols     aquolls    cryaquolls      cumulic cryaquolls  
+
+
+```r
+par(mar=c(0,1,1,1))
+# plot dendrogram + profiles
+d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-24-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+
+Check resulting distance matrix.
+
+```r
+d
+```
 
 
 ## Pair-wise distances between soil profiles 
@@ -317,64 +369,109 @@ round(d, 1)
 
 ```r
 # vizualize dissimilarity matrix via hierarchical clustering
-p <- as.phylo(as.hclust(diana(d)))
-plot(p, font=2)
+par(mar=c(0,0,3,0))
+plotProfileDendrogram(sp4, d, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-24-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
-demo new functions for plotting profiles below dendrogram
+
 
 ## Soil color
+moist or dry?
 
 
 ```r
 library(colorspace)
-data(munsell)
-m <- subset(munsell, subset=hue %in% c('5YR', '2.5Y') & value < 10 & chroma < 10)
-# m <- munsell[sample(1:nrow(munsell), size = 100), ]
 
-lab.data <- as(with(m, RGB(r, g, b)), 'LAB')
-pairs(lab.data@coords, col=rgb(m$r, m$g, m$b), pch=16, cex=2)
+# extract horizon data from select OSDs in above example
+h <- horizons(s)
+
+# convert Munsell color notation to RGB
+rgb.data <- munsell2rgb(h$hue, h$value, h$chroma, return_triplets = TRUE)
+
+# check
+head(rgb.data)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+         r           g           b
+----------  ----------  ----------
+ 0.4360624   0.3706674   0.2969745
+ 0.5589675   0.4673350   0.3566388
+ 0.5589675   0.4673350   0.3566388
+ 0.7719679   0.6774631   0.4899754
+ 0.3940324   0.2499977   0.1668267
+ 0.4309729   0.2327690   0.0977103
 
 ```r
-# standardize?
-d <- daisy(lab.data@coords, stand = TRUE)
-h <- as.hclust(diana(d))
-# h$labels <- paste0(m$hue, ' ', m$value, '/', m$chroma)
-p <- as.phylo(h)
-plot(p, font=2, cex=0.5, no.margin=TRUE, type='fan', show.tip.label=FALSE)
-tiplabels(pch=16, cex=1.25, col=rgb(m$r, m$g, m$b))
+# remove NA
+rgb.data <- na.omit(rgb.data)
+
+# retain unique colors
+rgb.data <- unique(rgb.data)
+
+# convert RGB colors to CIE LAB color system
+lab.data <- as(with(rgb.data, RGB(r, g, b)), 'LAB')
+
+# visualize colors in LAB coordinates
+pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-25-2.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-28-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+
+
+```r
+# create distance matrix from LAB coordinates
+d <- daisy(lab.data@coords, stand = TRUE)
+
+# divisive heirarcical clustering
+d.hclust <- as.hclust(diana(d))
+
+# convert to phylo class for nicer plotting
+p <- as.phylo(d.hclust)
+
+# perform nMDS on distance matrix
+d.sammon <- sammon(d)
+
+# setup multi-figure page
+par(mfcol=c(1,2), mar=c(0,0,2,0))
+
+# plot fan-style dendrogram
+plot(p, font=2, cex=0.5, type='fan', show.tip.label=FALSE, main='Dendrogram Representation')
+# add colors at dendrogram tips
+tiplabels(pch=16, cex=3, col=rgb(rgb.data))
+
+# plot nMDS ordination
+plot(d.sammon$points, type='n', axes=FALSE, xlab='', ylab='', asp=1, main='nMDS Ordination')
+abline(h=0, v=0, col='black', lty=3)
+points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3, col='white')
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 ## Component interpretations
 [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
 
-**use the same list of soil series as above**
+
+
 
 
 ```r
 library(reshape2)
-# set list of soil series (component names)
-soil.list <- c('Pardee', 'Yolo', 'Capay', 'Aiken', 'Amador', 'Pentz', 'Sobrante',
-'Argonaut', 'Toomes', 'Jocal', 'Holland', 'Auburn', 'Dunstone', 
-'Hanford', 'Redding', 'Columbia', 'San Joaquin', 'Fresno')
+# set list of component names, same as soil color example
+s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 
+            'hanford', 'cecil', 'sycamore', 'KLAMATH', 'MOGLIA', 'drummer', 
+            'musick', 'zook', 'argonaut', 'PALAU')
 
 # set list of relevant interpretations
 interp.list <- c('ENG - Construction Materials; Topsoil', 
 'ENG - Sewage Lagoons', 'ENG - Septic Tank Absorption Fields', 
-'ENG - Unpaved Local Roads and Streets', 
-'AGR - California Revised Storie Index (CA)')
+'ENG - Unpaved Local Roads and Streets')
 
 # compose query
 q <- paste0("SELECT compname, mrulename, AVG(interplr) as interplr_mean
 FROM component INNER JOIN cointerp ON component.cokey = cointerp.cokey
-WHERE compname IN ", format_SQL_in_statement(soil.list), "
+WHERE compname IN ", format_SQL_in_statement(s.list), "
 AND seqnum = 0
 AND mrulename IN ", format_SQL_in_statement(interp.list), "
 AND interplr IS NOT NULL
@@ -392,46 +489,47 @@ knitr::kable(x.wide, digits = 3, caption="Mean Fuzzy Ratings for Select Soil Ser
 
 Table: Mean Fuzzy Ratings for Select Soil Series
 
-compname       AGR - California Revised Storie Index (CA)   ENG - Construction Materials; Topsoil   ENG - Septic Tank Absorption Fields   ENG - Sewage Lagoons   ENG - Unpaved Local Roads and Streets
-------------  -------------------------------------------  --------------------------------------  ------------------------------------  ---------------------  --------------------------------------
-Aiken                                               0.739                                   0.217                                 1.000                  0.966                                   0.909
-Amador                                              0.217                                   0.000                                 1.000                  1.000                                   0.732
-Argonaut                                            0.441                                   0.050                                 1.000                  1.000                                   0.996
-Auburn                                              0.297                                   0.001                                 1.000                  1.000                                   0.997
-Capay                                               0.532                                   0.170                                 1.000                  0.677                                   1.000
-Columbia                                            0.594                                   0.426                                 0.984                  0.984                                   0.874
-Dunstone                                            0.213                                   0.000                                 1.000                  1.000                                   0.923
-Fresno                                              0.135                                   0.000                                 1.000                  1.000                                   0.419
-Hanford                                             0.843                                   0.667                                 0.988                  1.000                                   0.212
-Holland                                             0.634                                   0.108                                 0.979                  0.999                                   0.867
-Jocal                                               0.626                                   0.095                                 0.921                  0.993                                   1.000
-Pardee                                              0.207                                   0.000                                 1.000                  1.000                                   1.000
-Pentz                                               0.243                                   0.004                                 1.000                  1.000                                   0.739
-Redding                                             0.239                                   0.039                                 1.000                  1.000                                   0.892
-San Joaquin                                         0.268                                   0.218                                 1.000                  1.000                                   0.632
-Sobrante                                            0.439                                   0.071                                 1.000                  1.000                                   0.871
-Toomes                                              0.170                                   0.000                                 1.000                  1.000                                   1.000
-Yolo                                                0.830                                   0.826                                 0.885                  0.633                                   0.730
+compname    ENG - Construction Materials; Topsoil   ENG - Septic Tank Absorption Fields   ENG - Sewage Lagoons   ENG - Unpaved Local Roads and Streets
+---------  --------------------------------------  ------------------------------------  ---------------------  --------------------------------------
+Amador                                      0.000                                 1.000                  1.000                                   0.732
+Argonaut                                    0.050                                 1.000                  1.000                                   0.996
+Cecil                                       0.419                                 0.663                  0.855                                   0.282
+Drummer                                     0.000                                 1.000                  1.000                                   1.000
+Hanford                                     0.667                                 0.988                  1.000                                   0.212
+Klamath                                     0.000                                 1.000                  1.000                                   1.000
+Moglia                                      0.000                                 1.000                  0.400                                   1.000
+Musick                                      0.167                                 1.000                  1.000                                   0.909
+Palau                                       0.011                                 1.000                  0.864                                   1.000
+Pardee                                      0.000                                 1.000                  1.000                                   1.000
+Pentz                                       0.004                                 1.000                  1.000                                   0.739
+Redding                                     0.039                                 1.000                  1.000                                   0.892
+Sycamore                                    0.787                                 0.947                  0.759                                   0.875
+Willows                                     0.010                                 1.000                  0.894                                   1.000
+Yolo                                        0.826                                 0.885                  0.633                                   0.730
+Zook                                        0.006                                 1.000                  1.000                                   1.000
 
 
 ```r
 # create distance matrix
 d <- daisy(x.wide[, -1])
 
-# cluster via divisive hierachical method
-h <- as.hclust(diana(d))
+# copy component names
+m <- as.matrix(d)
+dimnames(m) <- list(x.wide$compname, x.wide$compname)
 
-# transfer compname labels and convert to 'ape' class for plotting
-h$labels <- x.wide$compname
-h <- as.phylo(h)
-
-# plot as dendrogram
-par(mar=c(1,1,3,1))
-plot(h)
-title('Component Similarity via Select Interpretation Fuzzy Values')
+# back to distance matrix
+d <- as.dist(m)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+
+```r
+par(mar=c(2,0,2,0))
+plotProfileDendrogram(s, d, dend.y.scale = 1.5, scaling.factor = 0.004, y.offset = 0.1, width=0.15, cex.names=0.45)
+title('Component Similarity via Select Fuzzy Ratings')
+mtext('Profile Sketches are from OSDs', 1)
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-32-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -459,7 +557,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-28-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
 
 ## Species composition
