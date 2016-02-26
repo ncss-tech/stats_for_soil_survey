@@ -37,13 +37,13 @@ plot(pedons)
 
 
 ## Objectives:
+- Learn more about R and how to inspect objects and data types
 - Use the soilDB package to load NASIS pedon data into R
--	Learn about the checks run by the fetch functions when pulling data into R
--	Learn basic commands for inspecting objects and data types
-- Understand the basic structure of pedon data stored in a Soil Profile Collection (SPC) object
-- Learn ways to work with and inspect pedon data in R
-- Learn basic checks that you can do to filter and inspect the consistency of a pedon dataset
--	Not finding the data you need? Joining additional data to an SPC via extended data query functions
+- Learn about the checks run by the fetch functions when pulling data into R
+- Understand the structure data stored in a Soil Profile Collection (SPC) object
+- Learn ways to filter and subset data SPC data in R
+- Learn how functions can be used to bundle operations
+- Joining additional data to an SPC via extended data functions
 
 
 ## Importance of pedon data
@@ -70,8 +70,6 @@ ggplot(data.frame(Pedons, Year), aes(x=Year, y=Pedons)) + geom_bar(stat="identit
 - If we acknowledge this, which we must, then how do we deal with it in working with pedon data?
     - using a cutoff depth of 100cm for example to truncate observations to a zone of greater confidence
     
-could use a slab plot to show this!!!  Provides a hook up front.
-
 
 # R fundamentals
 
@@ -200,6 +198,7 @@ Notice in dataframe `d` that each row has an index number in front of it.  Using
 **Question:**
 
 **How would we remove a vector or column from a dataframe?**
+
 `d$tax_subgroup <- NULL` will remove this column from the dataframe.
 
 
@@ -220,7 +219,8 @@ Lists are similar to the dataframe class, but without limitations on the length 
 # make a list with named elements
 l <- list('favorite shovels'=c('sharpshooter', 'gibbs digger', 'auger', 'rock bar', 'backhoe!'),
      'food'=c('apples', 'bread', 'cheese', 'vienna sausages', 'lutefisk'),
-     'numbers I like'=c(12, 1, 5, 16, 25, 68), 
+     'numbers I like'=c(12, 1, 5, 16, 25, 68),
+     'chips I like' =c('plantain', 'corn', 'tortilla', 'potato', '10YR 3/2'),
      'email messages deleted'=c(TRUE, FALSE, FALSE, FALSE, TRUE, TRUE))
 # check
 l
@@ -280,7 +280,8 @@ Data from a selected set defined in your local NASIS database can be accessed in
 **Question:**
 
 **Does NASIS need to be open and running to query data using soilDB?**
-No, `fetchNASIS()` will work when the NASIS application is not running. You just need to make sure that you have the data you want loaded into your selected set.
+
+No, `fetchNASIS()` will work whether the NASIS application is running or not. You just need to make sure that you have the data you want loaded into your selected set.
 
 
 ## What is the soilDB package and what does it do?
@@ -350,7 +351,8 @@ One-to-many relationships are flattened where possible by `fetchNASIS()` to aggr
     - submit queries to the Soil Data Access system
         - For more information check out the following tutorial:
         [**Soil Data Access Tutorial**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/SDA-tutorial.html?root=aqp)
- 
+
+
 ### Data checks run by the `fetchNASIS()` function
 
 When loading pedons with the fetchNASIS() function the following data checks are performed:
@@ -373,7 +375,7 @@ _Notice the issue here?  Bottom depth of the A horizon and the upper depth of th
 - **sites missing pedon records:** data without corresponding horizons are not loaded
 
 
-#### How can we find the site ID's where these errors occur so that we can to fix them in NASIS?
+#### How can we find the site ID's where these errors occur and fix them in NASIS?
 Should errors in the pedon data be detected when loading data using fetchNASIS() you can use the following 'get' functions to trace them back to the corresponding records in NASIS:
 
 - **get('sites.missing.pedons', envir=soilDB.env)**
@@ -626,7 +628,7 @@ sort(table(f$texture), decreasing=TRUE)
 
 ### Filtering data using pattern matching
 
-A collection of soil profiles or an SPC can be subset using a variety of methods and then the results can be placed into another SPC. This can be useful for generating subset SPC objects from the original dataset.  The following examples use the `grep()` function to pattern match within the data and create an index of the SPC for records that match the specified pattern within that column and then use that index to filter to specific sites and their corresponding profiles. Patterns are specified in [regular expression](http://regexr.com/) syntax.
+A collection of soil profiles or an SPC can be subset using a variety of methods and then the results can be placed into another SPC. This can be useful for generating subset SPC objects from the original dataset.  The following examples use the `grep()` function to pattern match within the data and create an index of the SPC for records that match the specified pattern within that column and then use that index to filter to specific sites and their corresponding profiles. Patterns are specified in [regular expression](http://regexr.com/) (REGEX) syntax.
 
 This process can be applied to many different columns in the SPC based on how you need to filter the data.  This example pattern matches on the `tax_subgroup` column, but another useful application might be to pattern match on geomorphic or parent material information.
 
@@ -655,6 +657,13 @@ title('Pedons with the word "lithic" at subgroup-level of Soil Taxonomy', line=-
 ```
 
 For more information on using regular expressions in `grep()` for pattern matching operations: [Regular-expression-syntax](https://www.gnu.org/software/findutils/manual/html_node/find_html/grep-regular-expression-syntax.html)
+
+#### Additional useful syntax options for use in REGEX
+
+  - `|` - equivalent to "or" in SQL.
+    - example:   `grep('loamy | sandy', f$part_size_class)`
+  - `^` - anchors to the left side of the string - `grep('^sandy', f$part_size_class)`
+  - `$` - anchors to the right side of the string - `grep('$skeletal', f$part_size_class)`
 
 
 ### Filtering data by specifying a criteria using the `which()` function
@@ -735,11 +744,13 @@ Such a string can then be copied/pasted back as a concatenated string or could e
 
 
 ## Functions
-If objects are analogous to *nouns* in a spoken language, then functions are analagous to *verbs*. A function defines an action that (usually) results in the creation of an object. An object that is "acted on" by a function is called an "argument" to said function. Examples are most informative:
+If objects are analogous to *nouns* in a spoken language, then functions are analagous to *verbs*. A function defines an action that (usually) results in the creation of an object. An object that a function "acts on" is referred to as an "argument" of that function. Let's follow this terminology with a very basic example:
 
 ```{r }
 # make a new object with a sequence of values from 1 to 10
 a <- seq(from=1, to=10, by=1)
+# result
+#[1]  1  2  3  4  5  6  7  8  9 10
 
 # define a function that performs a simple action on a vector of numbers
 # "i" is a temporary object created inside of the context of this function based on the argument supplied
@@ -756,7 +767,7 @@ aFunction(a)
 
 
 ### Defining a function
-Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes that can be re-used.  Here we focus on functions that work with the site and horizon data in the SPC.  The general workflow typically goes like this:
+Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes that can be re-used.  Here we focus on functions that work with the horizon data in the SPC.  The general workflow typically goes like this:
 
 - *the need for a function is realized*
 
@@ -775,7 +786,7 @@ Functions can bundle a series of operations and then be applied to an SPC using 
 What steps would be needed to accomplish this task and return an upper depth to carbonates for each site?
 
  - *extract* the horizon data for each profile
- - *iterate* through the horizon designations(hzname) pattern matching for 't'
+ - *iterate* through the horizon designations(hzname) pattern matching for **'t'**
  - *apply* the function to each profile via `profileApply()`
  - *summarize* the data returned by the function to one value per profile
  - *join* the summarized depth value back to the site data
@@ -827,9 +838,8 @@ head(clay)
 #5 268791 268791 1258251    Bt2     33     58   28     6.5 
 
 # still need to reduce this down to one depth value for each profile
-# summarize this dataframe using summarise() in the plyr package
 ## ddply() will apply a function (summarise the min(hzdept)) then combine the results into a data frame.
-## standard ddply syntax is as follows (type '??ddply' into the console:
+## standard ddply syntax is as follows (type '??ddply' into the R console):
 ## ddply(.data, .variables, .fun = NULL....)
 
 clay1 <- ddply(clay, 'peiid', summarise, depth_to_argillic_cm=min(hzdept))
@@ -902,7 +912,7 @@ In the following example we want to use some pedon data to model the depth to ca
 What steps would be needed to accomplish this task and return an upper depth to carbonates for each site?
 
  - *extract* the horizon data for each profile
- - *iterate* through the horizon designations(hzname) pattern matching for 'k'
+ - *iterate* through the horizon designations(hzname) pattern matching for **'k'**
  - *apply* the function to each profile via `profileApply()`
  - *summarize* the data returned by the function to one value per profile
  - *join* the summarized depth value back to the site data
@@ -936,17 +946,9 @@ limy <- ldply(l)
 # view the top 6 rows
 head(limy)
 
-# example of data returned - you can see that we still need to summarize this to get the upper depth from multiple 'Bk' horizons
-# notice that a couple of additional variable were return by the function
-#     .id  peiid   phiid hzname hzdept hzdepb phfield effervescence
-#1 828198 828198 4268004    Bk1     91    152     8.2     violent
-#2 828198 828198 4268003    Bk2    152    182     8.2      strong
-#3 828209 828209 4268070    Btk    104    152     7.6       <NA>
-
 # still need to reduce this down to one depth value for each profile
-# summarize this dataframe using summarise() in the plyr package
 ## ddply() will apply a function (summarise the min(hzdept)) then combine the results into a data frame.
-## standard ddply syntax is as follows (type '??ddply' into the console:
+## standard ddply syntax is as follows (type '??ddply' into the R console):
 ## ddply(.data, .variables, .fun = NULL....)
 
 limy1 <- ddply(limy, 'peiid', summarise, depth_to_carbonates_cm=min(hzdept))
@@ -988,15 +990,7 @@ organic <- ldply(l)
 # show contents of the 'organic' dataframe
 head(organic)
 
-# example of data returned - you can see that we still need to summarize this to get the lower depth for multiple 'O' horizons where present. 
- #     .id  peiid   phiid hzname hzdept hzdepb
- #1 828138 828138 4005848     Oi      0      5
- #2 828139 828139 4005854     Oe      0      3
-##3 828140 828140 4005861     Oi      0      3
-##4 828140 828140 4005862     Oe      3      7
-
-# still need to reduce this down to one max bottom depth value for each profile
-# summarize this dataframe using summarise() in the plyr package
+# still need to reduce this down to one max bottom depth value for each profile, can use ddply()
 organic1 <- ddply(organic, 'peiid', summarise, organic_thickness_cm=max(hzdepb))
 
 # since we have peiid in the 'organic1' dataframe we can join back to site data in the SPC
@@ -1010,11 +1004,12 @@ You could now subtract the `organic_thickness_cm` values from `depth_to_carbonat
 
 How would we do that?
 
-How about an example where we truncate the thickness or we're interested in summarizing the data for some depth zone, 25 to 100cm for example.  Weighted average clay for the 25 to 100cm thickness?
+How about examples where we truncate the thickness or we're interested in summarizing the data for some depth zone, 25 to 100cm.  Weighted average clay for the 25 to 100 cm thickness?
 
 Simple example: `slab(f, fm= peiid ~ clay, slab.structure=c(25,100), slab.fun=mean, na.rm=TRUE)`
 
-
+Some excellent examples using the `slice()` and `slab()` functions in the AQP package can be found here:
+[`Introduction to SoilProfileCollection`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)
 
 ## Getting additional data: Extended data functions in soilDB
 
@@ -1196,17 +1191,24 @@ For more information on generating diagnostic feature diagrams use the following
     - Origin of the location information?
     - What datum was the data collected in?
     - What was considered reasonable accuracy for GPS values at that time?
+    
+### Meeting the challenges
+  
+  - Graphical display of the data and summary outputs
+  - Generalized Horizon Labels(GHL) - deriving an aggregate soil profile for multiple similar soils
+      - more on that process can be found in the following tutorial:
+      [**GHL Aggregation Presentation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/ghl-aggregation.html?root=aqp) and [**GHL Aggregation Tutorial**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-application.html?root=aqp)
 
 For more information regarding working with difficult pedon data see the following tutorial in the 'aqp' package:  
 [**Dealing with Troublesome data**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/dealing-with-bad-data.html?root=aqp)
 
 # References
 
- * [Tutorials on the AQP website](http://aqp.r-forge.r-project.org/)
- * [Package 'aqp' manual](https://cran.r-project.org/web/packages/aqp/aqp.pdf)
- * [Package 'soilDB' manual](https://cran.r-project.org/web/packages/aqp/soilDB.pdf)
- * [Package 'sharpshootR' manual](https://cran.r-project.org/web/packages/aqp/sharpshootR.pdf)
- * [Package 'plyr' manual](https://cran.r-project.org/web/packages/plyr/plyr.pdf)
+ * [**Tutorials on the AQP website**](http://aqp.r-forge.r-project.org/)
+ * [**Package 'aqp' manual**](https://cran.r-project.org/web/packages/aqp/aqp.pdf)
+ * [**Package 'soilDB' manual**](https://cran.r-project.org/web/packages/aqp/soilDB.pdf)
+ * [**Package 'sharpshootR' manual**](https://cran.r-project.org/web/packages/aqp/sharpshootR.pdf)
+ * [**Package 'plyr' manual**](https://cran.r-project.org/web/packages/plyr/plyr.pdf)
 
 
 ## Additional resources
@@ -1218,6 +1220,15 @@ For more information regarding working with difficult pedon data see the followi
 
 
 
+
+
+
+
+
+
+
+----------------------------
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
 
 
 
