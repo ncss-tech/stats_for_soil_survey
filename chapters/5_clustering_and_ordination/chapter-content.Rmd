@@ -82,6 +82,21 @@ library(MASS)
 
 <!-- This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`. -->
 
+TODO:
+ 
+ * links to unsupervised classification
+ * spatial clustering with fanny
+ * think: distance metric, characteristics, standardization, clustering algorithm, number of classes...
+ * fuzzy clustering of hz attr -> plot on profile
+ * missing data: bain of numerical taxonomy... strategies
+ * color clustering of entire profiles
+ * profile_compare() details
+ * clustering of map unit GIS data -> post sample data
+ * add discussion points to each section
+ * add questions
+ * adapt to use 'pedons' through entire document for simple use of student's data
+ * mean silhouette width as cluster number selection
+
 
 
 # Introduction
@@ -340,9 +355,21 @@ library(cluster)
 library(ape)
 library(RColorBrewer)
 library(vegan)
+library(MASS)
+library(colorspace)
 ```
 
-### Example data and following along with your own data
+### Data sources
+
+Most of the examples used in this module come from the following sources:
+
+1. built-in data sets from the `aqp` and `soilDB` packages ("sp4" and "loafercreek")
+2. results from [`fetchNASIS()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp): pedon data from the local NASIS selected set
+3. results from [`fetchKSSL()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp): lab characterization data from the SoilWeb snapshot
+4. results from [`fetchOSD()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/OSD-dendrogram.html?root=aqp): basic morphologic and taxonmic data from the SoilWeb snapshot 
+5. results from [`SDA_query()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp): *live* SSURGO spatial and tabular data from [Soil Data Access](http://sdmdataaccess.nrcs.usda.gov/)
+
+In most cases, you can edit the examples to swap-in just about any data that is or has been upgraded to a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp). For example, pedons from **your** local NASIS selected set can be loaded with `fetchNASIS()`.
 
 
 ## More on the distance matrix and how to make one
@@ -438,6 +465,38 @@ Review:
  * [SoilProfileCollection object tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)
 
 
+## Pair-wise distances between soil profiles 
+
+[relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
+
+[relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
+
+```{r, message=FALSE}
+# init example data
+data(sp4)
+depths(sp4) <- id ~ top + bottom
+
+# eval dissimilarity:
+# using Ex-Ca:Mg and CEC at pH 7
+# with no depth-weighting (k=0)
+# to a maximum depth of 40 cm
+d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
+
+# check distance matrix:
+round(d, 1)
+
+# cluster via divisive method
+clust <- diana(d)
+```
+
+```{r, fig.width=8, fig.height=4}
+# vizualize dissimilarity matrix via hierarchical clustering
+par(mar=c(0,0,3,0))
+plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
+```
+
+
+
 ## Pair-wise distances between subgroup level taxa
 
 ```{r, fig.width=10, fig.height=4.5}
@@ -467,41 +526,12 @@ d
 ```
 
 
-## Pair-wise distances between soil profiles 
-
-[relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
-
-[relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
-
-```{r, message=FALSE}
-# init example data
-data(sp4)
-depths(sp4) <- id ~ top + bottom
-
-# eval dissimilarity:
-# using Ex-Ca:Mg and CEC at pH 7
-# with no depth-weighting (k=0)
-# to a maximum depth of 40 cm
-d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
-
-# check distance matrix:
-round(d, 1)
-```
-
-```{r, fig.width=8, fig.height=4}
-# vizualize dissimilarity matrix via hierarchical clustering
-par(mar=c(0,0,3,0))
-plotProfileDendrogram(sp4, d, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
-```
-
 
 
 ## Soil color
-moist or dry?
+moist colors
 
 ```{r, fig.width=6, fig.height=6}
-library(colorspace)
-
 # extract horizon data from select OSDs in above example
 h <- horizons(s)
 
@@ -538,17 +568,17 @@ p <- as.phylo(d.hclust)
 d.sammon <- sammon(d)
 
 # setup multi-figure page
-par(mfcol=c(1,2), mar=c(0,0,2,0))
+par(mfcol=c(1,2), mar=c(0,0,2,0), bg=grey(0.95))
 
 # plot fan-style dendrogram
 plot(p, font=2, cex=0.5, type='fan', show.tip.label=FALSE, main='Dendrogram Representation')
 # add colors at dendrogram tips
-tiplabels(pch=16, cex=3, col=rgb(rgb.data))
+tiplabels(pch=21, cex=4, col='white', bg=rgb(rgb.data))
 
 # plot nMDS ordination
 plot(d.sammon$points, type='n', axes=FALSE, xlab='', ylab='', asp=1, main='nMDS Ordination')
 abline(h=0, v=0, col='black', lty=3)
-points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3, col='white')
+points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
 ## Component interpretations
@@ -570,7 +600,7 @@ interp.list <- c('ENG - Construction Materials; Topsoil',
 'ENG - Unpaved Local Roads and Streets')
 
 # compose query
-q <- paste0("SELECT compname, mrulename, AVG(interplr) as interplr_mean
+q <- paste0("SELECT UPPER(compname) as compname, mrulename, AVG(interplr) as interplr_mean
 FROM component INNER JOIN cointerp ON component.cokey = cointerp.cokey
 WHERE compname IN ", format_SQL_in_statement(s.list), "
 AND seqnum = 0
@@ -587,20 +617,24 @@ knitr::kable(x.wide, digits = 3, caption="Mean Fuzzy Ratings for Select Soil Ser
 ```
 
 ```{r}
+# note: component name and series name have been converted to upper case
+# sort rows of fuzzy ratings based on profiles from OSDs
+new.order <- match(x.wide$compname, profile_id(s))
+x.wide <- x.wide[new.order, ]
+
+# copy ids to row.names so that they are preserved in distance matrix
+row.names(x.wide) <- x.wide$compname
+
 # create distance matrix
 d <- daisy(x.wide[, -1])
 
-# copy component names
-m <- as.matrix(d)
-dimnames(m) <- list(x.wide$compname, x.wide$compname)
-
-# back to distance matrix
-d <- as.dist(m)
+# divisive hierarchical clustering
+clust <- diana(d)
 ```
 
 ```{r, fig.width=10, fig.height=6}
 par(mar=c(2,0,2,0))
-plotProfileDendrogram(s, d, dend.y.scale = 1.5, scaling.factor = 0.004, y.offset = 0.1, width=0.15, cex.names=0.45)
+plotProfileDendrogram(s, clust, dend.y.scale = 1.5, scaling.factor = 0.004, y.offset = 0.1, width=0.15, cex.names=0.45)
 title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
