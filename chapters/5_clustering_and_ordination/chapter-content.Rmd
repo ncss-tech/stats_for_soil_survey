@@ -370,7 +370,7 @@ Most of the examples used in this module come from the following sources:
 6. data from SSR 2, as CSV, downloaded from class [GitHub site](https://github.com/ncss-tech/stats_for_soil_survey/tree/master/data/clustering_and_ordination)
 
 
-In most cases, you can edit the examples to swap-in just about any data that is or has been upgraded to a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp). For example, pedons from **your** local NASIS selected set can be loaded with `fetchNASIS()`.
+In most cases, you can edit the examples and swap-in just about any data that are or have been upgraded to a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp). For example, pedons from **your** local NASIS selected set can be loaded with `fetchNASIS()`.
 
 
 #### Your turn
@@ -384,11 +384,26 @@ Tinker with some `SoilProfileCollection` objects:
 
 ## More on the distance matrix and how to make one
 
+### Options
+
+* `dist()` (base R), simple and fast, limited number of distance metrics
+* `daisy()` ([cluster package](https://cran.r-project.org/web/packages/cluster/index.html)), better selection of distance metrics, simple standardization, my go-to function
+* `vegdist` ([vegan package](https://cran.r-project.org/web/packages/vegan/index.html)), many distance metrics, primarily designed for species composition data
+
+
+
 ```{r, }
-# dist()
-# daisy()
-# vegdist()
-# vegemite and related
+# get some example data from the aqp package
+data('sp4', package = 'aqp')
+# subset select rows and columns
+sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+
+# compare distance functions
+round(dist(sp4[, -1], method = 'euclidean'))
+
+round(daisy(sp4[, -1], stand = TRUE, metric = 'euclidean'), 2)
+
+round(vegdist(sp4[, -1], method = 'gower'), 2)
 ```
 
 ### Distance calculations with categorical data
@@ -466,6 +481,7 @@ Tinker with some `SoilProfileCollection` objects:
 
 ### Interpretation and goodness of fit
 
+[Shephard diagram](http://cc.oulu.fi/~jarioksa/softhelp/vegan/html/goodness.metaMDS.html)
 ```{r, eval=FALSE}
 # MASS library
 d.shep <- Shepard(d, d.sammon$points)
