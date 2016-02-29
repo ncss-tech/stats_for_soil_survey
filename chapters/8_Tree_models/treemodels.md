@@ -127,7 +127,7 @@ text(spodintmodel, cex=0.8) #cex is text size
 
 ![](treemodels_files/figure-html/unnamed-chunk-4-1.png)
 
-When soil order and subgroup are included in the spodint model, they are the two most important variables for seperating spodic intensity. This makes sense given the ratings for spodic intensity: 0 = non spodic, 0.5 = Bs horizon, 1 = spodic subgroup, 1.5 = spodic subgroup OR Spodosol, 2 = Spodosol. Let's omit soil order and subgroup to see what other factors best seperate spodint.  
+When soil order and subgroup are included in the spodint model, they are the two most important variables for separating spodic intensity. This makes sense given the ratings for spodic intensity: 0 = non spodic, 0.5 = Bs horizon, 1 = spodic subgroup, 1.5 = spodic subgroup OR Spodosol, 2 = Spodosol. Let's omit soil order and subgroup to see what other factors best separate spodint.  
 
 
 ```r
@@ -205,9 +205,9 @@ printcp(spodintmodel)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.432099      0   1.00000 1.00000 0.046614
-## 2 0.395062      1   0.56790 0.59877 0.047561
-## 3 0.024691      2   0.17284 0.17284 0.030780
-## 4 0.010000      3   0.14815 0.16049 0.029794
+## 2 0.395062      1   0.56790 0.62963 0.047967
+## 3 0.024691      2   0.17284 0.17901 0.031254
+## 4 0.010000      3   0.14815 0.15432 0.029280
 ```
 
 ```r
@@ -236,12 +236,12 @@ printcp(spodintmodel2)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.253086      0   1.00000 1.00000 0.046614
-## 2 0.058642      1   0.74691 0.77778 0.048799
-## 3 0.037037      3   0.62963 0.79012 0.048787
-## 4 0.030864      4   0.59259 0.76543 0.048799
-## 5 0.018519      5   0.56173 0.72840 0.048724
-## 6 0.015432      6   0.54321 0.77160 0.048801
-## 7 0.012346      8   0.51235 0.77160 0.048801
+## 2 0.058642      1   0.74691 0.78395 0.048794
+## 3 0.037037      3   0.62963 0.80864 0.048744
+## 4 0.030864      4   0.59259 0.79012 0.048787
+## 5 0.018519      5   0.56173 0.77160 0.048801
+## 6 0.015432      6   0.54321 0.79630 0.048776
+## 7 0.012346      8   0.51235 0.79012 0.048787
 ## 8 0.010000     12   0.45679 0.77778 0.048799
 ```
 
@@ -290,8 +290,8 @@ printcp(pruned)
 ## 
 ##        CP nsplit rel error  xerror     xstd
 ## 1 0.43210      0   1.00000 1.00000 0.046614
-## 2 0.39506      1   0.56790 0.59877 0.047561
-## 3 0.09900      2   0.17284 0.17284 0.030780
+## 2 0.39506      1   0.56790 0.62963 0.047967
+## 3 0.09900      2   0.17284 0.17901 0.031254
 ```
 
 ```r
@@ -327,9 +327,9 @@ printcp(pruned2)
 ## 
 ##         CP nsplit rel error  xerror     xstd
 ## 1 0.253086      0   1.00000 1.00000 0.046614
-## 2 0.058642      1   0.74691 0.77778 0.048799
-## 3 0.037037      3   0.62963 0.79012 0.048787
-## 4 0.034000      4   0.59259 0.76543 0.048799
+## 2 0.058642      1   0.74691 0.78395 0.048794
+## 3 0.037037      3   0.62963 0.80864 0.048744
+## 4 0.034000      4   0.59259 0.79012 0.048787
 ```
 
 ```r
@@ -345,7 +345,7 @@ Another way to visualize rpart's decison tree and model performance is to use th
 
 
 ```r
-rpart.plot(pruned2, extra=3) #extra=3 displays the missclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
+rpart.plot(pruned2, extra=3) #extra=3 displays the misclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
 ```
 
 ![](treemodels_files/figure-html/unnamed-chunk-9-1.png)
@@ -385,17 +385,17 @@ printcp(spodintmodel3)
 ## 
 ## n= 250 
 ## 
-##          CP nsplit rel error  xerror    xstd
-## 1  0.318266      0   1.00000 1.01149 0.16640
-## 2  0.111721      1   0.68173 0.70332 0.11678
-## 3  0.050419      2   0.57001 0.72342 0.10459
-## 4  0.043957      3   0.51959 0.71140 0.11279
-## 5  0.031130      4   0.47564 0.70792 0.11470
-## 6  0.019235      5   0.44451 0.74678 0.11608
-## 7  0.013928      6   0.42527 0.77474 0.12470
-## 8  0.010851      7   0.41134 0.80748 0.12713
-## 9  0.010394      8   0.40049 0.81461 0.12707
-## 10 0.010000      9   0.39010 0.82614 0.12740
+##          CP nsplit rel error  xerror     xstd
+## 1  0.318266      0   1.00000 1.00805 0.166576
+## 2  0.111721      1   0.68173 0.70838 0.119043
+## 3  0.050419      2   0.57001 0.66250 0.096848
+## 4  0.043957      3   0.51959 0.67700 0.107479
+## 5  0.031130      4   0.47564 0.62473 0.106850
+## 6  0.019235      5   0.44451 0.64763 0.107592
+## 7  0.013928      6   0.42527 0.66753 0.110082
+## 8  0.010851      7   0.41134 0.68724 0.109936
+## 9  0.010394      8   0.40049 0.69973 0.110004
+## 10 0.010000      9   0.39010 0.69697 0.109696
 ```
 
 ```r
@@ -428,10 +428,10 @@ printcp(pruned3)
 ## 
 ## n= 250 
 ## 
-##         CP nsplit rel error  xerror    xstd
-## 1 0.318266      0   1.00000 1.01149 0.16640
-## 2 0.111721      1   0.68173 0.70332 0.11678
-## 3 0.050419      2   0.57001 0.72342 0.10459
+##         CP nsplit rel error  xerror     xstd
+## 1 0.318266      0   1.00000 1.00805 0.166576
+## 2 0.111721      1   0.68173 0.70838 0.119043
+## 3 0.050419      2   0.57001 0.66250 0.096848
 ```
 
 **Was the majority of the variance in total O horizon thickness captured with the rpart model?**
@@ -440,7 +440,7 @@ printcp(pruned3)
 ### Exercise 1: rpart
 Using the soildata dataset, construct a rpart model to predict tipmound. Prune the model if necessary and answer the following questions:
 
-1) What are the most important variables for seperating tip and mound ratings?
+1) What are the most important variables for separating tip and mound ratings?
 2) What is the cross-validation error of the pruned model?
 3) How could you improve this model?
 
@@ -466,8 +466,8 @@ rf # statistical summary
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 13
 ## 
-##           Mean of squared residuals: 21.11634
-##                     % Var explained: 41.28
+##           Mean of squared residuals: 21.4013
+##                     % Var explained: 40.49
 ```
 
 ```r
@@ -496,47 +496,47 @@ importance(rf) #tabular summary
 ```
 
 ```
-##                  %IncMSE IncNodePurity
-## x             2.91197257    207.999510
-## y             9.00858831    338.881114
-## Overtype      6.06275937    371.632399
-## Underconifer  2.67108636     37.126784
-## spodint      18.61679604   1582.580405
-## ps            0.37523379     48.788814
-## drainage      1.54810435     12.684980
-## slope         1.25318594    124.809347
-## surfacetex    5.77180564   1003.070239
-## stoniness     1.04069660     56.378365
-## depthclass   -0.09575845     25.668700
-## bedrockdepth -0.19455779      9.696075
-## hillslope     1.49330537     45.205384
-## tipmound      0.52438955     26.167524
-## rainfall      5.80410132     88.738570
-## geology       2.04477928     17.290261
-## aachn         3.04951721    115.998258
-## dem10m        2.20708301    148.477479
-## downslpgra    2.79468598     99.007120
-## eastness     -2.76881634    586.970974
-## greenrefl     2.21559323    205.546792
-## landsatb1     2.02389238     99.980715
-## landsatb2     1.34065068    127.949417
-## landsatb3     0.48246359     65.092315
-## landsatb7     6.23849834    507.746533
-## maxc100       1.80808064    122.372852
-## maxent        5.83055505    504.266387
-## minc100      -0.13209048    103.679890
-## mirref        1.57648402    273.278975
-## ndvi          0.04375298    135.836337
-## northeastn   -0.02215932    320.603275
-## northness     2.34930513    121.010503
-## northwestn    3.58000234    241.672938
-## planc100      0.87544287    143.175404
-## proc100       1.34622020    112.860853
-## protection    4.69546498    147.486210
-## relpos11      1.53006070    118.224244
-## slp50         2.04845337    121.539067
-## solar         1.79653127    151.090754
-## tanc75       -0.15265347    149.319513
+##                 %IncMSE IncNodePurity
+## x             2.7466611     203.74556
+## y             7.0623477     323.85785
+## Overtype      6.1671432     454.37620
+## Underconifer  2.6873455      32.61779
+## spodint      18.9422746    1543.42277
+## ps           -1.1766319      48.45761
+## drainage     -1.1316555      13.90926
+## slope         1.1842654     115.06059
+## surfacetex    6.4940362    1012.70739
+## stoniness     2.5314740      67.61651
+## depthclass   -0.2866298      26.60054
+## bedrockdepth -0.6370323      12.35880
+## hillslope     5.0595186      59.80030
+## tipmound      2.3436125      27.11789
+## rainfall      5.8006666      77.38009
+## geology       1.9713885      18.05937
+## aachn         0.8662600     138.10070
+## dem10m        3.2320090     151.67036
+## downslpgra    1.9896186      99.84497
+## eastness     -3.7785542     658.16152
+## greenrefl     4.2563289     178.78592
+## landsatb1     1.4048135      98.25968
+## landsatb2     1.7322221     120.69122
+## landsatb3     0.7610440      60.02267
+## landsatb7     6.5944514     494.92055
+## maxc100       1.8477057     124.05165
+## maxent        5.4363242     493.16763
+## minc100       0.6259799      93.66140
+## mirref        2.2580097     273.04452
+## ndvi          0.3290258     113.27927
+## northeastn    2.0245942     329.05479
+## northness     0.6611449     124.77783
+## northwestn    3.9733863     238.06246
+## planc100     -0.6615894     132.25190
+## proc100      -0.3324362     122.38564
+## protection    1.9910928     140.59312
+## relpos11      0.5163321     113.35519
+## slp50         1.2685970     123.98450
+## solar         2.7873116     126.61789
+## tanc75        0.8166283     158.30040
 ```
 
 For each tree, each predictor in the OOB sample is randomly permuted and passed through the tree to obtain an error rate (mean square error (MSE) for regression and Gini index for classification). The error rate from the unpermuted OOB is then subtracted from the error rate of the permuted OOB data, and averaged across all trees. When this value is large, it implies that a variable is highly correlated to the dependent variable and is needed in the model. 
@@ -548,7 +548,7 @@ In the rf model, it is apparent that spodint is the most important variable used
 ### Exercise 2: randomForest
 Using the soildata dataset, construct a randomForest model to predict soil order. Hint: remove the one histosol observation before constructing the model (`soildata2<-droplevels(subset(soildata, order!="histosol")) `) and do not include spodint, series, taxon, or subgroup. When finished, answer the following questions:
 
-1) What are the most important variables for seperating Inceptisols from Spodosols from Ultisols?
+1) What are the most important variables for separating Inceptisols from Spodosols from Ultisols?
 2) What is the out-of-bag error rate?
 3) Which soil order was best predicted by the model?
 
