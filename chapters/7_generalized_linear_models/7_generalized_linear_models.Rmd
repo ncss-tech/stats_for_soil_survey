@@ -35,7 +35,7 @@ opts_chunk$set(message=FALSE, warning=FALSE, background="#F7F7F7", fig.retina=2,
 
 ## <a id="intro")></a> 7.1 Introduction
 
-Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or soil temperature, GLM can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or counts of a plant species along a transact (i.e. Poisson regression). These generalizations greatly expands the applicability of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.
+Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or soil temperature, GLM can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or counts of a plant species along a transact (i.e. Poisson regression). These generalizations greatly expand the applicability of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.
 
 In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(x). However such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(x)). Also response transformations are not guaranteed to achieve both normality and constant variance simultaneously. GLM likewise transform the response, but also preserve the scale of the response, and provide separate functions to transform the mean response and variance, know as the link and variance functions respectively. So instead of looking like this
 
@@ -47,7 +47,7 @@ $g(\mu)$ or $\eta = \beta_{0} + \beta_{1}x + \varepsilon$
 
 with $g(\mu)$ or $\eta$ symbolizing the link function. 
 
-Another alteration the classical linear model is that with GLM the coefficients are estimated iteratively by maximum likelihood estimation instead of ordinary least squares. This results in the GLM minimizing the deviance, instead of the sum of squares. However for the Gaussian (i.e. normal) distributions the deviance and sum of squares are equivalent.
+Another alteration of the classical linear model is that with GLM the coefficients are estimated iteratively by maximum likelihood estimation instead of ordinary least squares. This results in the GLM minimizing the deviance, instead of the sum of squares. However for the Gaussian (i.e. normal) distributions the deviance and sum of squares are equivalent.
 
 
 ## <a id="logistic")></a> 7.2 Logistic regression
@@ -87,9 +87,9 @@ par(mfrow = c(1, 3))
 
 ## <a id="example")></a> 7.3 Logistic regression example
 
-Now that we've got some of the basic GLM theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter comes from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert. The problem tackled here is a familiar one, where can I expect to find argillic horizons on fan piedmonts. Argillic horizons within the Mojave are typically found on fan remnants, which are a stable landform that is a remnant of the Pleistocene (Peterson, 1981). Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or deposition.
+Now that we've got some of the basic GLM theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter come from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert. The problem tackled here is a familiar one, where can I expect to find argillic horizons on fan piedmonts. Argillic horizons within the Mojave are typically found on fan remnants, which are a stable landform that is a remnant of the Pleistocene (Peterson, 1981). Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or deposition.
 
-With this dataset we'll encounter some challenges. To start with, fan piedmont landscapes typically have relatively little relief. Since most of our predictors will be derivatives of elevation, that won't leave us much to work with. Also, our elevation data comes from the USGS National Elevation dataset (NED), which provides considerable less detail than say LiDAR or IFSAR (Shi et al., 2012). Lastly our pedon dataset like most in NASIS, hasn't receive near as much quality control as have the components. So we'll need to wrangle some of the pedon data before we can analyze it. These are all typical problems encountered in any data analysis and should be good practice. Ideally it would be more interesting to try and model individual soil series with argillic horizons, but do to some challenges just mentioned this is difficult with this dataset. However, at the end we'll look at one simple approach to try and separate individual soil series with argillic horizons.
+With this dataset we'll encounter some challenges. To start with, fan piedmont landscapes typically have relatively little relief. Since most of our predictors will be derivatives of elevation, that won't leave us with much to work with. Also, our elevation data comes from the USGS National Elevation dataset (NED), which provides considerably less detail than say LiDAR or IFSAR (Shi et al., 2012). Lastly our pedon dataset like most in NASIS, hasn't received near as much quality control as have the components. So we'll need to wrangle some of the pedon data before we can analyze it. These are all typical problems encountered in any data analysis and should be good practice. Ideally it would be more interesting to try and model individual soil series with argillic horizons, but due to some of the challenges previously mentioned it would be difficult with this dataset. However, at the end we'll look at one simple approach to try and separate individual soil series with argillic horizons.
 
 ### Load packages
 
@@ -108,7 +108,7 @@ library(car) # additional regression tools
 
 ### Read in data
 
-Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you. Once data is captured in NASIS it much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS it may as well not exist.
+Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you. Once data are captured in NASIS it is much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS it may as well not exist.
 
 ```{r import data}
 # pedons <- fetchNASIS(rmHzErrors = FALSE) # beware the error messages, by default they don't get imported unless you override the default, which in our chase shouldn't cause any problems
@@ -134,7 +134,7 @@ table(s$argillic.horizon, useNA = "ifany") # tabulate the number of argillic hor
 
 # summary(s$argillic.horizon) 
 
-# Extract argillic presense from the taxonomic subgroup
+# Extract argillic presence from the taxonomic subgroup
 
 s$argillic <- grepl("arg", s$tax_subgroup)
 
@@ -197,7 +197,7 @@ Looking at our numeric variables only depth to bedrock seems to show much separa
 
 ### <a id="bias")></a> 7.4.3 Soil scientist bias
 
-Next we'll look at soil scientist bias. The question being are some soil scientists more likely to describe argillic horizons that others.
+Next we'll look at soil scientist bias. The question being are some soil scientists more likely to describe argillic horizons than others.
 
 ```{r bias}
 # Function to filter out the top 3 mappers
@@ -224,11 +224,11 @@ with(s_sub, table(describer2, argillic, useNA = "ifany"))
 with(s_sub, round(prop.table(table(describer2, argillic), margin = 1) * 100))
 ```
 
-For fan landforms all none of the soil scientists seem more likely than others to describe argillic horizons that others. However while this information is suggestive, it is far from definitive, because it doesn't take into account other factors. We'll examine this more closely later.
+For fan landforms, none of the soil scientists seem more likely than the others to describe argillic horizons. However while this information is suggestive, it is far from definitive because it doesn't take into account other factors. We'll examine this more closely later.
 
 ### <a id="plot")></a> 7.4.4 Plot coordinates
 
-Where do are our points plot. We can plot the general location in R, but for this task will export them to a Shapefile, so we can view them in a proper GIS, and look more closely. Notice in the figure below the number of points that fall outside the survey boundary. What it doesn't show is the points in the Ocean or Mexico.
+Where do are our points plot? We can plot the general location in R, but for this task will export them to a Shapefile, so we can view them in a proper GIS, and look more closely. Notice in the figure below the number of points that fall outside the survey boundary. What it doesn't show is the points in the Ocean or Mexico.
 
 ```{r plot}
 # Plot coordinates
@@ -309,7 +309,7 @@ data <- data.frame(
 
 ### <a id="spatial")></a> 7.4.6 Examine spatial data 
 
-With our spatial data in hand, we can now see whether any of the varibles will help us separate the presense/absense of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).  
+With our spatial data in hand, we can now see whether any of the variables will help us separate the presense/absense of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).  
 
 ```{r spatial}
 load(file = "C:/workspace/ch7_data.Rdata")
@@ -379,7 +379,7 @@ dev.off()
 
 ### <a id="eval")></a> 7.5.2 Model evaluation
 
-After we're satisfied no additional variables will improve the fit we can evaluate the model's accuracy. Because we're dealing with a classification problem, we have to consider both errors of comission (Type I) and omission (Type II), or their corresponding accuracies of sensitivity (producer's accuracy) and specificity (producers's accuracy) respectively. Before we can assess the error however we need to select a probability threshold. 
+After we're satisfied no additional variables will improve the fit, we can evaluate the model's accuracy. Because we're dealing with a classification problem, we have to consider both errors of comission (Type I) and omission (Type II), or their corresponding accuracies of sensitivity (producer's accuracy) and specificity (user's accuracy) respectively. Before we can assess the error however we need to select a probability threshold. 
 
 - **Sensitivity** and **specificity** examine how well the ground truth or reference data compares to the predictions. 
 - **Positive**  and **negative** predicted values (user's accuracy) examine the inverse concept of how well the predictions match the reference data
@@ -390,7 +390,7 @@ comp <- cbind(test[c("argillic", "cluster")], pred = predict(argi_glm, test, typ
 confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
 ```
 
-- Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some cluster appear to be dominated by specific soil series, this data isn't clean enough (nor are concepts usually) to model series separately however we could use the cluster as an additional model to separate the series. Cluster 2, 6, 7, 8, 13 and 15 all appear to be hyperthermic
+- Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some cluster appear to be dominated by specific soil series, these data aren't clean enough (nor are concepts usually) to model series separately however we could use the cluster as an additional model to separate the series. Cluster 2, 6, 7, 8, 13 and 15 all appear to be hyperthermic
 
 
 ```{r}
