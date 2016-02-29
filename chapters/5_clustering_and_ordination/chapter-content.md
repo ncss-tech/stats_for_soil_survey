@@ -1,86 +1,12 @@
----
-title: "Numerical Taxonomy"
-author: "D.E. Beaudette"
-date: "March 2016"
-output:
-  html_document:
-    keep_md: yes
-    number_sections: yes
-    toc: yes
-    toc_depth: 3
-    toc_float:
-      collapsed: true
-      smooth_scroll: false
-bibliography: bibliography.bib
----
+# Numerical Taxonomy
+D.E. Beaudette  
+March 2016  
 
 
 
-```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
-# setup
-library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
 
-# options for R functions
-options(width=100, stringsAsFactors=FALSE)
 
-# captions added to figures
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
-
-# compaire pair-wise distances between 3 individuals
-distPlot <- function(ex, vars, individuals, id, scale.data=FALSE, show.distances=TRUE, ...) {
-  par(mar=c(5,5,1,1))
-  # optionally scale
-  if(scale.data) {
-    ex.scaled <- scale(ex[, vars], center = TRUE, scale = TRUE)
-    ex[[vars[1]]] <- ex.scaled[, 1]
-    ex[[vars[2]]] <- ex.scaled[, 2]
-  }
-    
-  
-  x.data <- ex[[vars[1]]]
-  y.data <- ex[[vars[2]]]
-  
-  d <- dist(ex[, vars])
-  m <- round(as.matrix(d), 1)
-  dimnames(m) <- list(ex[[id]], ex[[id]])
-  
-  plot(ex[[vars[1]]], ex[[vars[2]]], las=1, type='n', ...)
-  # plot(x.data, y.data, las=1, type='n')
-  grid()
-  
-  if(show.distances) {
-    arrows(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col='RoyalBlue', length = 0.1, code = 3)
-    arrows(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col='Orange', length = 0.1, code = 3)
-    
-    segments(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[3]], y.data[individuals[2]], lwd=1, lty=2, col='Orange')
-    segments(x.data[individuals[3]], y.data[individuals[2]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col='Orange')
-    segments(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[1]], lwd=1, lty=2, col='RoyalBlue')
-    segments(x.data[individuals[2]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col='RoyalBlue')
-    
-    legend('topright', legend=c(m[individuals[1], individuals[2]], m[individuals[3], individuals[2]]), col=c('RoyalBlue', 'Orange'), lty=1, lwd=2, bty='n', title = 'Distance', cex=1.5)
-  }
-  
-  text(x.data, y.data, ex[[id]], col='black', cex=1.5, font=1, pos = 4)
-  points(x.data, y.data, pch=16, col='black', cex=0.75)
-  
-  return(m)
-}
-
-# load libs for examples
-library(aqp)
-library(cluster)
-library(ape)
-library(RColorBrewer)
-library(MASS)
-```
-
-<!-- This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`. -->
+<!-- This document is based on `aqp` version 1.9.7 and `sharpshootR` version 0.9.6. -->
 
 TODO:
  
@@ -123,11 +49,15 @@ Nearly every aspect of soil survey involves the question: "*is A more similar to
 
 There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column. For example:
 
-```{r, echo=FALSE}
-data('sp4', package = 'aqp')
-sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
-knitr::kable(sp4, caption='A matrix of data: soil horizons (individuals) and associated characteristics.', align = 'c')
-```
+
+Table: A matrix of data: soil horizons (individuals) and associated characteristics.
+
+ name    clay    sand     Mg     Ca     CEC_7 
+------  ------  ------  ------  -----  -------
+  A       21      46     25.7    9.0    23.0  
+ ABt      27      42     23.7    5.6    21.4  
+ Bt1      32      40     23.2    1.9    23.7  
+ Bt2      55      27     44.3    0.3    43.0  
 
 Quantitative measures of similarity are more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
 
@@ -137,9 +67,7 @@ where $p_{1}$ is the 1st characteristic (or dimension) of individual $p$. There 
 
 Using sand and clay percentages from the data above, dissimilarity is represented as the length of the line connecting any two individuals in property space:
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
-m <- distPlot(sp4, vars=c('sand', 'clay'), individuals=c(1,2,4), id='name', xlim=c(10, 60), ylim=c(10, 60), xlab='Sand (%)', ylab='Clay (%)')
-```
+<img src="chapter-content_files/figure-html/unnamed-chunk-2-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 A matrix of all pair-wise distances (the **distance matrix**) looks something like this:
 
@@ -165,9 +93,7 @@ Interpretation is simple: individual "A" is more like "ABt" than "Bt1". It is im
 
 Euclidean distance doesn't make much sense when characteristics do not share a common unit of measure, range of values, or when some characteristics are categorical vs. continuous. For example, distances are distorted when computed from clay (%) and exchangeable Ca (cmol/kg):
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
-m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', xlim=c(0, 60), ylim=c(0, 60), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
-```
+<img src="chapter-content_files/figure-html/unnamed-chunk-3-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of Ex-Ca. Typically, characteristics are given equal weight (why?).
 
@@ -177,16 +103,17 @@ $$x_{scaled} = \frac{x - mean(x)}{sd(x)}$$
 
 There are many other **standardization** methods which we will cover later. The new data matrix looks like this:
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
-sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
-sp4.scaled
-```
+
+name     clay    sand      Mg      Ca   CEC_7
+-----  ------  ------  ------  ------  ------
+A       -0.86    0.88   -0.35    1.23   -0.47
+ABt     -0.45    0.40   -0.55    0.36   -0.63
+Bt1     -0.12    0.15   -0.60   -0.59   -0.40
+Bt2      1.43   -1.43    1.49   -1.00    1.49
 
 Using the standardized data matrix, distances computed in the property space of clay and exchangeable calcium are unbiased by the unique central tendency or spread of each character.
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
-m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', scale=TRUE, xlim=c(-1.5, 1.5), ylim=c(-1.5, 1.5), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
-```
+<img src="chapter-content_files/figure-html/unnamed-chunk-5-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 It is rare that the question of "dissimilarity" can be answered with only two characteristcs (dimensions). Euclidean distance can be extended to an arbitrary number of $n$ dimensions:
 
@@ -194,12 +121,13 @@ $$D(p,q) = \sqrt{ \sum_{i=1}^{n}{(p_{i} - q_{i})^{2}} }$$
 
 where $i$ is one of $n$ total characteristics. It is hard to imagine what distance "looks like" when there are > 3 dimensions, so lets look at the distance matrix calculated using all five characteristics.
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
-d <- dist(sp4.scaled[, -1])
-m <- as.matrix(d)
-dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
-round(m, 2)
-```
+
+          A    ABt    Bt1    Bt2
+----  -----  -----  -----  -----
+A      0.00   1.10   2.11   4.77
+ABt    1.10   0.00   1.06   4.17
+Bt1    2.11   1.06   0.00   3.61
+Bt2    4.77   4.17   3.61   0.00
 
 We can now begin to describe disimilarity between individuals using an arbitrary number of (relevant!) characteristics and make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon". While this may be a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
@@ -213,76 +141,18 @@ We can now begin to describe disimilarity between individuals using an arbitrary
 
 [Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way visualizaing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Disimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
 
-```{r, echo=FALSE, fig.width=10, fig.height=5}
-par(mar=c(1,1,1,0), mfcol=c(1,2))
-
-m <- distPlot(sp4, vars=c('sand', 'clay'), individuals=c(1,2,4), id='name', show.distances=FALSE, xlim=c(10, 60), ylim=c(10, 60), xlab='Sand (%)', ylab='Clay (%)')
-d <- as.dist(m)
-dd <- diana(d)
-h <- as.hclust(dd)
-p <- as.phylo(h)
-
-plot(p, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
-# axis(2, las=1, line=1.5)
-mtext('Dendrogram Representation of Distance Matrix\n(sand and clay %)', side=1, line=2)
-```
+<img src="chapter-content_files/figure-html/unnamed-chunk-7-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corrosponding dendrogram. Visualizing the geometry of pair-wise distances in > 3 dimensions is difficult, however, a the dendrogram can conveniently summarize a distance matrix created from an arbitrary number of characteristics.
 
-```{r, echo=FALSE, fig.width=10, fig.height=4}
-par(mfcol=c(1,2))
-
-d <- dist(sp4.scaled[, -1])
-m <- as.matrix(d)
-dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
-d <- as.dist(m)
-dd <- diana(d)
-h <- as.hclust(dd)
-p.all <- as.phylo(h)
-
-plot(p, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
-axis(2, las=1, line=1.5)
-mtext('Dendrogram Representation of Distance Matrix\n(sand and clay %)', side=1, line=2)
-
-plot(p.all, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
-axis(2, las=1, line=1.5)
-mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=2)
-```
+<img src="chapter-content_files/figure-html/unnamed-chunk-8-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 There isn't much difference between these two figures, because most of the characteristics in this example dataset are highly correlated with soil texture. More on this later.
 
 
 ### Cluster analysis: finding groups
 
-```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
-# re-make data, this time with all profiles
-data('sp4', package = 'aqp')
-sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
-sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
-
-# distance matrix
-d <- dist(sp4.scaled[, -1])
-m <- as.matrix(d)
-dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
-d <- as.dist(m)
-# dendrogram from divisive clustering
-dd <- diana(d)
-h <- as.hclust(dd)
-p <- as.phylo(h)
-
-# define colors based on natural groupings
-cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
-
-par(mar=c(0,0,0,0), mfcol=c(1,2))
-plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
-abline(v=2.3, col='orange', lty=2, lwd=2)
-# mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
-
-plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
-abline(v=2.3, col='orange', lty=2, lwd=2)
-tiplabels(pch=15, col=cols)
-# mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
-```
+<img src="chapter-content_files/figure-html/unnamed-chunk-9-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 ### Ordination: visualization in a reduced space
@@ -294,50 +164,9 @@ tiplabels(pch=15, col=cols)
 |Bt1  |  0.41| -0.21| -0.09| -0.74| -0.16|
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
 
-```{r, echo=FALSE, results='hide', fig.width=10, fig.height=5}
-# re-make data, this time with all profiles
-data('sp4', package = 'aqp')
-sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
-sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
+<img src="chapter-content_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
-# distance matrix
-d <- dist(sp4.scaled[, -1])
-m <- as.matrix(d)
-dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
-d <- as.dist(m)
-# dendrogram from divisive clustering
-dd <- diana(d)
-h <- as.hclust(dd)
-p <- as.phylo(h)
-
-# define colors based on natural groupings
-cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
-
-# MDS
-s <- MASS::sammon(d)
-
-par(mar=c(3,0,0,3), mfcol=c(1,2))
-plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
-tiplabels(pch=15, col=cols)
-mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
-
-plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
-abline(v=0, h=0, col='grey', lty=3)
-text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
-axis(1, cex.axis=0.75, line=-2)
-axis(4, cex.axis=0.75, line=0, las=1)
-mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
-```
-
-```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
-# re-init sp4, copy clustering colors to hz attribute
-data('sp4', package = 'aqp')
-sp4$cl <- cols
-depths(sp4) <- id ~ top + bottom
-
-par(mar=c(0,0,0,0))
-plot(sp4, color='cl', cex.names=0.75)
-```
+<img src="chapter-content_files/figure-html/unnamed-chunk-11-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -345,7 +174,8 @@ plot(sp4, color='cl', cex.names=0.75)
 
 ## Setup the R session
 Install R packages as needed. Open a new R script file to use as you follow along.
-```{r, results='hide'}
+
+```r
 # load libraries
 library(aqp)
 library(soilDB)
@@ -392,7 +222,8 @@ Tinker with some `SoilProfileCollection` objects:
 
 
 
-```{r, }
+
+```r
 # get some example data from the aqp package
 data('sp4', package = 'aqp')
 # subset select rows and columns
@@ -400,15 +231,45 @@ sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
 
 # compare distance functions
 round(dist(sp4[, -1], method = 'euclidean'))
+```
 
+```
+##    1  2  3
+## 2  8      
+## 3 15  7   
+## 4 48 44 39
+```
+
+```r
 round(daisy(sp4[, -1], stand = TRUE, metric = 'euclidean'), 2)
+```
 
+```
+## Dissimilarities :
+##      1    2    3
+## 2 1.45          
+## 3 2.73 1.36     
+## 4 6.45 5.65 4.91
+## 
+## Metric :  euclidean 
+## Number of objects : 4
+```
+
+```r
 round(vegdist(sp4[, -1], method = 'gower'), 2)
+```
+
+```
+##      1    2    3
+## 2 0.19          
+## 3 0.32 0.16     
+## 4 0.96 0.84 0.69
 ```
 
 ### Distance calculations with categorical data
 
-```{r, }
+
+```r
 # SoilTaxonomyDendrogram()
 # component.adj.matrix()
 ```
@@ -418,47 +279,54 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 
 ### Agglomerative methods
 
-```{r, }
+
+```r
 # hclust()
 # agnes()
 ```
 
 ### Divisive methods
 
-```{r, }
+
+```r
 # dianna()
 ```
 
 ### Advanced plotting functions
 
-```{r, }
+
+```r
 # as.phylo()
 # other ways to plot dendrogram
 ```
 
 ## Partitioning into clusters
 
-```{r, }
+
+```r
 # 1D example
 # 2D example
 ```
 
 ### Hard classes
 
-```{r, }
+
+```r
 # pam()
 # clara()
 ```
 
 ### Fuzzy classes
 
-```{r, }
+
+```r
 # fanny()
 ```
 
 ### How many clusters?
 
-```{r, }
+
+```r
 # silhouette()
 ```
 
@@ -466,7 +334,8 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 
 ## Interpretation / application
 
-```{r, }
+
+```r
 # Hmisc::
 # varclus()
 # naclus()
@@ -482,7 +351,8 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 ### Interpretation and goodness of fit
 
 [Shephard diagram](http://cc.oulu.fi/~jarioksa/softhelp/vegan/html/goodness.metaMDS.html)
-```{r, eval=FALSE}
+
+```r
 # MASS library
 d.shep <- Shepard(d, d.sammon$points)
 plot(d.shep, pch='.')
@@ -501,7 +371,6 @@ stressplot(nmds)
 
 # GOF by site, smaller = better
 hist(goodness(nmds))
-
 ```
 
 
@@ -518,7 +387,8 @@ Review:
 
 [relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
 
-```{r, message=FALSE}
+
+```r
 # init example data
 data(sp4)
 depths(sp4) <- id ~ top + bottom
@@ -531,22 +401,45 @@ d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
 
 # check distance matrix:
 round(d, 1)
+```
 
+```
+## Dissimilarities :
+##                colusa glenn kings mariposa mendocino napa san benito shasta shasta-trinity
+## glenn            13.5                                                                     
+## kings            16.0  12.7                                                               
+## mariposa          8.4  11.3  16.5                                                         
+## mendocino        11.5   8.0  16.4     15.0                                                
+## napa             30.4  24.1  29.4     29.2      21.6                                      
+## san benito       25.7  20.6  26.3     28.2      15.8 18.0                                 
+## shasta           17.2  13.3   8.7     17.6      17.1 33.7       22.2                      
+## shasta-trinity    6.4  16.6  22.3      9.6      16.5 29.8       27.2   23.3               
+## tehama           28.7  22.9  27.9     27.3      20.0  8.8       15.1   31.4           27.9
+## 
+## Metric :  mixed ;  Types = I, I 
+## Number of objects : 10
+```
+
+```r
 # cluster via divisive method
 clust <- diana(d)
 ```
 
-```{r, fig.width=8, fig.height=4}
+
+```r
 # vizualize dissimilarity matrix via hierarchical clustering
 par(mar=c(0,0,3,0))
 plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
 ```
 
+<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+
 
 
 ## Pair-wise distances between subgroup level taxa
 
-```{r, fig.width=10, fig.height=4.5}
+
+```r
 # define a vector of series
 s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 'hanford', 'cecil', 'sycamore', 'KLAMATH', 'MOGLIA', 'drummer', 'musick', 'zook', 'argonaut', 'PALAU')
 
@@ -556,19 +449,38 @@ s <- fetchOSD(s.list)
 # graphical check
 par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
+```
 
+<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+
+```r
 # check structure of some site-level attributes
 head(site(s))[, c('id', 'soilorder', 'suborder', 'greatgroup', 'subgroup')]
 ```
 
-```{r, fig.width=12, fig.height=5}
+
+
+id         soilorder     suborder   greatgroup      subgroup            
+---------  ------------  ---------  --------------  --------------------
+AMADOR     inceptisols   xerepts    haploxerepts    typic haploxerepts  
+ARGONAUT   alfisols      xeralfs    haploxeralfs    mollic haploxeralfs 
+CECIL      ultisols      udults     kanhapludults   typic kanhapludults 
+DRUMMER    mollisols     aquolls    endoaquolls     typic endoaquolls   
+HANFORD    entisols      orthents   xerorthents     typic xerorthents   
+KLAMATH    mollisols     aquolls    cryaquolls      cumulic cryaquolls  
+
+
+```r
 par(mar=c(0,1,1,1))
 # plot dendrogram + profiles
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
 ```
 
+<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+
 Check resulting distance matrix.
-```{r, eval=FALSE}
+
+```r
 d
 ```
 
@@ -578,7 +490,8 @@ d
 ## Soil color
 moist colors
 
-```{r, fig.width=6, fig.height=6}
+
+```r
 # extract horizon data from select OSDs in above example
 h <- horizons(s)
 
@@ -587,7 +500,18 @@ rgb.data <- munsell2rgb(h$hue, h$value, h$chroma, return_triplets = TRUE)
 
 # check
 head(rgb.data)
+```
 
+         r           g           b
+----------  ----------  ----------
+ 0.4360624   0.3706674   0.2969745
+ 0.5589675   0.4673350   0.3566388
+ 0.5589675   0.4673350   0.3566388
+ 0.7719679   0.6774631   0.4899754
+ 0.3940324   0.2499977   0.1668267
+ 0.4309729   0.2327690   0.0977103
+
+```r
 # remove NA
 rgb.data <- na.omit(rgb.data)
 
@@ -601,7 +525,10 @@ lab.data <- as(with(rgb.data, RGB(r, g, b)), 'LAB')
 pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-```{r, fig.width=12, fig.height=6, results='hide'}
+<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+
+
+```r
 # create distance matrix from LAB coordinates
 d <- daisy(lab.data@coords, stand = TRUE)
 
@@ -628,13 +555,16 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
+<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+
 ## Component interpretations
 [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
 
 
 
 
-```{r}
+
+```r
 library(reshape2)
 # set list of component names, same as soil color example
 s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 
@@ -663,7 +593,31 @@ x.wide <- dcast(x, compname ~ mrulename, value.var = 'interplr_mean')
 knitr::kable(x.wide, digits = 3, caption="Mean Fuzzy Ratings for Select Soil Series")
 ```
 
-```{r}
+
+
+Table: Mean Fuzzy Ratings for Select Soil Series
+
+compname    ENG - Construction Materials; Topsoil   ENG - Septic Tank Absorption Fields   ENG - Sewage Lagoons   ENG - Unpaved Local Roads and Streets
+---------  --------------------------------------  ------------------------------------  ---------------------  --------------------------------------
+AMADOR                                      0.000                                 1.000                  1.000                                   0.732
+ARGONAUT                                    0.050                                 1.000                  1.000                                   0.996
+CECIL                                       0.419                                 0.663                  0.855                                   0.282
+DRUMMER                                     0.000                                 1.000                  1.000                                   1.000
+HANFORD                                     0.667                                 0.988                  1.000                                   0.212
+KLAMATH                                     0.000                                 1.000                  1.000                                   1.000
+MOGLIA                                      0.000                                 1.000                  0.400                                   1.000
+MUSICK                                      0.167                                 1.000                  1.000                                   0.909
+PALAU                                       0.011                                 1.000                  0.864                                   1.000
+PARDEE                                      0.000                                 1.000                  1.000                                   1.000
+PENTZ                                       0.004                                 1.000                  1.000                                   0.739
+REDDING                                     0.039                                 1.000                  1.000                                   0.892
+SYCAMORE                                    0.787                                 0.947                  0.759                                   0.875
+WILLOWS                                     0.010                                 1.000                  0.894                                   1.000
+YOLO                                        0.826                                 0.885                  0.633                                   0.730
+ZOOK                                        0.006                                 1.000                  1.000                                   1.000
+
+
+```r
 # note: component name and series name have been converted to upper case
 # sort rows of fuzzy ratings based on profiles from OSDs
 new.order <- match(x.wide$compname, profile_id(s))
@@ -679,19 +633,23 @@ d <- daisy(x.wide[, -1])
 clust <- diana(d)
 ```
 
-```{r, fig.width=10, fig.height=6}
+
+```r
 par(mar=c(2,0,2,0))
 plotProfileDendrogram(s, clust, dend.y.scale = 1.5, scaling.factor = 0.004, y.offset = 0.1, width=0.15, cex.names=0.45)
 title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
 
+<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+
 
 
 ## Diagnostic features
 [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp)
 
-```{r}
+
+```r
 # load some example NASIS data
 data(loafercreek, package='soilDB')
 
@@ -711,12 +669,15 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
+<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+
 
 ## GIS Data
 
 TODO: give credit to SEKI crew
 
-```{r, fig.width=8, fig.height=8, results='hide'}
+
+```r
 library(plyr)
 library(reshape2)
 library(vegan)
@@ -772,12 +733,15 @@ legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, b
 title('Map Unit Terrain Signatures')
 ```
 
+<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+
 
 ## Species composition
 
 TODO: give credit to CA630 ESD crew
 
-```{r}
+
+```r
 # library(reshape2)
 # library(vegan)
 
@@ -791,7 +755,20 @@ x <- read.csv(tf, stringsAsFactors = FALSE)
 
 # check: long-format
 head(x)
+```
 
+
+
+site_id          ecosite  ecostat   stratum   plantsym    cover
+--------------  --------  --------  --------  ---------  ------
+07CA630DWB006       2224  4F        SM        CEMO2         0.1
+07CA630DWB006       2224  4F        SL        ERCA6         0.1
+07CA630DWB006       2224  4F        TS        QUKE          0.1
+07CA630DWB006       2224  4F        TR        PISA2         0.1
+07CA630DWB006       2224  4F        TR        PIPO          0.1
+07CA630DWB006       2224  4F        F         HIAL2         0.1
+
+```r
 # keep only tree species
 idx <- which(grepl('^T', x$stratum))
 x <- x[idx, ]
@@ -814,21 +791,73 @@ m[is.na(m)] <- 0
 
 # check: looks good, except missing data (NA) should be 0
 head(m, 1)[, 1:20]
+```
 
+```
+##   ABCO/TM   ABCO/TR   ABCO/TS   ABCO/TT  ACMA3/TM  ACMA3/TR  ACMA3/TS   AECA/TR   AECA/TS  ALNUS/TR 
+##         0         0         0         0         0         0         0         0         0         0 
+##   ARMA/TR   ARME/TR   ARME/TS CADE27/TM CADE27/TR CADE27/TS CADE27/TT  CONU4/TR  CONU4/TS  CORNU/TR 
+##         0         0         0         0         0         0         0         0         0         0
+```
+
+```r
 # compute distance between ES
 d <- metaMDSdist(m)
+```
 
+```
+## Square root transformation
+## Wisconsin double standardization
+## Using step-across dissimilarities:
+## Too long or NA distances: 260 out of 4095 (6.3%)
+## Stepping across 4095 dissimilarities...
+## Connectivity of distance matrix with threshold dissimilarity 1 
+## Data are connected
+```
+
+```r
 # try ordination: non-metrix multidimensional scaling with default distance metric and standardization
 nmds <- metaMDS(m)
 ```
 
-```{r, fig.width=5, fig.height=5}
+```
+## Square root transformation
+## Wisconsin double standardization
+## Run 0 stress 0.2027479 
+## Run 1 stress 0.2053878 
+## Run 2 stress 0.2052404 
+## Run 3 stress 0.2203835 
+## Run 4 stress 0.2050696 
+## Run 5 stress 0.210362 
+## Run 6 stress 0.2163894 
+## Run 7 stress 0.2112501 
+## Run 8 stress 0.2126187 
+## Run 9 stress 0.2051845 
+## Run 10 stress 0.2085831 
+## Run 11 stress 0.2028816 
+## ... procrustes: rmse 0.01172564  max resid 0.07020517 
+## Run 12 stress 0.2163896 
+## Run 13 stress 0.2053703 
+## Run 14 stress 0.2116107 
+## Run 15 stress 0.222078 
+## Run 16 stress 0.2140008 
+## Run 17 stress 0.2076695 
+## Run 18 stress 0.2082157 
+## Run 19 stress 0.2122447 
+## Run 20 stress 0.2100432
+```
+
+
+```r
 # evaluate nmMDS fit
 par(mar=c(5,5,1,1))
 stressplot(nmds, cex=0.5)
 ```
 
-```{r, fig.width=10, fig.height=5}
+<img src="chapter-content_files/figure-html/unnamed-chunk-37-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
+
+
+```r
 # plot
 par(mar=c(1,1,1,1), mfcol=c(1,2))
 
@@ -846,10 +875,12 @@ text(fig, "sites", col="black", cex=0.5)
 title('Sites', line=-0.5)
 ```
 
+<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+
 
 
 ----------------------------
-This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `soilDB` version `r utils::packageDescription("soilDB", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
+This document is based on `aqp` version 1.9.7 and `soilDB` version 1.7 and `sharpshootR` version 0.9.6.
 ----------------------------
 
 
@@ -859,162 +890,15 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 
 
 
-```{r, echo=FALSE, eval=FALSE, fig.width=8, fig.height=4}
-# simulate some aggregate profile data
-frags <- c(16, 5, 25, 6, 3) # rock fragments
-clay <- c(8, 15, 17, 25, 31) # clay contents
-
-# combine into single data.frame
-s <- data.frame(clay, frags)
-
-# evaluate pair-wise dissimilarity based on clay and frag %
-# since both measurements are on the same scale, no standardization is needed
-d <- daisy(s)
-
-# inspect pair-wise dissimilarity matrix
-print(d)
-
-# perform divisive hierarcical clustering for dendrogram creation
-d.diana <- diana(d)
-
-# convert object into 'phylo' class for plotting
-d.phylo <- as.phylo(as.hclust(d.diana))
-
-# 2-figure plot of original data and resulting dendrogram repsesentation of dissimilarity matrix
-par(mfcol=c(1,2), mar=c(4.5,4,1,1))
-# original data: setup plot, but don't actually plot it
-plot(frags ~ clay, data=s, type='n', xlab='% Clay', ylab='% Rock Fragments')
-# add grid lines to assist the eye
-grid()
-# annotate empty plot with soil numbers
-text(s$clay, s$frags, row.names(s), font=2)
-
-# plot dendrogram representation, annotated with the same labels
-plot(d.phylo, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90, y.lim=c(-1, 15))
-```
-
-```{r demo-2, echo=FALSE, eval=FALSE}
-# continuing from example above...
-	
-# return dissimilarity matrices at each depth slice
-d.dis.all <- profile_compare(d, vars=c('clay', 'pH', 'frags'), k=0, 
-max_d=61, replace_na=TRUE, add_soil_flag=TRUE, return_depth_distances=TRUE)
-
-# check between-profile dissimilarity, at slice 1
-print(as.matrix(d.dis.all[[1]]))
-
-# init functions for extracting pair-wise dissimilarity: 
-f.12 <- function(i) as.matrix(i)[1, 2] # between auburn and dunstone
-f.13 <- function(i) as.matrix(i)[1, 3] # between auburn and sobrante
-f.23 <- function(i) as.matrix(i)[2, 3] # between dunstone and sobrante
-
-# apply functions at each slice
-d.12 <- sapply(d.dis.all, f.12)
-d.13 <- sapply(d.dis.all, f.13)
-d.23 <- sapply(d.dis.all, f.23)
-
-# combine into single data.frame
-d.all <- make.groups(
-auburn.dunstone=data.frame(slice=1:61, d=d.12, d.sum=cumsum(d.12)),
-auburn.sobrante=data.frame(slice=1:61, d=d.13, d.sum=cumsum(d.13)),
-dunstone.sobrante=data.frame(slice=1:61, d=d.23, d.sum=cumsum(d.23))
-)
-
-# plot slice-wise dissimilarity between all three soils
-p.1 <- xyplot(slice ~ d, groups=which, data=d.all, 
-ylim=c(62,0), type=c('l','g'), xlim=c(0.2,1.2), ylab='Depth (cm)', xlab='', 
-horizontal=TRUE, auto.key=list(columns=3, lines=TRUE, points=FALSE), asp=1)
-
-# plot slice-wise, cumulative dissimilarity between all three soils
-p.2 <- xyplot(slice ~ d.sum, groups=which, data=d.all, 
-ylim=c(62,0), type=c('l','g'), ylab='Depth (cm)', xlab='', 
-horizontal=TRUE, auto.key=list(columns=3, lines=TRUE, points=FALSE), asp=1)
-
-# combine into panels of a single figure
-p.3 <- c('Slice-Wise Distance'=p.1, 'Cumulative Distance'=p.2)
-# render figure
-update(p.3, par.settings=list(superpose.line=list(col=cols, lwd=2, lty=c(1,2,4)), strip.background=list(col=grey(0.85))))
-```
-
-```{r  echo=FALSE, fig.width=9, eval=FALSE, fig.height=3}
-# setup some colors
-cols <- brewer.pal(3, 'Set1')
-
-# setup horizon-level data: data are from lab sampled pedons
-d <- read.csv(
-	textConnection('
-series,name,top,bottom,clay,frags,pH
-auburn,A,0,3,15,6,5.6
-auburn,Bw1,3,15,15,13,5.6
-auburn,Bw2,15,38,18,9,5.8
-dunstone,A,0,5,16,13,6
-dunstone,Bt1,5,17,17,19,6.3
-dunstone,Bt2,17,31,20,6,6.3
-dunstone,Bt3,31,41,21,15,6.3
-sobrante,A1,0,5,18,0,5.8
-sobrante,A2,5,10,16,2,5.7
-sobrante,Bt1,10,28,15,21,5.8
-sobrante,Bt2,28,51,18,13,6.2
-sobrante,Bt3,51,74,20,12,6.2
-'))
-
-# establish site-level data
-s <- data.frame(
-	series=c('auburn', 'dunstone', 'sobrante'), 
-	precip=c(24, 30, 32),
-	stringsAsFactors=FALSE
-	)
-
-# generate fake horizon names with clay / frags / ph
-# d$fake.name <- with(d, paste(clay, frags, pH, sep='/'))
-
-# upgrade to SoilProfile Collection object
-depths(d) <- series ~ top + bottom
-site(d) <- s
-
-# plot profiles, coloring horizons based on soil property
-par(mfcol=c(1,3), mar=c(0,0,4,0))
-plot(d, color='clay', cex.names=0.85, axis.line.offset=-3.5)
-plot(d, color='frags', cex.names=0.85, axis.line.offset=-3.5)
-plot(d, color='pH', cex.names=0.85, axis.line.offset=-3.5)
-```
-
-```{r  echo=FALSE,fig.width=5, eval=FALSE, fig.height=5}
-# inspect variables used to determine dissimilarity
-h <- horizons(d)
-splom(~ h[, c('clay', 'pH', 'frags')], groups=series, data=h, type=c('p', 'g'),
-auto.key=list(columns=3, points=TRUE, lines=FALSE), 
-par.settings=list(superpose.symbol=list(pch=16, col=cols, cex=1)))
-```
-
-```{r  echo=FALSE, compute-distance, eval=FALSE, fig.width=8, fig.height=4}
-# compute betwee-profile dissimilarity, no depth weighting
-d.dis <- profile_compare(d, vars=c('clay', 'pH', 'frags'), k=0, 
-max_d=61, replace_na=TRUE, add_soil_flag=TRUE)
-
-# check total, between-profile dissimilarity, normalized to maximum
-d.m <- signif(as.matrix(d.dis / max(d.dis)), 2)
-print(d.m)
-
-# group via divisive hierarchical clustering
-d.diana <- diana(d.dis)
-# convert classes, for better plotting
-d.phylo <- as.phylo(as.hclust(d.diana))
 
 
-# plot: 2 figures side-by-side
-par(mfcol=c(1,2), mar=c(2,2,2,2))
-# profiles
-plot(d, width=0.1, name='name')
-# annotate shallow-mod.deep break
-abline(h=50, col='red', lty=2)
-# add dissimilarity matrix
-addtable2plot(0.2, 70, format(d.m, digits=2), display.rownames=TRUE, 
-xjust=0, yjust=0, cex=0.6, title='Total Dissimilarity')
-# plot dendrogram in next panel
-plot(d.phylo, direction='down', adj=0.5, srt=0, 
-label.offset=0.5, font=1, y.lim=c(-5, 25), cex=0.7)
-```
+
+
+
+
+
+
+
 
 
 
