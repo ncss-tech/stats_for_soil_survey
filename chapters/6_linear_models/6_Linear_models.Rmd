@@ -20,99 +20,222 @@ output:
 Linear regression has been used for soil survey applications since the early 1900s when Briggs and McLane (1907) developed a pedotransfer function to estimate the wilting coefficient as a function of soil particle size: Wilting coefficient = 0.01(sand) + 0.12(silt) + 0.57(clay). Linear regression, as the name implys, models the linear relationship between a dependent variable (y) and an independent variable (x) where y = b0 + b1x + e (b0=intercept of the fitted line, b1=slope of the fitted line, and e= the error term). When more than one independent variable is used in the regression, the model is called multiple linear regression. In regression models, the dependent (or response) variable must always be continuous. The independent (or predictor) variable(s) can be continuous, discrete, or categorical. In order to use linear regression or any linear model, the data must be normally distributed. Most environmental data are non-linear and require transformations to the response variable (such as square root or log) for use in linear models. Often, these data are best used in non-linear models due to the complications of interpreting and predicting transformed data. Normality can be assessed in R visually using a QQ plot or histogram and tabularly using something like the Shapiro-Wilk test of normality. 
 
 ```{r load packages, message=FALSE, warning=FALSE}
-library(soilDB)
-library(raster)
-library(rgdal)
-library(lattice)
-library(reshape2)
-library(plyr)
-library(dplyr)
-library(caret)
-library(fBasics)
+library(aqp) # specialized soil classes and functions
+library(soilDB) # NASIS and SDA import functions
+library(raster) # guess
+library(rgdal) # spatial import
+library(lattice) # graphing
+library(reshape2) # data manipulation
+library(plyr) # data manipulation
+library(caret) # printing
+library(car) # additional regression tools
 ```
 
-# Read in data
+
+### Read in data
+
+Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you. Once data is captured in NASIS it much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS it may as well not exist.
+
 ```{r import data}
-pedons <- fetchNASIS()
-# pedons <- read.csv("C:workspace/pedons.csv")
+# pedons <- fetchNASIS(rmHzErrors = FALSE) # beware the error messages, by default they don't get imported unless you override the default, which in our chase shouldn't cause any problems
+load(file = "C:/workspace/ch7_data.Rdata")
+
+str(pedons, max.level = 2) # Examine the makeup of the data we imported from NASIS.
 ```
+
+
+### <a id="wrang")></a> 7.4.1 Data wrangling
+
+Generally before we begin modeling its good to explore the data. By using a simple summary we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are all the argillic horizons haven't been properly populated in the diagnostic horizon table like they should be. Luckily for us, the desert argillic horizons always pop up in the taxonomic name, so we can use pattern matching to extract it. By doing this we gain an additional 11 pedons with argillic horizons and are able to label the missing values (i.e. NA). At a minimum for modeling purposes we probably need 10 pedons of the target we're interested in and a total of 100 observations overall.
+
+
+```{r consistency}
+s <- site(pedons)
+
+pedons$surface_gravel <- with(s, surface_gravel - surface_fgravel) # recalculate gravel
+s$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum)
+
+summary(s$surface_total)
+
+densityplot(~ surface_total + surface_gravel, data = s, auto.key = TRUE)
+```
+
+
+
+### <a id="geomorph")></a> 7.4.2 Geomorphic data
+
+Another obvious place to look is at the geomorphic data in the site table. This information is intended to help differentiate where our soil observations exist on the landscape. If populated consistently it could be used in future disaggregation efforts, as demonstrated by Nauman and Thompson (2014).
+
+
+```{r landform}
+# Landform vs surface_total
+
+test <- aggregate(surface_total ~ landform.string, data = s, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
+
+test[order(test$surface_total[, 2]), ]
+
+s_sub <- subset(s, grepl("fan", landform.string)) # subset fan landforms
+
+densityplot(~ surface_total + surface_gravel, data = s_sub, auto.key = TRUE)
+
+
+# Hillslope position
+
+test <- aggregate(surface_total ~ hillslope_pos, data = s_sub, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
+test[order(test$surface_total[, 2]), ]
+
+# Slope shape
+
+test <- aggregate(surface_total ~ paste(shapedown, shapeacross), data = s_sub, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
+test[order(test$surface_total[, 2]), ]
+
+
+# Surface morphometry, depth and surface rock fragments
+
+s_sub <- subset(s, grepl("fan", landform.string), select = c(surface_total, surface_gravel, bedrckdepth, slope_field, elev_field)) # subset slopes > 15 to just look and fans, and select numeric columns
+
+round(cor(s_sub, use = "pairwise.complete.obs"), 2)
+
+scatterplotMatrix(s_sub, use = "pairwise.complete.obs")
+
+
+# Function to filter out the top 3 mappers
+desc_test <- function(old) {
+  old <- as.character(old)
+  new <- NA
+  # ranked by seniority
+  if (is.na(old)) {new <- "other"}
+  if (grepl("Stephen", old)) {new <- "Stephen"} 
+  if (grepl("Paul", old)) {new <- "Paul"} 
+  if (grepl("Peter", old)) {new <- "Peter"}
+  if (is.na(new)) {new <- "other"}
+ return(new)
+}
+
+s$describer2 <- sapply(s$describer, desc_test)
+
+s_sub <- subset(s, grepl("fan", landform.string))
+
+test <- aggregate(surface_total ~ describer2, data = s_sub, function(x) round(quantile(x)))
+test[order(test$surface_total[, 2]), ]
+```
+
+
+### <a id="plot")></a> 7.4.4 Plot coordinates
+
+Where do are our points plot. We can plot the general location in R, but for this task will export them to a Shapefile, so we can view them in a proper GIS, and look more closely. Notice in the figure below the number of points that fall outside the survey boundary. What it doesn't show is the points in the Ocean or Mexico.
+
+```{r plot}
+# Plot coordinates
+pedons2 <- pedons
+
+slot(pedons2, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
+idx <- complete.cases(site(pedons2)[c("x", "y")]) # create an index to filter out pedons with missing coordinates
+pedons2 <- pedons2[idx]
+coordinates(pedons2) <- ~ x + y # set the coordinates
+proj4string(pedons2) <- CRS("+init=epsg:4326") # set the projection
+
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
+ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to sp object
+
+plot(ca794, axes = TRUE)
+plot(pedons_sp, add = TRUE) # notice the points outside the boundary
+
+pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # transform between coordinate systems
+# optionally write shapefile of pedons
+# writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") 
+```
+
+
+
+#### <a id="view")></a> Exercise 1: View the data in ArcGIS
+
+- Examine the shapefile in ArcGIS along with our potential predictive variables (hint classify the Shapefile symbology using the argillic horizon column)
+- Discuss with your group, and report your observations or hypotheses
+
+
+### <a id="extract")></a> 7.4.5 Extracting spatial data
+
+Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data locations. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract the geodata values where they intersect with field data.
+
+```{r extract, eval=FALSE}
+folder <- "M:/geodata/project_data/8VIC/ca794/"
+files <- c(
+  elev   = "ned30m_8VIC.tif",
+  slope  = "ned30m_8VIC_slope5.tif",
+  aspect = "ned30m_8VIC_aspect5.tif",
+  twi    = "ned30m_8VIC_wetness.tif",
+  twi_sc = "ned30m_8VIC_wetness_sc.tif",
+  ch     = "ned30m_8VIC_cheight.tif",
+  z2str  = "ned30m_8VIC_z2stream.tif",
+  mrrtf  = "ned30m_8VIC_mrrtf.tif",
+  mrvbf  = "ned30m_8VIC_mrvbf.tif",
+  solar  = "ned30m_8VIC_solar.tif",
+  precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif",
+  precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif",
+  temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif",
+  ls     = "landsat30m_8VIC_b123457.tif",
+  tc     = "landsat30m_8VIC_tc123.tif",
+  k      = "gamma30m_8VIC_namrad_k.tif",
+  th     = "gamma30m_8VIC_namrad_th.tif",
+  u      = "gamma30m_8VIC_namrad_u.tif",
+  cluster = "cluster152.tif"
+  )
+
+geodata_f <- sapply(files, function(x) paste0(folder, x)) # combine the folder directory and file names
+
+head(geodata_f)
+
+geodata_r <- stack(geodata_f) # create a raster stack
+
+data <- data.frame(
+   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "argillic", "surface_total", "x_std", "y_std", "describer2", "landform.string")],
+   extract(geodata_r, pedons_sp)
+   )
+
+# s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
+# slot(pedons, "site") <- s
+# data[c("describer2", "x_std", "y_std")] <- NA
+# save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
+```
+
+
+### <a id="spatial")></a> 7.4.6 Examine spatial data 
+
+With our spatial data in hand, we can now see whether any of the varibles will help us separate the presense/absense of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).  
+
+```{r spatial}
+load(file = "C:/workspace/ch7_data.Rdata")
+test <- data
+test <- subset(test, mrvbf > 0.15) # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+test$frags <- test$surface_total
+test$landform <- ifelse(grepl("fan", test$landform.string), "fan", "hill")
+
+terrain1 <- c("elev", "slope", "solar", "mrrtf", "mrvbf")
+terrain2 <- c("twi", "ch", "z2str", "solar")
+climate <- c("precip", "precipsum", "temp")
+landsat <- paste0("ls_", 1:6)
+tcaps <- paste0("tc_", 1:3)
+grad <- c("k", "th", "u")
+
+scatterplotMatrix(test[c("frags", terrain1)])
+
+
+test2 <- subset(test, select = - c(pedon_id, describer2, taxonname, x_std, y_std, landform.string, landform, cluster))
+
+data_m <- melt(test2, id = "argillic")
+bwplot(argillic ~ value | variable, data = data_m, scales = list(x = "free"))
+
+# Argillic horizons seem to occur over a limited range of twi. So lets rescale twi by substracting its median
+aggregate(twi ~ argillic, data = test, summary)
+test$twi_sc <- abs(test$twi - 13.8)
+```
+
+
 
 ```{r}
-s <- site(pedons)
-s$surface_gravel <- s$surface_gravel-s$surface_fgravel # recalculate gravel
-site(pedons)$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum)
-
-idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
-pedons2 <- pedons[idx]
-coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
-proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
-
-pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
-
-# Geodata extract
-```{r geodata extract}
-folder1 <- "M:/geodata/project_data/8VIC/"
-folder2 <- "M:/geodata/imagery/gamma/"
-files1 <- list(
-  terrain = c(
-    elev    = "ned30m_8VIC.tif",
-    slope   = "ned30m_8VIC_slope5.tif",
-    aspect  = "ned30m_8VIC_aspect5.tif",
-    twi     = "ned30m_8VIC_wetness.tif",
-    z2str   = "ned30m_8VIC_z2stream.tif",
-    mrrtf   = "ned30m_8VIC_mrrtf.tif",
-    mrvbf   = "ned30m_8VIC_mrvbf.tif",
-    #  solar   = "ned30m_vic8_solar.tif",
-    solarcv = "ned30m_vic8_solarcv.tif"
-  ),
-  climate = c(
-    precip  = "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
-    precipsum = "prism30m_vic8_ppt_1981_2010_summer_mm.tif",
-    temp    = "prism30m_vic8_tavg_1981_2010_annual_C.tif"
-  ),
-  imagery = c(
-    ls = "landsat30m_vic8_b123457.tif",
-    tc      = "landsat30m_vic8_tc123.tif"
-  )
-)
-files2 <- list(
-  gamma = c(
-    k  = "namrad_k_aea.tif",
-    th = "namrad_th_aea.tif",
-    u  = "namrad_u_aea.tif"
-  )
-)
-geodata <- c(lapply(files1, function(x) paste0(folder1, x)), lapply(files2, function(x) paste0(folder2, x))) 
-names(geodata$terrain) <- names(files1$terrain)
-names(geodata$climate) <- names(files1$climate)
-names(geodata$imagery) <- names(files1$imagery)
-names(geodata$gamma) <- names(files2$gamma)
-
-geodata_df <- data.frame(
-  as.data.frame(pedons_sp)[c("surface_total", "x_std", "y_std", "describer")],
-  extract(stack(geodata$terrain[1:7]), pedons_sp),
-  extract(raster(geodata$terrain[8]), pedons_sp),
-  extract(stack(geodata$imagery), pedons_sp),
-  extract(stack(geodata$gamma), pedons_sp),
-  extract(stack(geodata$climate), pedons_sp)
-)
-names(geodata_df)[c(12, 18)] <- c("solarcv", "ls_7")
-
-gidx <- list()
-gidx$terrain <- names(files1$terrain)
-gidx$climate <- names(files1$climate)
-gidx$imagery <- names(geodata_df)[!names(geodata_df) %in% names(files1$terrain) &
-                                    !names(geodata_df) %in% names(files1$climate) &
-                                    !names(geodata_df) %in% names(files2$gamma) &
-                                    !names(geodata_df) %in% c("x_std", "y_std", "describer", "surface_total")]
-gidx$gamma <- names(files2$gamma)
-
-
-data <- subset(geodata_df, select = - c(x_std, y_std))
-data <- na.exclude(data)
-save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch6_data.Rdata")
-
 data$surface_total <- ifelse(data$mrvbf < 0.15, NA,  data$surface_total)
 
 test2 <- lm(surface_total ~ precipsum + tc_3 + tc_2 + twi_sc + mrrtf + k + th + elev, data = data[- c(35, 506), ])
