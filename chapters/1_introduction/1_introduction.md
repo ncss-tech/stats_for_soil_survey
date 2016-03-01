@@ -611,7 +611,7 @@ tapply(pedons$depth, pedons$taxonname, summary)
 
 ```r
 #data structure and variable names
-str(Hartleton) 
+str(pedons) 
 ```
 
 
