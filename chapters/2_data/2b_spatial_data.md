@@ -1,6 +1,17 @@
-# Chapter 2 - The Spatial Data We Use
-Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello  
-February, 2016  
+---
+title: Chapter 2 - The Spatial Data We Use
+author: Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello
+date: "February, 2016"
+output:
+  html_document:
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
 # Chapter 2: The Spatial Data We Use
@@ -75,7 +86,7 @@ bbox(r) # get bounding box
 plot(r)
 ```
 
-![](2b_spatial_data_files/figure-html/raster-1.png) 
+![plot of chunk raster](figure/raster-1.png)
 
 ### Stacking rasters
 
@@ -90,7 +101,7 @@ s <- stack(f, f)
 plot(s)
 ```
 
-![](2b_spatial_data_files/figure-html/unnamed-chunk-1-1.png) 
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
 
 ### Importing raster data with `rgdal` package
 
@@ -115,9 +126,8 @@ writeRaster(r, filename = "C:/workspace/test.tif", format = "GTiff", progress = 
 ```
 
 ```
-## 
-  |                                                                       
-  |                                                                 |   0%
+##   |                                                                         |                                                                 |   0%  |                                                                         |================                                                 |  25%  |                                                                         |================================                                 |  50%  |                                                                         |=================================================                |  75%  |                                                                         |=================================================================| 100%
+## 
 ```
 
 ```r
@@ -184,10 +194,11 @@ bbox(pol)
 plot(pol, axes = TRUE)
 ```
 
-![](2b_spatial_data_files/figure-html/unnamed-chunk-2-1.png) 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
+
 ### Accessing vector tabular data
 
-Tabular data associated with a vector layer can be accessed via the `@data` slot within the `SpatialPolygonsDataFrame` object.  We can you the `head()` function to take a look at the columns present in the data.
+Tabular data associated with a vector layer can be accessed via the `@data` slot within the `SpatialPolygonsDataFrame` object.  We can use the `head()` function to take a look at the columns present in the data.
 
 
 ```r
@@ -205,12 +216,50 @@ head(pol)
 ## 5      CA794          2  2835 2450615 2450615
 ```
 
+
 ### Exporting vector data
 
 ```r
 # export vector data
 writeOGR(pol, dsn = "C:/workspace/test.shp", layer = "test", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 ```
+
+
+## Reprojecting data
+
+Typically you'll find that you need to reproject one of your files before you can combine it with another. To accomplish this we can either use the `spTranform()` function for sp objects, or the `projectRaster()` function for raster objects. However for large raster files the raster package is slow, so it's either better to call another GIS or spatial databases via R, or reproject the files manually in a GIS.
+
+A catalog of spatial reference systems compatible with R and ArcGIS can be found at [spatialreference.org](http://spatialreference.org/) or [http://epsg.io/](http://epsg.io/). Generally is it simplest to use the EPSG code to specify the reference system you're interested in, otherwise you have to manually specify the projection, ellipsoid, and datum. 
+
+
+```r
+# reproject polygons
+
+proj4string(pol) # get the original projection
+```
+
+```
+## [1] "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"
+```
+
+```r
+CRS("+init=epsg:5070") # get a projection using the EPSG code
+```
+
+```
+## CRS arguments:
+##  +init=epsg:5070 +proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23
+## +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs
+## +ellps=GRS80 +towgs84=0,0,0
+```
+
+```r
+pol2 <- spTransform(pol, CRS("+init=epsg:26911")) # reproject the pol SpatialPolygonsDataFrame to NAD83 UTM Zone 11
+```
+
+
+The standard projection for point data in NASIS and WebSoilSurvey is now longlat WGS84 (i.e. EPSG code 4326). This is a geographic coordinate system, which projects the Earth as a sphere and measures distances in decimal degrees. However many spatial operations is necessary to use a projected coordinate system, which projects the earth as a flat surface, and measure distances in meters. All projected coordinate systems distort the Earth's surface to some degree. Within the continental US a good choice is the USA Contiguous Albers Equal Area Conic USGS projection, which corresponds with EPSG:5070.
+
 
 ## Extracting Spatial Data
 
@@ -318,16 +367,6 @@ The resulting point file will have the corresponding cell values for slope, prof
 ![R GUI image](figure/ch2_fig5.jpg)  
 
 The resulting point file may also be saved as a text file for use in R.
-
-
-
-## References  
-
-Stevens, S. S. (1946). On the theory of measurement scales. Science, 103(2684). [http://www.sciencemag.org/content/103/2684/677.full.pdf](http://www.sciencemag.org/content/103/2684/677.full.pdf) 
-
-Velleman, P.F., and L. Wilkinson, 1993. Nominal, Ordinal, Interval, and Ratio Typologies are Misleading. The American Statistician 47(1)65:72. [https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf](https://www.cs.uic.edu/~wilkinson/Publications/stevens.pdf)
-
-"Level of measurement" Wikipedia: The Free Encyclopedia. Wikimedia Foundation, Inc. 7 Feb. 2016. Web. 10 Feb. 2016. [https://en.wikipedia.org/wiki/Level_of_measurement](https://en.wikipedia.org/wiki/Level_of_measurement)
 
 
 ## Additional Reading
