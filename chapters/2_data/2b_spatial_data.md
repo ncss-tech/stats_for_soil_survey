@@ -1,17 +1,6 @@
----
-title: Chapter 2 - The Spatial Data We Use
-author: Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello
-date: "February, 2016"
-output:
-  html_document:
-    keep_md: yes
-    number_sections: yes
-    toc: yes
-    toc_depth: 3
-    toc_float:
-      collapsed: true
-      smooth_scroll: false
----
+# Chapter 2 - The Spatial Data We Use
+Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello  
+February, 2016  
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
 # Chapter 2: The Spatial Data We Use
@@ -86,7 +75,7 @@ bbox(r) # get bounding box
 plot(r)
 ```
 
-![plot of chunk raster](figure/raster-1.png)
+![](2b_spatial_data_files/figure-html/raster-1.png) 
 
 ### Stacking rasters
 
@@ -101,7 +90,7 @@ s <- stack(f, f)
 plot(s)
 ```
 
-![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
+![](2b_spatial_data_files/figure-html/unnamed-chunk-1-1.png) 
 
 ### Importing raster data with `rgdal` package
 
@@ -126,8 +115,9 @@ writeRaster(r, filename = "C:/workspace/test.tif", format = "GTiff", progress = 
 ```
 
 ```
-##   |                                                                         |                                                                 |   0%  |                                                                         |================                                                 |  25%  |                                                                         |================================                                 |  50%  |                                                                         |=================================================                |  75%  |                                                                         |=================================================================| 100%
-## 
+## 
+  |                                                                       
+  |                                                                 |   0%
 ```
 
 ```r
@@ -194,7 +184,7 @@ bbox(pol)
 plot(pol, axes = TRUE)
 ```
 
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
+![](2b_spatial_data_files/figure-html/unnamed-chunk-2-1.png) 
 
 ### Accessing vector tabular data
 
@@ -258,7 +248,7 @@ pol2 <- spTransform(pol, CRS("+init=epsg:26911")) # reproject the pol SpatialPol
 ```
 
 
-The standard projection for point data in NASIS and WebSoilSurvey is now longlat WGS84 (i.e. EPSG code 4326). This is a geographic coordinate system, which projects the Earth as a sphere and measures distances in decimal degrees. However many spatial operations is necessary to use a projected coordinate system, which projects the earth as a flat surface, and measure distances in meters. All projected coordinate systems distort the Earth's surface to some degree. Within the continental US a good choice is the USA Contiguous Albers Equal Area Conic USGS projection, which corresponds with EPSG:5070.
+The standard projection for point data in NASIS and WebSoilSurvey is now longlat WGS84 (i.e. EPSG code 4326). This is a geographic coordinate system, which projects the Earth as a sphere and measures distances in decimal degrees. Many spatial operations are necessary to use a projected coordinate system, which projects the earth as a flat surface, and measures distances in meters. All projected coordinate systems distort the Earth's surface to some degree. Within the continental US, a good choice is the USA Contiguous Albers Equal Area Conic USGS projection, which corresponds with EPSG:5070.
 
 
 ## Extracting Spatial Data
