@@ -44,9 +44,9 @@ Nearly every aspect of soil survey involves the question: "*is A more similar to
 * Apply techniques from numerical taxonomy to addressing the "similar/disimilar" question
 
 
-## A whirlwind tour
+# A whirlwind tour
 
-### Similarity, disimilarty, and distance
+## Similarity, disimilarty, and distance
 
 There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column. For example:
 
@@ -79,7 +79,7 @@ A matrix of all pair-wise distances (the [**distance matrix**](https://en.wikipe
 |Bt1 | 12.5|  5.4|  0.0| 26.4|
 |Bt2 | 38.9| <b>31.8</b>| 26.4|  0.0|
 
-Note that this is the "full" form of the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix), with 0s on the diagonal (e.g. the distance between individual 'A' and itself is 0) and upper and lower "triangles" symmetric. Tpically only the lower triangle is used to describe pair-wise distances.
+Note that this is the "full" form of the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix), with 0s on the diagonal (e.g. the distance between individual 'A' and itself is 0) and upper and lower "triangles" symmetric. The lower triangle is commonly used by most algorithms to encode pair-wise distances.
 
 |    |    A|  ABt|  Bt1|
 |:---|----:|----:|----:|
@@ -90,7 +90,7 @@ Note that this is the "full" form of the [**distance matrix**](https://en.wikipe
 Interpretation is simple: individual "A" is more like "ABt" than "Bt1". It is important to note that quantification of disimilarity (distance) among individuals is always relative: *"X is more like Y, as compared to Z"*. More on this later.
 
 
-### Standardization of characteristics
+## Standardization of characteristics
 
 Euclidean distance doesn't make much sense when characteristics do not share a common unit of measure, range of values, or when some characteristics are categorical vs. continuous. For example, distances are distorted when computed from clay (%) and exchangeable Ca (cmol/kg):
 
@@ -132,7 +132,7 @@ Bt2    4.77   4.17   3.61   0.00
 
 We can now begin to describe disimilarity between individuals using an arbitrary number of (relevant!) characteristics and make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon". While this may be a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
-#### Review and discuss
+### Review and discuss
 
  * What is are the "data matrix" and "distance matrix"?
  * What is standardization and why is it important?
@@ -143,7 +143,7 @@ We can now begin to describe disimilarity between individuals using an arbitrary
      + ... simple to define in code, but hard to vizualize
    
 
-### Visualizing pair-wise distances: the dendrogram
+## Visualizing pair-wise distances: the dendrogram
 
 [Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way visualizaing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Disimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
 
@@ -156,12 +156,12 @@ Interpretation is simple. Euclidean distance in property-space is directly propo
 There isn't much difference between these two figures, because most of the characteristics in this example dataset are highly correlated with soil texture. There are some more important details on how individuals are connected into larger and larger groups within the dendrogram, more on this later.
 
 
-#### Review and discuss
+### Review and discuss
  * Any questions about dendrogram interpretation? They will be used extensively in this chapter.
  * If you were explaining how to interpret a dendrogram to someone, where would you start: roots or leaves? Why?
 
 
-### Cluster analysis: finding groups in data
+## Cluster analysis: finding groups in data
 [**Cluster analysis**](https://en.wikipedia.org/wiki/Cluster_analysis) is a massive topic that deals with the seemingly simple task of finding "useful" groups within a dataset. This topic and the methods used are also refered to as "unsupervised classification" in remote sensing and GIS circles. All of the available algorithms will find groups in a give dataset, however, it is up to the subject expert to determine:
  
  1. suitable characteristics and standardization method
@@ -170,14 +170,14 @@ There isn't much difference between these two figures, because most of the chara
  4. interpretation of the final grouping based on subject knowledge
  5. &rarr; *possibly starting over at step 1...*
 
-#### Using color to communicate the results of a clustering or ordination exercise
+### Using color to communicate the results of a clustering or ordination exercise
 Note that the widespread use of color in the following examples are not aestetic. Clors are convenient for tri-variate data-spaces because our eyes can automatically integrate the information into a self-consistent set of classes.
 
-#### Hierarchical clustering
+### Hierarchical clustering
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-9-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
-##### Methods
+#### Methods
 
 There are two main types of [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering):
 
@@ -194,17 +194,27 @@ The agglomerative methods also depends on the choice of a [**linkage criterion**
  * weighted average linkage
  * flexible linkage
 
-We will go over these methods in more detail later. 
+More on these criteria later.
 
-The simplicity and lack of decisions make the **divisive** method convenient for most work. Also, it the top-down approach is similar to the way in which we describe soil morphology and taxonomy.
-
-
-
-#### Partitioning or centroid clustering
-
+##### Review and discuss
+ * The simplicity and lack of decisions make the **divisive** method convenient for most work. 
+ * The top-down approach is similar to the way in which we describe soil morphology and taxonomy.
+ * Method selection: think about it, don't go "fishing".
 
 
-### Ordination: visualization in a reduced space
+
+### Partitioning or centroid/medoid clustering
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+
+#### Methods
+
+
+
+##### Review and discuss
+
+
+## Ordination: visualization in a reduced space
 
 |name |  clay|  sand|    Mg|    Ca| CEC_7|
 |:----|-----:|-----:|-----:|-----:|-----:|
@@ -213,9 +223,9 @@ The simplicity and lack of decisions make the **divisive** method convenient for
 |Bt1  |  0.41| -0.21| -0.09| -0.74| -0.16|
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
-
 <img src="chapter-content_files/figure-html/unnamed-chunk-11-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-12-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -483,7 +493,7 @@ par(mar=c(0,0,3,0))
 plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 
@@ -502,7 +512,7 @@ par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 ```r
 # check structure of some site-level attributes
@@ -527,7 +537,7 @@ par(mar=c(0,1,1,1))
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-28-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 Check resulting distance matrix.
 
@@ -576,7 +586,7 @@ lab.data <- as(with(rgb.data, RGB(r, g, b)), 'LAB')
 pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -606,7 +616,7 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 ## Component interpretations
 [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
@@ -692,7 +702,7 @@ title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -720,7 +730,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
 
 ## GIS Data
@@ -784,7 +794,7 @@ legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, b
 title('Map Unit Terrain Signatures')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-36-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 ## Species composition
@@ -875,27 +885,27 @@ nmds <- metaMDS(m)
 ## Square root transformation
 ## Wisconsin double standardization
 ## Run 0 stress 0.2027479 
-## Run 1 stress 0.2109196 
-## Run 2 stress 0.2252035 
-## Run 3 stress 0.2080043 
-## Run 4 stress 0.2054484 
-## Run 5 stress 0.2192835 
-## Run 6 stress 0.203174 
-## ... procrustes: rmse 0.01462569  max resid 0.07477794 
-## Run 7 stress 0.2080475 
-## Run 8 stress 0.2118572 
-## Run 9 stress 0.2294089 
-## Run 10 stress 0.223541 
-## Run 11 stress 0.2053905 
-## Run 12 stress 0.2051847 
-## Run 13 stress 0.2092043 
-## Run 14 stress 0.2277472 
-## Run 15 stress 0.2054594 
-## Run 16 stress 0.2254097 
-## Run 17 stress 0.2121049 
-## Run 18 stress 0.2053335 
-## Run 19 stress 0.2111705 
-## Run 20 stress 0.2062182
+## Run 1 stress 0.2162792 
+## Run 2 stress 0.2279006 
+## Run 3 stress 0.2320883 
+## Run 4 stress 0.2052938 
+## Run 5 stress 0.2032479 
+## Run 6 stress 0.2107288 
+## Run 7 stress 0.2052294 
+## Run 8 stress 0.2191159 
+## Run 9 stress 0.2038073 
+## Run 10 stress 0.2220374 
+## Run 11 stress 0.225853 
+## Run 12 stress 0.205042 
+## Run 13 stress 0.2189405 
+## Run 14 stress 0.2158423 
+## Run 15 stress 0.2050603 
+## Run 16 stress 0.2114478 
+## Run 17 stress 0.2031161 
+## ... procrustes: rmse 0.01376868  max resid 0.07253014 
+## Run 18 stress 0.2321677 
+## Run 19 stress 0.2066686 
+## Run 20 stress 0.2118672
 ```
 
 
@@ -905,7 +915,7 @@ par(mar=c(5,5,1,1))
 stressplot(nmds, cex=0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-37-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 
 ```r
@@ -926,7 +936,7 @@ text(fig, "sites", col="black", cex=0.5)
 title('Sites', line=-0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
