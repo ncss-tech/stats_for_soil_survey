@@ -212,6 +212,7 @@ You can also use command line:
 ```r
 savehistory(file = "sand.Rhistory")  
 loadhistory(file = "sand.Rhistory")  
+history(max.show=Inf) #displays all previous commands
 ```
 
 ### 1.3.4 R Graphics   
