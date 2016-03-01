@@ -97,7 +97,15 @@ TODO:
  * adapt to use 'pedons' through entire document for simple use of student's data
  * mean silhouette width as cluster number selection
 
+<hr>
+<span style="font-size:200%">Before You Start</span><br>
+Some of the examples in this document depend on the latest versions of the `aqp` and `sharpshootR` packages. Open a fresh RStudio session and paste the following in the consol panel:
 
+```{r, eval=FALSE}
+install.packages("aqp", repos="http://R-Forge.R-project.org", type="source")
+install.packages("sharpshootR", repos="http://R-Forge.R-project.org", type="source")
+```
+<hr><br>
 
 # Introduction
 
@@ -118,16 +126,16 @@ Nearly every aspect of soil survey involves the question: "*is A more similar to
 * Apply techniques from numerical taxonomy to addressing the "similar/disimilar" question
 
 
-# A whirlwind tour
+# Whirlwind tour
 
 ## Similarity, disimilarty, and distance
 
-There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column. For example:
+There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together refered to as the **data matrix**. For example:
 
 ```{r, echo=FALSE}
 data('sp4', package = 'aqp')
 sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
-knitr::kable(sp4, caption='A matrix of data: soil horizons (individuals) and associated characteristics.', align = 'c')
+knitr::kable(sp4, align = 'c')
 ```
 
 Quantitative measures of similarity are more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
@@ -333,7 +341,7 @@ More on these criteria later.
 
 
 
-### Partitioning or centroid/medoid clustering
+### Centroid / medoid (partitioning) clustering
 
 ```{r, echo=FALSE, results='hide', fig.width=6, fig.height=6}
 # re-make data, this time with all profiles
@@ -344,22 +352,30 @@ sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
 # use pam to generate 3 clusters
 cl <- pam(sp4.scaled[, -1], k = 3, stand = FALSE)
 
+# use kmeans to generate centroids for demo
+km <- kmeans(sp4.scaled[, -1], 3, iter.max = 100)
+
 # define colors based on hard clustering
 col.set <- brewer.pal(9, 'Set1')
 cols <- col.set[cl$clustering]
 
 # setup plot
+par(mar=c(4,4,0,0))
 plot(sp4.scaled$Mg, sp4.scaled$Ca, asp=1, ylab='Exchangeable Mg (cmol/kg), Standardized', xlab='Exchangeable Ca (cmol/kg), Standardized', type='n')
 abline(h=0, v=0, col='black')
 grid()
+
+# add k-means centroids
+points(km$centers[, 1], km$centers[, 2], cex=2, lwd=1, pch=8, col='black')
+
 # add medoids
 points(cl$medoids, col=col.set, lwd=2, cex=3, pch=0, lend=2)
 
 # add original obs
-points(sp4.scaled$Mg, sp4.scaled$Ca, bg=cols, col='black', cex=1, pch=21)
+points(sp4.scaled$Mg, sp4.scaled$Ca, bg=cols, col='black', cex=1.25, pch=21)
 
 # legend
-legend('topright', legend=c('Observation', 'Medoid'), pch=c(21, 0), lwd=c(1,2), pt.cex=c(1, 3), lty=NA, bty='n', cex=1.25)
+legend('topright', legend=c('Observation', 'Medoid', 'Centroid'), pch=c(21, 0, 8), lwd=c(1, 2, 1), pt.cex=c(1.25, 3, 2), lty=NA, bty='n', cex=1.25)
 ```
 
 #### Methods
@@ -442,6 +458,9 @@ library(RColorBrewer)
 library(vegan)
 library(MASS)
 library(colorspace)
+
+# annoying workaround for downloading files from HTTPS links on Windows...
+setInternet2(TRUE)
 ```
 
 ### Data sources
@@ -813,7 +832,7 @@ library(cluster)
 # init a temp file
 tf <- tempfile()
 # download compressed CSV to temp file
-setInternet2(TRUE)
+# make have to use setInternet2(TRUE) on windows
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/seki-mu-gis-samples.csv.gz', destfile = tf, quiet = TRUE)
 # read-in from compressed CSV to data.frame object
 x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
@@ -866,13 +885,13 @@ title('Map Unit Terrain Signatures')
 TODO: give credit to CA630 ESD crew
 
 ```{r}
-# library(reshape2)
-# library(vegan)
+library(reshape2)
+library(vegan)
 
 # read species data from online CSV
 # init a temp file
 tf <- tempfile()
-setInternet2(TRUE)
+# make have to use setInternet2(TRUE) on windows
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/ca630-22A-species.csv', destfile = tf, quiet = TRUE)
 
 x <- read.csv(tf, stringsAsFactors = FALSE)
@@ -880,9 +899,14 @@ x <- read.csv(tf, stringsAsFactors = FALSE)
 # check: long-format
 head(x)
 
-# keep only tree species
-idx <- which(grepl('^T', x$stratum))
-x <- x[idx, ]
+# any missing cover values should be converted to trace values of 0.1
+idx <- which(is.na(x$cover))
+if(length(idx) > 0)
+  x$cover[idx] <- 0.1
+
+# # keep only tree species
+# idx <- which(grepl('^T', x$stratum))
+# x <- x[idx, ]
 
 # add stratum as a suffix for tree species (^T*)
 x$symbol <- ifelse(grepl('^T', x$stratum), paste0(x$plantsym, '/', x$stratum), x$plantsym)
@@ -897,16 +921,14 @@ row.names(m) <- gsub('CA630', '', m$site_id)
 # convert to matrix, excluding the first column (site id)
 m <- as.matrix(m[, -1])
 
+# check first row and first 20 columns: looks good, except missing data (NA) should be 0
+head(m, 1)[, 1:20]
+
 # replace NA in the community matrix with 0
 m[is.na(m)] <- 0
 
-# check: looks good, except missing data (NA) should be 0
-head(m, 1)[, 1:20]
-
-# compute distance between ES
-d <- metaMDSdist(m)
-
-# try ordination: non-metrix multidimensional scaling with default distance metric and standardization
+# all-in-one!
+# non-metrix multidimensional scaling with default distance metric and standardization
 nmds <- metaMDS(m)
 ```
 
