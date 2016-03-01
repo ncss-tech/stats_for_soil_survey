@@ -57,10 +57,8 @@ Nearly every aspect of soil survey involves the question: "*is A more similar to
 
 ## Similarity, disimilarty, and distance
 
-There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column. For example:
+There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together refered to as the **data matrix**. For example:
 
-
-Table: A matrix of data: soil horizons (individuals) and associated characteristics.
 
  name    clay    sand     Mg     Ca     CEC_7 
 ------  ------  ------  ------  -----  -------
@@ -183,6 +181,7 @@ There isn't much difference between these two figures, because most of the chara
 Note that the widespread use of color in the following examples are not aestetic. Clors are convenient for tri-variate data-spaces because our eyes can automatically integrate the information into a self-consistent set of classes.
 
 ### Hierarchical clustering
+This form of clustering is useful when a the full **distance matrix** is available, and the optimal number of clusters is not yet known. [**Hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) creates a data structure that can encode "grouping" information from 1 cluster to as many clusters as there are individuals. It is up to the expert to determine the optimial place to "cut the tree" and generate a fixed set of clusters. The results from a [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) operation are nearly always presented in the form of a dendrogram.
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
@@ -213,14 +212,26 @@ More on these criteria later.
 
 
 ### Centroid / medoid (partitioning) clustering
+This form of cluster analysis is commonly referred to as [**k-means**](https://en.wikipedia.org/wiki/K-means_clustering)-style analysis, however, the name "k-means" is one of many possible clustering algorithms that partition property-space into a *fixed* number of groups. These type of algorithms can be applied to very large datasets because they do not rely on the **distance matrix**. Rather, they are based on an iterative shuffling of group "centroids" until some criterion is minimized--for example, the mean variance within groups.
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-11-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 #### Methods
 
+We will be discussing three (out of many) of the most important **partitioning** type algorithms:
+
+ * [**k-means**](https://en.wikipedia.org/wiki/K-means_clustering): groups of individuals are partitioned around newly created "[centroids](https://en.wikipedia.org/wiki/Centroid)"
+ * [**k-medoids**](https://en.wikipedia.org/wiki/K-medoids): groups of individuals are partitioned around selected "[medoids](https://en.wikipedia.org/wiki/Medoid)"
+ * [**fuzzy clustering**](https://en.wikipedia.org/wiki/Fuzzy_clustering): individuals are assigned a "fuzzy membership" value for each partition or property-space
+
+All of these methods are sensitive to the type of **standardization** that has been applied to characteristics. These methods rely on iterative minimization of one or more criteria, therefore each clustering "run" may generate slightly different output. Most implementations will re-run the algorithm until it stabilizes. More on this later.
 
 
 ##### Review and discuss
+
+ * What is the difference between a "medoid" and a "centroid"? Can you think of a way in which both concepts could be applied to the grouping of soils data? 
+ * Fuzzy clustering is also referred to as "soft clustering", while the other two methods as "hard clustering". Sometimes using both can be helpful, especially for cases where individuals straddle the line between groups.
+
 
 
 ## Ordination: visualization in a reduced space
@@ -254,6 +265,9 @@ library(RColorBrewer)
 library(vegan)
 library(MASS)
 library(colorspace)
+
+# annoying workaround for downloading files from HTTPS links on Windows...
+setInternet2(TRUE)
 ```
 
 ### Data sources
@@ -812,8 +826,8 @@ TODO: give credit to CA630 ESD crew
 
 
 ```r
-# library(reshape2)
-# library(vegan)
+library(reshape2)
+library(vegan)
 
 # read species data from online CSV
 # init a temp file
@@ -829,26 +843,31 @@ head(x)
 
 
 
-site_id          ecosite  ecostat   stratum   plantsym    cover
---------------  --------  --------  --------  ---------  ------
-07CA630DWB006       2224  4F        SM        CEMO2         0.1
-07CA630DWB006       2224  4F        SL        ERCA6         0.1
-07CA630DWB006       2224  4F        TS        QUKE          0.1
-07CA630DWB006       2224  4F        TR        PISA2         0.1
-07CA630DWB006       2224  4F        TR        PIPO          0.1
-07CA630DWB006       2224  4F        F         HIAL2         0.1
+site_id          ecosite  ecostat   stratum   symbol    cover
+--------------  --------  --------  --------  -------  ------
+07CA630DWB006       2224  4F        TS        QUWI2       5.0
+07CA630DWB006       2224  4F        TM        PIPO       10.0
+07CA630DWB006       2224  4F        TR        PIPO        0.1
+07CA630DWB006       2224  4F        TR        PISA2       0.1
+07CA630DWB006       2224  4F        TS        QUKE        0.1
+07CA630DWB006       2224  4F        TS        QUCH2       5.0
 
 ```r
-# keep only tree species
-idx <- which(grepl('^T', x$stratum))
-x <- x[idx, ]
+# any missing cover values should be converted to trace values of 0.1
+idx <- which(is.na(x$cover))
+if(length(idx) > 0)
+  x$cover[idx] <- 0.1
+
+# # keep only tree species
+# idx <- which(grepl('^T', x$stratum))
+# x <- x[idx, ]
 
 # add stratum as a suffix for tree species (^T*)
-x$symbol <- ifelse(grepl('^T', x$stratum), paste0(x$plantsym, '/', x$stratum), x$plantsym)
+x$modified.symbol <- ifelse(grepl('^T', x$stratum), paste0(x$symbol, '/', x$stratum), x$symbol)
 
 # convert "long" format to full community matrix, "wide" format using the mean pct cover
 # 1 row / ES ID, each column is a species
-m <- dcast(x, site_id ~ symbol, value.var = 'cover', fun.aggregate = mean)
+m <- dcast(x, site_id ~ modified.symbol, value.var = 'cover', fun.aggregate = mean)
 
 # assign abbreviated user site ID to row names
 row.names(m) <- gsub('CA630', '', m$site_id) 
@@ -856,64 +875,41 @@ row.names(m) <- gsub('CA630', '', m$site_id)
 # convert to matrix, excluding the first column (site id)
 m <- as.matrix(m[, -1])
 
-# replace NA in the community matrix with 0
-m[is.na(m)] <- 0
-
-# check: looks good, except missing data (NA) should be 0
+# check first row and first 20 columns: looks good, except missing data (NA) should be 0
 head(m, 1)[, 1:20]
 ```
 
 ```
-##   ABCO/TM   ABCO/TR   ABCO/TS   ABCO/TT  ACMA3/TM  ACMA3/TR  ACMA3/TS   AECA/TR   AECA/TS  ALNUS/TR 
-##         0         0         0         0         0         0         0         0         0         0 
-##   ARMA/TR   ARME/TR   ARME/TS CADE27/TM CADE27/TR CADE27/TS CADE27/TT  CONU4/TR  CONU4/TS  CORNU/TR 
-##         0         0         0         0         0         0         0         0         0         0
+##      2GA  ABCO/TS    ACHNA ACMA3/TM ACMA3/TR ACMA3/TS    ACMI2     ADFA     AECA  AECA/TR  AECA/TS 
+##      NaN      NaN      NaN      NaN      NaN      NaN      NaN       15      NaN      NaN      NaN 
+##    AGOSE     AICA     AMME    APAN2   ARCTO3     ARMA  ARME/TR  ARME/TS    ARVI4 
+##      NaN        1      NaN      NaN       85      NaN      NaN      NaN      NaN
 ```
 
 ```r
-# compute distance between ES
-d <- metaMDSdist(m)
-```
+# replace NA in the community matrix with 0
+m[is.na(m)] <- 0
 
-```
-## Square root transformation
-## Wisconsin double standardization
-## Using step-across dissimilarities:
-## Too long or NA distances: 260 out of 4095 (6.3%)
-## Stepping across 4095 dissimilarities...
-## Connectivity of distance matrix with threshold dissimilarity 1 
-## Data are connected
-```
-
-```r
-# try ordination: non-metrix multidimensional scaling with default distance metric and standardization
+# all-in-one!
+# non-metrix multidimensional scaling with default distance metric and standardization
 nmds <- metaMDS(m)
 ```
 
 ```
 ## Square root transformation
 ## Wisconsin double standardization
-## Run 0 stress 0.2027479 
-## Run 1 stress 0.2134203 
-## Run 2 stress 0.2053322 
-## Run 3 stress 0.2055539 
-## Run 4 stress 0.212657 
-## Run 5 stress 0.2118649 
-## Run 6 stress 0.2174863 
-## Run 7 stress 0.2240691 
-## Run 8 stress 0.2150012 
-## Run 9 stress 0.2243079 
-## Run 10 stress 0.2116387 
-## Run 11 stress 0.2191012 
-## Run 12 stress 0.204191 
-## Run 13 stress 0.2104531 
-## Run 14 stress 0.2339382 
-## Run 15 stress 0.2208382 
-## Run 16 stress 0.2188426 
-## Run 17 stress 0.2033293 
-## Run 18 stress 0.2332302 
-## Run 19 stress 0.2113026 
-## Run 20 stress 0.2231545
+## Run 0 stress 0.1960707 
+## Run 1 stress 0.1957942 
+## ... New best solution
+## ... procrustes: rmse 0.00831202  max resid 0.03316821 
+## Run 2 stress 0.1979168 
+## Run 3 stress 0.197905 
+## Run 4 stress 0.1987166 
+## Run 5 stress 0.2143558 
+## Run 6 stress 0.2179493 
+## Run 7 stress 0.1957942 
+## ... procrustes: rmse 7.604595e-05  max resid 0.0003254186 
+## *** Solution reached
 ```
 
 

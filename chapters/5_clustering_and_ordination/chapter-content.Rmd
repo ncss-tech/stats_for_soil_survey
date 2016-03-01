@@ -284,6 +284,7 @@ There isn't much difference between these two figures, because most of the chara
 Note that the widespread use of color in the following examples are not aestetic. Clors are convenient for tri-variate data-spaces because our eyes can automatically integrate the information into a self-consistent set of classes.
 
 ### Hierarchical clustering
+This form of clustering is useful when a the full **distance matrix** is available, and the optimal number of clusters is not yet known. [**Hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) creates a data structure that can encode "grouping" information from 1 cluster to as many clusters as there are individuals. It is up to the expert to determine the optimial place to "cut the tree" and generate a fixed set of clusters. The results from a [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) operation are nearly always presented in the form of a dendrogram.
 
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
 # re-make data, this time with all profiles
@@ -342,6 +343,7 @@ More on these criteria later.
 
 
 ### Centroid / medoid (partitioning) clustering
+This form of cluster analysis is commonly referred to as [**k-means**](https://en.wikipedia.org/wiki/K-means_clustering)-style analysis, however, the name "k-means" is one of many possible clustering algorithms that partition property-space into a *fixed* number of groups. These type of algorithms can be applied to very large datasets because they do not rely on the **distance matrix**. Rather, they are based on an iterative shuffling of group "centroids" until some criterion is minimized--for example, the mean variance within groups.
 
 ```{r, echo=FALSE, results='hide', fig.width=6, fig.height=6}
 # re-make data, this time with all profiles
@@ -380,9 +382,20 @@ legend('topright', legend=c('Observation', 'Medoid', 'Centroid'), pch=c(21, 0, 8
 
 #### Methods
 
+We will be discussing three (out of many) of the most important **partitioning** type algorithms:
+
+ * [**k-means**](https://en.wikipedia.org/wiki/K-means_clustering): groups of individuals are partitioned around newly created "[centroids](https://en.wikipedia.org/wiki/Centroid)"
+ * [**k-medoids**](https://en.wikipedia.org/wiki/K-medoids): groups of individuals are partitioned around selected "[medoids](https://en.wikipedia.org/wiki/Medoid)"
+ * [**fuzzy clustering**](https://en.wikipedia.org/wiki/Fuzzy_clustering): individuals are assigned a "fuzzy membership" value for each partition or property-space
+
+All of these methods are sensitive to the type of **standardization** that has been applied to characteristics. These methods rely on iterative minimization of one or more criteria, therefore each clustering "run" may generate slightly different output. Most implementations will re-run the algorithm until it stabilizes. More on this later.
 
 
 ##### Review and discuss
+
+ * What is the difference between a "medoid" and a "centroid"? Can you think of a way in which both concepts could be applied to the grouping of soils data? 
+ * Fuzzy clustering is also referred to as "soft clustering", while the other two methods as "hard clustering". Sometimes using both can be helpful, especially for cases where individuals straddle the line between groups.
+
 
 
 ## Ordination: visualization in a reduced space
@@ -832,7 +845,7 @@ library(cluster)
 # init a temp file
 tf <- tempfile()
 # download compressed CSV to temp file
-# make have to use setInternet2(TRUE) on windows
+setInternet2(TRUE)
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/seki-mu-gis-samples.csv.gz', destfile = tf, quiet = TRUE)
 # read-in from compressed CSV to data.frame object
 x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
@@ -891,7 +904,7 @@ library(vegan)
 # read species data from online CSV
 # init a temp file
 tf <- tempfile()
-# make have to use setInternet2(TRUE) on windows
+setInternet2(TRUE)
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/ca630-22A-species.csv', destfile = tf, quiet = TRUE)
 
 x <- read.csv(tf, stringsAsFactors = FALSE)
@@ -909,11 +922,11 @@ if(length(idx) > 0)
 # x <- x[idx, ]
 
 # add stratum as a suffix for tree species (^T*)
-x$symbol <- ifelse(grepl('^T', x$stratum), paste0(x$plantsym, '/', x$stratum), x$plantsym)
+x$modified.symbol <- ifelse(grepl('^T', x$stratum), paste0(x$symbol, '/', x$stratum), x$symbol)
 
 # convert "long" format to full community matrix, "wide" format using the mean pct cover
 # 1 row / ES ID, each column is a species
-m <- dcast(x, site_id ~ symbol, value.var = 'cover', fun.aggregate = mean)
+m <- dcast(x, site_id ~ modified.symbol, value.var = 'cover', fun.aggregate = mean)
 
 # assign abbreviated user site ID to row names
 row.names(m) <- gsub('CA630', '', m$site_id) 
