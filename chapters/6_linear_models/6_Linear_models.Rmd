@@ -53,11 +53,11 @@ Generally before we begin modeling its good to explore the data. By using a simp
 s <- site(pedons)
 
 s$surface_gravel <- with(s, surface_gravel - surface_fgravel) # recalculate gravel
-s$surface_total <- apply(s[grepl("surface", names(s))], 1, sum)
+s$frags <- apply(s[grepl("surface", names(s))], 1, sum)
 
-summary(s$surface_total)
+summary(s$frags)
 
-densityplot(~ surface_total + surface_gravel, data = s, auto.key = TRUE)
+densityplot(~ frags + surface_gravel, data = s, auto.key = TRUE)
 ```
 
 
@@ -68,36 +68,42 @@ Another obvious place to look is at the geomorphic data in the site table. This 
 
 
 ```{r landform}
-# Landform vs surface_total
+# Landform vs frags
 
-test <- aggregate(surface_total ~ landform.string, data = s, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
+test <- aggregate(frags ~ landform.string, data = s, function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))))
+arrange(test, frags[, 2]) # sort data frame by column using plyr package function
 
-test[order(test$surface_total[, 2]), ]
+# or
 
-s_sub <- subset(s, grepl("fan", landform.string)) # subset fan landforms
+# test[order(test$surface_total[, 2]), ]
 
-densityplot(~ surface_total + surface_gravel, data = s_sub, auto.key = TRUE)
+s$landform <- ifelse(grepl("fan", s$landform.string), "fan", "hill")
+s$landform <- as.factor(s$landform)
+
+densityplot(~ frags + surface_gravel | landform, data = s, auto.key = TRUE)
 
 
 # Hillslope position
 
-test <- aggregate(surface_total ~ hillslope_pos, data = s_sub, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
-test[order(test$surface_total[, 2]), ]
+test <- aggregate(frags ~ landform + hillslope_pos, data = s, function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))))
+arrange(test, landform, frags[, 2])
 
 # Slope shape
 
-test <- aggregate(surface_total ~ paste(shapedown, shapeacross), data = s_sub, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
-test[order(test$surface_total[, 2]), ]
+test <- aggregate(frags ~ landform + paste(shapedown, shapeacross), data = s, function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))))
+arrange(test, landform, frags[, 2])
 
 
 # Surface morphometry, depth and surface rock fragments
 
-s_sub <- subset(s, grepl("fan", landform.string), select = c(surface_total, surface_gravel, bedrckdepth, slope_field, elev_field)) # subset slopes > 15 to just look and fans, and select numeric columns
+s_fan <- subset(s, landform == "fan", select = c(frags, surface_gravel, bedrckdepth, slope_field, elev_field))
+s_hill <- subset(s, landform == "hill", select = c(frags, surface_gravel, bedrckdepth, slope_field, elev_field))
 
-round(cor(s_sub, use = "pairwise.complete.obs"), 2)
+round(cor(s_fan, use = "pairwise.complete.obs"), 2)
+round(cor(s_hill, use = "pairwise.complete.obs"), 2)
 
-scatterplotMatrix(s_sub, use = "pairwise.complete.obs")
-
+spm(s_fan, use = "pairwise.complete.obs")
+spm(s_hill, use = "pairwise.complete.obs")
 
 # Function to filter out the top 3 mappers
 desc_test <- function(old) {
@@ -114,10 +120,8 @@ desc_test <- function(old) {
 
 s$describer2 <- sapply(s$describer, desc_test)
 
-s_sub <- subset(s, grepl("fan", landform.string))
-
-test <- aggregate(surface_total ~ describer2, data = s_sub, function(x) round(quantile(x)))
-test[order(test$surface_total[, 2]), ]
+test <- aggregate(frags ~ landform + describer2, data = s, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
+test[order(test$landform, test$frags[, 2]), ]
 ```
 
 
@@ -135,7 +139,7 @@ pedons2 <- pedons2[idx]
 coordinates(pedons2) <- ~ x + y # set the coordinates
 proj4string(pedons2) <- CRS("+init=epsg:4326") # set the projection
 
-ssa <- readOGR(dsn = "F:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
 ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
 # ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
 pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to sp object
@@ -161,7 +165,7 @@ pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # transform between 
 Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data locations. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract the geodata values where they intersect with field data.
 
 ```{r extract, eval=FALSE}
-folder <- "F:/geodata/project_data/8VIC/"
+folder <- "M:/geodata/project_data/8VIC/ca794/"
 files <- c(
   elev   = "ned30m_8VIC.tif",
   slope  = "ned30m_8VIC_slope5.tif",
@@ -191,9 +195,12 @@ head(geodata_f)
 geodata_r <- stack(geodata_f) # create a raster stack
 
 data <- data.frame(
-   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "surface_total", "x_std", "y_std", "describer2", "landform.string")],
+   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "landform", "argillic.horizon")],
    extract(geodata_r, pedons_sp)
    )
+
+datacluster <- as.factor(data$cluster)
+
 
 # s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
 # slot(pedons, "site") <- s
@@ -208,12 +215,9 @@ With our spatial data in hand, we can now see whether any of the varibles will h
 
 ```{r spatial}
 load(file = "C:/workspace/ch7_data.Rdata")
-test <- data
-test$frags <- test$surface_total
-test$cluster <- as.factor(test$cluster)
-test$landform <- ifelse(grepl("fan", test$landform.string), "fan", "hill"); test$landform <- as.factor(test$landform)
+train <- data
 
-test <- subset(test, mrvbf > 0.5 & landform != "hill" & frags < 100, select = - c(pedon_id, taxonname, surface_total, landform.string, x_std, y_std, landform)) # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+train <- subset(train, mrvbf > 0.5 & landform != "hill" & frags < 100, select = - c(pedon_id, taxonname, frags, landform.string, x_std, y_std, landform)) # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 
 terrain1 <- c("slope", "solar", "mrrtf", "mrvbf")
 terrain2 <- c("twi", "z2str")
@@ -222,47 +226,59 @@ landsat <- paste0("ls_", 1:6)
 tcaps <- paste0("tc_", 1:3)
 grad <- c("k", "th", "u")
 
-round(cor(test[c("frags", terrain1)]), 2)
-round(cor(test[c("frags", terrain2)], use = "pairwise.complete.obs"), 2)
-round(cor(test[c("frags", climate)]), 2)
-round(cor(test[c("frags", landsat)]), 2)
-round(cor(test[c("frags", tcaps)], use = "pairwise.complete.obs"), 2)
-round(cor(test[c("frags", grad)]), 2)
+round(cor(train[c("frags", terrain1)]), 2)
+round(cor(train[c("frags", terrain2)], use = "pairwise.complete.obs"), 2)
+round(cor(train[c("frags", climate)]), 2)
+round(cor(train[c("frags", landsat)]), 2)
+round(cor(train[c("frags", tcaps)], use = "pairwise.complete.obs"), 2)
+round(cor(train[c("frags", grad)]), 2)
 
-scatterplotMatrix(test[c("frags", terrain1)])
-scatterplotMatrix(test[c("frags", terrain2)])
-scatterplotMatrix(test[c("frags", climate)])
-scatterplotMatrix(test[c("frags", tcaps)])
-scatterplotMatrix(test[c("frags", grad)])
+scatterplotMatrix(train[c("frags", terrain1)])
+scatterplotMatrix(train[c("frags", terrain2)])
+scatterplotMatrix(train[c("frags", climate)])
+scatterplotMatrix(train[c("frags", tcaps)])
+scatterplotMatrix(train[c("frags", grad)])
 
-bwplot(frags ~ as.factor(cluster), data = test)
+bwplot(frags ~ as.factor(cluster), data = train)
 
-bwplot(twi ~ landform, data = test)
-aggregate(twi ~ landform, data = test, median)
-test$twi_sc <- abs(test$twi - 13.8)
-test$gsi <- with(test, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
-test$sw <- cos(test$aspect - 255)
+bwplot(twi ~ landform, data = train)
+aggregate(twi ~ landform, data = train, median)
+train$twi_sc <- abs(train$twi - 13.8)
+train$gsi <- with(train, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
+train$sw <- cos(train$aspect - 255)
 
 ```
 
 
 
 ```{r}
-full <- lm(frags ~ ., data = test) # "~ ." includes all columns in the data set
-null <- lm(frags ~ 1, data = test) # "~ 1" just includes an intercept
+full <- lm(frags ~ . + tc_3 * mrvbf, data = train) # "~ ." includes all columns in the data set
+null <- lm(frags ~ 1, data = train) # "~ 1" just includes an intercept
 
 add1(null, full, test = "F") # using the AIC test the effect of '
 
-null <- update(null, . ~ . + elev) # add twi_sc to the model, 
+null <- update(null, . ~ . + tc_3) # add twi_sc to the model, 
 
 test2 <- lm(frags ~ elev + gsi, data = test)
 
-test_sub <- subset(test, !(cluster %in% c(2, 6, 7, 8, 13, 15)))
 
-temp <- by(test, list(test$cluster), FUN = function(x) with(x, data.frame(cluster = unique(cluster), r2 = round(cor(frags, predict(test2, x))^2, 2), n = length(frags))))
+test_sub <- subset(test, !(cluster %in% c(2, 3, 6, 7, 8, 13, 15)))
+
+temp <- aggregate(temp + 2 ~ cluster, data = train, mean)
+train2 <- join(train, temp, by = "cluster", type = "left")
+
+train_sub <- subset(train2, temp + 2 < 27)
+
+full <- lm(frags ~ . + tc_3 * mrvbf, data = train_sub) # "~ ." includes all columns in the data set
+null <- lm(frags ~ 1, data = train_sub) # "~ 1" just includes an intercept
+
+add1(null, full, test = "F") # using the AIC test the effect of '
+
+
+temp <- by(train_sub, list(train_sub$cluster), FUN = function(x) with(x, data.frame(cluster = unique(cluster), r2 = round(cor(frags, predict(test, x))^2, 2), n = length(frags))))
 do.call(rbind, temp)
-
 ```
+
 
 ## Additional reading
 
