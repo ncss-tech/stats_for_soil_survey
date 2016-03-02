@@ -126,7 +126,7 @@ desc_test <- function(old) {
 s$describer2 <- sapply(s$describer, desc_test)
 
 test <- aggregate(frags ~ landform + describer2, data = s, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
-test[order(test$landform, test$frags[, 2]), ]
+arrange(test, describer2, landform, frags[, 2])
 ```
 
 
@@ -205,7 +205,7 @@ data <- data.frame(
    extract(geodata_r, pedons_sp)
    )
 
-data$mast <- data$temp + 4
+data$mast <- data$temp - 4
 idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x), 2))
 data <- join(data, idx, by = "cluster", type = "left")
 data$cluster <- factor(data$cluster, levels = 1:15)
@@ -232,6 +232,7 @@ terrain1 <- c("slope", "solar", "mrrtf", "mrvbf")
 terrain2 <- c("twi", "z2str", "ch")
 climate <- c("elev", "precip", "precipsum", "temp")
 landsat <- paste0("ls_", 1:6)
+pcomps <- paste0("pc_", 1:6)
 tcaps <- paste0("tc_", 1:3)
 grad <- c("k", "th", "u")
 
@@ -239,14 +240,16 @@ round(cor(cbind(train$frags, train[terrain1]), use = "pairwise.complete.obs"), 2
 round(cor(cbind(train$frags, train[terrain2]), use = "pairwise.complete.obs"), 2)
 round(cor(cbind(train$frags, train[climate]), use = "pairwise.complete.obs"), 2)
 round(cor(cbind(train$frags, train[landsat]), use = "pairwise.complete.obs"), 2)
+round(cor(cbind(train$frags, train[pcomps]), use = "pairwise.complete.obs"), 2)
 round(cor(cbind(train$frags, train[tcaps]), use = "pairwise.complete.obs"), 2)
 round(cor(cbind(train$frags, train[grad]), use = "pairwise.complete.obs"), 2)
 
-scatterplotMatrix(train[c("frags", terrain1)])
-scatterplotMatrix(train[c("frags", terrain2)])
-scatterplotMatrix(train[c("frags", climate)])
-scatterplotMatrix(train[c("frags", tcaps)])
-scatterplotMatrix(train[c("frags", grad)])
+spm(train[c("frags", terrain1)])
+spm(train[c("frags", terrain2)])
+spm(train[c("frags", climate)])
+spm(train[c("frags", pcomps)])
+spm(train[c("frags", tcaps)])
+spm(train[c("frags", grad)])
 
 bwplot(frags ~ cluster, data = train)
 bwplot(frags ~ cluster2, data = train)
@@ -269,25 +272,25 @@ add1(null, full, test = "F") # using the AIC test the effect of '
 
 null <- update(null, . ~ . + pc_2) # add twi_sc to the model, 
 
-test2 <- lm(frags ~ pc_2 + pc_1 + pc_5 + twi + elev, data = train, data = test)
+test <- lm(frags ~ pc_2 + pc_1 + pc_5 + twi + elev, data = train)
+
+temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster), r2 = round(cor(frags, predict(test, x))^2, 2), n = length(frags))))
+do.call(rbind, temp)
 
 
-test_sub <- subset(test, !(cluster %in% c(2, 3, 6, 7, 8, 13, 15)))
+# test_sub <- subset(test, !(cluster %in% c(2, 3, 6, 7, 8, 13, 15)))
 
-temp <- aggregate(temp + 2 ~ cluster, data = train, mean)
-train2 <- join(train, temp, by = "cluster", type = "left")
+train_sub <- subset(train, mast.1 < 23)
 
-train_sub <- subset(train2, temp + 2 < 27)
-
-full <- lm(frags ~ . + tc_3 * mrvbf, data = train_sub) # "~ ." includes all columns in the data set
+full <- lm(frags ~ ., data = train_sub) # "~ ." includes all columns in the data set
 null <- lm(frags ~ 1, data = train_sub) # "~ 1" just includes an intercept
 
 add1(null, full, test = "F") # using the AIC test the effect of '
 
 
-temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster), r2 = round(cor(frags, predict(test, x))^2, 2), n = length(frags))))
+temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), r2 = round(cor(frags, predict(test, x), use = "pairwise.complete.obs")^2, 2), n = length(frags))))
 do.call(rbind, temp)
-
+plot(1:nrow(temp2), temp2$r2, type = "l")
 
 r <- predict(geodata_r, test, progress="text", type = "response")
 writeRaster(r, "test_frags4.tif", overwrite = T, progress = "text")
