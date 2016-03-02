@@ -405,13 +405,11 @@ All of these methods are sensitive to the type of **standardization** that has b
 ## Ordination: visualization in a reduced space
 Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortion.
 
-[**Principal component analysis**](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. For the rest of this document, we will be focusing on [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). The **nMDS** suite of ordination methods attempt to generate a reduced space that mimizes distortion in pair-wise distances.
+[**Principal component analysis**](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. For the rest of this document, we will be focusing on [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). "Non-metric" [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (nMDS) ordination methods attempt to generate a reduced space that mimizes distortion in *proportional similarity*: similar individuals are near eachother in the reduced space, dissimilar individuals are farther apart.
 
 
-### Non-metric multidimensional scaling
-Most [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) methods seek to preserve the approximate pair-wise distances from the original **distance matrix**.
-
-
+### An example of nMDS applied to soil data
+The following example is based on a *data matrix* containing lab measured clay fraction, sand fraction, exchageable Ca, exchangeable Mg, and CEC measured by NH4-Ac at pH 7.
 
 |name |  clay|  sand|    Mg|    Ca| CEC_7|
 |:----|-----:|-----:|-----:|-----:|-----:|
@@ -419,7 +417,6 @@ Most [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) met
 |ABt  |  0.04| -0.07| -0.06| -0.13| -0.38|
 |Bt1  |  0.41| -0.21| -0.09| -0.74| -0.16|
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
-
 
 
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=5}
@@ -471,8 +468,11 @@ title('Clustering Results in Context', line=-3)
 ```
 
 
+## Review and discuss
 
-### Review and discuss
+* Which visualization of the **distance matrix** was simpler to interpret: dendrogram or ordination by nMDS?
+* Any questions about the figures?
+* Any gueses on what the clusters represent?
 
 
 ## Application of these methods to soil profiles
@@ -511,7 +511,7 @@ setInternet2(TRUE)
 
 ### Data sources
 
-Most of the examples used in this module come from the following sources:
+Most of the examples used in the following exercises come from the following sources:
 
 1. built-in data sets from the `aqp` and `soilDB` packages ("sp4" and "loafercreek")
 2. results from [`fetchNASIS()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp): pedon data from the local NASIS selected set
@@ -533,6 +533,50 @@ Tinker with some `SoilProfileCollection` objects:
  * Determine the number of profiles and horizons within the collection.
  * View and extract some *site* and *horizon* attributes.
  * Generate some soil profile sketches.
+
+
+## Evaluating missing data
+
+The `aqp` package provides two functions for checking the fraction of missing data within a `SoilProfileCollection` object. The first function (`evalMissingData`) generates an index that ranges from 0 (all missing) to 1 (all present) for each profile. This index can be used to subset or rank profiles for further investigation. The second function (`missingDataGrid`) creates a vizualization of the *fraction* of data missing within each horizon. Both functions can optionally filter-out horizons that don't typically have data such as Cr, R, or Cd horizons.
+
+Lets try both functions on the `gopheridge` sample dataset.
+
+**evalMissingData**
+```{r, fig.width=10, fig.height=4}
+# example data
+data("gopheridge", package = "soilDB")
+
+# compute data completeness
+gopheridge$data.complete <- evalMissingData(gopheridge, vars = c('clay', 'sand', 'phfield'), name = 'hzname', p = 'Cr|R|Cd')
+
+# check range
+# summary(gopheridge$data.complete)
+
+# rank
+new.order <- order(gopheridge$data.complete)
+
+# plot along data completeness ranking
+par(mar=c(3,0,1,1))
+plot(gopheridge, plot.order=new.order, print.id=FALSE)
+
+# add axis, note re-ordering of axis labels
+axis(side=1, at=1:length(gopheridge), labels = round(gopheridge$data.complete[new.order], 2),
+line=-2, cex.axis=0.75, las=2)
+
+title('Gopheridge pedons sorted according to data completeness (clay, sand, pH)')
+```
+
+
+**missingDataGrid**
+```{r, fig.width=9, fig.height=4}
+# view missing data as a fraction
+res <- missingDataGrid(gopheridge, max_depth=100, vars=c('clay', 'sand', 'phfield'), filter.column='hzname', filter.regex = 'Cr|R|Cd', main='Fraction of missing data (clay, sand, pH)')
+
+# check results
+head(res)
+```
+
+
 
 
 ## More on the distance matrix and how to make one
@@ -699,11 +743,6 @@ for(k in 2:5) {
 
 ## Interpretation / application
 
-```{r, }
-# Hmisc::
-# varclus()
-# naclus()
-```
 
 
 ## Ordination (Non-metric multidimensional scaling)

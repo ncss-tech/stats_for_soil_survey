@@ -241,13 +241,11 @@ All of these methods are sensitive to the type of **standardization** that has b
 ## Ordination: visualization in a reduced space
 Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortion.
 
-[**Principal component analysis**](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. For the rest of this document, we will be focusing on [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). The **nMDS** suite of ordination methods attempt to generate a reduced space that mimizes distortion in pair-wise distances.
+[**Principal component analysis**](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. For the rest of this document, we will be focusing on [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). "Non-metric" [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (nMDS) ordination methods attempt to generate a reduced space that mimizes distortion in *proportional similarity*: similar individuals are near eachother in the reduced space, dissimilar individuals are farther apart.
 
 
-### Non-metric multidimensional scaling
-Most [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) methods seek to preserve the approximate pair-wise distances from the original **distance matrix**.
-
-
+### An example of nMDS applied to soil data
+The following example is based on a *data matrix* containing lab measured clay fraction, sand fraction, exchageable Ca, exchangeable Mg, and CEC measured by NH4-Ac at pH 7.
 
 |name |  clay|  sand|    Mg|    Ca| CEC_7|
 |:----|-----:|-----:|-----:|-----:|-----:|
@@ -257,14 +255,16 @@ Most [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) met
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
 
 
-
 <img src="chapter-content_files/figure-html/unnamed-chunk-12-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-13-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
+## Review and discuss
 
-### Review and discuss
+* Which visualization of the **distance matrix** was simpler to interpret: dendrogram or ordination by nMDS?
+* Any questions about the figures?
+* Any gueses on what the clusters represent?
 
 
 ## Application of these methods to soil profiles
@@ -304,7 +304,7 @@ setInternet2(TRUE)
 
 ### Data sources
 
-Most of the examples used in this module come from the following sources:
+Most of the examples used in the following exercises come from the following sources:
 
 1. built-in data sets from the `aqp` and `soilDB` packages ("sp4" and "loafercreek")
 2. results from [`fetchNASIS()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp): pedon data from the local NASIS selected set
@@ -326,6 +326,69 @@ Tinker with some `SoilProfileCollection` objects:
  * Determine the number of profiles and horizons within the collection.
  * View and extract some *site* and *horizon* attributes.
  * Generate some soil profile sketches.
+
+
+## Evaluating missing data
+
+The `aqp` package provides two functions for checking the fraction of missing data within a `SoilProfileCollection` object. The first function (`evalMissingData`) generates an index that ranges from 0 (all missing) to 1 (all present) for each profile. This index can be used to subset or rank profiles for further investigation. The second function (`missingDataGrid`) creates a vizualization of the *fraction* of data missing within each horizon. Both functions can optionally filter-out horizons that don't typically have data such as Cr, R, or Cd horizons.
+
+Lets try both functions on the `gopheridge` sample dataset.
+
+**evalMissingData**
+
+```r
+# example data
+data("gopheridge", package = "soilDB")
+
+# compute data completeness
+gopheridge$data.complete <- evalMissingData(gopheridge, vars = c('clay', 'sand', 'phfield'), name = 'hzname', p = 'Cr|R|Cd')
+
+# check range
+# summary(gopheridge$data.complete)
+
+# rank
+new.order <- order(gopheridge$data.complete)
+
+# plot along data completeness ranking
+par(mar=c(3,0,1,1))
+plot(gopheridge, plot.order=new.order, print.id=FALSE)
+
+# add axis, note re-ordering of axis labels
+axis(side=1, at=1:length(gopheridge), labels = round(gopheridge$data.complete[new.order], 2),
+line=-2, cex.axis=0.75, las=2)
+
+title('Gopheridge pedons sorted according to data completeness (clay, sand, pH)')
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-15-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+
+
+**missingDataGrid**
+
+```r
+# view missing data as a fraction
+res <- missingDataGrid(gopheridge, max_depth=100, vars=c('clay', 'sand', 'phfield'), filter.column='hzname', filter.regex = 'Cr|R|Cd', main='Fraction of missing data (clay, sand, pH)')
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-16-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
+
+```r
+# check results
+head(res)
+```
+
+
+
+  peiid   clay   sand   phfield
+-------  -----  -----  --------
+ 242808     29     29        29
+ 268791      0      0         0
+ 268792      0    100         0
+ 268793      0      0         0
+ 268794      0      0         0
+ 268795      0     33         0
+
+
 
 
 ## More on the distance matrix and how to make one
@@ -453,7 +516,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-21-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
+<img src="chapter-content_files/figure-html/unnamed-chunk-23-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
 
 
 
@@ -468,7 +531,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-22-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
+<img src="chapter-content_files/figure-html/unnamed-chunk-24-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
 
 
 #### K-medoids
@@ -505,7 +568,7 @@ grid()
 points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex=1.25, pch=21)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-24-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -517,7 +580,7 @@ plot(sp4.std, color='colors', cex.names=0.75)
 title('Fuzzy Clustering Results in Context', line=-3)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 > Nine of the 11 parent materials were serpentinites. The Napa and Tehama county parent materials were quite different from each other and from the nine other sites. Neither parent rock contained serpentine minerals and were therefore not serpentinites. The Napa County parent material contained dominantly vermiculite and albite, with minor amounts of Ca-bearing clino-pyroxene. The Tehama County parent material was dominated by grossularite, a calcsilicate ugrandite garnet, with subdominant amounts of the Ca-bearing sorosilicate, pumpellyite, and Ca-bearing clinopyroxene. The rocks from the Shasta and Kings county sites were serpentinite, dominated by serpentine minerals, but had minor amounts of Ca-bearing accessory minerals (calcic clinoamphibole [tremolite] and calcsilicate ugrandite garnet [andradite]). The seven other parent materials were serpentinites and exhibited, at most, trace amounts of Ca-bearing minerals.
 
@@ -535,18 +598,12 @@ for(k in 2:5) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-28-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
 
 
 
 ## Interpretation / application
 
-
-```r
-# Hmisc::
-# varclus()
-# naclus()
-```
 
 
 ## Ordination (Non-metric multidimensional scaling)
@@ -639,7 +696,7 @@ par(mar=c(0,0,3,0))
 plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 
@@ -658,7 +715,7 @@ par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-32-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 ```r
 # check structure of some site-level attributes
@@ -683,7 +740,7 @@ par(mar=c(0,1,1,1))
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-32-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 Check resulting distance matrix.
 
@@ -732,7 +789,7 @@ lab.data <- as(with(rgb.data, RGB(r, g, b)), 'LAB')
 pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -762,7 +819,7 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-36-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 ## Component interpretations
 [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
@@ -848,7 +905,7 @@ title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -876,7 +933,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-40-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
 
 ## GIS Data
@@ -940,7 +997,7 @@ legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, b
 title('Map Unit Terrain Signatures')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-40-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-41-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 ## Species composition
@@ -1050,7 +1107,7 @@ par(mar=c(5,5,1,1))
 stressplot(nmds, cex=0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-42-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-43-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 
 ```r
@@ -1071,7 +1128,7 @@ text(fig, "sites", col="black", cex=0.5)
 title('Sites', line=-0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-43-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-44-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
