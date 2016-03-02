@@ -259,14 +259,13 @@ The following example is based on a *data matrix* containing lab measured clay f
 * Any gueses on what the clusters represent?
 
 
-## Application of these methods to soil profiles
-
-[relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
-
-[relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
+## Pair-wise distances between soil profiles?
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-14-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
+This is a complex topic, lets switch over to a [relevant set of slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp).
+
+If you are hugry for more detailed information, have a look at this [relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
 
 
 ## Before proceeding...
@@ -280,7 +279,8 @@ Think carefully about the selection of:
  * number of clusters
  
 
-# Learn by doing
+# Excercises
+This is the fun part.
 
 ## Setup the R session
 Install R packages as needed. Open a new R script file to use as you follow along.
@@ -316,9 +316,7 @@ Most of the examples used in the following exercises come from the following sou
 In most cases, you can edit the examples and swap-in just about any data that are or have been upgraded to a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp). For example, pedons from **your** local NASIS selected set can be loaded with `fetchNASIS()`.
 
 
-
-
-#### Your turn
+#### Try it!
 Tinker with some `SoilProfileCollection` objects:
 
  * Get some data using one of the methods listed above, if you need help see the manual pages for examples (`?fetchKSSL`) or the [SoilProfileCollection tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).
@@ -404,14 +402,14 @@ plot(gopheridge.complete, color='clay', id.style='side', label='pedon_id')
 
 ## More on the distance matrix and how to make one
 
-### Options
+These three functions are essential to the creation of a **distance matrix**:
 
 * `dist()` (base R), simple and fast, limited number of distance metrics
 * `daisy()` ([cluster package](https://cran.r-project.org/web/packages/cluster/index.html)), better selection of distance metrics, simple standardization, my go-to function
 * `vegdist` ([vegan package](https://cran.r-project.org/web/packages/vegan/index.html)), many distance metrics, primarily designed for species composition data
 
 
-
+A short demo:
 
 ```r
 # get some example data from the aqp package
@@ -457,17 +455,16 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 ## Bt2 0.96 0.84 0.69
 ```
 
+
 ### Distance calculations with categorical data
-
-
-[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp)
+An example excerpted from [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp), that illustrates an application of clustering binary data (diagnostic feature presence / absence). Interally, the `diagnosticPropertyPlot` function is utilizing the `daisy` function to compute pair-wise distances using the **general dissimilarity coefficient of Gower** [@Gower1971]. A concise summary of this distance metric are given in @Kaufman2005.
 
 
 ```r
 # load some example NASIS data
 data(loafercreek, package='soilDB')
 
-# cut-down to a subset
+# cut-down to a subset, first 20 pedons
 loafercreek <- loafercreek[1:20, ]
 
 # get depth class
@@ -479,11 +476,13 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
        'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
        'shallow', 'mod.deep', 'deep', 'very.deep')
 
-
+# do the analysis and save the results to object 'x'
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-20-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+
+Hmmm... I wonder what is in the object `x`. The `str` function or manual page (`?diagnosticPropertyPlot`) can help.
 
 
 ## Hierachrical clustering
