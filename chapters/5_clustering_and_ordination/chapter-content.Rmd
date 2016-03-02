@@ -84,17 +84,13 @@ library(MASS)
 
 TODO:
  
- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data)
- * links to unsupervised classification
- * spatial clustering with fanny
- * think: distance metric, characteristics, standardization, clustering algorithm, number of classes...
+ 
  * fuzzy clustering of hz attr -> plot on profile
+ * think: distance metric, characteristics, standardization, clustering algorithm, number of classes...
  * missing data: bain of numerical taxonomy... strategies
+ * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data)
  * color clustering of entire profiles
  * profile_compare() details
- * add discussion points to each section
- * add questions
- * adapt to use 'pedons' through entire document for simple use of student's data
  * mean silhouette width as cluster number selection
 
 <hr>
@@ -182,7 +178,7 @@ In this example, exchangeable Ca contributes less to the distance between indivi
 
 **Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation:
 
-$$x_{scaled} = \frac{x - mean(x)}{sd(x)}$$
+$$x_{std} = \frac{x - mean(x)}{sd(x)}$$
 
 There are many other **standardization** methods which we will cover later. The new data matrix looks like this:
 
@@ -355,7 +351,7 @@ sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
 cl <- pam(sp4.scaled[, -1], k = 3, stand = FALSE)
 
 # use kmeans to generate centroids for demo
-km <- kmeans(sp4.scaled[, -1], 3, iter.max = 100)
+km <- kmeans(sp4.scaled[, -1], 3, nstart = 10, iter.max = 100)
 
 # define colors based on hard clustering
 col.set <- brewer.pal(9, 'Set1')
@@ -399,6 +395,9 @@ All of these methods are sensitive to the type of **standardization** that has b
 
 
 ## Ordination: visualization in a reduced space
+
+
+
 
 |name |  clay|  sand|    Mg|    Ca| CEC_7|
 |:----|-----:|-----:|-----:|-----:|-----:|
@@ -517,6 +516,7 @@ Tinker with some `SoilProfileCollection` objects:
 data('sp4', package = 'aqp')
 # subset select rows and columns
 sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+row.names(sp4) <- sp4$name
 
 # compare distance functions
 round(dist(sp4[, -1], method = 'euclidean'))
@@ -529,8 +529,14 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 ### Distance calculations with categorical data
 
 ```{r, }
-# SoilTaxonomyDendrogram()
-# component.adj.matrix()
+data('sp4', package = 'aqp')
+# subset select rows and columns
+sp4 <- sp4[, c('name', 'Mg', 'Ca')]
+sp4$name <- factor(sp4$name)
+
+d <- daisy(sp4, metric = 'gower')
+dd <- diana(d)
+
 ```
 
 
@@ -556,21 +562,56 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 # other ways to plot dendrogram
 ```
 
-## Partitioning or centroid clustering
+## Centroid / medoid (partitioning) clustering
 
 ```{r, }
 # 1D example
+
+
 # 2D example
+x <- rbind(matrix(rnorm(100, sd = 0.3), ncol = 2),
+           matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2))
+colnames(x) <- c("x", "y")
+
+# nice colors for later
+col.set <- brewer.pal(9, 'Set1')
+
 ```
 
 ### Hard classes
 
-```{r, }
+#### K-means
+```{r, fig.width=9, fig.height=9, htmlcap="k-means function with default settings"}
+par(mfrow=c(3,3), mar=c(1,1,1,1))
+for(i in 1:9) {
+  cl <- kmeans(x, centers=3)
+  plot(x, col = col.set[cl$cluster], axes=FALSE)
+  grid()
+  points(cl$centers, col = col.set, pch = 8, cex = 2, lwd=2)
+  box()
+}
+```
+
+
+```{r, fig.width=9, fig.height=9, htmlcap="k-means function after increasing the max number of random starts and iterations"}
+par(mfrow=c(3,3), mar=c(1,1,1,1))
+for(i in 1:9) {
+  cl <- kmeans(x, centers=3, nstart = 10, iter.max = 100)
+  plot(x, col = col.set[cl$cluster], axes=FALSE)
+  grid()
+  points(cl$centers, col = col.set, pch = 8, cex = 2, lwd=2)
+  box()
+}
+```
+
+
+#### K-medoids
+```{r}
 # pam()
 # clara()
 ```
 
-### Fuzzy classes
+### Fuzzy clusters
 
 ```{r, }
 # fanny()
@@ -578,8 +619,12 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 
 ### How many clusters?
 
-```{r, }
-# silhouette()
+```{r, fig.width=9, fig.height=9}
+data(ruspini)
+par(mfrow=c(2,2), mar=c(4,0,3,3))
+for(k in 2:5) {
+  plot(silhouette(pam(ruspini, k=k)), main = paste("k = ",k), do.n.k=FALSE, col = col.set[1:k]) 
+}
 ```
 
 

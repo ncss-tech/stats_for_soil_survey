@@ -10,17 +10,13 @@ March 2016
 
 TODO:
  
- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data)
- * links to unsupervised classification
- * spatial clustering with fanny
- * think: distance metric, characteristics, standardization, clustering algorithm, number of classes...
+ 
  * fuzzy clustering of hz attr -> plot on profile
+ * think: distance metric, characteristics, standardization, clustering algorithm, number of classes...
  * missing data: bain of numerical taxonomy... strategies
+ * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data)
  * color clustering of entire profiles
  * profile_compare() details
- * add discussion points to each section
- * add questions
- * adapt to use 'pedons' through entire document for simple use of student's data
  * mean silhouette width as cluster number selection
 
 <hr>
@@ -107,7 +103,7 @@ In this example, exchangeable Ca contributes less to the distance between indivi
 
 **Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation:
 
-$$x_{scaled} = \frac{x - mean(x)}{sd(x)}$$
+$$x_{std} = \frac{x - mean(x)}{sd(x)}$$
 
 There are many other **standardization** methods which we will cover later. The new data matrix looks like this:
 
@@ -236,6 +232,9 @@ All of these methods are sensitive to the type of **standardization** that has b
 
 ## Ordination: visualization in a reduced space
 
+
+
+
 |name |  clay|  sand|    Mg|    Ca| CEC_7|
 |:----|-----:|-----:|-----:|-----:|-----:|
 |A    | -0.41|  0.21|  0.06|  0.44| -0.23|
@@ -312,16 +311,17 @@ Tinker with some `SoilProfileCollection` objects:
 data('sp4', package = 'aqp')
 # subset select rows and columns
 sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+row.names(sp4) <- sp4$name
 
 # compare distance functions
 round(dist(sp4[, -1], method = 'euclidean'))
 ```
 
 ```
-##    1  2  3
-## 2  8      
-## 3 15  7   
-## 4 48 44 39
+##      A ABt Bt1
+## ABt  8        
+## Bt1 15   7    
+## Bt2 48  44  39
 ```
 
 ```r
@@ -330,10 +330,10 @@ round(daisy(sp4[, -1], stand = TRUE, metric = 'euclidean'), 2)
 
 ```
 ## Dissimilarities :
-##      1    2    3
-## 2 1.45          
-## 3 2.73 1.36     
-## 4 6.45 5.65 4.91
+##        A  ABt  Bt1
+## ABt 1.45          
+## Bt1 2.73 1.36     
+## Bt2 6.45 5.65 4.91
 ## 
 ## Metric :  euclidean 
 ## Number of objects : 4
@@ -344,18 +344,23 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 ```
 
 ```
-##      1    2    3
-## 2 0.19          
-## 3 0.32 0.16     
-## 4 0.96 0.84 0.69
+##        A  ABt  Bt1
+## ABt 0.19          
+## Bt1 0.32 0.16     
+## Bt2 0.96 0.84 0.69
 ```
 
 ### Distance calculations with categorical data
 
 
 ```r
-# SoilTaxonomyDendrogram()
-# component.adj.matrix()
+data('sp4', package = 'aqp')
+# subset select rows and columns
+sp4 <- sp4[, c('name', 'Mg', 'Ca')]
+sp4$name <- factor(sp4$name)
+
+d <- daisy(sp4, metric = 'gower')
+dd <- diana(d)
 ```
 
 
@@ -384,23 +389,63 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 # other ways to plot dendrogram
 ```
 
-## Partitioning or centroid clustering
+## Centroid / medoid (partitioning) clustering
 
 
 ```r
 # 1D example
+
+
 # 2D example
+x <- rbind(matrix(rnorm(100, sd = 0.3), ncol = 2),
+           matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2))
+colnames(x) <- c("x", "y")
+
+# nice colors for later
+col.set <- brewer.pal(9, 'Set1')
 ```
 
 ### Hard classes
 
+#### K-means
+
+```r
+par(mfrow=c(3,3), mar=c(1,1,1,1))
+for(i in 1:9) {
+  cl <- kmeans(x, centers=3)
+  plot(x, col = col.set[cl$cluster], axes=FALSE)
+  grid()
+  points(cl$centers, col = col.set, pch = 8, cex = 2, lwd=2)
+  box()
+}
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-21-1.png" title="" alt="" width="864" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
+
+
+
+```r
+par(mfrow=c(3,3), mar=c(1,1,1,1))
+for(i in 1:9) {
+  cl <- kmeans(x, centers=3, nstart = 10, iter.max = 100)
+  plot(x, col = col.set[cl$cluster], axes=FALSE)
+  grid()
+  points(cl$centers, col = col.set, pch = 8, cex = 2, lwd=2)
+  box()
+}
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-22-1.png" title="" alt="" width="864" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
+
+
+#### K-medoids
 
 ```r
 # pam()
 # clara()
 ```
 
-### Fuzzy classes
+### Fuzzy clusters
 
 
 ```r
@@ -411,8 +456,14 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 
 
 ```r
-# silhouette()
+data(ruspini)
+par(mfrow=c(2,2), mar=c(4,0,3,3))
+for(k in 2:5) {
+  plot(silhouette(pam(ruspini, k=k)), main = paste("k = ",k), do.n.k=FALSE, col = col.set[1:k]) 
+}
 ```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
 
 
 
@@ -516,7 +567,7 @@ par(mar=c(0,0,3,0))
 plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 
@@ -535,7 +586,7 @@ par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-28-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 ```r
 # check structure of some site-level attributes
@@ -560,7 +611,7 @@ par(mar=c(0,1,1,1))
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 Check resulting distance matrix.
 
@@ -609,7 +660,7 @@ lab.data <- as(with(rgb.data, RGB(r, g, b)), 'LAB')
 pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -639,7 +690,7 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-32-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 ## Component interpretations
 [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
@@ -725,7 +776,7 @@ title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-37-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -753,7 +804,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-36-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
 
 ## GIS Data
@@ -817,7 +868,7 @@ legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, b
 title('Map Unit Terrain Signatures')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-37-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 ## Species composition
@@ -899,17 +950,29 @@ nmds <- metaMDS(m)
 ## Square root transformation
 ## Wisconsin double standardization
 ## Run 0 stress 0.1960707 
-## Run 1 stress 0.1957942 
+## Run 1 stress 0.1957958 
 ## ... New best solution
-## ... procrustes: rmse 0.00831202  max resid 0.03316821 
-## Run 2 stress 0.1979168 
-## Run 3 stress 0.197905 
-## Run 4 stress 0.1987166 
-## Run 5 stress 0.2143558 
-## Run 6 stress 0.2179493 
-## Run 7 stress 0.1957942 
-## ... procrustes: rmse 7.604595e-05  max resid 0.0003254186 
-## *** Solution reached
+## ... procrustes: rmse 0.008321978  max resid 0.03311531 
+## Run 2 stress 0.2160726 
+## Run 3 stress 0.2217092 
+## Run 4 stress 0.1987167 
+## Run 5 stress 0.220515 
+## Run 6 stress 0.2265185 
+## Run 7 stress 0.2187418 
+## Run 8 stress 0.226085 
+## Run 9 stress 0.2336376 
+## Run 10 stress 0.1987166 
+## Run 11 stress 0.1986992 
+## Run 12 stress 0.2264577 
+## Run 13 stress 0.1960722 
+## ... procrustes: rmse 0.008450448  max resid 0.03276018 
+## Run 14 stress 0.2335826 
+## Run 15 stress 0.2264374 
+## Run 16 stress 0.213771 
+## Run 17 stress 0.3863692 
+## Run 18 stress 0.2273686 
+## Run 19 stress 0.2206339 
+## Run 20 stress 0.220525
 ```
 
 
@@ -919,7 +982,7 @@ par(mar=c(5,5,1,1))
 stressplot(nmds, cex=0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-41-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 
 ```r
@@ -940,7 +1003,7 @@ text(fig, "sites", col="black", cex=0.5)
 title('Sites', line=-0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-40-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-42-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
