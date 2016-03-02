@@ -8,14 +8,6 @@ March 2016
 
 <!-- This document is based on `aqp` version 1.9.7 and `sharpshootR` version 0.9.6. -->
 
-TODO:
- 
- 
- * fuzzy clustering of hz attr -> plot on profile
- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data)
- * color clustering of entire profiles
- * profile_compare() details
-
 <hr>
 <span style="font-size:200%">Before You Start</span><br>
 Some of the examples in this document depend on the latest versions of the `aqp` and `sharpshootR` packages. Open a fresh RStudio session and paste the following in the consol panel:
@@ -269,6 +261,13 @@ The following example is based on a *data matrix* containing lab measured clay f
 
 ## Application of these methods to soil profiles
 
+[relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
+
+[relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-14-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+
+
 
 ## Before proceeding...
 Think carefully about the selection of:
@@ -360,7 +359,7 @@ line=-2, cex.axis=0.75, las=2)
 title('Gopheridge pedons sorted according to data completeness (clay, sand, pH)')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-15-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-16-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 **missingDataGrid**
@@ -370,7 +369,7 @@ title('Gopheridge pedons sorted according to data completeness (clay, sand, pH)'
 res <- missingDataGrid(gopheridge, max_depth=100, vars=c('clay', 'sand', 'phfield'), filter.column='hzname', filter.regex = 'Cr|R|Cd', main='Fraction of missing data (clay, sand, pH)')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-16-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-17-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
 
 ```r
 # check results
@@ -388,6 +387,18 @@ head(res)
  268794      0      0         0
  268795      0     33         0
 
+For now, lets extract those profiles with a complete set of field-described clay, sand, or pH values for later use.
+
+```r
+# be sure to read the manual page for this function
+gopheridge.complete <- subsetProfiles(gopheridge, s = "data.complete == 1")
+
+# looks good
+par(mar=c(0,0,3,1))
+plot(gopheridge.complete, color='clay', id.style='side', label='pedon_id')
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-18-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 
@@ -449,15 +460,30 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 ### Distance calculations with categorical data
 
 
-```r
-data('sp4', package = 'aqp')
-# subset select rows and columns
-sp4 <- sp4[, c('name', 'Mg', 'Ca')]
-sp4$name <- factor(sp4$name)
+[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp)
 
-d <- daisy(sp4, metric = 'gower')
-dd <- diana(d)
+
+```r
+# load some example NASIS data
+data(loafercreek, package='soilDB')
+
+# cut-down to a subset
+loafercreek <- loafercreek[1:20, ]
+
+# get depth class
+sdc <- getSoilDepthClass(loafercreek)
+site(loafercreek) <- sdc
+
+# diagnostic properties to consider, no need to convert to factors
+v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
+       'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
+       'shallow', 'mod.deep', 'deep', 'very.deep')
+
+
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-20-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
 
 ## Hierachrical clustering
@@ -516,7 +542,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-23-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
+<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
 
 
 
@@ -531,7 +557,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-24-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
+<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
 
 
 #### K-medoids
@@ -568,7 +594,7 @@ grid()
 points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex=1.25, pch=21)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-28-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -580,7 +606,7 @@ plot(sp4.std, color='colors', cex.names=0.75)
 title('Fuzzy Clustering Results in Context', line=-3)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 > Nine of the 11 parent materials were serpentinites. The Napa and Tehama county parent materials were quite different from each other and from the nine other sites. Neither parent rock contained serpentine minerals and were therefore not serpentinites. The Napa County parent material contained dominantly vermiculite and albite, with minor amounts of Ca-bearing clino-pyroxene. The Tehama County parent material was dominated by grossularite, a calcsilicate ugrandite garnet, with subdominant amounts of the Ca-bearing sorosilicate, pumpellyite, and Ca-bearing clinopyroxene. The rocks from the Shasta and Kings county sites were serpentinite, dominated by serpentine minerals, but had minor amounts of Ca-bearing accessory minerals (calcic clinoamphibole [tremolite] and calcsilicate ugrandite garnet [andradite]). The seven other parent materials were serpentinites and exhibited, at most, trace amounts of Ca-bearing minerals.
 
@@ -598,7 +624,7 @@ for(k in 2:5) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-28-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
 
 
 
@@ -696,7 +722,7 @@ par(mar=c(0,0,3,0))
 plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 
@@ -715,7 +741,7 @@ par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-32-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 ```r
 # check structure of some site-level attributes
@@ -740,7 +766,7 @@ par(mar=c(0,1,1,1))
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 Check resulting distance matrix.
 
@@ -789,7 +815,7 @@ lab.data <- as(with(rgb.data, RGB(r, g, b)), 'LAB')
 pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-37-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -819,7 +845,7 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-36-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 ## Component interpretations
 [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
@@ -905,35 +931,11 @@ title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-41-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
-## Diagnostic features
-[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp)
 
-
-```r
-# load some example NASIS data
-data(loafercreek, package='soilDB')
-
-# cut-down to a subset
-loafercreek <- loafercreek[1:20, ]
-
-# get depth class
-sdc <- getSoilDepthClass(loafercreek)
-site(loafercreek) <- sdc
-
-# diagnostic properties to consider, no need to convert to factors
-v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
-       'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
-       'shallow', 'mod.deep', 'deep', 'very.deep')
-
-
-x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
-```
-
-<img src="chapter-content_files/figure-html/unnamed-chunk-40-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
 
 ## GIS Data
@@ -997,7 +999,7 @@ legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, b
 title('Map Unit Terrain Signatures')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-41-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-42-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 ## Species composition
@@ -1107,7 +1109,7 @@ par(mar=c(5,5,1,1))
 stressplot(nmds, cex=0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-43-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-44-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 
 ```r
@@ -1128,7 +1130,7 @@ text(fig, "sites", col="black", cex=0.5)
 title('Sites', line=-0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-44-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-45-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -1140,6 +1142,8 @@ This document is based on `aqp` version 1.9.7 and `soilDB` version 1.7 and `shar
 # References
 
 
+
+<!-- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data) -->
 
 
 

@@ -82,14 +82,6 @@ library(MASS)
 
 <!-- This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`. -->
 
-TODO:
- 
- 
- * fuzzy clustering of hz attr -> plot on profile
- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data)
- * color clustering of entire profiles
- * profile_compare() details
-
 <hr>
 <span style="font-size:200%">Before You Start</span><br>
 Some of the examples in this document depend on the latest versions of the `aqp` and `sharpshootR` packages. Open a fresh RStudio session and paste the following in the consol panel:
@@ -477,6 +469,30 @@ title('Clustering Results in Context', line=-3)
 
 ## Application of these methods to soil profiles
 
+[relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
+
+[relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
+
+```{r, fig.width=8, fig.height=4, echo=FALSE}
+# init example data
+data(sp4)
+depths(sp4) <- id ~ top + bottom
+
+# eval dissimilarity:
+# using Ex-Ca:Mg and CEC at pH 7
+# with no depth-weighting (k=0)
+# to a maximum depth of 40 cm
+d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
+
+# cluster via divisive method
+clust <- diana(d)
+
+# vizualize dissimilarity matrix via hierarchical clustering
+par(mar=c(0,0,3,0))
+plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
+```
+
+
 
 ## Before proceeding...
 Think carefully about the selection of:
@@ -576,6 +592,15 @@ res <- missingDataGrid(gopheridge, max_depth=100, vars=c('clay', 'sand', 'phfiel
 head(res)
 ```
 
+For now, lets extract those profiles with a complete set of field-described clay, sand, or pH values for later use.
+```{r, fig.width=8, fig.height=4}
+# be sure to read the manual page for this function
+gopheridge.complete <- subsetProfiles(gopheridge, s = "data.complete == 1")
+
+# looks good
+par(mar=c(0,0,3,1))
+plot(gopheridge.complete, color='clay', id.style='side', label='pedon_id')
+```
 
 
 
@@ -606,15 +631,27 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 
 ### Distance calculations with categorical data
 
-```{r, }
-data('sp4', package = 'aqp')
-# subset select rows and columns
-sp4 <- sp4[, c('name', 'Mg', 'Ca')]
-sp4$name <- factor(sp4$name)
 
-d <- daisy(sp4, metric = 'gower')
-dd <- diana(d)
+[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp)
 
+```{r}
+# load some example NASIS data
+data(loafercreek, package='soilDB')
+
+# cut-down to a subset
+loafercreek <- loafercreek[1:20, ]
+
+# get depth class
+sdc <- getSoilDepthClass(loafercreek)
+site(loafercreek) <- sdc
+
+# diagnostic properties to consider, no need to convert to factors
+v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
+       'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
+       'shallow', 'mod.deep', 'deep', 'very.deep')
+
+
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
 
@@ -960,28 +997,7 @@ mtext('Profile Sketches are from OSDs', 1)
 
 
 
-## Diagnostic features
-[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp)
 
-```{r}
-# load some example NASIS data
-data(loafercreek, package='soilDB')
-
-# cut-down to a subset
-loafercreek <- loafercreek[1:20, ]
-
-# get depth class
-sdc <- getSoilDepthClass(loafercreek)
-site(loafercreek) <- sdc
-
-# diagnostic properties to consider, no need to convert to factors
-v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
-       'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
-       'shallow', 'mod.deep', 'deep', 'very.deep')
-
-
-x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
-```
 
 
 ## GIS Data
@@ -1131,6 +1147,8 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 # References
 
 
+
+<!-- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data) -->
 
 
 
