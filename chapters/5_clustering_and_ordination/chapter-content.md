@@ -12,12 +12,9 @@ TODO:
  
  
  * fuzzy clustering of hz attr -> plot on profile
- * think: distance metric, characteristics, standardization, clustering algorithm, number of classes...
- * missing data: bain of numerical taxonomy... strategies
  * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data)
  * color clustering of entire profiles
  * profile_compare() details
- * mean silhouette width as cluster number selection
 
 <hr>
 <span style="font-size:200%">Before You Start</span><br>
@@ -47,13 +44,15 @@ Nearly every aspect of soil survey involves the question: "*is A more similar to
 * Learn the basics and application of ordination methods
 * Apply skils to a range of soil, vegetation, and similar data sources
 * Apply techniques from numerical taxonomy to addressing the "similar/disimilar" question
-
+* Learn some strategies for coping with missing data
 
 # Whirlwind tour
 
+Most of the examples featured in the whirlwind tour are based on soil data from [McGahan, D.G., Southard, R.J, Claassen, V.P. 2009. Plant-Available Calcium Varies Widely in Soils on Serpentinite Landscapes. Soil Sci. Soc. Am. J. 73: 2087-2095.](https://dl.sciencesocieties.org/publications/sssaj/articles/73/6/2087). These data are available in the `aqp` built-in dataset "sp4".
+
 ## Similarity, disimilarty, and distance
 
-There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together refered to as the **data matrix**. For example:
+There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of **numerical taxonomy** [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together refered to as the **data matrix**. For example:
 
 
  name    clay    sand     Mg     Ca     CEC_7 
@@ -146,6 +145,15 @@ We can now begin to describe disimilarity between individuals using an arbitrary
      + ... simple to define in code, but hard to vizualize
    
 
+## Quick detour: missing data
+
+Missing data are a fact of life. As soil scientists, we are quite familliar with KSSL data missing something (*"why didn't we request optical grain counts?"*) or NASIS pedon data that are missing foundational data elements such as horizon bottom depth, estimated clay fraction, or pH. Nearly all of the methods described in this document are very sensitive to missing data--in other words, they won't work! There are a couple of solutions:
+
+ * "fix" the missing data if at all possible
+ * "estimate" the missing data values from know relationships to other properties or group-wise mean/median
+ * remove records containing any missing data before proceeding
+
+
 ## Visualizing pair-wise distances: the dendrogram
 
 [Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way visualizaing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Disimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
@@ -231,7 +239,13 @@ All of these methods are sensitive to the type of **standardization** that has b
 
 
 ## Ordination: visualization in a reduced space
+Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortion.
 
+[**Principal component analysis**](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. For the rest of this document, we will be focusing on [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). The **nMDS** suite of ordination methods attempt to generate a reduced space that mimizes distortion in pair-wise distances.
+
+
+### Non-metric multidimensional scaling
+Most [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) methods seek to preserve the approximate pair-wise distances from the original **distance matrix**.
 
 
 
@@ -242,11 +256,30 @@ All of these methods are sensitive to the type of **standardization** that has b
 |Bt1  |  0.41| -0.21| -0.09| -0.74| -0.16|
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
 
+
+
 <img src="chapter-content_files/figure-html/unnamed-chunk-12-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-13-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
+
+### Review and discuss
+
+
+## Application of these methods to soil profiles
+
+
+## Before proceeding...
+Think carefully about the selection of:
+
+ * missing data strategy
+ * which characteristics
+ * standardization of characteristics
+ * distance metric
+ * clustering algorithm
+ * number of clusters
+ 
 
 # Learn by doing
 
@@ -420,7 +453,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-21-1.png" title="" alt="" width="864" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
+<img src="chapter-content_files/figure-html/unnamed-chunk-21-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
 
 
 
@@ -435,7 +468,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-22-1.png" title="" alt="" width="864" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
+<img src="chapter-content_files/figure-html/unnamed-chunk-22-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
 
 
 #### K-medoids
@@ -449,8 +482,47 @@ for(i in 1:9) {
 
 
 ```r
-# fanny()
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4.std <- data.frame(sp4[, c('id', 'name', 'top', 'bottom')], scale( sp4[, c('Mg', 'Ca')]))
+
+# perform fuzzy clustering
+cl <- fanny(sp4.std[, c('Mg', 'Ca')], k = 3, stand = FALSE)
+
+# get membership matrix
+m <- cl$membership
+
+# convert to colors by interpreting membership as R,G,B values
+cols <- rgb(m)
+
+# setup plot
+par(mar=c(4,4,0,0))
+plot(sp4.std$Mg, sp4.std$Ca, asp=1, ylab='Exchangeable Mg (cmol/kg), Standardized', xlab='Exchangeable Ca (cmol/kg), Standardized', type='n')
+abline(h=0, v=0, col='black')
+grid()
+
+# add original obs
+points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex=1.25, pch=21)
 ```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-24-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+
+
+```r
+sp4.std$colors <- cols
+depths(sp4.std) <- id ~ top + bottom
+
+par(mar=c(0,0,0,0))
+plot(sp4.std, color='colors', cex.names=0.75)
+title('Fuzzy Clustering Results in Context', line=-3)
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+
+> Nine of the 11 parent materials were serpentinites. The Napa and Tehama county parent materials were quite different from each other and from the nine other sites. Neither parent rock contained serpentine minerals and were therefore not serpentinites. The Napa County parent material contained dominantly vermiculite and albite, with minor amounts of Ca-bearing clino-pyroxene. The Tehama County parent material was dominated by grossularite, a calcsilicate ugrandite garnet, with subdominant amounts of the Ca-bearing sorosilicate, pumpellyite, and Ca-bearing clinopyroxene. The rocks from the Shasta and Kings county sites were serpentinite, dominated by serpentine minerals, but had minor amounts of Ca-bearing accessory minerals (calcic clinoamphibole [tremolite] and calcsilicate ugrandite garnet [andradite]). The seven other parent materials were serpentinites and exhibited, at most, trace amounts of Ca-bearing minerals.
+
+
+
 
 ### How many clusters?
 
@@ -463,7 +535,7 @@ for(k in 2:5) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
 
 
 
@@ -567,7 +639,7 @@ par(mar=c(0,0,3,0))
 plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 
@@ -586,7 +658,7 @@ par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 ```r
 # check structure of some site-level attributes
@@ -611,7 +683,7 @@ par(mar=c(0,1,1,1))
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-32-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 Check resulting distance matrix.
 
@@ -660,7 +732,7 @@ lab.data <- as(with(rgb.data, RGB(r, g, b)), 'LAB')
 pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -690,7 +762,7 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 ## Component interpretations
 [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
@@ -776,7 +848,7 @@ title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-37-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -804,7 +876,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
 
 ## GIS Data
@@ -868,7 +940,7 @@ legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, b
 title('Map Unit Terrain Signatures')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-40-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 ## Species composition
@@ -950,29 +1022,25 @@ nmds <- metaMDS(m)
 ## Square root transformation
 ## Wisconsin double standardization
 ## Run 0 stress 0.1960707 
-## Run 1 stress 0.1957958 
+## Run 1 stress 0.1987183 
+## Run 2 stress 0.2136949 
+## Run 3 stress 0.1957943 
 ## ... New best solution
-## ... procrustes: rmse 0.008321978  max resid 0.03311531 
-## Run 2 stress 0.2160726 
-## Run 3 stress 0.2217092 
-## Run 4 stress 0.1987167 
-## Run 5 stress 0.220515 
-## Run 6 stress 0.2265185 
-## Run 7 stress 0.2187418 
-## Run 8 stress 0.226085 
-## Run 9 stress 0.2336376 
-## Run 10 stress 0.1987166 
-## Run 11 stress 0.1986992 
-## Run 12 stress 0.2264577 
-## Run 13 stress 0.1960722 
-## ... procrustes: rmse 0.008450448  max resid 0.03276018 
-## Run 14 stress 0.2335826 
-## Run 15 stress 0.2264374 
-## Run 16 stress 0.213771 
-## Run 17 stress 0.3863692 
-## Run 18 stress 0.2273686 
-## Run 19 stress 0.2206339 
-## Run 20 stress 0.220525
+## ... procrustes: rmse 0.008315313  max resid 0.03313483 
+## Run 4 stress 0.2217091 
+## Run 5 stress 0.2227538 
+## Run 6 stress 0.2143557 
+## Run 7 stress 0.1960703 
+## ... procrustes: rmse 0.008324256  max resid 0.03302319 
+## Run 8 stress 0.2288671 
+## Run 9 stress 0.1986991 
+## Run 10 stress 0.1986991 
+## Run 11 stress 0.2030192 
+## Run 12 stress 0.2219393 
+## Run 13 stress 0.2231904 
+## Run 14 stress 0.1957957 
+## ... procrustes: rmse 0.0005127634  max resid 0.002398858 
+## *** Solution reached
 ```
 
 
@@ -982,7 +1050,7 @@ par(mar=c(5,5,1,1))
 stressplot(nmds, cex=0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-41-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-42-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 
 ```r
@@ -1003,7 +1071,7 @@ text(fig, "sites", col="black", cex=0.5)
 title('Sites', line=-0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-42-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-43-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 

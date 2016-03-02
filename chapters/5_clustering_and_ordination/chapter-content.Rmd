@@ -86,12 +86,9 @@ TODO:
  
  
  * fuzzy clustering of hz attr -> plot on profile
- * think: distance metric, characteristics, standardization, clustering algorithm, number of classes...
- * missing data: bain of numerical taxonomy... strategies
  * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data)
  * color clustering of entire profiles
  * profile_compare() details
- * mean silhouette width as cluster number selection
 
 <hr>
 <span style="font-size:200%">Before You Start</span><br>
@@ -120,13 +117,15 @@ Nearly every aspect of soil survey involves the question: "*is A more similar to
 * Learn the basics and application of ordination methods
 * Apply skils to a range of soil, vegetation, and similar data sources
 * Apply techniques from numerical taxonomy to addressing the "similar/disimilar" question
-
+* Learn some strategies for coping with missing data
 
 # Whirlwind tour
 
+Most of the examples featured in the whirlwind tour are based on soil data from [McGahan, D.G., Southard, R.J, Claassen, V.P. 2009. Plant-Available Calcium Varies Widely in Soils on Serpentinite Landscapes. Soil Sci. Soc. Am. J. 73: 2087-2095.](https://dl.sciencesocieties.org/publications/sssaj/articles/73/6/2087). These data are available in the `aqp` built-in dataset "sp4".
+
 ## Similarity, disimilarty, and distance
 
-There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together refered to as the **data matrix**. For example:
+There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of **numerical taxonomy** [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together refered to as the **data matrix**. For example:
 
 ```{r, echo=FALSE}
 data('sp4', package = 'aqp')
@@ -218,6 +217,15 @@ We can now begin to describe disimilarity between individuals using an arbitrary
      + {sand, clay, CEC, OC, horzion depth} = 5 dimensions
      + ... simple to define in code, but hard to vizualize
    
+
+## Quick detour: missing data
+
+Missing data are a fact of life. As soil scientists, we are quite familliar with KSSL data missing something (*"why didn't we request optical grain counts?"*) or NASIS pedon data that are missing foundational data elements such as horizon bottom depth, estimated clay fraction, or pH. Nearly all of the methods described in this document are very sensitive to missing data--in other words, they won't work! There are a couple of solutions:
+
+ * "fix" the missing data if at all possible
+ * "estimate" the missing data values from know relationships to other properties or group-wise mean/median
+ * remove records containing any missing data before proceeding
+
 
 ## Visualizing pair-wise distances: the dendrogram
 
@@ -395,7 +403,13 @@ All of these methods are sensitive to the type of **standardization** that has b
 
 
 ## Ordination: visualization in a reduced space
+Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortion.
 
+[**Principal component analysis**](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. For the rest of this document, we will be focusing on [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). The **nMDS** suite of ordination methods attempt to generate a reduced space that mimizes distortion in pair-wise distances.
+
+
+### Non-metric multidimensional scaling
+Most [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) methods seek to preserve the approximate pair-wise distances from the original **distance matrix**.
 
 
 
@@ -405,6 +419,8 @@ All of these methods are sensitive to the type of **standardization** that has b
 |ABt  |  0.04| -0.07| -0.06| -0.13| -0.38|
 |Bt1  |  0.41| -0.21| -0.09| -0.74| -0.16|
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
+
+
 
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=5}
 # re-make data, this time with all profiles
@@ -431,6 +447,7 @@ s <- MASS::sammon(d)
 par(mar=c(3,0,0,3), mfcol=c(1,2))
 plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
 tiplabels(pch=15, col=cols)
+abline(v=2.3, col='orange', lty=2, lwd=2)
 mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 
 plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
@@ -454,6 +471,23 @@ title('Clustering Results in Context', line=-3)
 ```
 
 
+
+### Review and discuss
+
+
+## Application of these methods to soil profiles
+
+
+## Before proceeding...
+Think carefully about the selection of:
+
+ * missing data strategy
+ * which characteristics
+ * standardization of characteristics
+ * distance metric
+ * clustering algorithm
+ * number of clusters
+ 
 
 # Learn by doing
 
@@ -581,7 +615,7 @@ col.set <- brewer.pal(9, 'Set1')
 ### Hard classes
 
 #### K-means
-```{r, fig.width=9, fig.height=9, htmlcap="k-means function with default settings"}
+```{r, fig.width=8, fig.height=8, htmlcap="k-means function with default settings"}
 par(mfrow=c(3,3), mar=c(1,1,1,1))
 for(i in 1:9) {
   cl <- kmeans(x, centers=3)
@@ -593,7 +627,7 @@ for(i in 1:9) {
 ```
 
 
-```{r, fig.width=9, fig.height=9, htmlcap="k-means function after increasing the max number of random starts and iterations"}
+```{r, fig.width=8, fig.height=8, htmlcap="k-means function after increasing the max number of random starts and iterations"}
 par(mfrow=c(3,3), mar=c(1,1,1,1))
 for(i in 1:9) {
   cl <- kmeans(x, centers=3, nstart = 10, iter.max = 100)
@@ -613,9 +647,43 @@ for(i in 1:9) {
 
 ### Fuzzy clusters
 
-```{r, }
-# fanny()
+```{r, fig.width=6, fig.height=6}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4.std <- data.frame(sp4[, c('id', 'name', 'top', 'bottom')], scale( sp4[, c('Mg', 'Ca')]))
+
+# perform fuzzy clustering
+cl <- fanny(sp4.std[, c('Mg', 'Ca')], k = 3, stand = FALSE)
+
+# get membership matrix
+m <- cl$membership
+
+# convert to colors by interpreting membership as R,G,B values
+cols <- rgb(m)
+
+# setup plot
+par(mar=c(4,4,0,0))
+plot(sp4.std$Mg, sp4.std$Ca, asp=1, ylab='Exchangeable Mg (cmol/kg), Standardized', xlab='Exchangeable Ca (cmol/kg), Standardized', type='n')
+abline(h=0, v=0, col='black')
+grid()
+
+# add original obs
+points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex=1.25, pch=21)
 ```
+
+```{r, results='hide', fig.width=10, fig.height=4}
+sp4.std$colors <- cols
+depths(sp4.std) <- id ~ top + bottom
+
+par(mar=c(0,0,0,0))
+plot(sp4.std, color='colors', cex.names=0.75)
+title('Fuzzy Clustering Results in Context', line=-3)
+```
+
+> Nine of the 11 parent materials were serpentinites. The Napa and Tehama county parent materials were quite different from each other and from the nine other sites. Neither parent rock contained serpentine minerals and were therefore not serpentinites. The Napa County parent material contained dominantly vermiculite and albite, with minor amounts of Ca-bearing clino-pyroxene. The Tehama County parent material was dominated by grossularite, a calcsilicate ugrandite garnet, with subdominant amounts of the Ca-bearing sorosilicate, pumpellyite, and Ca-bearing clinopyroxene. The rocks from the Shasta and Kings county sites were serpentinite, dominated by serpentine minerals, but had minor amounts of Ca-bearing accessory minerals (calcic clinoamphibole [tremolite] and calcsilicate ugrandite garnet [andradite]). The seven other parent materials were serpentinites and exhibited, at most, trace amounts of Ca-bearing minerals.
+
+
+
 
 ### How many clusters?
 
