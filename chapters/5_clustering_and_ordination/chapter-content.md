@@ -268,15 +268,14 @@ This is a complex topic, lets switch over to a [relevant set of slides](https://
 If you are hugry for more detailed information, have a look at this [relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
 
 
-## Before proceeding...
-Think carefully about the selection of:
-
+## Final discussion
  * missing data strategy
- * which characteristics
+ * meaningful characteristics
  * standardization of characteristics
  * distance metric
  * clustering algorithm
  * number of clusters
+ * **application to soil survey and ESD**
  
 
 # Excercises
@@ -486,29 +485,107 @@ Hmmm... I wonder what is in the object `x`. The `str` function or manual page (`
 
 
 ## Hierachrical clustering
-
-### Agglomerative methods
-
-
-```r
-# hclust()
-# agnes()
-```
-
-### Divisive methods
+ 
+ 
+ * `hclust()`
+ * `agnes()`
+ * `diana()`
 
 
 ```r
-# dianna()
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+
+# distance matrix
+d <- daisy(sp4[, -1], metric = 'euclidean', stand = TRUE)
+
+# hierachical clustering with base function hclust
+sp4.h <- hclust(d, method = 'ward.D')
+sp4.h$labels <- sp4$name
+
+# plot with basic plotting method... not many options here
+par(mar=c(2,4,2,2))
+plot(sp4.h, font=2, cex=0.85)
+
+# ID clusters after cutting tree
+rect.hclust(sp4.h, 4)
 ```
 
-### Advanced plotting functions
+<img src="chapter-content_files/figure-html/unnamed-chunk-21-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
+
+### Better plots via `ape` package
+
+Lets do this again, this time using a different approach to plotting.
 
 ```r
-# as.phylo()
-# other ways to plot dendrogram
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+
+# distance matrix
+d <- daisy(sp4[, -1], metric = 'euclidean', stand = TRUE)
+
+# divising clustering
+dd <- diana(d)
+
+# convert to ape class, via hclust class
+h <- as.hclust(dd)
+h$labels <- sp4$name
+p <- as.phylo(h)
+
+# define some nice colors
+col.set <- brewer.pal(9, 'Set1')
+
+# cut tree into 4 groups
+groups <- cutree(h, 4)
+
+# make color vector based on groups
+cols <- col.set[groups]
+
+par(mar=c(1,1,1,1), mfcol=c(2,2))
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
+tiplabels(pch=15, col=cols)
+
+plot(p, type='radial', font=1, cex=0.85)
+tiplabels(pch=15, col=cols)
+
+plot(p, type='fan', font=1, cex=0.85)
+tiplabels(pch=15, col=cols)
+
+plot(p, type='unrooted', font=1, cex=0.85)
+tiplabels(pch=15, col=cols)
 ```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-22-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
+
+### Comparison of dendrograms
+
+Simple example here, many more possibilities with the [dendextend package](https://cran.r-project.org/web/packages/dendextend/index.html).
+
+```r
+# load sample dataset from aqp package
+data(sp3)
+
+# promote to SoilProfileCollection
+depths(sp3) <- id ~ top + bottom
+
+# compute dissimilarity using different sets of variables
+# note that these are rescaled to the interval [0,1]
+d.1 <- profile_compare(sp3, vars=c('clay', 'L'), k=0, max_d=100, rescale.result=TRUE)
+
+# cluster via divisive hierarchical algorithm
+# convert to 'phylo' class
+p.1 <- as.phylo(as.hclust(diana(d.1)))
+
+# graphically compare diana() to agnes() using d.2
+dueling.dendrograms(as.phylo(as.hclust(diana(d.1))), 
+as.phylo(as.hclust(agnes(d.1, method='ward'))), lab.1='diana', lab.2='agnes')
+```
+
+<img src="chapter-content_files/figure-html/unnamed-chunk-23-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+
 
 ## Centroid / medoid (partitioning) clustering
 
@@ -666,15 +743,12 @@ hist(goodness(nmds))
 
 # Practical applications
 
-Review:
- * [SoilProfileCollection object tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)
+Before working through the following examples, it would be a good idea to review the [SoilProfileCollection object tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).
+
 
 
 ## Pair-wise distances between soil profiles 
 
-[relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
-
-[relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
 
 
 ```r
@@ -727,6 +801,8 @@ plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max
 
 ## Pair-wise distances between subgroup level taxa
 
+Demonstration of pair-wise distances computed from categorical data and the use of a dendrogram to organize groups from Soil Taxonomy. Details [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/OSD-dendrogram.html?root=aqp).
+
 
 ```r
 # define a vector of series
@@ -777,10 +853,12 @@ d
 
 
 ## Soil color
-moist colors
+Just for fun, lets use hierarchical clustering and nMDS on soil color data from the OSDs that were used in the previous example.
 
 
 ```r
+# these are moist colors
+
 # extract horizon data from select OSDs in above example
 h <- horizons(s)
 
@@ -846,10 +924,9 @@ points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
-## Component interpretations
-[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
 
-
+## *"How do the interpretations compare?"*
+Example borrowed from [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp).
 
 
 
@@ -1080,24 +1157,9 @@ nmds <- metaMDS(m)
 ## Square root transformation
 ## Wisconsin double standardization
 ## Run 0 stress 0.1960707 
-## Run 1 stress 0.1987183 
-## Run 2 stress 0.2136949 
-## Run 3 stress 0.1957943 
-## ... New best solution
-## ... procrustes: rmse 0.008315313  max resid 0.03313483 
-## Run 4 stress 0.2217091 
-## Run 5 stress 0.2227538 
-## Run 6 stress 0.2143557 
-## Run 7 stress 0.1960703 
-## ... procrustes: rmse 0.008324256  max resid 0.03302319 
-## Run 8 stress 0.2288671 
-## Run 9 stress 0.1986991 
-## Run 10 stress 0.1986991 
-## Run 11 stress 0.2030192 
-## Run 12 stress 0.2219393 
-## Run 13 stress 0.2231904 
-## Run 14 stress 0.1957957 
-## ... procrustes: rmse 0.0005127634  max resid 0.002398858 
+## Run 1 stress 0.2180467 
+## Run 2 stress 0.1960711 
+## ... procrustes: rmse 0.0001618146  max resid 0.0006457479 
 ## *** Solution reached
 ```
 
