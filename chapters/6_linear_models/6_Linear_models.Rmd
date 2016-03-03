@@ -71,8 +71,10 @@ Another obvious place to look is at the geomorphic data in the site table. This 
 
 ```{r landform}
 # Landform vs frags
+quantile2 <- function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95)))
 
-test <- aggregate(frags ~ landform.string, data = s, function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))))
+test <- aggregate(frags ~ landform.string, data = s, quantile2)
+
 arrange(test, frags[, 2]) # sort data frame by column using plyr package function
 
 # or
@@ -82,7 +84,7 @@ arrange(test, frags[, 2]) # sort data frame by column using plyr package functio
 s$landform <- ifelse(grepl("fan", s$landform.string), "fan", "hill")
 s$landform <- as.factor(s$landform)
 
-test <- aggregate(frags ~ landform, data = s, function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))))
+test <- aggregate(frags ~ landform, data = s, quantile2)
 arrange(test, landform, frags[, 2]) # sort data frame by column using plyr 
 
 densityplot(~ frags + surface_cobbles + surface_gravel | landform, data = s, auto.key = TRUE, scale = list(relation = "free"))
@@ -90,12 +92,12 @@ densityplot(~ frags + surface_cobbles + surface_gravel | landform, data = s, aut
 
 # Hillslope position
 
-test <- aggregate(frags ~ landform + hillslope_pos, data = s, function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))))
+test <- aggregate(frags ~ landform + hillslope_pos, data = s, quantile2)
 arrange(test, landform, frags[, 2])
 
 # Slope shape
 
-test <- aggregate(frags ~ landform + paste(shapedown, shapeacross), data = s, function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))))
+test <- aggregate(frags ~ landform + paste(shapedown, shapeacross), data = s, quantile2)
 arrange(test, landform, frags[, 2])
 
 
@@ -116,9 +118,9 @@ desc_test <- function(old) {
   new <- NA
   # ranked by seniority
   if (is.na(old)) {new <- "other"}
-  if (grepl("Stephen", old)) {new <- "Stephen"} 
+  if (grepl("Stephen", old)) {new <- "Stephen"} # least senior
   if (grepl("Paul", old)) {new <- "Paul"} 
-  if (grepl("Peter", old)) {new <- "Peter"}
+  if (grepl("Peter", old)) {new <- "Peter"} # most senior
   if (is.na(new)) {new <- "other"}
  return(new)
 }
@@ -259,7 +261,6 @@ aggregate(twi ~ landform, data = train, median)
 train$twi_sc <- abs(train$twi - 13.8)
 train$gsi <- with(train, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
 train$sw <- cos(train$aspect - 255)
-
 ```
 
 
@@ -273,6 +274,11 @@ add1(null, full, test = "F") # using the AIC test the effect of '
 null <- update(null, . ~ . + pc_2) # add twi_sc to the model, 
 
 test <- lm(frags ~ pc_2 + pc_1 + pc_5 + twi + elev, data = train)
+test <- lm(frags ~ twi + elev, data = train)
+test <- lm(frags ~ elev + gsi, data = train)
+test <- lm(frags ~ precipsum + tc_3 + tc_2 + twi + elev, data = train)
+
+sqrt(mean((train$frags - predict(test, train))^2, na.rm = T))
 
 temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster), r2 = round(cor(frags, predict(test, x))^2, 2), n = length(frags))))
 do.call(rbind, temp)
@@ -289,7 +295,7 @@ add1(null, full, test = "F") # using the AIC test the effect of '
 
 
 temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), r2 = round(cor(frags, predict(test, x), use = "pairwise.complete.obs")^2, 2), n = length(frags))))
-do.call(rbind, temp)
+temp2 <- do.call(rbind, temp)
 plot(1:nrow(temp2), temp2$r2, type = "l")
 
 r <- predict(geodata_r, test, progress="text", type = "response")
