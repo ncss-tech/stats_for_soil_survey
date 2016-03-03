@@ -276,13 +276,15 @@ null <- update(null, . ~ . + pc_2) # add twi_sc to the model,
 test <- lm(frags ~ pc_2 + pc_1 + pc_5 + twi + elev, data = train)
 test <- lm(frags ~ twi + elev, data = train)
 test <- lm(frags ~ elev + gsi, data = train)
-test <- lm(frags ~ precipsum + tc_3 + tc_2 + twi + elev, data = train)
+test <- lm(frags ~ precipsum + tc_3 + tc_2 + twi + elev + cluster, data = train)
 
 sqrt(mean((train$frags - predict(test, train))^2, na.rm = T))
+mean(abs(train$frags - predict(test, train)), na.rm = T)
 
-temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster), r2 = round(cor(frags, predict(test, x))^2, 2), n = length(frags))))
-do.call(rbind, temp)
-
+temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), rmse = round(sqrt(mean((frags - predict(test, x))^2, na.rm = TRUE))), n = length(frags))))
+temp2 <- do.call(rbind, temp)
+temp2
+dotplot(rmse ~ cluster, data = temp2)
 
 # test_sub <- subset(test, !(cluster %in% c(2, 3, 6, 7, 8, 13, 15)))
 
