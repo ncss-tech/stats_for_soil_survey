@@ -10,7 +10,7 @@ March 2016
 
 <hr>
 <span style="font-size:200%">Before You Start</span><br>
-Some of the examples in this document depend on the latest versions of the `aqp` and `sharpshootR` packages. Open a fresh RStudio session and paste the following in the consol panel:
+Some of the examples in this document depend on the latest versions of the `aqp` and `sharpshootR` packages. Open a fresh RStudio session and paste the following in the console panel:
 
 
 ```r
@@ -31,11 +31,11 @@ Nearly every aspect of soil survey involves the question: "*is A more similar to
 * Gain experience with R functions and packages commonly used for clustering / ordination
 * Learn how to create and interpret a distance matrix, and appropriate distance metrics
 * Learn how to create and interpret a dendrogram
-* Lean the basics and application of heirarchical clustering methods
+* Lean the basics and application of hierarchical clustering methods
 * Lean the basics and application of partitioning clustering methods
 * Learn the basics and application of ordination methods
-* Apply skils to a range of soil, vegetation, and similar data sources
-* Apply techniques from numerical taxonomy to addressing the "similar/disimilar" question
+* Apply skills to a range of soil, vegetation, and similar data sources
+* Apply techniques from numerical taxonomy to addressing the "similar/dissimilar" question
 * Learn some strategies for coping with missing data
 
 # Whirlwind tour
@@ -44,7 +44,7 @@ Most of the examples featured in the whirlwind tour are based on soil data from 
 
 ## Similarity, disimilarty, and distance
 
-There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of **numerical taxonomy** [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together refered to as the **data matrix**. For example:
+There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of **numerical taxonomy** [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together referred to as the **data matrix**. For example:
 
 
  name    clay    sand     Mg     Ca     CEC_7 
@@ -81,7 +81,7 @@ Note that this is the "full" form of the [**distance matrix**](https://en.wikipe
 |Bt1 | 12.5|  5.4|  |
 |Bt2 | 38.9| <b>31.8</b>| 26.4|
 
-Interpretation is simple: individual "A" is more like "ABt" than "Bt1". It is important to note that quantification of disimilarity (distance) among individuals is always relative: *"X is more like Y, as compared to Z"*. More on this later.
+Interpretation is simple: individual "A" is more like "ABt" than "Bt1". It is important to note that quantification of dissimilarity (distance) among individuals is always relative: *"X is more like Y, as compared to Z"*. More on this later.
 
 
 ## Standardization of characteristics
@@ -110,7 +110,7 @@ Using the standardized data matrix, distances computed in the property space of 
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-6-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
-It is rare that the question of "dissimilarity" can be answered with only two characteristcs (dimensions). Euclidean distance can be extended to an arbitrary number of $n$ dimensions:
+It is rare that the question of "dissimilarity" can be answered with only two characteristics (dimensions). Euclidean distance can be extended to an arbitrary number of $n$ dimensions:
 
 $$D(p,q) = \sqrt{ \sum_{i=1}^{n}{(p_{i} - q_{i})^{2}} }$$
 
@@ -124,7 +124,7 @@ ABt    1.10   0.00   1.06   4.17
 Bt1    2.11   1.06   0.00   3.61
 Bt2    4.77   4.17   3.61   0.00
 
-We can now begin to describe disimilarity between individuals using an arbitrary number of (relevant!) characteristics and make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon". While this may be a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
+We can now begin to describe dissimilarity between individuals using an arbitrary number of (relevant!) characteristics and make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon". While this may be a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
 ### Review and discuss
 
@@ -133,13 +133,13 @@ We can now begin to describe disimilarity between individuals using an arbitrary
  * What do you think is the largest impediment to creating a distance matrix from our NASIS and KSSL data?
  * **Key point:** each characteristic is its own *dimension* in property-space:
      + {sand, clay, CEC} = 3 dimensions
-     + {sand, clay, CEC, OC, horzion depth} = 5 dimensions
-     + ... simple to define in code, but hard to vizualize
+     + {sand, clay, CEC, OC, horizon depth} = 5 dimensions
+     + ... simple to define in code, but hard to visualize
    
 
 ## Quick detour: missing data
 
-Missing data are a fact of life. As soil scientists, we are quite familliar with KSSL data missing something (*"why didn't we request optical grain counts?"*) or NASIS pedon data that are missing foundational data elements such as horizon bottom depth, estimated clay fraction, or pH. Nearly all of the methods described in this document are very sensitive to missing data--in other words, they won't work! There are a couple of solutions:
+Missing data are a fact of life. As soil scientists, we are quite familiar with KSSL data missing something (*"why didn't we request optical grain counts?"*) or NASIS pedon data that are missing essential data elements such as horizon bottom depth, estimated clay fraction, or pH. Nearly all of the methods described in this document are very sensitive to missing data--in other words, they won't work! There are a couple of solutions:
 
  * "fix" the missing data if at all possible
  * "estimate" the missing data values from know relationships to other properties or group-wise mean/median
@@ -148,11 +148,11 @@ Missing data are a fact of life. As soil scientists, we are quite familliar with
 
 ## Visualizing pair-wise distances: the dendrogram
 
-[Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way visualizaing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Disimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
+[Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way of visualizing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Dissimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-8-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
-Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corrosponding dendrogram. Visualizing the geometry of pair-wise distances in > 3 dimensions is difficult, however, a the dendrogram can conveniently summarize a distance matrix created from an arbitrary number of characteristics. It is important to note that some information about pair-wise distances is lost in the dendrogram in the form of distortion: distortion is greatest near the terminal "leaves" of the dendrogram. This phenomena is analogous to the distortion generated by a map projection--it is impossible to flatten a higher-dimensional entity to a lower-dimensional form without causing distortion.
+Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corresponding dendrogram. Visualizing the geometry of pair-wise distances in > 3 dimensions is difficult, however, a the dendrogram can conveniently summarize a distance matrix created from an arbitrary number of characteristics. It is important to note that some information about pair-wise distances is lost in the dendrogram in the form of distortion: distortion is greatest near the terminal "leaves" of the dendrogram. This phenomena is analogous to the distortion generated by a map projection--it is impossible to flatten a higher-dimensional entity to a lower-dimensional form without causing distortion.
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-9-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
@@ -165,7 +165,7 @@ There isn't much difference between these two figures, because most of the chara
 
 
 ## Cluster analysis: finding groups in data
-[**Cluster analysis**](https://en.wikipedia.org/wiki/Cluster_analysis) is a massive topic that deals with the seemingly simple task of finding "useful" groups within a dataset. This topic and the methods used are also refered to as "unsupervised classification" in remote sensing and GIS circles. All of the available algorithms will find groups in a give dataset, however, it is up to the subject expert to determine:
+[**Cluster analysis**](https://en.wikipedia.org/wiki/Cluster_analysis) is a massive topic that deals with the seemingly simple task of finding "useful" groups within a dataset. This topic and the methods used are also referred to as "unsupervised classification" in remote sensing and GIS circles. All of the available algorithms will find groups in a give dataset, however, it is up to the subject expert to determine:
  
  1. suitable characteristics and standardization method
  2. appropriate clustering algorithm
@@ -174,10 +174,10 @@ There isn't much difference between these two figures, because most of the chara
  5. &rarr; *possibly starting over at step 1...*
 
 ### Using color to communicate the results of a clustering or ordination exercise
-Note that the widespread use of color in the following examples are not aestetic. Clors are convenient for tri-variate data-spaces because our eyes can automatically integrate the information into a self-consistent set of classes.
+Note that the widespread use of color in the following examples are not aesthetic. Colors are convenient for tri-variate data-spaces because our eyes can automatically integrate the information into a self-consistent set of classes.
 
 ### Hierarchical clustering
-This form of clustering is useful when a the full **distance matrix** is available, and the optimal number of clusters is not yet known. [**Hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) creates a data structure that can encode "grouping" information from 1 cluster to as many clusters as there are individuals. It is up to the expert to determine the optimial place to "cut the tree" and generate a fixed set of clusters. The results from a [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) operation are nearly always presented in the form of a dendrogram.
+This form of clustering is useful when a the full **distance matrix** is available, and the optimal number of clusters is not yet known. [**Hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) creates a data structure that can encode "grouping" information from 1 cluster to as many clusters as there are individuals. It is up to the expert to determine the optimal place to "cut the tree" and generate a fixed set of clusters. The results from a [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) operation are nearly always presented in the form of a dendrogram.
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
@@ -186,7 +186,7 @@ This form of clustering is useful when a the full **distance matrix** is availab
 There are two main types of [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering):
 
  * **agglomerative**: start with individuals and iteratively combine into larger and larger groups
- * **divisive**: start with all individuals and iteratively split into smaller and smaller goups
+ * **divisive**: start with all individuals and iteratively split into smaller and smaller groups
 
 Both methods are strongly influenced by choice of **standardization** method and **distance metric**. Both methods require a full, pair-wise distance matrix as input. This can limit [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) to datasets that can be fit into memory.
 
@@ -233,11 +233,11 @@ All of these methods are sensitive to the type of **standardization** that has b
 ## Ordination: visualization in a reduced space
 Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortion.
 
-[**Principal component analysis**](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. For the rest of this document, we will be focusing on [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). "Non-metric" [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (nMDS) ordination methods attempt to generate a reduced space that mimizes distortion in *proportional similarity*: similar individuals are near eachother in the reduced space, dissimilar individuals are farther apart.
+[**Principal component analysis**](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. For the rest of this document, we will be focusing on [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). "Non-metric" [**multidimensional scaling**](https://en.wikipedia.org/wiki/Multidimensional_scaling) (nMDS) ordination methods attempt to generate a reduced space that minimizes distortion in *proportional similarity*: similar individuals are near each other in the reduced space, dissimilar individuals are farther apart.
 
 
 ### An example of nMDS applied to soil data
-The following example is based on a *data matrix* containing lab measured clay fraction, sand fraction, exchageable Ca, exchangeable Mg, and CEC measured by NH4-Ac at pH 7.
+The following example is based on a *data matrix* containing lab measured clay fraction, sand fraction, exchangeable Ca, exchangeable Mg, and CEC measured by NH4-Ac at pH 7.
 
 |name |  clay|  sand|    Mg|    Ca| CEC_7|
 |:----|-----:|-----:|-----:|-----:|-----:|
@@ -256,7 +256,7 @@ The following example is based on a *data matrix* containing lab measured clay f
 
 * Which visualization of the **distance matrix** was simpler to interpret: dendrogram or ordination by nMDS?
 * Any questions about the figures?
-* Any gueses on what the clusters represent?
+* Any guesses on what the clusters represent?
 
 
 ## Pair-wise distances between soil profiles?
@@ -265,7 +265,7 @@ The following example is based on a *data matrix* containing lab measured clay f
 
 This is a complex topic, lets switch over to a [relevant set of slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp).
 
-If you are hugry for more detailed information, have a look at this [relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
+If you are hungry for more detailed information, have a look at this [relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
 
 
 ## Final discussion
@@ -297,17 +297,18 @@ library(MASS)
 library(colorspace)
 
 # annoying workaround for downloading files from HTTPS links on Windows...
-setInternet2(TRUE)
+if(.Platform$OS.type != 'unix')
+  setInternet2(TRUE)
 ```
 
 ### Data sources
 
 Most of the examples used in the following exercises come from the following sources:
 
-1. built-in data sets from the `aqp` and `soilDB` packages ("sp4" and "loafercreek")
+1. built-in data sets from the `aqp` and `soilDB` packages ("sp4", "gopheridge", and "loafercreek")
 2. results from [`fetchNASIS()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp): pedon data from the local NASIS selected set
 3. results from [`fetchKSSL()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp): lab characterization data from the SoilWeb snapshot
-4. results from [`fetchOSD()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/OSD-dendrogram.html?root=aqp): basic morphologic and taxonmic data from the SoilWeb snapshot 
+4. results from [`fetchOSD()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/OSD-dendrogram.html?root=aqp): basic morphologic and taxonomic data from the SoilWeb snapshot 
 5. results from [`SDA_query()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp): *live* SSURGO spatial and tabular data from [Soil Data Access](http://sdmdataaccess.nrcs.usda.gov/)
 6. data from SSR 2, as CSV, downloaded from class [GitHub site](https://github.com/ncss-tech/stats_for_soil_survey/tree/master/data/clustering_and_ordination)
 
@@ -326,7 +327,7 @@ Tinker with some `SoilProfileCollection` objects:
 
 ## Evaluating missing data
 
-The `aqp` package provides two functions for checking the fraction of missing data within a `SoilProfileCollection` object. The first function (`evalMissingData`) generates an index that ranges from 0 (all missing) to 1 (all present) for each profile. This index can be used to subset or rank profiles for further investigation. The second function (`missingDataGrid`) creates a vizualization of the *fraction* of data missing within each horizon. Both functions can optionally filter-out horizons that don't typically have data such as Cr, R, or Cd horizons.
+The `aqp` package provides two functions for checking the fraction of missing data within a `SoilProfileCollection` object. The first function (`evalMissingData`) generates an index that ranges from 0 (all missing) to 1 (all present) for each profile. This index can be used to subset or rank profiles for further investigation. The second function (`missingDataGrid`) creates a visualization of the *fraction* of data missing within each horizon. Both functions can optionally filter-out horizons that don't typically have data such as Cr, R, or Cd horizons.
 
 Lets try both functions on the `gopheridge` sample dataset.
 
@@ -456,7 +457,7 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 
 
 ### Distance calculations with categorical data
-An example excerpted from [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp), that illustrates an application of clustering binary data (diagnostic feature presence / absence). Interally, the `diagnosticPropertyPlot` function is utilizing the `daisy` function to compute pair-wise distances using the **general dissimilarity coefficient of Gower** [@Gower1971]. A concise summary of this distance metric are given in @Kaufman2005.
+An example excerpted from [here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp), that illustrates an application of clustering binary data (diagnostic feature presence / absence). Internally, the `diagnosticPropertyPlot` function is utilizing the `daisy` function to compute pair-wise distances using the **general dissimilarity coefficient of Gower** [@Gower1971]. A concise summary of this distance metric are given in @Kaufman2005.
 
 
 ```r
@@ -1027,8 +1028,12 @@ library(cluster)
 
 # init a temp file
 tf <- tempfile()
+
+# annoying work around for windows
+if(.Platform$OS.type != 'unix')
+  setInternet2(TRUE)
+
 # download compressed CSV to temp file
-setInternet2(TRUE)
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/seki-mu-gis-samples.csv.gz', destfile = tf, quiet = TRUE)
 # read-in from compressed CSV to data.frame object
 x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
@@ -1087,10 +1092,14 @@ TODO: give credit to CA630 ESD crew
 library(reshape2)
 library(vegan)
 
-# read species data from online CSV
 # init a temp file
 tf <- tempfile()
-setInternet2(TRUE)
+
+# annoying work around for windows
+if(.Platform$OS.type != 'unix')
+  setInternet2(TRUE)
+
+# read species data from online CSV
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/ca630-22A-species.csv', destfile = tf, quiet = TRUE)
 
 x <- read.csv(tf, stringsAsFactors = FALSE)
@@ -1157,9 +1166,18 @@ nmds <- metaMDS(m)
 ## Square root transformation
 ## Wisconsin double standardization
 ## Run 0 stress 0.1960707 
-## Run 1 stress 0.2180467 
-## Run 2 stress 0.1960711 
-## ... procrustes: rmse 0.0001618146  max resid 0.0006457479 
+## Run 1 stress 0.2131307 
+## Run 2 stress 0.2219397 
+## Run 3 stress 0.2205223 
+## Run 4 stress 0.1986994 
+## Run 5 stress 0.2357085 
+## Run 6 stress 0.1986996 
+## Run 7 stress 0.2108794 
+## Run 8 stress 0.2294464 
+## Run 9 stress 0.2217093 
+## Run 10 stress 0.2180503 
+## Run 11 stress 0.1960709 
+## ... procrustes: rmse 7.549188e-05  max resid 0.0003442484 
 ## *** Solution reached
 ```
 
