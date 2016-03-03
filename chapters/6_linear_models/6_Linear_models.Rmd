@@ -52,14 +52,15 @@ Generally before we begin modeling its good to explore the data. By using a simp
 ```{r consistency}
 s <- site(pedons)
 
-densityplot(~ surface_cobbles + surface_gravel + surface_fgravel, data = s, auto.key = TRUE)
+s$surface_gravel <- with(s, surface_gravel - surface_fgravel) # recalculate gravel to exclude fine gravel
+s$frags <- apply(s[grepl("surface", names(s))], 1, sum) # calculate total surface rock fragments
 
-s$surface_gravel <- with(s, surface_gravel - surface_fgravel) # recalculate gravel
-s$frags <- apply(s[grepl("surface", names(s))], 1, sum)
+densityplot(~ surface_cobbles + surface_gravel + surface_fgravel + frags, data = s, auto.key = TRUE)
 
 summary(s$frags)
 
-sum(s$frags > 100)
+sum(s$frags > 100) # number of samples greater than 100
+sum(s$frags < 1) # number of samples greater than 100
 ```
 
 
@@ -71,29 +72,28 @@ Another obvious place to look is at the geomorphic data in the site table. This 
 
 ```{r landform}
 # Landform vs frags
-quantile2 <- function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95)))
+quantile2 <- function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))) # create custom quantile function
 
 test <- aggregate(frags ~ landform.string, data = s, quantile2)
-
-arrange(test, frags[, 2]) # sort data frame by column using plyr package function
+arrange(test, frags[, 2], decreasing = TRUE) # sort data frame by column using plyr package function
 
 # or
 
-# test[order(test$surface_total[, 2]), ]
+# test[order(test$surface_total[, 2], decreasing = TRUE), ] # sort using base package function
 
 s$landform <- ifelse(grepl("fan", s$landform.string), "fan", "hill")
 s$landform <- as.factor(s$landform)
 
 test <- aggregate(frags ~ landform, data = s, quantile2)
-arrange(test, landform, frags[, 2]) # sort data frame by column using plyr 
+arrange(test, landform, frags[, 2], decreasing = TRUE) # sort data frame by column using plyr 
 
-densityplot(~ frags + surface_cobbles + surface_gravel | landform, data = s, auto.key = TRUE, scale = list(relation = "free"))
+densityplot(~ frags + surface_cobbles + surface_gravel | landform, data = s, auto.key = TRUE)
 
 
 # Hillslope position
 
 test <- aggregate(frags ~ landform + hillslope_pos, data = s, quantile2)
-arrange(test, landform, frags[, 2])
+arrange(test, landform, frags[, 2], decreasing = TRUE)
 
 # Slope shape
 
@@ -128,7 +128,7 @@ desc_test <- function(old) {
 s$describer2 <- sapply(s$describer, desc_test)
 
 test <- aggregate(frags ~ landform + describer2, data = s, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
-arrange(test, describer2, landform, frags[, 2])
+arrange(test, landform, describer2, frags[, 2], decreasing = TRUE)
 ```
 
 
@@ -137,26 +137,27 @@ arrange(test, describer2, landform, frags[, 2])
 Where do our points plot? We can plot the general location in R, but for a closer look, we'll export them to a Shapefile so that they can viewed in a proper GIS. Notice in the figure below the number of points that fall outside the survey boundary. What it doesn't show is the points in the Ocean or Mexico.
 
 ```{r plot}
-# Plot coordinates
+# Convert soil profile collection to a spatial object
 pedons2 <- pedons
-
 slot(pedons2, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
 idx <- complete.cases(site(pedons2)[c("x", "y")]) # create an index to filter out pedons with missing coordinates
 pedons2 <- pedons2[idx]
 coordinates(pedons2) <- ~ x + y # set the coordinates
 proj4string(pedons2) <- CRS("+init=epsg:4326") # set the projection
+pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to spatial object
+pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # reproject
 
-ssa <- readOGR(dsn = "F:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") # read in soil survey area boundaries
+# Read in soil survey area boundaries
+ssa <- readOGR(dsn = "M:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
 ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
-# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
-pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to sp object
+ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
 
+# Plot
 plot(ca794, axes = TRUE)
 plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # transform between coordinate systems
-# optionally write shapefile of pedons
-# writeOGR(pedons_sp, dsn = "F:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") 
+# Write shapefile of pedons
+# writeOGR(pedons_sp, dsn = "M:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") 
 ```
 
 
@@ -172,7 +173,7 @@ pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # transform between 
 Prior to any spatial analysis or modeling, you need to develop a suite of geodata files that can be intersected with your field data locations. This is in and of itself is a difficult task, and should be facilitated by your Regional GIS Specialist. Typically this would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R and extract the geodata values where they intersect with field data.
 
 ```{r extract, eval=FALSE}
-folder <- "F:/geodata/project_data/8VIC/ca794/"
+folder <- "M:/geodata/project_data/8VIC/ca794/"
 files <- c(
   elev   = "ned30m_8VIC.tif",
   slope  = "ned30m_8VIC_slope5.tif",
@@ -200,23 +201,33 @@ geodata_f <- sapply(files, function(x) paste0(folder, x)) # combine the folder d
 
 head(geodata_f)
 
-geodata_r <- stack(geodata_f) # create a raster stack
+# Create a raster stack
+geodata_r <- stack(geodata_f) 
 
+# Extract the geodata and imbed in a data frame
 data <- data.frame(
    as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "landform", "argillic.horizon")],
    extract(geodata_r, pedons_sp)
    )
 
+# Modify some of the geodata variables
 data$mast <- data$temp - 4
-idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x), 2))
+idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x, na.rm = TRUE), 2))
+names(idx)[2] <- "cluster_mast"
 data <- join(data, idx, by = "cluster", type = "left")
 data$cluster <- factor(data$cluster, levels = 1:15)
 data$cluster2 <- reorder(data$cluster, data$mast)
+data$twi_sc <- abs(data$twi - 13.8)
+data$gsi <- with(data, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
+data$sw <- cos(data$aspect - 255)
 
+# save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
+
+# Strip out location and personal information before uploading to the internet
 # s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
 # slot(pedons, "site") <- s
 # data[c("describer2", "x_std", "y_std")] <- NA
-# save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
+# save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 ```
 
 
@@ -227,61 +238,71 @@ With our spatial data in hand, we can now see whether any of the variables will 
 ```{r spatial}
 load(file = "C:/workspace/ch7_data.Rdata")
 train <- data
+train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon)) # Include only argillic horizons that only occur on fans. Argillic horizons that 
+train$fragst <- with(train, log10((frags / 100) / (1 - (frags / 100))))
 
-train <- subset(train, frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std)) # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 
 terrain1 <- c("slope", "solar", "mrrtf", "mrvbf")
 terrain2 <- c("twi", "z2str", "ch")
 climate <- c("elev", "precip", "precipsum", "temp")
-landsat <- paste0("ls_", 1:6)
-pcomps <- paste0("pc_", 1:6)
-tcaps <- paste0("tc_", 1:3)
-grad <- c("k", "th", "u")
+ls <- paste0("ls_", 1:6)
+pc <- paste0("pc_", 1:6)
+tc <- paste0("tc_", 1:3)
+rad <- c("k", "th", "u")
 
-round(cor(cbind(train$frags, train[terrain1]), use = "pairwise.complete.obs"), 2)
-round(cor(cbind(train$frags, train[terrain2]), use = "pairwise.complete.obs"), 2)
-round(cor(cbind(train$frags, train[climate]), use = "pairwise.complete.obs"), 2)
-round(cor(cbind(train$frags, train[landsat]), use = "pairwise.complete.obs"), 2)
-round(cor(cbind(train$frags, train[pcomps]), use = "pairwise.complete.obs"), 2)
-round(cor(cbind(train$frags, train[tcaps]), use = "pairwise.complete.obs"), 2)
-round(cor(cbind(train$frags, train[grad]), use = "pairwise.complete.obs"), 2)
+round(cor(train[c("fragst", terrain1)], use = "pairwise"), 2)
+round(cor(train[c("fragst", terrain2)], use = "pairwise"), 2)
+round(cor(train[c("fragst", climate)], use = "pairwise"), 2)
+round(cor(train[c("fragst", landsat)], use = "pairwise"), 2)
+round(cor(train[c("fragst", pc)], use = "pairwise"), 2)
+round(cor(train[c("fragst", tc)], use = "pairwise"), 2)
+round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
 
-spm(train[c("frags", terrain1)])
-spm(train[c("frags", terrain2)])
-spm(train[c("frags", climate)])
-spm(train[c("frags", pcomps)])
-spm(train[c("frags", tcaps)])
-spm(train[c("frags", grad)])
+spm(train[c("fragst", terrain1)])
+spm(train[c("fragst", terrain2)])
+spm(train[c("fragst", climate)])
+spm(train[c("fragst", pcomps)])
+spm(train[c("fragst", tc)])
+spm(train[c("fragst", rad)])
 
-bwplot(frags ~ cluster, data = train)
-bwplot(frags ~ cluster2, data = train)
+bwplot(fragst ~ cluster, data = train)
+bwplot(fragst ~ cluster2, data = train)
 
 bwplot(twi ~ landform, data = train)
 aggregate(twi ~ landform, data = train, median)
-train$twi_sc <- abs(train$twi - 13.8)
-train$gsi <- with(train, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
-train$sw <- cos(train$aspect - 255)
 ```
 
 
 
 ```{r}
-full <- lm(frags ~ ., data = train) # "~ ." includes all columns in the data set
-null <- lm(frags ~ 1, data = train) # "~ 1" just includes an intercept
+full <- lm(fragst ~ ., data = train) # "~ ." includes all columns in the data set
+null <- lm(fragst ~ 1, data = train) # "~ 1" just includes an intercept
 
 add1(null, full, test = "F") # using the AIC test the effect of '
 
-null <- update(null, . ~ . + pc_2) # add twi_sc to the model, 
+null <- update(null, . ~ . + tc_3) # add twi_sc to the model, 
 
-test <- lm(frags ~ pc_2 + pc_1 + pc_5 + twi + elev, data = train)
-test <- lm(frags ~ twi + elev, data = train)
-test <- lm(frags ~ elev + gsi, data = train)
-test <- lm(frags ~ precipsum + tc_3 + tc_2 + twi + elev + cluster, data = train)
+fragst_lm <- lm(fragst ~ tc_3 + tc_2 + twi + precipsum + elev, data = train)
 
-sqrt(mean((train$frags - predict(test, train))^2, na.rm = T))
-mean(abs(train$frags - predict(test, train)), na.rm = T)
+fragst_lm <- lm(fragst ~ pc_2 + pc_1 + pc_5 + elev, data = train)
+# fragst_lm <- lm(fragst ~ twi + elev, data = train)
+# fragst_lm <- lm(fragst ~ elev + gsi, data = train)
+# fragst_lm <- lm(fragst ~ precipsum + tc_3 + tc_2 + twi + elev + cluster, data = train)
 
-temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), rmse = round(sqrt(mean((frags - predict(test, x))^2, na.rm = TRUE))), n = length(frags))))
+summary(fragst_lm)
+
+plot(fragst_lm)
+
+train$predict <- predict(fragst_lm, train)
+
+with(train, plot(fragst, predict, xlim = c(0, 100), ylim = c(0, 100)))
+abline(0, 1)
+
+sqrt(mean((train$fragst - predict(fragst_lm, train))^2, na.rm = T)) # RMSE = root mean square error
+mean(abs(train$fragst - predict(fragst_lm, train)), na.rm = T) # MAE = mean absolute error
+
+temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), rmse = round(sqrt(mean((fragst - predict(fragst_lm, x))^2, na.rm = TRUE))), n = length(fragst))))
 temp2 <- do.call(rbind, temp)
 temp2
 dotplot(rmse ~ cluster, data = temp2)
@@ -290,20 +311,20 @@ dotplot(rmse ~ cluster, data = temp2)
 
 train_sub <- subset(train, mast.1 < 23)
 
-full <- lm(frags ~ ., data = train_sub) # "~ ." includes all columns in the data set
-null <- lm(frags ~ 1, data = train_sub) # "~ 1" just includes an intercept
+full <- lm(fragst ~ ., data = train_sub) # "~ ." includes all columns in the data set
+null <- lm(fragst ~ 1, data = train_sub) # "~ 1" just includes an intercept
 
 add1(null, full, test = "F") # using the AIC test the effect of '
 
 
-temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), r2 = round(cor(frags, predict(test, x), use = "pairwise.complete.obs")^2, 2), n = length(frags))))
+temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), r2 = round(cor(fragst, predict(test, x), use = "pairwise.complete.obs")^2, 2), n = length(fragst))))
 temp2 <- do.call(rbind, temp)
 plot(1:nrow(temp2), temp2$r2, type = "l")
 
 r <- predict(geodata_r, test, progress="text", type = "response")
-writeRaster(r, "test_frags4.tif", overwrite = T, progress = "text")
+writeRaster(r, "test_fragst4.tif", overwrite = T, progress = "text")
 
-plot(raster("C:/workspace/test_frags.tif"))
+plot(raster("C:/workspace/test_fragst.tif"))
 plot(ca794, add = TRUE)
 ```
 
