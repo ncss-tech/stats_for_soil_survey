@@ -1,4 +1,4 @@
-# Numerical Taxonomy
+# Numerical Taxonomy and Ordination
 D.E. Beaudette  
 March 2016  
 
@@ -54,7 +54,7 @@ There are shelves of books and many thousands of academic articles describing th
  Bt1      32      40     23.2    1.9    23.7  
  Bt2      55      27     44.3    0.3    43.0  
 
-Quantitative measures of similarity are more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
+Quantitative measures of similarity are more conveniently expressed as distance, or dissimilarity--this is part convention and part computational simplicity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
 
 $$D(p,q) = \sqrt{(p_{1} - q_{1})^{2} + (p_{2} - q_{2})^{2}}$$
 
@@ -90,7 +90,7 @@ Euclidean distance doesn't make much sense when characteristics do not share a c
 
 <img src="chapter-content_files/figure-html/unnamed-chunk-4-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
-In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of Ex-Ca. Typically, characteristics are given equal weight (why?).
+In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of Ex-Ca. Typically, characteristics are given equal weight [@Sneath1973], however weighting is much simpler to apply after **standardization**.
 
 **Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation:
 
@@ -487,10 +487,14 @@ Hmmm... I wonder what is in the object `x`. The `str` function or manual page (`
 
 ## Hierachrical clustering
  
+The go-to functions for **hierachrical clustering** are:
  
- * `hclust()`
- * `agnes()`
- * `diana()`
+ * `hclust()`: (agglomerative) base R, requires a distance matrix, implements most of the commonly used **linkage critera**
+ * `agnes()`: (agglomerative) "cluster" package, can perform standardization and distance calculations, implements more **linkage critera**
+ * `diana()`: (divisive) "cluster" package, can perform standardization and distance calculations
+
+### Basic agglomerative hierarchical clustering with `hclust`
+The `hclust()` function and resulting `hclust`-class objects are simple to use, but limited.
 
 
 ```r
@@ -518,7 +522,7 @@ rect.hclust(sp4.h, 4)
 
 ### Better plots via `ape` package
 
-Lets do this again, this time using a different approach to plotting.
+Lets do this again, this time using a different approach to plotting based on functions and classes from the `ape` package.
 
 ```r
 # re-make data, this time with all profiles
@@ -544,22 +548,26 @@ groups <- cutree(h, 4)
 
 # make color vector based on groups
 cols <- col.set[groups]
+```
 
+The plot methods for `phylo` class objects are quite flexible. Be sure to see the manual page `?plot.phylo`.
+
+```r
 par(mar=c(1,1,1,1), mfcol=c(2,2))
-plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85, main='dendrogram')
 tiplabels(pch=15, col=cols)
 
-plot(p, type='radial', font=1, cex=0.85)
+plot(p, type='radial', font=1, cex=0.85, main='radial')
 tiplabels(pch=15, col=cols)
 
-plot(p, type='fan', font=1, cex=0.85)
+plot(p, type='fan', font=1, cex=0.85, main='fan')
 tiplabels(pch=15, col=cols)
 
-plot(p, type='unrooted', font=1, cex=0.85)
+plot(p, type='unrooted', font=1, cex=0.85, main='unrooted')
 tiplabels(pch=15, col=cols)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-22-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-23-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
 
 ### Comparison of dendrograms
 
@@ -585,23 +593,21 @@ dueling.dendrograms(as.phylo(as.hclust(diana(d.1))),
 as.phylo(as.hclust(agnes(d.1, method='ward'))), lab.1='diana', lab.2='agnes')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-23-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-24-1.png" title="" alt="" width="672" style="display: block; margin: auto;" />
 
 
 ## Centroid / medoid (partitioning) clustering
 
+Lets make some simulated data for demonstration puposes.
 
 ```r
-# 1D example
-
+# nice colors for later
+col.set <- brewer.pal(9, 'Set1')
 
 # 2D example
 x <- rbind(matrix(rnorm(100, sd = 0.3), ncol = 2),
            matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2))
 colnames(x) <- c("x", "y")
-
-# nice colors for later
-col.set <- brewer.pal(9, 'Set1')
 ```
 
 ### Hard classes
@@ -619,7 +625,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-25-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
+<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function with default settings</p><hr>
 
 
 
@@ -634,7 +640,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-26-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
+<img src="chapter-content_files/figure-html/unnamed-chunk-27-1.png" title="" alt="" width="768" style="display: block; margin: auto;" /><p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">k-means function after increasing the max number of random starts and iterations</p><hr>
 
 
 #### K-medoids
@@ -671,7 +677,7 @@ grid()
 points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex=1.25, pch=21)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-28-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -683,7 +689,7 @@ plot(sp4.std, color='colors', cex.names=0.75)
 title('Fuzzy Clustering Results in Context', line=-3)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-29-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 > Nine of the 11 parent materials were serpentinites. The Napa and Tehama county parent materials were quite different from each other and from the nine other sites. Neither parent rock contained serpentine minerals and were therefore not serpentinites. The Napa County parent material contained dominantly vermiculite and albite, with minor amounts of Ca-bearing clino-pyroxene. The Tehama County parent material was dominated by grossularite, a calcsilicate ugrandite garnet, with subdominant amounts of the Ca-bearing sorosilicate, pumpellyite, and Ca-bearing clinopyroxene. The rocks from the Shasta and Kings county sites were serpentinite, dominated by serpentine minerals, but had minor amounts of Ca-bearing accessory minerals (calcic clinoamphibole [tremolite] and calcsilicate ugrandite garnet [andradite]). The seven other parent materials were serpentinites and exhibited, at most, trace amounts of Ca-bearing minerals.
 
@@ -691,27 +697,36 @@ title('Fuzzy Clustering Results in Context', line=-3)
 
 
 ### How many clusters?
+There is no simple answer to the question *"how many clusters are there in my data?"*. However, there are some metrics that can be used to help estimate a "resonable" number of clusters. The mean [**silhouette width**](https://en.wikipedia.org/wiki/Silhouette_(clustering)) is a useful index of "cluster compactness" relative to neightbor clusters [@Rousseeuw1987]. Larger silhouette widths suggest tighter grouping.
 
 
 ```r
-data(ruspini)
-par(mfrow=c(2,2), mar=c(4,0,3,3))
-for(k in 2:5) {
-  plot(silhouette(pam(ruspini, k=k)), main = paste("k = ",k), do.n.k=FALSE, col = col.set[1:k]) 
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4.std <- data.frame(sp4[, c('id', 'name', 'top', 'bottom')], scale( sp4[, c('Mg', 'Ca')]))
+
+# perform hard clustering
+sil.widths <- vector(mode='numeric')
+for(i in 2:10) {
+  cl <- pam(sp4.std[, c('Mg', 'Ca')], k = i, stand = FALSE)
+  sil.widths[i] <- cl$silinfo$avg.width
 }
+
+par(mar=c(4,4,3,1))
+plot(sil.widths, type='b', xlab='Number of Clusters', ylab='Average Silhouette Width', las=1, lwd=2, col='RoyalBlue', cex=1.25, main='Finding the "Right" Number of Clusters')
+grid()
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-30-1.png" title="" alt="" width="864" style="display: block; margin: auto;" />
-
-
-
-## Interpretation / application
-
+<img src="chapter-content_files/figure-html/unnamed-chunk-31-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 ## Ordination (Non-metric multidimensional scaling)
 
 ### Sammon's non-linear mapping
+
+
+
+
 
 ### nMDS with the `vegan` package
 
@@ -739,6 +754,7 @@ stressplot(nmds)
 # GOF by site, smaller = better
 hist(goodness(nmds))
 ```
+
 
 
 
@@ -796,7 +812,7 @@ par(mar=c(0,0,3,0))
 plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-33-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 
@@ -817,7 +833,7 @@ par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-34-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-36-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 ```r
 # check structure of some site-level attributes
@@ -842,7 +858,7 @@ par(mar=c(0,1,1,1))
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-35-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-37-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 Check resulting distance matrix.
 
@@ -893,7 +909,7 @@ lab.data <- as(with(rgb.data, RGB(r, g, b)), 'LAB')
 pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-37-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-39-1.png" title="" alt="" width="576" style="display: block; margin: auto;" />
 
 
 ```r
@@ -923,7 +939,7 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-38-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-40-1.png" title="" alt="" width="1152" style="display: block; margin: auto;" />
 
 
 ## *"How do the interpretations compare?"*
@@ -1008,7 +1024,7 @@ title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-41-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-43-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -1017,7 +1033,7 @@ mtext('Profile Sketches are from OSDs', 1)
 
 ## GIS Data
 
-TODO: give credit to SEKI crew
+Investigation of topographic "signatures" in the Sequoia Kings Canyon initial soil mapping project.
 
 
 ```r
@@ -1080,12 +1096,12 @@ legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, b
 title('Map Unit Terrain Signatures')
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-42-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-44-1.png" title="" alt="" width="768" style="display: block; margin: auto;" />
 
 
 ## Species composition
 
-TODO: give credit to CA630 ESD crew
+An example of using ordination to investigate patterns in species composition from MLRA 22A--Sierra Nevada Mountains, CA. Data courtesy of David Evans (Sonora, CA).
 
 
 ```r
@@ -1166,18 +1182,17 @@ nmds <- metaMDS(m)
 ## Square root transformation
 ## Wisconsin double standardization
 ## Run 0 stress 0.1960707 
-## Run 1 stress 0.2131307 
-## Run 2 stress 0.2219397 
-## Run 3 stress 0.2205223 
-## Run 4 stress 0.1986994 
-## Run 5 stress 0.2357085 
-## Run 6 stress 0.1986996 
-## Run 7 stress 0.2108794 
-## Run 8 stress 0.2294464 
-## Run 9 stress 0.2217093 
-## Run 10 stress 0.2180503 
-## Run 11 stress 0.1960709 
-## ... procrustes: rmse 7.549188e-05  max resid 0.0003442484 
+## Run 1 stress 0.2210913 
+## Run 2 stress 0.1957942 
+## ... New best solution
+## ... procrustes: rmse 0.008310743  max resid 0.03317656 
+## Run 3 stress 0.220523 
+## Run 4 stress 0.2210908 
+## Run 5 stress 0.2137711 
+## Run 6 stress 0.2276675 
+## Run 7 stress 0.2228174 
+## Run 8 stress 0.1957951 
+## ... procrustes: rmse 0.0005805943  max resid 0.002837496 
 ## *** Solution reached
 ```
 
@@ -1188,7 +1203,7 @@ par(mar=c(5,5,1,1))
 stressplot(nmds, cex=0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-44-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-46-1.png" title="" alt="" width="480" style="display: block; margin: auto;" />
 
 
 ```r
@@ -1209,7 +1224,7 @@ text(fig, "sites", col="black", cex=0.5)
 title('Sites', line=-0.5)
 ```
 
-<img src="chapter-content_files/figure-html/unnamed-chunk-45-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
+<img src="chapter-content_files/figure-html/unnamed-chunk-47-1.png" title="" alt="" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -1223,26 +1238,4 @@ This document is based on `aqp` version 1.9.7 and `soilDB` version 1.7 and `shar
 
 
 <!-- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data) -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

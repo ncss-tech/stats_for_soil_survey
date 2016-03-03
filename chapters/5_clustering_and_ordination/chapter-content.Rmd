@@ -1,5 +1,5 @@
 ---
-title: "Numerical Taxonomy"
+title: "Numerical Taxonomy and Ordination"
 author: "D.E. Beaudette"
 date: "March 2016"
 output:
@@ -125,7 +125,7 @@ sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
 knitr::kable(sp4, align = 'c')
 ```
 
-Quantitative measures of similarity are more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
+Quantitative measures of similarity are more conveniently expressed as distance, or dissimilarity--this is part convention and part computational simplicity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
 
 $$D(p,q) = \sqrt{(p_{1} - q_{1})^{2} + (p_{2} - q_{2})^{2}}$$
 
@@ -165,7 +165,7 @@ Euclidean distance doesn't make much sense when characteristics do not share a c
 m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', xlim=c(0, 60), ylim=c(0, 60), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
 ```
 
-In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of Ex-Ca. Typically, characteristics are given equal weight (why?).
+In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of Ex-Ca. Typically, characteristics are given equal weight [@Sneath1973], however weighting is much simpler to apply after **standardization**.
 
 **Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation:
 
@@ -657,10 +657,14 @@ Hmmm... I wonder what is in the object `x`. The `str` function or manual page (`
 
 ## Hierachrical clustering
  
+The go-to functions for **hierachrical clustering** are:
  
- * `hclust()`
- * `agnes()`
- * `diana()`
+ * `hclust()`: (agglomerative) base R, requires a distance matrix, implements most of the commonly used **linkage critera**
+ * `agnes()`: (agglomerative) "cluster" package, can perform standardization and distance calculations, implements more **linkage critera**
+ * `diana()`: (divisive) "cluster" package, can perform standardization and distance calculations
+
+### Basic agglomerative hierarchical clustering with `hclust`
+The `hclust()` function and resulting `hclust`-class objects are simple to use, but limited.
 
 ```{r, }
 # re-make data, this time with all profiles
@@ -685,8 +689,8 @@ rect.hclust(sp4.h, 4)
 
 ### Better plots via `ape` package
 
-Lets do this again, this time using a different approach to plotting.
-```{r, fig.width=9, fig.height=9}
+Lets do this again, this time using a different approach to plotting based on functions and classes from the `ape` package.
+```{r}
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -710,18 +714,21 @@ groups <- cutree(h, 4)
 
 # make color vector based on groups
 cols <- col.set[groups]
+```
 
+The plot methods for `phylo` class objects are quite flexible. Be sure to see the manual page `?plot.phylo`.
+```{r, fig.width=9, fig.height=9}
 par(mar=c(1,1,1,1), mfcol=c(2,2))
-plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85, main='dendrogram')
 tiplabels(pch=15, col=cols)
 
-plot(p, type='radial', font=1, cex=0.85)
+plot(p, type='radial', font=1, cex=0.85, main='radial')
 tiplabels(pch=15, col=cols)
 
-plot(p, type='fan', font=1, cex=0.85)
+plot(p, type='fan', font=1, cex=0.85, main='fan')
 tiplabels(pch=15, col=cols)
 
-plot(p, type='unrooted', font=1, cex=0.85)
+plot(p, type='unrooted', font=1, cex=0.85, main='unrooted')
 tiplabels(pch=15, col=cols)
 ```
 
@@ -751,18 +758,15 @@ as.phylo(as.hclust(agnes(d.1, method='ward'))), lab.1='diana', lab.2='agnes')
 
 ## Centroid / medoid (partitioning) clustering
 
+Lets make some simulated data for demonstration puposes.
 ```{r, }
-# 1D example
-
+# nice colors for later
+col.set <- brewer.pal(9, 'Set1')
 
 # 2D example
 x <- rbind(matrix(rnorm(100, sd = 0.3), ncol = 2),
            matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2))
 colnames(x) <- c("x", "y")
-
-# nice colors for later
-col.set <- brewer.pal(9, 'Set1')
-
 ```
 
 ### Hard classes
@@ -839,24 +843,62 @@ title('Fuzzy Clustering Results in Context', line=-3)
 
 
 ### How many clusters?
+There is no simple answer to the question *"how many clusters are there in my data?"*. However, there are some metrics that can be used to help estimate a "resonable" number of clusters. The mean [**silhouette width**](https://en.wikipedia.org/wiki/Silhouette_(clustering)) is a useful index of "cluster compactness" relative to neightbor clusters [@Rousseeuw1987]. Larger silhouette widths suggest tighter grouping.
 
-```{r, fig.width=9, fig.height=9}
-data(ruspini)
-par(mfrow=c(2,2), mar=c(4,0,3,3))
-for(k in 2:5) {
-  plot(silhouette(pam(ruspini, k=k)), main = paste("k = ",k), do.n.k=FALSE, col = col.set[1:k]) 
+```{r, fig.width=8, fig.height=4}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4.std <- data.frame(sp4[, c('id', 'name', 'top', 'bottom')], scale( sp4[, c('Mg', 'Ca')]))
+
+# perform hard clustering
+sil.widths <- vector(mode='numeric')
+for(i in 2:10) {
+  cl <- pam(sp4.std[, c('Mg', 'Ca')], k = i, stand = FALSE)
+  sil.widths[i] <- cl$silinfo$avg.width
 }
+
+par(mar=c(4,4,3,1))
+plot(sil.widths, type='b', xlab='Number of Clusters', ylab='Average Silhouette Width', las=1, lwd=2, col='RoyalBlue', cex=1.25, main='Finding the "Right" Number of Clusters')
+grid()
 ```
-
-
-
-## Interpretation / application
-
 
 
 ## Ordination (Non-metric multidimensional scaling)
 
 ### Sammon's non-linear mapping
+
+```{r, eval=FALSE, echo=FALSE, results='hide', fig.width=10, fig.height=5}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
+
+# distance matrix
+d <- dist(sp4.scaled[, -1])
+m <- as.matrix(d)
+dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
+d <- as.dist(m)
+# dendrogram from divisive clustering
+dd <- diana(d)
+h <- as.hclust(dd)
+p <- as.phylo(h)
+
+# define colors based on natural groupings
+cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
+
+# MDS
+s <- sammon(d)
+
+plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
+# abline(v=0, h=0, col='black')
+grid()
+text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
+axis(1, cex.axis=0.95, line=-2)
+axis(4, cex.axis=0.95, line=0.5, las=1)
+mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
+```
+
+
 
 ### nMDS with the `vegan` package
 
@@ -884,6 +926,7 @@ stressplot(nmds)
 hist(goodness(nmds))
 
 ```
+
 
 
 
@@ -1074,7 +1117,7 @@ mtext('Profile Sketches are from OSDs', 1)
 
 ## GIS Data
 
-TODO: give credit to SEKI crew
+Investigation of topographic "signatures" in the Sequoia Kings Canyon initial soil mapping project.
 
 ```{r, fig.width=8, fig.height=8, results='hide'}
 library(plyr)
@@ -1139,7 +1182,7 @@ title('Map Unit Terrain Signatures')
 
 ## Species composition
 
-TODO: give credit to CA630 ESD crew
+An example of using ordination to investigate patterns in species composition from MLRA 22A--Sierra Nevada Mountains, CA. Data courtesy of David Evans (Sonora, CA).
 
 ```{r}
 library(reshape2)
@@ -1229,173 +1272,4 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 
 
 <!-- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data) -->
-
-
-
-```{r, echo=FALSE, eval=FALSE, fig.width=8, fig.height=4}
-# simulate some aggregate profile data
-frags <- c(16, 5, 25, 6, 3) # rock fragments
-clay <- c(8, 15, 17, 25, 31) # clay contents
-
-# combine into single data.frame
-s <- data.frame(clay, frags)
-
-# evaluate pair-wise dissimilarity based on clay and frag %
-# since both measurements are on the same scale, no standardization is needed
-d <- daisy(s)
-
-# inspect pair-wise dissimilarity matrix
-print(d)
-
-# perform divisive hierarcical clustering for dendrogram creation
-d.diana <- diana(d)
-
-# convert object into 'phylo' class for plotting
-d.phylo <- as.phylo(as.hclust(d.diana))
-
-# 2-figure plot of original data and resulting dendrogram repsesentation of dissimilarity matrix
-par(mfcol=c(1,2), mar=c(4.5,4,1,1))
-# original data: setup plot, but don't actually plot it
-plot(frags ~ clay, data=s, type='n', xlab='% Clay', ylab='% Rock Fragments')
-# add grid lines to assist the eye
-grid()
-# annotate empty plot with soil numbers
-text(s$clay, s$frags, row.names(s), font=2)
-
-# plot dendrogram representation, annotated with the same labels
-plot(d.phylo, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90, y.lim=c(-1, 15))
-```
-
-```{r demo-2, echo=FALSE, eval=FALSE}
-# continuing from example above...
-	
-# return dissimilarity matrices at each depth slice
-d.dis.all <- profile_compare(d, vars=c('clay', 'pH', 'frags'), k=0, 
-max_d=61, replace_na=TRUE, add_soil_flag=TRUE, return_depth_distances=TRUE)
-
-# check between-profile dissimilarity, at slice 1
-print(as.matrix(d.dis.all[[1]]))
-
-# init functions for extracting pair-wise dissimilarity: 
-f.12 <- function(i) as.matrix(i)[1, 2] # between auburn and dunstone
-f.13 <- function(i) as.matrix(i)[1, 3] # between auburn and sobrante
-f.23 <- function(i) as.matrix(i)[2, 3] # between dunstone and sobrante
-
-# apply functions at each slice
-d.12 <- sapply(d.dis.all, f.12)
-d.13 <- sapply(d.dis.all, f.13)
-d.23 <- sapply(d.dis.all, f.23)
-
-# combine into single data.frame
-d.all <- make.groups(
-auburn.dunstone=data.frame(slice=1:61, d=d.12, d.sum=cumsum(d.12)),
-auburn.sobrante=data.frame(slice=1:61, d=d.13, d.sum=cumsum(d.13)),
-dunstone.sobrante=data.frame(slice=1:61, d=d.23, d.sum=cumsum(d.23))
-)
-
-# plot slice-wise dissimilarity between all three soils
-p.1 <- xyplot(slice ~ d, groups=which, data=d.all, 
-ylim=c(62,0), type=c('l','g'), xlim=c(0.2,1.2), ylab='Depth (cm)', xlab='', 
-horizontal=TRUE, auto.key=list(columns=3, lines=TRUE, points=FALSE), asp=1)
-
-# plot slice-wise, cumulative dissimilarity between all three soils
-p.2 <- xyplot(slice ~ d.sum, groups=which, data=d.all, 
-ylim=c(62,0), type=c('l','g'), ylab='Depth (cm)', xlab='', 
-horizontal=TRUE, auto.key=list(columns=3, lines=TRUE, points=FALSE), asp=1)
-
-# combine into panels of a single figure
-p.3 <- c('Slice-Wise Distance'=p.1, 'Cumulative Distance'=p.2)
-# render figure
-update(p.3, par.settings=list(superpose.line=list(col=cols, lwd=2, lty=c(1,2,4)), strip.background=list(col=grey(0.85))))
-```
-
-```{r  echo=FALSE, fig.width=9, eval=FALSE, fig.height=3}
-# setup some colors
-cols <- brewer.pal(3, 'Set1')
-
-# setup horizon-level data: data are from lab sampled pedons
-d <- read.csv(
-	textConnection('
-series,name,top,bottom,clay,frags,pH
-auburn,A,0,3,15,6,5.6
-auburn,Bw1,3,15,15,13,5.6
-auburn,Bw2,15,38,18,9,5.8
-dunstone,A,0,5,16,13,6
-dunstone,Bt1,5,17,17,19,6.3
-dunstone,Bt2,17,31,20,6,6.3
-dunstone,Bt3,31,41,21,15,6.3
-sobrante,A1,0,5,18,0,5.8
-sobrante,A2,5,10,16,2,5.7
-sobrante,Bt1,10,28,15,21,5.8
-sobrante,Bt2,28,51,18,13,6.2
-sobrante,Bt3,51,74,20,12,6.2
-'))
-
-# establish site-level data
-s <- data.frame(
-	series=c('auburn', 'dunstone', 'sobrante'), 
-	precip=c(24, 30, 32),
-	stringsAsFactors=FALSE
-	)
-
-# generate fake horizon names with clay / frags / ph
-# d$fake.name <- with(d, paste(clay, frags, pH, sep='/'))
-
-# upgrade to SoilProfile Collection object
-depths(d) <- series ~ top + bottom
-site(d) <- s
-
-# plot profiles, coloring horizons based on soil property
-par(mfcol=c(1,3), mar=c(0,0,4,0))
-plot(d, color='clay', cex.names=0.85, axis.line.offset=-3.5)
-plot(d, color='frags', cex.names=0.85, axis.line.offset=-3.5)
-plot(d, color='pH', cex.names=0.85, axis.line.offset=-3.5)
-```
-
-```{r  echo=FALSE,fig.width=5, eval=FALSE, fig.height=5}
-# inspect variables used to determine dissimilarity
-h <- horizons(d)
-splom(~ h[, c('clay', 'pH', 'frags')], groups=series, data=h, type=c('p', 'g'),
-auto.key=list(columns=3, points=TRUE, lines=FALSE), 
-par.settings=list(superpose.symbol=list(pch=16, col=cols, cex=1)))
-```
-
-```{r  echo=FALSE, compute-distance, eval=FALSE, fig.width=8, fig.height=4}
-# compute betwee-profile dissimilarity, no depth weighting
-d.dis <- profile_compare(d, vars=c('clay', 'pH', 'frags'), k=0, 
-max_d=61, replace_na=TRUE, add_soil_flag=TRUE)
-
-# check total, between-profile dissimilarity, normalized to maximum
-d.m <- signif(as.matrix(d.dis / max(d.dis)), 2)
-print(d.m)
-
-# group via divisive hierarchical clustering
-d.diana <- diana(d.dis)
-# convert classes, for better plotting
-d.phylo <- as.phylo(as.hclust(d.diana))
-
-
-# plot: 2 figures side-by-side
-par(mfcol=c(1,2), mar=c(2,2,2,2))
-# profiles
-plot(d, width=0.1, name='name')
-# annotate shallow-mod.deep break
-abline(h=50, col='red', lty=2)
-# add dissimilarity matrix
-addtable2plot(0.2, 70, format(d.m, digits=2), display.rownames=TRUE, 
-xjust=0, yjust=0, cex=0.6, title='Total Dissimilarity')
-# plot dendrogram in next panel
-plot(d.phylo, direction='down', adj=0.5, srt=0, 
-label.offset=0.5, font=1, y.lim=c(-5, 25), cex=0.7)
-```
-
-
-
-
-
-
-
-
-
-
 
