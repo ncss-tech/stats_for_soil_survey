@@ -121,7 +121,7 @@ str(pedons, max.level = 2) # Examine the makeup of the data we imported from NAS
 
 ### <a id="wrang")></a> 7.4.1 Data wrangling
 
-Generally before we begin modeling its good to explore the data. By using a simple summary we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are all the argillic horizons haven't been properly populated in the diagnostic horizon table like they should be. Luckily for us, the desert argillic horizons always pop up in the taxonomic name, so we can use pattern matching to extract it. By doing this we gain an additional 11 pedons with argillic horizons and are able to label the missing values (i.e. NA). At a minimum for modeling purposes we probably need 10 pedons of the target we're interested in and a total of 100 observations overall.
+Generally before we begin modeling its good to explore the data. By examining a simple summary we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are all the argillic horizons haven't been properly populated in the diagnostic horizon table like they should be. Luckily for us, the desert argillic horizons always pop up in the taxonomic name, so we can use pattern matching to extract it. By doing this we gain an additional 11 pedons with argillic horizons and are able to label the missing values (i.e. NA). At a minimum for modeling purposes we probably need 10 pedons of the target we're interested in and a total of 100 observations overall.
 
 ```{r consistency}
 # Check consistency of argillic horizon population
@@ -174,7 +174,7 @@ with(s_sub, round(prop.table(table(hillslope_pos, argillic, useNA = "ifany"), 2)
 
 # Slope shape
 
-with(s_sub, round(prop.table(table(paste(shapedown, shapeacross, useNA = "ifany"), argillic), 2) * 100))
+with(s_sub, round(prop.table(table(paste(shapedown, shapeacross), argillic, useNA = "ifany"), 2) * 100))
 ```
 
 Looking at the hillslope postion of fan landforms we can see a slightly higher proportion of argillic horizons are found on summits, while less are found on toeslopes. Slope shape doesn't seem to provide any useful information for distinguishing argillic horizons.
@@ -197,10 +197,10 @@ Looking at our numeric variables only depth to bedrock seems to show much separa
 
 ### <a id="bias")></a> 7.4.3 Soil scientist bias
 
-Next we'll look at soil scientist bias. The question being are some soil scientists more likely to describe argillic horizons than others.
+Next we'll look at soil scientist bias. The question being are some soil scientists more likely to describe argillic horizons than others. Due to the excess number of soil scientist that have worked on CA794, including detailees, we've filtered the names of soil scientist to include just the top 3 mappers and given priority to the most senior soil scientists when they occur together.
 
 ```{r bias}
-# Function to filter out the top 3 mappers
+# Function to filter out the top 3 soil scientists
 desc_test <- function(old) {
   old <- as.character(old)
   new <- NA
