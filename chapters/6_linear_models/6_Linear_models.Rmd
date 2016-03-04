@@ -27,8 +27,10 @@ library(rgdal) # spatial import
 library(lattice) # graphing
 library(reshape2) # data manipulation
 library(plyr) # data manipulation
+library(dplyr) # data manipulation
 library(caret) # printing
 library(car) # additional regression tools
+library(DAAG) # additional regression tools
 ```
 
 
@@ -236,12 +238,14 @@ data$sw <- cos(data$aspect - 255)
 With our spatial data in hand, we can now see whether any of the variables will help us separate the presence/absence of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).  
 
 ```{r spatial}
-load(file = "C:/workspace/ch7_data.Rdata")
+load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 train <- data
-train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon)) # Include only argillic horizons that only occur on fans. Argillic horizons that 
-train$fragst <- with(train, log10((frags / 100) / (1 - (frags / 100))))
+train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon, describer2)) # Include only argillic horizons that only occur on fans. Argillic horizons that 
 
-occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+logit <- function(x) log(x / (1 - x)) # logit transform
+ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit transform
+
+train$fragst <- logit(train$frags / 100)
 
 terrain1 <- c("slope", "solar", "mrrtf", "mrvbf")
 terrain2 <- c("twi", "z2str", "ch")
@@ -292,19 +296,42 @@ fragst_lm <- lm(fragst ~ pc_2 + pc_1 + pc_5 + elev, data = train)
 
 summary(fragst_lm)
 
+test <- CVlm(na.exclude(train), formula(fragst_lm), m = 10)
+with(test, cor(frags, ilogit(cvpred) * 100)^2) # cv r2
+
 plot(fragst_lm)
 
-train$predict <- predict(fragst_lm, train)
+train$predict <- ilogit(predict(fragst_lm, train)) * 100
 
-with(train, plot(fragst, predict, xlim = c(0, 100), ylim = c(0, 100)))
+with(train, plot(frags, predict, xlim = c(0, 100), ylim = c(0, 100)))
 abline(0, 1)
 
-sqrt(mean((train$fragst - predict(fragst_lm, train))^2, na.rm = T)) # RMSE = root mean square error
-mean(abs(train$fragst - predict(fragst_lm, train)), na.rm = T) # MAE = mean absolute error
+with(train, sqrt(mean((frags - predict)^2, na.rm = T))) # RMSE = root mean square error
+with(train, mean(abs(frags - predict), na.rm = T)) # MAE = mean absolute error
 
-temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), rmse = round(sqrt(mean((fragst - predict(fragst_lm, x))^2, na.rm = TRUE))), n = length(fragst))))
+temp <- by(train, list(train$cluster2), FUN = function(x) 
+  with(x, data.frame(
+  cluster = unique(cluster2), 
+  rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+  n = length(frags)
+  )))
 temp2 <- do.call(rbind, temp)
 temp2
+
+# or using dplyr package
+
+group_by(train, cluster2) %>% summarize(
+  rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+  n = length(frags)
+)
+
+# or using plyr
+
+ddply(train, .(cluster2), summarize,
+  rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+  n = length(frags)
+)
+
 dotplot(rmse ~ cluster, data = temp2)
 
 # test_sub <- subset(test, !(cluster %in% c(2, 3, 6, 7, 8, 13, 15)))
