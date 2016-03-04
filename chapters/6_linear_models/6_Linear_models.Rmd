@@ -17,7 +17,25 @@ output:
 ![Statistics for pedologists course banner image](figure/logo.jpg)
 
 ## Introduction
-Linear regression has been used for soil survey applications since the early 1900s when Briggs and McLane (1907) developed a pedotransfer function to estimate the wilting coefficient as a function of soil particle size: Wilting coefficient = 0.01(sand) + 0.12(silt) + 0.57(clay). Linear regression, as the name implys, models the linear relationship between a dependent variable (y) and an independent variable (x) where y = b0 + b1x + e (b0=intercept of the fitted line, b1=slope of the fitted line, and e= the error term). When more than one independent variable is used in the regression, the model is called multiple linear regression. In regression models, the dependent (or response) variable must always be continuous. The independent (or predictor) variable(s) can be continuous, discrete, or categorical. In order to use linear regression or any linear model, the data must be normally distributed. Most environmental data are non-linear and require transformations to the response variable (such as square root or log) for use in linear models. Often, these data are best used in non-linear models due to the complications of interpreting and predicting transformed data. Normality can be assessed in R visually using a QQ plot or histogram and tabularly using something like the Shapiro-Wilk test of normality. 
+
+Linear regression has been used for soil survey applications since the early 1900s when Briggs and McLane (1907) developed a pedotransfer function to estimate the wilting coefficient as a function of soil particle size. 
+
+Wilting coefficient = 0.01(sand) + 0.12(silt) + 0.57(clay)
+
+Linear regression, as the name implys, models the linear relationship between a response variable (y) and an predictor variable (x). 
+
+$f(y) = \beta_{0} + \beta_{1}x + \varepsilon$
+
+- \beta_{0} = intercept of the fitted line
+- \beta_{1}x = slope of the fitted line
+- \varepsilon$ = the error term
+
+When more than one independent variable is used in the regression, the model is called multiple linear regression. In regression models, the response (or dependent) variable must always be continuous. The predictor (or independent) variable(s) can be continuous or categorical. In order to use linear regression or any linear model, the errors (i.e. residuals) must be normally distributed. Most environmental data are skewed and require transformations to the response variable (such as square root or log) for use in linear models. Normality can be assessed in R visually using a QQ plot or histogram of the residuals.
+
+
+### Load packages
+
+To start, as always we need to load some extra packages. This is a necessary evil every time you start R. Most of the basic functions we need to develop a linear regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
 
 ```{r load packages, message=FALSE, warning=FALSE}
 library(aqp) # specialized soil classes and functions
@@ -27,7 +45,6 @@ library(rgdal) # spatial import
 library(lattice) # graphing
 library(reshape2) # data manipulation
 library(plyr) # data manipulation
-library(dplyr) # data manipulation
 library(caret) # printing
 library(car) # additional regression tools
 library(DAAG) # additional regression tools
@@ -45,11 +62,11 @@ load(file = "C:/workspace/ch7_data.Rdata")
 str(pedons, max.level = 2) # Examine the makeup of the data we imported from NASIS.
 ```
 
+## Exploratory analysis
 
-### <a id="wrang")></a> 7.4.1 Data wrangling
+### Data Wrangling
 
-Generally before we begin modeling its good to explore the data. By using a simple summary we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are all the argillic horizons haven't been properly populated in the diagnostic horizon table like they should be. Luckily for us, the desert argillic horizons always pop up in the taxonomic name, so we can use pattern matching to extract it. By doing this we gain an additional 11 pedons with argillic horizons and are able to label the missing values (i.e. NA). At a minimum for modeling purposes we probably need 10 pedons of the target we're interested in and a total of 100 observations overall.
-
+Generally before we begin modeling its good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. Unfortunately, odds are all the data haven't been properly populated like they should be.
 
 ```{r consistency}
 s <- site(pedons)
@@ -59,62 +76,102 @@ s$frags <- apply(s[grepl("surface", names(s))], 1, sum) # calculate total surfac
 
 densityplot(~ surface_cobbles + surface_gravel + surface_fgravel + frags, data = s, auto.key = TRUE)
 
-summary(s$frags)
+apply(s[grepl("surface|frags", names(s))], 2, function(x) round(summary(x)))
 
 sum(s$frags > 100) # number of samples greater than 100
-sum(s$frags < 1) # number of samples greater than 100
+sum(s$frags < 1) # number of samples less than  1
 ```
 
+An important think to note is the `fetchNASIS
 
 
-### <a id="geomorph")></a> 7.4.2 Geomorphic data
+### Geomorphic data
 
 Another obvious place to look is at the geomorphic data in the site table. This information is intended to help differentiate where our soil observations exist on the landscape. If populated consistently it could be used in future disaggregation efforts, as demonstrated by Nauman and Thompson (2014).
 
+#### Landform vs frags
 
 ```{r landform}
-# Landform vs frags
-quantile2 <- function(x) round(quantile(x, probs = c(0.05, 0.5, 0.95))) # create custom quantile function
+# Create a custom quantile function
+
+quantile2 <- function(x) c(round(quantile(x, probs = c(0.05, 0.5, 0.95))), n = length(x))
 
 test <- aggregate(frags ~ landform.string, data = s, quantile2)
-arrange(test, frags[, 2], decreasing = TRUE) # sort data frame by column using plyr package function
 
-# or
+test <- subset(test, frags[, 4] > 3) # subset to those with greater than 3 observations
 
-# test[order(test$surface_total[, 2], decreasing = TRUE), ] # sort using base package function
+arrange(test, frags[, 2], decreasing = TRUE) # sort the data frame by the frags matrix column using plyr package function
 
-s$landform <- ifelse(grepl("fan", s$landform.string), "fan", "hill")
+# or sort using the order() function from the base package
+
+# test[order(test$surface_total[, 2], decreasing = TRUE), ]
+```
+
+There are obviously a wide variety of landforms. However generally it appears that erosional landforms have the most surface rock fragments. Lets generalize the `landform.string` and have a closer look.
+
+```{r}
+# Generalize the landform.string
+
+s$landform <- ifelse(grepl("fan", s$landform.string), "fan", "hill") 
 s$landform <- as.factor(s$landform)
 
 test <- aggregate(frags ~ landform, data = s, quantile2)
+
 arrange(test, landform, frags[, 2], decreasing = TRUE) # sort data frame by column using plyr 
 
 densityplot(~ frags + surface_cobbles + surface_gravel | landform, data = s, auto.key = TRUE)
+```
+
+So it does appear that erosional landforms generally do have more surface rock fragments that depositional one, but not by much. It also appears that most of the difference is coming from the amount of cobbles, as seen in the density plot.
 
 
-# Hillslope position
+#### Hillslope position
 
+```{r}
 test <- aggregate(frags ~ landform + hillslope_pos, data = s, quantile2)
+
 arrange(test, landform, frags[, 2], decreasing = TRUE)
+```
 
-# Slope shape
+If we examine the different hillslope positions for each generic landform we can see other trends. For hills it appears that surface rock fragments decrease as we traverse up the slope, with the exception of toeslopes which are typically associated with channels. On fans we see the opposite relationship, which toeslopes again being the exception. 
 
+
+#### Slope shape
+
+```{r}
 test <- aggregate(frags ~ landform + paste(shapedown, shapeacross), data = s, quantile2)
-arrange(test, landform, frags[, 2])
+
+arrange(test, landform, frags[, 2], decreasing = TRUE)
+```
+
+When examining slope shape on hills it appears that concave positions have greater amounts of surface rock fragments. I can't see any sensible pattern with slope shape on fans.
 
 
-# Surface morphometry, depth and surface rock fragments
+#### Surface morphometry, depth and surface rock fragments
 
+```{r}
+# Subset Generic landforms and Select Numeric Columns
 s_fan <- subset(s, landform == "fan", select = c(frags, surface_gravel, bedrckdepth, slope_field, elev_field))
 s_hill <- subset(s, landform == "hill", select = c(frags, surface_gravel, bedrckdepth, slope_field, elev_field))
 
-round(cor(s_fan, use = "pairwise.complete.obs"), 2)
-round(cor(s_hill, use = "pairwise.complete.obs"), 2)
+# Correlation Matrices
+round(cor(s_fan, use = "pairwise"), 2)
+round(cor(s_hill, use = "pairwise"), 2)
 
-spm(s_fan, use = "pairwise.complete.obs")
-spm(s_hill, use = "pairwise.complete.obs")
+# Scatterplot Matrices
+spm(s_fan, use = "pairwise")
+spm(s_hill, use = "pairwise")
+```
 
-# Function to filter out the top 3 mappers
+In examing the correlation matrices we can we that both generic landforms have similar correlations, both in strength and sign. One difference is that the density plot of slope gradient on the diagonal axis shows a bimodal distribution.
+
+
+#### Soil scientist bias
+
+Next we'll look at soil scientist bias. The question being do some soil scientists have a tendency to describe more surface rock fragments that others. Due to the excess number of soil scientist that have worked on CA794, including detailees, we've filtered the names of soil scientist to include just the top 3 soil scientists and given priority to the most senior soil scientists when they occur together.
+
+```{r}
+# Custom function to filter out the top 3 soil scientists
 desc_test <- function(old) {
   old <- as.character(old)
   new <- NA
@@ -130,8 +187,11 @@ desc_test <- function(old) {
 s$describer2 <- sapply(s$describer, desc_test)
 
 test <- aggregate(frags ~ landform + describer2, data = s, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
-arrange(test, landform, describer2, frags[, 2], decreasing = TRUE)
+
+arrange(test, landform, frags[, 2], decreasing = TRUE)
 ```
+
+In looking at the numbers it appears we have a clear trend on both fans and hills. We can see that Paul overall describes the most surface rock fragments, while Stephen describest the least. By looking the maximum values we can also see who is recording surface rock fragments in excess of 100. However while this information is suggestive, it is far from definitive because it doesn't take into account other factors. We'll examine this more closely later.
 
 
 ### <a id="plot")></a> 7.4.4 Plot coordinates
@@ -163,10 +223,9 @@ plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 ```
 
 
+#### Exercise 1: View the data in ArcGIS
 
-#### <a id="view")></a> Exercise 1: View the data in ArcGIS
-
-- Examine the shapefile in ArcGIS along with our potential predictive variables (hint classify the Shapefile symbology using the argillic horizon column)
+- Examine the shapefile in ArcGIS along with our potential predictive variables (hint classify the Shapefile symbology using the frags column)
 - Discuss with your group, and report your observations or hypotheses
 
 
@@ -235,16 +294,20 @@ data$sw <- cos(data$aspect - 255)
 
 ### <a id="spatial")></a> 7.4.6 Examine spatial data 
 
-With our spatial data in hand, we can now see whether any of the variables will help us separate the presence/absence of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).  
+With our spatial data in hand, we can now see whether any of the variables have a linear relationship with surface rock fragments. 
+
+At the beginning of our analysis we noticed some issues with our data. Particularly that the distribution of our data was skewed, and included values greater than 100 and equal to 0.
 
 ```{r spatial}
 load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 train <- data
-train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon, describer2)) # Include only argillic horizons that only occur on fans. Argillic horizons that 
+train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon, describer2)) # exclude frags greater than 100 and less than 1, and exclude some of the extra columns
 
+# Create custom functions
 logit <- function(x) log(x / (1 - x)) # logit transform
 ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit transform
 
+# Transform
 train$fragst <- logit(train$frags / 100)
 
 terrain1 <- c("slope", "solar", "mrrtf", "mrvbf")
@@ -258,7 +321,7 @@ rad <- c("k", "th", "u")
 round(cor(train[c("fragst", terrain1)], use = "pairwise"), 2)
 round(cor(train[c("fragst", terrain2)], use = "pairwise"), 2)
 round(cor(train[c("fragst", climate)], use = "pairwise"), 2)
-round(cor(train[c("fragst", landsat)], use = "pairwise"), 2)
+round(cor(train[c("fragst", ls)], use = "pairwise"), 2)
 round(cor(train[c("fragst", pc)], use = "pairwise"), 2)
 round(cor(train[c("fragst", tc)], use = "pairwise"), 2)
 round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
@@ -266,7 +329,7 @@ round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
 spm(train[c("fragst", terrain1)])
 spm(train[c("fragst", terrain2)])
 spm(train[c("fragst", climate)])
-spm(train[c("fragst", pcomps)])
+spm(train[c("fragst", pc)])
 spm(train[c("fragst", tc)])
 spm(train[c("fragst", rad)])
 
@@ -276,8 +339,6 @@ bwplot(fragst ~ cluster2, data = train)
 bwplot(twi ~ landform, data = train)
 aggregate(twi ~ landform, data = train, median)
 ```
-
-
 
 ```{r}
 full <- lm(fragst ~ ., data = train) # "~ ." includes all columns in the data set
@@ -319,35 +380,23 @@ temp2 <- do.call(rbind, temp)
 temp2
 
 # or using dplyr package
-
-group_by(train, cluster2) %>% summarize(
-  rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
-  n = length(frags)
-)
+# 
+# group_by(train, cluster2) %>% summarize(
+#   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+#   n = length(frags)
+# )
 
 # or using plyr
-
-ddply(train, .(cluster2), summarize,
-  rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
-  n = length(frags)
-)
+# 
+# ddply(train, .(cluster2), summarize,
+#   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+#   n = length(frags)
+# )
 
 dotplot(rmse ~ cluster, data = temp2)
+```
 
-# test_sub <- subset(test, !(cluster %in% c(2, 3, 6, 7, 8, 13, 15)))
-
-train_sub <- subset(train, mast.1 < 23)
-
-full <- lm(fragst ~ ., data = train_sub) # "~ ." includes all columns in the data set
-null <- lm(fragst ~ 1, data = train_sub) # "~ 1" just includes an intercept
-
-add1(null, full, test = "F") # using the AIC test the effect of '
-
-
-temp <- by(train, list(train$cluster2), FUN = function(x) with(x, data.frame(cluster = unique(cluster2), r2 = round(cor(fragst, predict(test, x), use = "pairwise.complete.obs")^2, 2), n = length(fragst))))
-temp2 <- do.call(rbind, temp)
-plot(1:nrow(temp2), temp2$r2, type = "l")
-
+```{r, eval=FALSE}
 r <- predict(geodata_r, test, progress="text", type = "response")
 writeRaster(r, "test_fragst4.tif", overwrite = T, progress = "text")
 
