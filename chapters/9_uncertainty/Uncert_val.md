@@ -40,24 +40,58 @@ Errors are simply the difference between reality and our representation of reali
   - Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared   
   $CV = /frac{SD} {X}$
 
-```{r}
+
+```r
 #Create dataset and evaluate dispersion
 set.seed(3) #set seed so that we all get the same results
 Depth <- sample(20:60,10) #we are creating a sample set with 10 values between 20 - 60
 
 range(Depth)
-quantile(Depth)
+```
 
+```
+## [1] 24 52
+```
+
+```r
+quantile(Depth)
+```
+
+```
+##    0%   25%   50%   75%  100% 
+## 24.00 30.50 37.00 40.75 52.00
+```
+
+```r
 Depth2 <- sample(40:50,10) #we are creating a sample set with values between 40 - 50
 
 range(Depth2)
-quantile(Depth2)
-
-stripchart(Depth)
-stripchart(Depth2)
-
+```
 
 ```
+## [1] 40 50
+```
+
+```r
+quantile(Depth2)
+```
+
+```
+##    0%   25%   50%   75%  100% 
+## 40.00 43.25 45.50 47.75 50.00
+```
+
+```r
+stripchart(Depth)
+```
+
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
+
+```r
+stripchart(Depth2)
+```
+
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-2.png)
     
 ## Exercise
 
@@ -79,7 +113,8 @@ Dispersion or variance is a characteristic of the population being evaluated. Wh
 6. Resample 10 times, each time calculate mean and variance.
 
 
-```{r}
+
+```r
 set.seed(3) #set seed so that we all get the same results
 
 #simulate a dataset with two soil names with depth values from 20 - 60 (some values occur more than once)
@@ -89,10 +124,34 @@ Data <- data.frame(
 )
 
 range(Data$Depth)
-quantile(Data$Depth)
-stripchart(Data$Depth)
-boxplot(Data$Depth)
+```
 
+```
+## [1] 21 59
+```
+
+```r
+quantile(Data$Depth)
+```
+
+```
+##   0%  25%  50%  75% 100% 
+##   21   30   39   49   59
+```
+
+```r
+stripchart(Data$Depth)
+```
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
+
+```r
+boxplot(Data$Depth)
+```
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-2.png)
+
+```r
 #calculate the mean of depth
  Data$m <- mean(Data$Depth)
  
@@ -108,15 +167,56 @@ boxplot(Data$Depth)
  # Note the differences in range and variance calcualted for Depth in both examples (10 samples vs. 100)
 
 quantile(Depth)
+```
+
+```
+##    0%   25%   50%   75%  100% 
+## 24.00 30.50 37.00 40.75 52.00
+```
+
+```r
 quantile(Data$Depth)
+```
 
+```
+##   0%  25%  50%  75% 100% 
+##   21   30   39   49   59
+```
+
+```r
 var(Depth)
-var(Data$Depth)
+```
 
+```
+## [1] 70.98889
+```
+
+```r
+var(Data$Depth)
+```
+
+```
+## [1] 119.5688
+```
+
+```r
 #Now Compare Standard Error (standard deviation / n- 1)
 sd(Depth)/sqrt(length(Depth))
+```
+
+```
+## [1] 2.664374
+```
+
+```r
 sd(Data$Depth)/sqrt(length(Data$Depth))
- 
+```
+
+```
+## [1] 1.093475
+```
+
+```r
 #Why are standard errors different?
 ```
 
@@ -142,7 +242,8 @@ When calculating many basic statistical parameters, the assumption is that the d
 
 Resampling is a general term that defines any procedure to repeatedly draw samples form a given dataset. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Resampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation (Good, 2001).  
 
-```{r}
+
+```r
 #this bootstrap is estimating the uncertainty associated with the variance of Data$Depth
 
 #abbreviate our data to simply the commands
@@ -161,9 +262,26 @@ for (i in 1:N){ # for each instance (i) in the set from 1 to N (50 in this case)
 }
 
 quantile(stat)
-stripchart(stat)
-boxplot(stat)
+```
 
+```
+##       0%      25%      50%      75%     100% 
+## 102.2792 109.8320 118.6610 124.2920 136.6355
+```
+
+```r
+stripchart(stat)
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png)
+
+```r
+boxplot(stat)
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-2.png)
+
+```r
 #an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
 
 N <- 100
@@ -175,13 +293,30 @@ for (i in 1:N){
 }
 
 quantile(boot.means, c(0.05, 0.95))
+```
 
+```
+##      5%     95% 
+## 37.9295 41.1310
+```
+
+```r
 #traditional approach
 #lower
 mean(d) - 1.96*sd(d)/sqrt(n)
+```
+
+```
+## [1] 37.22679
+```
+
+```r
 #upper
 mean(d) + 1.96*sd(d)/sqrt(n)
+```
 
+```
+## [1] 41.51321
 ```
 
 # Validation
