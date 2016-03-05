@@ -17,32 +17,32 @@ output:
 
 
 ## 8.0  Introduction
-Tree-based models are a supervised machine learning method commonly used in soil survey and ecology for exploratory data analysis and prediction due to their simplistic nonparametric design. Instead of fitting a model to the data, tree-based models recursively partition the data into increasingly homogenous groups based on values that minimize a loss function (such as Sum of Squared Errors (SSE) for regression or Gini Index for classification) (McBratney et al., 2003). The two most common packages for generating tree-based models in R are rpart and randomForest. The rpart package creates a regression or classification tree based on binary splits that maximize homogeneity and minimize impurity. The output is a single decision tree that can be further "pruned" or trimmed back using the cross-validation error statistic to reduce over-fitting. The randomForest package is similar to rpart, but is double random in that each node is split using a random subset of predictors AND observations at each node and this process is repeated hundreds of times (as specified by the user). Unlike rpart, random forests do not produce a graphical decision tree since the predictions are averaged across hundreds or thousands of trees. Instead, random forests produce a variable importance plot and a tabular statistical summary. 
-<br/>
+Tree-based models are a supervised machine learning method commonly used in soil survey and ecology for exploratory data analysis and prediction due to their simplistic nonparametric design. Instead of fitting a model to the data, tree-based models recursively partition the data into increasingly homogenous groups based on values that minimize a loss function (such as Sum of Squared Errors (SSE) for regression or Gini Index for classification) ([McBratney et al.,2013](http://www.clw.csiro.au/aclep/documents/McBratney%20et%20al.%202003.pdf)). The two most common packages for generating tree-based models in R are rpart and randomForest. The rpart package creates a regression or classification tree based on binary splits that maximize homogeneity and minimize impurity. The output is a single decision tree that can be further "pruned" or trimmed back using the cross-validation error statistic to reduce over-fitting. The randomForest package is similar to rpart, but is double random in that each node is split using a random subset of predictors AND observations at each node and this process is repeated hundreds of times (as specified by the user). Unlike rpart, random forests do not produce a graphical decision tree since the predictions are averaged across hundreds or thousands of trees. Instead, random forests produce a variable importance plot and a tabular statistical summary. 
 
-##<a id="cart")></a>8.1 Classification and Regression Trees (CART)
-The basic function for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
 
-Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the library( ) function.
+## 8.1 Exploratory Data Analysis
+
+The data that we will be working with in this chapter were collected in support of a MLRA 127 soil survey update project to tabularly and spatially update SSRUGO map units for spodic properties in the Monongahela National Forest. Soils that were historically covered by Eastern Hemlock and Red Spruce exhibit spodic morphology on shale and sandstone bedrocks at eleveations typically >3,200 ft in West Virginia ([Nauman et al., 2015](http://www.sciencedirect.com/science/article/pii/S0016706115000427)). 
+
+### 8.1.1 Examining Data in R
+
+Before we dive in to building tree models, let's first import and examine the dataset in R.  
 
 ```{r, warning=FALSE, message=FALSE}
-library(rpart)
-library(randomForest)
-library(rpart.plot)
+library(lattice) #graphing
+library(sp) #spatial data
+library(maps) #maps
+library(rgdal) #spatial import
 
 file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(file, destfile = "soildata.csv")
 soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
+View(soildata) #view the data
+str(soildata) #examine the internal data structure
 
 ```
 
-Review the data structure to ensure that the data were imported correctly into R.
-```{r}
-str(soildata)
-
-```
-
-The example dataset, soildata, consists of 250 observations and 58 variables that were collected in the field or derived from geospatial data to identify spodic soil properties in West Virginia. Of particular interest is determining best splits for spodic intensity (relative spodicity index). As you can see in that data structure, R interpreted the spodint field as numeric. Since spodint is an index, it will need to be changed to a factor and then to an ordered factor. The same will need to be done for tipmound (a tip and mound microtopography index).
+The example dataset, **soildata**, consists of 250 observations and 58 variables that were collected in the field or derived from geospatial data to identify spodic soil properties in West Virginia. Of particular interest is determining best splits for spodic intensity (relative spodicity index). As you can see in the data structure, R interpreted the spodint field as numeric. Since spodint is an index, it will need to be changed to a factor and then to an ordered factor. The same will need to be done for tipmound (a tip and mound microtopography index).
 
 ```{r}
 soildata$spodint<-as.factor(soildata$spodint)
@@ -51,6 +51,52 @@ soildata$tipmound<-as.factor(soildata$tipmound)
 soildata$tipmound<-ordered(soildata$tipmound)
 
 ```
+
+Next, let's explore the tabular data:
+
+```{r}
+boxplot(Otot~spodint, data=soildata, xlab="spodic intensity", ylab="total O horizon thickness (cm)") #do you see any patterns?
+boxplot(solar~spodint, data=soildata, xlab="spodic intensity", ylab="solar") #does solar radiation affect spodic intensity?
+boxplot(northwestn~spodint, data=soildata, xlab="spodic intensity", ylab="northwestness") #how about aspect?
+densityplot(~ Otot|order, data=soildata) #distribution of O horizon thickness among soil orders
+numeric<-data.frame(soildata[, c(5:8, 17, 21:22, 25, 27:50)]) #combine numeric columns into a new data frame
+names(numeric) 
+round(cor(numeric, use = "pairwise"), 2) #look at what variables are highly correlated to Otot
+
+```
+
+
+### 8.1.2 Plotting Data
+```{r}
+coordinates(soildata) <- ~ x + y #set the coordinates
+proj4string(soildata) <- CRS("+init=EPSG:4269") #set the projection; https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/OverviewCoordinateReferenceSystems.pdf 
+
+map("county", "west virginia") 
+points(soildata) #plot points
+
+#convert soildata into a shapefile
+writeOGR(soildata, dsn = "C:/workspace", "soildata", driver = "ESRI Shapefile") 
+
+```
+
+Conveniently, environmental covariate values were previously extracted for all of the observations in the **soildata** dataset. **How would you extract raster data to points in R?**  ([Hint](https://github.com/ncss-tech/stats_for_soil_survey/blob/master/chapters/6_linear_models/6_Linear_models.md))
+
+
+### 8.1.3 Exercise 1
+Examine the **soildata** shapefile and environmental covariate data in ArcGIS. Come up with a theory of which possible covariates might be useful for predicting spodic intensity and total O horizon thickness. 
+
+
+## 8.2 Classification and Regression Trees (CART)
+The basic function for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
+
+Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the library( ) function.
+
+```{r, warning=FALSE, message=FALSE}
+library(rpart)
+library(randomForest)
+library(rpart.plot)
+```
+
 
 If you wanted to create a classification tree for spodint using all of the variables, you would simply type: `rpart(spodint ~ ., data=soildata)`. Since the soildata dataset contains variables such as FID and NASIS_Pedo that are site observation labels, it is not wise to include all variables in the model. Instead, you want to define which variables the model should use. 
 
