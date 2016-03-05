@@ -1,6 +1,17 @@
-# Chapter 1 - Introduction to R and RStudio
-Katey Yoast, Skye Wills, Stephen Roecker  
-Tuesday, February 24, 2015  
+---
+title: 6 - Linear Regression
+author: Stephen Roecker &  Katey Yoast
+date: "Tuesday, March 5, 2016"
+output:
+  html_document:
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+---
 
 
 ![Statistics for pedologists course banner image](figure/logo.jpg)
@@ -87,13 +98,13 @@ s$frags <- apply(s[grepl("surface", names(s))], 1, sum) # calculate total surfac
 densityplot(~ surface_cobbles + surface_gravel + surface_fgravel + frags, data = s, auto.key = TRUE)
 ```
 
-![](6_Linear_models_files/figure-html/consistency-1.png)
+![plot of chunk consistency](figure/consistency-1.png)
 
 ```r
 hist(s$frags, 50)
 ```
 
-![](6_Linear_models_files/figure-html/consistency-2.png)
+![plot of chunk consistency](figure/consistency-2.png)
 
 ```r
 apply(s[grepl("surface|frags", names(s))], 2, function(x) round(summary(x))) # summarize all columns that pattern match either "surface" or "frags"
@@ -217,7 +228,7 @@ arrange(test, landform, frags[, 2], decreasing = TRUE) # sort data frame by colu
 densityplot(~ frags + surface_cobbles + surface_gravel | landform, data = s, auto.key = TRUE)
 ```
 
-![](6_Linear_models_files/figure-html/unnamed-chunk-1-1.png)
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
 
 So it does appear that erosional landforms generally do have more surface rock fragments that depositional one, but not by much. It also appears that most of the difference is coming from the amount of cobbles, as seen in the density plot.
 
@@ -346,13 +357,13 @@ round(cor(s_hill, use = "pairwise"), 2)
 spm(s_fan, use = "pairwise", main = "Scatterplot Matrix for Fans")
 ```
 
-![](6_Linear_models_files/figure-html/unnamed-chunk-4-1.png)
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png)
 
 ```r
 spm(s_hill, use = "pairwise", main = "Scatterplot Matrix for Hills")
 ```
 
-![](6_Linear_models_files/figure-html/unnamed-chunk-4-2.png)
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-2.png)
 
 In examing the correlation matrices we don't see a strong relationships with either elevation for slope gradient.
 
@@ -441,7 +452,7 @@ plot(ca794, axes = TRUE)
 plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 ```
 
-![](6_Linear_models_files/figure-html/plot-1.png)
+![plot of chunk plot](figure/plot-1.png)
 
 ```r
 # Write shapefile of pedons
@@ -641,50 +652,50 @@ round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
 spm(train[c("fragst", terrain1)])
 ```
 
-![](6_Linear_models_files/figure-html/spatial-1.png)
+![plot of chunk spatial](figure/spatial-1.png)
 
 ```r
 spm(train[c("fragst", terrain2)])
 ```
 
-![](6_Linear_models_files/figure-html/spatial-2.png)
+![plot of chunk spatial](figure/spatial-2.png)
 
 ```r
 spm(train[c("fragst", climate)])
 ```
 
-![](6_Linear_models_files/figure-html/spatial-3.png)
+![plot of chunk spatial](figure/spatial-3.png)
 
 ```r
 spm(train[c("fragst", pc)])
 ```
 
-![](6_Linear_models_files/figure-html/spatial-4.png)
+![plot of chunk spatial](figure/spatial-4.png)
 
 ```r
 spm(train[c("fragst", tc)])
 ```
 
-![](6_Linear_models_files/figure-html/spatial-5.png)
+![plot of chunk spatial](figure/spatial-5.png)
 
 ```r
 spm(train[c("fragst", rad)])
 ```
 
-![](6_Linear_models_files/figure-html/spatial-6.png)
+![plot of chunk spatial](figure/spatial-6.png)
 
 ```r
 # Create boxplots
 bwplot(fragst ~ cluster, data = train)
 ```
 
-![](6_Linear_models_files/figure-html/spatial-7.png)
+![plot of chunk spatial](figure/spatial-7.png)
 
 ```r
 bwplot(fragst ~ cluster2, data = train)
 ```
 
-![](6_Linear_models_files/figure-html/spatial-8.png)
+![plot of chunk spatial](figure/spatial-8.png)
 
 The correlation matrices and scatter plots above show that that surface rock fragments have moderate correlations with some of the variables, particularly the landsat bands and derivatives. This makes sense given that surface rock fragments are at the surface, unlike most soil properties. 
 
@@ -836,7 +847,7 @@ par(mfrow = c(1, 4))
 plot(fragst_lm)
 ```
 
-![](6_Linear_models_files/figure-html/unnamed-chunk-8-1.png)
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
 
 ```r
 dev.off()
@@ -964,7 +975,7 @@ Shi, X., L. Girod, R. Long, R. DeKett, J. Philippe, and T. Burke, 2012. A compar
 
 Faraway, J.J., 2002. Practical Regression and Anova using R. CRC Press, New York. [https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf](https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf)
 
-Gareth, J., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
 
 Hengl, T. 2009. A Practical Guide to Geostatistical Mapping, 2nd Edt. University of Amsterdam, www.lulu.com, 291 p. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf)
 
