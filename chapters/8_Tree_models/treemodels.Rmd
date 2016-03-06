@@ -223,7 +223,7 @@ The randomForest algorithm fits hundreds to thousands of CART models to random s
 Going back to the **soildata** dataset, let's generate a random forest regression model for total O horizon thickness and compare it to the one we just generated in rpart. Just like rpart, randomForest has the same basic model function: (y ~ x).
 
 ```{r}
-rf<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE) #importance=TRUE will allow the generation of a variable importance plot
+rf<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE, ntree=1000, mtry=10) #importance=TRUE will allow the generation of a variable importance plot
 
 rf # statistical summary
 
@@ -242,26 +242,26 @@ hist(soildata$Otot)
 
 Let's remove that observation to see how it impacted our model. 
 ```{r}
-soildata2 = soildata[-95,]
-rf<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE) #importance=TRUE will allow the generation of a variable importance plot
+file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+download.file(file, destfile = "soildata.csv")
+soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
+soildata2<-droplevels(subset(soildata, order!="histosol")) #remove Histosol observation
+rf2<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata2, importance=TRUE, ntree=1000, mtry=9) #importance=TRUE will allow the generation of a variable importance plot
 
-rf # statistical summary
-
-plot(rf)  #out of bag (OOB) error rate versus number of trees; this will help us tune the ntree parameter
+rf2 # statistical summary
 
 ```
 
 
-
+**Did removing the outlier Histosol observation improve the model?** 
 
 The defaults for the number of trees (`ntree`) and number of variables tried at each split (`mtry`) may need to be adjusted in the `randomForest` command to explain more variance in the data and to reduce model over-fitting. For most datasets, manually tweaking these parameters and examining the statistical summary is often sufficient. The `tuneRF()` function can be used to determine the optimal `mtry` value, but some users have claimed that this algorithm leads to bias. Feel free to manually tweak the `ntree` and `mtry` settings to see how they effect the overall model performance. 
 
 Another way to assess the rf model is to look at the variable importance plot. 
 
 ```{r, fig.width=7, fig.height=8}
-varImpPlot(rf)
-
-importance(rf) #tabular summary
+varImpPlot(rf2)
+importance(rf2) #tabular summary
 
 ```
 
@@ -269,7 +269,8 @@ For each tree, each predictor in the OOB sample is randomly permuted and passed 
 
 In a regression tree analysis, randomForest uses %IncMSE and IncNodePurity to rank variable importance. %IncMSE is simply the average increase in squared residuals of the test set when variables are randomly permuted (little importance = little change in model when variable is removed or added) and IncNodePurity is the increase in homogeneity in the data partitions. In a classification tree analysis, randomForest uses MeanDecreaseAccuracy and MeanDecreaseGini. For MeanDecreaseAccuracy, the more the accuracy of the model decreases due to the addition of a single variable, the more important the variable is deemed. MeanDecreaseGini is a measure of how each variable contributes to the homogeneity of the nodes and leaves.
 
-In the rf model, it is apparent that landsatb7 is the most important variable used in the model, followed by maxent, protection index, rainfall, solar, and northwestness. 
+In the rf2 model, it is apparent that landsatb7 is the most important variable used in the model, followed by maxent, protection index, northwestness, solar, and rainfall. 
+
 
 ### 8.3.1 Exercise 3: randomForest
 Using the **soildata** dataset, construct a randomForest model to predict the probability of a folistic epipedon. Be sure to tweak the ntree and mtry parameters to capture the most variability. Use the following code to combine ochric and umbric into a new category called nonfolistic. 
@@ -296,23 +297,27 @@ rasters<-stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines ra
 
 rasters 
 
-model<-rpart(Otot~maxent+slp50+protection, data=soildata)
+model<-randomForest(Otot~landsatb7+maxent+protection+northwestn+solar, data=soildata2)
 
-predict(rasters,model, type="vector",progress="window",overwrite=TRUE,filename="rpartpredict.img") #type: "vector" for mean response at the node, "prob" for matrix of class probabilities, or "class" for a factor of classifications based on the responses
+predict(rasters,model,progress="window",overwrite=TRUE,filename="rfpredict.img") 
+#type not specified=vector of predicted values, "response" for predicted class, "prob" for probabilities, or "vote" for matrix of vote counts (one column for each class and one row for each new input); either in raw counts or in fractions (if norm.votes=TRUE)
+
+#options for predicting rpart model: type= "vector" for mean response at the node, "prob" for matrix of class probabilities, or "class" for a factor of classifications based on the responses
 
 ```
 
-The output raster "rpartpredict.img" can be added and viewed in ArcMap. 
+The output raster "rfpredict.img" can be added and viewed in ArcMap. 
 
 ![R GUI image](figure/ch8_predicted.jpg)  
 
 
 You can also view the interpolated model in R:
 ```{r, eval=FALSE}
-rpartpredict <- raster("rpartpredict.img")
-plot(rpartpredict, xlab="Easting (m)", ylab="Northing (m)", main="Total O Horizon Thickness (cm)")
+rfpredict <- raster("rfpredict.img")
+plot(rfpredict, xlab="Easting (m)", ylab="Northing (m)", main="Total O Horizon Thickness (cm)")
 
 ```
+
 
 ## 8.5 Summary
 Tree-based models are intuitive, quick to run, nonparametric, and are often ideal for exploratory data analysis and prediction. Both rpart and randomForest produce graphical and tabular outputs to aid interpretation. Both packages also perform internal validataion (rpart=10-fold cross validation; randomForest=OOB error estimates) to assess model performance. Tree-based models do require pruning and/or tweaking of model parameters to reduce over-fitting and are unstable in that removing observations (especially outliers) or independent predictors can greatly alter the tree structure. In general,  tree-based models are robust against multicollinearity and low n, high p datasets (low sample size and many predictors).

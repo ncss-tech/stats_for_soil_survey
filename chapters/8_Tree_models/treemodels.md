@@ -728,13 +728,11 @@ The examples above dealt with classification trees which resulted in categorical
 ## 8.3 Random Forest
 The randomForest algorithm fits hundreds to thousands of CART models to random subsets of input data and combines the trees for prediction. Similarly to rpart, randomForest allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. Unlike rpart, the randomForest algorithm does not straight forwardly handle missing values with surrogate splits. There is a function called `rfImpute()` that uses a proximity matrix from the randomForest to populate missing values with either the weighted average of the non-missing observations (weighted by the proximities) for continuous predictors or the category with the largest average proximity for categorical predictors. 
 
-Going back to the **soildata** dataset, it is also of particular interest to determine what properties best predict total O horizon thickness (Otot). Just like rpart, randomForest has the same basic model function: (y ~ x).
+Going back to the **soildata** dataset, let's generate a random forest regression model for total O horizon thickness and compare it to the one we just generated in rpart. Just like rpart, randomForest has the same basic model function: (y ~ x).
 
 
 ```r
-rf<-randomForest(Otot~x+y+Overtype+Underconifer+spodint+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE) 
-#Oi, Oe, Oa, order, subgroup, and epipedon were omitted as independent variables
-#importance=TRUE will allow the generation of a variable importance plot
+rf<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE, ntree=1000, mtry=10) #importance=TRUE will allow the generation of a variable importance plot
 
 rf # statistical summary
 ```
@@ -742,24 +740,58 @@ rf # statistical summary
 ```
 ## 
 ## Call:
-##  randomForest(formula = Otot ~ x + y + Overtype + Underconifer +      spodint + ps + drainage + slope + surfacetex + stoniness +      depthclass + bedrockdepth + hillslope + tipmound + rainfall +      geology + aachn + dem10m + downslpgra + eastness + greenrefl +      landsatb1 + landsatb2 + landsatb3 + landsatb7 + maxc100 +      maxent + minc100 + mirref + ndvi + northeastn + northness +      northwestn + planc100 + proc100 + protection + relpos11 +      slp50 + solar + tanc75, data = soildata, importance = TRUE) 
+##  randomForest(formula = Otot ~ rainfall + geology + aachn + dem10m +      downslpgra + eastness + greenrefl + landsatb1 + landsatb2 +      landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref +      ndvi + northeastn + northness + northwestn + planc100 + proc100 +      protection + relpos11 + slp50 + solar + tanc75, data = soildata,      importance = TRUE, ntree = 1000, mtry = 10) 
 ##                Type of random forest: regression
-##                      Number of trees: 500
-## No. of variables tried at each split: 13
+##                      Number of trees: 1000
+## No. of variables tried at each split: 10
 ## 
-##           Mean of squared residuals: 21.49918
-##                     % Var explained: 40.21
+##           Mean of squared residuals: 28.08342
+##                     % Var explained: 21.9
 ```
 
 ```r
-plot(rf)  #out of bag (OOB) error rate versus number of trees
+plot(rf)  #out of bag (OOB) error rate versus number of trees; this will help us tune the ntree parameter
 ```
 
 ![](treemodels_files/figure-html/unnamed-chunk-15-1.png)
 
-The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 40% of the variance and produced a mean square error (sum of squared residuals divided by n) of 21 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly due to the random subsetting and averaging in the randomForest algorithm. 
+The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 23% of the variance and produced a mean square error (sum of squared residuals divided by n) of 28 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly due to the random subsetting and averaging in the randomForest algorithm. **How does this compare with the rpart model?**
 
-Recall that the rpart model that we constructed earlier for Otot produced a relative error of ~57%, meaning that the rpart model explained approximately 43% of the variance. In this example, the pruned rpart model performed slightly better (meaning that it was able to explain more variance) than the rf model. 
+Recall that the **soildata** dataset had one Histosol observation:
+
+```r
+hist(soildata$Otot)
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-16-1.png)
+
+
+Let's remove that observation to see how it impacted our model. 
+
+```r
+file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+download.file(file, destfile = "soildata.csv")
+soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
+soildata2<-droplevels(subset(soildata, order!="histosol")) #remove Histosol observation
+rf2<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata2, importance=TRUE, ntree=1000, mtry=9) #importance=TRUE will allow the generation of a variable importance plot
+
+rf2 # statistical summary
+```
+
+```
+## 
+## Call:
+##  randomForest(formula = Otot ~ rainfall + geology + aachn + dem10m +      downslpgra + eastness + greenrefl + landsatb1 + landsatb2 +      landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref +      ndvi + northeastn + northness + northwestn + planc100 + proc100 +      protection + relpos11 + slp50 + solar + tanc75, data = soildata2,      importance = TRUE, ntree = 1000, mtry = 9) 
+##                Type of random forest: regression
+##                      Number of trees: 1000
+## No. of variables tried at each split: 9
+## 
+##           Mean of squared residuals: 24.27255
+##                     % Var explained: 22.64
+```
+
+
+**Did removing the outlier Histosol observation improve the model?** 
 
 The defaults for the number of trees (`ntree`) and number of variables tried at each split (`mtry`) may need to be adjusted in the `randomForest` command to explain more variance in the data and to reduce model over-fitting. For most datasets, manually tweaking these parameters and examining the statistical summary is often sufficient. The `tuneRF()` function can be used to determine the optimal `mtry` value, but some users have claimed that this algorithm leads to bias. Feel free to manually tweak the `ntree` and `mtry` settings to see how they effect the overall model performance. 
 
@@ -767,73 +799,69 @@ Another way to assess the rf model is to look at the variable importance plot.
 
 
 ```r
-varImpPlot(rf)
+varImpPlot(rf2)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-16-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-18-1.png)
 
 ```r
-importance(rf) #tabular summary
+importance(rf2) #tabular summary
 ```
 
 ```
-##                  %IncMSE IncNodePurity
-## x             2.79789139     203.35592
-## y             3.36339658     321.36361
-## Overtype      6.19258129     426.21061
-## Underconifer  1.25951574      35.70674
-## spodint      20.23052096    1524.42446
-## ps           -0.54696916      52.53285
-## drainage      0.55390336      11.82159
-## slope         3.41058455     117.21076
-## surfacetex    5.56385537    1032.05146
-## stoniness    -0.03689932      64.43854
-## depthclass   -1.21792007      27.67313
-## bedrockdepth -0.42991996      10.39952
-## hillslope     3.70826479      60.05569
-## tipmound      1.70824673      26.45137
-## rainfall      1.64927824      79.57539
-## geology       1.97264303      20.10813
-## aachn         3.00324445     115.76476
-## dem10m        2.27592314     150.16356
-## downslpgra    2.50214656     103.28019
-## eastness     -1.78132307     634.59811
-## greenrefl     2.56914682     209.97843
-## landsatb1     1.38029139      87.10852
-## landsatb2    -0.56536038      97.71635
-## landsatb3     0.87014325      57.57567
-## landsatb7     6.76441443     521.05039
-## maxc100       2.06839771     116.63397
-## maxent        5.59197249     455.80518
-## minc100       0.83931279     100.37080
-## mirref        1.66163027     272.01076
-## ndvi          0.82084442     140.20066
-## northeastn   -1.24478101     329.60943
-## northness     1.16341636     126.41164
-## northwestn    2.20521404     256.28836
-## planc100      2.46248546     143.28924
-## proc100      -2.11509997     120.68565
-## protection    5.62376905     154.04767
-## relpos11      1.04161363     130.21507
-## slp50         2.41107448     119.35265
-## solar         2.79207650     127.18047
-## tanc75       -1.31736429     183.36300
+##               %IncMSE IncNodePurity
+## rainfall    9.7008362     152.83512
+## geology     4.4692365      39.29127
+## aachn       4.5511298     278.78632
+## dem10m      5.0931953     283.53027
+## downslpgra  5.0218564     172.39404
+## eastness    4.5355225     277.37319
+## greenrefl   3.4760112     235.61986
+## landsatb1   0.2836085     136.36233
+## landsatb2   2.9299042     117.79607
+## landsatb3   2.3168437     110.31440
+## landsatb7  22.9225825     975.72289
+## maxc100     4.4669093     201.46623
+## maxent     17.4622144     852.97759
+## minc100     3.7458066     224.00431
+## mirref      0.4491754     413.40654
+## ndvi        2.0321966     254.89927
+## northeastn  3.4415975     360.62509
+## northness   4.0126574     231.14696
+## northwestn  9.3653088     496.36284
+## planc100    3.6890158     203.79220
+## proc100     4.4813472     209.44943
+## protection 10.8817679     357.01546
+## relpos11    7.5613310     262.66997
+## slp50       4.7589916     221.46364
+## solar       8.7599168     284.33964
+## tanc75     -1.9336032     206.38636
 ```
 
 For each tree, each predictor in the OOB sample is randomly permuted and passed through the tree to obtain an error rate (mean square error (MSE) for regression and Gini index for classification). The error rate from the unpermuted OOB is then subtracted from the error rate of the permuted OOB data, and averaged across all trees. When this value is large, it implies that a variable is highly correlated to the dependent variable and is needed in the model. 
 
 In a regression tree analysis, randomForest uses %IncMSE and IncNodePurity to rank variable importance. %IncMSE is simply the average increase in squared residuals of the test set when variables are randomly permuted (little importance = little change in model when variable is removed or added) and IncNodePurity is the increase in homogeneity in the data partitions. In a classification tree analysis, randomForest uses MeanDecreaseAccuracy and MeanDecreaseGini. For MeanDecreaseAccuracy, the more the accuracy of the model decreases due to the addition of a single variable, the more important the variable is deemed. MeanDecreaseGini is a measure of how each variable contributes to the homogeneity of the nodes and leaves.
 
-In the rf model, it is apparent that spodint is the most important variable used in the model, followed by y, landsatb7, Overtype, surfacetex, maxent, hillslope, slp50, rainfall, and protection index. 
+In the rf2 model, it is apparent that landsatb7 is the most important variable used in the model, followed by maxent, protection index, northwestness, solar, and rainfall. 
 
-### Exercise 2: randomForest
-Using the soildata dataset, construct a randomForest model to predict soil order. Hint: remove the one histosol observation before constructing the model (`soildata2<-droplevels(subset(soildata, order!="histosol")) `) and do not include spodint, series, taxon, or subgroup. When finished, answer the following questions:
 
-1) What are the most important variables for separating Inceptisols from Spodosols from Ultisols?
-2) What is the out-of-bag error rate?
-3) Which soil order was best predicted by the model?
+### 8.3.1 Exercise 3: randomForest
+Using the **soildata** dataset, construct a randomForest model to predict the probability of a folistic epipedon. Be sure to tweak the ntree and mtry parameters to capture the most variability. Use the following code to combine ochric and umbric into a new category called nonfolistic. 
 
-## 8.3 Prediction using Tree-based Models
+
+```r
+soildata$epipedon2<-soildata$epipedon
+levels(soildata$epipedon2)[levels(soildata$epipedon2)=="ochric"] <- "nonfolistic"
+levels(soildata$epipedon2)[levels(soildata$epipedon2)=="umbric"] <- "nonfolistic"
+```
+
+
+** 1) What is the out-of-bag error rate?**
+** 2) Compare this model with the total O horizon thickness regression model. Which would be better for spatial interpolation?**
+** 3) How could you improve this model?**
+
+
+## 8.4 Prediction using Tree-based Models
 As with any modeling technique, tree-based models can be used for prediction and can be spatially interpolated using environmental covariates. In order to interpolate a model, R requires that all raster images have a common datum, common cell resolution, are coregistered, and are preferably .img files. The function `stack()` combines all of the rasters into a "raster stack." The `predict()` function is then used in the form of: `predict(rasterstack, fittedmodel, type="")`. Follow along through the example below to interpolate the rpart total O horizon thickness model:
 
 
@@ -843,12 +871,15 @@ rasters<-stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines ra
 
 rasters 
 
-model<-rpart(Otot~maxent+slp50+protection, data=soildata)
+model<-randomForest(Otot~landsatb7+maxent+protection+northwestn+solar, data=soildata2)
 
-predict(rasters,model, type="vector",progress="window",overwrite=TRUE,filename="rpartpredict.img") #type: "vector" for mean response at the node, "prob" for matrix of class probabilities, or "class" for a factor of classifications based on the responses
+predict(rasters,model,progress="window",overwrite=TRUE,filename="rfpredict.img") 
+#type not specified=vector of predicted values, "response" for predicted class, "prob" for probabilities, or "vote" for matrix of vote counts (one column for each class and one row for each new input); either in raw counts or in fractions (if norm.votes=TRUE)
+
+#options for predicting rpart model: type= "vector" for mean response at the node, "prob" for matrix of class probabilities, or "class" for a factor of classifications based on the responses
 ```
 
-The output raster "rpartpredict.img" can be added and viewed in ArcMap. 
+The output raster "rfpredict.img" can be added and viewed in ArcMap. 
 
 ![R GUI image](figure/ch8_predicted.jpg)  
 
@@ -856,15 +887,16 @@ The output raster "rpartpredict.img" can be added and viewed in ArcMap.
 You can also view the interpolated model in R:
 
 ```r
-rpartpredict <- raster("rpartpredict.img")
-plot(rpartpredict, xlab="Easting (m)", ylab="Northing (m)", main="Total O Horizon Thickness (cm)")
+rfpredict <- raster("rfpredict.img")
+plot(rfpredict, xlab="Easting (m)", ylab="Northing (m)", main="Total O Horizon Thickness (cm)")
 ```
 
-## 8.4 Summary
+
+## 8.5 Summary
 Tree-based models are intuitive, quick to run, nonparametric, and are often ideal for exploratory data analysis and prediction. Both rpart and randomForest produce graphical and tabular outputs to aid interpretation. Both packages also perform internal validataion (rpart=10-fold cross validation; randomForest=OOB error estimates) to assess model performance. Tree-based models do require pruning and/or tweaking of model parameters to reduce over-fitting and are unstable in that removing observations (especially outliers) or independent predictors can greatly alter the tree structure. In general,  tree-based models are robust against multicollinearity and low n, high p datasets (low sample size and many predictors).
 
 
-## 8.5 Additional Reading
+## 8.6 Additional Reading
 
 Gareth, J., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
 
