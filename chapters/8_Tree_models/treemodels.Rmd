@@ -45,6 +45,7 @@ str(soildata) #examine the internal data structure
 The example dataset, **soildata**, consists of 250 observations and 58 variables that were collected in the field or derived from geospatial data to identify spodic soil properties in West Virginia. Of particular interest is determining best splits for spodic intensity (relative spodicity index). As you can see in the data structure, R interpreted the spodint field as numeric. Since spodint is an index, it will need to be changed to a factor and then to an ordered factor. The same will need to be done for tipmound (a tip and mound microtopography index).
 
 ```{r}
+set.seed(250)
 soildata$spodint<-as.factor(soildata$spodint)
 soildata$spodint<-ordered(soildata$spodint)
 soildata$tipmound<-as.factor(soildata$tipmound)
@@ -94,9 +95,10 @@ The basic function for all CART models is (y ~ x), where y is the dependent vari
 Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the `library()` function.
 
 ```{r, warning=FALSE, message=FALSE}
-library(rpart)
-library(randomForest)
-library(rpart.plot)
+library(rpart) #CART models
+library(randomForest) #random forest
+library(rpart.plot) #rpart plot graphics
+library(caret) #confusion matrix
 ```
 
 
@@ -118,6 +120,15 @@ text(spodintmodel, cex=0.8) #cex is text size
 par(mar=c(3,6,3,6)) 
 plot(spodintmodel)
 text(spodintmodel, cex=0.6)
+```
+
+For more plot customization, use the rpart.plot package. 
+```{r, fig.width=6, fig.height=6}
+rpart.plot(spodintmodel, extra=3) #extra=3 displays the misclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
+
+rpart.plot(spodintmodel, extra=103) #adding 100 to the extra setting displays the percentage observations in the node
+prp(spodintmodel,type=1,extra=1,branch=1) #prp is another function in the rpart.plot package that has numerous plot customization options
+
 ```
 
 Notice that the terminal nodes display the different spodic intensity classes, ranging from 0 to 2. **Can you think of another way that we could model spodic expression?** 
@@ -157,22 +168,19 @@ plotcp(spodintmodel2)
 
 ```
 
-The optimal CP value is 0.030865 for spodintmodel and 0.050459 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
+The optimal CP value is 0.029321 for spodintmodel and 0.050459 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
 
-```{r, fig.width=7, fig.height=8}
-pruned<-prune(spodintmodel, cp=0.030865)
+```{r, fig.width=3, fig.height=3}
+pruned<-prune(spodintmodel, cp=0.029321)
 printcp(pruned)
-plot(pruned)
-text(pruned, cex=0.8)
-
+rpart.plot(pruned, extra=3)
 pruned2<-prune(spodintmodel2, cp=0.050459)
 printcp(pruned2)
-plot(pruned2)
-text(pruned2, cex=0.8)
+rpart.plot(pruned2, extra=3)
 
 ```
 
-The misclassification rate (in cross-validation) for the spodintmodel was 59% (root node error * xerror * 100) which dropped to 33% in the spodintmodel2. Why did the performance of these models differ significantly?
+The misclassification rate (in cross-validation) for the spodintmodel was 57% (root node error * xerror * 100) which dropped to 38% in the spodintmodel2. Why did the performance of these models differ significantly?
 
 Let's compute an internal validation using a confusion matrix to further examine differences in these models. In order to do this, we will need to split our data into a training and test set.
 
@@ -185,65 +193,34 @@ test<-soildata[-datasplit,]
 spodintmodel<-rpart(spodint~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=train, method = "class")
 printcp(spodintmodel)
 pruned<-prune(spodintmodel, cp=0.070175)
-
+pred <- predict(pruned, newdata=test, type="class") #predicting class test data using the pruned model
+confusionMatrix(pred, test$spodint) #computes confusion matrix and summary statistics
 
 spodintmodel2<-rpart(newcolumn~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=train, method = "class")
 printcp(spodintmodel2)
 pruned2<-prune(spodintmodel2, cp=0.050459)
-
-
-conf.matrix <- table(test$spodint, predict(pruned,type="class"))
-rownames(conf.matrix) <- paste("Actual", rownames(conf.matrix), sep = ":")
-colnames(conf.matrix) <- paste("Pred", colnames(conf.matrix), sep = ":")
-print(conf.matrix)
-
-conf.matrix2 <- table(test$newcolumn, predict(pruned2,type="class"))
-rownames(conf.matrix2) <- paste("Actual", rownames(conf.matrix2), sep = ":")
-colnames(conf.matrix2) <- paste("Pred", colnames(conf.matrix2), sep = ":")
-print(conf.matrix2)
+pred2 <- predict(pruned2, newdata=test, type="class") #predicting class of test data using the pruned model
+confusionMatrix(pred2, test$newcolumn) #computes confusion matrix and summary statistics
 
 ```
 
-Notice that  
+The accuracy of the spodintmodel using split sample internal validation was 39% (61% misclassification error). The model incorrectly classified all spodic intensity ratings of 0.5 and 1.5. The accuracy of the spodintmodel2 was 63% (37% misclassification error). The model was able to predict spodic better than nonspodic. Notice that both of the misclassification errors increased slightly using the split sample validation versus the deafult internal 10-fold cross-validation used in by the rpart package. It is not uncommon to see slight differences in overall model performance between validations. In this case, it confirms that the first model is relatively 40% accurate and the second model is relatively 63% accurate. 
+
+As a side note: The default 10-fold internal cross-validation in rpart divides the data into 10 subsets, using 9 sets as 'learning samples' to create trees, and 1 set as 'test samples' to calculate error rates. This process is repeated for all possible combinations of learning and test samples (a total of 10 times), and error rates are averaged to estimate the error rate for the full data set.
 
 
+### 8.2.1 Exercise 2: rpart
+The examples above dealt with classification trees which resulted in categorical terminal nodes determined by majority votes. In a regression tree model, terminal nodes reflect the mean of the observations in that node. Using the **soildata** dataset, construct a rpart regression tree model to predict total O horizon thickness. Prune the model if necessary and answer the following questions:
 
-Another way to visualize rpart's decison tree and model performance is to use the rpart.plot package. 
-
-```{r, fig.width=6, fig.height=6}
-rpart.plot(pruned2, extra=3) #extra=3 displays the misclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
-
-rpart.plot(pruned2, extra=103) #adding 100 to the extra setting displays the percentage observations in the node
-
-```
-
-The rpart.plot package is recommended for plotting rpart trees. The examples above all deal with classification trees which result in categorical terminal nodes determined by majority votes. In a regression tree model, terminal nodes reflect the mean of the observations in that node. Let's build a regression tree using the soildata dataset to predict total O horizon thickness. 
-
-```{r}
-spodintmodel3<-rpart(Otot~x+y+Overtype+Underconifer+spodint+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "anova")
-
-printcp(spodintmodel3)
-pruned3<-prune(spodintmodel3, cp=0.050419)
-prp(pruned3,type=1,extra=1,branch=1) #prp is another function in the rpart.plot package that has numerous plot customization options
-
-printcp(pruned3)
-
-```
-
-**Was the majority of the variance in total O horizon thickness captured with the rpart model?**
+** 1) Was the majority of the variance in total O horizon thickness captured with the rpart model?**
+** 2) What were the most important variables in the model?**
+** 3) How could the model be improved?**
 
 
-### Exercise 1: rpart
-Using the soildata dataset, construct a rpart model to predict tipmound. Prune the model if necessary and answer the following questions:
-
-1) What are the most important variables for separating tip and mound ratings?
-2) What is the cross-validation error of the pruned model?
-3) How could you improve this model?
-
-## 8.2 Random Forest
+## 8.3 Random Forest
 The randomForest algorithm fits hundreds to thousands of CART models to random subsets of input data and combines the trees for prediction. Similarly to rpart, randomForest allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. Unlike rpart, the randomForest algorithm does not straight forwardly handle missing values with surrogate splits. There is a function called `rfImpute()` that uses a proximity matrix from the randomForest to populate missing values with either the weighted average of the non-missing observations (weighted by the proximities) for continuous predictors or the category with the largest average proximity for categorical predictors. 
 
-Going back to the soildata dataset, it is also of particular interest to determine what properties best predict total O horizon thickness (Otot). Just like rpart, randomForest has the same basic model function: (y ~ x).
+Going back to the **soildata** dataset, it is also of particular interest to determine what properties best predict total O horizon thickness (Otot). Just like rpart, randomForest has the same basic model function: (y ~ x).
 
 ```{r}
 rf<-randomForest(Otot~x+y+Overtype+Underconifer+spodint+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE) 
