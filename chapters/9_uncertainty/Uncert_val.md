@@ -119,8 +119,8 @@ set.seed(3) #set seed so that we all get the same results
 
 #simulate a dataset with two soil names with depth values from 20 - 60 (some values occur more than once)
 Data <- data.frame(
-  Soil = sample(c("A", "B"), 100, replace<-TRUE),
-  Depth = sample(20:60, 100, replace=TRUE)
+  Soil <- sample(c("A", "B"), 100, replace = TRUE),
+  Depth <- sample(20:60, 100, replace = TRUE)
 )
 
 range(Data$Depth)
@@ -146,7 +146,7 @@ stripchart(Data$Depth)
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
 
 ```r
-boxplot(Data$Depth)
+boxplot(Data$Depth, horizontal = TRUE)
 ```
 
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-2.png)
@@ -162,7 +162,7 @@ boxplot(Data$Depth)
  SS <- sum(Data$S)
  
  #calculate sample vaiance (lenth gives us the total number of sample/observations)
- samp_var <- SS/length(Data$Depth)-1
+samp_var <- SS / length(Data$Depth) - 1
  
  # Note the differences in range and variance calcualted for Depth in both examples (10 samples vs. 100)
 
@@ -170,8 +170,8 @@ quantile(Depth)
 ```
 
 ```
-##    0%   25%   50%   75%  100% 
-## 24.00 30.50 37.00 40.75 52.00
+##   0%  25%  50%  75% 100% 
+##   21   30   39   49   59
 ```
 
 ```r
@@ -188,7 +188,7 @@ var(Depth)
 ```
 
 ```
-## [1] 70.98889
+## [1] 119.5688
 ```
 
 ```r
@@ -201,15 +201,15 @@ var(Data$Depth)
 
 ```r
 #Now Compare Standard Error (standard deviation / n- 1)
-sd(Depth)/sqrt(length(Depth))
+sd(Depth) / sqrt(length(Depth))
 ```
 
 ```
-## [1] 2.664374
+## [1] 1.093475
 ```
 
 ```r
-sd(Data$Depth)/sqrt(length(Data$Depth))
+sd(Data$Depth) / sqrt(length(Data$Depth))
 ```
 
 ```
@@ -288,9 +288,9 @@ N <- 100
 boot.means <- numeric(N)
 
 for (i in 1:N){
-  boot.sample = sample(d, 100, replace=T)
-  boot.means[i] = mean(boot.sample)
-}
+  boot.sample <- sample(d, 100, replace = T)
+  boot.means[i] <- mean(boot.sample)
+  }
 
 quantile(boot.means, c(0.05, 0.95))
 ```
@@ -303,7 +303,7 @@ quantile(boot.means, c(0.05, 0.95))
 ```r
 #traditional approach
 #lower
-mean(d) - 1.96*sd(d)/sqrt(n)
+mean(d) - 1.96 * sd(d) / sqrt(n)
 ```
 
 ```
@@ -312,7 +312,7 @@ mean(d) - 1.96*sd(d)/sqrt(n)
 
 ```r
 #upper
-mean(d) + 1.96*sd(d)/sqrt(n)
+mean(d) + 1.96 * sd(d) / sqrt(n)
 ```
 
 ```
@@ -389,6 +389,14 @@ In this exploratory and explanatory phase you are looking for relationships that
 - Repeat k times, each time one k group is used for error estimates
 - Average error of k
 - Less computationally intensive than LOOCV, but it is more robust and can be done with smaller sample sizes than a simple split.
+- Several R packages have tools to cross-validate predictions, including: `DAAG` and `boot` for `lm()` and `glm()` objects, `caret`, `rms`,
+
+
+```r
+# library(DAAG)
+# test <- CVlm(na.exclude(train), formula(fragst_lm), m = 10, plotit = FALSE)
+# with(test, cor(frags, ilogit(cvpred) * 100)^2) # cv r2
+```
 
   
 ## Subsample (Resampling or sample simulation)
