@@ -428,8 +428,13 @@ data <- data.frame(
    )
 
 # Modify some of the geodata variables
+data$mast <- data$temp - 4
+idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x, na.rm = TRUE), 2))
+names(idx)[2] <- "cluster_mast"
+data <- join(data, idx, by = "cluster", type = "left")
+
 data$cluster <- factor(data$cluster, levels = 1:15)
-data$cluster2 <- reorder(data$cluster, data$temp)
+data$cluster2 <- reorder(data$cluster, data$cluster_mast)
 data$gsi <- with(data, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
 data$ndvi <- with(data, (ls_4 - ls_3) / (ls_4 + ls_3))
 data$sw <- cos(data$aspect - 255)
@@ -510,45 +515,47 @@ add1(null, full, test = "Chisq") # using the AIC test the effect of adding addit
 ## 
 ## Model:
 ## argillic ~ 1
-##            Df Deviance    AIC     LRT  Pr(>Chi)    
-## <none>          872.18 891.63                      
-## describer2  3   853.25 878.70  18.932 0.0002824 ***
-## landform    1   768.81 790.26 103.377 < 2.2e-16 ***
-## elev        1   869.80 891.25   2.387 0.1223183    
-## slope       1   706.49 727.94 165.692 < 2.2e-16 ***
-## aspect      1   869.82 891.27   2.367 0.1238869    
-## twi         1   840.28 861.73  31.900 1.624e-08 ***
-## twi_sc      1   691.10 712.55 181.085 < 2.2e-16 ***
-## ch          1   870.86 892.31   1.328 0.2491889    
-## z2str       1   807.01 828.46  65.170 6.870e-16 ***
-## mrrtf       1   827.44 848.89  44.740 2.251e-11 ***
-## mrvbf       1   823.49 844.94  48.693 2.994e-12 ***
-## solar       1   862.48 883.93   9.704 0.0018388 ** 
-## precip      1   864.17 885.62   8.009 0.0046553 ** 
-## precipsum   1   854.46 875.91  17.720 2.559e-05 ***
-## temp        1   870.07 891.52   2.116 0.1458030    
-## ls_1        1   871.93 893.38   0.250 0.6167862    
-## ls_2        1   869.81 891.26   2.375 0.1232904    
-## ls_3        1   864.95 886.40   7.232 0.0071618 ** 
-## ls_4        1   860.69 882.14  11.489 0.0007000 ***
-## ls_5        1   846.45 867.90  25.728 3.930e-07 ***
-## ls_6        1   847.55 869.00  24.636 6.925e-07 ***
-## pc_1        1   855.98 877.43  16.206 5.682e-05 ***
-## pc_2        1   837.58 859.03  34.602 4.046e-09 ***
-## pc_3        1   858.21 879.66  13.971 0.0001857 ***
-## pc_4        1   869.44 890.89   2.748 0.0974002 .  
-## pc_5        1   872.17 893.62   0.015 0.9010447    
-## pc_6        1   864.01 885.46   8.173 0.0042519 ** 
-## tc_1        1   861.68 883.13  10.499 0.0011944 ** 
-## tc_2        1   869.34 890.79   2.846 0.0916075 .  
-## tc_3        1   837.31 858.76  34.874 3.518e-09 ***
-## k           1   870.15 891.60   2.029 0.1543334    
-## th          1   871.26 892.71   0.922 0.3368267    
-## u           1   872.02 893.47   0.159 0.6901881    
-## cluster2   12   760.01 803.46 112.172 < 2.2e-16 ***
-## gsi         1   835.10 856.55  37.086 1.130e-09 ***
-## ndvi        1   868.88 890.33   3.306 0.0690372 .  
-## sw          1   872.16 893.61   0.023 0.8804695    
+##              Df Deviance    AIC     LRT  Pr(>Chi)    
+## <none>            872.18 891.63                      
+## describer2    3   853.25 878.70  18.932 0.0002824 ***
+## landform      1   768.81 790.26 103.377 < 2.2e-16 ***
+## elev          1   869.80 891.25   2.387 0.1223183    
+## slope         1   706.49 727.94 165.692 < 2.2e-16 ***
+## aspect        1   869.82 891.27   2.367 0.1238869    
+## twi           1   840.28 861.73  31.900 1.624e-08 ***
+## twi_sc        1   691.10 712.55 181.085 < 2.2e-16 ***
+## ch            1   870.86 892.31   1.328 0.2491889    
+## z2str         1   807.01 828.46  65.170 6.870e-16 ***
+## mrrtf         1   827.44 848.89  44.740 2.251e-11 ***
+## mrvbf         1   823.49 844.94  48.693 2.994e-12 ***
+## solar         1   862.48 883.93   9.704 0.0018388 ** 
+## precip        1   864.17 885.62   8.009 0.0046553 ** 
+## precipsum     1   854.46 875.91  17.720 2.559e-05 ***
+## temp          1   870.07 891.52   2.116 0.1458030    
+## ls_1          1   871.93 893.38   0.250 0.6167862    
+## ls_2          1   869.81 891.26   2.375 0.1232904    
+## ls_3          1   864.95 886.40   7.232 0.0071618 ** 
+## ls_4          1   860.69 882.14  11.489 0.0007000 ***
+## ls_5          1   846.45 867.90  25.728 3.930e-07 ***
+## ls_6          1   847.55 869.00  24.636 6.925e-07 ***
+## pc_1          1   855.98 877.43  16.206 5.682e-05 ***
+## pc_2          1   837.58 859.03  34.602 4.046e-09 ***
+## pc_3          1   858.21 879.66  13.971 0.0001857 ***
+## pc_4          1   869.44 890.89   2.748 0.0974002 .  
+## pc_5          1   872.17 893.62   0.015 0.9010447    
+## pc_6          1   864.01 885.46   8.173 0.0042519 ** 
+## tc_1          1   861.68 883.13  10.499 0.0011944 ** 
+## tc_2          1   869.34 890.79   2.846 0.0916075 .  
+## tc_3          1   837.31 858.76  34.874 3.518e-09 ***
+## k             1   870.15 891.60   2.029 0.1543334    
+## th            1   871.26 892.71   0.922 0.3368267    
+## u             1   872.02 893.47   0.159 0.6901881    
+## mast          1   870.07 891.52   2.116 0.1458030    
+## cluster_mast  1   868.53 889.98   3.652 0.0560136 .  
+## gsi           1   835.10 856.55  37.086 1.130e-09 ***
+## ndvi          1   868.88 890.33   3.306 0.0690372 .  
+## sw            1   872.16 893.61   0.023 0.8804695    
+## cluster2     12   760.01 803.46 112.172 < 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -613,34 +620,11 @@ After we're satisfied no additional variables will improve the fit, we need to e
 
 ```r
 # Standard diagnostic plots for glm() objects
-par(mfrow = c(1, 4), ask = FALSE)
-plot(argi_glm) # plot regression diagnostics
-```
+# plot(argi_glm) # plot regression diagnostics
 
-![plot of chunk evaluation](figure/evaluation-1.png)
-
-```r
-dev.off()
-```
-
-```
-## pdf 
-##   2
-```
-
-```r
 # Term and partial residual plots
-par(mfrow = c(2, 3), ask = FALSE)
-termplot(argi_glm, partial.resid = TRUE)
-dev.off()
-```
+# termplot(argi_glm, partial.resid = TRUE)
 
-```
-## null device 
-##           1
-```
-
-```r
 # Variance inflation, greater than 5 or 10 is bad
 vif(argi_glm)
 ```
@@ -705,7 +689,8 @@ temp <- by(comp_sub, list(comp_sub$cluster), function(x) with(x, data.frame(
   sum_pred = sum(pred, na.rm = T),
   sensitivity = round(sum(pred == argillic) / length(argillic), 2)
   )))
-do.call(rbind, temp)
+temp <- do.call(rbind, temp)
+temp
 ```
 
 ```
@@ -723,7 +708,13 @@ do.call(rbind, temp)
 ```
 
 ```r
-train_sub <- subset(train, !(cluster2 %in% c(2, 3, 6, 7, 8, 13)))
+dotplot(sensitivity ~ cluster, data = temp)
+```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
+
+```r
+train_sub <- subset(train, temp < 22 + 4)
 
 # full <- glm(argillic ~ ., data = train_sub, family = binomial(link = "cloglog"))
 # null <- glm(argillic ~ 1, data = train_sub, family = binomial(link = "cloglog"))
@@ -742,25 +733,25 @@ confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
 ## 
 ##           Reference
 ## Prediction FALSE TRUE
-##      FALSE   427   28
-##      TRUE     38   52
+##      FALSE   377   39
+##      TRUE     51   59
 ##                                           
-##                Accuracy : 0.8789          
-##                  95% CI : (0.8485, 0.9051)
-##     No Information Rate : 0.8532          
-##     P-Value [Acc > NIR] : 0.04842         
+##                Accuracy : 0.8289          
+##                  95% CI : (0.7939, 0.8601)
+##     No Information Rate : 0.8137          
+##     P-Value [Acc > NIR] : 0.2014          
 ##                                           
-##                   Kappa : 0.5403          
-##  Mcnemar's Test P-Value : 0.26794         
+##                   Kappa : 0.4611          
+##  Mcnemar's Test P-Value : 0.2463          
 ##                                           
-##             Sensitivity : 0.65000         
-##             Specificity : 0.91828         
-##          Pos Pred Value : 0.57778         
-##          Neg Pred Value : 0.93846         
-##              Prevalence : 0.14679         
-##          Detection Rate : 0.09541         
-##    Detection Prevalence : 0.16514         
-##       Balanced Accuracy : 0.78414         
+##             Sensitivity : 0.6020          
+##             Specificity : 0.8808          
+##          Pos Pred Value : 0.5364          
+##          Neg Pred Value : 0.9062          
+##              Prevalence : 0.1863          
+##          Detection Rate : 0.1122          
+##    Detection Prevalence : 0.2091          
+##       Balanced Accuracy : 0.7414          
 ##                                           
 ##        'Positive' Class : TRUE            
 ## 
@@ -780,11 +771,19 @@ temp
 
 ```
 ##    cluster sum_arg sum_pred sensitivity
-## 5        5      32       17        0.53
-## 15      15      27       18        0.67
-## 14      14      20       17        0.85
+## 5        5      32       18        0.56
+## 15      15      27       17        0.63
+## 14      14      20       16        0.80
 ## 12      12       1        0        0.00
+## 2        2      17        8        0.47
+## 13      13       1        0        0.00
 ```
+
+```r
+dotplot(sensitivity ~ cluster, data = temp)
+```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-2.png)
 
 ```r
 # Examine the coefficients

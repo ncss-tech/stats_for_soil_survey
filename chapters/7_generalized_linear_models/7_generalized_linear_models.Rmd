@@ -288,8 +288,13 @@ data <- data.frame(
    )
 
 # Modify some of the geodata variables
+data$mast <- data$temp - 4
+idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x, na.rm = TRUE), 2))
+names(idx)[2] <- "cluster_mast"
+data <- join(data, idx, by = "cluster", type = "left")
+
 data$cluster <- factor(data$cluster, levels = 1:15)
-data$cluster2 <- reorder(data$cluster, data$temp)
+data$cluster2 <- reorder(data$cluster, data$cluster_mast)
 data$gsi <- with(data, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
 data$ndvi <- with(data, (ls_4 - ls_3) / (ls_4 + ls_3))
 data$sw <- cos(data$aspect - 255)
@@ -364,14 +369,10 @@ After we're satisfied no additional variables will improve the fit, we need to e
 
 ```{r evaluation}
 # Standard diagnostic plots for glm() objects
-par(mfrow = c(1, 4), ask = FALSE)
-plot(argi_glm) # plot regression diagnostics
-dev.off()
+# plot(argi_glm) # plot regression diagnostics
 
 # Term and partial residual plots
-par(mfrow = c(2, 3), ask = FALSE)
-termplot(argi_glm, partial.resid = TRUE)
-dev.off()
+# termplot(argi_glm, partial.resid = TRUE)
 
 # Variance inflation, greater than 5 or 10 is bad
 vif(argi_glm)
@@ -401,10 +402,13 @@ temp <- by(comp_sub, list(comp_sub$cluster), function(x) with(x, data.frame(
   sum_pred = sum(pred, na.rm = T),
   sensitivity = round(sum(pred == argillic) / length(argillic), 2)
   )))
-do.call(rbind, temp)
+temp <- do.call(rbind, temp)
+temp
+
+dotplot(sensitivity ~ cluster, data = temp)
 
 
-train_sub <- subset(train, !(cluster2 %in% c(2, 3, 6, 7, 8, 13)))
+train_sub <- subset(train, temp < 22 + 4)
 
 # full <- glm(argillic ~ ., data = train_sub, family = binomial(link = "cloglog"))
 # null <- glm(argillic ~ 1, data = train_sub, family = binomial(link = "cloglog"))
@@ -426,6 +430,8 @@ temp <- by(comp_sub, list(comp_sub$cluster2), function(x) with(x, data.frame(
   sensitivity = round(sum(pred == argillic) / length(argillic), 2))))
 temp <- do.call(rbind, temp)
 temp
+
+dotplot(sensitivity ~ cluster, data = temp)
 
 # Examine the coefficients
 summary(argi_glm)
