@@ -1,16 +1,15 @@
 ---
 title: 6 - Linear Regression
 author: Stephen Roecker &  Katey Yoast
-date: "Tuesday, March 5, 2016"
+date: "Tuesday, March 7, 2016"
 output:
   html_document:
-    keep_md: yes
     number_sections: yes
     toc: yes
     toc_depth: 3
     toc_float:
-      collapsed: yes
-      smooth_scroll: no
+      collapsed: no
+      smooth_scroll: yes
 ---
 
 
@@ -354,6 +353,7 @@ round(cor(s_hill, use = "pairwise"), 2)
 
 ```r
 # Scatterplot Matrices
+par(mfrow = c(1, 2))
 spm(s_fan, use = "pairwise", main = "Scatterplot Matrix for Fans")
 ```
 
@@ -364,6 +364,15 @@ spm(s_hill, use = "pairwise", main = "Scatterplot Matrix for Hills")
 ```
 
 ![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-2.png)
+
+```r
+dev.off()
+```
+
+```
+## RStudioGD 
+##         2
+```
 
 In examing the correlation matrices we don't see a strong relationships with either elevation for slope gradient.
 
@@ -460,7 +469,7 @@ plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 ```
 
 
-### Exercise 1: View the data in ArcGIS
+### Exercise 1: View the geodata in ArcGIS
 
 - Examine the shapefile in ArcGIS along with our potential predictive variables (hint classify the Shapefile symbology using the frags column)
 - Discuss with your group, and report your observations or hypotheses
@@ -498,15 +507,14 @@ files <- c(
   cluster = "cluster152.tif" # unsupervised classification
   )
 
-geodata_f <- paste0(folder, files) # combine the folder directory and file names
+geodata_f <- sapply(files, function(x) paste0(folder, x)) # combine the folder directory and file names
 
 # Create a raster stack
 geodata_r <- stack(geodata_f)
-names(geodata_r) <- names(files)
 
 # Extract the geodata and imbed in a data frame
 data <- data.frame(
-   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "landform", "argillic.horizon")],
+   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "landform", "tax_subgroup")],
    extract(geodata_r, pedons_sp)
    )
 
@@ -649,53 +657,54 @@ round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
 
 ```r
 # Create scatterplots
-spm(train[c("fragst", terrain1)])
+par(mfrow = c(1, 2))
+# spm(train[c("fragst", terrain1)])
+spm(train[c("fragst", terrain2)])
 ```
 
 ![plot of chunk spatial](figure/spatial-1.png)
 
 ```r
-spm(train[c("fragst", terrain2)])
+spm(train[c("fragst", climate)])
 ```
 
 ![plot of chunk spatial](figure/spatial-2.png)
 
 ```r
-spm(train[c("fragst", climate)])
+# spm(train[c("fragst", ls)])
+spm(train[c("fragst", pc)])
 ```
 
 ![plot of chunk spatial](figure/spatial-3.png)
 
 ```r
-spm(train[c("fragst", pc)])
+spm(train[c("fragst", tc)])
 ```
 
 ![plot of chunk spatial](figure/spatial-4.png)
 
 ```r
-spm(train[c("fragst", tc)])
+# spm(train[c("fragst", rad)])
+dev.off()
 ```
 
-![plot of chunk spatial](figure/spatial-5.png)
-
-```r
-spm(train[c("fragst", rad)])
 ```
-
-![plot of chunk spatial](figure/spatial-6.png)
+## RStudioGD 
+##         2
+```
 
 ```r
 # Create boxplots
 bwplot(fragst ~ cluster, data = train)
 ```
 
-![plot of chunk spatial](figure/spatial-7.png)
+![plot of chunk spatial](figure/spatial-5.png)![plot of chunk spatial](figure/spatial-6.png)
 
 ```r
 bwplot(fragst ~ cluster2, data = train)
 ```
 
-![plot of chunk spatial](figure/spatial-8.png)
+![plot of chunk spatial](figure/spatial-7.png)
 
 The correlation matrices and scatter plots above show that that surface rock fragments have moderate correlations with some of the variables, particularly the landsat bands and derivatives. This makes sense given that surface rock fragments are at the surface, unlike most soil properties. 
 
@@ -706,7 +715,7 @@ Examining the density plots on the diagonal axis of the scatterplots we can see 
 
 # Modeling
 
-## Model training
+## Model Training
 
 Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that confuses the model. Also the order is which the variables are included or excluded from the model effects the significance of the others, and thus several weak predictors might mask the effect of one strong predictor. Therefore it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
 
@@ -772,6 +781,8 @@ add1(null, full, test = "F") # using the AIC test the effect of '
 
 We can see as the correlation matrices showed earlier that the pc predictors have some of the smallest AIC and reduce the deviance the most. So lets add pc\_2 to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions, until the model is saturated.
 
+We can continue adding predictors to the model until we no longer see an increase in the adjusted R2. At some point the adjusted R2 will level off, versus the R2 which will continue to incrementally increase. The difference between the adjusted R2 vs the R2, is that the adjusted R2 is penalizes model for each additional predictor added to model, similarly to the AIC.
+
 
 ```r
 fragst_lm <- update(null, . ~ . + pc_2) # add one or several variables to the model 
@@ -815,35 +826,15 @@ summary(fragst_lm)
 ## F-statistic:   106 on 5 and 912 DF,  p-value: < 2.2e-16
 ```
 
-We can continue adding predictors to the model until we no longer see an increase in the adjusted R2. At some point the adjusted R2 will level off, versus the R2 which will continue to incrementally increase. The difference between the adjusted R2 vs the R2, is that the adjusted R2 is penalizes model for each additional predictor added to model, similarly to the AIC.
 
-After we've constructed a model 
+## Model Evaluation
 
+After we're satisfied no additional variables will improve the fit, we need to evaluate it's residuals, collinearity, accuracy, and model coefficients.
 
-```r
-# test <- CVlm(na.exclude(train), formula(fragst_lm), m = 10, plotit = FALSE)
-# with(test, cor(frags, ilogit(cvpred) * 100)^2) # cv r2
-
-anova(fragst_lm)
-```
-
-```
-## Analysis of Variance Table
-## 
-## Response: fragst
-##            Df  Sum Sq Mean Sq F value    Pr(>F)    
-## pc_2        1  413.65  413.65 307.886 < 2.2e-16 ***
-## pc_1        1  192.37  192.37 143.180 < 2.2e-16 ***
-## temp        1   28.54   28.54  21.243 4.623e-06 ***
-## twi         1   35.61   35.61  26.504 3.223e-07 ***
-## precipsum   1   41.78   41.78  31.099 3.231e-08 ***
-## Residuals 912 1225.30    1.34                      
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-```
 
 ```r
-par(mfrow = c(1, 4))
+# Standard diagnostic plots for lm() objects
+par(mfrow = c(2, 2), pty = "s", ask = FALSE)
 plot(fragst_lm)
 ```
 
@@ -854,12 +845,18 @@ dev.off()
 ```
 
 ```
-## null device 
-##           1
+## RStudioGD 
+##         2
 ```
 
 ```r
-par(mfrow = c(1, 4))
+# Term and partial residual plots
+par(mfrow = c(2, 3), ask = FALSE)
+```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-2.png)
+
+```r
 termplot(fragst_lm, partial.resid = TRUE)
 dev.off()
 ```
@@ -870,21 +867,30 @@ dev.off()
 ```
 
 ```r
-vif(fragst_lm)
+# Variance inflation, greater than 5 or 10 is bad
+sqrt(vif(fragst_lm))
 ```
 
 ```
 ##      pc_2      pc_1      temp       twi precipsum 
-##    3.1829    1.6868    3.9061    1.5162    2.6580
+##  1.784068  1.298769  1.976386  1.231341  1.630337
 ```
 
 ```r
-train$predict <- ilogit(predict(fragst_lm, train)) * 100
+# Adjusted R2
+summary(fragst_lm)$adj.r.squared
+```
 
-with(train, plot(frags, predict, xlim = c(0, 100), ylim = c(0, 100)))
-abline(0, 1)
+```
+## [1] 0.3640385
+```
 
-with(train, sqrt(mean((frags - predict)^2, na.rm = T))) # RMSE = root mean square error
+```r
+# Generate predictions
+train$predict <- ilogit(predict(fragst_lm, train)) * 100 # apply reverse transform
+
+# Root mean square error (RMSE)
+with(train, sqrt(mean((frags - predict)^2, na.rm = T)))
 ```
 
 ```
@@ -892,7 +898,8 @@ with(train, sqrt(mean((frags - predict)^2, na.rm = T))) # RMSE = root mean squar
 ```
 
 ```r
-with(train, mean(abs(frags - predict), na.rm = T)) # MAE = mean absolute error
+# Mean absolute error
+with(train, mean(abs(frags - predict), na.rm = T))
 ```
 
 ```
@@ -900,14 +907,19 @@ with(train, mean(abs(frags - predict), na.rm = T)) # MAE = mean absolute error
 ```
 
 ```r
-temp <- by(train, list(train$cluster2), FUN = function(x) 
+# Plot the observed vs predicted values
+with(train, plot(frags, predict, xlim = c(0, 100), ylim = c(0, 100)))
+abline(0, 1)
+
+# Examine the RMSE for each cluster
+temp <- by(train, list(train$cluster2), function(x) 
   with(x, data.frame(
   cluster = unique(cluster2), 
   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
   n = length(frags)
   )))
-temp2 <- do.call(rbind, temp)
-temp2
+temp <- do.call(rbind, temp)
+temp
 ```
 
 ```
@@ -928,6 +940,13 @@ temp2
 ```
 
 ```r
+# or using plyr
+# 
+# ddply(train, .(cluster2), summarize,
+#   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+#   n = length(frags)
+# )
+#
 # or using dplyr package
 # 
 # group_by(train, cluster2) %>% summarize(
@@ -935,34 +954,101 @@ temp2
 #   n = length(frags)
 # )
 
-# or using plyr
-# 
-# ddply(train, .(cluster2), summarize,
-#   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
-#   n = length(frags)
-# )
+dotplot(rmse ~ cluster, data = temp)
 
-dotplot(rmse ~ cluster, data = temp2)
+# fragst_lm <- update(null, . ~ . + pc_2 + pc_1 + temp + twi + precipsum + cluster) # add one or several variables to the model
 
-# fragst_lm <- update(null, . ~ . + pc_2 + pc_1 + temp + twi + precipsum + cluster) # add one or several variables to the model 
+# Examine the coefficients
+summary(fragst_lm)
 ```
+
+```
+## 
+## Call:
+## lm(formula = fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -4.1703 -0.6741  0.0487  0.7576  3.7761 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) -5.3226111  0.9232371  -5.765 1.12e-08 ***
+## pc_2        -0.0390539  0.0058898  -6.631 5.71e-11 ***
+## pc_1         0.0088757  0.0009487   9.356  < 2e-16 ***
+## temp         0.2183623  0.0296425   7.367 3.92e-13 ***
+## twi         -0.0855969  0.0151303  -5.657 2.06e-08 ***
+## precipsum    0.0578040  0.0103655   5.577 3.23e-08 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 1.159 on 912 degrees of freedom
+##   (50 observations deleted due to missingness)
+## Multiple R-squared:  0.3675,	Adjusted R-squared:  0.364 
+## F-statistic:   106 on 5 and 912 DF,  p-value: < 2.2e-16
+```
+
+```r
+ilogit(fragst_lm$coefficients) * 100
+```
+
+```
+## (Intercept)        pc_2        pc_1        temp         twi   precipsum 
+##   0.4856296  49.0237777  50.2218919  55.4374684  47.8613837  51.4446988
+```
+
+```r
+anova(fragst_lm) # importance of each predictor assess by the amount of variance they explain
+```
+
+```
+## Analysis of Variance Table
+## 
+## Response: fragst
+##            Df  Sum Sq Mean Sq F value    Pr(>F)    
+## pc_2        1  413.65  413.65 307.886 < 2.2e-16 ***
+## pc_1        1  192.37  192.37 143.180 < 2.2e-16 ***
+## temp        1   28.54   28.54  21.243 4.623e-06 ***
+## twi         1   35.61   35.61  26.504 3.223e-07 ***
+## precipsum   1   41.78   41.78  31.099 3.231e-08 ***
+## Residuals 912 1225.30    1.34                      
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
 
 
 ```r
+# Custom function to return the predictions and their standard errors
 predfun <- function(model, data) {
-  v <- predict(model, data, se.fit=TRUE)
-  cbind(p = as.vector(ilogit(v$fit) * 100), se=as.vector(ilogit(v$se.fit)) * 100)
-}
+  v <- predict(model, data, se.fit = TRUE)
+  cbind(
+    p = as.vector(ilogit(v$fit) * 100),
+    se = as.vector(ilogit(v$se.fit)) * 100)
+  }
 
-r <- predict(geodata_r, fragst_lm, fun = predfun, index = 1:2, progress="text")
-writeRaster(r[[1]], "frags.tif", overwrite = T, progress = "text")
-writeRaster(r[[2]], "frags_se.tif", overwrite = T, progress = "text")
+# Generate spatial predictions
+# r <- predict(geodata_r, fragst_lm, fun = predfun, index = 1:2, progress = "text")
 
-plot(raster("C:/workspace/test_fragst4.tif"))
+# Export the results
+# writeRaster(r[[1]], "frags.tif", overwrite = T, progress = "text")
+# writeRaster(r[[2]], "frags_se.tif", overwrite = T, progress = "text")
+
+plot(raster("C:/workspace/frags.tif"))
+plot(ca794, add = TRUE)
+plot(raster("C:/workspace/frags_se.tif"))
 plot(ca794, add = TRUE)
 ```
 
+### Exercise 2: View the predictions in ArcGIS
+
+- Examine the raster predictions in ArcGIS  and compare them to your Shapefile of that contain the original observations (hint classify the Shapefile symbology using the frags column)
+- Discuss with your group, and report your observations or hypotheses
+
+
 # References
+
+Beckett, P.H.T., and R. Webster, 1971. Soil variability: a review. Soils Fertil. 34 (1), 1-15.
 
 Nauman, T. W., and J. A. Thompson, 2014. Semi-automated disaggregation of conventional soil maps using knowledge driven data mining and classification trees. Geoderma 213:385-399. [http://www.sciencedirect.com/science/article/pii/S0016706113003066](http://www.sciencedirect.com/science/article/pii/S0016706113003066)
 

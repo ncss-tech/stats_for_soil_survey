@@ -1,16 +1,15 @@
 ---
 title: 6 - Linear Regression
 author: Stephen Roecker &  Katey Yoast
-date: "Tuesday, March 5, 2016"
+date: "Tuesday, March 7, 2016"
 output:
   html_document:
-    keep_md: yes
     number_sections: yes
     toc: yes
     toc_depth: 3
     toc_float:
-      collapsed: yes
-      smooth_scroll: no
+      collapsed: no
+      smooth_scroll: yes
 ---
 
 
@@ -164,8 +163,10 @@ round(cor(s_fan, use = "pairwise"), 2)
 round(cor(s_hill, use = "pairwise"), 2)
 
 # Scatterplot Matrices
+par(mfrow = c(1, 2))
 spm(s_fan, use = "pairwise", main = "Scatterplot Matrix for Fans")
 spm(s_hill, use = "pairwise", main = "Scatterplot Matrix for Hills")
+dev.off()
 ```
 
 In examing the correlation matrices we don't see a strong relationships with either elevation for slope gradient.
@@ -228,7 +229,7 @@ plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 ```
 
 
-### Exercise 1: View the data in ArcGIS
+### Exercise 1: View the geodata in ArcGIS
 
 - Examine the shapefile in ArcGIS along with our potential predictive variables (hint classify the Shapefile symbology using the frags column)
 - Discuss with your group, and report your observations or hypotheses
@@ -265,15 +266,14 @@ files <- c(
   cluster = "cluster152.tif" # unsupervised classification
   )
 
-geodata_f <- paste0(folder, files) # combine the folder directory and file names
+geodata_f <- sapply(files, function(x) paste0(folder, x)) # combine the folder directory and file names
 
 # Create a raster stack
 geodata_r <- stack(geodata_f)
-names(geodata_r) <- names(files)
 
 # Extract the geodata and imbed in a data frame
 data <- data.frame(
-   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "landform", "argillic.horizon")],
+   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "landform", "tax_subgroup")],
    extract(geodata_r, pedons_sp)
    )
 
@@ -331,12 +331,15 @@ round(cor(train[c("fragst", tc)], use = "pairwise"), 2)
 round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
 
 # Create scatterplots
-spm(train[c("fragst", terrain1)])
+par(mfrow = c(1, 2))
+# spm(train[c("fragst", terrain1)])
 spm(train[c("fragst", terrain2)])
 spm(train[c("fragst", climate)])
+# spm(train[c("fragst", ls)])
 spm(train[c("fragst", pc)])
 spm(train[c("fragst", tc)])
-spm(train[c("fragst", rad)])
+# spm(train[c("fragst", rad)])
+dev.off()
 
 # Create boxplots
 bwplot(fragst ~ cluster, data = train)
@@ -352,7 +355,7 @@ Examining the density plots on the diagonal axis of the scatterplots we can see 
 
 # Modeling
 
-## Model training
+## Model Training
 
 Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that confuses the model. Also the order is which the variables are included or excluded from the model effects the significance of the others, and thus several weak predictors might mask the effect of one strong predictor. Therefore it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
 
@@ -368,6 +371,8 @@ add1(null, full, test = "F") # using the AIC test the effect of '
 ```
 
 We can see as the correlation matrices showed earlier that the pc predictors have some of the smallest AIC and reduce the deviance the most. So lets add pc\_2 to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions, until the model is saturated.
+
+We can continue adding predictors to the model until we no longer see an increase in the adjusted R2. At some point the adjusted R2 will level off, versus the R2 which will continue to incrementally increase. The difference between the adjusted R2 vs the R2, is that the adjusted R2 is penalizes model for each additional predictor added to model, similarly to the AIC.
 
 ```{r}
 fragst_lm <- update(null, . ~ . + pc_2) # add one or several variables to the model 
@@ -385,49 +390,51 @@ fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
 summary(fragst_lm)
 ```
 
-We can continue adding predictors to the model until we no longer see an increase in the adjusted R2. At some point the adjusted R2 will level off, versus the R2 which will continue to incrementally increase. The difference between the adjusted R2 vs the R2, is that the adjusted R2 is penalizes model for each additional predictor added to model, similarly to the AIC.
 
-After we've constructed a model 
+## Model Evaluation
+
+After we're satisfied no additional variables will improve the fit, we need to evaluate it's residuals, collinearity, accuracy, and model coefficients.
 
 ```{r}
-# test <- CVlm(na.exclude(train), formula(fragst_lm), m = 10, plotit = FALSE)
-# with(test, cor(frags, ilogit(cvpred) * 100)^2) # cv r2
-
-anova(fragst_lm)
-
-par(mfrow = c(1, 4))
+# Standard diagnostic plots for lm() objects
+par(mfrow = c(2, 2), pty = "s", ask = FALSE)
 plot(fragst_lm)
 dev.off()
 
-par(mfrow = c(1, 4))
+# Term and partial residual plots
+par(mfrow = c(2, 3), ask = FALSE)
 termplot(fragst_lm, partial.resid = TRUE)
 dev.off()
 
-vif(fragst_lm)
+# Variance inflation, greater than 5 or 10 is bad
+sqrt(vif(fragst_lm))
 
-train$predict <- ilogit(predict(fragst_lm, train)) * 100
+# Adjusted R2
+summary(fragst_lm)$adj.r.squared
 
+# Generate predictions
+train$predict <- ilogit(predict(fragst_lm, train)) * 100 # apply reverse transform
+
+# Root mean square error (RMSE)
+with(train, sqrt(mean((frags - predict)^2, na.rm = T)))
+
+# Mean absolute error
+with(train, mean(abs(frags - predict), na.rm = T))
+
+# Plot the observed vs predicted values
 with(train, plot(frags, predict, xlim = c(0, 100), ylim = c(0, 100)))
 abline(0, 1)
 
-with(train, sqrt(mean((frags - predict)^2, na.rm = T))) # RMSE = root mean square error
-with(train, mean(abs(frags - predict), na.rm = T)) # MAE = mean absolute error
-
-temp <- by(train, list(train$cluster2), FUN = function(x) 
+# Examine the RMSE for each cluster
+temp <- by(train, list(train$cluster2), function(x) 
   with(x, data.frame(
   cluster = unique(cluster2), 
   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
   n = length(frags)
   )))
-temp2 <- do.call(rbind, temp)
-temp2
+temp <- do.call(rbind, temp)
+temp
 
-# or using dplyr package
-# 
-# group_by(train, cluster2) %>% summarize(
-#   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
-#   n = length(frags)
-# )
 
 # or using plyr
 # 
@@ -435,27 +442,58 @@ temp2
 #   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
 #   n = length(frags)
 # )
+#
+# or using dplyr package
+# 
+# group_by(train, cluster2) %>% summarize(
+#   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+#   n = length(frags)
+# )
 
-dotplot(rmse ~ cluster, data = temp2)
+dotplot(rmse ~ cluster, data = temp)
 
-# fragst_lm <- update(null, . ~ . + pc_2 + pc_1 + temp + twi + precipsum + cluster) # add one or several variables to the model 
+# fragst_lm <- update(null, . ~ . + pc_2 + pc_1 + temp + twi + precipsum + cluster) # add one or several variables to the model
+
+# Examine the coefficients
+summary(fragst_lm)
+
+ilogit(fragst_lm$coefficients) * 100
+
+anova(fragst_lm) # importance of each predictor assess by the amount of variance they explain
 ```
 
+
 ```{r, eval=FALSE}
+# Custom function to return the predictions and their standard errors
 predfun <- function(model, data) {
-  v <- predict(model, data, se.fit=TRUE)
-  cbind(p = as.vector(ilogit(v$fit) * 100), se=as.vector(ilogit(v$se.fit)) * 100)
-}
+  v <- predict(model, data, se.fit = TRUE)
+  cbind(
+    p = as.vector(ilogit(v$fit) * 100),
+    se = as.vector(ilogit(v$se.fit)) * 100)
+  }
 
-r <- predict(geodata_r, fragst_lm, fun = predfun, index = 1:2, progress="text")
-writeRaster(r[[1]], "frags.tif", overwrite = T, progress = "text")
-writeRaster(r[[2]], "frags_se.tif", overwrite = T, progress = "text")
+# Generate spatial predictions
+# r <- predict(geodata_r, fragst_lm, fun = predfun, index = 1:2, progress = "text")
 
-plot(raster("C:/workspace/test_fragst4.tif"))
+# Export the results
+# writeRaster(r[[1]], "frags.tif", overwrite = T, progress = "text")
+# writeRaster(r[[2]], "frags_se.tif", overwrite = T, progress = "text")
+
+plot(raster("C:/workspace/frags.tif"))
+plot(ca794, add = TRUE)
+plot(raster("C:/workspace/frags_se.tif"))
 plot(ca794, add = TRUE)
 ```
 
+### Exercise 2: View the predictions in ArcGIS
+
+- Examine the raster predictions in ArcGIS  and compare them to your Shapefile of that contain the original observations (hint classify the Shapefile symbology using the frags column)
+- Discuss with your group, and report your observations or hypotheses
+
+
 # References
+
+Beckett, P.H.T., and R. Webster, 1971. Soil variability: a review. Soils Fertil. 34 (1), 1-15.
 
 Nauman, T. W., and J. A. Thompson, 2014. Semi-automated disaggregation of conventional soil maps using knowledge driven data mining and classification trees. Geoderma 213:385-399. [http://www.sciencedirect.com/science/article/pii/S0016706113003066](http://www.sciencedirect.com/science/article/pii/S0016706113003066)
 
