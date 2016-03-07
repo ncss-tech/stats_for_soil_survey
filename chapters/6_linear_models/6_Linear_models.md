@@ -519,8 +519,13 @@ data <- data.frame(
    )
 
 # Modify some of the geodata variables
+data$mast <- data$temp - 4
+idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x, na.rm = TRUE), 2))
+names(idx)[2] <- "cluster_mast"
+data <- join(data, idx, by = "cluster", type = "left")
+
 data$cluster <- factor(data$cluster, levels = 1:15)
-data$cluster2 <- reorder(data$cluster, data$temp)
+data$cluster2 <- reorder(data$cluster, data$cluster_mast)
 data$gsi <- with(data, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
 data$ndvi <- with(data, (ls_4 - ls_3) / (ls_4 + ls_3))
 data$sw <- cos(data$aspect - 255)
@@ -657,7 +662,6 @@ round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
 
 ```r
 # Create scatterplots
-par(mfrow = c(1, 2))
 # spm(train[c("fragst", terrain1)])
 spm(train[c("fragst", terrain2)])
 ```
@@ -678,33 +682,21 @@ spm(train[c("fragst", pc)])
 ![plot of chunk spatial](figure/spatial-3.png)
 
 ```r
-spm(train[c("fragst", tc)])
+# spm(train[c("fragst", tc)])
+# spm(train[c("fragst", rad)])
+
+
+# Create boxplots
+bwplot(fragst ~ cluster, data = train)
 ```
 
 ![plot of chunk spatial](figure/spatial-4.png)
 
 ```r
-# spm(train[c("fragst", rad)])
-dev.off()
-```
-
-```
-## RStudioGD 
-##         2
-```
-
-```r
-# Create boxplots
-bwplot(fragst ~ cluster, data = train)
-```
-
-![plot of chunk spatial](figure/spatial-5.png)![plot of chunk spatial](figure/spatial-6.png)
-
-```r
 bwplot(fragst ~ cluster2, data = train)
 ```
 
-![plot of chunk spatial](figure/spatial-7.png)
+![plot of chunk spatial](figure/spatial-5.png)
 
 The correlation matrices and scatter plots above show that that surface rock fragments have moderate correlations with some of the variables, particularly the landsat bands and derivatives. This makes sense given that surface rock fragments are at the surface, unlike most soil properties. 
 

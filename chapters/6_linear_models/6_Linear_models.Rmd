@@ -278,8 +278,13 @@ data <- data.frame(
    )
 
 # Modify some of the geodata variables
+data$mast <- data$temp - 4
+idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x, na.rm = TRUE), 2))
+names(idx)[2] <- "cluster_mast"
+data <- join(data, idx, by = "cluster", type = "left")
+
 data$cluster <- factor(data$cluster, levels = 1:15)
-data$cluster2 <- reorder(data$cluster, data$temp)
+data$cluster2 <- reorder(data$cluster, data$cluster_mast)
 data$gsi <- with(data, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
 data$ndvi <- with(data, (ls_4 - ls_3) / (ls_4 + ls_3))
 data$sw <- cos(data$aspect - 255)
@@ -331,15 +336,14 @@ round(cor(train[c("fragst", tc)], use = "pairwise"), 2)
 round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
 
 # Create scatterplots
-par(mfrow = c(1, 2))
 # spm(train[c("fragst", terrain1)])
 spm(train[c("fragst", terrain2)])
 spm(train[c("fragst", climate)])
 # spm(train[c("fragst", ls)])
 spm(train[c("fragst", pc)])
-spm(train[c("fragst", tc)])
+# spm(train[c("fragst", tc)])
 # spm(train[c("fragst", rad)])
-dev.off()
+
 
 # Create boxplots
 bwplot(fragst ~ cluster, data = train)
