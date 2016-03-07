@@ -6,7 +6,7 @@ March 2016
 
 
 
-<!-- This document is based on `aqp` version 1.9.7 and `sharpshootR` version 0.9.6. -->
+<!-- This document is based on `aqp` version 1.9.8 and `sharpshootR` version 0.9.6. -->
 
 <hr>
 <span style="font-size:200%">Before You Start</span><br>
@@ -1182,17 +1182,20 @@ nmds <- metaMDS(m)
 ## Square root transformation
 ## Wisconsin double standardization
 ## Run 0 stress 0.1960707 
-## Run 1 stress 0.2210913 
-## Run 2 stress 0.1957942 
+## Run 1 stress 0.1987168 
+## Run 2 stress 0.2227529 
+## Run 3 stress 0.1986992 
+## Run 4 stress 0.1979035 
+## Run 5 stress 0.1957961 
 ## ... New best solution
-## ... procrustes: rmse 0.008310743  max resid 0.03317656 
-## Run 3 stress 0.220523 
-## Run 4 stress 0.2210908 
-## Run 5 stress 0.2137711 
-## Run 6 stress 0.2276675 
-## Run 7 stress 0.2228174 
-## Run 8 stress 0.1957951 
-## ... procrustes: rmse 0.0005805943  max resid 0.002837496 
+## ... procrustes: rmse 0.008368502  max resid 0.0330334 
+## Run 6 stress 0.2448173 
+## Run 7 stress 0.2189626 
+## Run 8 stress 0.2136949 
+## Run 9 stress 0.2307125 
+## Run 10 stress 0.1957943 
+## ... New best solution
+## ... procrustes: rmse 0.0006482733  max resid 0.003164699 
 ## *** Solution reached
 ```
 
@@ -1229,7 +1232,7 @@ title('Sites', line=-0.5)
 
 
 ----------------------------
-This document is based on `aqp` version 1.9.7 and `soilDB` version 1.7 and `sharpshootR` version 0.9.6.
+This document is based on `aqp` version 1.9.8 and `soilDB` version 1.7.1 and `sharpshootR` version 0.9.6.
 ----------------------------
 
 
