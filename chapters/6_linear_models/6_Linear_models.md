@@ -834,37 +834,17 @@ After we're satisfied no additional variables will improve the fit, we need to e
 
 ```r
 # Standard diagnostic plots for lm() objects
-par(mfrow = c(2, 2), pty = "s", ask = FALSE)
 plot(fragst_lm)
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
-
-```r
-dev.off()
-```
-
-```
-## RStudioGD 
-##         2
-```
+![plot of chunk diagnostics](figure/diagnostics-1.png)![plot of chunk diagnostics](figure/diagnostics-2.png)![plot of chunk diagnostics](figure/diagnostics-3.png)![plot of chunk diagnostics](figure/diagnostics-4.png)
 
 ```r
 # Term and partial residual plots
-par(mfrow = c(2, 3), ask = FALSE)
-```
-
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-2.png)
-
-```r
 termplot(fragst_lm, partial.resid = TRUE)
-dev.off()
 ```
 
-```
-## null device 
-##           1
-```
+![plot of chunk diagnostics](figure/diagnostics-5.png)![plot of chunk diagnostics](figure/diagnostics-6.png)![plot of chunk diagnostics](figure/diagnostics-7.png)![plot of chunk diagnostics](figure/diagnostics-8.png)![plot of chunk diagnostics](figure/diagnostics-9.png)
 
 ```r
 # Variance inflation, greater than 5 or 10 is bad
@@ -908,9 +888,29 @@ with(train, mean(abs(frags - predict), na.rm = T))
 
 ```r
 # Plot the observed vs predicted values
-with(train, plot(frags, predict, xlim = c(0, 100), ylim = c(0, 100)))
+plot(train$frags, train$predict, xlim = c(0, 100), ylim = c(0, 100))
 abline(0, 1)
+```
 
+![plot of chunk diagnostics](figure/diagnostics-10.png)
+
+```r
+sum(train$frags < 15)
+```
+
+```
+## [1] 34
+```
+
+```r
+sum(train$frags > 80)
+```
+
+```
+## [1] 311
+```
+
+```r
 # Examine the RMSE for each cluster
 temp <- by(train, list(train$cluster2), function(x) 
   with(x, data.frame(
@@ -955,7 +955,11 @@ temp
 # )
 
 dotplot(rmse ~ cluster, data = temp)
+```
 
+![plot of chunk diagnostics](figure/diagnostics-11.png)
+
+```r
 # fragst_lm <- update(null, . ~ . + pc_2 + pc_1 + temp + twi + precipsum + cluster) # add one or several variables to the model
 
 # Examine the coefficients

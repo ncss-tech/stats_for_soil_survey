@@ -395,16 +395,12 @@ summary(fragst_lm)
 
 After we're satisfied no additional variables will improve the fit, we need to evaluate it's residuals, collinearity, accuracy, and model coefficients.
 
-```{r}
+```{r diagnostics}
 # Standard diagnostic plots for lm() objects
-par(mfrow = c(2, 2), pty = "s", ask = FALSE)
 plot(fragst_lm)
-dev.off()
 
 # Term and partial residual plots
-par(mfrow = c(2, 3), ask = FALSE)
 termplot(fragst_lm, partial.resid = TRUE)
-dev.off()
 
 # Variance inflation, greater than 5 or 10 is bad
 sqrt(vif(fragst_lm))
@@ -422,8 +418,12 @@ with(train, sqrt(mean((frags - predict)^2, na.rm = T)))
 with(train, mean(abs(frags - predict), na.rm = T))
 
 # Plot the observed vs predicted values
-with(train, plot(frags, predict, xlim = c(0, 100), ylim = c(0, 100)))
+plot(train$frags, train$predict, xlim = c(0, 100), ylim = c(0, 100))
 abline(0, 1)
+
+sum(train$frags < 15)
+
+sum(train$frags > 80)
 
 # Examine the RMSE for each cluster
 temp <- by(train, list(train$cluster2), function(x) 
