@@ -8,8 +8,8 @@ output:
     toc: yes
     toc_depth: 3
     toc_float:
-      collapsed: no
-      smooth_scroll: yes
+      collapsed: yes
+      smooth_scroll: no
 ---
 
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
@@ -83,7 +83,7 @@ library(raster) # guess
 library(rgdal) # spatial import
 library(lattice) # graphing
 library(reshape2) # data manipulation
-library(caret) # printing
+library(caret) # classification and regression training
 library(car) # additional regression tools
 ```
 
@@ -120,14 +120,15 @@ table(s$argillic.horizon, useNA = "ifany") # tabulate the number of argillic hor
 s$argillic <- grepl("arg", s$tax_subgroup)
 
 table(s$argillic, useNA = "ifany")
+round(prop.table(table(s$argillic, useNA = "ifany")) * 100)
 ```
 
 Ideally, if the diagnostic horizon table had been populated consistently we could have used the upper depth to diagnostic feature to filter out argillic horizons that start below 50cm, which may not be representative of "good" argillic horizons and may therefore have gotten correlated to a Torripsamments anyway. Not only are unrepresentative sites confusing for scientists, they're equally confusing for models. However, as we saw earlier, some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name, since it gives us the biggest sample.
 
 ```{r diagnostic}
 d <- diagnostic_hz(pedons)
-idx <- unique(d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"])
-test <- s$peiid %in% idx
+peiid <- unique(d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"])
+test <- s$peiid %in% peiid
 summary(test)
 ```
 
@@ -154,7 +155,8 @@ Examining the above frequency table we can see that argillic horizons occur pred
 
 s_sub <- subset(s, landform == "fan") # subset fan landforms
 
-with(s_sub, round(prop.table(table(hillslope_pos, argillic, useNA = "ifany"), 2) * 100)) # cross tabulate and calculate proportions, the "2" calculates the proportions relative to the column totals
+# Cross tabulate and calculate proportions, the "2" calculates the proportions relative to the column totals
+with(s_sub, round(prop.table(table(hillslope_pos, argillic, useNA = "ifany"), 2) * 100)) 
 
 # Slope shape
 
@@ -184,7 +186,6 @@ Looking at our numeric variables only depth to bedrock seems to show much separa
 Next we'll look at soil scientist bias. The question being: Are some soil scientists more likely to describe argillic horizons than others? Due to the excess number of soil scientist that have worked on CA794, including detailees, we've filtered the names of soil scientist to include just the top 3 mappers and given priority to the most senior soil scientists when they occur together.
 
 ```{r bias}
-# Function to filter out the top 3 soil scientists
 # Custom function to filter out the top 3 soil scientists
 desc_test <- function(old) {
   old <- as.character(old)
@@ -227,9 +228,9 @@ pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to spatial object
 pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # reproject
 
 # Read in soil survey area boundaries
-ssa <- readOGR(dsn = "F:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
-ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
-ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+# ssa <- readOGR(dsn = "F:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+# ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
 
 # Plot
 plot(ca794, axes = TRUE)
@@ -317,7 +318,7 @@ With our spatial data in hand, we can now see whether any of the variables will 
 load(file = "C:/workspace/ch7_data.Rdata")
 train <- data
 train$argillic <- with(train, grepl("arg", tax_subgroup) & mrvbf > 0.15)
-train <- subset(train, select = - c(pedon_id, taxonname, x_std, y_std, landform.string, cluster, tax_subgroup, frags)) # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
+train <- subset(train, select = - c(pedon_id, taxonname, x_std, y_std, landform.string, cluster, cluster_mast, argillic.horizon, tax_subgroup, frags)) # Include only argillic horizons that only occur on fans. Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.
 
 train2 <- subset(train, select = - c(describer2, landform, cluster2))
 data_m <- melt(train2, id = "argillic")
@@ -356,7 +357,7 @@ argi_glm <- update(null, . ~ . + twi_sc) # add twi_sc to the model, "-" will sub
 
 # drop1(argi_glm, test = "Chisq") # test effect of dropping a predictor
 
-argi_glm <- glm(argillic ~ twi_sc + slope + ls_1 + ch + z2str + mrvbf, data = train, family = binomial(link = "cloglog"))
+argi_glm <- glm(argillic ~ twi_sc + slope + ls_1 + ch + z2str + mrvbf, data = train, family = binomial())
 
 summary(argi_glm) # examine the effect and error for each predictors
 ```
@@ -373,7 +374,11 @@ After we're satisfied no additional variables will improve the fit, we need to e
 
 # Term and partial residual plots
 # termplot(argi_glm, partial.resid = TRUE)
+```
 
+The **variance inflation factor** (VIF) is used to assess collinearity amongst the predictors. Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 2 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
+
+```{r}
 # Variance inflation, greater than 5 or 10 is bad
 vif(argi_glm)
 ```
@@ -387,12 +392,16 @@ Because we're dealing with a classification problem, we have to consider both er
 ```{r}
 comp <- cbind(train[c("argillic", "cluster2")], pred = predict(argi_glm, train, type = "response") > 0.5)
 confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
+
+# Deviance squared
+D2 <- with(argi_glm, round((null.deviance - deviance) / null.deviance, 2))
+
+# Adjusted deviance squared
+adjD2 <- with(argi_glm, round(1 - ((df.null / df.residual) * (1 - D2)), 2))
+adjD2
 ```
 
-
-
 - Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some clusters appear to be dominated by specific soil series, these data aren't clean enough (nor are the series concepts usually) to model series separately, however, we could use the clusters as an additional model to attempt to separate the series. Do the hyperthermic clusters perform differently.
-
 
 ```{r}
 comp_sub <- subset(comp, argillic == TRUE)
@@ -407,14 +416,13 @@ temp
 
 dotplot(sensitivity ~ cluster, data = temp)
 
-
 train_sub <- subset(train, temp < 22 + 4)
 
 # full <- glm(argillic ~ ., data = train_sub, family = binomial(link = "cloglog"))
 # null <- glm(argillic ~ 1, data = train_sub, family = binomial(link = "cloglog"))
 # add1(null, full, train = "Chisq")
 
-sub_glm <- glm(argillic ~ slope + twi_sc + ls_1 + mrvbf + z2str + ch, data = train_sub, family = binomial(link = "cloglog"))
+sub_glm <- glm(argillic ~ slope + twi_sc + ls_1 + mrvbf + z2str + ch, data = train_sub, family = binomial())
 
 # summary(sub_glm)
 
@@ -436,9 +444,11 @@ dotplot(sensitivity ~ cluster, data = temp)
 # Examine the coefficients
 summary(argi_glm)
 
-round(binomial(link = "cloglog")$linkinv(coef(argi_glm)), 2) # convert the coefficients to an odds scale, who here gambles?
+# Convert the coefficients to an odds scale, who here gambles?
+round(binomial(link = "logit")$linkinv(coef(argi_glm)), 2) 
 
-anova(argi_glm) # importance of each predictor assessed by the amount of deviance they explain
+# Importance of each predictor assessed by the amount of deviance they explain
+anova(argi_glm) 
 ```
 
 - View the results in ArcGIS and examine the accuracy at individual points
