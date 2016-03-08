@@ -8,8 +8,8 @@ output:
     toc: yes
     toc_depth: 3
     toc_float:
-      collapsed: no
-      smooth_scroll: yes
+      collapsed: yes
+      smooth_scroll: no
 ---
 
 
@@ -163,10 +163,8 @@ round(cor(s_fan, use = "pairwise"), 2)
 round(cor(s_hill, use = "pairwise"), 2)
 
 # Scatterplot Matrices
-par(mfrow = c(1, 2))
 spm(s_fan, use = "pairwise", main = "Scatterplot Matrix for Fans")
 spm(s_hill, use = "pairwise", main = "Scatterplot Matrix for Hills")
-dev.off()
 ```
 
 In examing the correlation matrices we don't see a strong relationships with either elevation for slope gradient.
@@ -206,12 +204,9 @@ Where do our points plot? We can plot the general location in R, but for a close
 
 ```{r plot}
 # Convert soil profile collection to a spatial object
-# extract site data
-pedons2 <- site(pedons)
-
-            ### DOESN'T LOOK LIKE THERE ARE ANY COORDINATES IN THE DATA WE LOADED!!!
-#slot(pedons2, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
-idx <- complete.cases(pedons2[c("x", "y")]) # create an index to filter out pedons with missing coordinates
+pedons2 <- pedons
+slot(pedons2, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
+idx <- complete.cases(site(pedons2)[c("x", "y")]) # create an index to filter out pedons with missing coordinates
 pedons2 <- pedons2[idx]
 coordinates(pedons2) <- ~ x + y # set the coordinates
 proj4string(pedons2) <- CRS("+init=epsg:4326") # set the projection
@@ -219,9 +214,9 @@ pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to spatial object
 pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # reproject
 
 # Read in soil survey area boundaries
-ssa <- readOGR(dsn = "F:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
-ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
-ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+# ssa <- readOGR(dsn = "F:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+# ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
 
 # Plot
 plot(ca794, axes = TRUE)
@@ -278,7 +273,7 @@ geodata_r <- stack(geodata_f)
 
 # Extract the geodata and add to a data frame
 data <- data.frame(
-   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "landform", "tax_subgroup")],
+   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "argillic.horizon", "landform", "tax_subgroup")],
    extract(geodata_r, pedons_sp)
    )
 
@@ -311,7 +306,6 @@ With our spatial data in hand, we can now see whether any of the variables have 
 At the beginning of our analysis we noticed some issues with our data. Particularly that the distribution of our data was skewed, and included values greater than 100 and equal to 0. So before we start lets filter those out and transform the surface rock fragments using a logit transform.
 
 ```{r spatial}
-load(file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 train <- data
 train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon, describer2)) # exclude frags greater than 100 and less than 1, and exclude some of the extra columns
 
@@ -371,6 +365,7 @@ Modeling is an iterative process that cycles between fitting and evaluating alte
 The example below is known as a forward selection procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models, the Akaike's Information Criterion (AIC) is used. When using AIC to assess predictor significance, a smaller number is better.
 
 ```{r}
+load(file = "C:/workspace/ch7_data.Rdata")
 train <- subset(train, select = - c(ls_1, ls_2, ls_3, ls_4, ls_5, ls_6))
 
 full <- lm(fragst ~ . - frags, data = train) # "~ ." includes all columns in the data set, "-" removes variables
@@ -410,10 +405,26 @@ plot(fragst_lm)
 
 # Term and partial residual plots
 termplot(fragst_lm, partial.resid = TRUE)
+```
 
-# Variance inflation, greater than 5 or 10 is bad
+The **variance inflation factor** (VIF) is used to assess collinearity amongst the predictors. Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 2 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
+
+```{r}
+# vif() function from the car or rms packages
 sqrt(vif(fragst_lm))
 
+# or 
+
+sqrt(vif(fragst_lm)) > 2
+```
+
+**Accuracy** can be assessed using several different metrics.
+
+- Adjusted R^2^ = proportion of variance explained
+- Root mean square error (RMSE)
+- Mean absolute error(MAE)
+
+```{r}
 # Adjusted R2
 summary(fragst_lm)$adj.r.squared
 
@@ -445,7 +456,7 @@ temp <- do.call(rbind, temp)
 temp
 
 
-# or using plyr
+# or using plyr package
 # 
 # ddply(train, .(cluster2), summarize,
 #   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
@@ -503,6 +514,8 @@ plot(ca794, add = TRUE)
 # References
 
 Beckett, P.H.T., and R. Webster, 1971. Soil variability: a review. Soils Fertil. 34 (1), 1-15.
+
+James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
 
 Nauman, T. W., and J. A. Thompson, 2014. Semi-automated disaggregation of conventional soil maps using knowledge driven data mining and classification trees. Geoderma 213:385-399. [http://www.sciencedirect.com/science/article/pii/S0016706113003066](http://www.sciencedirect.com/science/article/pii/S0016706113003066)
 
