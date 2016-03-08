@@ -1,17 +1,6 @@
----
-title: "Uncertainty_Validation"
-author: "Skye Wills"
-date: "December 22, 2015"
-output:
-  html_document:
-    keep_md: yes
-    number_sections: yes
-    toc: yes
-    toc_depth: 3
-    toc_float:
-      collapsed: yes
-      smooth_scroll: no
----
+# Uncertainty_Validation
+Skye Wills  
+December 22, 2015  
 
 ![Statistics for pedologists course banner image](figure/logo.jpg)
 
@@ -33,18 +22,21 @@ Errors are simply the difference between reality and our representation of reali
   - Quantiles: These refer to 25% increments in the rank of observations. Typically, the 25th and 75th quantiles are used to represent the spread of the most typical values around the central tendency.
 
 **Measure of Variation**
-  - Variance: The deviation of from the mean is calculated as sum of squares (SS) to use absolute deviation (eliminate any distinction between negative and positive correlation).    
-  $SS = \sum_(X - x)^2)$	
-  $variance (sample) = \frac{SS} {n-1}$  
-  * Standard deviation: Used to return variance to the original units $sd = sqrt(\frac{SS} {n-1})$ 
-  - Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared   
-  $CV = /frac{SD} {X}$
+  * Variance: The deviation of from the mean is calculated as sum of squares (SS) to use absolute deviation (eliminate any distinction between negative and positive correlation). $variance (sample) = \frac{SS}{n-1}$
+  
+  * $SS = \sum{(X - x)^2}$
+   
+  * Standard deviation: Used to return variance to the original units $sd = \sqrt{\frac{SS}{n-1}}$
+  
+  * Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared $CV = \frac{SD}{x}$
 
+Create and example dataset and evaluate dispersion.
 
 ```r
-#Create dataset and evaluate dispersion
-set.seed(3) #set seed so that we all get the same results
-Depth <- sample(20:60,10) #we are creating a sample set with 10 values between 20 - 60
+#set random seed so that we all get the same results
+set.seed(3)
+# we are creating a sample set with 10 values between 20 - 60
+Depth <- sample(x = 20:60, size=10, replace = FALSE)
 
 range(Depth)
 ```
@@ -63,7 +55,8 @@ quantile(Depth)
 ```
 
 ```r
-Depth2 <- sample(40:50,10) #we are creating a sample set with values between 40 - 50
+#we are creating a sample set with values between 40 - 50
+Depth2 <- sample(x=40:50, size=10, replace = FALSE)
 
 range(Depth2)
 ```
@@ -82,16 +75,11 @@ quantile(Depth2)
 ```
 
 ```r
-stripchart(Depth)
+# compare with box plots
+boxplot(list(example.1=Depth, example.2=Depth2), ylab='Depth (cm)', boxwex=0.5)
 ```
 
-![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
-
-```r
-stripchart(Depth2)
-```
-
-![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-2.png)
+![](Uncert_val_files/figure-html/unnamed-chunk-1-1.png) 
     
 ## Exercise
 
@@ -143,13 +131,13 @@ quantile(Data$Depth)
 stripchart(Data$Depth)
 ```
 
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
+![](Uncert_val_files/figure-html/unnamed-chunk-2-1.png) 
 
 ```r
 boxplot(Data$Depth, horizontal = TRUE)
 ```
 
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-2.png)
+![](Uncert_val_files/figure-html/unnamed-chunk-2-2.png) 
 
 ```r
 #calculate the mean of depth
@@ -273,13 +261,13 @@ quantile(stat)
 stripchart(stat)
 ```
 
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png)
+![](Uncert_val_files/figure-html/unnamed-chunk-3-1.png) 
 
 ```r
 boxplot(stat)
 ```
 
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-2.png)
+![](Uncert_val_files/figure-html/unnamed-chunk-3-2.png) 
 
 ```r
 #an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
@@ -429,7 +417,7 @@ The use of validation will be demonstrated as part of each modeling section. The
 
 Efron, B., Tibshirani, R.J., 1993. An introduction to the bootstrap. Monographs on Statistics and Applied Probability, vol. 57. Chapman & Hall, London, UK.
 
-Good, P.I., 2001. Resampling methods. Birkhäuser.
+Good, P.I., 2001. Resampling methods. BirkhÃ¤user.
 
 James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
 

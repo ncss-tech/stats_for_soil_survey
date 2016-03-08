@@ -33,30 +33,32 @@ Errors are simply the difference between reality and our representation of reali
   - Quantiles: These refer to 25% increments in the rank of observations. Typically, the 25th and 75th quantiles are used to represent the spread of the most typical values around the central tendency.
 
 **Measure of Variation**
-  - Variance: The deviation of from the mean is calculated as sum of squares (SS) to use absolute deviation (eliminate any distinction between negative and positive correlation).    
-  $SS = \sum_(X - x)^2)$	
-  $variance (sample) = \frac{SS} {n-1}$  
-  * Standard deviation: Used to return variance to the original units $sd = sqrt(\frac{SS} {n-1})$ 
-  - Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared   
-  $CV = /frac{SD} {X}$
+  * Variance: The deviation of from the mean is calculated as sum of squares (SS) to use absolute deviation (eliminate any distinction between negative and positive correlation). $variance (sample) = \frac{SS}{n-1}$
+  
+  * $SS = \sum{(X - x)^2}$
+   
+  * Standard deviation: Used to return variance to the original units $sd = \sqrt{\frac{SS}{n-1}}$
+  
+  * Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared $CV = \frac{SD}{x}$
 
-```{r}
-#Create dataset and evaluate dispersion
-set.seed(3) #set seed so that we all get the same results
-Depth <- sample(20:60,10) #we are creating a sample set with 10 values between 20 - 60
+Create and example dataset and evaluate dispersion.
+```{r, fig.width=6, fig.width=6}
+#set random seed so that we all get the same results
+set.seed(3)
+# we are creating a sample set with 10 values between 20 - 60
+Depth <- sample(x = 20:60, size=10, replace = FALSE)
 
 range(Depth)
 quantile(Depth)
 
-Depth2 <- sample(40:50,10) #we are creating a sample set with values between 40 - 50
+#we are creating a sample set with values between 40 - 50
+Depth2 <- sample(x=40:50, size=10, replace = FALSE)
 
 range(Depth2)
 quantile(Depth2)
 
-stripchart(Depth)
-stripchart(Depth2)
-
-
+# compare with box plots
+boxplot(list(example.1=Depth, example.2=Depth2), ylab='Depth (cm)', boxwex=0.5)
 ```
     
 ## Exercise
@@ -80,44 +82,44 @@ Dispersion or variance is a characteristic of the population being evaluated. Wh
 
 
 ```{r}
-set.seed(3) #set seed so that we all get the same results
+#set seed so that we all get the same results
+set.seed(3)
 
 #simulate a dataset with two soil names with depth values from 20 - 60 (some values occur more than once)
-Data <- data.frame(
-  Soil <- sample(c("A", "B"), 100, replace = TRUE),
-  Depth <- sample(20:60, 100, replace = TRUE)
+d <- data.frame(
+  soil=sample(c("A", "B"), size=100, replace = TRUE),
+  depth=sample(20:60, size=100, replace = TRUE)
 )
 
-range(Data$Depth)
-quantile(Data$Depth)
-stripchart(Data$Depth)
-boxplot(Data$Depth, horizontal = TRUE)
+range(d$depth)
+quantile(d$depth)
+boxplot(depth ~ soil, data=d, horizontal = TRUE, las=1)
 
 #calculate the mean of depth
- Data$m <- mean(Data$Depth)
+m <- mean(d$depth)
  
 #subtract mean from each value and square
- Data$S <- (Data$Depth - Data$m)^2
+d$S <- (d$depth - m)^2
  
 #calculate overall sum of squares
- SS <- sum(Data$S)
+SS <- sum(d$S)
  
- #calculate sample vaiance (lenth gives us the total number of sample/observations)
-samp_var <- SS / length(Data$Depth) - 1
+#calculate sample vaiance (lenth gives us the total number of sample/observations)
+samp_var <- SS / length(d$depth) - 1
  
- # Note the differences in range and variance calcualted for Depth in both examples (10 samples vs. 100)
+# Note the differences in range and variance calcualted for Depth in both examples (10 samples vs. 100)
 
 quantile(Depth)
-quantile(Data$Depth)
+quantile(d$depth)
 
 var(Depth)
-var(Data$Depth)
+var(d$depth)
 
-#Now Compare Standard Error (standard deviation / n- 1)
+# Now Compare Standard Error (standard deviation / n- 1)
 sd(Depth) / sqrt(length(Depth))
-sd(Data$Depth) / sqrt(length(Data$Depth))
+sd(d$depth) / sqrt(length(d$depth))
 
-#Why are standard errors different?
+# Why are standard errors different?
 ```
 
 
@@ -143,11 +145,11 @@ When calculating many basic statistical parameters, the assumption is that the d
 Resampling is a general term that defines any procedure to repeatedly draw samples form a given dataset. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Resampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation (Good, 2001).  
 
 ```{r}
-#this bootstrap is estimating the uncertainty associated with the variance of Data$Depth
+#this bootstrap is estimating the uncertainty associated with the variance of d$depth
 
 #abbreviate our data to simply the commands
-d <- Data$Depth
-n <- length(Data$Depth)
+d <- d$depth
+n <- length(d$depth)
 
 #set number of iterations
 N <- 50
