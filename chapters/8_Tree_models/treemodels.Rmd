@@ -33,10 +33,11 @@ library(lattice) #graphing
 library(sp) #spatial data
 library(maps) #maps
 library(rgdal) #spatial import
+library(corrplot) #graphical display of correlation matrix
 
-file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(file, destfile = "soildata.csv")
-soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
+soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
 View(soildata) #view the data
 str(soildata) #examine the internal data structure
 
@@ -46,10 +47,10 @@ The example dataset, **soildata**, consists of 250 observations and 58 variables
 
 ```{r}
 set.seed(250)
-soildata$spodint<-as.factor(soildata$spodint)
-soildata$spodint<-ordered(soildata$spodint)
-soildata$tipmound<-as.factor(soildata$tipmound)
-soildata$tipmound<-ordered(soildata$tipmound)
+soildata$spodint <- as.factor(soildata$spodint)
+soildata$spodint <- ordered(soildata$spodint)
+soildata$tipmound <- as.factor(soildata$tipmound)
+soildata$tipmound <- ordered(soildata$tipmound)
 
 ```
 
@@ -59,9 +60,10 @@ Next, let's explore the tabular data:
 boxplot(solar~spodint, data=soildata, xlab="spodic intensity", ylab="solar") #does solar radiation affect spodic intensity?
 boxplot(northwestn~spodint, data=soildata, xlab="spodic intensity", ylab="northwestness") #how about aspect?
 densityplot(~ Otot|order, data=soildata) #distribution of O horizon thickness among soil orders
-numeric<-data.frame(soildata[, c(8, 25, 27:50)]) #combine numeric columns into a new data frame
+numeric <- data.frame(soildata[, c(8, 25, 27:50)]) #combine numeric columns into a new data frame
 names(numeric) 
-round(cor(numeric, use = "pairwise"), 2) #look at what variables are highly correlated to Otot
+cormatrix <- cor(numeric) #calculate correlation matrix
+corrplot(cormatrix, method = "circle") #plot correlation matrix
 
 ```
 
@@ -90,7 +92,7 @@ Examine the **soildata** shapefile and environmental covariate data in ArcGIS. C
 
 
 ## 8.2 Classification and Regression Trees (CART)
-The basic function for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
+The basic form for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
 
 Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the `library()` function.
 
@@ -105,7 +107,7 @@ library(caret) #confusion matrix
 If you wanted to create a classification tree for spodint using all of the variables, you would simply type: `rpart(spodint ~ ., data=soildata)`. Since our goal is to generate a spatial prediction model, we only want to use the variables for which we have spatial coverage--our environmental covariate rasters. 
 
 ```{r, fig.width=7, fig.height=8}
-spodintmodel<-rpart(spodint~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "class")
+spodintmodel <- rpart(spodint ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, method = "class")
 
 spodintmodel
 
@@ -127,6 +129,7 @@ For more plot customization, use the rpart.plot package.
 rpart.plot(spodintmodel, extra=3) #extra=3 displays the misclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
 
 rpart.plot(spodintmodel, extra=103) #adding 100 to the extra setting displays the percentage observations in the node
+
 prp(spodintmodel,type=1,extra=1,branch=1) #prp is another function in the rpart.plot package that has numerous plot customization options
 
 ```
@@ -141,9 +144,9 @@ What if we considered everything with a spodic intensity of <= 0.5 to be non-spo
 index <- c(0, 0.5, 1, 1.5, 2) #index for lookup table
 values <- c("nonspodic", "nonspodic", "spodic", "spodic", "spodic") #assigning corresponding categories to look up values
 soildata$newcolumn <- values[match(soildata$spodint, index)] #match spodint to index and assign values
-soildata$newcolumn<-as.factor(soildata$newcolumn) #convert new column from character to factor
+soildata$newcolumn <- as.factor(soildata$newcolumn) #convert new column from character to factor
 
-spodintmodel2<-rpart(newcolumn~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "class")
+spodintmodel2 <- rpart(newcolumn ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, method = "class")
 
 spodintmodel2
 
@@ -171,10 +174,10 @@ plotcp(spodintmodel2)
 The optimal CP value is 0.029321 for spodintmodel and 0.050459 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
 
 ```{r, fig.width=3, fig.height=3}
-pruned<-prune(spodintmodel, cp=0.029321)
+pruned <- prune(spodintmodel, cp=0.029321)
 printcp(pruned)
 rpart.plot(pruned, extra=3)
-pruned2<-prune(spodintmodel2, cp=0.050459)
+pruned2 <- prune(spodintmodel2, cp=0.050459)
 printcp(pruned2)
 rpart.plot(pruned2, extra=3)
 
@@ -186,19 +189,19 @@ Let's compute an internal validation using a confusion matrix to further examine
 
 ```{r, fig.width=7, fig.height=8}
 ## splits 70% of the data selected randomly into training set and the remaining 30% sample into test set
-datasplit<-sort(sample(nrow(soildata), nrow(soildata)*.7)) 
-train<-soildata[datasplit,]
-test<-soildata[-datasplit,]
+datasplit <- sort(sample(nrow(soildata), nrow(soildata)*.7)) 
+train <- soildata[datasplit,]
+test <- soildata[-datasplit,]
 
-spodintmodel<-rpart(spodint~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=train, method = "class")
+spodintmodel <- rpart(spodint ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = train, method = "class")
 printcp(spodintmodel)
-pruned<-prune(spodintmodel, cp=0.070175)
+pruned <- prune(spodintmodel, cp=0.070175)
 pred <- predict(pruned, newdata=test, type="class") #predicting class test data using the pruned model
 confusionMatrix(pred, test$spodint) #computes confusion matrix and summary statistics
 
-spodintmodel2<-rpart(newcolumn~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=train, method = "class")
+spodintmodel2 <- rpart(newcolumn ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = train, method = "class")
 printcp(spodintmodel2)
-pruned2<-prune(spodintmodel2, cp=0.050459)
+pruned2 <- prune(spodintmodel2, cp=0.050459)
 pred2 <- predict(pruned2, newdata=test, type="class") #predicting class of test data using the pruned model
 confusionMatrix(pred2, test$newcolumn) #computes confusion matrix and summary statistics
 
@@ -213,7 +216,9 @@ As a side note: The default 10-fold internal cross-validation in rpart divides t
 The examples above dealt with classification trees which resulted in categorical terminal nodes determined by majority votes. In a regression tree model, terminal nodes reflect the mean of the observations in that node. Using the **soildata** dataset, construct a rpart regression tree model to predict total O horizon thickness. Prune the model if necessary and answer the following questions:
 
 ** 1) Was the majority of the variance in total O horizon thickness captured with the rpart model?**
+
 ** 2) What were the most important variables in the model?**
+
 ** 3) How could the model be improved?**
 
 
@@ -223,9 +228,9 @@ The randomForest algorithm fits hundreds to thousands of CART models to random s
 Going back to the **soildata** dataset, let's generate a random forest regression model for total O horizon thickness and compare it to the one we just generated in rpart. Just like rpart, randomForest has the same basic model function: (y ~ x).
 
 ```{r}
-rf<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE, ntree=1000, mtry=10) #importance=TRUE will allow the generation of a variable importance plot
+rf <- randomForest(Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, importance=TRUE, ntree=1000, mtry=10) #importance=TRUE will allow the generation of a variable importance plot
 
-rf # statistical summary
+rf #statistical summary
 
 plot(rf)  #out of bag (OOB) error rate versus number of trees; this will help us tune the ntree parameter
 
@@ -242,11 +247,13 @@ hist(soildata$Otot)
 
 Let's remove that observation to see how it impacted our model. 
 ```{r}
-file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+file <- 'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(file, destfile = "soildata.csv")
-soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
-soildata2<-droplevels(subset(soildata, order!="histosol")) #remove Histosol observation
-rf2<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata2, importance=TRUE, ntree=1000, mtry=9) #importance=TRUE will allow the generation of a variable importance plot
+soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+soildata2 <- droplevels(subset(soildata, order!="histosol")) #remove Histosol observation
+
+rf2 <- randomForest(Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata2, importance=TRUE, ntree=1000, mtry=9) 
+#importance=TRUE will allow the generation of a variable importance plot
 
 rf2 # statistical summary
 
@@ -276,7 +283,7 @@ In the rf2 model, it is apparent that landsatb7 is the most important variable u
 Using the **soildata** dataset, construct a randomForest model to predict the probability of a folistic epipedon. Be sure to tweak the ntree and mtry parameters to capture the most variability. Use the following code to combine ochric and umbric into a new category called nonfolistic. 
 
 ```{r}
-soildata$epipedon2<-soildata$epipedon
+soildata$epipedon2 <- soildata$epipedon
 levels(soildata$epipedon2)[levels(soildata$epipedon2)=="ochric"] <- "nonfolistic"
 levels(soildata$epipedon2)[levels(soildata$epipedon2)=="umbric"] <- "nonfolistic"
 
@@ -284,7 +291,9 @@ levels(soildata$epipedon2)[levels(soildata$epipedon2)=="umbric"] <- "nonfolistic
 
 
 ** 1) What is the out-of-bag error rate?**
+
 ** 2) Compare this model with the total O horizon thickness regression model. Which would be better for spatial interpolation?**
+
 ** 3) How could you improve this model?**
 
 
@@ -293,11 +302,11 @@ As with any modeling technique, tree-based models can be used for prediction and
 
 ```{r, warning=FALSE, message=FALSE, eval=FALSE}
 library(raster)
-rasters<-stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines rasters with a .img file extension stored in the working directory
+rasters <- stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines rasters with a .img file extension stored in the working directory
 
 rasters 
 
-model<-randomForest(Otot~landsatb7+maxent+protection+northwestn+solar, data=soildata2)
+model <- randomForest(Otot~landsatb7+maxent+protection+northwestn+solar, data=soildata2)
 
 predict(rasters,model,progress="window",overwrite=TRUE,filename="rfpredict.img") 
 #type not specified=vector of predicted values, "response" for predicted class, "prob" for probabilities, or "vote" for matrix of vote counts (one column for each class and one row for each new input); either in raw counts or in fractions (if norm.votes=TRUE)

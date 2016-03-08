@@ -24,10 +24,11 @@ library(lattice) #graphing
 library(sp) #spatial data
 library(maps) #maps
 library(rgdal) #spatial import
+library(corrplot) #graphical display of correlation matrix
 
-file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(file, destfile = "soildata.csv")
-soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
+soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
 View(soildata) #view the data
 str(soildata) #examine the internal data structure
 ```
@@ -91,10 +92,10 @@ The example dataset, **soildata**, consists of 250 observations and 58 variables
 
 ```r
 set.seed(250)
-soildata$spodint<-as.factor(soildata$spodint)
-soildata$spodint<-ordered(soildata$spodint)
-soildata$tipmound<-as.factor(soildata$tipmound)
-soildata$tipmound<-ordered(soildata$tipmound)
+soildata$spodint <- as.factor(soildata$spodint)
+soildata$spodint <- ordered(soildata$spodint)
+soildata$tipmound <- as.factor(soildata$tipmound)
+soildata$tipmound <- ordered(soildata$tipmound)
 ```
 
 Next, let's explore the tabular data:
@@ -119,7 +120,7 @@ densityplot(~ Otot|order, data=soildata) #distribution of O horizon thickness am
 ![](treemodels_files/figure-html/unnamed-chunk-3-3.png)
 
 ```r
-numeric<-data.frame(soildata[, c(8, 25, 27:50)]) #combine numeric columns into a new data frame
+numeric <- data.frame(soildata[, c(8, 25, 27:50)]) #combine numeric columns into a new data frame
 names(numeric) 
 ```
 
@@ -133,119 +134,11 @@ names(numeric)
 ```
 
 ```r
-round(cor(numeric, use = "pairwise"), 2) #look at what variables are highly correlated to Otot
+cormatrix <- cor(numeric) #calculate correlation matrix
+corrplot(cormatrix, method = "circle") #plot correlation matrix
 ```
 
-```
-##             Otot rainfall aachn dem10m downslpgra eastness greenrefl
-## Otot        1.00    -0.24 -0.21   0.01      -0.12    -0.26     -0.13
-## rainfall   -0.24     1.00  0.11  -0.21       0.21     0.09      0.01
-## aachn      -0.21     0.11  1.00   0.35      -0.07     0.20      0.04
-## dem10m      0.01    -0.21  0.35   1.00       0.07     0.07     -0.07
-## downslpgra -0.12     0.21 -0.07   0.07       1.00    -0.11     -0.01
-## eastness   -0.26     0.09  0.20   0.07      -0.11     1.00     -0.06
-## greenrefl  -0.13     0.01  0.04  -0.07      -0.01    -0.06      1.00
-## landsatb1  -0.07     0.19  0.07  -0.20       0.08     0.16      0.21
-## landsatb2  -0.27     0.19  0.12  -0.09       0.00     0.15      0.33
-## landsatb3  -0.15     0.08  0.14   0.05       0.05     0.18      0.25
-## landsatb7  -0.36     0.19  0.23   0.05       0.04     0.43      0.27
-## maxc100    -0.02     0.18  0.26  -0.04      -0.15     0.13     -0.11
-## maxent      0.34    -0.22 -0.03   0.42       0.11    -0.23     -0.04
-## minc100     0.09    -0.03  0.34   0.19      -0.23    -0.05     -0.14
-## mirref     -0.25     0.07  0.12  -0.04       0.04     0.16      0.82
-## ndvi       -0.11     0.09  0.01  -0.03       0.01     0.05      0.01
-## northeastn -0.05     0.03  0.10   0.02      -0.13     0.69     -0.15
-## northness   0.19    -0.05 -0.07  -0.04      -0.07    -0.06     -0.15
-## northwestn  0.31    -0.09 -0.18  -0.08       0.02    -0.73     -0.06
-## planc100    0.12     0.03  0.13   0.02      -0.18    -0.02     -0.11
-## proc100    -0.05     0.11  0.48   0.13      -0.18     0.13     -0.15
-## protection  0.13    -0.26 -0.60  -0.30      -0.37     0.05      0.08
-## relpos11   -0.18     0.26  0.70   0.23       0.03     0.15     -0.08
-## slp50       0.13    -0.30 -0.19  -0.14      -0.72     0.12      0.01
-## solar      -0.18     0.06  0.16   0.25       0.26     0.01      0.14
-## tanc75     -0.14     0.04  0.03  -0.02       0.20     0.03      0.07
-##            landsatb1 landsatb2 landsatb3 landsatb7 maxc100 maxent minc100
-## Otot           -0.07     -0.27     -0.15     -0.36   -0.02   0.34    0.09
-## rainfall        0.19      0.19      0.08      0.19    0.18  -0.22   -0.03
-## aachn           0.07      0.12      0.14      0.23    0.26  -0.03    0.34
-## dem10m         -0.20     -0.09      0.05      0.05   -0.04   0.42    0.19
-## downslpgra      0.08      0.00      0.05      0.04   -0.15   0.11   -0.23
-## eastness        0.16      0.15      0.18      0.43    0.13  -0.23   -0.05
-## greenrefl       0.21      0.33      0.25      0.27   -0.11  -0.04   -0.14
-## landsatb1       1.00      0.43      0.40      0.39    0.01  -0.20   -0.13
-## landsatb2       0.43      1.00      0.62      0.64   -0.01  -0.21   -0.19
-## landsatb3       0.40      0.62      1.00      0.65    0.01  -0.09   -0.04
-## landsatb7       0.39      0.64      0.65      1.00   -0.09  -0.32   -0.17
-## maxc100         0.01     -0.01      0.01     -0.09    1.00   0.03    0.57
-## maxent         -0.20     -0.21     -0.09     -0.32    0.03   1.00    0.17
-## minc100        -0.13     -0.19     -0.04     -0.17    0.57   0.17    1.00
-## mirref          0.32      0.44      0.40      0.59   -0.15  -0.20   -0.22
-## ndvi            0.00      0.16     -0.09      0.07   -0.05  -0.25   -0.12
-## northeastn     -0.07     -0.17     -0.10      0.04    0.07  -0.25   -0.02
-## northness      -0.25     -0.39     -0.31     -0.37   -0.03  -0.12    0.02
-## northwestn     -0.28     -0.38     -0.33     -0.55   -0.11   0.08    0.05
-## planc100       -0.08     -0.13     -0.04     -0.21    0.77   0.15    0.78
-## proc100        -0.05     -0.05      0.00     -0.02    0.72   0.04    0.66
-## protection      0.00      0.04     -0.07     -0.05   -0.39  -0.11   -0.49
-## relpos11       -0.03      0.04      0.06      0.11    0.61   0.01    0.54
-## slp50          -0.08     -0.02     -0.09     -0.07   -0.18  -0.13   -0.01
-## solar           0.22      0.34      0.32      0.37    0.04   0.21    0.04
-## tanc75          0.08      0.12      0.06      0.23   -0.65  -0.16   -0.68
-##            mirref  ndvi northeastn northness northwestn planc100 proc100
-## Otot        -0.25 -0.11      -0.05      0.19       0.31     0.12   -0.05
-## rainfall     0.07  0.09       0.03     -0.05      -0.09     0.03    0.11
-## aachn        0.12  0.01       0.10     -0.07      -0.18     0.13    0.48
-## dem10m      -0.04 -0.03       0.02     -0.04      -0.08     0.02    0.13
-## downslpgra   0.04  0.01      -0.13     -0.07       0.02    -0.18   -0.18
-## eastness     0.16  0.05       0.69     -0.06      -0.73    -0.02    0.13
-## greenrefl    0.82  0.01      -0.15     -0.15      -0.06    -0.11   -0.15
-## landsatb1    0.32  0.00      -0.07     -0.25      -0.28    -0.08   -0.05
-## landsatb2    0.44  0.16      -0.17     -0.39      -0.38    -0.13   -0.05
-## landsatb3    0.40 -0.09      -0.10     -0.31      -0.33    -0.04    0.00
-## landsatb7    0.59  0.07       0.04     -0.37      -0.55    -0.21   -0.02
-## maxc100     -0.15 -0.05       0.07     -0.03      -0.11     0.77    0.72
-## maxent      -0.20 -0.25      -0.25     -0.12       0.08     0.15    0.04
-## minc100     -0.22 -0.12      -0.02      0.02       0.05     0.78    0.66
-## mirref       1.00  0.06      -0.09     -0.29      -0.31    -0.19   -0.18
-## ndvi         0.06  1.00      -0.04     -0.11      -0.11    -0.08   -0.07
-## northeastn  -0.09 -0.04       1.00      0.69       0.00    -0.01    0.08
-## northness   -0.29 -0.11       0.69      1.00       0.73     0.01   -0.02
-## northwestn  -0.31 -0.11       0.00      0.73       1.00     0.02   -0.11
-## planc100    -0.19 -0.08      -0.01      0.01       0.02     1.00    0.39
-## proc100     -0.18 -0.07       0.08     -0.02      -0.11     0.39    1.00
-## protection   0.06  0.03       0.05      0.02      -0.03    -0.31   -0.54
-## relpos11    -0.07  0.03       0.05     -0.08      -0.15     0.38    0.78
-## slp50       -0.03  0.02       0.17      0.11      -0.01    -0.02   -0.18
-## solar        0.27  0.06      -0.60     -0.83      -0.58    -0.01    0.09
-## tanc75       0.16  0.05      -0.01     -0.04      -0.05    -0.88   -0.30
-##            protection relpos11 slp50 solar tanc75
-## Otot             0.13    -0.18  0.13 -0.18  -0.14
-## rainfall        -0.26     0.26 -0.30  0.06   0.04
-## aachn           -0.60     0.70 -0.19  0.16   0.03
-## dem10m          -0.30     0.23 -0.14  0.25  -0.02
-## downslpgra      -0.37     0.03 -0.72  0.26   0.20
-## eastness         0.05     0.15  0.12  0.01   0.03
-## greenrefl        0.08    -0.08  0.01  0.14   0.07
-## landsatb1        0.00    -0.03 -0.08  0.22   0.08
-## landsatb2        0.04     0.04 -0.02  0.34   0.12
-## landsatb3       -0.07     0.06 -0.09  0.32   0.06
-## landsatb7       -0.05     0.11 -0.07  0.37   0.23
-## maxc100         -0.39     0.61 -0.18  0.04  -0.65
-## maxent          -0.11     0.01 -0.13  0.21  -0.16
-## minc100         -0.49     0.54 -0.01  0.04  -0.68
-## mirref           0.06    -0.07 -0.03  0.27   0.16
-## ndvi             0.03     0.03  0.02  0.06   0.05
-## northeastn       0.05     0.05  0.17 -0.60  -0.01
-## northness        0.02    -0.08  0.11 -0.83  -0.04
-## northwestn      -0.03    -0.15 -0.01 -0.58  -0.05
-## planc100        -0.31     0.38 -0.02 -0.01  -0.88
-## proc100         -0.54     0.78 -0.18  0.09  -0.30
-## protection       1.00    -0.75  0.75 -0.34   0.14
-## relpos11        -0.75     1.00 -0.39  0.20  -0.16
-## slp50            0.75    -0.39  1.00 -0.45  -0.12
-## solar           -0.34     0.20 -0.45  1.00   0.09
-## tanc75           0.14    -0.16 -0.12  0.09   1.00
-```
+![](treemodels_files/figure-html/unnamed-chunk-3-4.png)
 
 
 ### 8.1.2 Plotting Data
@@ -274,7 +167,7 @@ Examine the **soildata** shapefile and environmental covariate data in ArcGIS. C
 
 
 ## 8.2 Classification and Regression Trees (CART)
-The basic function for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
+The basic form for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
 
 Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the `library()` function.
 
@@ -291,7 +184,7 @@ If you wanted to create a classification tree for spodint using all of the varia
 
 
 ```r
-spodintmodel<-rpart(spodint~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "class")
+spodintmodel <- rpart(spodint ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, method = "class")
 
 spodintmodel
 ```
@@ -380,9 +273,9 @@ What if we considered everything with a spodic intensity of <= 0.5 to be non-spo
 index <- c(0, 0.5, 1, 1.5, 2) #index for lookup table
 values <- c("nonspodic", "nonspodic", "spodic", "spodic", "spodic") #assigning corresponding categories to look up values
 soildata$newcolumn <- values[match(soildata$spodint, index)] #match spodint to index and assign values
-soildata$newcolumn<-as.factor(soildata$newcolumn) #convert new column from character to factor
+soildata$newcolumn <- as.factor(soildata$newcolumn) #convert new column from character to factor
 
-spodintmodel2<-rpart(newcolumn~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "class")
+spodintmodel2 <- rpart(newcolumn ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, method = "class")
 
 spodintmodel2
 ```
@@ -502,7 +395,7 @@ The optimal CP value is 0.029321 for spodintmodel and 0.050459 for spodintmodel2
 
 
 ```r
-pruned<-prune(spodintmodel, cp=0.029321)
+pruned <- prune(spodintmodel, cp=0.029321)
 printcp(pruned)
 ```
 
@@ -536,7 +429,7 @@ rpart.plot(pruned, extra=3)
 ![](treemodels_files/figure-html/unnamed-chunk-13-1.png)
 
 ```r
-pruned2<-prune(spodintmodel2, cp=0.050459)
+pruned2 <- prune(spodintmodel2, cp=0.050459)
 printcp(pruned2)
 ```
 
@@ -575,11 +468,11 @@ Let's compute an internal validation using a confusion matrix to further examine
 
 ```r
 ## splits 70% of the data selected randomly into training set and the remaining 30% sample into test set
-datasplit<-sort(sample(nrow(soildata), nrow(soildata)*.7)) 
-train<-soildata[datasplit,]
-test<-soildata[-datasplit,]
+datasplit <- sort(sample(nrow(soildata), nrow(soildata)*.7)) 
+train <- soildata[datasplit,]
+test <- soildata[-datasplit,]
 
-spodintmodel<-rpart(spodint~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=train, method = "class")
+spodintmodel <- rpart(spodint ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = train, method = "class")
 printcp(spodintmodel)
 ```
 
@@ -609,7 +502,7 @@ printcp(spodintmodel)
 ```
 
 ```r
-pruned<-prune(spodintmodel, cp=0.070175)
+pruned <- prune(spodintmodel, cp=0.070175)
 pred <- predict(pruned, newdata=test, type="class") #predicting class test data using the pruned model
 confusionMatrix(pred, test$spodint) #computes confusion matrix and summary statistics
 ```
@@ -649,7 +542,7 @@ confusionMatrix(pred, test$spodint) #computes confusion matrix and summary stati
 ```
 
 ```r
-spodintmodel2<-rpart(newcolumn~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=train, method = "class")
+spodintmodel2 <- rpart(newcolumn ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = train, method = "class")
 printcp(spodintmodel2)
 ```
 
@@ -678,7 +571,7 @@ printcp(spodintmodel2)
 ```
 
 ```r
-pruned2<-prune(spodintmodel2, cp=0.050459)
+pruned2 <- prune(spodintmodel2, cp=0.050459)
 pred2 <- predict(pruned2, newdata=test, type="class") #predicting class of test data using the pruned model
 confusionMatrix(pred2, test$newcolumn) #computes confusion matrix and summary statistics
 ```
@@ -721,7 +614,9 @@ As a side note: The default 10-fold internal cross-validation in rpart divides t
 The examples above dealt with classification trees which resulted in categorical terminal nodes determined by majority votes. In a regression tree model, terminal nodes reflect the mean of the observations in that node. Using the **soildata** dataset, construct a rpart regression tree model to predict total O horizon thickness. Prune the model if necessary and answer the following questions:
 
 ** 1) Was the majority of the variance in total O horizon thickness captured with the rpart model?**
+
 ** 2) What were the most important variables in the model?**
+
 ** 3) How could the model be improved?**
 
 
@@ -732,9 +627,9 @@ Going back to the **soildata** dataset, let's generate a random forest regressio
 
 
 ```r
-rf<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE, ntree=1000, mtry=10) #importance=TRUE will allow the generation of a variable importance plot
+rf <- randomForest(Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, importance=TRUE, ntree=1000, mtry=10) #importance=TRUE will allow the generation of a variable importance plot
 
-rf # statistical summary
+rf #statistical summary
 ```
 
 ```
@@ -769,11 +664,13 @@ hist(soildata$Otot)
 Let's remove that observation to see how it impacted our model. 
 
 ```r
-file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+file <- 'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(file, destfile = "soildata.csv")
-soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
-soildata2<-droplevels(subset(soildata, order!="histosol")) #remove Histosol observation
-rf2<-randomForest(Otot~rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata2, importance=TRUE, ntree=1000, mtry=9) #importance=TRUE will allow the generation of a variable importance plot
+soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+soildata2 <- droplevels(subset(soildata, order!="histosol")) #remove Histosol observation
+
+rf2 <- randomForest(Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata2, importance=TRUE, ntree=1000, mtry=9) 
+#importance=TRUE will allow the generation of a variable importance plot
 
 rf2 # statistical summary
 ```
@@ -850,14 +747,16 @@ Using the **soildata** dataset, construct a randomForest model to predict the pr
 
 
 ```r
-soildata$epipedon2<-soildata$epipedon
+soildata$epipedon2 <- soildata$epipedon
 levels(soildata$epipedon2)[levels(soildata$epipedon2)=="ochric"] <- "nonfolistic"
 levels(soildata$epipedon2)[levels(soildata$epipedon2)=="umbric"] <- "nonfolistic"
 ```
 
 
 ** 1) What is the out-of-bag error rate?**
+
 ** 2) Compare this model with the total O horizon thickness regression model. Which would be better for spatial interpolation?**
+
 ** 3) How could you improve this model?**
 
 
@@ -867,11 +766,11 @@ As with any modeling technique, tree-based models can be used for prediction and
 
 ```r
 library(raster)
-rasters<-stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines rasters with a .img file extension stored in the working directory
+rasters <- stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines rasters with a .img file extension stored in the working directory
 
 rasters 
 
-model<-randomForest(Otot~landsatb7+maxent+protection+northwestn+solar, data=soildata2)
+model <- randomForest(Otot~landsatb7+maxent+protection+northwestn+solar, data=soildata2)
 
 predict(rasters,model,progress="window",overwrite=TRUE,filename="rfpredict.img") 
 #type not specified=vector of predicted values, "response" for predicted class, "prob" for probabilities, or "vote" for matrix of vote counts (one column for each class and one row for each new input); either in raw counts or in fractions (if norm.votes=TRUE)
