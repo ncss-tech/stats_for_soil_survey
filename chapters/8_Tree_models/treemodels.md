@@ -550,6 +550,8 @@ confusionMatrix(pred, test$spodint) #computes confusion matrix and summary stati
 ```
 
 ```r
+#sensitivity=producer's accuracy and specificity=user's accuracy
+
 spodintmodel2 <- rpart(newcolumn ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = train, method = "class")
 printcp(spodintmodel2)
 ```
