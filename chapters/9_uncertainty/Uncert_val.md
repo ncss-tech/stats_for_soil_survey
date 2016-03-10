@@ -1,6 +1,17 @@
-# Uncertainty_Validation
-Skye Wills  
-December 22, 2015  
+---
+title: "Uncertainty_Validation"
+author: "Skye Wills"
+date: "December 22, 2015"
+output:
+  html_document:
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+---
 
 ![Statistics for pedologists course banner image](figure/logo.jpg)
 
@@ -76,10 +87,10 @@ quantile(Depth2)
 
 ```r
 # compare with box plots
-boxplot(list(example.1=Depth, example.2=Depth2), ylab='Depth (cm)', boxwex=0.5)
+boxplot(list(example.1=Depth, example.2=Depth2), ylab='Depth (cm)', boxwex = 0.5)
 ```
 
-![](Uncert_val_files/figure-html/unnamed-chunk-1-1.png) 
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
     
 ## Exercise
 
@@ -103,15 +114,16 @@ Dispersion or variance is a characteristic of the population being evaluated. Wh
 
 
 ```r
-set.seed(3) #set seed so that we all get the same results
+#set seed so that we all get the same results
+set.seed(3)
 
 #simulate a dataset with two soil names with depth values from 20 - 60 (some values occur more than once)
-Data <- data.frame(
-  Soil <- sample(c("A", "B"), 100, replace = TRUE),
-  Depth <- sample(20:60, 100, replace = TRUE)
+d <- data.frame(
+  soil <- sample(c("A", "B"), size=100, replace = TRUE),
+  depth <- sample(20:60, size=100, replace = TRUE)
 )
 
-range(Data$Depth)
+range(d$depth)
 ```
 
 ```
@@ -119,7 +131,7 @@ range(Data$Depth)
 ```
 
 ```r
-quantile(Data$Depth)
+quantile(d$depth)
 ```
 
 ```
@@ -128,42 +140,36 @@ quantile(Data$Depth)
 ```
 
 ```r
-stripchart(Data$Depth)
+boxplot(depth ~ soil, data=d, horizontal = TRUE, las=1)
 ```
 
-![](Uncert_val_files/figure-html/unnamed-chunk-2-1.png) 
-
-```r
-boxplot(Data$Depth, horizontal = TRUE)
-```
-
-![](Uncert_val_files/figure-html/unnamed-chunk-2-2.png) 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
 
 ```r
 #calculate the mean of depth
- Data$m <- mean(Data$Depth)
+m <- mean(d$depth)
  
 #subtract mean from each value and square
- Data$S <- (Data$Depth - Data$m)^2
+d$S <- (d$depth - m)^2
  
 #calculate overall sum of squares
- SS <- sum(Data$S)
+SS <- sum(d$S)
  
- #calculate sample vaiance (lenth gives us the total number of sample/observations)
-samp_var <- SS / length(Data$Depth) - 1
+#calculate sample vaiance (lenth gives us the total number of sample/observations)
+samp_var <- SS / length(d$depth) - 1
  
- # Note the differences in range and variance calcualted for Depth in both examples (10 samples vs. 100)
+# Note the differences in range and variance calcualted for Depth in both examples (10 samples vs. 100)
 
 quantile(Depth)
 ```
 
 ```
-##   0%  25%  50%  75% 100% 
-##   21   30   39   49   59
+##    0%   25%   50%   75%  100% 
+## 24.00 30.50 37.00 40.75 52.00
 ```
 
 ```r
-quantile(Data$Depth)
+quantile(d$depth)
 ```
 
 ```
@@ -176,36 +182,36 @@ var(Depth)
 ```
 
 ```
+## [1] 70.98889
+```
+
+```r
+var(d$depth)
+```
+
+```
 ## [1] 119.5688
 ```
 
 ```r
-var(Data$Depth)
-```
-
-```
-## [1] 119.5688
-```
-
-```r
-#Now Compare Standard Error (standard deviation / n- 1)
+# Now Compare Standard Error (standard deviation / n- 1)
 sd(Depth) / sqrt(length(Depth))
 ```
 
 ```
+## [1] 2.664374
+```
+
+```r
+sd(d$depth) / sqrt(length(d$depth))
+```
+
+```
 ## [1] 1.093475
 ```
 
 ```r
-sd(Data$Depth) / sqrt(length(Data$Depth))
-```
-
-```
-## [1] 1.093475
-```
-
-```r
-#Why are standard errors different?
+# Why are standard errors different?
 ```
 
 
@@ -232,11 +238,11 @@ Resampling is a general term that defines any procedure to repeatedly draw sampl
 
 
 ```r
-#this bootstrap is estimating the uncertainty associated with the variance of Data$Depth
+#this bootstrap is estimating the uncertainty associated with the variance of d$depth
 
 #abbreviate our data to simply the commands
-d <- Data$Depth
-n <- length(Data$Depth)
+d <- d$depth
+n <- length(d)
 
 #set number of iterations
 N <- 50
@@ -261,13 +267,13 @@ quantile(stat)
 stripchart(stat)
 ```
 
-![](Uncert_val_files/figure-html/unnamed-chunk-3-1.png) 
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png)
 
 ```r
 boxplot(stat)
 ```
 
-![](Uncert_val_files/figure-html/unnamed-chunk-3-2.png) 
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-2.png)
 
 ```r
 #an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
@@ -322,8 +328,8 @@ Validation refers to the process and the result of a process where the validity 
 - Numerical
     - Correlation (r2)
     - Scatter plots (visual inspection)
-    - Mean Error (ME) = sum(predicted - actual)/n
-    - Root Mean Square Error (RMSE) = sqrt(ME)
+    - Mean Error (ME) = mean(predicted - actual)
+    - Root Mean Square Error (RMSE) = sqrt((mean(predicted - actual)^2))
 - Categorical
     - Confusion (error) matrix
     - Types of Accuracy
@@ -381,9 +387,88 @@ In this exploratory and explanatory phase you are looking for relationships that
 
 
 ```r
-# library(DAAG)
-# test <- CVlm(na.exclude(train), formula(fragst_lm), m = 10, plotit = FALSE)
-# with(test, cor(frags, ilogit(cvpred) * 100)^2) # cv r2
+library(caret)
+library(randomForest)
+
+### Linear model example
+
+# Load and modify data
+load(file = "C:/workspace/ch7_data.Rdata")
+train <- data
+train <- subset(train, frags > 0 & frags < 100)
+
+# Custom logit and inverse logit function
+logit <- function(x) log(x / (1 - x)) # logit transform
+ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit 
+
+# Transform
+train$fragst <- logit(train$frags / 100)
+
+# Subset
+train <- subset(train, select = c(pc_2, pc_1, temp, twi, precipsum, fragst))
+
+# Create linear model
+fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
+
+# Create folds
+folds <- createFolds(train$fragst, k = 10)
+
+# Cross validate
+cv_results <- lapply(folds, function(x) {
+  train <- train[-x,]
+  test <- train[x,]
+  model <- lm(fragst ~ ., data = train)
+  R2 <- summary(model)$r.squared
+  adjR2 <- summary(model)$adj.r.squared
+  return(c(R2 = R2, adjR2 = adjR2))
+  }
+  )
+
+# Convert to a data.frame
+cv_results <- do.call(rbind, cv_results)
+
+# Summarize results
+summary(cv_results)
+```
+
+```
+##        R2             adjR2       
+##  Min.   :0.3551   Min.   :0.3512  
+##  1st Qu.:0.3634   1st Qu.:0.3596  
+##  Median :0.3657   Median :0.3618  
+##  Mean   :0.3679   Mean   :0.3640  
+##  3rd Qu.:0.3738   3rd Qu.:0.3700  
+##  Max.   :0.3817   Max.   :0.3779
+```
+
+```r
+### Random forest example
+
+# Modify data
+train2 <- data
+train2 <- subset(train2, frags > 0 & frags < 100)
+train2 <- subset(train2, select = - c(pedon_id, taxonname, x_std, y_std, describer2, landform.string, argillic.horizon, landform, tax_subgroup, cluster2, cluster_mast, aspect, mast, gsi, ndvi, sw))
+
+# Create folds
+folds2 <- createFolds(train2$frags, k = 10)
+
+# Cross validate
+cv_results2 <- lapply(folds2, function(x) {
+  train <- train2[-x,]
+  test <- train2[x,]
+  model <- randomForest(frags ~ ., data = train, na.action = na.exclude)
+  R2 <- model$rsq[500]
+  return(R2)
+  }
+  )
+
+# Summarize results
+summary(unlist(cv_results2))
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  0.5421  0.5529  0.5584  0.5609  0.5699  0.5805
 ```
 
   
@@ -417,7 +502,7 @@ The use of validation will be demonstrated as part of each modeling section. The
 
 Efron, B., Tibshirani, R.J., 1993. An introduction to the bootstrap. Monographs on Statistics and Applied Probability, vol. 57. Chapman & Hall, London, UK.
 
-Good, P.I., 2001. Resampling methods. BirkhÃ¤user.
+Good, P.I., 2001. Resampling methods. Birkhäuser.
 
 James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
 

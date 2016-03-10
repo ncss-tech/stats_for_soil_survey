@@ -58,7 +58,7 @@ range(Depth2)
 quantile(Depth2)
 
 # compare with box plots
-boxplot(list(example.1=Depth, example.2=Depth2), ylab='Depth (cm)', boxwex=0.5)
+boxplot(list(example.1=Depth, example.2=Depth2), ylab='Depth (cm)', boxwex = 0.5)
 ```
     
 ## Exercise
@@ -87,8 +87,8 @@ set.seed(3)
 
 #simulate a dataset with two soil names with depth values from 20 - 60 (some values occur more than once)
 d <- data.frame(
-  soil=sample(c("A", "B"), size=100, replace = TRUE),
-  depth=sample(20:60, size=100, replace = TRUE)
+  soil <- sample(c("A", "B"), size=100, replace = TRUE),
+  depth <- sample(20:60, size=100, replace = TRUE)
 )
 
 range(d$depth)
@@ -149,7 +149,7 @@ Resampling is a general term that defines any procedure to repeatedly draw sampl
 
 #abbreviate our data to simply the commands
 d <- d$depth
-n <- length(d$depth)
+n <- length(d)
 
 #set number of iterations
 N <- 50
@@ -201,8 +201,8 @@ Validation refers to the process and the result of a process where the validity 
 - Numerical
     - Correlation (r2)
     - Scatter plots (visual inspection)
-    - Mean Error (ME) = sum(predicted - actual)/n
-    - Root Mean Square Error (RMSE) = sqrt(ME)
+    - Mean Error (ME) = mean(predicted - actual)
+    - Root Mean Square Error (RMSE) = sqrt((mean(predicted - actual)^2))
 - Categorical
     - Confusion (error) matrix
     - Types of Accuracy
@@ -258,10 +258,72 @@ In this exploratory and explanatory phase you are looking for relationships that
 - Less computationally intensive than LOOCV, but it is more robust and can be done with smaller sample sizes than a simple split.
 - Several R packages have tools to cross-validate predictions, including: `DAAG` and `boot` for `lm()` and `glm()` objects, `caret`, `rms`,
 
-```{r}
-# library(DAAG)
-# test <- CVlm(na.exclude(train), formula(fragst_lm), m = 10, plotit = FALSE)
-# with(test, cor(frags, ilogit(cvpred) * 100)^2) # cv r2
+```{r, message=FALSE, warning=FALSE}
+library(caret)
+library(randomForest)
+
+### Linear model example
+
+# Load and modify data
+load(file = "C:/workspace/ch7_data.Rdata")
+train <- data
+train <- subset(train, frags > 0 & frags < 100)
+
+# Custom logit and inverse logit function
+logit <- function(x) log(x / (1 - x)) # logit transform
+ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit 
+
+# Transform
+train$fragst <- logit(train$frags / 100)
+
+# Subset
+train <- subset(train, select = c(pc_2, pc_1, temp, twi, precipsum, fragst))
+
+# Create linear model
+fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
+
+# Create folds
+folds <- createFolds(train$fragst, k = 10)
+
+# Cross validate
+cv_results <- lapply(folds, function(x) {
+  train <- train[-x,]
+  test <- train[x,]
+  model <- lm(fragst ~ ., data = train)
+  R2 <- summary(model)$r.squared
+  adjR2 <- summary(model)$adj.r.squared
+  return(c(R2 = R2, adjR2 = adjR2))
+  }
+  )
+
+# Convert to a data.frame
+cv_results <- do.call(rbind, cv_results)
+
+# Summarize results
+summary(cv_results)
+
+### Random forest example
+
+# Modify data
+train2 <- data
+train2 <- subset(train2, frags > 0 & frags < 100)
+train2 <- subset(train2, select = - c(pedon_id, taxonname, x_std, y_std, describer2, landform.string, argillic.horizon, landform, tax_subgroup, cluster2, cluster_mast, aspect, mast, gsi, ndvi, sw))
+
+# Create folds
+folds2 <- createFolds(train2$frags, k = 10)
+
+# Cross validate
+cv_results2 <- lapply(folds2, function(x) {
+  train <- train2[-x,]
+  test <- train2[x,]
+  model <- randomForest(frags ~ ., data = train, na.action = na.exclude)
+  R2 <- model$rsq[500]
+  return(R2)
+  }
+  )
+
+# Summarize results
+summary(unlist(cv_results2))
 ```
 
   
