@@ -290,9 +290,11 @@ cv_results <- lapply(folds, function(x) {
   train <- train[-x,]
   test <- train[x,]
   model <- lm(fragst ~ ., data = train)
-  R2 <- summary(model)$r.squared
-  adjR2 <- summary(model)$adj.r.squared
-  return(c(R2 = R2, adjR2 = adjR2))
+  actual <- ilogit(test$fragst) * 100
+  predict <- ilogit(predict(model, test)) * 100
+  RMSE <- sqrt(mean((actual - predict)^2, na.rm = TRUE))
+  R2 <- cor(actual, predict, use = "pairwise")^2
+  return(c(RMSE = RMSE, R2 = R2))
   }
   )
 
@@ -317,13 +319,17 @@ cv_results2 <- lapply(folds2, function(x) {
   train <- train2[-x,]
   test <- train2[x,]
   model <- randomForest(frags ~ ., data = train, na.action = na.exclude)
+  RMSE <- sqrt(model$mse[500])
   R2 <- model$rsq[500]
-  return(R2)
+  return(c(RMSE = RMSE, R2 = R2))
   }
   )
 
+# Convert to a data.frame
+cv_results2 <- do.call(rbind, cv_results2)
+
 # Summarize results
-summary(unlist(cv_results2))
+summary(cv_results2)
 ```
 
   

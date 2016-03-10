@@ -418,9 +418,11 @@ cv_results <- lapply(folds, function(x) {
   train <- train[-x,]
   test <- train[x,]
   model <- lm(fragst ~ ., data = train)
-  R2 <- summary(model)$r.squared
-  adjR2 <- summary(model)$adj.r.squared
-  return(c(R2 = R2, adjR2 = adjR2))
+  actual <- ilogit(test$fragst) * 100
+  predict <- ilogit(predict(model, test)) * 100
+  RMSE <- sqrt(mean((actual - predict)^2, na.rm = TRUE))
+  R2 <- cor(actual, predict, use = "pairwise")^2
+  return(c(RMSE = RMSE, R2 = R2))
   }
   )
 
@@ -432,13 +434,13 @@ summary(cv_results)
 ```
 
 ```
-##        R2             adjR2       
-##  Min.   :0.3551   Min.   :0.3512  
-##  1st Qu.:0.3634   1st Qu.:0.3596  
-##  Median :0.3657   Median :0.3618  
-##  Mean   :0.3679   Mean   :0.3640  
-##  3rd Qu.:0.3738   3rd Qu.:0.3700  
-##  Max.   :0.3817   Max.   :0.3779
+##       RMSE             R2        
+##  Min.   :18.75   Min.   :0.2332  
+##  1st Qu.:20.87   1st Qu.:0.2647  
+##  Median :21.20   Median :0.3341  
+##  Mean   :21.49   Mean   :0.3206  
+##  3rd Qu.:22.24   3rd Qu.:0.3521  
+##  Max.   :23.91   Max.   :0.4100
 ```
 
 ```r
@@ -457,18 +459,27 @@ cv_results2 <- lapply(folds2, function(x) {
   train <- train2[-x,]
   test <- train2[x,]
   model <- randomForest(frags ~ ., data = train, na.action = na.exclude)
+  RMSE <- sqrt(model$mse[500])
   R2 <- model$rsq[500]
-  return(R2)
+  return(c(RMSE = RMSE, R2 = R2))
   }
   )
 
+# Convert to a data.frame
+cv_results2 <- do.call(rbind, cv_results2)
+
 # Summarize results
-summary(unlist(cv_results2))
+summary(cv_results2)
 ```
 
 ```
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.5421  0.5529  0.5584  0.5609  0.5699  0.5805
+##       RMSE             R2        
+##  Min.   :16.66   Min.   :0.5421  
+##  1st Qu.:16.84   1st Qu.:0.5529  
+##  Median :17.05   Median :0.5584  
+##  Mean   :17.00   Mean   :0.5609  
+##  3rd Qu.:17.15   3rd Qu.:0.5699  
+##  Max.   :17.31   Max.   :0.5805
 ```
 
   

@@ -488,9 +488,11 @@ cv_results &lt;- lapply(folds, function(x) {
   train &lt;- train[-x,]
   test &lt;- train[x,]
   model &lt;- lm(fragst ~ ., data = train)
-  R2 &lt;- summary(model)$r.squared
-  adjR2 &lt;- summary(model)$adj.r.squared
-  return(c(R2 = R2, adjR2 = adjR2))
+  actual &lt;- ilogit(test$fragst) * 100
+  predict &lt;- ilogit(predict(model, test)) * 100
+  RMSE &lt;- sqrt(mean((actual - predict)^2, na.rm = TRUE))
+  R2 &lt;- cor(actual, predict, use = &quot;pairwise&quot;)^2
+  return(c(RMSE = RMSE, R2 = R2))
   }
   )
 
@@ -499,13 +501,13 @@ cv_results &lt;- do.call(rbind, cv_results)
 
 # Summarize results
 summary(cv_results)</code></pre>
-<pre><code>##        R2             adjR2       
-##  Min.   :0.3594   Min.   :0.3555  
-##  1st Qu.:0.3634   1st Qu.:0.3595  
-##  Median :0.3675   Median :0.3637  
-##  Mean   :0.3680   Mean   :0.3641  
-##  3rd Qu.:0.3727   3rd Qu.:0.3689  
-##  Max.   :0.3779   Max.   :0.3741</code></pre>
+<pre><code>##       RMSE             R2        
+##  Min.   :18.21   Min.   :0.2585  
+##  1st Qu.:19.31   1st Qu.:0.3262  
+##  Median :20.30   Median :0.3734  
+##  Mean   :20.79   Mean   :0.3771  
+##  3rd Qu.:21.93   3rd Qu.:0.3928  
+##  Max.   :24.29   Max.   :0.5446</code></pre>
 <pre class="r"><code>### Random forest example
 
 # Modify data
@@ -521,15 +523,24 @@ cv_results2 &lt;- lapply(folds2, function(x) {
   train &lt;- train2[-x,]
   test &lt;- train2[x,]
   model &lt;- randomForest(frags ~ ., data = train, na.action = na.exclude)
+  RMSE &lt;- sqrt(model$mse[500])
   R2 &lt;- model$rsq[500]
-  return(R2)
+  return(c(RMSE = RMSE, R2 = R2))
   }
   )
 
+# Convert to a data.frame
+cv_results2 &lt;- do.call(rbind, cv_results2)
+
 # Summarize results
-summary(unlist(cv_results2))</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.5435  0.5562  0.5586  0.5580  0.5643  0.5689</code></pre>
+summary(cv_results2)</code></pre>
+<pre><code>##       RMSE             R2        
+##  Min.   :16.87   Min.   :0.5435  
+##  1st Qu.:16.96   1st Qu.:0.5562  
+##  Median :17.07   Median :0.5586  
+##  Mean   :17.06   Mean   :0.5580  
+##  3rd Qu.:17.16   3rd Qu.:0.5643  
+##  Max.   :17.25   Max.   :0.5689</code></pre>
 </div>
 <div id="subsample-resampling-or-sample-simulation" class="section level2">
 <h2><span class="header-section-number">6.3</span> Subsample (Resampling or sample simulation)</h2>
