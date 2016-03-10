@@ -14,9 +14,10 @@ Tree-based models are a supervised machine learning method commonly used in soil
 
 The data that we will be working with in this chapter were collected in support of a MLRA 127 soil survey update project to tabularly and spatially update SSRUGO map units for spodic properties in the Monongahela National Forest. Soils that were historically covered by Eastern Hemlock and Red Spruce exhibit spodic morphology on shale, siltstone, and sandstone bedrocks at elevations typically >3,200 ft in West Virginia ([Nauman et al., 2015](http://www.sciencedirect.com/science/article/pii/S0016706115000427)). The landscape and vegetative communities were greatly altered by fire and logging in the early 1900s, complicating the identification of spodic morphology. It is of particular interest to the project leader and the U.S. Forest Service that spatial maps be developed to depict the location of spodic morphology and folistic epipedons in the Monongahela National Forest. Folistic epipedons provide habitat for the Northern Flying Squirrel, just recently removed from the endangered species list.  
 
-### 8.1.1 Examining Data in R
 
-Before we dive in to model building, let's first import and examine the dataset in R.  
+### 8.1.1 Getting Data Into R and Exporting to Shapefile
+
+Before we dive in to model building, let's first import and plot the dataset in R. 
 
 
 ```r
@@ -26,6 +27,34 @@ library(maps) #maps
 library(rgdal) #spatial import
 library(corrplot) #graphical display of correlation matrix
 
+file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+download.file(file, destfile = "soildata.csv")
+soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+coordinates(soildata) <- ~ x + y #set the coordinates; converting dataframe to a spatial object
+proj4string(soildata) <- CRS("+init=EPSG:4269") #set the projection; https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/OverviewCoordinateReferenceSystems.pdf 
+
+map("county", "west virginia") 
+points(soildata) #plot points
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-1-1.png)
+
+
+```r
+#convert soildata into a shapefile
+writeOGR(soildata, dsn = "C:/workspace", "soildata", driver = "ESRI Shapefile") 
+```
+
+Conveniently, environmental covariate values were previously extracted for all of the observations in the **soildata** dataset. **How would you extract raster data to points in R?**  ([Hint](https://github.com/ncss-tech/stats_for_soil_survey/blob/master/chapters/6_linear_models/6_Linear_models.md))
+
+
+### 8.1.2 Examining Data in R
+
+
+```r
+#since we converted the soildata dataframe to a spatial object to export as a shapefile, we will need to convert it back to a dataframe to plot and further examine the data in R
+
+#reimporting the data and overwriting the soildata object is just one way to achieve this
 file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(file, destfile = "soildata.csv")
 soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
@@ -105,19 +134,19 @@ Next, let's explore the tabular data:
 boxplot(solar~spodint, data=soildata, xlab="spodic intensity", ylab="solar") #does solar radiation affect spodic intensity?
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-3-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-5-1.png)
 
 ```r
 boxplot(northwestn~spodint, data=soildata, xlab="spodic intensity", ylab="northwestness") #how about aspect?
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-3-2.png)
+![](treemodels_files/figure-html/unnamed-chunk-5-2.png)
 
 ```r
 densityplot(~ Otot|order, data=soildata) #distribution of O horizon thickness among soil orders
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-3-3.png)
+![](treemodels_files/figure-html/unnamed-chunk-5-3.png)
 
 ```r
 numeric <- data.frame(soildata[, c(8, 25, 27:50)]) #combine numeric columns into a new data frame
@@ -138,28 +167,7 @@ cormatrix <- cor(numeric) #calculate correlation matrix
 corrplot(cormatrix, method = "circle") #plot correlation matrix
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-3-4.png)
-
-
-### 8.1.2 Plotting Data
-
-```r
-coordinates(soildata) <- ~ x + y #set the coordinates
-proj4string(soildata) <- CRS("+init=EPSG:4269") #set the projection; https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/OverviewCoordinateReferenceSystems.pdf 
-
-map("county", "west virginia") 
-points(soildata) #plot points
-```
-
-![](treemodels_files/figure-html/unnamed-chunk-4-1.png)
-
-
-```r
-#convert soildata into a shapefile
-writeOGR(soildata, dsn = "C:/workspace", "soildata", driver = "ESRI Shapefile") 
-```
-
-Conveniently, environmental covariate values were previously extracted for all of the observations in the **soildata** dataset. **How would you extract raster data to points in R?**  ([Hint](https://github.com/ncss-tech/stats_for_soil_survey/blob/master/chapters/6_linear_models/6_Linear_models.md))
+![](treemodels_files/figure-html/unnamed-chunk-5-4.png)
 
 
 ### 8.1.3 Exercise 1
@@ -792,7 +800,7 @@ plot(rfpredict, xlab="Easting (m)", ylab="Northing (m)", main="Total O Horizon T
 
 
 ## 8.5 Summary
-Tree-based models are intuitive, quick to run, nonparametric, and are often ideal for exploratory data analysis and prediction. Both rpart and randomForest produce graphical and tabular outputs to aid interpretation. Both packages also perform internal validataion (rpart=10-fold cross validation; randomForest=OOB error estimates) to assess model performance. Tree-based models do require pruning and/or tweaking of model parameters to reduce over-fitting and are unstable in that removing observations (especially outliers) or independent predictors can greatly alter the tree structure. In general,  tree-based models are robust against multicollinearity and low n, high p datasets (low sample size and many predictors).
+Tree-based models are intuitive, quick to run, nonparametric, and are often ideal for exploratory data analysis and prediction. Both rpart and randomForest produce graphical and tabular outputs to aid interpretation. Both packages also perform internal validataion (rpart=10-fold cross validation; randomForest=OOB error estimates) to assess model performance. Tree-based models do require pruning and/or tweaking of model parameters to reduce over-fitting and are unstable in that removing observations (especially outliers) or independent predictors can greatly alter the tree structure. In general, tree-based models are robust against multicollinearity and low n, high p datasets (low sample size and many predictors).
 
 
 ## 8.6 Additional Reading
@@ -800,4 +808,3 @@ Tree-based models are intuitive, quick to run, nonparametric, and are often idea
 Gareth, J., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
 
 Rad, M.R.P., N. Toomanian, F. Khormali, C.W. Brungard, C.B. Komaki, and P. Bogaert. 2014. Updating soil survey maps using random forest and conditioned Latin hypercube sampling in the loess derived soils of northern Iran. Geoderma. 232-234: 97-106. 
-
