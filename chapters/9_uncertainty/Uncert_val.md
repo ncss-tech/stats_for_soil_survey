@@ -390,6 +390,8 @@ In this exploratory and explanatory phase you are looking for relationships that
 library(caret)
 library(randomForest)
 
+set.seed(123)
+
 ### Linear model example
 
 # Load and modify data
@@ -435,12 +437,12 @@ summary(cv_results)
 
 ```
 ##       RMSE             R2        
-##  Min.   :18.75   Min.   :0.2332  
-##  1st Qu.:20.87   1st Qu.:0.2647  
-##  Median :21.20   Median :0.3341  
-##  Mean   :21.49   Mean   :0.3206  
-##  3rd Qu.:22.24   3rd Qu.:0.3521  
-##  Max.   :23.91   Max.   :0.4100
+##  Min.   :16.02   Min.   :0.1816  
+##  1st Qu.:18.73   1st Qu.:0.3260  
+##  Median :20.74   Median :0.3850  
+##  Mean   :20.35   Mean   :0.3804  
+##  3rd Qu.:20.94   3rd Qu.:0.4283  
+##  Max.   :24.01   Max.   :0.5680
 ```
 
 ```r
@@ -459,8 +461,10 @@ cv_results2 <- lapply(folds2, function(x) {
   train <- train2[-x,]
   test <- train2[x,]
   model <- randomForest(frags ~ ., data = train, na.action = na.exclude)
-  RMSE <- sqrt(model$mse[500])
-  R2 <- model$rsq[500]
+  actual <- test$frags
+  predict <- predict(model, test)
+  RMSE <- sqrt(mean((actual - predict)^2, na.rm = TRUE))
+  R2 <- cor(actual, predict, use = "pairwise")^2
   return(c(RMSE = RMSE, R2 = R2))
   }
   )
@@ -474,12 +478,12 @@ summary(cv_results2)
 
 ```
 ##       RMSE             R2        
-##  Min.   :16.66   Min.   :0.5421  
-##  1st Qu.:16.84   1st Qu.:0.5529  
-##  Median :17.05   Median :0.5584  
-##  Mean   :17.00   Mean   :0.5609  
-##  3rd Qu.:17.15   3rd Qu.:0.5699  
-##  Max.   :17.31   Max.   :0.5805
+##  Min.   :14.91   Min.   :0.4899  
+##  1st Qu.:16.28   1st Qu.:0.5216  
+##  Median :17.07   Median :0.5789  
+##  Mean   :16.92   Mean   :0.5733  
+##  3rd Qu.:17.27   3rd Qu.:0.6081  
+##  Max.   :19.17   Max.   :0.6764
 ```
 
   

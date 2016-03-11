@@ -262,6 +262,8 @@ In this exploratory and explanatory phase you are looking for relationships that
 library(caret)
 library(randomForest)
 
+set.seed(123)
+
 ### Linear model example
 
 # Load and modify data
@@ -319,8 +321,10 @@ cv_results2 <- lapply(folds2, function(x) {
   train <- train2[-x,]
   test <- train2[x,]
   model <- randomForest(frags ~ ., data = train, na.action = na.exclude)
-  RMSE <- sqrt(model$mse[500])
-  R2 <- model$rsq[500]
+  actual <- test$frags
+  predict <- predict(model, test)
+  RMSE <- sqrt(mean((actual - predict)^2, na.rm = TRUE))
+  R2 <- cor(actual, predict, use = "pairwise")^2
   return(c(RMSE = RMSE, R2 = R2))
   }
   )
