@@ -250,7 +250,7 @@ list.of.lists
 as.data.frame(list.of.lists)
 ```
 
-### Matrix
+### 2.125 Matrix
 The matrix object is used to describe rectangular data of a single datatype: numbers, characters, Boolean values, and so on.
 ```{r datatype4, eval=TRUE}
 # make a 5x5 matrix of 0's
@@ -276,7 +276,7 @@ m
 outer(1:10, 1:10, FUN='*')
 ```
 
-# 2.2 Using the soilDB Package to Load NASIS Pedon Data
+# 2.2 Using the SoilDB Package to Load NASIS Pedon Data
  
 ## 2.21 Set Up an Open Database Connectivity (ODBC) Connection to NASIS  
 
@@ -292,10 +292,10 @@ Does NASIS need to be open and running to query data using soilDB?
 No, `fetchNASIS()` works whether the NASIS application is running or not. You just need to make sure that the data you want is loaded into your selected set.
 
 
-## What is the SoilDB Package, and What Does It Do?
-The soilDB package for R was designed for working with soil-resource-related data sources.  The package has a series of convenience functions for accessing data in NASIS, KSSL, SDA, and other sources. The `fetchNASIS` convenience function extracts data from a NASIS selected set via Structured Query Language (SQL) queries.  Some basic data checks are run within the fetch functions, then the data is assembled into a combined site-level and horizon-level data structure within a custom R object called a `Soil Profile Collection (SPC)`.  The [`SoilProfileCollection`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) class was designed to simplify the process of working with collections of data associated with soil profiles, e.g., site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc.  
+## 2.22 What is the SoilDB Package, and What Does It Do?
+The soilDB package for R works with soil-resource-related data sources.  It has a series of convenience functions for accessing data in NASIS, KSSL, SDA, and other sources. The `fetchNASIS` convenience function extracts data from a NASIS selected set via Structured Query Language (SQL). Basic data checks are run within the fetch functions, then the data are assembled into a combined site-level and horizon-level data structure within a custom R object called a `Soil Profile Collection (SPC)`.  The [`SoilProfileCollection`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp) class simplifies the process of working with collections of data associated with soil profiles, e.g., site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc.  
 
-It is important to mention that the import process built into `fetchNASIS()` is not comprehensive and does not pull all of the data for every table related to pedon data out of NASIS.  However, it pulls much of the most often used pedon and horizon data.  In addition, much of the nested complexity of the NASIS data structure has been simplified in creating the SPC object that results from the `fetchNASIS()` function.  Higher level functions like `fetchNASIS()` bundle a series of lower level functions which get specific parts of the data structure. 
+Note that the import process in `fetchNASIS()` is not comprehensive. It does not pull all of the data for every table related to pedon data out of NASIS. Instead, it pulls much of the most commonly used pedon and horizon data.  In addition, much of the nested complexity of the NASIS data structure is simplified in the resulting SPC object.  Higher level functions like `fetchNASIS()` bundle a series of lower level functions that get specific parts of the data structure. 
 
 ```{r structure_diagram_a, echo=FALSE, results='hide', warning=FALSE}
 library(diagram, quietly=TRUE)
@@ -323,51 +323,51 @@ arrows(0.42, 0.61, x1=0.65, y1=0.61, length = 0.25, code=2, lwd=2, angle = 15)
 arrows(0.42, 0.87, x1=0.65, y1=0.68, length = 0.25, code=2, lwd=2, angle = 15)
 ```
 
-One-to-many relationships are flattened where possible by `fetchNASIS()` to aggregate the data to one site record with related horizon records.  Selected additional data elements that may have a one-to-many relationship to a site or pedon can be gathered from a NASIS selected set via the  `get_extended_data_from_NASIS_db()` function.
+One-to-many relationships are flattened where possible by `fetchNASIS()`. This flatteneing aggregates the data into one site record with related horizon records.  Selected additional data elements that may have a one-to-many relationship to a site or pedon can be gathered from a NASIS selected set via the  `get_extended_data_from_NASIS_db()` function.
 
-**In short.....the soilDB package greatly simplifies the process of getting pedon data from NASIS into R for further analysis.**
+In short, the soilDB package greatly simplifies the process of getting pedon data from NASIS into R for further analysis.
 
 
 
-### Additional convenience functions in the soilDB package
+### 2.221 Additional Convenience Functions in the SoilDB Package
 
 - **fetchNASISLabData()**
-    - Get KSSL laboratory pedon/horizon layer data from a local NASIS database.
+    - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
 - **fetchNASIS_component_data()**
-    - Get selected NASIS mapunit and component data from a local NASIS database (experimental).
-        - For more information, check out the following tutorial:
+    - Gets selected NASIS map unit and component data from a local NASIS database (experimental).
+        - For more information, see the following tutorial:
         [**NASIS component data**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/NASIS-component-data.html?root=aqp).
 - **fetchKSSL()**
-    - Get KSSL data via BBOX, MLRA, or series name query, from the SoilWeb system.
-        - For more information, check out the following tutorial:
+    - Gets KSSL data via BBOX, MLRA, or series name query, from the SoilWeb system.
+        - For more information, see the following tutorial:
         [**KSSL data demo**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/NASIS-component-data.html?root=aqp).
 - **fetchOSD()**
-    - Fetch a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
+    - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
 - **fetchRaCA()**
-    - Get Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
-        - For more information, check out the following tutorial:
+    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
+        - For more information, see the following tutorial:
         [**RaCA data demo**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/RaCA-demo.html?root=aqp).
 - **fetchSCAN()**
-    - Query soil and climate data from USDA-NRCS SCAN Stations (experimental).
+    - Queries soil and climate data from USDA-NRCS SCAN Stations (experimental).
 - **fetchHenry()**
-    - Download Data from the Henry Mount Soil Climate Database (experimental).
-        - For more information, check out the following tutorial:
+    - Downloads data from the Henry Mount Soil Climate Database (experimental).
+        - For more information, see the following tutorial:
         [**Henry Mount Soil Climate Database Tutorial**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/Henry-demo.html?root=aqp).
 - **fetchPedonPC()**
-    - Fetch commonly used site/horizon data from a PedonPC v.5 database.
+    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
 - **SDA_query**
-    - Submit queries to the Soil Data Access system.
-        - For more information, check out the following tutorial:
+    - Submits queries to the Soil Data Access system.
+        - For more information, see the following tutorial:
         [**Soil Data Access Tutorial**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/SDA-tutorial.html?root=aqp).
 
 
-### Data checks run by the `fetchNASIS()` function
+### 2.222 Data Checks Run by the `fetchNASIS()` Function
 
-When loading pedons with the fetchNASIS() function the following data checks are performed:
+When you load pedons using the fetchNASIS() function, the following data checks are performed:
 
-- **Presence of multiple map datums:** Results reported to the user and the data are not modified.
+- **Presence of multiple map datums**.—Results reported to the user and the data are not modified.
 
-- **Inconsistent horizon boundaries:** Pedons with inconsistent horizon boundaries are not loaded.  In most cases, this occurs when the bottom depth of a horizon is not the same as the upper depth of the next lower horizon.
+- **Inconsistent horizon boundaries**.—Pedons with inconsistent horizon boundaries are not loaded.  In most cases, this occurs when the bottom depth of a horizon is not the same as the upper depth of the next lower horizon.
 
 ```{r example_a, echo=FALSE, results='show', warning=FALSE}
 top <- c(0,38,56,121,135)
@@ -376,15 +376,15 @@ hzname <- c('A', 'Bt1', 'Bt2', 'Bk', 'R')
 d <- data.frame(hzname, top, bot)
 d
 ```
-_Notice the issue here? Bottom depth of the A horizon and the upper depth of the Bt1 horizons should be the same: either 30 or 38 cm. The correct depth needs to be determined to resolve this issue._
+Note the issue above. The bottom depth of the A horizon and the upper depth of the Bt1 horizons should be the same: either 30 or 38 cm. The correct depth needs to be determined.
 
-- **Missing lower horizon depths:** Offending horizons are fixed by replacing the missing bottom depth with the top depth + 2cm.  So in the case of the profile shown above, a bottom depth of 137 cm would be inserted where the depth is missing.
+- **Missing lower horizon depths.**.—Offending horizons are fixed by replacing the missing bottom depth with the top depth + 2 cm. In the case of the profile shown above, a bottom depth of 137 cm would be inserted where the depth is missing.
 
-- **Sites missing pedon records:** Data without corresponding horizons are not loaded.
+- **Sites missing pedon records**.—Data without corresponding horizons are not loaded.
 
 
-#### How can we find the site ID's where these errors occur and fix them in NASIS?
-Should errors in the pedon data be detected when loading data using fetchNASIS() you can use the following 'get' functions to trace them back to the corresponding records in NASIS:
+#### 2.2221 How can I find the site ID's where these errors occur and fix them in NASIS?
+If errors in the pedon data are detected when loading data using fetchNASIS(), the following 'get' functions can trace them back to the corresponding records in NASIS:
 
 - **get('sites.missing.pedons', envir=soilDB.env)**
     - Returns user site ID's for sites missing pedons.
@@ -398,27 +398,27 @@ Should errors in the pedon data be detected when loading data using fetchNASIS()
 - **get('bad.horizons', envir=soilDB.env)**
     - Returns a dataframe of horizon-level information for pedons with inconsistent horizon depths.
 
-For more information on the design of soilDB functions, use the following link to the soilDB documentation: [**Introduction to soilDB**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/soilDB-Intro.html?root=aqp).
+For more information on the design of soilDB functions, go to the following documentation: [**Introduction to soilDB**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/soilDB-Intro.html?root=aqp).
 
 
-### Options that can be set within fetchNASIS()
+### 2.223 Options That Can Be Set Within fetchNASIS()
 
 There are two default options that can be set within `fetchNASIS(rmHzErrors = TRUE, nullFragsAreZero = TRUE)`.  
 
 - **rmHzErrors = TRUE/FALSE** 
-    - Setting this value to **TRUE** (the default) will enable checks for horizon depth consistency. Consider setting this argument to FALSE if you aren't concerned about horizon depth errors, or if you know that your selected set contains many combination horizons (consisting of E/Bt or similar two part horizons described individually for the same depth range). Note that any pedons flagged as having horizon depths errors (rmHzErrors = TRUE) will be omitted from the data returned by `fetchNASIS()`.
+    - Setting this value to **TRUE** (the default) enables checks for horizon depth consistency. Consider setting this argument to FALSE if you aren't concerned about horizon depth errors or if you know that your selected set contains many combination horizons (e.g., consisting of E/Bt horizons or similar two-part horizons described individually for the same depth range). Note that any pedons flagged as having horizon depths errors (rmHzErrors = TRUE) are omitted from the data returned by `fetchNASIS()`.
     
 - **nullFragsAreZero = TRUE/FALSE**
-    - Setting this value to **TRUE** (the default) will convert NULL rock fragment volumes to 0. This is typically the right assumption as rock fragment data are typically populated only when observed. If you know that your data contain a combination of omitted information (e.g. there are no rock fragment volumes populated) then consider setting this argument to FALSE.
+    - Setting this value to **TRUE** (the default) converts null entries for rock fragment volumes to 0. This is typically the right assumption because rock fragment data are typically populated only when observed. If you know that your data contain a combination of omitted information (e.g. no rock fragment volumes are populated) then consider setting this argument to FALSE.
   
 For more information on the data checks and adjusting the default options to `fetchNASIS()` function, use the following resource: [**Tips on getting data from NASIS into R**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp).
 
-## Structure of Pedon Data in a Soil Profile Collection (SPC)
+## 2.23 Structure of Pedon Data in a Soil Profile Collection (SPC)
 
-#### The `Gopheridge` Sample Dataset
-The `gopheridge` sample dataset is very similar to the type of data returned from `fetchNASIS()`. The following demonstration is intended to show the structure of the Soil Profile Collection (SPC) object that is returned by `fetchNASIS()`. 
+### 2.231 The `Gopheridge` Sample Dataset
+The `gopheridge` sample dataset is very similar to the type of data returned from `fetchNASIS()`. The following demonstration shows the structure of the Soil Profile Collection (SPC) object that is returned by `fetchNASIS()`. 
 
-Before proceeding, it may be helpful to review [**SoilProfileCollection object introduction**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).  This tutorial provides an excellent overview of how the SPC object is constructed. Also the `soilDB` and `aqp` manual pages are accessible (click on the "index" at the bottom of the Help tab in RStudio) by entering the following into the R console: 
+Before proceeding, you may be it helpful to review [**SoilProfileCollection object introduction**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp). This tutorial provides an excellent overview of how the SPC object is constructed. Also, the manual pages for `soilDB` and `aqp` are accessible (click **index** at the bottom of the **Help** tab in RStudio) by entering the following into the R console: 
 
 ```{r, eval=FALSE}
 # not run
@@ -431,7 +431,7 @@ help(aqp)
 ```
 
 
-Open RStudio, and setup the environment by loading packages and the Gopheridge sample dataset.
+Open RStudio, and set up the environment by loading packages and the Gopheridge sample dataset.
 
 
 ```{r gopheridge_a}
@@ -453,7 +453,7 @@ siteNames(gopheridge)
 horizonNames(gopheridge)
 ```
 
-#### Quickly generate sketches from a `SoilProfileCollection` object
+#### 2.2311 Quickly generate sketches from a `SoilProfileCollection` object
 The `plot()` function applied to a `SoilProfileCollection` object will generate sketches based on horizon depths, designations, and colors. The `fetchNASIS()` function automatically converts moist Munsell colors into R-style colors. Multiple colors per horizon are mixed. See `?plotSPC` for a detailed list of arguments and examples.
 
 ```{r, fig.width=10, fig.height=4}
@@ -463,7 +463,7 @@ title('Pedons from the `gopheridge` sample dataset', line=-0.5)
 ```
 
 
-#### Subset example of the data in the site-level portion of the SPC:
+#### 2.2312 Subset example of the data in the site-level portion of the SPC:
 
 ```{r gopheridge_a1, eval=TRUE, echo=FALSE, results='show', warning=FALSE, collapse=TRUE}
 s <- site(gopheridge)
@@ -477,7 +477,7 @@ knitr::kable(s[1:2, 28:36])
 #head(site(gopheridge), 2) # show the first 2 lines of the site data
 ```
 
-#### Subset example of the data in the horizon-level portion of the SPC:
+#### 2.2313 Subset example of the data in the horizon-level portion of the SPC:
 
 ```{r gopheridge_a2, eval=TRUE, echo=FALSE, results='show', warning=FALSE, collapse=TRUE}
 h <- horizons(gopheridge)
@@ -491,11 +491,11 @@ knitr::kable(h[1:8, 11:19])
 #head(horizons(gopheridge), 5) # show the first 5 rows of the horizon data
 ```
 
-#### Follow along with your own data
+#### 2.2314 Follow along with your own data
 
-**Explore the site and horizon level data in your own SPC using the following code:**
+Explore the site- and horizon-level data in your own SPC using the following code.
 
-Note: This will require some pedons in your local NASIS selected set.
+Note: You must have pedons in your local NASIS selected set.
 
 ```{r owndata_a, results='hide'}
 # load required libraries
@@ -520,14 +520,14 @@ head(site(f), 2)
 head(horizons(f), 2)
 ```
 
-**Question:**
+**Question**
 
-**How can we find out how many site and horizon records we have in the data we've just loaded?**
+How can you find out how many site and horizon records are in the data you just loaded?
 
-## Viewing Pedon Locations
-### Plotting geographic data directly in R
+## 2.24 Viewing Pedon Locations
+### 2.241 Plotting Geographic Data Directly in R
 
-**Quick check:** Does the data roughly plot where you would expect it to?
+**Quick check:** Does the data plot roughly where you would expect it?
  
 Plotting the data directly as an R graphic can give you some idea of how the data look spatially and whether their distribution approximates what you would expect to see.  Typos in coordinates are relatively common when they are manually entered, and viewing the data spatially is a quick way to see points that plot far outside of the geographic area of interest and clearly have some kind of error.
 
