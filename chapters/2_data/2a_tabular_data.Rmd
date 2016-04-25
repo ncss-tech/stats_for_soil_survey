@@ -41,7 +41,7 @@ plot(pedons)
 - Use the soilDB package to load NASIS pedon data into R
 - Learn about the checks run by the fetch functions when pulling data into R
 - Understand the structure of data stored in a Soil Profile Collection (SPC)
-- Learn ways to filter and subset data SPC data in R
+- Learn ways to filter and subset SPC data in R
 - Learn how functions can be used to bundle operations
 - Review additional data that is accessible via extended data functions
 
@@ -522,7 +522,7 @@ head(horizons(f), 2)
 
 **Question**
 
-How can you find out how many site and horizon records are in the data you just loaded?
+How can I find out how many site and horizon records are in the data you just loaded?
 
 ## 2.24 Viewing Pedon Locations
 ### 2.241 Plotting Geographic Data Directly in R
@@ -572,7 +572,7 @@ Google Earth is a powerful data viewer for point data.  Geographic data is displ
 ### 2.243 Exporting Pedon Data to an ESRI Shapefile
 Another way you can view the data is to export a shapefile from R.  For further information, see this tutorial: [**Export Pedons to Shapefile**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/export-points-from-NASIS.html?root=aqp).
 
-#### 2.2431Follow along with your own data
+#### 2.2431 Follow along with your own data
 
 **Use the script below to make an R plot of pedon data loaded from your NASIS selected set.**
 
@@ -677,10 +677,12 @@ For more information on using regular expressions in `grep()` for pattern matchi
 
 #### 2.3111 Additional syntax options for REGEX pattern matching
 
-  - `|` --- Equivalent to "or" in SQL.
-    - Example:   `grep('loamy | sandy', f$part_size_class)`
-  - `^` --- Anchors to the left side of the string - `grep('^sandy', f$part_size_class)`.
-  - `$` --- Anchors to the right side of the string - `grep('skeletal$', f$part_size_class)`.
+  - `|`—Equivalent to "or" in SQL.
+    - Example:  `grep('loamy | sandy', f$part_size_class)`
+  - `^`—Anchors to the left side of the string.
+    - Example:  `grep('^sandy', f$part_size_class)`.
+  - `$`—Anchors to the right side of the string.
+    - Example:  `grep('skeletal$', f$part_size_class)`.
 
 
 ### 2.312 Filtering Data by Specifying a Criteria Using the `which()` Function
@@ -711,16 +713,16 @@ title('Sandy-skeletal particle size control section class')
 
 #### 2.3121 Additional syntax options for use in `which()` criteria
 
-  - `%in%` --- Equivalent to IN() in SQL. Can use `c()` to concatenate lists of vectors.
+  - `%in%`—Equivalent to IN() in SQL. Can use `c()` to concatenate lists of vectors.
     - Example:   `which(f$part_size_class %in% c('loamy-skeletal', 'sandy-skeletal'))`
-  - `!=` --- Not-equal-to character "string".
-  - `==` --- Notice in the above example that R uses a double equal sign as "equal to".
-  - `<, >, <=, >=` --- less than, greater than, and equal to.
+  - `!=`—Not-equal-to character "string."
+  - `==`—Note in the example above that R uses a double equal sign as "equal to."
+  - `<, >, <=, >=`—less than, greater than, less than or equal to, and greater than or equal to.
 
 
-### Extracting site and horizon data
+### 2.313 Extracting Site and Horizon Data
 
-Soil Profile Collections are designed to be dismantled in order to work with either site or horizon data more easily. Within the SPC, there is a slot for site-level data and a slot for horizon-level data. We can reference these slots using the `site()` and `horizons()` functions within the AQP package. These "get" functions will extract all the site or horizon variables as a dataframe for further use.  
+Soil Profile Collections are designed to be dismantled so they can work more easily with either site or horizon data. The SPC has a slot for site-level data and a slot for horizon-level data. You can reference these slots using the `site()` and `horizons()` functions within the AQP package. These "get" functions extract all the site or horizon variables as a dataframe for further use.  
 
 ```{r owndata_g, results='show'}
 # extract site data from SPC into dataframe 's'
@@ -730,10 +732,10 @@ names(s)
 h <- horizons(f)
 names(h)
 ```
-We can also use these functions in referencing the data within an SPC to specify that we want to look specifically in the site or horizon data. 
+You can also use these functions when referencing the data within an SPC to specify that you want to look specifically in the site or horizon data. 
 
-### Review of data checks run by `fetchNASIS()`
-Now that we've loaded some data and learned a little about how to filter data in the SPC, let's quickly review some of the `get()` functions used to track data issues detected in the process of loading data back to the NASIS records in our selected set.
+### 2.314 Review of Data Checks Run by `fetchNASIS()`
+Now that you've loaded some data and learned a little about how to filter data in the SPC, you can quickly review some of the `get()` functions used to track data issues detected in the process of loading data back to the NASIS records in your selected set.
 
 ```{r owndata_a1, eval=FALSE, results='hide'}
 # use each one of these to return a vector of the pedons where errors were detected
@@ -750,18 +752,17 @@ Now that we've loaded some data and learned a little about how to filter data in
 idx <- which(horizons(f)$pedon_id != get('bad.pedon.ids', envir=soilDB.env))
 f <- f[idx, ]
 ```
-Another useful function is `dput()`, which will concatenate a variable converting something like this:\
+Another useful function is `dput()`, which concatenates a variable. It converts something like this:
+\"2011MT0810001" "2011MT0810009" "2011MT00810015" "2011MT0810027" "2011MT0810034"\
   
-"2011MT0810001" "2011MT0810009" "2011MT00810015" "2011MT0810027" "2011MT0810034"\
-  
-into a comma delimited string like this:\  
-c("2011MT0810001", "2011MT0810009", "2011MT00810015", "2011MT0810027", "2011MT0810034").
+into a comma delimited string like this:
+\c("2011MT0810001", "2011MT0810009", "2011MT00810015", "2011MT0810027", "2011MT0810034")\.
 
 Such a string can be copied and then pasted back as a concatenated string or could even be used as string for NASIS list queries. The `dput()` function is also helpful when sending questions or examples to colleagues via email.
 
 
-## Functions
-If objects are analogous to *nouns* in a spoken language, then functions are analogous to *verbs*. A function defines an action that (usually) results in the creation of an object. An object that a function "acts on" is referred to as an "argument" of that function. Let's follow this terminology with a very basic example:
+## 2.32 Functions
+If objects are analogous to nouns in a spoken language, then functions are analogous to verbs. A function defines an action that (typically) results in the creation of an object. An object that a function "acts on" is referred to as an "argument" of that function. Follow this terminology with a very basic example:
 
 ```{r }
 # make a new object with a sequence of values from 1 to 10
@@ -783,33 +784,33 @@ aFunction(a)
 ```
 
 
-### Defining a function
-Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes that can be re-used.  Here we focus on functions that work with the horizon data in the SPC.  The general workflow typically goes like this:
+### 2.321 Defining a Function
+Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes that can be re-used.  The following focuses on functions that work with the horizon data in the SPC.  The general workflow typically goes like this:
 
 - *The need for a function is realized,*
 
 - *steps for a function are defined,*
 
-- *function is then applied iteratively to each soil profile,*
+- *the function is applied iteratively to each soil profile,*
 
 - *results are returned, and*
 
-- *in many cases, results many need to be further summarized in order to join them back to the original SPC.*
+- *results may, in many cases, need to be further summarized before joining back to the original SPC.*
 
 
-### Function examples
+### 2.322 Function Examples
 
-Functions can bundle a series of operations and then be applied to each profile within a collection (SPC) using `profileApply()`.  Let's say we wanted to use some pedon data to model the depth to the top of an argillic horizon.  Ideally, this task would be performed using data from the pedon diagnostic features table. However, these records are not always consistently populated.  So how else might we accomplish this task?  One possible way would be to look through horizon designations to derive a depth using the 't' suffix horizon designation.
+Functions can bundle a series of operations and then be applied to each profile within a collection (SPC) using `profileApply()`.  Consider, for example, if you wanted to use some pedon data to model  depth to the top of an argillic horizon.  Ideally, this task would be performed using data from the pedon diagnostic features table. However, these records are not always consistently populated. So how else might you accomplish this task?  One way to try would be using horizon designations to derive a depth to the 't' suffix horizon designation.
 
-What steps would be needed to accomplish this task and return an upper depth to an argillic horizon for each site?
+What steps would return an upper depth to an argillic horizon for each site?
 
  - *Extract* the horizon data for each profile,
- - *iterate* through the horizon designations(hzname) and search for the pattern **"t"**,
+ - *iterate* through the horizon designations (hzname) and search for the pattern **"t",**
  - *apply* the function to each profile via `profileApply()`,
  - *summarize* the data returned by the function to one value per profile, and
  - *join* the summarized depth value back to the site data.
  
-#### Example using the Gopheridge sample dataset
+#### 2.3221 Example using the Gopheridge sample dataset
 
 ```{r owndata_i_gopher, echo=TRUE, results='show', warning=FALSE}
 # load required libraries
@@ -841,9 +842,9 @@ findBtHorizons <- function(i) {
 findBtHorizons(f[1, ])
 ```
 
-You can see that we still need to summarize this to get the upper depth from multiple "Bt" horizons per profile. Also, notice that a couple of additional variable were returned by the function.
+You still need to summarize this to get the upper depth from multiple "Bt" horizons per profile. Also, note that additional variable were returned by the function.
 
-Next, apply our function to all profiles in our collection; results are a list of dataframes.
+Next, apply the function to all profiles in your collection. The results are a list of dataframes.
 ```{r}
 l <- profileApply(f, FUN=findBtHorizons, simplify=FALSE)
 
@@ -852,7 +853,7 @@ Bt.horizons <- ldply(l)
 ```
 
 
-We still need to reduce this down to one depth value per profile. The `ddply()` function is a convenient way to iterate over groups of rows in a dataframe and compute summaries (similar to `GROUP BY` in SQL). The group-wise summaries are re-combined into a new dataframe along with ids for each group.
+You still need to reduce this to one depth value per profile. The `ddply()` function conveniently iterates over groups of rows in a dataframe and computes summaries (similar to `GROUP BY` in SQL). The group-wise summaries are re-combined into a new dataframe along with ids for each group.
 ```{r fig.width=4.5, fig.height=3.5}
 # standard ddply syntax is as follows (type '?ddply' into the R console):
 # ddply(.data, .variables, .fun)
@@ -865,8 +866,9 @@ site(f) <- Bt.horizons.top
 # summary of depth to carbonates in the data using a histogram
 hist(f$depth_to_argillic_cm, xlab='Depth to Bt Horizon (cm)', main='')
 ```
-**Question:**                                                                                                                                          
-**What is a potential problem with this operation? What was not accounted for?**
+**Questions**                                                                                                                                          
+**What is a potential problem with this operation?** 
+**What was not accounted for?**
 
 
 ```{r owndata_i1_gopher, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
@@ -906,24 +908,22 @@ site(f) <- organic1
 hist(f$organic_thickness_cm, xlab='Thickness of Organic horizons (cm)', main='')
 ```
 
-You could now subtract the organic_thickness_cm values from depth_to_argillic_cm values to get a more realistic upper depth to argillic features.
+**Question**
+How would you subtract the organic_thickness_cm values from depth_to_argillic_cm values to get a more realistic upper depth to argillic features?
 
-How would we do that?
+#### 2.3222 Follow along with your own data
 
+In the following example, you will use pedon data to model the depth to calcium carbonate.  
 
-#### Follow along with your own data
-
-In the following example, we want to use some pedon data to model the depth to calcium carbonate.  
-
-What steps would be needed to accomplish this task and return an upper depth to carbonates for each site?
+What steps would be needed to return an upper depth to carbonates for each site?
 
  - *Extract* the horizon data for each profile,
- - *iterate* through the horizon designations(hzname) pattern matching for **"k"**,
+ - *iterate* through the horizon designations (hzname) pattern matching for **"k",**
  - *apply* the function to each profile via `profileApply()`,
  - *summarize* the data returned by the function to one value per profile, and
  - *join* the summarized depth value back to the site data.
 
-Note: This example may need to be modified to evaluate different horizon designations than the ones used here as they may not be present in the data you currently have loaded.
+Note: This example may need modification to evaluate different horizon designations than the ones used here as these may not be present in your currently loaded data.
  
 ```{r owndata_i, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
 # load required libraries
@@ -967,20 +967,20 @@ site(f) <- limy1
 hist(f$depth_to_carbonates_cm, xlab='Depth to Calcium Carbonates (cm)', main='')
 ```
 
-If you have organic horizons present in your data, go ahead and use the `f.organic` function outlined above to derive `organic_thickness_cm` values for the data.
+If your data contains organic horizons, use the `f.organic` function outlined above to derive values for `organic_thickness_cm`.
 
 You can then subtract the `organic_thickness_cm` values from `depth_to_carbonates_cm` values to get a more realistic upper depth to calcium carbonates.
 
-How about examples where we truncate the thickness or we're interested in summarizing the data for some depth zone, for example, 25 to 100 cm.  What is the weighted average clay for the 25 to 100 cm thickness?
+Consider examples where you truncate the thickness or are interested in summarizing the data for a depth zone, for example, 25 to 100 cm.  What is the weighted average clay for the 25 to 100 cm thickness?
 
 Simple example: `slab(f, fm= peiid ~ clay, slab.structure=c(25,100), slab.fun=mean, na.rm=TRUE)`.
 
-Some excellent examples using the `slice()` and `slab()` functions in the AQP package can be found here:
+Excellent examples using the `slice()` and `slab()` functions in the AQP package can be found at:
 [**Introduction to SoilProfileCollection**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).
 
-## Getting Additional Data: Extended Data Functions
+## 2.33 Getting Additional Data: Extended Data Functions
 
-Additional data related to both site and horizon information can be fetched using the `get_extended_data_from_NASIS()` function. The reason that this data is not automatically brought into R is that in most cases these data elements are related to the site or horizon data as one to many relationships. For example, multiple diagnostic features could exist within one pedon. Below is a summary of additional information that can be readily brought into R from your NASIS selected set via the `get_extended_data_from_NASIS()` function.
+Additional data related to both site and horizon information can be fetched using the `get_extended_data_from_NASIS()` function. This data is not automatically brought into R because these data elements are typically related to the site or horizon data in one-to-many relationships. For example, multiple diagnostic features could exist within one pedon. Below is a summary of additional information that can be readily brought into R from your NASIS selected set via the `get_extended_data_from_NASIS()` function.
 
 ```{r owndata_j1, eval=TRUE, echo=TRUE, results='show', warning=FALSE, collapse=TRUE}
 # fetch extended site and horizon data
@@ -1019,7 +1019,7 @@ colnames(e$texmodifier)
 colnames(e$struct) 
 ```
 
-Geomorphic description and parent materials are important attributes in soil data and can be useful as handles in exploring data. The soilDB package flattens the nested table structure of parent material and geomorphic description within NASIS into single strings for each site-level record. The pattern matching concepts demonstrated above can be used to select profiles based on parts of these strings. Here we generate a handy graphical summary of the 10 most commonly occurring landforms in `fetchNASIS()` data so you can see their frequency of occurrence. 
+Geomorphic description and parent materials are important attributes in soil data and can be useful as handles in exploring data. The soilDB package flattens the nested table structure of parent material and geomorphic description within NASIS into single strings for each site-level record. The pattern matching concepts demonstrated above select profiles based on parts of these strings. The following code generates a handy graphical summary of the 10 most commonly occurring landforms in `fetchNASIS()` data so you can see their frequency of occurrence. 
 
 ```{r owndata_c, results='show'} 
 # graphically tabulate the occurrence of landforms
@@ -1034,15 +1034,15 @@ lf <- sort(table(f$landform.string), decreasing = TRUE)
 dotchart2(lf[1:10], col='black', xlim = c(0, max(lf)), cex.labels = 0.75)
 ```
 
-### Deriving thicknesses of diagnostic features
+### 2.331 Deriving Thicknesses of Diagnostic Features
 
-#### Boolean diagnostic feature columns in the site data
+#### 2.3311 Boolean diagnostic feature columns in the site data
 
-If diagnostic features have been populated in the pedon diagnostic features table in NASIS then data brought into R by soilDB will have Boolean (`TRUE` or `FALSE`) fields created for each diagnostic feature present in the data. These fields can be readily used to model the presence or absence of a diagnostic soil feature by extracting the site data.
+If diagnostic features are populated in the pedon diagnostic features table in NASIS, then Boolean (`TRUE` or `FALSE`) fields are created for each diagnostic feature in the data brought into R by soilDB. These fields can be readily used to model the presence or absence of a diagnostic soil feature by extracting the site data.
 
-We could have used the following code to pull the upper depth to calcium carbonates using the "calcic horizon" and/or the "secondary carbonates" diagnostic features. However, this is where data consistency becomes critical. We could only use those fields if they have been consistently populated for all pedons that we are working with in our selected set. As you start working with larger pedon data sets, you will quickly find that there can be great inconsistencies in the way the data were populated by different people in different offices on different surveys over different time frames.
+You could use the following code to pull the upper depth to calcium carbonates using the "calcic horizon" and/or the "secondary carbonates" diagnostic features. However, data consistency is critical. You can only use those fields if they are consistently populated for all pedons that you are working with in your selected set. As you start working with larger pedon data sets, you will quickly find that there can be great inconsistencies in the way the data were populated by different people in different offices on different surveys over different time frames.
 
-The following is an example of how you could use the diagnostic features (if populated!) from the extended data to determine the thickness of some diagnostic feature of interest.
+The following is an example of how you could use the diagnostic features (if populated!) from the extended data to determine the thickness of a diagnostic feature of interest.
 
 ```{r owndata_j3, results='show', warning=FALSE, fig.width=6, fig.height=4}
 # rename gopheridge data
@@ -1069,7 +1069,7 @@ hist(f$argillic_thickness_cm, xlab='Thickness of argillic diagnostic (cm)', main
 hist(f$depth_to_argillic_cm, xlab='Depth to argillic diagnostic (cm)', main='')
 ```
 
-#### Follow along with your own data
+#### 2.3312 Follow along with your own data
 
 ```{r owndata_j4, eval=TRUE, echo=TRUE, results='show', warning=FALSE}
 # start fresh with your own data
@@ -1089,11 +1089,11 @@ sort(table(d$diag_kind), decreasing = TRUE)[1:5]
 
 ```
 
-**Question:**
+**Question**
 
-**What can we do with the Boolean diagnostic feature data?**
+What can I do with the Boolean diagnostic feature data?
 
-### Diagnostic feature diagrams
+### 2.332 Diagnostic Feature Diagrams
 
 ```{r owndata_k, eval=TRUE, echo=TRUE, results='show', warning=FALSE}
 ## work up diagnostic plot based on gopheridge dataset
@@ -1114,10 +1114,10 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 'taxonname', sort.vars = TRUE)
 ```
 
-#### Follow along with your own data
+#### 2.3321 Follow along with your own data
 
-**Use the following script to make a diagnostic feature diagram of the pedon data you've loaded from your NASIS selected set.**
-_Note: If there are more than 20-30 pedons, the following code may generate figures that are very hard to read. You also need to be certain that pedon diagnostic feature have been populated in your data for this code to work._
+Use the following script to generate a diagnostic-feature diagram for the pedon data you've loaded from your NASIS selected set.
+Note: If the data includes more than 20–30 pedons, the script might generate figures that are very hard to read. You also need to be certain that pedon diagnostic feature were populated in your data.
 
 ```{r owndata_l, eval=FALSE, echo=TRUE, results='hide', warning=FALSE}
 library(soilDB)
@@ -1144,11 +1144,11 @@ v <- c('ochric.epipedon', 'cambic.horizon', 'argillic.horizon', 'paralithic.cont
 diagnosticPropertyPlot(f, v, k=5, grid.label='site_id', dend.label = 'taxonname')
 ```
 
-For more information on generating diagnostic feature diagrams use the following tutorial:
+For more information on generating diagnostic feature diagrams, go to the following tutorial:
 [**Diagnostic feature property plots**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp).
 
 
-## Common Challenges in Working with Pedon Data
+## 2.34 Common Challenges in Working with Pedon Data
 
  - Consistency
     - Missing data
@@ -1157,24 +1157,24 @@ For more information on generating diagnostic feature diagrams use the following
  - Description style differences
     - Depth described, horizonation usage styles
  - Legacy data vintage
-    - What decade?
+    - Decadal span of data
     - Updating taxonomy, horizon nomenclature
  - Location confidence
-    - Origin of the location information?
-    - What datum was the data collected in?
-    - What was considered reasonable accuracy for GPS values at that time?
+    - Origin of the location information
+    - Datum used for data collection
+    - Reasonable accuracy for GPS values at the time of data collection
     
-### Meeting the challenges
+### 2.341 Meeting the Challenges
   
   - Graphical display of the data and summary outputs ([**slice-wise aggregation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/profile-summary.html?root=aqp))
-  - Generalized Horizon Labels(GHL).---Derive an aggregate soil profile and summarize soil properties for groups of similar soils. 
+  - Generalized Horizon Labels(GHL).—Derive an aggregate soil profile and summarize soil properties for groups of similar soils. 
       - More on that process can be found in the following tutorial:
       [**GHL Aggregation Presentation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/ghl-aggregation.html?root=aqp) and [**GHL Aggregation Tutorial**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-application.html?root=aqp).
 
-For more information regarding working with difficult pedon data, see the following tutorial in the "aqp" package:  
+For more information regarding difficult pedon data, see the following tutorial in the "aqp" package:  
 [**Dealing with Troublesome data**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/dealing-with-bad-data.html?root=aqp).
 
-# References
+# 2.4 References
 
  * [**Tutorials on the AQP website**](http://aqp.r-forge.r-project.org/)
  * [**Package 'aqp' manual**](https://cran.r-project.org/web/packages/aqp/aqp.pdf)
@@ -1183,14 +1183,14 @@ For more information regarding working with difficult pedon data, see the follow
  * [**Package 'plyr' manual**](https://cran.r-project.org/web/packages/plyr/plyr.pdf)
 
 
-## Additional Resources
+## 2.41 Additional Resources
 
  * [**Quick R website**](http://www.statmethods.net/)
  * [**Simple R tutorial**](http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf)
  
-Venables, W. N., D. M. Smith and the R Core Team, 2015. Introduction to R, Notes on R: A Programming Environment for Data Analysis and Graphics Version. (3.2.3, 2015-12-10) [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
+Venables, W.N., D.M. Smith and the R Core Team. 2015. Introduction to R, Notes on R: A programming environment for data analysis and graphics, version (3.2.3, 2015-12-10). [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf).
 
-Wickham, H., 2014. Advanced R. CRC Press, New York. [http://adv-r.had.co.nz/](http://adv-r.had.co.nz/)
+Wickham, H. 2014. Advanced R. CRC Press, New York. [http://adv-r.had.co.nz/](http://adv-r.had.co.nz/).
 
 
 
