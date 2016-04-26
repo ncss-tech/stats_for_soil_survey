@@ -331,17 +331,17 @@ In short, the soilDB package greatly simplifies the process of getting pedon dat
 - **fetchNASIS_component_data()**
     - Gets selected NASIS map unit and component data from a local NASIS database (experimental).
         - For more information, see the following tutorial:
-        [**NASIS component data**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/NASIS-component-data.html?root=aqp).
+        [**NASIS Component Data**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/NASIS-component-data.html?root=aqp).
 - **fetchKSSL()**
     - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
         - For more information, see the following tutorial:
-        [**KSSL data demo**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/NASIS-component-data.html?root=aqp).
+        [**KSSL Data Demo**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/NASIS-component-data.html?root=aqp).
 - **fetchOSD()**
     - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
 - **fetchRaCA()**
     - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
         - For more information, see the following tutorial:
-        [**RaCA data demo**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/RaCA-demo.html?root=aqp).
+        [**RaCA Data Demo**](https://r-forge.r-project.org/scm/viewvc.php/%2acheckout%2a/docs/soilDB/RaCA-demo.html?root=aqp).
 - **fetchSCAN()**
     - Queries soil and climate data from USDA-NRCS SCAN Stations (experimental).
 - **fetchHenry()**
@@ -378,7 +378,7 @@ Note the issue above. The bottom depth of the A horizon and the upper depth of t
 - **Sites missing pedon records**.—Data without corresponding horizons are not loaded.
 
 
-#### 2.2221 How can I find the site ID's where these errors occur and fix them in NASIS?
+#### 2.2221 How can you find the site ID's where these errors occur and fix them in NASIS?
 If errors in the pedon data are detected when loading data using fetchNASIS(), the following "get" functions can trace them back to the corresponding records in NASIS:
 
 - **get('sites.missing.pedons', envir=soilDB.env)**
@@ -745,11 +745,11 @@ f <- f[idx, ]
 ```
 Another useful function is `dput()`, which concatenates a variable. It converts something like this:
 
-\"2011MT0810001" "2011MT0810009" "2011MT00810015" "2011MT0810027" "2011MT0810034"\
+"2011MT0810001" "2011MT0810009" "2011MT00810015" "2011MT0810027" "2011MT0810034"
 
 into a comma delimited string like this:
 
-\c("2011MT0810001", "2011MT0810009", "2011MT00810015", "2011MT0810027", "2011MT0810034")\.
+c("2011MT0810001", "2011MT0810009", "2011MT00810015", "2011MT0810027", "2011MT0810034").
 
 Such a string can be copied and then pasted back as a concatenated string or could even be used as string for NASIS list queries. The `dput()` function is also helpful when sending questions or examples to colleagues via email.
 
@@ -778,7 +778,7 @@ aFunction(a)
 
 
 ### 2.321 Defining a Function
-Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes that can be re-used.  The following focuses on functions that work with the horizon data in the SPC.  The general workflow typically goes like this:
+Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes that can be re-used.  This section focuses on functions that work with the horizon data in the SPC.  The general workflow typically goes like this:
 
 - *The need for a function is realized,*
 
@@ -793,12 +793,12 @@ Functions bundle operations and can come in the form of small helper functions o
 
 ### 2.322 Function Examples
 
-Functions can bundle a series of operations and then be applied to each profile within a collection (SPC) using `profileApply()`.  Consider, for example, if you wanted to use some pedon data to model  depth to the top of an argillic horizon.  Ideally, this task would be performed using data from the pedon diagnostic features table. However, these records are not always consistently populated. So how else might you accomplish this task?  One way to try would be using horizon designations to derive a depth to the 't' suffix horizon designation.
+Functions can bundle a series of operations and then be applied to each profile within a collection (SPC) using `profileApply()`.  Consider, for example, if you wanted to use some pedon data to model  depth to the top of an argillic horizon.  Ideally, this task would be performed using data from the pedon diagnostic features table. However, these records are not always consistently populated. So, how else might you accomplish this task?  One way to try would be using horizon designations to derive a depth to the "t" suffix horizon designation.
 
 What steps would return an upper depth to an argillic horizon for each site?
 
  - *Extract* the horizon data for each profile,
- - *iterate* through the horizon designations (hzname) and search for the pattern **"t",**
+ - *iterate* through the horizon designations (hzname) and search for the pattern "t",
  - *apply* the function to each profile via `profileApply()`,
  - *summarize* the data returned by the function to one value per profile, and
  - *join* the summarized depth value back to the site data.
@@ -835,7 +835,7 @@ findBtHorizons <- function(i) {
 findBtHorizons(f[1, ])
 ```
 
-You still need to summarize this to get the upper depth from multiple "Bt" horizons per profile. Also, note that additional variable were returned by the function.
+You still need to summarize to get the upper depth from multiple "Bt" horizons per profile. Also, note that additional variables were returned by the function.
 
 Next, apply the function to all profiles in your collection. The results are a list of dataframes.
 ```{r}
@@ -846,7 +846,7 @@ Bt.horizons <- ldply(l)
 ```
 
 
-You still need to reduce this to one depth value per profile. The `ddply()` function conveniently iterates over groups of rows in a dataframe and computes summaries (similar to `GROUP BY` in SQL). The group-wise summaries are re-combined into a new dataframe along with ids for each group.
+You still need to reduce this to one depth value per profile. The `ddply()` function conveniently iterates over groups of rows in a dataframe and computes summaries (similar to `GROUP BY` in SQL). The group-wise summaries are re-combined into a new dataframe along with ID's for each group.
 ```{r fig.width=4.5, fig.height=3.5}
 # standard ddply syntax is as follows (type '?ddply' into the R console):
 # ddply(.data, .variables, .fun)
@@ -859,10 +859,8 @@ site(f) <- Bt.horizons.top
 # summary of depth to carbonates in the data using a histogram
 hist(f$depth_to_argillic_cm, xlab='Depth to Bt Horizon (cm)', main='')
 ```
-**Questions**                                                                                                                                          
-**What is a potential problem with this operation?** 
-**What was not accounted for?**
-
+ 
+What is a potential problem with this operation, and what was not accounted for?
 
 ```{r owndata_i1_gopher, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
 # This time we'll go after the thickness of the organic horizons where present.
@@ -901,17 +899,16 @@ site(f) <- organic1
 hist(f$organic_thickness_cm, xlab='Thickness of Organic horizons (cm)', main='')
 ```
 
-**Question**
 How would you subtract the organic_thickness_cm values from depth_to_argillic_cm values to get a more realistic upper depth to argillic features?
 
 #### 2.3222 Follow along with your own data
 
-In the following example, you will use pedon data to model the depth to calcium carbonate.  
+The following example uses pedon data to model the depth to calcium carbonate.  
 
 What steps would be needed to return an upper depth to carbonates for each site?
 
  - *Extract* the horizon data for each profile,
- - *iterate* through the horizon designations (hzname) pattern matching for **"k",**
+ - *iterate* through the horizon designations (hzname) pattern matching for "k",
  - *apply* the function to each profile via `profileApply()`,
  - *summarize* the data returned by the function to one value per profile, and
  - *join* the summarized depth value back to the site data.
@@ -964,11 +961,11 @@ If your data contains organic horizons, use the `f.organic` function outlined ab
 
 You can then subtract the `organic_thickness_cm` values from `depth_to_carbonates_cm` values to get a more realistic upper depth to calcium carbonates.
 
-Consider examples where you truncate the thickness or are interested in summarizing the data for a depth zone, for example, 25 to 100 cm.  What is the weighted average clay for the 25 to 100 cm thickness?
+Consider examples where you truncate the thickness or are interested in summarizing the data for a depth zone, for example, 25 to 100 cm.  What is the weighted average of clay for the 25 to 100 cm thickness?
 
 Simple example: `slab(f, fm= peiid ~ clay, slab.structure=c(25,100), slab.fun=mean, na.rm=TRUE)`.
 
-Excellent examples using the `slice()` and `slab()` functions in the AQP package can be found at:
+Excellent examples using the `slice()` and `slab()` functions in the AQP package can be seen at:
 [**Introduction to SoilProfileCollection**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).
 
 ## 2.33 Getting Additional Data: Extended Data Functions
@@ -1082,9 +1079,7 @@ sort(table(d$diag_kind), decreasing = TRUE)[1:5]
 
 ```
 
-**Question**
-
-What can I do with the Boolean diagnostic feature data?
+What can you do with the Boolean diagnostic feature data?
 
 ### 2.332 Diagnostic Feature Diagrams
 
@@ -1110,7 +1105,7 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 #### 2.3321 Follow along with your own data
 
 Use the following script to generate a diagnostic-feature diagram for the pedon data you've loaded from your NASIS selected set.
-Note: If the data includes more than 20–30 pedons, the script might generate figures that are very hard to read. You also need to be certain that pedon diagnostic feature were populated in your data.
+Note: If the data includes more than about 20 pedons, the script might generate figures that are very hard to read. You also need to be certain that pedon diagnostic feature were populated in your data.
 
 ```{r owndata_l, eval=FALSE, echo=TRUE, results='hide', warning=FALSE}
 library(soilDB)
@@ -1137,8 +1132,8 @@ v <- c('ochric.epipedon', 'cambic.horizon', 'argillic.horizon', 'paralithic.cont
 diagnosticPropertyPlot(f, v, k=5, grid.label='site_id', dend.label = 'taxonname')
 ```
 
-For more information on generating diagnostic feature diagrams, go to the following tutorial:
-[**Diagnostic feature property plots**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp).
+For more information on generating diagnostic feature diagrams, see the following tutorial:
+[**Diagnostic Feature Property Plots**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp).
 
 
 ## 2.34 Common Challenges in Working with Pedon Data
@@ -1151,17 +1146,17 @@ For more information on generating diagnostic feature diagrams, go to the follow
     - Depth described, horizonation usage styles
  - Legacy data vintage
     - Decadal span of data
-    - Updating taxonomy, horizon nomenclature
+    - Taxonomy updates, horizon nomenclature
  - Location confidence
     - Origin of the location information
     - Datum used for data collection
-    - Reasonable accuracy for GPS values at the time of data collection
+    - Accuracy for GPS values at the time of data collection
     
 ### 2.341 Meeting the Challenges
   
   - Graphical display of the data and summary outputs ([**slice-wise aggregation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/profile-summary.html?root=aqp))
-  - Generalized Horizon Labels(GHL).—Derive an aggregate soil profile and summarize soil properties for groups of similar soils. 
-      - More on that process can be found in the following tutorial:
+  - Generalized Horizon Labels (GHL).—Derive an aggregate soil profile and summarize soil properties for groups of similar soils. 
+      - More on that process can be seen in the following tutorial:
       [**GHL Aggregation Presentation**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/ghl-aggregation.html?root=aqp) and [**GHL Aggregation Tutorial**](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-application.html?root=aqp).
 
 For more information regarding difficult pedon data, see the following tutorial in the "aqp" package:  
@@ -1181,7 +1176,7 @@ For more information regarding difficult pedon data, see the following tutorial 
  * [**Quick R website**](http://www.statmethods.net/)
  * [**Simple R tutorial**](http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf)
  
-Venables, W.N., D.M. Smith and the R Core Team. 2015. Introduction to R, Notes on R: A programming environment for data analysis and graphics, version (3.2.3, 2015-12-10). [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf).
+Venables, W.N., D.M. Smith, and the R Core Team. 2015. Introduction to R, Notes on R: A programming environment for data analysis and graphics, version (3.2.3, 2015-12-10). [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf).
 
 Wickham, H. 2014. Advanced R. CRC Press, New York. [http://adv-r.had.co.nz/](http://adv-r.had.co.nz/).
 
