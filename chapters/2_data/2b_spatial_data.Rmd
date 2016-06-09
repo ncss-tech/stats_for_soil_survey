@@ -27,7 +27,7 @@ output:
 
 ## 2.6 Raster Data
 
-The raster format is a common GIS format designed primarily for displaying continuous data. The format is similar to matrices in R, although it contains additional information, such as spatial projection and resolution. R and many other GIS, including ArcGIS, use the Geospatial Data Abstraction Library (GDAL) to import raster data. GDAL supports a wide variety of raster formats. Popular formats include GeoTIFF (.tif) and Erdas Imagine (.img), but exclude rasters stored in ESRI's propriety file geodatabase format. Either the `readGDAL()` or `raster()` function can used to import raster data. These functions are from the rgdal and raster packages respectively. The raster package is preferred for working with large raster datasets because it doesn't require reading the raster files into the computer's random access memory (RAM). The raster package also contains a wider variety of functions similar to those found in the ArcGIS Spatial Analyst extension.
+The raster format is a common GIS format designed primarily for displaying continuous data. The format is similar to matrices in R, although it contains additional information, such as spatial projection and resolution. R and many other GIS, including ArcGIS, use the Geospatial Data Abstraction Library (GDAL) to import raster data. GDAL supports a wide variety of raster formats. Popular formats include GeoTIFF (.tif) and Erdas Imagine (.img), but exclude rasters stored in ESRI's propriety file geodatabase format. Either the `readGDAL()` or `raster()` function can be used to import raster data. These functions are from the rgdal and raster packages respectively. The raster package is preferred for working with large raster datasets because it doesn't require reading the raster files into the computer's random access memory (RAM). The raster package also contains a wider variety of functions similar to those found in the ArcGIS Spatial Analyst extension.
 
 ### 2.6.1 Importing Raster Data With the `raster` Package
 
@@ -109,7 +109,7 @@ plot(pol, axes = TRUE)
 
 ### 2.7.2 Accessing Vector Tabular Data
 
-Tabular data associated with a vector layer can be accessed via the `@data` slot within the `SpatialPolygonsDataFrame` object.  You can use the `head()` function to look at the columns present in the data.
+Tabular data associated with a vector layer can be accessed via the `@data` slot within the `SpatialPolygonsDataFrame` object.  You can use the `head()` function to look at the columns in the data.
 
 ```{r}
 # access tabular data table for vector data using '@data' slot
@@ -124,11 +124,11 @@ writeOGR(pol, dsn = "C:/workspace/test.shp", layer = "test", driver = "ESRI Shap
 ```
 
 
-## 2.8 Reprojecting data
+## 2.8 Reprojecting Data
 
 Typically, you will need to reproject a file before you can combine it with another. You can reproject using either the `spTranform()` function for sp objects or the `projectRaster()` function for raster objects. For large raster files, however, the raster package is slow; so it's better to either call another GIS or spatial databases via R or reproject the files manually in a GIS.
 
-A catalog of spatial reference systems that are compatible with R and ArcGIS can be seen at [spatialreference.org](http://spatialreference.org/) or [http://epsg.io/](http://epsg.io/). Generally, is it simplest to use the EPSG code to specify the reference system you're interested in; otherwise, you have to manually specify the projection, ellipsoid, and datum. 
+A catalog of spatial reference systems that are compatible with R and ArcGIS can be seen at [spatialreference.org](http://spatialreference.org/) or [http://epsg.io/](http://epsg.io/). Generally, it is simplest to use the EPSG code to specify the reference system; otherwise, you have to manually specify the projection, ellipsoid, and datum. 
 
 ```{r}
 # reproject polygons
@@ -141,12 +141,12 @@ pol2 <- spTransform(pol, CRS("+init=epsg:26911")) # reproject the pol SpatialPol
 ```
 
 
-The standard projection for point data in NASIS and WebSoilSurvey is now long/lat WGS84 (i.e., EPSG code 4326). This is a geographic coordinate system, which projects the Earth as a sphere and measures distances in decimal degrees. Many spatial operations are necessary to use a projected coordinate system, which projects the Earth as a flat surface and measures distances in meters. All projected coordinate systems distort the Earth's surface to some degree. Within the continental U.S., a good choice is the USA Contiguous Albers Equal Area Conic USGS projection, which corresponds with EPSG code 5070.
+The standard projection for point data in NASIS and Web Soil Survey is now long/lat WGS84 (i.e., EPSG code 4326). This is a geographic coordinate system. It projects the Earth as a sphere and measures distances in decimal degrees. Many spatial operations are necessary to use a projected coordinate system, which projects the Earth as a flat surface and measures distances in meters. All projected coordinate systems distort the Earth's surface to some degree. Within the continental U.S., a good choice is the USA Contiguous Albers Equal Area Conic USGS projection, which corresponds with EPSG code 5070.
 
 
 ## 2.9 Extracting Spatial Data
 
-When using soil survey data, you're typically interested in the values for spatial data that overlap point locations or polygons. This gives you information on the geomorphic setting of our observations. You can then use this information to make predictions about the spatial distribution of soil properties or classes at unobserved sites (e.g. raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
+When using soil survey data, you're typically interested in the values for spatial data that overlap point locations or polygons. This gives you information on the geomorphic setting of soil observations. You can then use this information to make predictions about the spatial distribution of soil properties or classes at unobserved sites (e.g., raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
 
 Before you can extract spatial data for the purpose of spatial prediction, the data must meet the following conditions:  
 
@@ -208,27 +208,28 @@ summary(test)
 
 #### 2.9.1.1 Exercise 1: Extracting Spatial Data
 
-- Using your own point data, extract the raster values for several pedons
-- Submit the results to your coach.
+Using your own point data, extract the raster values for several pedons.
+
+Submit the results to your coach.
 
 
 ### 2.9.2 ArcGIS Tools for Extracting Spatial Data: Extracting Point Data from a Raster
 
-This section discusses the use of the *Extract Multi Values to Points* tool, which assigns the cell value of specified raster data sets to existing points. The *Extract Values to Points* and *Sample* tools achieve similar results. These tools are described in the ESRI help section: [An Overview of the Extraction Tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/).  
+This section discusses the use of the "Extract Multi Values to Points" tool, which assigns the cell value of specified raster data sets to existing points. The "Extract Values to Points" and "Sample" tools achieve similar results. These tools are described in the ESRI help section [An Overview of the Extraction Tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/).  
 
-To start, assume you have 50 observations across your area of interest contained in a point file in ArcGIS that has numerous observed soil properties. In your analysis, you would also like to consider such variables as slope, profile curvature, solar insolation, topographic wetness index, relative position, and elevation in your analysis.
+To start, assume you have 50 observations across an area of interest in an ArcGIS point file that has numerous observed soil properties. In your analysis, you will also consider such variables as slope, profile curvature, solar insolation, topographic wetness index, relative position, and elevation.
  
-Using the **Extract Multi Values to Points** tool is the most expedient way to populate raster values to a point file. _If your spatial extent is large and you have many raster layers, e.g. 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times_.  
+The Extract Multi Values to Points tool is the most expedient way to populate raster values to a point file. If your spatial extent is large and you have many raster layers; e.g., 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times.  
 
-The **Extract Multi Values to Points** tool is in the **Extraction** tool box in in the **Spatial Analyst Tools.**  
+The **Extract Multi Values to Points** tool is in the **Extraction** tool box in **Spatial Analyst Tools.**  
 
 ![R GUI image](figure/ch2_fig3.jpg)  
 
-Select your point file and the associated raster files of interest as noted in the example graphic.  
+Select your point file and the associated raster files of interest as noted in the following graphic.  
 
 ![R GUI image](figure/ch2_fig4.jpg)  
 
-The resulting point file will have the corresponding cell values for slope, profile curvature, and wetness index attached to the point file as columns in the shapefile table.  
+The resulting point file has the corresponding cell values for slope, profile curvature, and wetness index attached to the point file as columns in the shapefile table.  
 
 ![R GUI image](figure/ch2_fig5.jpg)  
 
@@ -241,8 +242,8 @@ Brenning, A., and D. Bangs. 2015. Introduction to terrain analysis with RSAGA: L
 
 Hijmans, R.J. 2015. Introduction to the 'raster' package. [https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf).
 
-Pebesma, E., and R.S. Bivand. 2005. Classes and methods for spatial data: The sp Package. [https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
+Pebesma, E., and R.S. Bivand. 2005. Classes and methods for spatial data: The sp package. [https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
 
-Venables, W.N., D.M. Smith, and the R Core Team, 2015. Introduction to R, notes on R: A programming environment for data analysis and graphics, version. (3.2.3, 2015-12-10). [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf).
+Venables, W.N., D.M. Smith, and the R Core Team, 2015. Introduction to R, Notes on R: A programming environment for data analysis and graphics, version (3.2.3, 2015-12-10). [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf).
 
 Wickham, H. 2014. Advanced R. CRC Press, New York. [http://adv-r.had.co.nz/](http://adv-r.had.co.nz/).
