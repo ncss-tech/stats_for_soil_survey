@@ -37,7 +37,7 @@ map("county", "west virginia")
 points(soildata) #plot points
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-1-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
 
 
 ```r
@@ -134,19 +134,19 @@ Next, let's explore the tabular data:
 boxplot(solar~spodint, data=soildata, xlab="spodic intensity", ylab="solar") #does solar radiation affect spodic intensity?
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-5-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 ```r
 boxplot(northwestn~spodint, data=soildata, xlab="spodic intensity", ylab="northwestness") #how about aspect?
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-5-2.png)
+![](treemodels_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
 
 ```r
 densityplot(~ Otot|order, data=soildata) #distribution of O horizon thickness among soil orders
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-5-3.png)
+![](treemodels_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
 
 ```r
 numeric <- data.frame(soildata[, c(8, 25, 27:50)]) #combine numeric columns into a new data frame
@@ -167,7 +167,7 @@ cormatrix <- cor(numeric) #calculate correlation matrix
 corrplot(cormatrix, method = "circle") #plot correlation matrix
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-5-4.png)
+![](treemodels_files/figure-html/unnamed-chunk-5-4.png)<!-- -->
 
 
 ### 8.1.3 Exercise 1
@@ -239,7 +239,7 @@ plot(spodintmodel)
 text(spodintmodel, cex=0.8) #cex is text size
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-7-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 
 ```r
@@ -256,19 +256,19 @@ For more plot customization, use the rpart.plot package.
 rpart.plot(spodintmodel, extra=3) #extra=3 displays the misclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-9-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ```r
 rpart.plot(spodintmodel, extra=103) #adding 100 to the extra setting displays the percentage observations in the node
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-9-2.png)
+![](treemodels_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
 
 ```r
 prp(spodintmodel,type=1,extra=1,branch=1) #prp is another function in the rpart.plot package that has numerous plot customization options
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-9-3.png)
+![](treemodels_files/figure-html/unnamed-chunk-9-3.png)<!-- -->
 
 Notice that the terminal nodes display the different spodic intensity classes, ranging from 0 to 2. **Can you think of another way that we could model spodic expression?** 
 
@@ -318,7 +318,7 @@ plot(spodintmodel2)
 text(spodintmodel2, cex=0.8)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-10-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 Notice that several of the splits changed. Which model performed better? One way to compare the two models is to use the function `printcp()`:
 
@@ -391,13 +391,13 @@ The `printcp()` funtion generates a cost complexity parameter table that provide
 plotcp(spodintmodel)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-12-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ```r
 plotcp(spodintmodel2)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-12-2.png)
+![](treemodels_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
 
 The optimal CP value is 0.029321 for spodintmodel and 0.050459 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
 
@@ -434,7 +434,7 @@ printcp(pruned)
 rpart.plot(pruned, extra=3)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-13-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ```r
 pruned2 <- prune(spodintmodel2, cp=0.050459)
@@ -467,7 +467,7 @@ printcp(pruned2)
 rpart.plot(pruned2, extra=3)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-13-2.png)
+![](treemodels_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
 
 The misclassification rate (in cross-validation) for the spodintmodel was 57% (root node error * xerror * 100) which dropped to 38% in the spodintmodel2. Why did the performance of these models differ significantly?
 
@@ -658,7 +658,7 @@ rf #statistical summary
 plot(rf)  #out of bag (OOB) error rate versus number of trees; this will help us tune the ntree parameter
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-15-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 23% of the variance and produced a mean square error (sum of squared residuals divided by n) of 28 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly due to the random subsetting and averaging in the randomForest algorithm. **How does this compare with the rpart model?**
 
@@ -668,7 +668,7 @@ Recall that the **soildata** dataset had one Histosol observation:
 hist(soildata$Otot)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-16-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 
 Let's remove that observation to see how it impacted our model. 
@@ -709,40 +709,42 @@ Another way to assess the rf model is to look at the variable importance plot.
 varImpPlot(rf2)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-18-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ```r
-importance(rf2) #tabular summary
+imp <- as.data.frame(sort(importance(rf2)[,1],decreasing = TRUE),optional = T)
+names(imp) <- "% Inc MSE"
+imp # sorted tabular summary
 ```
 
 ```
-##               %IncMSE IncNodePurity
-## rainfall    9.7008362     152.83512
-## geology     4.4692365      39.29127
-## aachn       4.5511298     278.78632
-## dem10m      5.0931953     283.53027
-## downslpgra  5.0218564     172.39404
-## eastness    4.5355225     277.37319
-## greenrefl   3.4760112     235.61986
-## landsatb1   0.2836085     136.36233
-## landsatb2   2.9299042     117.79607
-## landsatb3   2.3168437     110.31440
-## landsatb7  22.9225825     975.72289
-## maxc100     4.4669093     201.46623
-## maxent     17.4622144     852.97759
-## minc100     3.7458066     224.00431
-## mirref      0.4491754     413.40654
-## ndvi        2.0321966     254.89927
-## northeastn  3.4415975     360.62509
-## northness   4.0126574     231.14696
-## northwestn  9.3653088     496.36284
-## planc100    3.6890158     203.79220
-## proc100     4.4813472     209.44943
-## protection 10.8817679     357.01546
-## relpos11    7.5613310     262.66997
-## slp50       4.7589916     221.46364
-## solar       8.7599168     284.33964
-## tanc75     -1.9336032     206.38636
+##             % Inc MSE
+## landsatb7  22.9225825
+## maxent     17.4622144
+## protection 10.8817679
+## rainfall    9.7008362
+## northwestn  9.3653088
+## solar       8.7599168
+## relpos11    7.5613310
+## dem10m      5.0931953
+## downslpgra  5.0218564
+## slp50       4.7589916
+## aachn       4.5511298
+## eastness    4.5355225
+## proc100     4.4813472
+## geology     4.4692365
+## maxc100     4.4669093
+## northness   4.0126574
+## minc100     3.7458066
+## planc100    3.6890158
+## greenrefl   3.4760112
+## northeastn  3.4415975
+## landsatb2   2.9299042
+## landsatb3   2.3168437
+## ndvi        2.0321966
+## mirref      0.4491754
+## landsatb1   0.2836085
+## tanc75     -1.9336032
 ```
 
 For each tree, each predictor in the OOB sample is randomly permuted and passed through the tree to obtain an error rate (mean square error (MSE) for regression and Gini index for classification). The error rate from the unpermuted OOB is then subtracted from the error rate of the permuted OOB data, and averaged across all trees. When this value is large, it implies that a variable is highly correlated to the dependent variable and is needed in the model. 
