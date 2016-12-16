@@ -17,17 +17,29 @@ output:
 
 # Introduction
 
+Linear regression models the linear relationship between a response variable (y) and an predictor variable (x). 
+
+y = a + Bx + e
+
+Where:
+
+y = the dependent variable
+
+a = the intercet of the fitted line
+
+B = the Regression coefficient, i.e. slope of the fitted line. Strong relationships will have high values.
+
+x = the independent variable (aka explanatory or predictor variable(s) )
+
+e = the error term
+
+[//]: # (- \beta_{0} = intercept of the fitted line)
+[//]: # (- \beta_{1}x = slope of the fitted line)
+[//]: # (- \varepsilon = the error term)
+
 Linear regression has been used for soil survey applications since the early 1900s when Briggs and McLane (1907) developed a pedotransfer function to estimate the wilting coefficient as a function of soil particle size. 
 
 Wilting coefficient = 0.01(sand) + 0.12(silt) + 0.57(clay)
-
-Linear regression, as the name implys, models the linear relationship between a response variable (y) and an predictor variable (x). 
-
-$f(y) = \beta_{0} + \beta_{1}x + \varepsilon$
-
-- $\beta_{0}$ = intercept of the fitted line
-- $\beta_{1}x$ = slope of the fitted line
-- $\varepsilon$ = the error term
 
 When more than one independent variable is used in the regression, it is referred to as multiple linear regression. In regression models, the response (or dependent) variable must always be continuous. The predictor (or independent) variable(s) can be continuous or categorical. In order to use linear regression or any linear model, the errors (i.e. residuals) must be normally distributed. Most environmental data are skewed and require transformations to the response variable (such as square root or log) for use in linear models. Normality can be assessed using a QQ plot or histogram of the residuals.
 
