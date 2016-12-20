@@ -42,6 +42,78 @@ When comparing a simple linear model vs a simple logistic model we can see the e
 
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
 
+Examples of Logistic regression output showing probability of red clay parent material, mollisol and ponded components:  
+
+![Example 1](figure/redclay.png) 
+![Example 2](figure/mollisol.png)
+![Example 3](figure/ponded.png)
+
+# Logistic regression rules of thumb
+
+- The response variable is discrete, i.e. binomial, present/absent, 0/1
+- The independent variables can be numeric or categorical  
+- No assumptions for normality among independent variables
+- Check for highly correlated variables and select accordingly
+- The minimum number of cases per independent variable is 10:1
+- The <strong>preferred</strong> number of cases per independent variable is 20:1
+- The <strong>preferred</strong> number of cases per independent variable is 50:1 when using stepwise logistic regression 
+
+# Logistic regression quick example
+
+This example will provide a quick introduction to logistic regression by exploring the presence of soils with spodic characteristics in the Central Appalachians of West Virginia. Spodisols and soils with spodic properties form under the process of podzolization. The process of podzolization involves the removal (eluviation) of organic material, aluminum and iron from upper soil horizons (O, A and E) and the accumulation (illuviation) of these materials in the subsoil spodic horizon(s). In this region, these soils are associated with the past and present occurence of red spruce forest cover. 
+
+Load the required packages and set the working directory. Change the working directory to accomodate your working environment.
+
+```r
+require(sp)
+require(raster)
+require(rgdal)
+require(rms)
+setwd("C:/workspace")
+```
+Select sample file, create data frame and view the first few records
+
+```r
+file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+download.file(file, destfile = "pts.csv")
+pts <- read.csv("pts.csv", header=TRUE, sep=",")
+head(pts, 1) 
+```
+
+Soil scientists developed a local, ad-hoc classification of the intensity of spodic expression for use in the region that is an ordered data type. This will need to be converted to a binary classification for modeling purposes.
+
+Add a column called spod\_pres\_cons to the pts object that converts spodint to a binary variable
+
+```r
+pts$spod_pres_cons <- ifelse(pts$spodint <= 1, 0, 1) 
+```
+
+Create a model using dem10m, eastness, northness, and maxent to predict spod\_pres\_con and view the summary
+
+```r
+GLM.1 <- lrm(spod_pres_cons ~ dem10m + eastness + northness + maxent, data=pts)
+print(GLM.1)
+```
+
+The summary will look similar to the following:
+
+![Summary output](figure/glm.png) 
+
+Evaluating the results involves review of several key values as noted in the summary figure:
+
+1. Is the ratio of observations to independent variables ok?
+2. What is the relationship between the dependent and independent variables? A low P value indicates there is a relationship between the DV and IV
+3. Is multicollinearity present? Standard Errors should be less than 2, which does not pertain to the intercept.
+4. Relationship of individual independent variables to the dependent variable. Small "p" values indicate the independent variable is a meaningful predictor
+5. Does the model perform better than random chance?
+"C" refers to the concordance aka c-index or AUC, with the following suggested scale (Hosmer & Lemeshow, 2013),
+0.5 = no discrimination,
+0.7 - 0.8 acceptable discrimination,
+0.8 - 0.9 excellent discrimination,
+>0.9 outstanding discrimination
+6. What is the "Goodness of fit" for the model? The R2  of linear regression does not exist for Logistic regression. A measure called the pseudo R squared is only roughly analogous. There are several methods for calculating the pseudo R squared. In general, the higher the value the greater the variability that is explained by the independent variables. 
+
+
 # Logistic regression example
 
 Now that we've discussed some of the basic background GLM theory we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter come from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert. The problem tackled here is a familiar one: Where can I expect to find argillic horizons on fan piedmonts? Argillic horizons within the Mojave are typically found on fan remnants, which are a stable landform that is a remnant of the Pleistocene (Peterson, 1981). Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or active deposition.
