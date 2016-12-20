@@ -988,6 +988,18 @@ plot(ca794, add = TRUE)
 
 # References
 
+Beaudette, D. E., & O'Geen, A. T, 2009. Quantifying the aspect effect: an application of solar radiation modeling for soil survey. Soil Science Society of America Journal, 73:1345-1352
+
+Gessler, P. E., Moore, I. D., McKenzie, N. J., & Ryan, P. J, 1995. Soil-landscape modelling and spatial prediction of soil attributes. International Journal of Geographical Information Systems, 9:421-432
+
+Gorsevski, P. V., Gessler, P. E., Foltz, R. B., & Elliot, W. J, 2006. Spatial prediction of landslide hazard using logistic regression and ROC analysis. Transactions in GIS, 10:395-415
+
+Evans, D.M. and Hartemink, A.E., 2014. Digital soil mapping of a red clay subsoil covered by loess. Geoderma, 230:296-304.
+
+Hosmer Jr, D.W., Lemeshow, S. and Sturdivant, R.X., 2013. Applied logistic regression (Vol. 398). John Wiley & Sons
+
+Kempen, B., Brus, D. J., Heuvelink, G., & Stoorvogel, J. J. (2009). Updating the 1: 50,000 Dutch soil map using legacy soil data: A multinomial logistic regression approach. Geoderma, 151:311-326.
+
 Nauman, T. W., and J. A. Thompson, 2014. Semi-automated disaggregation of conventional soil maps using knowledge driven data mining and classification trees. Geoderma 213:385-399. [http://www.sciencedirect.com/science/article/pii/S0016706113003066](http://www.sciencedirect.com/science/article/pii/S0016706113003066)
 
 Peterson, F.F., 1981. Landforms of the basin and range province: defined for soil survey. Nevada Agricultural Experiment Station Technical Bulletin 28, University of Nevada - Reno, NV. 52 p. [http://jornada.nmsu.edu/files/Peterson_LandformsBasinRangeProvince.pdf](http://jornada.nmsu.edu/files/Peterson_LandformsBasinRangeProvince.pdf)
