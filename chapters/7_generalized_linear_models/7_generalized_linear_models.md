@@ -113,8 +113,24 @@ Evaluating the results involves review of several key values as noted in the sum
 >0.9 outstanding discrimination
 6. What is the "Goodness of fit" for the model? The R2  of linear regression does not exist for Logistic regression. A measure called the pseudo R squared is only roughly analogous. There are several methods for calculating the pseudo R squared. In general, the higher the value the greater the variability that is explained by the independent variables. 
 
+Run a prediction of the model using the dem10m, eastness, northness, and maxent raster files. These files will be downloaded, a raster stack will be built and the GLM.1 model applied. When using your own data, the "stack" code only works if all rasters are co-registered, are .img files, have the same projection and spatial extent, and are stored in your working directory. In practice, other GDAL file formats should also work.  
 
-# Logistic regression example
+
+```r
+ras1 <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/dem10.img'
+ras2 <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/eastness.img'
+ras3 <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/maxent.img'
+ras4 <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/northness.img'
+download.file(ras1, destfile = "dem10.img")
+download.file(ras2, destfile = "eastness.img")
+download.file(ras3, destfile = "maxent.img")
+download.file(ras4, destfile = "northness.img")
+rasters=stack(list.files(getwd(),pattern="img$",full.names=FALSE))
+predict(rasters, GLM.1, type= "fitted", progress = "window", overwrite = TRUE, filename = "spodic_pres_GLM1.img")
+```
+
+
+# Logistic regression detailed example
 
 Now we will move on to a detailed example, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter come from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert. The problem tackled here is a familiar one: Where can I expect to find argillic horizons on fan piedmonts? Argillic horizons within the Mojave are typically found on fan remnants, which are a stable landform that is a remnant of the Pleistocene (Peterson, 1981). Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or active deposition.
 

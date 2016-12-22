@@ -295,6 +295,17 @@ print(GLM.1)</code></pre>
 <li>Does the model perform better than random chance? “C” refers to the concordance aka c-index or AUC, with the following suggested scale (Hosmer &amp; Lemeshow, 2013), 0.5 = no discrimination, 0.7 - 0.8 acceptable discrimination, 0.8 - 0.9 excellent discrimination, &gt;0.9 outstanding discrimination</li>
 <li>What is the “Goodness of fit” for the model? The R2 of linear regression does not exist for Logistic regression. A measure called the pseudo R squared is only roughly analogous. There are several methods for calculating the pseudo R squared. In general, the higher the value the greater the variability that is explained by the independent variables.</li>
 </ol>
+<p>Run a prediction of the model using the dem10m, eastness, northness, and maxent raster files. These files will be downloaded, a raster stack will be built and the GLM.1 model applied. When using your own data, the “stack” code only works if all rasters are co-registered, are .img files, have the same projection and spatial extent, and are stored in your working directory. In practice, other GDAL file formats should also work.</p>
+<pre class="r"><code>ras1 &lt;-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/dem10.img'
+ras2 &lt;-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/eastness.img'
+ras3 &lt;-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/maxent.img'
+ras4 &lt;-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/northness.img'
+download.file(ras1, destfile = &quot;dem10.img&quot;)
+download.file(ras2, destfile = &quot;eastness.img&quot;)
+download.file(ras3, destfile = &quot;maxent.img&quot;)
+download.file(ras4, destfile = &quot;northness.img&quot;)
+rasters=stack(list.files(getwd(),pattern=&quot;img$&quot;,full.names=FALSE))
+predict(rasters, GLM.1, type= &quot;fitted&quot;, progress = &quot;window&quot;, overwrite = TRUE, filename = &quot;spodic_pres_GLM1.img&quot;)</code></pre>
 </div>
 <div id="logistic-regression-example" class="section level1">
 <h1><span class="header-section-number">5</span> Logistic regression example</h1>
