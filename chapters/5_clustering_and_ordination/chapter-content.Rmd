@@ -96,30 +96,30 @@ Some of the examples in this document depend on the latest versions of the `aqp`
 
 # Introduction
 
-Nearly every aspect of soil survey involves the question: "*is A more similar to B or to C?*". The quantification of *similarity* within a collection of horizons, pedons, components, map units, or even landscapes represents an exciting new way to enhance the precision and accuracy of our day to day work. After completing this module you should be able to *quantitatively* organize objects based on measured or observed characteristics of those objects in a consistent and repeatable manner. Perhaps you will find a solution to the long-standing "similar / dissimilar" question.
+Nearly every aspect of soil survey involves the question: "Is X more similar to Y or to Z?" The quantification of similarity within a collection of horizons, pedons, components, map units, or even landscapes represents an exciting new way to enhance the precision and accuracy of the day-to-day work of soil scientists. After completing this module, you should be able to quantitatively organize objects based on measured or observed characteristics in a consistent and repeatable manner. Perhaps you will find a solution to the long-standing "similar or dissimilar" question.
 
 ![](static-figures/soils-by-pigments.png)
 
 
 ## Objectives
-* Learn essential vocabulary used in the field of numerical taxonomy, review some of the literature
-* Gain experience with R functions and packages commonly used for clustering / ordination
-* Learn how to create and interpret a distance matrix, and appropriate distance metrics
-* Learn how to create and interpret a dendrogram
-* Lean the basics and application of hierarchical clustering methods
-* Lean the basics and application of partitioning clustering methods
-* Learn the basics and application of ordination methods
-* Apply skills to a range of soil, vegetation, and similar data sources
-* Apply techniques from numerical taxonomy to addressing the "similar/dissimilar" question
-* Learn some strategies for coping with missing data
+ * Learn essential vocabulary used in the field of numerical taxonomy. Review some of the literature.
+ * Gain experience with R functions and packages commonly used for clustering and ordination.
+ * Learn how to create and interpret a distance matrix and appropriate distance metrics.
+ * Learn how to create and interpret a dendrogram.
+ * Lean the basics and application of hierarchical clustering methods.
+ * Lean the basics and application of partitioning clustering methods.
+ * Learn the basics and application of ordination methods.
+ * Apply skills to a range of data sources for soils and vegetation.
+ * Apply techniques from numerical taxonomy to addressing the "similar or dissimilar" question.
+ * Learn some strategies for coping with missing data.
 
-# Whirlwind tour
+# Whirlwind Tour
 
-Most of the examples featured in the whirlwind tour are based on soil data from [McGahan, D.G., Southard, R.J, Claassen, V.P. 2009. Plant-Available Calcium Varies Widely in Soils on Serpentinite Landscapes. Soil Sci. Soc. Am. J. 73: 2087-2095.](https://dl.sciencesocieties.org/publications/sssaj/articles/73/6/2087). These data are available in the `aqp` built-in dataset "sp4".
+Most of the examples featured in this whirlwind tour are based on soil data from [McGahan, D.G., Southard, R.J, Claassen, V.P. 2009. Plant-available calcium varies widely in soils on serpentinite landscapes. Soil Sci. Soc. Am. J. 73: 2087-2095.](https://dl.sciencesocieties.org/publications/sssaj/articles/73/6/2087) These data are available in the dataset "sp4" that is built into `aqp` package for R.
 
-## Similarity, disimilarty, and distance
+## Similarity, Disimilarty, and Distance
 
-There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of **numerical taxonomy** [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column, together referred to as the **data matrix**. For example:
+There are shelves of books and thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of **numerical taxonomy** [@Sneath1973]. Central to this field is the quantification of **similarity** among "individuals" based on a relevant set of "characteristics." Individuals are typically described as rows of data with a single characteristic per column, together referred to as a **data matrix**. For example:
 
 ```{r, echo=FALSE}
 data('sp4', package = 'aqp')
@@ -127,19 +127,21 @@ sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
 knitr::kable(sp4, align = 'c')
 ```
 
-Quantitative measures of similarity are more conveniently expressed as distance, or dissimilarity--this is part convention and part computational simplicity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
+Quantitative measures of similarity are more conveniently expressed as distance, or dissimilarity; in part because of convention and in part because of computational efficiency. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions (between individuals $p$ and $q$), the Euclidean distance is calculated as follows:
 
 $$D(p,q) = \sqrt{(p_{1} - q_{1})^{2} + (p_{2} - q_{2})^{2}}$$
 
-where $p_{1}$ is the 1st characteristic (or dimension) of individual $p$. There are many other ways to define "distance" (e.g. *distance metrics*), but we will cover those later.
+where $p_{1}$ is the 1st characteristic (or dimension) of individual $p$.
 
-Using sand and clay percentages from the data above, dissimilarity is represented as the length of the line connecting any two individuals in property space:
+There are many other ways to define "distance" (e.g. distance metrics), but they will be covered later.
+
+Using the sand and clay percentages from the data above, dissimilarity is represented as the length of the line connecting any two individuals in property space.
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
 m <- distPlot(sp4, vars=c('sand', 'clay'), individuals=c(1,2,4), id='name', xlim=c(10, 60), ylim=c(10, 60), xlab='Sand (%)', ylab='Clay (%)')
 ```
 
-A matrix of all pair-wise distances (the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix)) looks something like this:
+The following is a matrix of all pair-wise distances (the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix)):
 
 |    |    A|  ABt|  Bt1|  Bt2|
 |:---|----:|----:|----:|----:|
@@ -148,7 +150,7 @@ A matrix of all pair-wise distances (the [**distance matrix**](https://en.wikipe
 |Bt1 | 12.5|  5.4|  0.0| 26.4|
 |Bt2 | 38.9| <b>31.8</b>| 26.4|  0.0|
 
-Note that this is the "full" form of the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix), with 0s on the diagonal (e.g. the distance between individual 'A' and itself is 0) and upper and lower "triangles" symmetric. The lower triangle is commonly used by most algorithms to encode pair-wise distances.
+Note that this is the full form of the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix). In this form, zeros are on the diagonal (i.e. the distance between an individual and itself is zero) and the upper and lower "triangles" are symmetric. The lower triangle is commonly used by most algorithms to encode pair-wise distances.
 
 |    |    A|  ABt|  Bt1|
 |:---|----:|----:|----:|
@@ -156,24 +158,24 @@ Note that this is the "full" form of the [**distance matrix**](https://en.wikipe
 |Bt1 | 12.5|  5.4|  |
 |Bt2 | 38.9| <b>31.8</b>| 26.4|
 
-Interpretation is simple: individual "A" is more like "ABt" than "Bt1". It is important to note that quantification of dissimilarity (distance) among individuals is always relative: *"X is more like Y, as compared to Z"*. More on this later.
+Interpretation of the matrix is simple: Individual "A" is more like "ABt" than like "Bt1." It is important to note that quantification of dissimilarity (distance) among individuals is always relative: "X is more like Y, as compared to Z."
 
 
-## Standardization of characteristics
+## Standardization of Characteristics
 
-Euclidean distance doesn't make much sense when characteristics do not share a common unit of measure, range of values, or when some characteristics are categorical vs. continuous. For example, distances are distorted when computed from clay (%) and exchangeable Ca (cmol/kg):
+Euclidean distance doesn't make much sense if the characteristics do not share a common unit of measure or range of values. Nor is it relevant when some characteristics are categorical and some are continuous. For example, distances are distorted if you compare clay (%) and exchangeable Ca (cmol/kg).
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
 m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', xlim=c(0, 60), ylim=c(0, 60), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
 ```
 
-In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of Ex-Ca. Typically, characteristics are given equal weight [@Sneath1973], however weighting is much simpler to apply after **standardization**.
+In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of the exchangeable Ca. Typically, characteristics are given equal weight [@Sneath1973]; however, weighting is much simpler to apply after **standardization**.
 
-**Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation:
+**Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation ([z-score transformation](https://en.wikipedia.org/wiki/Standard_score)).
 
 $$x_{std} = \frac{x - mean(x)}{sd(x)}$$
 
-There are many other **standardization** methods which we will cover later. The new data matrix looks like this:
+There are several other **standardization** methods covered later. The new data matrix looks like the following:
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
 sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
@@ -186,11 +188,11 @@ Using the standardized data matrix, distances computed in the property space of 
 m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', scale=TRUE, xlim=c(-1.5, 1.5), ylim=c(-1.5, 1.5), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
 ```
 
-It is rare that the question of "dissimilarity" can be answered with only two characteristics (dimensions). Euclidean distance can be extended to an arbitrary number of $n$ dimensions:
+Rarely can the question of "dissimilarity" be answered with only two characteristics (dimensions). Euclidean distance, however, can be extended to an arbitrary number of $n$ dimensions.
 
 $$D(p,q) = \sqrt{ \sum_{i=1}^{n}{(p_{i} - q_{i})^{2}} }$$
 
-where $i$ is one of $n$ total characteristics. It is hard to imagine what distance "looks like" when there are > 3 dimensions, so lets look at the distance matrix calculated using all five characteristics.
+In the equation above, $i$ is one of $n$ total characteristics. Imagining what distance "looks like" is difficult if there are more than three dimensions. Instead, examine the distance matrix calculated using all five characteristics.
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
 d <- dist(sp4.scaled[, -1])
@@ -199,31 +201,34 @@ dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
 round(m, 2)
 ```
 
-We can now begin to describe dissimilarity between individuals using an arbitrary number of (relevant!) characteristics and make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon". While this may be a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
+You can now begin to describe dissimilarity between individuals using an arbitrary number of (relevant) characteristics. You can make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon." Although this is a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
-### Review and discuss
+### Review and Discuss
 
- * What is are the "data matrix" and "distance matrix"?
- * What is standardization and why is it important?
- * What do you think is the largest impediment to creating a distance matrix from our NASIS and KSSL data?
- * **Key point:** each characteristic is its own *dimension* in property-space:
-     + {sand, clay, CEC} = 3 dimensions
-     + {sand, clay, CEC, OC, horizon depth} = 5 dimensions
-     + ... simple to define in code, but hard to visualize
+  * What are the "data matrix" and "distance matrix"?
+  * What is standardization, and why is it important?
+  * What is the largest impediment to creating a distance matrix from NASIS and KSSL data?
+  * **Key point:** Each characteristic is its own dimension in property-space.
+    + Sand, clay, and CEC = 3 dimensions.
+    + Sand, clay, CEC, OC, and horizon depth = 5 dimensions.
+    + Multiple dimensions are simple to define in code but are hard to visualize.
    
 
-## Quick detour: missing data
+## Quick Detour: Missing Data
 
-Missing data are a fact of life. As soil scientists, we are quite familiar with KSSL data missing something (*"why didn't we request optical grain counts?"*) or NASIS pedon data that are missing essential data elements such as horizon bottom depth, estimated clay fraction, or pH. Nearly all of the methods described in this document are very sensitive to missing data--in other words, they won't work! There are a couple of solutions:
+Missing data are a fact of life. Soil scientists are quite familiar with missing lab data (*"Why didn't we request optical grain counts?"*) or missing essential NASIS pedon data elements, such as horizon bottom depth, estimated clay fraction, or pH. Nearly all of the methods described in this document are very sensitive to missing data. In other words, they won't work! Following are a couple of possible solutions:
+ 
+  * Fix the missing data if at all possible,
+  * Estimate the missing data values from know relationships to other properties or a group-wise mean or median, or
+  * Remove records containing any missing data.
 
- * "fix" the missing data if at all possible
- * "estimate" the missing data values from know relationships to other properties or group-wise mean/median
- * remove records containing any missing data before proceeding
 
 
-## Visualizing pair-wise distances: the dendrogram
+## Visualizing Pair-Wise Distances: The Dendrogram
 
-[Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way of visualizing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Dissimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
+**TODO: document missing link between distances / dendrogram: clustering**
+
+[Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way of visualizing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Dissimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity; branching at lower levels suggests greater similarity. Consider the previous example in which distance between individuals was defined in terms of sand and clay percentages.
 
 ```{r, echo=FALSE, fig.width=10, fig.height=5}
 par(mar=c(1,1,1,0), mfcol=c(1,2))
@@ -239,7 +244,7 @@ plot(p, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
 mtext('Dendrogram Representation of Distance Matrix\n(sand and clay %)', side=1, line=2)
 ```
 
-Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corresponding dendrogram. Visualizing the geometry of pair-wise distances in > 3 dimensions is difficult, however, a the dendrogram can conveniently summarize a distance matrix created from an arbitrary number of characteristics. It is important to note that some information about pair-wise distances is lost in the dendrogram in the form of distortion: distortion is greatest near the terminal "leaves" of the dendrogram. This phenomena is analogous to the distortion generated by a map projection--it is impossible to flatten a higher-dimensional entity to a lower-dimensional form without causing distortion.
+Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corresponding dendrogram. Visualizing the geometry of pair-wise distances in more than three dimensions is difficult. A dendrogram, however, can conveniently summarize a distance matrix created from an arbitrary number of characteristics. It is important to note that some information about pair-wise distances is lost or distored in the dendrogram. Distortion is greatest near the terminal "leaves" of the dendrogram. This phenomena is analogous to the distortion generated by a map projection. It is impossible to flatten a higher-dimensional entity to a lower-dimensional form without causing distortion.
 
 ```{r, echo=FALSE, fig.width=10, fig.height=4}
 par(mfcol=c(1,2))
@@ -261,28 +266,30 @@ axis(2, las=1, line=1.5)
 mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=2)
 ```
 
-There isn't much difference between these two figures, because most of the characteristics in this example dataset are highly correlated with soil texture. There are some more important details on how individuals are connected into larger and larger groups within the dendrogram, more on this later.
+There isn't much difference between these two figures because most of the characteristics in the example dataset are highly correlated with soil texture. There are some more important details on how individuals are connected into larger and larger groups within the dendrogram.
 
 
-### Review and discuss
- * Any questions about dendrogram interpretation? They will be used extensively in this chapter.
- * If you were explaining how to interpret a dendrogram to someone, where would you start: roots or leaves? Why?
+### Review and Discuss
+  * Do you have any questions about dendrogram interpretation?  Dendrograms are used extensively in the rest of this chapter.
+  * If you were explaining how to interpret a dendrogram to someone, would you start at the roots or leaves? Why?
 
 
-## Cluster analysis: finding groups in data
-[**Cluster analysis**](https://en.wikipedia.org/wiki/Cluster_analysis) is a massive topic that deals with the seemingly simple task of finding "useful" groups within a dataset. This topic and the methods used are also referred to as "unsupervised classification" in remote sensing and GIS circles. All of the available algorithms will find groups in a give dataset, however, it is up to the subject expert to determine:
+## Cluster Analysis: Finding Groups in Data
+[**Cluster analysis**](https://en.wikipedia.org/wiki/Cluster_analysis) is a massive topic that deals with the seemingly simple task of finding useful groups within a dataset. This topic and the methods used are also referred to as "unsupervised classification" in the fields of remote sensing and GIS. All of the available algorithms will find groups in a give dataset; however, it is up to the subject expert to determine the following:
  
- 1. suitable characteristics and standardization method
- 2. appropriate clustering algorithm
- 3. criteria used to determine the "right" number of clusters
- 4. interpretation of the final grouping based on subject knowledge
- 5. &rarr; *possibly starting over at step 1...*
+  1. Suitable characteristics and standardization method,
+  2. Appropriate clustering algorithm,
+  3. Criteria to determine the "right" number of clusters,
+  4. Interpretation of the final grouping based on subject knowledge, and
+  5. The possiblity of needing to start over at step 1.
 
-### Using color to communicate the results of a clustering or ordination exercise
-Note that the widespread use of color in the following examples are not aesthetic. Colors are convenient for tri-variate data-spaces because our eyes can automatically integrate the information into a self-consistent set of classes.
 
-### Hierarchical clustering
-This form of clustering is useful when a the full **distance matrix** is available, and the optimal number of clusters is not yet known. [**Hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) creates a data structure that can encode "grouping" information from 1 cluster to as many clusters as there are individuals. It is up to the expert to determine the optimal place to "cut the tree" and generate a fixed set of clusters. The results from a [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) operation are nearly always presented in the form of a dendrogram.
+### Using Color to Communicate Results of Clustering or Ordination
+Note that the widespread use of color in the following examples is not for aesthetic purposes. Colors are convenient for tri-variate data-spaces because you can visually integrate the information into a self-consistent set of classes.
+
+
+### Hierarchical Clustering
+[Hierarchical clustering](https://en.wikipedia.org/wiki/Hierarchical_clustering) is useful when a full **distance matrix** is available and the optimal number of clusters is not yet known. This form of clustering creates a data structure that can encode "grouping" information from one cluster to as many clusters as there are individuals. The expert must determine the optimal place to "cut the tree" and generate a fixed set of clusters. The results from a hierarchical clustering operation are nearly always presented as a dendrogram.
 
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
 # re-make data, this time with all profiles
@@ -316,27 +323,27 @@ tiplabels(pch=15, col=cols)
 
 #### Methods
 
-There are two main types of [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering):
+There are two main types of hierarchical clustering.
 
- * **agglomerative**: start with individuals and iteratively combine into larger and larger groups
- * **divisive**: start with all individuals and iteratively split into smaller and smaller groups
+  * **Agglomerative:** Start with individuals and iteratively combine into larger and larger groups.
+  * **Divisive:** Start with all individuals and iteratively split into smaller and smaller groups.
 
-Both methods are strongly influenced by choice of **standardization** method and **distance metric**. Both methods require a full, pair-wise distance matrix as input. This can limit [**hierarchical clustering**](https://en.wikipedia.org/wiki/Hierarchical_clustering) to datasets that can be fit into memory.
+Both methods are strongly influenced by the choice of **standardization** method and **distance metric**. Both methods require a full, pair-wise distance matrix as input. This requirement can limit the use of hierarchical clustering to datasets that can be fit into memory.
 
-The agglomerative methods also depends on the choice of a [**linkage criterion**](https://en.wikipedia.org/wiki/Hierarchical_clustering#Linkage_criteria). Some of these criteria include:
+The agglomerative methods also depends on the choice of [linkage criterion](https://en.wikipedia.org/wiki/Hierarchical_clustering#Linkage_criteria). Some of these criteria include:
 
- * single linkage
- * complete linkage
- * Ward's method
- * weighted average linkage
- * flexible linkage
+  * Single linkage,
+  * Complete linkage,
+  * Ward's method,
+  * Weighted average linkage, and
+  * Flexible linkage.  
 
 More on these criteria later.
 
-##### Review and discuss
- * The simplicity and lack of decisions make the **divisive** method convenient for most work. 
- * The top-down approach is similar to the way in which we describe soil morphology and taxonomy.
- * Method selection: think about it, don't go "fishing".
+##### Review and Discuss
+  * The simplicity and lack of decisions make the divisive method convenient for most work. 
+  * The top-down approach is similar to the way in which we describe soil morphology and taxonomy.
+  * When selecting a method, think about it; don't just go "fishing."
 
 
 
