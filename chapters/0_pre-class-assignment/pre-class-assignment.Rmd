@@ -1,10 +1,9 @@
 ---
 title: "Pre-course Assignment"
-author: "Dylan Beaudette, Stephen Roecker, Tom D'Avello"
 date: "`r Sys.Date()`"
 output:
   html_document:
-    keep_md: yes
+    keep_md: no
     number_sections: yes
     toc_float:
       collapsed: yes
@@ -15,28 +14,34 @@ output:
 
 2. **Create** a folder on your machine to be used as the working directory for this course at `C:\workspace`. Use all lower case letters please.
 
-3. Open **RStudio**, and change your Global Options (Tools>Global Options):
+3. Open **RStudio**, and edit some of the "Global Options" (Tools &rarr; Global Options):
+  + **Change** the default working directory to `C:\workspace` (R General Tab)
+  + **Uncheck** "Restore .Rdata into workspace at startup" (R General Tab)
 
-- **Change** the default working directory to `C:\workspace` (R General Tab)
-- **Uncheck** "Restore .Rdata into workspace at startup" (R General Tab)
+  ![Figure 1: Example of RStudio General options settings.](figure/rstudio_options_general.png) 
 
-![Figure 1: Example of RStudio General options settings.](figure/rstudio_options_general.png) 
+  + Check "Soft-wrap R source files" (Code/Editing Tab)
 
-- Check "Soft-wrap R source files" (Code/Editing Tab)
+  ![Figure 2: Example of RStudio Code options settings.](figure/rstudio_options_code.png) 
 
-![Figure 2: Example of RStudio Code options settings.](figure/rstudio_options_code.png) 
 
-4. **Install** the necessary additional packages by **copying and pasting** the following code in the box below into the R console window after the command prompt (>) and hit **enter**. This doesn't require admin privileges. Depending on your network connection this could take a while. *Hint: the R console is the lower left or left window in RStudio with a tab labeled "Console".* If this is the first time you've installed a package, R will ask you if you want to create a local repository in your My Documents folder. Click **Yes**.
+4. Establish a *safe* location for the R package library. This should ideally be on a local disk with about 1-2GB of free space. This step will prevent R from installing packages to your `$HOME` directory which is typically on a network share (H:). **Copy** the following code in the box below and **paste** into the R console panel after the command prompt (>) and hit **enter**. *Hint: the R console is the lower left or left window in RStudio with a tab labeled "Console".*
+
+```{r, eval=FALSE}
+source('https://raw.githubusercontent.com/ncss-tech/soilReports/master/R/installRprofile.R')
+installRprofile()
+```
+
+An updated set of library paths will be printed. Close RStudio and re-open before continuing to the next step.
 
 ![Figure 3: Example of RStudio Console.](figure/rconsole.png)  
 
-```{r, warning=FALSE, message=FALSE, results="hide", eval=FALSE}
 
-source('https://raw.githubusercontent.com/ncss-tech/soilReports/master/R/installRprofile.R')
-installRprofile()
 
-dir.create(path="C:/workspace", recursive = TRUE)
+5. **Install** the necessary R packages by **copying and pasting** the following code from box below into the R console window after the command prompt (>) and hit **enter**. Depending on your network connection this could take a while. If this is the first time you've installed a package, R will ask you if you want to create a local repository in your My Documents folder. Click **Yes**.
 
+
+```{r, eval=FALSE}
 # helper fuction for installing required packages from CRAN
 # a simple check is done to see if each is already installed
 # p: vector of package names
@@ -57,28 +62,27 @@ ipkCRAN <- function(p, up){
 ## list of packages
 packages <- c("devtools","aqp", "soilDB", "sharpshootR", "Rcpp", "clhs", "circular", "Rcmdr", "fBasics", "car", "rms", "randomForest", "rpart", "party", "caret", "knitr", "markdown", "gdalUtils", "raster", "rgdal", "sp", "spatial", "shape", "shapefiles", "digest", "plyr", "dplyr", "httr", "reshape", "reshape2", "stringr", "stringi", "cluster", "ape", "lattice", "latticeExtra", "ggplot2", "RColorBrewer", "plotrix", "rpart.plot", "Matrix")
 
-## install
+## install packages, upgrading as needed
 ipkCRAN(packages, up=TRUE)
 
 ## install the latest version of packages from the AQP suite:
 devtools::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade_dependencies=FALSE)
 devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
 devtools::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade_dependencies=FALSE)
+
+## install additional packages
 install.packages("printr", type = "source", repos = c("http://yihui.name/xran", "http://cran.rstudio.com"))
 
 ## load packages in the list
-sapply(packages, library, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
+suppressWarnings(sapply(packages, library, character.only = TRUE, quietly = TRUE, logical.return = TRUE))
 ```
 
-If the above process completed successfully, you should see an R folder in your actual **C:/Users/user.name/Documents** folder. In this folder you should see all the packages that were installed. We installed the packages in this new library folder in order to avoid placing them in your HOME directory, which for many USDA computers has now been redirected to a server or cloud. This will greatly increase the speed with which we are able to load and download packages. In order for R to notice the new library location, we've placed an ".Rprofile" file in your redirected HOME directory (My Documents). The .Rprofile file is designed to customize your R installation. Each time RStudio is opened it will search for your installed packages and adjust your R session according. You can check the location of your R library by typing `.libPaths()` into the R console, which should say `[1] "C:/Users/user.name/Documents/R/win-library/3.3" "C:/Program Files/R/R-3.2.1/library"`.
 
 5. Establish an ODBC connection to NASIS by following the directions at the following hyperlink ([ODBC Connection to NASIS](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html)).
 
 Once you've successfully established a ODBC connection, prove it by loading your NASIS selected set with the site and pedon tables for any user pedon id (e.g. 11CA794317), run `fetchNASIS()` in the R console like the example below, and submit your results to Tom D'Avello.
 
-```{r example, message=FALSE, warning=FALSE, eval=FALSE}
-# Example
-
+```{r eval=FALSE}
 library(soilDB)
 
 test <- fetchNASIS()
@@ -86,7 +90,7 @@ test <- fetchNASIS()
 str(test, max.level = 2)
 ```
 
-6. Follow the one line example below, copy the output, and submit the results to Tom D'Avello. This should spit back a report of all the packages you downloaded.
+6. Follow the one line example below, copy the output, and submit the results to Tom D'Avello. This will help us to verify that all of the required packages have been installed.
 
 ```{r, eval=FALSE}
 # Example
