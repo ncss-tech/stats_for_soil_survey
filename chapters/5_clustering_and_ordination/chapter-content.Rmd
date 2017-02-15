@@ -78,6 +78,7 @@ library(cluster)
 library(ape)
 library(RColorBrewer)
 library(MASS)
+
 ```
 
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
@@ -1124,6 +1125,93 @@ mtext('Profile Sketches are from OSDs', 1)
 
 
 ## GIS Data
+
+
+### MLRA Summaries: PRISM and Elevation
+
+**TODO: describe use of ordination / density contours for sampled PRISM data**
+```{r, fig.width=8, fig.height=8, results='hide', eval=FALSE}
+library(MASS)
+library(vegan)
+library(cluster)
+library(RColorBrewer)
+
+
+# get example data
+# init a temp file
+tf <- tempfile()
+
+# download compressed CSV to temp file
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/seki-mu-gis-samples.csv.gz', destfile = tf, quiet = TRUE)
+# read-in from compressed CSV to data.frame object
+d.sub <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
+
+# check
+head(d.sub)
+
+# define some nice colors
+cols <- brewer.pal(9, 'Set1') 
+# remove light colors
+cols <- cols[c(1:5,7,9)]
+
+# http://stackoverflow.com/questions/16225530/contours-of-percentiles-on-level-plot
+kdeContours <- function(i, prob, cols, m, ...) {
+  
+  if(nrow(i) < 2) {
+    return(NULL)
+  }
+  
+  this.id <- unique(i$.id)
+  this.col <- cols[match(this.id, m)]
+  dens <- kde2d(i$x, i$y, n=200); ## estimate the z counts
+
+  dx <- diff(dens$x[1:2])
+  dy <- diff(dens$y[1:2])
+  sz <- sort(dens$z)
+  c1 <- cumsum(sz) * dx * dy
+  levels <- sapply(prob, function(x) {
+    approx(c1, sz, xout = 1 - x)$y
+  })
+  
+  # add contours if possible
+  if(!is.na(levels))
+    contour(dens, levels=levels, drawlabels=FALSE, add=TRUE, col=this.col, ...)
+}
+
+## NOTE: data with very low variability will cause warnings
+# eval numerical distance, removing 'sid' and '.id' columns
+d.dist <- daisy(d.sub[, d.mu.wide.vars], stand=TRUE)
+
+## map distance matrix to 2D space via principal coordinates
+d.betadisper <- vegan::betadisper(d.dist, group=d.sub$.id, bias.adjust = TRUE, sqrt.dist = TRUE, type='median')
+d.scores <- vegan::scores(d.betadisper)
+
+# split data into a list by ID
+s <- data.frame(x=d.scores$sites[, 1], y=d.scores$sites[, 2], .id=d.sub$.id)
+s <- split(s, s$.id)
+
+# plot
+par(mar=c(1,1,3,1))
+plot(d.scores$sites, type='n', axes=FALSE)
+abline(h=0, v=0, lty=2, col='grey')
+
+# NOTE: lines are not added if data are too densely spaced for evaluation of requested prob. level 
+# add contours of prob density
+res <- lapply(s, kdeContours, prob=c(0.75), cols=cols, m=levels(d.sub$.id), lwd=1, lty=3)
+res <- lapply(s, kdeContours, prob=c(0.5), cols=cols, m=levels(d.sub$.id), lwd=1, lty=2)
+res <- lapply(s, kdeContours, prob=c(0.25), cols=cols, m=levels(d.sub$.id), lwd=2, lty=1)
+
+points(d.scores$sites, cex=0.45, col=cols[as.numeric(d.sub$.id)], pch=16)
+# note special indexing for cases when low-var MU have been removed
+vegan::ordilabel(d.betadisper, display='centroids', col=cols[match(mu.set, levels(d.sub$.id))])
+title('Ordination of Raster Samples (cLHS Subset) with 25%, 50%, 75% Density Contours')
+box()
+```
+
+
+
+### Topographic Signatures
+
 
 The following is an investigation of topographic "signatures" in the initial soil mapping project for Sequoia and Kings Canyon, California.
 
