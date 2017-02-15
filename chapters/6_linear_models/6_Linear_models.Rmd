@@ -1,129 +1,534 @@
 ---
-title: Chapter 6 - Linear Regression
-author: Stephen Roecker, Katey Yoast
-date: "Thursday, January 14, 2016"
+title: 6 - Linear Regression
+author: Stephen Roecker &  Katey Yoast
+date: "Tuesday, March 7, 2016"
 output:
   html_document:
-    keep_md: yes
     number_sections: yes
     toc: yes
     toc_depth: 3
     toc_float:
-      collapsed: true
-      smooth_scroll: false
+      collapsed: yes
+      smooth_scroll: no
 ---
 
 
 ![Statistics for pedologists course banner image](figure/logo.jpg)
 
-## Introduction
-Linear regression has been used for soil survey applications since the early 1900s when Briggs and McLane (1907) developed a pedotransfer function to estimate the wilting coefficient as a function of soil particle size: Wilting coefficient = 0.01(sand) + 0.12(silt) + 0.57(clay). Linear regression, as the name implys, models the linear relationship between a dependent variable (y) and an independent variable (x) where y = b0 + b1x + e (b0=intercept of the fitted line, b1=slope of the fitted line, and e= the error term). When more than one independent variable is used in the regression, the model is called multiple linear regression. In regression models, the dependent (or response) variable must always be continuous. The independent (or predictor) variable(s) can be continuous, discrete, or categorical. In order to use linear regression or any linear model, the data must be normally distributed. Most environmental data are non-linear and require transformations to the response variable (such as square root or log) for use in linear models. Often, these data are best used in non-linear models due to the complications of interpreting and predicting transformed data. Normality can be assessed in R visually using a QQ plot or histogram and tabularly using something like the Shapiro-Wilk test of normality. 
+# Introduction
+
+Linear regression has been used for soil survey applications since the early 1900s when Briggs and McLane (1907) developed a pedotransfer function to estimate the wilting coefficient as a function of soil particle size. 
+
+Wilting coefficient = 0.01(sand) + 0.12(silt) + 0.57(clay)
+
+Linear regression models the linear relationship between a response variable (y) and an predictor variable (x). 
+
+
+$f(y) = \beta_{0} + \beta_{1}x + \varepsilon$
+
+- $\beta_{0}$ = intercept of the fitted line
+- $\beta_{1}x$ = slope of the fitted line
+- $\varepsilon$ = the error term
+
+When more than one independent variable is used in the regression, it is referred to as multiple linear regression. In regression models, the response (or dependent) variable must always be continuous. The predictor (or independent) variable(s) can be continuous or categorical. In order to use linear regression or any linear model, the errors (i.e. residuals) must be normally distributed. Most environmental data are skewed and require transformations to the response variable (such as square root or log) for use in linear models. Normality can be assessed using a QQ plot or histogram of the residuals.
+
+
+# Linear Regression Example
+
+Now that we've got some of the basic theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The example selected for this chapter comes from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert. The landscape is composed primarily of closed basins ringed by granitic hills and mountains (Peterson, 1981). The problem tackled here is modeling the distribution of surface rock fragments as a function of digital elevation model (DEM) and Landsat derivatives.
+
+With this dataset we'll encounter some challenges. To start with, fan piedmont landscapes typically have relatively little relief. Since most of our predictors will be derivatives of elevation, that won't leave us with much to work with. Also, our elevation data comes from the USGS National Elevation dataset (NED), which provides considerably less detail than say LiDAR or IFSAR data (Shi et al., 2012). Lastly our pedon dataset like most in NASIS, hasn't received near as much quality control as have the components. So we'll need to wrangle some of the pedon data before we can analyze it. These are all typical problems encountered in any data analysis and should be good practice.
+
+
+## Load packages
+
+To start, as always we need to load some extra R packages. This is will become a familar routine every time you start R. Most of the basic functions we need to develop a linear regression model are contained in base R, but the following packages contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
 
 ```{r load packages, message=FALSE, warning=FALSE}
-library(soilDB)
-library(raster)
-library(rgdal)
-library(lattice)
-library(reshape2)
-library(plyr)
-library(dplyr)
-library(caret)
-library(fBasics)
+library(aqp) # specialized soil classes and functions
+library(soilDB) # NASIS and SDA import functions
+library(raster) # guess
+library(rgdal) # spatial import
+library(lattice) # graphing
+library(reshape2) # data manipulation
+library(plyr) # data manipulation
+library(caret) # printing
+library(car) # additional regression tools
+library(DAAG) # additional regression tools
 ```
 
-# Read in data
+## Read in data
+
+Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you! Once data are captured in NASIS it is much easier to import them into R, extract the pieces you need, manipulate them, model them, etc. If it's not entered into NASIS, it may as well not exist.
+
 ```{r import data}
-pedons <- fetchNASIS()
-# pedons <- read.csv("C:workspace/pedons.csv")
+# pedons <- fetchNASIS(rmHzErrors = FALSE) # beware the error messages, by default they don't get imported unless you override the default, which in our case shouldn't cause any problems
+load(file = "C:/workspace/ch7_data.Rdata")
+
+str(pedons, max.level = 2) # Examine the makeup of the data we imported from NASIS.
 ```
+
+# Exploratory analysis
+
+## Data Wrangling
+
+Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. Unfortunately, odds are all the data haven't been consistently populated like they should be.
+
+```{r consistency}
+s <- site(pedons) # extract the site data frame from the pedons soil profile collection object
+
+s$surface_gravel <- with(s, surface_gravel - surface_fgravel) # recalculate gravel to exclude fine gravel
+s$frags <- apply(s[grepl("surface", names(s))], 1, sum) # calculate total surface rock fragments
+
+densityplot(~ surface_cobbles + surface_gravel + surface_fgravel + frags, data = s, auto.key = TRUE)
+
+hist(s$frags, 50)
+
+apply(s[grepl("surface|frags", names(s))], 2, function(x) round(summary(x))) # summarize all columns that pattern match either "surface" or "frags"
+
+sum(s$frags > 100) # number of samples greater than 100
+sum(s$frags < 1) # number of samples less than  1
+```
+
+Examining the results we can see that the distribution of our surface rock fragments are skewed. In addition, we apparently have values in excess of 100 and some that equal 0. Those values in excess of 100 are likely recording errors, while the values that equal 0 could either be truly 0 or NA.
+
+
+## Geomorphic data
+
+Another obvious place to look is at the geomorphic data in the site table. This information is intended to help differentiate where our soil observations exist on the landscape. If populated consistently it could potentially be used in future disaggregation efforts, as demonstrated by Nauman and Thompson (2014).
+
+### Landform vs frags
+
+```{r landform}
+quantile2 <- function(x) c(round(quantile(x, probs = c(0.05, 0.5, 0.95))), n = length(x)) # Create a custom quantile function
+
+test <- aggregate(frags ~ landform.string, data = s, quantile2)
+
+test <- subset(test, frags[, 4] > 3) # subset the data frame to only include landforms with greater than 3 observations
+
+arrange(test, frags[, 2], decreasing = TRUE) # sort the data frame by the frags matrix column using plyr package function
+
+# or sort using the order() function from the base package
+
+# test[order(test$surface_total[, 2], decreasing = TRUE), ]
+```
+
+There are obviously a wide variety of landforms. However generally it appears that erosional landforms have the most surface rock fragments. Let's generalize the `landform.string` and have a closer look.
 
 ```{r}
-s <- site(pedons)
-s$surface_gravel <- s$surface_gravel-s$surface_fgravel # recalculate gravel
-site(pedons)$surface_total <- apply(s[, grepl("surface", names(s))], 1, sum)
+s$landform <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform.string), "fan", "hill") # generalize the landform.string
+s$landform <- as.factor(s$landform)
 
-idx <- complete.cases(site(pedons)[c("x", "y")]) # create an index to filter out pedons that are missing coordinates in WGS84
-pedons2 <- pedons[idx]
-coordinates(pedons2) <- ~ x + y # add coordinates to the pedon object
-proj4string(pedons2) <- CRS("+init=epsg:4326") # add projection to pedon object
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070"))
+test <- aggregate(frags ~ landform, data = s, quantile2)
 
-pedons_sp <- as(pedons2, "SpatialPointsDataFrame")
+arrange(test, landform, frags[, 2], decreasing = TRUE) # sort data frame by column using plyr 
 
-# Geodata extract
-```{r geodata extract}
-folder1 <- "M:/geodata/project_data/8VIC/"
-folder2 <- "M:/geodata/imagery/gamma/"
-files1 <- list(
-  terrain = c(
-    elev    = "ned30m_8VIC.tif",
-    slope   = "ned30m_8VIC_slope5.tif",
-    aspect  = "ned30m_8VIC_aspect5.tif",
-    twi     = "ned30m_8VIC_wetness.tif",
-    z2str   = "ned30m_8VIC_z2stream.tif",
-    mrrtf   = "ned30m_8VIC_mrrtf.tif",
-    mrvbf   = "ned30m_8VIC_mrvbf.tif",
-    #  solar   = "ned30m_vic8_solar.tif",
-    solarcv = "ned30m_vic8_solarcv.tif"
-  ),
-  climate = c(
-    precip  = "prism30m_vic8_ppt_1981_2010_annual_mm.tif",
-    precipsum = "prism30m_vic8_ppt_1981_2010_summer_mm.tif",
-    temp    = "prism30m_vic8_tavg_1981_2010_annual_C.tif"
-  ),
-  imagery = c(
-    ls = "landsat30m_vic8_b123457.tif",
-    tc      = "landsat30m_vic8_tc123.tif"
-  )
-)
-files2 <- list(
-  gamma = c(
-    k  = "namrad_k_aea.tif",
-    th = "namrad_th_aea.tif",
-    u  = "namrad_u_aea.tif"
-  )
-)
-geodata <- c(lapply(files1, function(x) paste0(folder1, x)), lapply(files2, function(x) paste0(folder2, x))) 
-names(geodata$terrain) <- names(files1$terrain)
-names(geodata$climate) <- names(files1$climate)
-names(geodata$imagery) <- names(files1$imagery)
-names(geodata$gamma) <- names(files2$gamma)
-
-geodata_df <- data.frame(
-  as.data.frame(pedons_sp)[c("surface_total", "x_std", "y_std", "describer")],
-  extract(stack(geodata$terrain[1:7]), pedons_sp),
-  extract(raster(geodata$terrain[8]), pedons_sp),
-  extract(stack(geodata$imagery), pedons_sp),
-  extract(stack(geodata$gamma), pedons_sp),
-  extract(stack(geodata$climate), pedons_sp)
-)
-names(geodata_df)[c(12, 18)] <- c("solarcv", "ls_7")
-
-gidx <- list()
-gidx$terrain <- names(files1$terrain)
-gidx$climate <- names(files1$climate)
-gidx$imagery <- names(geodata_df)[!names(geodata_df) %in% names(files1$terrain) &
-                                    !names(geodata_df) %in% names(files1$climate) &
-                                    !names(geodata_df) %in% names(files2$gamma) &
-                                    !names(geodata_df) %in% c("x_std", "y_std", "describer", "surface_total")]
-gidx$gamma <- names(files2$gamma)
-
-
-data <- subset(geodata_df, select = - c(x_std, y_std))
-data <- na.exclude(data)
-save(data, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch6_data.Rdata")
-
-data$surface_total <- ifelse(data$mrvbf < 0.15, NA,  data$surface_total)
-
-test2 <- lm(surface_total ~ precipsum + tc_3 + tc_2 + twi_sc + mrrtf + k + th + elev, data = data[- c(35, 506), ])
-
+densityplot(~ frags + surface_cobbles + surface_gravel | landform, data = s, auto.key = TRUE)
 ```
 
-## Additional reading
+So it does appear that erosional landforms generally do have more surface rock fragments than depositional landforms, but not by much. It also appears that most of the difference is coming from the amount of cobbles, as seen in the density plot.
+
+
+### Hillslope position
+
+```{r}
+test <- aggregate(frags ~ landform + hillslope_pos, data = s, quantile2)
+
+arrange(test, landform, frags[, 2], decreasing = TRUE)
+```
+
+If we examine the different hillslope positions for each generic landform we can see other trends. For hills, it appears that surface rock fragments decrease as we traverse up the slope, with the exception of the toeslopes which are typically associated with drainageways. On fans we see the opposite relationship, with toeslopes again being the exception. 
+
+
+### Slope shape
+
+```{r}
+test <- aggregate(frags ~ landform + paste(shapedown, shapeacross), data = s, quantile2)
+
+arrange(test, landform, frags[, 2], decreasing = TRUE)
+```
+
+When examining slope shape on hills it appears that concave positions have greater amounts of surface rock fragments. I can't see any sensible pattern with slope shape on fans.
+
+
+### Surface Morphometry, Depth and Surface Rock Fragments
+
+```{r}
+# Subset Generic landforms and Select Numeric Columns
+s_fan <- subset(s, landform == "fan", select = c(frags, surface_gravel, bedrckdepth, slope_field, elev_field))
+s_hill <- subset(s, landform == "hill", select = c(frags, surface_gravel, bedrckdepth, slope_field, elev_field))
+
+# Correlation Matrices
+round(cor(s_fan, use = "pairwise"), 2)
+round(cor(s_hill, use = "pairwise"), 2)
+
+# Scatterplot Matrices
+spm(s_fan, use = "pairwise", main = "Scatterplot Matrix for Fans")
+spm(s_hill, use = "pairwise", main = "Scatterplot Matrix for Hills")
+```
+
+In examing the correlation matrices we don't see a strong relationships with either elevation for slope gradient.
+
+
+### Soil Scientist Bias
+
+Next we'll look at soil scientist bias. The question being: Do some soil scientists have a tendency to describe more surface rock fragments than others? Due to the excess number of soil scientist that have worked on CA794, including detailees, we've filtered the names of soil scientist to include just the top 3 soil scientists with the most documentation and have given priority to those soil scientists when they occur together.
+
+```{r}
+# Custom function to filter out the data for the 3 soil scientists with the most data
+desc_test <- function(old) {
+  old <- as.character(old)
+  new <- NA
+  # ranked by seniority
+  if (is.na(old)) {new <- "other"}
+  if (grepl("Stephen", old)) {new <- "Stephen"} # least senior
+  if (grepl("Paul", old)) {new <- "Paul"} 
+  if (grepl("Peter", old)) {new <- "Peter"} # most senior
+  if (is.na(new)) {new <- "other"}
+ return(new)
+}
+
+s$describer2 <- sapply(s$describer, desc_test)
+
+test <- aggregate(frags ~ landform + describer2, data = s, function(x) round(quantile(x, probs = c(0, 0.5, 1))))
+
+arrange(test, landform, frags[, 2], decreasing = TRUE)
+```
+
+In looking at the numbers it appears we have a bit of a trend on both fans and hills. We can see that Stephen always describes the least overall amount of surface rock fragments, while Paul and Peter trade places describing the most on hills and fans. By looking the maximum values we can also see who is recording surface rock fragments in excess of 100%. However, while these trends are suggestive and informative, they are not definitive because they don't take into account other factors. We'll examine this potential bias more closely later.
+
+
+## Plot coordinates
+
+Where do our points plot? We can plot the general location in R, but for a closer look, we'll export them to a Shapefile so that they can viewed in a proper GIS. Notice in the figure below the number of points that fall outside the survey boundary. What it doesn't show is the points in the Ocean or Mexico!
+
+```{r plot}
+# Convert soil profile collection to a spatial object
+pedons2 <- pedons
+slot(pedons2, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
+idx <- complete.cases(site(pedons2)[c("x", "y")]) # create an index to filter out pedons with missing coordinates
+pedons2 <- pedons2[idx]
+coordinates(pedons2) <- ~ x + y # set the coordinates
+proj4string(pedons2) <- CRS("+init=epsg:4326") # set the projection
+pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to spatial object
+pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # reproject
+
+# Read in soil survey area boundaries
+# ssa <- readOGR(dsn = "F:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+# ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+
+# Plot
+plot(ca794, axes = TRUE)
+plot(pedons_sp, col='red', add = TRUE) # notice the points outside the boundary
+
+# Write shapefile of pedons
+# writeOGR(pedons_sp, dsn = "F:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") 
+```
+
+
+### Exercise 1: View the geodata in ArcGIS
+
+- Examine the shapefile in ArcGIS along with our potential predictive variables (hint classify the Shapefile symbology using the frags column)
+- Discuss with your group, and report your observations or hypotheses
+
+
+## Extracting spatial data
+
+Prior to any spatial analysis or modeling, you will need to develop a suite of geodata files that can be intersected with your field data locations. This is, in and of itself a difficult task and should be facilitated by your Regional GIS Specialist. Geodata files typically used would consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R, and then extract the geodata values where they intersect with field data.
+
+As you can see below their is an almost limitless number of variables we could inspect.
+
+```{r extract, eval=FALSE}
+# set file path
+folder <- "F:/geodata/project_data/8VIC/ca794/"
+# list of file names
+files <- c(
+  elev   = "ned30m_8VIC.tif", # elevation
+  slope  = "ned30m_8VIC_slope5.tif", # slope gradient
+  aspect = "ned30m_8VIC_aspect5.tif", # slope aspect
+  twi    = "ned30m_8VIC_wetness.tif", # topographic wetness index
+  twi_sc = "ned30m_8VIC_wetness_sc.tif", # transformed twi
+  ch     = "ned30m_8VIC_cheight.tif", # catchment height
+  z2str  = "ned30m_8VIC_z2stream.tif", # height above streams
+  mrrtf  = "ned30m_8VIC_mrrtf.tif", # multiresolution ridgetop flatness index
+  mrvbf  = "ned30m_8VIC_mrvbf.tif", # multiresolution valley bottom flatness index
+  solar  = "ned30m_8VIC_solar.tif", # solar radiation
+  precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif", # annual precipitation
+  precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif", # summer precipitation
+  temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif", # annual temperature
+  ls     = "landsat30m_8VIC_b123457.tif", # landsat bands
+  pc     = "landsat30m_8VIC_pc123456.tif", # principal components of landsat
+  tc     = "landsat30m_8VIC_tc123.tif", # tasseled cap components of landsat
+  k      = "gamma30m_8VIC_namrad_k.tif", # gamma radiometrics signatures
+  th     = "gamma30m_8VIC_namrad_th.tif",
+  u      = "gamma30m_8VIC_namrad_u.tif",
+  cluster = "cluster152.tif" # unsupervised classification
+  )
+
+geodata_f <- sapply(files, function(x) paste0(folder, x)) # combine the folder directory and file names
+
+# Create a raster stack
+geodata_r <- stack(geodata_f)
+
+# Extract the geodata and add to a data frame
+data <- data.frame(
+   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "argillic.horizon", "landform", "tax_subgroup")],
+   extract(geodata_r, pedons_sp)
+   )
+
+# Modify some of the geodata variables
+data$mast <- data$temp - 4
+idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x, na.rm = TRUE), 2))
+names(idx)[2] <- "cluster_mast"
+data <- join(data, idx, by = "cluster", type = "left")
+
+data$cluster <- factor(data$cluster, levels = 1:15)
+data$cluster2 <- reorder(data$cluster, data$cluster_mast)
+data$gsi <- with(data, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
+data$ndvi <- with(data, (ls_4 - ls_3) / (ls_4 + ls_3))
+data$sw <- cos(data$aspect - 255)
+
+# save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
+
+# Strip out location and personal information before uploading to the internet
+# s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
+# slot(pedons, "site") <- s
+# data[c("describer2", "x_std", "y_std")] <- NA
+# save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+```
+
+
+## Examine Spatial Data 
+
+With our spatial data in hand, we can now see whether any of the variables have a linear relationship with surface rock fragments. 
+
+At the beginning of our analysis we noticed some issues with our data. Particularly that the distribution of our data was skewed, and included values greater than 100 and equal to 0. So before we start lets filter those out and transform the surface rock fragments using a logit transform.
+
+```{r spatial}
+train <- data
+train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon, describer2)) # exclude frags greater than 100 and less than 1, and exclude some of the extra columns
+
+# Create custom transform functions
+logit <- function(x) log(x / (1 - x)) # logit transform
+ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit transform
+
+# Transform
+train$fragst <- logit(train$frags / 100)
+
+# Create list of predictor names
+terrain1 <- c("slope", "solar", "mrrtf", "mrvbf")
+terrain2 <- c("twi", "z2str", "ch")
+climate <- c("elev", "precip", "precipsum", "temp")
+ls <- paste0("ls_", 1:6)
+pc <- paste0("pc_", 1:6)
+tc <- paste0("tc_", 1:3)
+rad <- c("k", "th", "u")
+
+# Compute correlation matrices
+round(cor(train[c("fragst", terrain1)], use = "pairwise"), 2)
+round(cor(train[c("fragst", terrain2)], use = "pairwise"), 2)
+round(cor(train[c("fragst", climate)], use = "pairwise"), 2)
+round(cor(train[c("fragst", ls)], use = "pairwise"), 2)
+round(cor(train[c("fragst", pc)], use = "pairwise"), 2)
+round(cor(train[c("fragst", tc)], use = "pairwise"), 2)
+round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
+
+# Create scatterplots
+# spm(train[c("fragst", terrain1)])
+spm(train[c("fragst", terrain2)])
+spm(train[c("fragst", climate)])
+# spm(train[c("fragst", ls)])
+spm(train[c("fragst", pc)])
+# spm(train[c("fragst", tc)])
+# spm(train[c("fragst", rad)])
+
+
+# Create boxplots
+bwplot(fragst ~ cluster, data = train)
+bwplot(fragst ~ cluster2, data = train)
+```
+
+The correlation matrices and scatter plots above show that that surface rock fragments have moderate correlations with some of the variables, particularly the landsat bands and derivatives. This makes sense given that surface rock fragments are at the surface, unlike most soil properties. 
+
+By examining the correlations between some of the predictors we can also see that some are *collinear* (e.g. > 0.6), such as the landsat bands. Therefore these variables are redundant as they describe almost the same thing. This collinearity will also make it difficult to estimate our regression coefficients. Considering that we already have other derivatives of landsat in our dataset, which are intentionally designed to reduce their collinearity, we may as well exclude the landsat bands from our dataset all together.
+
+Examining the density plots on the diagonal axis of the scatterplots we can see that some variables are skewed while others are bimodal. Lastly the boxplot show a trend amongst the clusters when sorted according to annual temperature.
+
+
+# Modeling
+
+## Model Training
+
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. For this reason, it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
+
+The example below is known as a forward selection procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models, the Akaike's Information Criterion (AIC) is used. When using AIC to assess predictor significance, a smaller number is better.
+
+```{r}
+load(file = "C:/workspace/ch7_data.Rdata")
+train <- subset(train, select = - c(ls_1, ls_2, ls_3, ls_4, ls_5, ls_6))
+
+full <- lm(fragst ~ . - frags, data = train) # "~ ." includes all columns in the data set, "-" removes variables
+null <- lm(fragst ~ 1, data = train) # "~ 1" just includes an intercept
+
+add1(null, full, test = "F") # using the AIC test the effect of '
+```
+
+We can see as the correlation matrices showed earlier that the pc predictors have some of the smallest AIC and reduce the deviance the most. So let's add pc\_2 to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions, until the model is saturated.
+
+We can continue adding predictors to the model until we no longer see an increase in the adjusted R^2^. At some point the adjusted R^2^ will level off, versus the R^2^ which will continue to incrementally increase. The difference between the adjusted R^2^ vs the R^2^, is that the adjusted R^2^ is penalizes model for each additional predictor added to model, similarly to the AIC.
+
+```{r}
+fragst_lm <- update(null, . ~ . + pc_2) # add one or several variables to the model 
+
+# or refit
+
+# fragst_lm <- lm(fragst ~ pc_2, data = train)
+
+# add1(fragst_lm, full, test = "F") # iterate until the model is saturated
+
+# drop1(fragst_lm, test = "F") # test effect of dropping a predictor
+
+fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
+
+summary(fragst_lm)
+```
+
+
+## Model Evaluation
+
+After we're satisfied no additional variables will improve the fit, we need to evaluate its residuals, collinearity, accuracy, and model coefficients.
+
+```{r diagnostics}
+# Standard diagnostic plots for lm() objects
+plot(fragst_lm)
+
+# Term and partial residual plots
+termplot(fragst_lm, partial.resid = TRUE)
+```
+
+The **variance inflation factor** (VIF) is used to assess collinearity amongst the predictors. Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 2 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
+
+```{r}
+# vif() function from the car or rms packages
+sqrt(vif(fragst_lm))
+
+# or 
+
+sqrt(vif(fragst_lm)) > 2
+```
+
+**Accuracy** can be assessed using several different metrics.
+
+- Adjusted R^2^ = proportion of variance explained
+- Root mean square error (RMSE)
+- Mean absolute error(MAE)
+
+```{r}
+# Adjusted R2
+summary(fragst_lm)$adj.r.squared
+
+# Generate predictions
+train$predict <- ilogit(predict(fragst_lm, train)) * 100 # apply reverse transform
+
+# Root mean square error (RMSE)
+with(train, sqrt(mean((frags - predict)^2, na.rm = T)))
+
+# Mean absolute error
+with(train, mean(abs(frags - predict), na.rm = T))
+
+# Plot the observed vs predicted values
+plot(train$frags, train$predict, xlim = c(0, 100), ylim = c(0, 100))
+abline(0, 1)
+
+sum(train$frags < 15)
+
+sum(train$frags > 80)
+
+# Examine the RMSE for each cluster
+temp <- by(train, list(train$cluster2), function(x) 
+  with(x, data.frame(
+  cluster = unique(cluster2), 
+  rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+  n = length(frags)
+  )))
+temp <- do.call(rbind, temp)
+temp
+
+
+# or using plyr package
+# 
+# ddply(train, .(cluster2), summarize,
+#   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+#   n = length(frags)
+# )
+#
+# or using dplyr package
+# 
+# group_by(train, cluster2) %>% summarize(
+#   rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
+#   n = length(frags)
+# )
+
+dotplot(rmse ~ cluster, data = temp)
+
+# fragst_lm <- update(null, . ~ . + pc_2 + pc_1 + temp + twi + precipsum + cluster) # add one or several variables to the model
+
+# Examine the coefficients
+summary(fragst_lm)
+
+ilogit(fragst_lm$coefficients) * 100
+
+anova(fragst_lm) # importance of each predictor assess by the amount of variance they explain
+```
+
+
+```{r, eval=FALSE}
+# Custom function to return the predictions and their standard errors
+predfun <- function(model, data) {
+  v <- predict(model, data, se.fit = TRUE)
+  cbind(
+    p = as.vector(ilogit(v$fit) * 100),
+    se = as.vector(ilogit(v$se.fit)) * 100)
+  }
+
+# Generate spatial predictions
+# r <- predict(geodata_r, fragst_lm, fun = predfun, index = 1:2, progress = "text")
+
+# Export the results
+# writeRaster(r[[1]], "frags.tif", overwrite = T, progress = "text")
+# writeRaster(r[[2]], "frags_se.tif", overwrite = T, progress = "text")
+
+plot(raster("C:/workspace/frags.tif"))
+plot(ca794, add = TRUE)
+plot(raster("C:/workspace/frags_se.tif"))
+plot(ca794, add = TRUE)
+```
+
+### Exercise 2: View the predictions in ArcGIS
+
+- Examine the raster predictions in ArcGIS  and compare them to your Shapefile that contain the original point observations (hint classify the Shapefile symbology using the frags column)
+- Discuss with your group, and report your observations or hypotheses
+
+
+# References
+
+Beckett, P.H.T., and R. Webster, 1971. Soil variability: a review. Soils Fertil. 34 (1), 1-15.
+
+James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+
+Nauman, T. W., and J. A. Thompson, 2014. Semi-automated disaggregation of conventional soil maps using knowledge driven data mining and classification trees. Geoderma 213:385-399. [http://www.sciencedirect.com/science/article/pii/S0016706113003066](http://www.sciencedirect.com/science/article/pii/S0016706113003066)
+
+Peterson, F.F., 1981. Landforms of the basin and range province: defined for soil survey. Nevada Agricultural Experiment Station Technical Bulletin 28, University of Nevada - Reno, NV. 52 p. [http://jornada.nmsu.edu/files/Peterson_LandformsBasinRangeProvince.pdf](http://jornada.nmsu.edu/files/Peterson_LandformsBasinRangeProvince.pdf)
+
+Shi, X., L. Girod, R. Long, R. DeKett, J. Philippe, and T. Burke, 2012. A comparison of LiDAR-based DEMs and USGS-sourced DEMs in terrain analysis for knowledge-based digital soil mapping. Geoderma 170:217-226. [http://www.sciencedirect.com/science/article/pii/S0016706111003387](http://www.sciencedirect.com/science/article/pii/S0016706111003387)
+
+
+# Additional reading
 
 Faraway, J.J., 2002. Practical Regression and Anova using R. CRC Press, New York. [https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf](https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf)
 
-Gareth, J., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
 
 Hengl, T. 2009. A Practical Guide to Geostatistical Mapping, 2nd Edt. University of Amsterdam, www.lulu.com, 291 p. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf)
 

@@ -13,20 +13,20 @@ html_document:
  - [4.0 Introduction](#intro)  
  - [4.1 Data inspection](#data)  
      - [Exercise 1: fetch and inspect](#ex1)
- - [4.2 Examining distributions](#dist)
+ - [4.2 Examining Distributions](#dist)
       - [4.2.1 The normal distribution](#norm)       
       - [4.2.2 Histograms & density curves](#hist) 
       - [4.3.3 Quantile comparison plots](#qq)       
- - [4.3 Measures of central tendency](#cent)        
+ - [4.3 Measures of Central Tendency](#cent)        
  - [4.4 Measures of Dispersion](#disp)      
      - [4.3.1 Box plots](#box)       
- - [4.5 Measures of association](#asso)
+ - [4.5 Measures of Association](#asso)
      - [4.5.1 Correlation matrix](#cor) 
      - [4.5.2 Scatterplot](#splom)       
  - [4.6 Transformations](#transform)       	
      - [4.6.1 pH](#ph)       
      - [4.6.2 Circular data](#circular)       
- - [4.7 R markdown reports](#rmd)
+ - [4.7 R Markdown Reports](#rmd)
      - [Exercise 2: run the pedon_summary_by_taxonname.Rmd](#ex2)
  - [4.8 Zonal Statistics](#zonal)
      - [4.8.1 Zonal Statistics in R](#rtools)
@@ -34,11 +34,11 @@ html_document:
      - [4.8.2 TEUI toolkit](#teui)
      - [4.8.3 ArcGIS tools](#arcgis)
  - [4.9 References](#ref)   
- - [4.10 Additional reading](#add)
+ - [4.10 Additional Reading](#add)
 
 ##<a id="intro")></a>4.0  Introduction
 
-Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This typcially done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
+Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This is typically done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
 
 Filliben (2004), describes EDA as: 
 *"an approach/philosophy for data analysis that employs a variety of techniques (mostly  graphical) to maximize":*
@@ -58,9 +58,9 @@ Tukey (1980) summarized:
  2.	A flexibility, AND  
  3.	Some graph paper (or transparencies, or both)  
 
-*"No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper and transparencies  are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated."*
+*"No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper and transparencies are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated."*
 
-Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the 'pictures' (i.e. graphical output) and descriptive statistics we will use to explore our data.  
+Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the 'pictures' (i.e., graphical output) and descriptive statistics needed to explore our data.  
 
 Descriptive statistics include:  
 
@@ -82,15 +82,15 @@ Graphical methods include:
  - **Radial plots** - plots formatted for the representation of circular data 
 
 
-##<a id="data")></a> 4.1  Data inspection
+##<a id="data")></a> 4.1  Data Inspection
 
-Ideally before you start an EDA, you should ensure that your data has no errors, typos, or other problems. However as is often the case, EDA is a useful tool/process to identify such errors before you move on to other statistical analyses. For this chapter we'll use the loafercreek dataset, from the CA630 Soil Survey Area.
+Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine appropriate statistical analyses. For this chapter we'll use the loafercreek dataset from the CA630 Soil Survey Area.
 
 
 ```r
 library(soilDB)
 library(lattice)
-library(reshape2)
+library(car)
 
 data("loafercreek") # load from the soilDB package
 
@@ -123,7 +123,7 @@ View(h)
 # or by clicking on the dataset in the environment tab
 ```
  
-This view is fine for a small dataset, but can be cumbersome for a larger ones. In order to quickly summarize a dataset, can simply use the `summary()` function. However even for our small example dataset the output can be volumnous. Therefore in the interest of saving space we'll only look at a sample of columns.  
+This view is fine for a small dataset, but can be cumbersome for larger ones. The `summary()` function can be used to quickly summarize a dataset however, even for our small example dataset, the output can be voluminous. Therefore in the interest of saving space we'll only look at a sample of columns.  
 
 
 ```r
@@ -150,13 +150,39 @@ summary(h[vars])
 ## 
 ```
 
-The `summary()` function is know as a generic R function. It will return a preprogrammed summary for any R object. Because `h` is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e. number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they are present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
+```r
+# or
+
+sub <- subset(h, select = c("genhz", "clay", "total_frags_pct", "phfield", "effervescence"))
+summary(sub)
+```
+
+```
+##       genhz         clay       total_frags_pct    phfield     
+##  A       :64   Min.   :10.00   Min.   : 0.00   Min.   :4.900  
+##  Bt1     :59   1st Qu.:17.00   1st Qu.: 0.00   1st Qu.:6.000  
+##  Bt2     :58   Median :21.00   Median : 5.00   Median :6.200  
+##  Bt3     :52   Mean   :22.05   Mean   :13.01   Mean   :6.135  
+##  Cr      :57   3rd Qu.:26.00   3rd Qu.:20.00   3rd Qu.:6.500  
+##  R       :26   Max.   :48.00   Max.   :87.00   Max.   :6.900  
+##  not-used:49   NA's   :110                     NA's   :204    
+##  effervescence     
+##  Length:365        
+##  Class :character  
+##  Mode  :character  
+##                    
+##                    
+##                    
+## 
+```
+
+The `summary()` function is known as a generic R function. It will return a preprogrammed summary for any R object. Because `h` is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e., number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they are present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
 
 When you do have missing data and the function you want to run will not run with missing values, the following options are available:  
 
- 1. **Exclude** all rows or columns that contain missing values using  the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g. horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such as `clay <- na.exclude(h$clay)`.
+ 1. **Exclude** all rows or columns that contain missing values using the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g., horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such as `clay <- na.exclude(h$clay)`.
  2.	**Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$clay <- ifelse(is.na(h$clay), 0, h$clay) # or h[is.na(h$clay), ] <- 0`.
- 3. **Read** the help file for the function you're attempting to use. Many functions have additional arguements for dealing with missing values, such as `na.rm`.
+ 3. **Read** the help file for the function you're attempting to use. Many functions have additional arguments for dealing with missing values, such as `na.rm`.
 
 A quick check for typos would be to examine the list of levels for a factor or character, such as:  
 
@@ -194,11 +220,11 @@ If the `unique()` function returned typos such as "BT" or "B t", you could eithe
 
 
 ```r
-h$hzname[h$hzname == "BT"] <- "Bt"
+h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 
 # or
 
-# h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
+# h$hzname[h$hzname == "BT"] <- "Bt"
 
 # or as a last resort we could manually edit the spreadsheet in R
 
@@ -210,7 +236,7 @@ Typo errors such as these are common problem with old pedon data in NASIS.
 ### <a id="ex1")></a> Exercise: fetch and inspect
 
 - Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset 
-- Apply the generalized horizon rules below or develop your own
+- Apply the generalized horizon rules below or develop your own, see the following [job-aid](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 - Summarize the depths, genhz, texture class, sand, and fine gravel
 - Show your work and submit the results to your coach
 
@@ -223,16 +249,16 @@ p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
 ```
 
 
-## <a id="dist")></a> 4.2  Examining distributions  
+## <a id="dist")></a> 4.2  Examining Distributions  
 
-Now that we've checked for missing values and typos and made correcitons, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center (e.g. RV) and spread or dispersion (e.g low and high) of our data. Typically in introductory statistics the normal (i.e. Gaussian) distribution is emphasized.
+Now that we've checked for missing values and typos and made corrections, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center (e.g., RV) and spread or dispersion (e.g., low and high) of our data. Typically in introductory statistics the normal (i.e., Gaussian) distribution is emphasized.
 
 
 ### <a id="norm")></a> 4.2.1  The normal distribution
 
-What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Applying certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e. Low, RV and High values). Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data is normally distributed. However, if the data is skewed, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality and can be found in the fBasics package, but Webster (2001) cautions aganist using signficance tests for assessing normality. Then preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
+What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Applying certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e., Low, RV and High values). Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data are normally distributed. However, if the data are skewed, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality and can be found in the fBasics package, but Webster (2001) cautions against using significance tests for assessing normality. The preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
 
-A Gaussian distribution is often referred too as "Bell Curve", and has the following properties (Lane):  
+A Gaussian distribution is often referred to as "Bell Curve", and has the following properties (Lane):  
 
  1. Gaussian distributions are **symmetric** around their mean 
  2.	The mean, median, and mode of a Gaussian distribution are **equal** 
@@ -260,9 +286,9 @@ Figure 3. Uniform distribution
 
 
 
-### <a id="hist")></a> 4.2.2  Histograms and denisty curves  
+### <a id="hist")></a> 4.2.2  Histograms and density curves  
 
-Next will review the `histogram()` and `densityplot()` functions which plot a histogram and density curve respectively.  
+Next we'll review the `histogram()` and `densityplot()` functions which plot a histogram and density curve respectively.  
 
 
 ```r
@@ -327,7 +353,7 @@ densityplot(~ clay + sand + total_frags_pct, data = h, auto.key = TRUE)
 Figure 5. The Kernel density plot depicts a smoothed line of the distribution  
 
 
-Compared to the histogram where the y-axis represents the number or percent (i.e. frequencey) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. Notice how the histogram of clay seems to emphasis the long right tail of values, which we might question as to whether we have a normal distribution. One curious feature that the density curve is that shows the hint of a bimodal distribution. Given that our sample includes a mixture of surface and subsurface horizons it may be we have have two different populations. However considering how much the two distributions overlap it seems impractical to separate them in this instance.
+Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. Notice how the histogram of clay seems to emphasis the long right tail of values, which we might question as to whether we have a normal distribution. One curious feature of the density curve is the hint of a bimodal distribution. Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
 
 ### <a id="qq")></a> 4.2.3  Quantile comparison plots (QQplot)  
@@ -359,7 +385,7 @@ A more detailed explanation of QQplots may be found on Wikipedia:
 [https://en.wikipedia.org/wiki/QQ_plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)  
 
 
-## <a id="cent")></a>4.3  Measures of central tendency  
+## <a id="cent")></a>4.3  Measures of Central Tendency  
 
 These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used measures for our purposes.
 
@@ -380,6 +406,7 @@ mean(clay)
 
 ```r
 # or use the additional na.rm argument
+
 mean(h$clay, na.rm = TRUE)
 ```
 
@@ -453,7 +480,7 @@ aggregate(clay ~ genhz, data = h, summary)
 ## 5     27.00
 ```
 
-In this example the mean and median are only slightly different, so we can safefully assume we have normal distribution. However many soil variables often have a non-normal distribution. For example, lets look at graphical examination of the mean vs median for clay and rock fragments:  
+In this example the mean and median are only slightly different, so we can safely assume that we have a normal distribution. However many soil variables often have a non-normal distribution. For example, let's look at graphical examination of the mean vs. median for clay and rock fragments:  
 
 
 ```r
@@ -482,9 +509,9 @@ abline(v = amean, col = "orange") # plot the mean as a red vertical line
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
 
 
-The blue vertical line represents the breakpoint for the median and the orange represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a long tailed distribution (e.g. skewed). Using the mean in this instance would overestimate the rock fragments. Although in this instance the difference between the mean and median is only 8 percent.
+The blue vertical line represents the breakpoint for the median and the orange represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a long tailed distribution (e.g., skewed). Using the mean in this instance would overestimate the rock fragments. Although in this instance the difference between the mean and median is only 8 percent.
 
-**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode, is that with numeric data you need to round the data to the level of precision you're interested in. In following example you can see where it looks like someone entered the laboratory data into the pedon horizon data. It hard to tell from the example, but the first column in each sequence shows the values and the following columns show the number occurences for that value.
+**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. In following example you can see where it looks like someone entered the laboratory data into the pedon horizon data. It's hard to tell from the example, but the first column in each sequence shows the values and the following columns show the number occurrences for that value.
 
 
 ```r
@@ -524,7 +551,7 @@ table(h$clay) # show a frequency table
 
 # table(as.integer(h$clay)) 
 
-sort(table(h$clay), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
+sort(table(round(h$clay)), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
 ```
 
 ```
@@ -532,7 +559,7 @@ sort(table(h$clay), decreasing = TRUE)[1] # sort and select the 1st value, which
 ## 18
 ```
 
-## <a id="disp")></a> 4.4  Measures of dispersion  
+## <a id="disp")></a> 4.4  Measures of Dispersion  
 
 These are measures used to determine the spread of values around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point. In NASIS speak these values might equate to the low (L) and high (H) values for numeric and integer data.
 
@@ -569,7 +596,7 @@ sd(clay)
 # sqrt(var(clay))
 ```
 
-**Coefficient of Variation** (CV)  is a relative (i.e. unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
+**Coefficient of Variation** (CV)  is a relative (i.e., unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
 
 CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:  
 
@@ -584,9 +611,9 @@ cv
 ```
 
 
-**Quantiles (aka Percentiles)** - the percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
+**Quantiles (a.k.a. Percentiles)** - the percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
 
-The default for the `quantile()` function returns the the min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summmery originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
+The default for the `quantile()` function returns the  min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summmary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
 
 
 ```r
@@ -609,7 +636,7 @@ quantile(clay, c(0.05, 0.5, 0.95))
 ## 12.7 21.0 33.3
 ```
 
-Thus, for the five number summary 25% of the observations fall between each of the intervals. Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpetration.
+Thus, for the five number summary 25% of the observations fall between each of the intervals. Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpretation.
 
 
 **Range**  is the difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
@@ -663,7 +690,7 @@ IQR(clay)
 
 ### <a id="box")></a>4.3.1  Box plots  
 
-Box plots area a graphical representation that shows the quartiles, minimum, maximum and outliers, if present, of the data.  Boxplots convey the shape of the data distribution, the presence of extreme values, and the ability to compare with other variables using the same scale, providing an excellent tool for screening data quality, determining thresholds for variables or developing working hypotheses.  
+Box plots are a graphical representation of the five number summary, depicting quartiles, minimum, maximum and outliers (if present). Boxplots convey the shape of the data distribution, the presence of extreme values, and the ability to compare with other variables using the same scale, providing an excellent tool for screening data quality, determining thresholds for variables and developing working hypotheses.  
 
 The parts of the boxplot are shown in Figure 8. The "box" of the boxplot is defined as the 1st quartile, (Q1 in the figure) and the 3rd quartile, (Q3 in the figure). The median, or 2nd quartile, is the dark line in the box. The whiskers show data that is 1.5 * IQR above and below the 3rd and 1st quartile. Any data point that is beyond a whisker is considered an outlier.  
 
@@ -693,7 +720,7 @@ Figure 9. Box plot of clay by horizon
 
 The xlab and ylab parameters control the titles of the x and y axis.  
 
-The above box plot shows us a steady increase in clay content with depth. Notice the outliers in the box plots identified by the individual circles.
+The above box plot shows a steady increase in clay content with depth. Notice the outliers in the box plots, identified by the individual circles.
 
 **Frequencies**
 
@@ -760,7 +787,7 @@ table(h$genhz, h$texture_class)
 ##   not-used  0  0  1 20   1   1   0    1   2  1  18
 ```
 
-We can also easily see add margin totals to the table or convert the table frequencies to proportions.
+We can also easily add margin totals to the table or convert the table frequencies to proportions.
 
 
 ```r
@@ -802,7 +829,7 @@ round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100)
 
 
 
-## <a id="asso")></a> 4.5.1 Measures of association 
+## <a id="asso")></a> 4.5 Measures of Association 
 
 ### <a id="cor")></a> 4.5.1 Correlation matrix
 
@@ -831,9 +858,9 @@ As seen in the output, variables are perfectly correlated with themselves and ha
 
 ### <a id="splom")></a> 4.5.2 Scatterplots
 
-Plotting points of one variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. It is assumed that these plots are for ratio or interval data types. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offer the potential to correlate soil attributes with a large variety of raster datasets.  
+Plotting points of one ratio or interval variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offers the potential to correlate soil attributes with a large variety of raster datasets.  
 
-The purpose of a scatterplot is to see how one variable relates to another. With modeling in general the goal is parsimony (i.e. simple). The goal is to determine the fewest number of variables required to explain or describe a relationship. If two variables explain the same thing, i.e. they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.
+The purpose of a scatterplot is to see how one variable relates to another. With modeling in general the goal is parsimony (i.e., simple). The goal is to determine the fewest number of variables required to explain or describe a relationship. If two variables explain the same thing, i.e., they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.
 
 Create a basic scatter plot using the loafercreek dataset.
 
@@ -876,7 +903,7 @@ Slope aspect and pH are two common variables warranting special consideration fo
 
 ### <a id="ph")></a> 4.6.1  pH
 
-Since **pH** has a logarithmic distribution, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The higher pH the greater the difference between the geometric and arithmetic mean becomes. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
+Since **pH** has a logarithmic distribution, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The higher the pH, the greater the difference between the geometric and arithmetic mean. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
 
 If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:
 
@@ -899,7 +926,7 @@ mean(h$phfield, na.rm = TRUE)
 ## [1] 6.134783
 ```
 
-If there is a need to create a surface of pH values, i.e. interpolate values from point observations, the operation of determining values at unknown points is analogous to determining an average and the use of hydrogen ion concentration would be the proper input.  
+If there is a need to create a surface of pH values, i.e., interpolate values from point observations, the operation of determining values at unknown points is analogous to determining an average and the use of hydrogen ion concentration would be the proper input.  
 
 If spatial interpolation is going to be performed, the following steps should be executed:  
 
@@ -914,10 +941,10 @@ Here is a brief example for interpolating pH using common software:
 ![R GUI image](figure/ch4_fig44.jpg)  
 3.  Format a column as numeric with ~15 decimals and a header named H_concentration
 4.	Enter a formula in the first empty cell as: =(1/10^B2) * 1000000
-5.	Drag the cell down to all empty records, which results in a transformed H+concentration
+5.	Drag the cell down to all empty records, which results in a transformed H+ concentration
 ![R GUI image](figure/ch4_fig45.jpg)
  
-This is a workaround for ArcGIS, which truncates data that is extremely small like the H+ concentration for pH > 7.  
+This is a workaround for ArcGIS, which truncates data that are extremely small like the H+ concentration for pH > 7.  
 
 6.  Bring the text file into ArcGIS as points using Make XY Event Layer
 
@@ -983,7 +1010,7 @@ Figure 11. Rose Diagram
 
 
 
-## <a id="rmd")></a> 4.7 R Markdown reports (.Rmd)
+## <a id="rmd")></a> 4.7 R Markdown Reports (.Rmd)
 
 R Markdown (.Rmd) is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. 
 
@@ -997,7 +1024,7 @@ To generate summarizes of pedon and GIS data, several reports have been develope
 
 **Requirements**
 
--	Data is properly populated, otherwise the report may fail. Common examples include:
+-	Data are properly populated, otherwise the report may fail. Common examples include:
     -	Horizon depths don't lineup
     -	Both the Pedon and Site tables aren't loaded
 -	The user is familiar with RStudio, if not see the Job-Aids webpage for an introduction
@@ -1022,7 +1049,7 @@ The setup only needs to be run once. Afterwards you only need to update your R p
 
 3. **Open** the pedon report. **Navigate** to the file path specified above and **open** the pedon_summary_by_taxonname.Rmd or lab_summary_by_taxonname.Rmd file in Rstudio.
  
-4. **Check** or **create** a genhz_rules file for your soil series. In order to aggregate the pedons by horizon designation, a genhz_rules file (e.g. Genesee_rules.R) is needed. See below.
+4. **Check** or **create** a genhz_rules file for your soil series. In order to aggregate the pedons by horizon designation, a genhz_rules file (e.g., Genesee_rules.R) is needed. See below.
 
 ![](figure/ghl_folder.png)
 
@@ -1036,7 +1063,7 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 ![](figure/genesee.png)
 
-6.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e. C:/workspace/soil-pit/reports/pedon_summary_by_taxonname.html), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing, or convert it to a pdf. Also when reopening the .html with Internet Explorer, click on "Allow blocked content" if prompted. Otherwise Internet Explorer may alter the formatting within the document.
+6.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e., C:/workspace/soil-pit/reports/pedon_summary_by_taxonname.html), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing, or convert it to a pdf. Also when reopening the .html with Internet Explorer, click on "Allow blocked content" if prompted. Otherwise Internet Explorer may alter the formatting within the document.
 
 **Sample pedon report**
  
@@ -1054,17 +1081,17 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 ## <a id="zonal")></a> 4.8 Zonal Statistics
 
-To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g. a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
+To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g., a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
 
 Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
 
- - All data conforms to a common projection and datum
+ - All data conform to a common projection and datum
  - All raster data have a common cell resolution
- - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can insure cell alignment. An ERDAS model is also available to perform this task.  
+ - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can ensure cell alignment. An ERDAS model is also available to perform this task.  
 
 ### <a id="rtools")></a> 4.8.1 Zonal Statistics in R
 
-Zonal statistics in R can be implemented using either the census or sample approach. While R can compute zonal statistics using the census approach with the `zonal()` function in the raster package, it is considerable faster to call another GIS via either the RSAGA or spgrass6 packages. These additional GIS packages provide R functions to access SAGA and GRASS commands. For this example the RSAGA package will be used.
+Zonal statistics in R can be implemented using either the census or sample approach. While R can compute zonal statistics using the census approach with the `zonal()` function in the raster package, it is considerably faster to call another GIS via the RSAGA or spgrass6 packages. These additional GIS packages provide R functions to access SAGA and GRASS commands. For this example the RSAGA package will be used.
 
 
 ```r
@@ -1194,7 +1221,7 @@ The Toolkit requires the user to specify a folder location to store the database
  2. A dialog window will appear.  
 ![R GUI image](figure/ch5_fig12.jpg)
  
- 3.  Select Browse??.  
+ 3. Select Browse...  
 
  4.	In the Browse for Folder dialog, navigate to a location of your choice and select “Make New Folder”  
 
@@ -1210,9 +1237,7 @@ The Toolkit requires the user to specify a folder location to store the database
  2.  A dialog window will appear.  
  ![R GUI image](figure/ch5_fig13.jpg)  
  
- 1.  If the project was recent, click on the project in the Recent dialog box and click Open.  
-
- 2.	If it is older and does not appear in the dialog box, select **Browse**.and navigate to the project folder location. Select the project and click OK.  
+If the project was recent, click on the project in the Recent dialog box and click **Open**. If it is older and does not appear in the dialog box, select **Browse** and navigate to the project folder location. Select the project and click **OK**.  
 
 **SECTION 3. Manage geospatial data and calculate statistics**
 
@@ -1228,7 +1253,7 @@ Note: _If you move the geospatial data used in an existing Toolkit project, you 
  ![R GUI image](figure/ch5_fig15.jpg)  
  
 **Analysis Features**: are zones within which you would like to generate statistics. These features
-can be feature classes such polygons or points (line features will be available soon) as a shapefile (.shp), as a feature class within a file geodatabase, or within a feature dataset within a file geodatabase. Analysis features can also be a in the form of a discrete raster. The value field will be used as the identifier.  
+can be feature classes such polygons or points (line features will be available soon) as a shapefile (.shp), as a feature class within a file geodatabase, or within a feature dataset within a file geodatabase. Analysis features can also be in the form of a discrete raster. The value field will be used as the identifier.  
 
 **Rasters**: are the raster data that are to be used to generate the descriptive statistics. An example would be a digital elevation model (DEM), percent slope, aspect, or land use for a discrete raster.  
 
@@ -1240,12 +1265,11 @@ can be feature classes such polygons or points (line features will be available 
 
 ![R GUI image](figure/ch5_fig17.jpg)  
 
-Note:_All data layers to be analyzed (analysis features and raster data) must have the same
-geographic coordinate system and projection as each other. You will receive a warning if they are different._   
+Note: _All data layers to be analyzed (analysis features and raster data) must have the same geographic coordinate system and projection as each other. You will receive a warning if they are different._   
 
 **Remove Analysis Features from a Toolkit Project**  
 
- 1. To remove an analysis layer from the Data Manager, click on the layer you wish to remove in the grey layer list, and click Remove. Click OK when prompted that this is correct.  
+ 1. To remove an analysis layer from the Data Manager, click on the layer you wish to remove in the grey layer list, and click **Remove**. Click OK when prompted that this is correct.  
  
 ![R GUI image](figure/ch5_fig18.jpg)  
 ![R GUI image](figure/ch5_fig19.jpg)  
@@ -1260,7 +1284,7 @@ geographic coordinate system and projection as each other. You will receive a wa
 
 *In some instances, such as TEUI mapping or Soil Survey, you may wish to identify individual polygon features as belonging to a specific map unit. This is simply a repeating identifying symbol or value which will be used to aggregate the statistics of the polygons belonging to that group. You do not need to select a map unit column in order to run the Toolkit. The symbol must be present as an attribute column in either the feature class layer or as an attribute in the VAT table of a discrete raster.* 
 
- 1.  Select the Analysis Feature layer that you wish to add a Map Unit symbol for.  
+ 1. Select the Analysis Feature layer that you wish to add a Map Unit symbol for.  
 
  2.	Select the appropriate map unit column attribute name for your map unit symbol in the drop down menu    
   
@@ -1304,7 +1328,7 @@ geographic coordinate system and projection as each other. You will receive a wa
  
 ![R GUI image](figure/ch5_fig27.jpg)  
 
- 4.  When finished click **OK** when the statistics run is done.  
+ 4.  When the statistics run is finished, click **OK**.
  
 **SECTION 4. Create and Visualize Graphs and Tables**  
 
@@ -1360,11 +1384,11 @@ Feature Source: Choose which feature analysis layer you would like to graph. Pol
 ![R GUI image](figure/ch5_fig38.jpg)  
 
 Map Unit: Chose from which map unit you would like to select a polygon. Alternatively, select just
-the map unit you want to graph as a whole (i.e. don’t select an individual feature below). Also, you can leave this option blank which is the default.  
+the map unit you want to graph as a whole (i.e., don’t select an individual feature below). Also, you can leave this option blank which is the default.  
 
 ![R GUI image](figure/ch5_fig39a.jpg)  
 
-Feature: Select the individual feature you would like to view statistics for. This is the Feature ID or FID  
+Feature: Select the individual feature you would like to view statistics for. This is the Feature ID or FID.  
 
 ![R GUI image](figure/ch5_fig39.jpg)  
 
@@ -1393,7 +1417,7 @@ To add another axis to your graph window, simply select the feature source, a ma
 ![R GUI image](figure/ch5_fig44.jpg)  
 
 **Is there a way to find a specific value on the graph?**  
-If you hover over a specific spot in the graph, a line and window will appear with the specific values that your cursor is on. This is valuable if you are trying to identify outliers in our data.  
+If you hover over a specific spot in the graph, a line and window will appear with the specific values that your cursor is on. This is valuable if you are trying to identify outliers in your data.  
 
 ![R GUI image](figure/ch5_fig45.jpg)  
 
@@ -1504,7 +1528,7 @@ Tukey, J. 1980. We need both exploratory and confirmatory. The American Statisti
 Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract)
 
 
-## <a id="add")></a> 4.10 Additional reading
+## <a id="add")></a> 4.10 Additional Reading
 
 de Smith, M.J., 2015. STATSREF: Statistical Analysis Handbook: a web-based statistics
 resource. The Winchelsea Press, Winchelsea, UK.  [http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  

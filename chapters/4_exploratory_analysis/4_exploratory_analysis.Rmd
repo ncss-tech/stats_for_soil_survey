@@ -89,7 +89,7 @@ Before you start an EDA, you should inspect your data and correct all typos and 
 ```{r, warning=FALSE, message=FALSE}
 library(soilDB)
 library(lattice)
-library(reshape2)
+library(car)
 
 data("loafercreek") # load from the soilDB package
 
@@ -126,6 +126,11 @@ This view is fine for a small dataset, but can be cumbersome for larger ones. Th
 ```{r}
 vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effervescence")
 summary(h[vars])
+
+# or
+
+sub <- subset(h, select = c("genhz", "clay", "total_frags_pct", "phfield", "effervescence"))
+summary(sub)
 ```
 
 The `summary()` function is known as a generic R function. It will return a preprogrammed summary for any R object. Because `h` is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e., number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they are present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
@@ -149,11 +154,11 @@ sort(unique(h$hzname)) # sort the results
 If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make an adjustment in R, such as:
 
 ```{r, eval=FALSE}
-h$hzname[h$hzname == "BT"] <- "Bt"
+h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 
 # or
 
-# h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
+# h$hzname[h$hzname == "BT"] <- "Bt"
 
 # or as a last resort we could manually edit the spreadsheet in R
 
@@ -165,7 +170,7 @@ Typo errors such as these are common problem with old pedon data in NASIS.
 ### <a id="ex1")></a> Exercise: fetch and inspect
 
 - Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset 
-- Apply the generalized horizon rules below or develop your own
+- Apply the generalized horizon rules below or develop your own, see the following [job-aid](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/gen-hz-assignment.html?root=aqp)
 - Summarize the depths, genhz, texture class, sand, and fine gravel
 - Show your work and submit the results to your coach
 
@@ -345,6 +350,7 @@ clay <- na.exclude(h$clay) # first remove missing values and create a new vector
 mean(clay)
 
 # or use the additional na.rm argument
+
 mean(h$clay, na.rm = TRUE)
 ```
 
@@ -379,16 +385,16 @@ test <- density(clay)
 plot(test, main = "Clay")
 amean <- mean(clay)
 amed <- median(clay)
-abline(v = amed, col = "blue") # plot the median as a gree vertical line 
-abline(v = amean, col = "orange") # plot the mean as a red vertical line
+abline(v = amed, col = "blue") # plot the median as a blue vertical line 
+abline(v = amean, col = "orange") # plot the mean as a orange vertical line
 
 frags <- h$total_frags_pct
 test <- density(frags)
 plot(test, main = "Rock Fragments")
 amean <- mean(frags)
 amed <- median(frags)
-abline(v = amed, col = "blue") # plot the median as a gree vertical line 
-abline(v = amean, col = "orange") # plot the mean as a red vertical line
+abline(v = amed, col = "blue") # plot the median as a blue vertical line 
+abline(v = amean, col = "orange") # plot the mean as a orange vertical line
 ```
 
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
@@ -409,7 +415,7 @@ table(h$clay) # show a frequency table
 
 # table(as.integer(h$clay)) 
 
-sort(table(h$clay), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
+sort(table(round(h$clay)), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
 ```
 
 ## <a id="disp")></a> 4.4  Measures of Dispersion  
@@ -449,7 +455,7 @@ cv
 
 **Quantiles (a.k.a. Percentiles)** - the percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
 
-The default for the `quantile()` function returns the  min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summmary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
+The default for the `quantile()` function returns the  min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
 
 ```{r}
 quantile(clay)
@@ -502,10 +508,11 @@ That is not to say the points are in error, just that they are extreme compared 
 
 
 ![R GUI image](figure/ch4_fig28.jpg)
+
 Figure 8. Boxplot description (Seltman, 2009)  
 
-A boxplot of sand content by horizon may be made for the sample dataset as:  
 
+A boxplot of sand content by horizon may be made for the sample dataset as:  
 
 ```{r boxplots}
 bwplot(clay ~ genhz, xlab = "Horizon", ylab = "Clay (%)", data = h)

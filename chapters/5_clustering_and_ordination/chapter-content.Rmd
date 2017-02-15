@@ -1,12 +1,12 @@
 ---
-title: "Numerical Taxonomy"
+title: "Numerical Taxonomy and Ordination"
 author: "D.E. Beaudette"
-date: "March 2016"
+date: "`r Sys.Date()`"
 output:
   html_document:
     keep_md: no
     number_sections: yes
-    toc: yes
+    toc: no
     toc_depth: 3
     toc_float:
       collapsed: true
@@ -80,68 +80,68 @@ library(RColorBrewer)
 library(MASS)
 ```
 
-<!-- This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`. -->
+This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")` and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
 
-TODO:
- 
- * links to unsupervised classification
- * spatial clustering with fanny
- * think: distance metric, characteristics, standardization, clustering algorithm, number of classes...
- * fuzzy clustering of hz attr -> plot on profile
- * missing data: bain of numerical taxonomy... strategies
- * color clustering of entire profiles
- * profile_compare() details
- * add discussion points to each section
- * add questions
- * adapt to use 'pedons' through entire document for simple use of student's data
- * mean silhouette width as cluster number selection
+<!--
+<hr>
+<span style="font-size:200%">Before You Start</span><br>
+Some of the examples in this document depend on the latest versions of the `aqp` and `sharpshootR` packages. Open a fresh RStudio session and paste the following in the console panel:
 
+```{r, eval=FALSE}
 
+```
+-->
+
+<hr><br>
 
 # Introduction
 
-Nearly every aspect of soil survey involves the question: "*is A more similar to B or to C?*". The quantification of *similarity* within a collection of horizons, pedons, components, map units, or even landscapes represents an exciting new way to enhance the precision and accuracy of our day to day work. After completing this module you should be able to replicate (some of) our innate ability to organize objects based on measured or observed characteristics of those objects.
+Nearly every aspect of soil survey involves the question: "Is X more similar to Y or to Z?" The quantification of similarity within a collection of horizons, pedons, components, map units, or even landscapes represents an exciting new way to enhance the precision and accuracy of the day-to-day work of soil scientists. After completing this module, you should be able to quantitatively organize objects based on measured or observed characteristics in a consistent and repeatable manner. Perhaps you will find a solution to the long-standing "similar or dissimilar" question.
 
-![alt.text](static-figures/soils-by-pigments.png)
+![](static-figures/soils-by-pigments.png)
 
 
 ## Objectives
-* Learn essential vocabulary used in the field of numerical taxonomy, review some of the literature
-* Gain experience with R functions and packages commonly used for clustering / ordination
-* Learn how to create and interpret a distance matrix, and appropriate distance metrics
-* Learn how to create and interpret a dendrogram
-* Lean the basics and application of heirarchical clustering methods
-* Lean the basics and application of partitioning clustering methods
-* Learn the basics and application of ordination methods
-* Apply skils to a range of soil, vegetation, and similar data sources
-* Apply techniques from numerical taxonomy to addressing the "similar/disimilar" question
+ * Learn essential vocabulary used in the field of numerical taxonomy. Review some of the literature.
+ * Gain experience with R functions and packages commonly used for clustering and ordination.
+ * Learn how to create and interpret a distance matrix and appropriate distance metrics.
+ * Learn how to create and interpret a dendrogram.
+ * Lean the basics and application of hierarchical clustering methods.
+ * Lean the basics and application of partitioning clustering methods.
+ * Learn the basics and application of ordination methods.
+ * Apply skills to a range of data sources for soils and vegetation.
+ * Apply techniques from numerical taxonomy to addressing the "similar or dissimilar" question.
+ * Learn some strategies for coping with missing data.
 
+# Whirlwind Tour
 
-## A whirlwind tour
+Most of the examples featured in this whirlwind tour are based on soil data from [McGahan, D.G., Southard, R.J, Claassen, V.P. 2009. Plant-available calcium varies widely in soils on serpentinite landscapes. Soil Sci. Soc. Am. J. 73: 2087-2095.](https://dl.sciencesocieties.org/publications/sssaj/articles/73/6/2087) These data are available in the dataset "sp4" that is built into `aqp` package for R.
 
-### Similarity, disimilarty, and distance
+## Similarity, Disimilarty, and Distance
 
-There are shelves of books and many thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of numerical taxonomy [@Sneath1973]. Central to this field is the quantification of *similarity* among "individuals" based on a relevant set of "characteristics". Individuals are typically described as rows of data with a single characteristic per column. For example:
+There are shelves of books and thousands of academic articles describing the theory and applications of "clustering" and "ordination" methods. This body of knowledge is commonly described as the field of **numerical taxonomy** [@Sneath1973]. Central to this field is the quantification of **similarity** among "individuals" based on a relevant set of "characteristics." Individuals are typically described as rows of data with a single characteristic per column, together referred to as a **data matrix**. For example:
 
 ```{r, echo=FALSE}
 data('sp4', package = 'aqp')
 sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
-knitr::kable(sp4, caption='A matrix of data: soil horizons (individuals) and associated characteristics.', align = 'c')
+knitr::kable(sp4, align = 'c')
 ```
 
-Quantitative measures of similarity are more conveniently expressed (why?) as distance, or dissimilarity. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions, between individuals $p$ and $q$ the Euclidean distance is calculated:
+Quantitative measures of similarity are more conveniently expressed as distance, or dissimilarity; in part because of convention and in part because of computational efficiency. In the simplest case, dissimilarity can be computed as the shortest distance between individuals in property-space. Another name for the shortest linear distance between points is the [**Euclidean distance**](https://en.wikipedia.org/wiki/Euclidean_distance). Evaluated in two dimensions (between individuals $p$ and $q$), the Euclidean distance is calculated as follows:
 
 $$D(p,q) = \sqrt{(p_{1} - q_{1})^{2} + (p_{2} - q_{2})^{2}}$$
 
-where $p_{1}$ is the 1st characteristic (or dimension) of individual $p$. There are many other ways to define "distance" (e.g. *distance metrics*), but we will cover those later.
+where $p_{1}$ is the 1st characteristic (or dimension) of individual $p$.
 
-Using sand and clay percentages from the data above, dissimilarity is represented as the length of the line connecting any two individuals in property space:
+There are many other ways to define "distance" (e.g. distance metrics), but they will be covered later.
+
+Using the sand and clay percentages from the data above, dissimilarity is represented as the length of the line connecting any two individuals in property space.
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
 m <- distPlot(sp4, vars=c('sand', 'clay'), individuals=c(1,2,4), id='name', xlim=c(10, 60), ylim=c(10, 60), xlab='Sand (%)', ylab='Clay (%)')
 ```
 
-A matrix of all pair-wise distances (the **distance matrix**) looks something like this:
+The following is a matrix of all pair-wise distances (the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix)):
 
 |    |    A|  ABt|  Bt1|  Bt2|
 |:---|----:|----:|----:|----:|
@@ -150,7 +150,7 @@ A matrix of all pair-wise distances (the **distance matrix**) looks something li
 |Bt1 | 12.5|  5.4|  0.0| 26.4|
 |Bt2 | 38.9| <b>31.8</b>| 26.4|  0.0|
 
-Note that this is the "full" form of the **distance matrix**, with 0s on the diagonal (e.g. the distance between individual 'A' and itself is 0) and upper and lower "triangles" symmetric. Tpically only the lower triangle is used to describe pair-wise distances.
+Note that this is the full form of the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix). In this form, zeros are on the diagonal (i.e. the distance between an individual and itself is zero) and the upper and lower "triangles" are symmetric. The lower triangle is commonly used by most algorithms to encode pair-wise distances.
 
 |    |    A|  ABt|  Bt1|
 |:---|----:|----:|----:|
@@ -158,24 +158,24 @@ Note that this is the "full" form of the **distance matrix**, with 0s on the dia
 |Bt1 | 12.5|  5.4|  |
 |Bt2 | 38.9| <b>31.8</b>| 26.4|
 
-Interpretation is simple: individual "A" is more like "ABt" than "Bt1". It is important to note that quantification of disimilarity (distance) among individuals is always relative: *"X is more like Y, as compared to Z"*. More on this later.
+Interpretation of the matrix is simple: Individual "A" is more like "ABt" than like "Bt1." It is important to note that quantification of dissimilarity (distance) among individuals is always relative: "X is more like Y, as compared to Z."
 
 
-### Standardization of characteristics
+## Standardization of Characteristics
 
-Euclidean distance doesn't make much sense when characteristics do not share a common unit of measure, range of values, or when some characteristics are categorical vs. continuous. For example, distances are distorted when computed from clay (%) and exchangeable Ca (cmol/kg):
+Euclidean distance doesn't make much sense if the characteristics do not share a common unit of measure or range of values. Nor is it relevant when some characteristics are categorical and some are continuous. For example, distances are distorted if you compare clay (%) and exchangeable Ca (cmol/kg).
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
 m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', xlim=c(0, 60), ylim=c(0, 60), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
 ```
 
-In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of Ex-Ca. Typically, characteristics are given equal weight (why?).
+In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of the exchangeable Ca. Typically, characteristics are given equal weight [@Sneath1973]; however, weighting is much simpler to apply after **standardization**.
 
-**Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation:
+**Standardization** of the data matrix solves the problem of unequal ranges or units of measure, typically by subtraction of the mean and division by standard deviation ([z-score transformation](https://en.wikipedia.org/wiki/Standard_score)).
 
-$$x_{scaled} = \frac{x - mean(x)}{sd(x)}$$
+$$x_{std} = \frac{x - mean(x)}{sd(x)}$$
 
-There are many other **standardization** methods which we will cover later. The new data matrix looks like this:
+There are several other **standardization** methods covered later. The new data matrix looks like the following:
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
 sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
@@ -188,11 +188,11 @@ Using the standardized data matrix, distances computed in the property space of 
 m <- distPlot(sp4, vars=c('Ca', 'clay'), individuals=c(1,2,4), id='name', scale=TRUE, xlim=c(-1.5, 1.5), ylim=c(-1.5, 1.5), xlab='Exchangeable Ca (cmol/kg)', ylab='Clay (%)')
 ```
 
-It is rare that the question of "dissimilarity" can be answered with only two characteristcs (dimensions). Euclidean distance can be extended to an arbitrary number of $n$ dimensions:
+Rarely can the question of "dissimilarity" be answered with only two characteristics (dimensions). Euclidean distance, however, can be extended to an arbitrary number of $n$ dimensions.
 
 $$D(p,q) = \sqrt{ \sum_{i=1}^{n}{(p_{i} - q_{i})^{2}} }$$
 
-where $i$ is one of $n$ total characteristics. It is hard to imagine what distance "looks like" when there are > 3 dimensions, so lets look at the distance matrix calculated using all five characteristics.
+In the equation above, $i$ is one of $n$ total characteristics. Imagining what distance "looks like" is difficult if there are more than three dimensions. Instead, examine the distance matrix calculated using all five characteristics.
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
 d <- dist(sp4.scaled[, -1])
@@ -201,17 +201,34 @@ dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
 round(m, 2)
 ```
 
-We can now begin to describe disimilarity between individuals using an arbitrary number of (relevant!) characteristics and make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon". While this may be a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
+You can now begin to describe dissimilarity between individuals using an arbitrary number of (relevant) characteristics. You can make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon." Although this is a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
-**Review**
+### Review and Discuss
 
- * What is are the "data matrix" and "distance matrix"?
- * What is standardization and why is it important?
+  * What are the "data matrix" and "distance matrix"?
+  * What is standardization, and why is it important?
+  * What is the largest impediment to creating a distance matrix from NASIS and KSSL data?
+  * **Key point:** Each characteristic is its own dimension in property-space.
+    + Sand, clay, and CEC = 3 dimensions.
+    + Sand, clay, CEC, OC, and horizon depth = 5 dimensions.
+    + Multiple dimensions are simple to define in code but are hard to visualize.
    
 
-### Visualizing pair-wise distances: the dendrogram
+## Quick Detour: Missing Data
 
-[Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way visualizaing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Disimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity, branching at lower levels suggests greater similarity. Consider the previous example, where distance between individuals was defined in terms of sand and clay percentages:
+Missing data are a fact of life. Soil scientists are quite familiar with missing lab data (*"Why didn't we request optical grain counts?"*) or missing essential NASIS pedon data elements, such as horizon bottom depth, estimated clay fraction, or pH. Nearly all of the methods described in this document are very sensitive to missing data. In other words, they won't work! Following are a couple of possible solutions:
+ 
+  * Fix the missing data if at all possible,
+  * Estimate the missing data values from know relationships to other properties or a group-wise mean or median, or
+  * Remove records containing any missing data.
+
+
+
+## Visualizing Pair-Wise Distances: The Dendrogram
+
+**TODO: document missing link between distances / dendrogram: clustering**
+
+[Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient way of visualizing [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) among individuals from a distance matrix. Dissimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity; branching at lower levels suggests greater similarity. Consider the previous example in which distance between individuals was defined in terms of sand and clay percentages.
 
 ```{r, echo=FALSE, fig.width=10, fig.height=5}
 par(mar=c(1,1,1,0), mfcol=c(1,2))
@@ -227,7 +244,7 @@ plot(p, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90)
 mtext('Dendrogram Representation of Distance Matrix\n(sand and clay %)', side=1, line=2)
 ```
 
-Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corrosponding dendrogram. Visualizing the geometry of pair-wise distances in > 3 dimensions is difficult, however, a the dendrogram can conveniently summarize a distance matrix created from an arbitrary number of characteristics.
+Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corresponding dendrogram. Visualizing the geometry of pair-wise distances in more than three dimensions is difficult. A dendrogram, however, can conveniently summarize a distance matrix created from an arbitrary number of characteristics. It is important to note that some information about pair-wise distances is lost or distored in the dendrogram. Distortion is greatest near the terminal "leaves" of the dendrogram. This phenomena is analogous to the distortion generated by a map projection. It is impossible to flatten a higher-dimensional entity to a lower-dimensional form without causing distortion.
 
 ```{r, echo=FALSE, fig.width=10, fig.height=4}
 par(mfcol=c(1,2))
@@ -249,10 +266,30 @@ axis(2, las=1, line=1.5)
 mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=2)
 ```
 
-There isn't much difference between these two figures, because most of the characteristics in this example dataset are highly correlated with soil texture. More on this later.
+There isn't much difference between these two figures because most of the characteristics in the example dataset are highly correlated with soil texture. There are some more important details on how individuals are connected into larger and larger groups within the dendrogram.
 
 
-### Cluster analysis: finding groups
+### Review and Discuss
+  * Do you have any questions about dendrogram interpretation?  Dendrograms are used extensively in the rest of this chapter.
+  * If you were explaining how to interpret a dendrogram to someone, would you start at the roots or leaves? Why?
+
+
+## Cluster Analysis: Finding Groups in Data
+[**Cluster analysis**](https://en.wikipedia.org/wiki/Cluster_analysis) is a massive topic that deals with the seemingly simple task of finding useful groups within a dataset. This topic and the methods used are also referred to as "unsupervised classification" in the fields of remote sensing and GIS. All of the available algorithms will find groups in a give dataset; however, it is up to the subject expert to determine the following:
+ 
+  1. Suitable characteristics and standardization method,
+  2. Appropriate clustering algorithm,
+  3. Criteria to determine the "right" number of clusters,
+  4. Interpretation of the final grouping based on subject knowledge, and
+  5. The possiblity of needing to start over at step 1.
+
+
+### Using Color to Communicate Results of Clustering or Ordination
+Note that the widespread use of color in the following examples is not for aesthetic purposes. Colors are convenient for tri-variate data-spaces because you can visually integrate the information into a self-consistent set of classes.
+
+
+### Hierarchical Clustering
+[Hierarchical clustering](https://en.wikipedia.org/wiki/Hierarchical_clustering) is useful when a full **distance matrix** is available and the optimal number of clusters is not yet known. This form of clustering creates a data structure that can encode "grouping" information from one cluster to as many clusters as there are individuals. The expert must determine the optimal place to "cut the tree" and generate a fixed set of clusters. The results from a hierarchical clustering operation are nearly always presented as a dendrogram.
 
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
 # re-make data, this time with all profiles
@@ -284,8 +321,95 @@ tiplabels(pch=15, col=cols)
 # mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 ```
 
+#### Methods
 
-### Ordination: visualization in a reduced space
+There are two main types of hierarchical clustering.
+
+  * **Agglomerative:** Start with individuals and iteratively combine into larger and larger groups.
+  * **Divisive:** Start with all individuals and iteratively split into smaller and smaller groups.
+
+Both methods are strongly influenced by the choice of **standardization** method and **distance metric**. Both methods require a full, pair-wise distance matrix as input. This requirement can limit the use of hierarchical clustering to datasets that can be fit into memory.
+
+The agglomerative methods also depends on the choice of [linkage criterion](https://en.wikipedia.org/wiki/Hierarchical_clustering#Linkage_criteria). Some of these criteria include:
+
+  * Single linkage,
+  * Complete linkage,
+  * Ward's method,
+  * Weighted average linkage, and
+  * Flexible linkage.  
+
+More on these criteria later.
+
+##### Review and Discuss
+  * The simplicity and lack of decisions make the divisive method convenient for most work. 
+  * The top-down approach is similar to the way in which we describe soil morphology and taxonomy.
+  * When selecting a method, think about it; don't just go "fishing."
+
+
+### Centroid and Medoid (Partitioning) Clustering
+Centroid and medoid cluster analyses are commonly referred to as [k-means](https://en.wikipedia.org/wiki/K-means_clustering)-style analysis. "K-means," however, is just one of many possible clustering algorithms that partition property-space into a fixed number of groups. These type of algorithms can be applied to very large datasets because they do not rely on the **distance matrix**. Instead, they are based on an iterative shuffling of group "centroids" until some criterion is minimized, for example, the mean variance within groups.  
+
+```{r, echo=FALSE, results='hide', fig.width=6, fig.height=6}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'Mg', 'Ca')]
+sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
+
+# use pam to generate 3 clusters
+cl <- pam(sp4.scaled[, -1], k = 3, stand = FALSE)
+
+# use kmeans to generate centroids for demo
+km <- kmeans(sp4.scaled[, -1], 3, nstart = 10, iter.max = 100)
+
+# define colors based on hard clustering
+col.set <- brewer.pal(9, 'Set1')
+cols <- col.set[cl$clustering]
+
+# setup plot
+par(mar=c(4,4,0,0))
+plot(sp4.scaled$Mg, sp4.scaled$Ca, asp=1, ylab='Exchangeable Mg (cmol/kg), Standardized', xlab='Exchangeable Ca (cmol/kg), Standardized', type='n')
+abline(h=0, v=0, col='black')
+grid()
+
+# add k-means centroids
+points(km$centers[, 1], km$centers[, 2], cex=2, lwd=1, pch=8, col='black')
+
+# add medoids
+points(cl$medoids, col=col.set, lwd=2, cex=3, pch=0, lend=2)
+
+# add original obs
+points(sp4.scaled$Mg, sp4.scaled$Ca, bg=cols, col='black', cex=1.25, pch=21)
+
+# legend
+legend('topright', legend=c('Observation', 'Medoid', 'Centroid'), pch=c(21, 0, 8), lwd=c(1, 2, 1), pt.cex=c(1.25, 3, 2), lty=NA, bty='n', cex=1.25)
+```
+
+#### Methods
+
+This section describes three (out of many) of the most important partitioning-type algorithms.
+ 
+  * [K-means](https://en.wikipedia.org/wiki/K-means_clustering): Groups of individuals are partitioned around newly created "[centroids.](https://en.wikipedia.org/wiki/Centroid)"
+  * [K-medoids](https://en.wikipedia.org/wiki/K-medoids): Groups of individuals are partitioned around selected "[medoids.](https://en.wikipedia.org/wiki/Medoid)"
+  * [Fuzzy clustering](https://en.wikipedia.org/wiki/Fuzzy_clustering): Individuals are assigned a "fuzzy membership" value for each partition or property-space.
+
+All of these methods are sensitive to the type of **standardization** applied to the characteristics. These methods rely on iterative minimization of one or more criteria; therefore, each clustering "run" may generate slightly different output. Most implementations re-run the algorithm until it stabilizes.
+
+
+##### Review and Discuss
+
+  * What is the difference between a "medoid" and a "centroid"? Can you think of a way in which both concepts could be applied to the grouping of soils data? 
+  * Fuzzy clustering is also referred to as "soft clustering," while the other two methods are referred to as "hard clustering." Sometimes, using both can be helpful, especially if individuals straddle the line between groups.
+
+
+
+## Ordination: Visualization in a Reduced Space
+Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortions.
+
+[Principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. The rest of this chapter is focused on [multidimensional scaling](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). Methods of ordination that use ["Non-metric" multidimensional scaling](https://en.wikipedia.org/wiki/Multidimensional_scaling#Non-metric_multidimensional_scaling) (nMDS) attempt to generate a reduced space that minimizes distortion in proportional similarity; i.e., similar individuals are near each other in the reduced space, dissimilar individuals are farther apart.
+
+
+### An Example of nMDS Applied to Soil Data
+The following example is based on a **data matrix** containing lab measurements of clay fraction, sand fraction, exchangeable Ca, exchangeable Mg, and CEC measured by NH<sub>4</sub>-Ac at pH 7.
 
 |name |  clay|  sand|    Mg|    Ca| CEC_7|
 |:----|-----:|-----:|-----:|-----:|-----:|
@@ -293,6 +417,7 @@ tiplabels(pch=15, col=cols)
 |ABt  |  0.04| -0.07| -0.06| -0.13| -0.38|
 |Bt1  |  0.41| -0.21| -0.09| -0.74| -0.16|
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
+
 
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=5}
 # re-make data, this time with all profiles
@@ -319,13 +444,15 @@ s <- MASS::sammon(d)
 par(mar=c(3,0,0,3), mfcol=c(1,2))
 plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
 tiplabels(pch=15, col=cols)
+abline(v=2.3, col='orange', lty=2, lwd=2)
 mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 
 plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
-abline(v=0, h=0, col='grey', lty=3)
+# abline(v=0, h=0, col='black')
+grid()
 text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
-axis(1, cex.axis=0.75, line=-2)
-axis(4, cex.axis=0.75, line=0, las=1)
+axis(1, cex.axis=0.95, line=-2)
+axis(4, cex.axis=0.95, line=0.5, las=1)
 mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 ```
 
@@ -337,13 +464,58 @@ depths(sp4) <- id ~ top + bottom
 
 par(mar=c(0,0,0,0))
 plot(sp4, color='cl', cex.names=0.75)
+title('Clustering Results in Context', line=-3)
 ```
 
 
+## Review and Discuss
 
-# Learn by doing
+  * Which visualization of the distance matrix was simpler to interpret: Dendrogram or ordination by nMDS?
+  * Do you have any questions about the figures?
+  * Do you have any guesses on what the clusters represent?
 
-## Setup the R session
+
+## Pair-Wise Distances Between Soil Profiles
+
+```{r, fig.width=8, fig.height=4, echo=FALSE}
+library(sharpshootR)
+# init example data
+data(sp4)
+depths(sp4) <- id ~ top + bottom
+
+# eval dissimilarity:
+# using Ex-Ca:Mg and CEC at pH 7
+# with no depth-weighting (k=0)
+# to a maximum depth of 40 cm
+d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
+
+# cluster via divisive method
+clust <- diana(d)
+
+# vizualize dissimilarity matrix via hierarchical clustering
+par(mar=c(0,0,3,0))
+plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
+```
+
+Because this is a complex topic, it is described in a [supplemental set of slides](http://ncss-tech.github.io/AQP/presentations/AQP-num_soil_classification.pdf).
+
+If you want for more detailed information, see this [relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020).
+
+
+## Final Discussion
+  * Missing data strategy
+  * Meaningful characteristics
+  * Standardization of characteristics
+  * Distance metric
+  * Clustering algorithm
+  * Number of clusters
+  * Application to soil survey and ESD
+ 
+
+# Excercises
+This is the fun part.
+
+## Set Up the R Session
 Install R packages as needed. Open a new R script file to use as you follow along.
 ```{r, results='hide'}
 # load libraries
@@ -358,45 +530,99 @@ library(MASS)
 library(colorspace)
 ```
 
-### Data sources
+### Data Sources
 
-Most of the examples used in this module come from the following sources:
+Most of the examples used in the following exercises come from these sources:
 
-1. built-in data sets from the `aqp` and `soilDB` packages ("sp4" and "loafercreek")
-2. results from [`fetchNASIS()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/fetchNASIS-mini-tutorial.html?root=aqp): pedon data from the local NASIS selected set
-3. results from [`fetchKSSL()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/KSSL-demo.html?root=aqp): lab characterization data from the SoilWeb snapshot
-4. results from [`fetchOSD()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/OSD-dendrogram.html?root=aqp): basic morphologic and taxonmic data from the SoilWeb snapshot 
-5. results from [`SDA_query()`](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-tutorial.html?root=aqp): *live* SSURGO spatial and tabular data from [Soil Data Access](http://sdmdataaccess.nrcs.usda.gov/)
-6. data from SSR 2, as CSV, downloaded from class [GitHub site](https://github.com/ncss-tech/stats_for_soil_survey/tree/master/data/clustering_and_ordination)
-
-
-In most cases, you can edit the examples and swap-in just about any data that are or have been upgraded to a [`SoilProfileCollection` object](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp). For example, pedons from **your** local NASIS selected set can be loaded with `fetchNASIS()`.
+  1. Built-in data sets from the `aqp` and `soilDB` packages ("sp4," "gopheridge," and "loafercreek").
+  2. Results from [`fetchNASIS()`](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html): pedon data from the local NASIS selected set.
+  3. Results from [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html): lab characterization data from the SoilWeb snapshot.
+  4. Results from [`fetchOSD()`](http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html): basic morphologic and taxonomic data from the SoilWeb snapshot.
+  5. Results from [`SDA_query()`](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html): live SSURGO spatial and tabular data from [Soil Data Access](http://sdmdataaccess.nrcs.usda.gov/)
+  6. Data from SSR 2, as CSV, downloaded from class [GitHub site](https://github.com/ncss-tech/stats_for_soil_survey/tree/master/data/clustering_and_ordination)
 
 
-#### Your turn
-Tinker with some `SoilProfileCollection` objects:
-
- * Get some data using one of the methods listed above, if you need help see the manual pages for examples (`?fetchKSSL`) or the [SoilProfileCollection tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp).
- * Determine the number of profiles and horizons within the collection.
- * View and extract some *site* and *horizon* attributes.
- * Generate some soil profile sketches.
+In most cases, you can edit the examples and swap-in just about any data that are in a [`SoilProfileCollection` object](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html). For example, pedons from your local NASIS selected set can be loaded with `fetchNASIS()`.
 
 
-## More on the distance matrix and how to make one
+#### Try it!
+Tinker with some `SoilProfileCollection` objects.
 
-### Options
-
-* `dist()` (base R), simple and fast, limited number of distance metrics
-* `daisy()` ([cluster package](https://cran.r-project.org/web/packages/cluster/index.html)), better selection of distance metrics, simple standardization, my go-to function
-* `vegdist` ([vegan package](https://cran.r-project.org/web/packages/vegan/index.html)), many distance metrics, primarily designed for species composition data
-
+  * Get some data using one of the methods listed above. If you need help, see the manual pages for examples (`?fetchKSSL`) or the [SoilProfileCollection tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
+  * Determine the number of profiles and horizons within the collection.
+  * View and extract some site and horizon attributes.
+  * Generate some soil profile sketches.
 
 
+## Evaluating Missing Data
+
+The `aqp` package provides two functions for checking the fraction of missing data within a `SoilProfileCollection` object. The first function (`evalMissingData`) generates an index that ranges from 0 (all missing) to 1 (all present) for each profile. This index can be used to subset or rank profiles for further investigation. The second function (`missingDataGrid`) creates a visualization of the *fraction* of data missing within each horizon. Both functions can optionally filter-out horizons that don't typically have data, for example Cr, Cd, and R horizons.
+
+The following examples run the functions on the `gopheridge` sample dataset.
+
+**evalMissingData**
+```{r, fig.width=10, fig.height=4}
+# example data
+data("gopheridge", package = "soilDB")
+
+# compute data completeness
+gopheridge$data.complete <- evalMissingData(gopheridge, vars = c('clay', 'sand', 'phfield'), name = 'hzname', p = 'Cr|R|Cd')
+
+# check range
+# summary(gopheridge$data.complete)
+
+# rank
+new.order <- order(gopheridge$data.complete)
+
+# plot along data completeness ranking
+par(mar=c(3,0,1,1))
+plot(gopheridge, plot.order=new.order, print.id=FALSE)
+
+# add axis, note re-ordering of axis labels
+axis(side=1, at=1:length(gopheridge), labels = round(gopheridge$data.complete[new.order], 2),
+line=-2, cex.axis=0.75, las=2)
+
+title('Gopheridge pedons sorted according to data completeness (clay, sand, pH)')
+```
+
+
+**missingDataGrid**
+```{r, fig.width=9, fig.height=4}
+# view missing data as a fraction
+res <- missingDataGrid(gopheridge, max_depth=100, vars=c('clay', 'sand', 'phfield'), filter.column='hzname', filter.regex = 'Cr|R|Cd', main='Fraction of missing data (clay, sand, pH)')
+
+# check results
+head(res)
+```
+
+For now, extract those profiles that have a complete set of field-described clay, sand, or pH values for later use.
+```{r, fig.width=8, fig.height=4}
+# be sure to read the manual page for this function
+gopheridge.complete <- subsetProfiles(gopheridge, s = "data.complete == 1")
+
+# looks good
+par(mar=c(0,0,3,1))
+plot(gopheridge.complete, color='clay', id.style='side', label='pedon_id')
+```
+
+
+
+## More on the Distance Matrix and How to Make One
+
+The following three functions are essential to the creation of a **distance matrix**:
+
+  * `dist()`: This function is in base R, is simple and fast, and has a limited number of distance metrics.
+  * `daisy()`: This function is in [cluster package](https://cran.r-project.org/web/packages/cluster/index.html), has a better selection of distance metrics, and has simple standardization. Much more convenient than `dist()`.
+  * `vegdist`: This function is in [vegan package](https://cran.r-project.org/web/packages/vegan/index.html), has many distance metrics, and is primarily designed for species composition data.
+
+
+The following is a short demonstration:
 ```{r, }
 # get some example data from the aqp package
 data('sp4', package = 'aqp')
 # subset select rows and columns
 sp4 <- sp4[1:4, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+row.names(sp4) <- sp4$name
 
 # compare distance functions
 round(dist(sp4[, -1], method = 'euclidean'))
@@ -406,80 +632,286 @@ round(daisy(sp4[, -1], stand = TRUE, metric = 'euclidean'), 2)
 round(vegdist(sp4[, -1], method = 'gower'), 2)
 ```
 
-### Distance calculations with categorical data
+
+### Distance Calculations with Categorical Data
+The following example is excerpted from ["A Novel Display of Categorical Pedon Data"](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html). This example illustrates an application of clustering binary data (presence or absence of a diagnostic feature). Internally, the `diagnosticPropertyPlot` function uses the `daisy` function to compute pair-wise distances using the "general dissimilarity coefficient" of Gower [@Gower1971]. A concise summary of this distance metric is in [@Kaufman2005].
+
+```{r}
+# load some example NASIS data
+data(loafercreek, package='soilDB')
+
+# cut-down to a subset, first 20 pedons
+loafercreek <- loafercreek[1:20, ]
+
+# get depth class
+sdc <- getSoilDepthClass(loafercreek)
+site(loafercreek) <- sdc
+
+# diagnostic properties to consider, no need to convert to factors
+v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
+       'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
+       'shallow', 'mod.deep', 'deep', 'very.deep')
+
+# do the analysis and save the results to object 'x'
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
+```
+
+If you are wondering what is in the object `x`, the `str` function or manual page (`?diagnosticPropertyPlot`) can help.
+
+
+## Hierachrical Clustering
+ 
+The go-to functions for hierachrical clustering are as follows:
+ 
+  * `hclust()`: This function is agglomerative, is in base R, requires a distance matrix, and implements most of the commonly used linkage critera.
+  * `agnes()`: This function is agglomerative, is in "cluster" package, can perform standardization and distance calculations, and implements more linkage critera.
+  * `diana()`: This function is divisive, is in "cluster" package, can perform standardization and distance calculations.
+
+
+### Basic Agglomerative Hierarchical Clustering with `hclust`
+The `hclust()` function and resulting `hclust`-class objects are simple to use, but limited.
 
 ```{r, }
-# SoilTaxonomyDendrogram()
-# component.adj.matrix()
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+
+# distance matrix
+d <- daisy(sp4[, -1], metric = 'euclidean', stand = TRUE)
+
+# hierachical clustering with base function hclust
+sp4.h <- hclust(d, method = 'ward.D')
+sp4.h$labels <- sp4$name
+
+# plot with basic plotting method... not many options here
+par(mar=c(2,4,2,2))
+plot(sp4.h, font=2, cex=0.85)
+
+# ID clusters after cutting tree
+rect.hclust(sp4.h, 4)
 ```
 
 
-## Hierachrical clustering
+### Better Plots via `ape` Package
 
-### Agglomerative methods
+This example uses a different approach to plotting based on functions and classes from the `ape` package.
+```{r}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
 
-```{r, }
-# hclust()
-# agnes()
+# distance matrix
+d <- daisy(sp4[, -1], metric = 'euclidean', stand = TRUE)
+
+# divising clustering
+dd <- diana(d)
+
+# convert to ape class, via hclust class
+h <- as.hclust(dd)
+h$labels <- sp4$name
+p <- as.phylo(h)
+
+# define some nice colors
+col.set <- brewer.pal(9, 'Set1')
+
+# cut tree into 4 groups
+groups <- cutree(h, 4)
+
+# make color vector based on groups
+cols <- col.set[groups]
 ```
 
-### Divisive methods
+The plot methods for `phylo` class objects are quite flexible. Be sure to see the manual page `?plot.phylo`.
+```{r, fig.width=9, fig.height=9}
+par(mar=c(1,1,1,1), mfcol=c(2,2))
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85, main='dendrogram')
+tiplabels(pch=15, col=cols)
 
-```{r, }
-# dianna()
+plot(p, type='radial', font=1, cex=0.85, main='radial')
+tiplabels(pch=15, col=cols)
+
+plot(p, type='fan', font=1, cex=0.85, main='fan')
+tiplabels(pch=15, col=cols)
+
+plot(p, type='unrooted', font=1, cex=0.85, main='unrooted')
+tiplabels(pch=15, col=cols)
 ```
 
-### Advanced plotting functions
 
-```{r, }
-# as.phylo()
-# other ways to plot dendrogram
+### Comparison of Dendrograms
+
+The following example is simple. Many more possibilities are available in the [dendextend package](https://cran.r-project.org/web/packages/dendextend/index.html).
+```{r}
+# load sample dataset from aqp package
+data(sp3)
+
+# promote to SoilProfileCollection
+depths(sp3) <- id ~ top + bottom
+
+# compute dissimilarity using different sets of variables
+# note that these are rescaled to the interval [0,1]
+d.1 <- profile_compare(sp3, vars=c('clay', 'L'), k=0, max_d=100, rescale.result=TRUE)
+
+# cluster via divisive hierarchical algorithm
+# convert to 'phylo' class
+p.1 <- as.phylo(as.hclust(diana(d.1)))
+
+# graphically compare diana() to agnes() using d.2
+dueling.dendrograms(as.phylo(as.hclust(diana(d.1))), 
+as.phylo(as.hclust(agnes(d.1, method='ward'))), lab.1='diana', lab.2='agnes')
 ```
 
-## Partitioning into clusters
 
+## Centroid and Medoid (Partitioning) Clustering
+
+The following creates simulated data for demonstration puposes, representing two populations: 1) mean = 0, sd = 0.3, and 2) mean = 1, sd = 0.3.
 ```{r, }
-# 1D example
+# nice colors for later
+col.set <- brewer.pal(9, 'Set1')
+
 # 2D example
+x <- rbind(matrix(rnorm(100, mean = 0, sd = 0.3), ncol = 2),
+           matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2))
+colnames(x) <- c("x", "y")
 ```
 
-### Hard classes
+### Hard Classes
 
-```{r, }
+#### K-Means
+```{r, fig.width=8, fig.height=8, htmlcap="k-means function with default settings"}
+par(mfrow=c(3,3), mar=c(1,1,1,1))
+for(i in 1:9) {
+  cl <- kmeans(x, centers=3)
+  plot(x, col = col.set[cl$cluster], axes=FALSE)
+  grid()
+  points(cl$centers, col = col.set, pch = 8, cex = 2, lwd=2)
+  box()
+}
+```
+
+
+```{r, fig.width=8, fig.height=8, htmlcap="k-means function after increasing the max number of random starts and iterations"}
+par(mfrow=c(3,3), mar=c(1,1,1,1))
+for(i in 1:9) {
+  cl <- kmeans(x, centers=3, nstart = 10, iter.max = 100)
+  plot(x, col = col.set[cl$cluster], axes=FALSE)
+  grid()
+  points(cl$centers, col = col.set, pch = 8, cex = 2, lwd=2)
+  box()
+}
+```
+
+
+#### K-Medoids
+**TODO: finish this**
+```{r}
 # pam()
 # clara()
 ```
 
-### Fuzzy classes
+### Fuzzy Clusters
 
-```{r, }
-# fanny()
+```{r, fig.width=6, fig.height=6}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4.std <- data.frame(sp4[, c('id', 'name', 'top', 'bottom')], scale( sp4[, c('Mg', 'Ca')]))
+
+# perform fuzzy clustering
+cl <- fanny(sp4.std[, c('Mg', 'Ca')], k = 3, stand = FALSE)
+
+# get membership matrix
+m <- cl$membership
+
+# convert to colors by interpreting membership as R,G,B values
+cols <- rgb(m)
+
+# setup plot
+par(mar=c(4,4,0,0))
+plot(sp4.std$Mg, sp4.std$Ca, asp=1, ylab='Exchangeable Mg (cmol/kg), Standardized', xlab='Exchangeable Ca (cmol/kg), Standardized', type='n')
+abline(h=0, v=0, col='black')
+grid()
+
+# add original obs
+points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex=1.25, pch=21)
 ```
 
-### How many clusters?
+```{r, results='hide', fig.width=10, fig.height=4}
+sp4.std$colors <- cols
+depths(sp4.std) <- id ~ top + bottom
 
-```{r, }
-# silhouette()
+par(mar=c(0,0,0,0))
+plot(sp4.std, color='colors', cex.names=0.75)
+title('Fuzzy Clustering Results in Context', line=-3)
+```
+
+> Of the 11 parent materials, 9 were serpentinites. The parent materials in Napa and Tehama Counties were quite different from each other and from those of the nine other sites. Neither had parent rock that contained serpentine minerals. They were, therefore, not serpentinites. The Napa County parent material contained dominantly vermiculite and albite and had minor amounts of Ca-bearing clino-pyroxene. The Tehama County parent material was dominated by grossularite, which is a calcsilicate ugrandite garnet, and had subdominant amounts of the Ca-bearing sorosilicate, pumpellyite, and Ca-bearing clinopyroxene. The rocks from the Shasta and Kings County sites were serpentinite, dominated by serpentine minerals. They had minor amounts of Ca-bearing accessory minerals (calcic clinoamphibole [tremolite] and calcsilicate ugrandite garnet [andradite]). The seven other parent materials were serpentinites and exhibited, at most, trace amounts of Ca-bearing minerals.
+
+
+
+
+### How Many Clusters?
+There is no simple answer to the question "How many clusters are in my data?" Some metrics, however, can be used to help estimate a "resonable" number of clusters. The mean [silhouette width](https://en.wikipedia.org/wiki/Silhouette_(clustering)) is a useful index of "cluster compactness" relative to neighbor clusters [@Rousseeuw1987]. Larger silhouette widths suggest tighter grouping.
+
+```{r, fig.width=8, fig.height=4}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4.std <- data.frame(sp4[, c('id', 'name', 'top', 'bottom')], scale( sp4[, c('Mg', 'Ca')]))
+
+# perform hard clustering
+sil.widths <- vector(mode='numeric')
+for(i in 2:10) {
+  cl <- pam(sp4.std[, c('Mg', 'Ca')], k = i, stand = FALSE)
+  sil.widths[i] <- cl$silinfo$avg.width
+}
+
+par(mar=c(4,4,3,1))
+plot(sil.widths, type='b', xlab='Number of Clusters', ylab='Average Silhouette Width', las=1, lwd=2, col='RoyalBlue', cex=1.25, main='Finding the "Right" Number of Clusters')
+grid()
+```
+
+
+## Ordination (Non-Metric Multidimensional Scaling)
+
+### Sammon's Nonlinear Mapping
+**TODO: add limitations here **
+
+```{r, eval=FALSE, echo=FALSE, results='hide', fig.width=10, fig.height=5}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
+
+# distance matrix
+d <- dist(sp4.scaled[, -1])
+m <- as.matrix(d)
+dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
+d <- as.dist(m)
+# dendrogram from divisive clustering
+dd <- diana(d)
+h <- as.hclust(dd)
+p <- as.phylo(h)
+
+# define colors based on natural groupings
+cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
+
+# MDS
+s <- sammon(d)
+
+plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
+# abline(v=0, h=0, col='black')
+grid()
+text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
+axis(1, cex.axis=0.95, line=-2)
+axis(4, cex.axis=0.95, line=0.5, las=1)
+mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 ```
 
 
 
-## Interpretation / application
+### nMDS with the `vegan` Package
 
-```{r, }
-# Hmisc::
-# varclus()
-# naclus()
-```
-
-
-## Ordination (Non-metric multidimensional scaling)
-
-### Sammon's non-linear mapping
-
-### nMDS with the `vegan` package
-
-### Interpretation and goodness of fit
+### Interpretation and Goodness of Fit
+**TODO: add some explanation here **
 
 [Shephard diagram](http://cc.oulu.fi/~jarioksa/softhelp/vegan/html/goodness.metaMDS.html)
 ```{r, eval=FALSE}
@@ -506,17 +938,14 @@ hist(goodness(nmds))
 
 
 
-# Practical applications
 
-Review:
- * [SoilProfileCollection object tutorial](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/aqp/aqp-intro.html?root=aqp)
+# Practical Applications
+
+Before you work through the following examples, you should review the [SoilProfileCollection object tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
 
 
-## Pair-wise distances between soil profiles 
 
-[relevant paper](http://dx.doi.org/10.1016/j.cageo.2012.10.020)
-
-[relevant slides](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/presentations/AQP-num_soil_classification.pdf?root=aqp)
+## Pair-Wise Distances Between Soil Profiles 
 
 ```{r, message=FALSE}
 # init example data
@@ -544,7 +973,9 @@ plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max
 
 
 
-## Pair-wise distances between subgroup level taxa
+## Pair-Wise Distances Between Subgroup-Level Taxa
+
+The following are demonstrations of pair-wise distances computed from categorical data and the use of a dendrogram to organize groups from Soil Taxonomy. [Click here](http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html) for details.
 
 ```{r, fig.width=10, fig.height=4.5}
 # define a vector of series
@@ -567,18 +998,20 @@ par(mar=c(0,1,1,1))
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
 ```
 
-Check resulting distance matrix.
+Check the resulting distance matrix.
 ```{r, eval=FALSE}
-d
+print(d)
 ```
 
 
 
 
-## Soil color
-moist colors
+## Soil Color
+Just for fun, use hierarchical clustering and nMDS on soil color data from the OSDs that were used in the previous example.
 
 ```{r, fig.width=6, fig.height=6}
+# these are moist colors
+
 # extract horizon data from select OSDs in above example
 h <- horizons(s)
 
@@ -628,10 +1061,9 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
-## Component interpretations
-[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/soilDB/SDA-cointerp-tutorial.html?root=aqp)
 
-
+## *"How Do the Interpretations Compare?"*
+Example borrowed from [this tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-cointerp-tutorial.html).
 
 
 ```{r}
@@ -688,33 +1120,12 @@ mtext('Profile Sketches are from OSDs', 1)
 
 
 
-## Diagnostic features
-[here](https://r-forge.r-project.org/scm/viewvc.php/*checkout*/docs/sharpshootR/diagnostic-property-plot.html?root=aqp)
 
-```{r}
-# load some example NASIS data
-data(loafercreek, package='soilDB')
-
-# cut-down to a subset
-loafercreek <- loafercreek[1:20, ]
-
-# get depth class
-sdc <- getSoilDepthClass(loafercreek)
-site(loafercreek) <- sdc
-
-# diagnostic properties to consider, no need to convert to factors
-v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon', 
-       'cambic.horizon', 'ochric.epipedon', 'mollic.epipedon', 'very.shallow',
-       'shallow', 'mod.deep', 'deep', 'very.deep')
-
-
-x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
-```
 
 
 ## GIS Data
 
-TODO: give credit to SEKI crew
+The following is an investigation of topographic "signatures" in the initial soil mapping project for Sequoia and Kings Canyon, California.
 
 ```{r, fig.width=8, fig.height=8, results='hide'}
 library(plyr)
@@ -724,8 +1135,8 @@ library(cluster)
 
 # init a temp file
 tf <- tempfile()
+
 # download compressed CSV to temp file
-setInternet2(TRUE)
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/seki-mu-gis-samples.csv.gz', destfile = tf, quiet = TRUE)
 # read-in from compressed CSV to data.frame object
 x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
@@ -773,18 +1184,18 @@ title('Map Unit Terrain Signatures')
 ```
 
 
-## Species composition
+## Species Composition
 
-TODO: give credit to CA630 ESD crew
+The following is an example of the use of ordination to investigate patterns in species composition. It is from MLRA 22A-Sierra Nevada Mountains, CA. Data courtesy of David Evans (Sonora, CA).
 
 ```{r}
-# library(reshape2)
-# library(vegan)
+library(reshape2)
+library(vegan)
 
-# read species data from online CSV
 # init a temp file
 tf <- tempfile()
-setInternet2(TRUE)
+
+# read species data from online CSV
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/ca630-22A-species.csv', destfile = tf, quiet = TRUE)
 
 x <- read.csv(tf, stringsAsFactors = FALSE)
@@ -792,16 +1203,21 @@ x <- read.csv(tf, stringsAsFactors = FALSE)
 # check: long-format
 head(x)
 
-# keep only tree species
-idx <- which(grepl('^T', x$stratum))
-x <- x[idx, ]
+# any missing cover values should be converted to trace values of 0.1
+idx <- which(is.na(x$cover))
+if(length(idx) > 0)
+  x$cover[idx] <- 0.1
+
+# # keep only tree species
+# idx <- which(grepl('^T', x$stratum))
+# x <- x[idx, ]
 
 # add stratum as a suffix for tree species (^T*)
-x$symbol <- ifelse(grepl('^T', x$stratum), paste0(x$plantsym, '/', x$stratum), x$plantsym)
+x$modified.symbol <- ifelse(grepl('^T', x$stratum), paste0(x$symbol, '/', x$stratum), x$symbol)
 
 # convert "long" format to full community matrix, "wide" format using the mean pct cover
 # 1 row / ES ID, each column is a species
-m <- dcast(x, site_id ~ symbol, value.var = 'cover', fun.aggregate = mean)
+m <- dcast(x, site_id ~ modified.symbol, value.var = 'cover', fun.aggregate = mean)
 
 # assign abbreviated user site ID to row names
 row.names(m) <- gsub('CA630', '', m$site_id) 
@@ -809,16 +1225,14 @@ row.names(m) <- gsub('CA630', '', m$site_id)
 # convert to matrix, excluding the first column (site id)
 m <- as.matrix(m[, -1])
 
+# check first row and first 20 columns: looks good, except missing data (NA) should be 0
+head(m, 1)[, 1:20]
+
 # replace NA in the community matrix with 0
 m[is.na(m)] <- 0
 
-# check: looks good, except missing data (NA) should be 0
-head(m, 1)[, 1:20]
-
-# compute distance between ES
-d <- metaMDSdist(m)
-
-# try ordination: non-metrix multidimensional scaling with default distance metric and standardization
+# all-in-one!
+# non-metrix multidimensional scaling with default distance metric and standardization
 nmds <- metaMDS(m)
 ```
 
@@ -857,172 +1271,5 @@ This document is based on `aqp` version `r utils::packageDescription("aqp", fiel
 
 
 
-
-
-```{r, echo=FALSE, eval=FALSE, fig.width=8, fig.height=4}
-# simulate some aggregate profile data
-frags <- c(16, 5, 25, 6, 3) # rock fragments
-clay <- c(8, 15, 17, 25, 31) # clay contents
-
-# combine into single data.frame
-s <- data.frame(clay, frags)
-
-# evaluate pair-wise dissimilarity based on clay and frag %
-# since both measurements are on the same scale, no standardization is needed
-d <- daisy(s)
-
-# inspect pair-wise dissimilarity matrix
-print(d)
-
-# perform divisive hierarcical clustering for dendrogram creation
-d.diana <- diana(d)
-
-# convert object into 'phylo' class for plotting
-d.phylo <- as.phylo(as.hclust(d.diana))
-
-# 2-figure plot of original data and resulting dendrogram repsesentation of dissimilarity matrix
-par(mfcol=c(1,2), mar=c(4.5,4,1,1))
-# original data: setup plot, but don't actually plot it
-plot(frags ~ clay, data=s, type='n', xlab='% Clay', ylab='% Rock Fragments')
-# add grid lines to assist the eye
-grid()
-# annotate empty plot with soil numbers
-text(s$clay, s$frags, row.names(s), font=2)
-
-# plot dendrogram representation, annotated with the same labels
-plot(d.phylo, font=2, label.offset=0.5, adj=0.5, direction='down', srt=90, y.lim=c(-1, 15))
-```
-
-```{r demo-2, echo=FALSE, eval=FALSE}
-# continuing from example above...
-	
-# return dissimilarity matrices at each depth slice
-d.dis.all <- profile_compare(d, vars=c('clay', 'pH', 'frags'), k=0, 
-max_d=61, replace_na=TRUE, add_soil_flag=TRUE, return_depth_distances=TRUE)
-
-# check between-profile dissimilarity, at slice 1
-print(as.matrix(d.dis.all[[1]]))
-
-# init functions for extracting pair-wise dissimilarity: 
-f.12 <- function(i) as.matrix(i)[1, 2] # between auburn and dunstone
-f.13 <- function(i) as.matrix(i)[1, 3] # between auburn and sobrante
-f.23 <- function(i) as.matrix(i)[2, 3] # between dunstone and sobrante
-
-# apply functions at each slice
-d.12 <- sapply(d.dis.all, f.12)
-d.13 <- sapply(d.dis.all, f.13)
-d.23 <- sapply(d.dis.all, f.23)
-
-# combine into single data.frame
-d.all <- make.groups(
-auburn.dunstone=data.frame(slice=1:61, d=d.12, d.sum=cumsum(d.12)),
-auburn.sobrante=data.frame(slice=1:61, d=d.13, d.sum=cumsum(d.13)),
-dunstone.sobrante=data.frame(slice=1:61, d=d.23, d.sum=cumsum(d.23))
-)
-
-# plot slice-wise dissimilarity between all three soils
-p.1 <- xyplot(slice ~ d, groups=which, data=d.all, 
-ylim=c(62,0), type=c('l','g'), xlim=c(0.2,1.2), ylab='Depth (cm)', xlab='', 
-horizontal=TRUE, auto.key=list(columns=3, lines=TRUE, points=FALSE), asp=1)
-
-# plot slice-wise, cumulative dissimilarity between all three soils
-p.2 <- xyplot(slice ~ d.sum, groups=which, data=d.all, 
-ylim=c(62,0), type=c('l','g'), ylab='Depth (cm)', xlab='', 
-horizontal=TRUE, auto.key=list(columns=3, lines=TRUE, points=FALSE), asp=1)
-
-# combine into panels of a single figure
-p.3 <- c('Slice-Wise Distance'=p.1, 'Cumulative Distance'=p.2)
-# render figure
-update(p.3, par.settings=list(superpose.line=list(col=cols, lwd=2, lty=c(1,2,4)), strip.background=list(col=grey(0.85))))
-```
-
-```{r  echo=FALSE, fig.width=9, eval=FALSE, fig.height=3}
-# setup some colors
-cols <- brewer.pal(3, 'Set1')
-
-# setup horizon-level data: data are from lab sampled pedons
-d <- read.csv(
-	textConnection('
-series,name,top,bottom,clay,frags,pH
-auburn,A,0,3,15,6,5.6
-auburn,Bw1,3,15,15,13,5.6
-auburn,Bw2,15,38,18,9,5.8
-dunstone,A,0,5,16,13,6
-dunstone,Bt1,5,17,17,19,6.3
-dunstone,Bt2,17,31,20,6,6.3
-dunstone,Bt3,31,41,21,15,6.3
-sobrante,A1,0,5,18,0,5.8
-sobrante,A2,5,10,16,2,5.7
-sobrante,Bt1,10,28,15,21,5.8
-sobrante,Bt2,28,51,18,13,6.2
-sobrante,Bt3,51,74,20,12,6.2
-'))
-
-# establish site-level data
-s <- data.frame(
-	series=c('auburn', 'dunstone', 'sobrante'), 
-	precip=c(24, 30, 32),
-	stringsAsFactors=FALSE
-	)
-
-# generate fake horizon names with clay / frags / ph
-# d$fake.name <- with(d, paste(clay, frags, pH, sep='/'))
-
-# upgrade to SoilProfile Collection object
-depths(d) <- series ~ top + bottom
-site(d) <- s
-
-# plot profiles, coloring horizons based on soil property
-par(mfcol=c(1,3), mar=c(0,0,4,0))
-plot(d, color='clay', cex.names=0.85, axis.line.offset=-3.5)
-plot(d, color='frags', cex.names=0.85, axis.line.offset=-3.5)
-plot(d, color='pH', cex.names=0.85, axis.line.offset=-3.5)
-```
-
-```{r  echo=FALSE,fig.width=5, eval=FALSE, fig.height=5}
-# inspect variables used to determine dissimilarity
-h <- horizons(d)
-splom(~ h[, c('clay', 'pH', 'frags')], groups=series, data=h, type=c('p', 'g'),
-auto.key=list(columns=3, points=TRUE, lines=FALSE), 
-par.settings=list(superpose.symbol=list(pch=16, col=cols, cex=1)))
-```
-
-```{r  echo=FALSE, compute-distance, eval=FALSE, fig.width=8, fig.height=4}
-# compute betwee-profile dissimilarity, no depth weighting
-d.dis <- profile_compare(d, vars=c('clay', 'pH', 'frags'), k=0, 
-max_d=61, replace_na=TRUE, add_soil_flag=TRUE)
-
-# check total, between-profile dissimilarity, normalized to maximum
-d.m <- signif(as.matrix(d.dis / max(d.dis)), 2)
-print(d.m)
-
-# group via divisive hierarchical clustering
-d.diana <- diana(d.dis)
-# convert classes, for better plotting
-d.phylo <- as.phylo(as.hclust(d.diana))
-
-
-# plot: 2 figures side-by-side
-par(mfcol=c(1,2), mar=c(2,2,2,2))
-# profiles
-plot(d, width=0.1, name='name')
-# annotate shallow-mod.deep break
-abline(h=50, col='red', lty=2)
-# add dissimilarity matrix
-addtable2plot(0.2, 70, format(d.m, digits=2), display.rownames=TRUE, 
-xjust=0, yjust=0, cex=0.6, title='Total Dissimilarity')
-# plot dendrogram in next panel
-plot(d.phylo, direction='down', adj=0.5, srt=0, 
-label.offset=0.5, font=1, y.lim=c(-5, 25), cex=0.7)
-```
-
-
-
-
-
-
-
-
-
-
+<!-- * [problems assoc. with too many dimensions](https://en.wikipedia.org/wiki/Clustering_high-dimensional_data) -->
 

@@ -70,7 +70,7 @@ The working directory can also be changed and set by clicking on File > Change d
 ### 1.2.1 Importing Data
 After your working directory is set, you can import data from .txt, .csv, etc. One basic command for importing data into R is `read.csv()`. The command is followed by the file name and then some optional instructions for how to read the file.    
 
-First, create an example file by copying the following contents below, starting with "location." Paste it into Notepad and save it as a file named sand_example.txt in the C:/workspace folder:  
+First, create an example file by copying the following contents below, starting with "location." Paste it into Notepad and save it as a file named **sand_example.txt** in the C:\workspace folder:  
 
 location,landuse,horizon,depth,sand  
 city,crop,A,14,19  
@@ -95,6 +95,13 @@ west,range,B,24,24
 The sand_example.txt file can then imported into R by typing:  
 
 
+```r
+sand<- read.csv("C:/workspace/sand_example.txt", header=TRUE, sep=",") 
+
+#since you've specified your working directory, you could also use: sand<-read.csv("sand_example.txt")
+
+#use the read.table() function to import other types of table formatted files
+```
 
 There are other arguments that you might want to use with `read.csv()`. A quick way to find out what arguments are available for a given command is to type `help(command)`. In this example, you would type:
 
@@ -212,6 +219,7 @@ You can also use command line:
 ```r
 savehistory(file = "sand.Rhistory")  
 loadhistory(file = "sand.Rhistory")  
+history(max.show=Inf) #displays all previous commands
 ```
 
 ### 1.3.4 R Graphics   
@@ -603,7 +611,7 @@ tapply(pedons$depth, pedons$taxonname, summary)
 
 ```r
 #data structure and variable names
-str(Hartleton) 
+str(pedons) 
 ```
 
 

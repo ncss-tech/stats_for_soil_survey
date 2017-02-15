@@ -7,29 +7,59 @@ Thursday, January 14, 2016
 
 
 ## 8.0  Introduction
-Tree-based models are a supervised machine learning method commonly used in soil survey and ecology for exploratory data analysis and prediction due to their simplistic nonparametric design. Instead of fitting a model to the data, tree-based models recursively partition the data into increasingly homogenous groups based on values that minimize a loss function (such as Sum of Squared Errors (SSE) for regression or Gini Index for classification) (McBratney et al., 2003). The two most common packages for generating tree-based models in R are rpart and randomForest. The rpart package creates a regression or classification tree based on binary splits that maximize homogeneity and minimize impurity. The output is a single decision tree that can be further "pruned" or trimmed back using the cross-validation error statistic to reduce over-fitting. The randomForest package is similar to rpart, but is double random in that each node is split using a random subset of predictors AND observations at each node and this process is repeated hundreds of times (as specified by the user). Unlike rpart, random forests do not produce a graphical decision tree since the predictions are averaged across hundreds or thousands of trees. Instead, random forests produce a variable importance plot and a tabular statistical summary. 
-<br/>
+Tree-based models are a supervised machine learning method commonly used in soil survey and ecology for exploratory data analysis and prediction due to their simplistic nonparametric design. Instead of fitting a model to the data, tree-based models recursively partition the data into increasingly homogenous groups based on values that minimize a loss function (such as Sum of Squared Errors (SSE) for regression or Gini Index for classification) ([McBratney et al.,2013](http://www.clw.csiro.au/aclep/documents/McBratney%20et%20al.%202003.pdf)). The two most common packages for generating tree-based models in R are rpart and randomForest. The rpart package creates a regression or classification tree based on binary splits that maximize homogeneity and minimize impurity. The output is a single decision tree that can be further "pruned" or trimmed back using the cross-validation error statistic to reduce over-fitting. The randomForest package is similar to rpart, but is double random in that each node is split using a random subset of predictors AND observations at each node and this process is repeated hundreds of times (as specified by the user). Unlike rpart, random forests do not produce a graphical decision tree since the predictions are averaged across hundreds or thousands of trees. Instead, random forests produce a variable importance plot and a tabular statistical summary. 
 
-##<a id="cart")></a>8.1 Classification and Regression Trees (CART)
-The basic function for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
 
-Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the library( ) function.
+## 8.1 Exploratory Data Analysis
+
+The data that we will be working with in this chapter were collected in support of a MLRA 127 soil survey update project to tabularly and spatially update SSRUGO map units for spodic properties in the Monongahela National Forest. Soils that were historically covered by Eastern Hemlock and Red Spruce exhibit spodic morphology on shale, siltstone, and sandstone bedrocks at elevations typically >3,200 ft in West Virginia ([Nauman et al., 2015](http://www.sciencedirect.com/science/article/pii/S0016706115000427)). The landscape and vegetative communities were greatly altered by fire and logging in the early 1900s, complicating the identification of spodic morphology. It is of particular interest to the project leader and the U.S. Forest Service that spatial maps be developed to depict the location of spodic morphology and folistic epipedons in the Monongahela National Forest. Folistic epipedons provide habitat for the Northern Flying Squirrel, just recently removed from the endangered species list.  
+
+
+### 8.1.1 Getting Data Into R and Exporting to Shapefile
+
+Before we dive in to model building, let's first import and plot the dataset in R. 
 
 
 ```r
-library(rpart)
-library(randomForest)
-library(rpart.plot)
+library(lattice) #graphing
+library(sp) #spatial data
+library(maps) #maps
+library(rgdal) #spatial import
+library(corrplot) #graphical display of correlation matrix
 
-file<-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(file, destfile = "soildata.csv")
-soildata<-read.csv("soildata.csv", header=TRUE, sep=",")
+soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+coordinates(soildata) <- ~ x + y #set the coordinates; converting dataframe to a spatial object
+proj4string(soildata) <- CRS("+init=EPSG:4269") #set the projection; https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/OverviewCoordinateReferenceSystems.pdf 
+
+map("county", "west virginia") 
+points(soildata) #plot points
 ```
 
-Review the data structure to ensure that the data were imported correctly into R.
+![](treemodels_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
+
 
 ```r
-str(soildata)
+#convert soildata into a shapefile
+writeOGR(soildata, dsn = "C:/workspace", "soildata", driver = "ESRI Shapefile") 
+```
+
+Conveniently, environmental covariate values were previously extracted for all of the observations in the **soildata** dataset. **How would you extract raster data to points in R?**  ([Hint](https://github.com/ncss-tech/stats_for_soil_survey/blob/master/chapters/6_linear_models/6_Linear_models.md))
+
+
+### 8.1.2 Examining Data in R
+
+
+```r
+#since we converted the soildata dataframe to a spatial object to export as a shapefile, we will need to convert it back to a dataframe to plot and further examine the data in R
+
+#reimporting the data and overwriting the soildata object is just one way to achieve this
+file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+download.file(file, destfile = "soildata.csv")
+soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+View(soildata) #view the data
+str(soildata) #examine the internal data structure
 ```
 
 ```
@@ -86,21 +116,83 @@ str(soildata)
 ##  $ tanc75      : num  0.0511 0.0279 0.0553 -0.0187 -0.0346 ...
 ```
 
-The example dataset, soildata, consists of 250 observations and 58 variables that were collected in the field or derived from geospatial data to identify spodic soil properties in West Virginia. Of particular interest is determining best splits for spodic intensity (relative spodicity index). As you can see in that data structure, R interpreted the spodint field as numeric. Since spodint is an index, it will need to be changed to a factor and then to an ordered factor. The same will need to be done for tipmound (a tip and mound microtopography index).
+The example dataset, **soildata**, consists of 250 observations and 58 variables that were collected in the field or derived from geospatial data to identify spodic soil properties in West Virginia. Of particular interest is determining best splits for spodic intensity (relative spodicity index). As you can see in the data structure, R interpreted the spodint field as numeric. Since spodint is an index, it will need to be changed to a factor and then to an ordered factor. The same will need to be done for tipmound (a tip and mound microtopography index).
 
 
 ```r
-soildata$spodint<-as.factor(soildata$spodint)
-soildata$spodint<-ordered(soildata$spodint)
-soildata$tipmound<-as.factor(soildata$tipmound)
-soildata$tipmound<-ordered(soildata$tipmound)
+set.seed(250)
+soildata$spodint <- as.factor(soildata$spodint)
+soildata$spodint <- ordered(soildata$spodint)
+soildata$tipmound <- as.factor(soildata$tipmound)
+soildata$tipmound <- ordered(soildata$tipmound)
 ```
 
-If you wanted to create a classification tree for spodint using all of the variables, you would simply type: `rpart(spodint ~ ., data=soildata)`. Since the soildata dataset contains variables such as FID and NASIS_Pedo that are site observation labels, it is not wise to include all variables in the model. Instead, you want to define which variables the model should use. 
+Next, let's explore the tabular data:
 
 
 ```r
-spodintmodel<-rpart(spodint~x+y+Overtype+Underconifer+Oi+Oe+Oa+Otot+epipedon+subgroup+order+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "class")
+boxplot(solar~spodint, data=soildata, xlab="spodic intensity", ylab="solar") #does solar radiation affect spodic intensity?
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+```r
+boxplot(northwestn~spodint, data=soildata, xlab="spodic intensity", ylab="northwestness") #how about aspect?
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
+
+```r
+densityplot(~ Otot|order, data=soildata) #distribution of O horizon thickness among soil orders
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-5-3.png)<!-- -->
+
+```r
+numeric <- data.frame(soildata[, c(8, 25, 27:50)]) #combine numeric columns into a new data frame
+names(numeric) 
+```
+
+```
+##  [1] "Otot"       "rainfall"   "aachn"      "dem10m"     "downslpgra"
+##  [6] "eastness"   "greenrefl"  "landsatb1"  "landsatb2"  "landsatb3" 
+## [11] "landsatb7"  "maxc100"    "maxent"     "minc100"    "mirref"    
+## [16] "ndvi"       "northeastn" "northness"  "northwestn" "planc100"  
+## [21] "proc100"    "protection" "relpos11"   "slp50"      "solar"     
+## [26] "tanc75"
+```
+
+```r
+cormatrix <- cor(numeric) #calculate correlation matrix
+corrplot(cormatrix, method = "circle") #plot correlation matrix
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-5-4.png)<!-- -->
+
+
+### 8.1.3 Exercise 1
+Examine the **soildata** shapefile and environmental covariate data in ArcGIS. Come up with a theory of which possible covariates might be useful for predicting spodic morphology and folistic epipedons. Also, think of the different possible ways to model these features given the **soildata** dataset. 
+
+
+## 8.2 Classification and Regression Trees (CART)
+The basic form for all CART models is (y ~ x), where y is the dependent variable to be predicted from x, a set of independent variables. If the dependent variable (y) is numeric, the resulting tree will be a regression tree. Conversely, if the dependent variable (y) is categorical, the resulting tree will be a classification tree. The rpart package allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. The rpart algorithm ignores missing values when determining the quality of a split and uses surrogate splits to determine if observation(s) with missing data is best split left or right. If an observation is missing all surrogate splits, then the observation(s) is sent to the child node with the largest relative frequency (Feelders, 1999).
+
+Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the `library()` function.
+
+
+```r
+library(rpart) #CART models
+library(randomForest) #random forest
+library(rpart.plot) #rpart plot graphics
+library(caret) #confusion matrix
+```
+
+
+If you wanted to create a classification tree for spodint using all of the variables, you would simply type: `rpart(spodint ~ ., data=soildata)`. Since our goal is to generate a spatial prediction model, we only want to use the variables for which we have spatial coverage--our environmental covariate rasters. 
+
+
+```r
+spodintmodel <- rpart(spodint ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, method = "class")
 
 spodintmodel
 ```
@@ -111,13 +203,35 @@ spodintmodel
 ## node), split, n, loss, yval, (yprob)
 ##       * denotes terminal node
 ## 
-## 1) root 250 162 0 (0.35 0.084 0.26 0.024 0.28)  
-##   2) order=inceptisol,ultisol 179  91 0 (0.49 0.12 0.36 0.028 0)  
-##     4) subgroup=aeric,aquic,typic 108  20 0 (0.81 0.18 0.0093 0 0)  
-##       8) slp50>=5.61029 100  14 0 (0.86 0.13 0.01 0 0) *
-##       9) slp50< 5.61029 8   2 0.5 (0.25 0.75 0 0 0) *
-##     5) subgroup=spodic 71   7 1 (0 0.028 0.9 0.07 0) *
-##   3) order=histosol,spodosol 71   1 2 (0 0 0 0.014 0.99) *
+##   1) root 250 162 0 (0.35 0.084 0.26 0.024 0.28)  
+##     2) northwestn< 0.55138 148  80 0 (0.46 0.081 0.29 0.027 0.14)  
+##       4) maxc100< 0.10341 57  20 0 (0.65 0.088 0.14 0.018 0.11) *
+##       5) maxc100>=0.10341 91  56 1 (0.34 0.077 0.38 0.033 0.16)  
+##        10) solar< 1504355 83  52 0 (0.37 0.084 0.33 0.036 0.18)  
+##          20) minc100< -0.197089 9   1 0 (0.89 0 0 0 0.11) *
+##          21) minc100>=-0.197089 74  47 1 (0.31 0.095 0.36 0.041 0.19)  
+##            42) maxent< 12.9024 23  10 0 (0.57 0.13 0.26 0.043 0)  
+##              84) solar< 1460005 16   5 0 (0.69 0.19 0.12 0 0) *
+##              85) solar>=1460005 7   3 1 (0.29 0 0.57 0.14 0) *
+##            43) maxent>=12.9024 51  30 1 (0.2 0.078 0.41 0.039 0.27)  
+##              86) greenrefl>=0.01846795 40  20 1 (0.22 0.075 0.5 0.025 0.17)  
+##               172) dem10m>=1012.96 33  14 1 (0.27 0.061 0.58 0 0.091)  
+##                 344) minc100< 0.06651935 24   7 1 (0.21 0.083 0.71 0 0) *
+##                 345) minc100>=0.06651935 9   5 0 (0.44 0 0.22 0 0.33) *
+##               173) dem10m< 1012.96 7   3 2 (0 0.14 0.14 0.14 0.57) *
+##              87) greenrefl< 0.01846795 11   4 2 (0.091 0.091 0.091 0.091 0.64) *
+##        11) solar>=1504355 8   0 1 (0 0 1 0 0) *
+##     3) northwestn>=0.55138 102  53 2 (0.2 0.088 0.22 0.02 0.48)  
+##       6) protection< 0.0988242 25  15 1 (0.2 0.16 0.4 0.04 0.2)  
+##        12) proc100< 0.1502945 14  10 0 (0.29 0.29 0.14 0 0.29) *
+##        13) proc100>=0.1502945 11   3 1 (0.091 0 0.73 0.091 0.091) *
+##       7) protection>=0.0988242 77  33 2 (0.19 0.065 0.16 0.013 0.57)  
+##        14) maxent< 9.5806 30  19 0 (0.37 0.1 0.17 0.033 0.33)  
+##          28) rainfall< 52 9   2 0 (0.78 0 0 0 0.22) *
+##          29) rainfall>=52 21  13 2 (0.19 0.14 0.24 0.048 0.38)  
+##            58) landsatb7>=0.0398039 12   7 1 (0.17 0.25 0.42 0 0.17) *
+##            59) landsatb7< 0.0398039 9   3 2 (0.22 0 0 0.11 0.67) *
+##        15) maxent>=9.5806 47  13 2 (0.085 0.043 0.15 0 0.72) *
 ```
 
 ```r
@@ -125,13 +239,51 @@ plot(spodintmodel)
 text(spodintmodel, cex=0.8) #cex is text size
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-4-1.png)
-
-When soil order and subgroup are included in the spodint model, they are the two most important variables for separating spodic intensity. This makes sense given the ratings for spodic intensity: 0 = non spodic, 0.5 = Bs horizon, 1 = spodic subgroup, 1.5 = spodic subgroup OR Spodosol, 2 = Spodosol. Let's omit soil order and subgroup to see what other factors best separate spodint.  
+![](treemodels_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 
 ```r
-spodintmodel2<-rpart(spodint~x+y+Overtype+Underconifer+Oi+Oe+Oa+Otot+epipedon+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "class")
+#if you are having trouble viewing the text in the plot window, click zoom to open a bigger window
+#you may also need to adjust the plot margins or text size; for this example, try:
+par(mar=c(3,6,3,6)) 
+plot(spodintmodel)
+text(spodintmodel, cex=0.6)
+```
+
+For more plot customization, use the rpart.plot package. 
+
+```r
+rpart.plot(spodintmodel, extra=3) #extra=3 displays the misclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+```r
+rpart.plot(spodintmodel, extra=103) #adding 100 to the extra setting displays the percentage observations in the node
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+
+```r
+prp(spodintmodel,type=1,extra=1,branch=1) #prp is another function in the rpart.plot package that has numerous plot customization options
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-9-3.png)<!-- -->
+
+Notice that the terminal nodes display the different spodic intensity classes, ranging from 0 to 2. **Can you think of another way that we could model spodic expression?** 
+
+Could we treat spodic intesity (an ordered factor) as numeric, ranging from 0 to 1 to develop a regression tree? Does this make sense? what would a mean of 1 tell you about the observations in the terminal node? 
+
+What if we considered everything with a spodic intensity of <= 0.5 to be non-spodic and everything >0.5 to be spodic? A binary probability approach to predicting spodic morphology, similar to Nauman et al., 2015.
+
+
+```r
+index <- c(0, 0.5, 1, 1.5, 2) #index for lookup table
+values <- c("nonspodic", "nonspodic", "spodic", "spodic", "spodic") #assigning corresponding categories to look up values
+soildata$newcolumn <- values[match(soildata$spodint, index)] #match spodint to index and assign values
+soildata$newcolumn <- as.factor(soildata$newcolumn) #convert new column from character to factor
+
+spodintmodel2 <- rpart(newcolumn ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, method = "class")
 
 spodintmodel2
 ```
@@ -142,31 +294,23 @@ spodintmodel2
 ## node), split, n, loss, yval, (yprob)
 ##       * denotes terminal node
 ## 
-##   1) root 250 162 0 (0.35 0.084 0.26 0.024 0.28)  
-##     2) Oa< 3.5 184 104 0 (0.43 0.11 0.31 0.033 0.11)  
-##       4) proc100< -0.1166665 40  10 0 (0.75 0.05 0.05 0.025 0.12) *
-##       5) proc100>=-0.1166665 144  89 1 (0.35 0.12 0.38 0.035 0.11)  
-##        10) eastness>=-0.0713796 66  32 0 (0.52 0.12 0.3 0.015 0.045)  
-##          20) aachn>=23.9057 57  24 0 (0.58 0.12 0.23 0.018 0.053)  
-##            40) slope>=41 15   1 0 (0.93 0 0.067 0 0) *
-##            41) slope< 41 42  23 0 (0.45 0.17 0.29 0.024 0.071)  
-##              82) slope>=10.5 35  17 0 (0.51 0.14 0.34 0 0)  
-##               164) landsatb2>=0.0555786 27  10 0 (0.63 0.11 0.26 0 0)  
-##                 328) minc100< 0.0260241 17   3 0 (0.82 0.12 0.059 0 0) *
-##                 329) minc100>=0.0260241 10   4 1 (0.3 0.1 0.6 0 0) *
-##               165) landsatb2< 0.0555786 8   3 1 (0.12 0.25 0.62 0 0) *
-##              83) slope< 10.5 7   4 2 (0.14 0.29 0 0.14 0.43) *
-##          21) aachn< 23.9057 9   2 1 (0.11 0.11 0.78 0 0) *
-##        11) eastness< -0.0713796 78  43 1 (0.21 0.13 0.45 0.051 0.17)  
-##          22) surfacetex=cnhosil,cnl,cnsil,cnxl,cnxsl,flsil,grl,grvl,hosil,sil 62  31 1 (0.21 0.16 0.5 0.065 0.065)  
-##            44) surfacetex=cnhosil,cnsil,flsil,grl,hosil,sil 48  28 1 (0.27 0.17 0.42 0.083 0.062)  
-##              88) tipmound=0 19   9 0 (0.53 0.11 0.26 0 0.11) *
-##              89) tipmound=1,2,3 29  14 1 (0.1 0.21 0.52 0.14 0.034) *
-##            45) surfacetex=cnl,cnxl,cnxsl,grvl 14   3 1 (0 0.14 0.79 0 0.071) *
-##          23) surfacetex=cnvhol,cnvl,cnvsil,grsil,hol,l 16   7 2 (0.19 0 0.25 0 0.56) *
-##     3) Oa>=3.5 66  17 2 (0.12 0.015 0.12 0 0.74)  
-##       6) Otot< 8.5 8   4 0 (0.5 0.12 0.25 0 0.12) *
-##       7) Otot>=8.5 58  10 2 (0.069 0 0.1 0 0.83) *
+##  1) root 250 109 spodic (0.4360000 0.5640000)  
+##    2) eastness>=-0.1275925 100  36 nonspodic (0.6400000 0.3600000)  
+##      4) tanc75>=-0.0268239 64  16 nonspodic (0.7500000 0.2500000) *
+##      5) tanc75< -0.0268239 36  16 spodic (0.4444444 0.5555556)  
+##       10) northeastn>=0.7433605 13   3 nonspodic (0.7692308 0.2307692) *
+##       11) northeastn< 0.7433605 23   6 spodic (0.2608696 0.7391304) *
+##    3) eastness< -0.1275925 150  45 spodic (0.3000000 0.7000000)  
+##      6) minc100< -0.1576455 47  23 spodic (0.4893617 0.5106383)  
+##       12) dem10m>=1054.305 15   2 nonspodic (0.8666667 0.1333333) *
+##       13) dem10m< 1054.305 32  10 spodic (0.3125000 0.6875000)  
+##         26) protection>=0.178847 13   5 nonspodic (0.6153846 0.3846154) *
+##         27) protection< 0.178847 19   2 spodic (0.1052632 0.8947368) *
+##      7) minc100>=-0.1576455 103  22 spodic (0.2135922 0.7864078)  
+##       14) landsatb7>=0.0440802 37  15 spodic (0.4054054 0.5945946)  
+##         28) planc100< -0.00902005 8   1 nonspodic (0.8750000 0.1250000) *
+##         29) planc100>=-0.00902005 29   8 spodic (0.2758621 0.7241379) *
+##       15) landsatb7< 0.0440802 66   7 spodic (0.1060606 0.8939394) *
 ```
 
 ```r
@@ -174,9 +318,9 @@ plot(spodintmodel2)
 text(spodintmodel2, cex=0.8)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-5-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
-The decision tree got more complex when soil order and subgroup were omitted. Also, 0.5 and 1.5 were omitted from the terminal nodes. One way to compare the two models is to use the function `printcp()`:
+Notice that several of the splits changed. Which model performed better? One way to compare the two models is to use the function `printcp()`:
 
 
 ```r
@@ -186,10 +330,7 @@ printcp(spodintmodel)
 ```
 ## 
 ## Classification tree:
-## rpart(formula = spodint ~ x + y + Overtype + Underconifer + Oi + 
-##     Oe + Oa + Otot + epipedon + subgroup + order + ps + drainage + 
-##     slope + surfacetex + stoniness + depthclass + bedrockdepth + 
-##     hillslope + tipmound + rainfall + geology + aachn + dem10m + 
+## rpart(formula = spodint ~ rainfall + geology + aachn + dem10m + 
 ##     downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + 
 ##     landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref + 
 ##     ndvi + northeastn + northness + northwestn + planc100 + proc100 + 
@@ -197,17 +338,21 @@ printcp(spodintmodel)
 ##     method = "class")
 ## 
 ## Variables actually used in tree construction:
-## [1] order    slp50    subgroup
+##  [1] dem10m     greenrefl  landsatb7  maxc100    maxent     minc100   
+##  [7] northwestn proc100    protection rainfall   solar     
 ## 
 ## Root node error: 162/250 = 0.648
 ## 
 ## n= 250 
 ## 
 ##         CP nsplit rel error  xerror     xstd
-## 1 0.432099      0   1.00000 1.00000 0.046614
-## 2 0.395062      1   0.56790 0.62963 0.047967
-## 3 0.024691      2   0.17284 0.17901 0.031254
-## 4 0.010000      3   0.14815 0.15432 0.029280
+## 1 0.179012      0   1.00000 1.00000 0.046614
+## 2 0.030864      1   0.82099 0.90741 0.048039
+## 3 0.029321      2   0.79012 0.88272 0.048292
+## 4 0.018519      7   0.63580 0.89506 0.048172
+## 5 0.015432      8   0.61728 0.86420 0.048448
+## 6 0.012346     11   0.56790 0.86420 0.048448
+## 7 0.010000     14   0.53086 0.87037 0.048399
 ```
 
 ```r
@@ -217,32 +362,26 @@ printcp(spodintmodel2)
 ```
 ## 
 ## Classification tree:
-## rpart(formula = spodint ~ x + y + Overtype + Underconifer + Oi + 
-##     Oe + Oa + Otot + epipedon + ps + drainage + slope + surfacetex + 
-##     stoniness + depthclass + bedrockdepth + hillslope + tipmound + 
-##     rainfall + geology + aachn + dem10m + downslpgra + eastness + 
-##     greenrefl + landsatb1 + landsatb2 + landsatb3 + landsatb7 + 
-##     maxc100 + maxent + minc100 + mirref + ndvi + northeastn + 
-##     northness + northwestn + planc100 + proc100 + protection + 
-##     relpos11 + slp50 + solar + tanc75, data = soildata, method = "class")
+## rpart(formula = newcolumn ~ rainfall + geology + aachn + dem10m + 
+##     downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + 
+##     landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref + 
+##     ndvi + northeastn + northness + northwestn + planc100 + proc100 + 
+##     protection + relpos11 + slp50 + solar + tanc75, data = soildata, 
+##     method = "class")
 ## 
 ## Variables actually used in tree construction:
-##  [1] aachn      eastness   landsatb2  minc100    Oa         Otot      
-##  [7] proc100    slope      surfacetex tipmound  
+## [1] dem10m     eastness   landsatb7  minc100    northeastn planc100  
+## [7] protection tanc75    
 ## 
-## Root node error: 162/250 = 0.648
+## Root node error: 109/250 = 0.436
 ## 
 ## n= 250 
 ## 
 ##         CP nsplit rel error  xerror     xstd
-## 1 0.253086      0   1.00000 1.00000 0.046614
-## 2 0.058642      1   0.74691 0.78395 0.048794
-## 3 0.037037      3   0.62963 0.80864 0.048744
-## 4 0.030864      4   0.59259 0.79012 0.048787
-## 5 0.018519      5   0.56173 0.77160 0.048801
-## 6 0.015432      6   0.54321 0.79630 0.048776
-## 7 0.012346      8   0.51235 0.79012 0.048787
-## 8 0.010000     12   0.45679 0.77778 0.048799
+## 1 0.256881      0   1.00000 1.00000 0.071933
+## 2 0.050459      1   0.74312 0.88073 0.070550
+## 3 0.027523      5   0.54128 0.88073 0.070550
+## 4 0.010000      8   0.45872 0.88991 0.070686
 ```
 
 The `printcp()` funtion generates a cost complexity parameter table that provides the complexity parameter value (CP), relative model error (1 - relative error = ~variance explained), error estimated from a 10-fold cross validation (xerror), and the standard error of the xerror (xstd). The CP values control the size of the tree; the greater the CP value, the fewer the number of splits in the tree. To determine the optimal CP value, rpart automatically performs a 10-fold cross validation. The optimal size of the tree is generally the row in the CP table that minimizes all error with the fewest branches. Another way to determine the optimal tree size is to use the `plotcp()` function. This will plot the xerror versus cp value and tree size. 
@@ -252,29 +391,26 @@ The `printcp()` funtion generates a cost complexity parameter table that provide
 plotcp(spodintmodel)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-7-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ```r
 plotcp(spodintmodel2)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-7-2.png)
+![](treemodels_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
 
-The optimal CP value is 0.099 for spodintmodel and 0.034 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
+The optimal CP value is 0.029321 for spodintmodel and 0.050459 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
 
 
 ```r
-pruned<-prune(spodintmodel, cp=0.099)
+pruned <- prune(spodintmodel, cp=0.029321)
 printcp(pruned)
 ```
 
 ```
 ## 
 ## Classification tree:
-## rpart(formula = spodint ~ x + y + Overtype + Underconifer + Oi + 
-##     Oe + Oa + Otot + epipedon + subgroup + order + ps + drainage + 
-##     slope + surfacetex + stoniness + depthclass + bedrockdepth + 
-##     hillslope + tipmound + rainfall + geology + aachn + dem10m + 
+## rpart(formula = spodint ~ rainfall + geology + aachn + dem10m + 
 ##     downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + 
 ##     landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref + 
 ##     ndvi + northeastn + northness + northwestn + planc100 + proc100 + 
@@ -282,203 +418,287 @@ printcp(pruned)
 ##     method = "class")
 ## 
 ## Variables actually used in tree construction:
-## [1] order    subgroup
+## [1] northwestn protection
 ## 
 ## Root node error: 162/250 = 0.648
 ## 
 ## n= 250 
 ## 
-##        CP nsplit rel error  xerror     xstd
-## 1 0.43210      0   1.00000 1.00000 0.046614
-## 2 0.39506      1   0.56790 0.62963 0.047967
-## 3 0.09900      2   0.17284 0.17901 0.031254
+##         CP nsplit rel error  xerror     xstd
+## 1 0.179012      0   1.00000 1.00000 0.046614
+## 2 0.030864      1   0.82099 0.90741 0.048039
+## 3 0.029321      2   0.79012 0.88272 0.048292
 ```
 
 ```r
-plot(pruned)
-text(pruned, cex=0.8)
+rpart.plot(pruned, extra=3)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-8-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ```r
-pruned2<-prune(spodintmodel2, cp=0.034)
+pruned2 <- prune(spodintmodel2, cp=0.050459)
 printcp(pruned2)
 ```
 
 ```
 ## 
 ## Classification tree:
-## rpart(formula = spodint ~ x + y + Overtype + Underconifer + Oi + 
-##     Oe + Oa + Otot + epipedon + ps + drainage + slope + surfacetex + 
-##     stoniness + depthclass + bedrockdepth + hillslope + tipmound + 
-##     rainfall + geology + aachn + dem10m + downslpgra + eastness + 
-##     greenrefl + landsatb1 + landsatb2 + landsatb3 + landsatb7 + 
-##     maxc100 + maxent + minc100 + mirref + ndvi + northeastn + 
-##     northness + northwestn + planc100 + proc100 + protection + 
-##     relpos11 + slp50 + solar + tanc75, data = soildata, method = "class")
+## rpart(formula = newcolumn ~ rainfall + geology + aachn + dem10m + 
+##     downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + 
+##     landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref + 
+##     ndvi + northeastn + northness + northwestn + planc100 + proc100 + 
+##     protection + relpos11 + slp50 + solar + tanc75, data = soildata, 
+##     method = "class")
 ## 
 ## Variables actually used in tree construction:
-## [1] aachn    eastness Oa       proc100 
+## [1] eastness
 ## 
-## Root node error: 162/250 = 0.648
+## Root node error: 109/250 = 0.436
 ## 
 ## n= 250 
 ## 
 ##         CP nsplit rel error  xerror     xstd
-## 1 0.253086      0   1.00000 1.00000 0.046614
-## 2 0.058642      1   0.74691 0.78395 0.048794
-## 3 0.037037      3   0.62963 0.80864 0.048744
-## 4 0.034000      4   0.59259 0.79012 0.048787
+## 1 0.256881      0   1.00000 1.00000 0.071933
+## 2 0.050459      1   0.74312 0.88073 0.070550
 ```
 
 ```r
-plot(pruned2)
-text(pruned2, cex=0.8)
+rpart.plot(pruned2, extra=3)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-8-2.png)
+![](treemodels_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
 
-Spodintmodel explained approximately 83% of the variance in the data while spodintmodel2 only explained 41%. It is evident that soil order and subgroup greatly influence spodic intensity, but is that useful for prediction? 
+The misclassification rate (in cross-validation) for the spodintmodel was 57% (root node error * xerror * 100) which dropped to 38% in the spodintmodel2. Why did the performance of these models differ significantly?
 
-Another way to visualize rpart's decison tree and model performance is to use the rpart.plot package. 
+Let's compute an internal validation using a confusion matrix to further examine differences in these models. In order to do this, we will need to split our data into a training and test set.
 
 
 ```r
-rpart.plot(pruned2, extra=3) #extra=3 displays the misclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
-```
+## splits 70% of the data selected randomly into training set and the remaining 30% sample into test set
+datasplit <- sort(sample(nrow(soildata), nrow(soildata)*.7)) 
+train <- soildata[datasplit,]
+test <- soildata[-datasplit,]
 
-![](treemodels_files/figure-html/unnamed-chunk-9-1.png)
-
-```r
-rpart.plot(pruned2, extra=103) #adding 100 to the extra setting displays the percentage observations in the node
-```
-
-![](treemodels_files/figure-html/unnamed-chunk-9-2.png)
-
-The rpart.plot package is recommended for plotting rpart trees. The examples above all deal with classification trees which result in categorical terminal nodes determined by majority votes. In a regression tree model, terminal nodes reflect the mean of the observations in that node. Let's build a regression tree using the soildata dataset to predict total O horizon thickness. 
-
-
-```r
-spodintmodel3<-rpart(Otot~x+y+Overtype+Underconifer+spodint+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, method = "anova")
-
-printcp(spodintmodel3)
+spodintmodel <- rpart(spodint ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = train, method = "class")
+printcp(spodintmodel)
 ```
 
 ```
 ## 
-## Regression tree:
-## rpart(formula = Otot ~ x + y + Overtype + Underconifer + spodint + 
-##     ps + drainage + slope + surfacetex + stoniness + depthclass + 
-##     bedrockdepth + hillslope + tipmound + rainfall + geology + 
-##     aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + 
-##     landsatb2 + landsatb3 + landsatb7 + maxc100 + maxent + minc100 + 
-##     mirref + ndvi + northeastn + northness + northwestn + planc100 + 
-##     proc100 + protection + relpos11 + slp50 + solar + tanc75, 
-##     data = soildata, method = "anova")
+## Classification tree:
+## rpart(formula = spodint ~ rainfall + geology + aachn + dem10m + 
+##     downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + 
+##     landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref + 
+##     ndvi + northeastn + northness + northwestn + planc100 + proc100 + 
+##     protection + relpos11 + slp50 + solar + tanc75, data = train, 
+##     method = "class")
 ## 
 ## Variables actually used in tree construction:
-## [1] aachn      greenrefl  landsatb3  maxent     spodint    stoniness 
-## [7] surfacetex y         
+## [1] aachn      maxc100    maxent     northwestn protection relpos11  
 ## 
-## Root node error: 8990/250 = 35.96
+## Root node error: 108/175 = 0.61714
 ## 
-## n= 250 
-## 
-##          CP nsplit rel error  xerror     xstd
-## 1  0.318266      0   1.00000 1.00805 0.166576
-## 2  0.111721      1   0.68173 0.70838 0.119043
-## 3  0.050419      2   0.57001 0.66250 0.096848
-## 4  0.043957      3   0.51959 0.67700 0.107479
-## 5  0.031130      4   0.47564 0.62473 0.106850
-## 6  0.019235      5   0.44451 0.64763 0.107592
-## 7  0.013928      6   0.42527 0.66753 0.110082
-## 8  0.010851      7   0.41134 0.68724 0.109936
-## 9  0.010394      8   0.40049 0.69973 0.110004
-## 10 0.010000      9   0.39010 0.69697 0.109696
-```
-
-```r
-pruned3<-prune(spodintmodel3, cp=0.050419)
-prp(pruned3,type=1,extra=1,branch=1) #prp is another function in the rpart.plot package that has numerous plot customization options
-```
-
-![](treemodels_files/figure-html/unnamed-chunk-10-1.png)
-
-```r
-printcp(pruned3)
-```
-
-```
-## 
-## Regression tree:
-## rpart(formula = Otot ~ x + y + Overtype + Underconifer + spodint + 
-##     ps + drainage + slope + surfacetex + stoniness + depthclass + 
-##     bedrockdepth + hillslope + tipmound + rainfall + geology + 
-##     aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + 
-##     landsatb2 + landsatb3 + landsatb7 + maxc100 + maxent + minc100 + 
-##     mirref + ndvi + northeastn + northness + northwestn + planc100 + 
-##     proc100 + protection + relpos11 + slp50 + solar + tanc75, 
-##     data = soildata, method = "anova")
-## 
-## Variables actually used in tree construction:
-## [1] spodint    surfacetex
-## 
-## Root node error: 8990/250 = 35.96
-## 
-## n= 250 
+## n= 175 
 ## 
 ##         CP nsplit rel error  xerror     xstd
-## 1 0.318266      0   1.00000 1.00805 0.166576
-## 2 0.111721      1   0.68173 0.70838 0.119043
-## 3 0.050419      2   0.57001 0.66250 0.096848
+## 1 0.194444      0   1.00000 1.00000 0.059540
+## 2 0.046296      1   0.80556 0.89815 0.060882
+## 3 0.043210      2   0.75926 0.92593 0.060616
+## 4 0.037037      5   0.62963 0.89815 0.060882
+## 5 0.010000      6   0.59259 0.94444 0.060397
 ```
 
-**Was the majority of the variance in total O horizon thickness captured with the rpart model?**
+```r
+pruned <- prune(spodintmodel, cp=0.070175)
+pred <- predict(pruned, newdata=test, type="class") #predicting class test data using the pruned model
+confusionMatrix(pred, test$spodint) #computes confusion matrix and summary statistics
+```
+
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction  0 0.5  1 1.5  2
+##        0   17   4 16   2 10
+##        0.5  0   0  0   0  0
+##        1    0   0  0   0  0
+##        1.5  0   0  0   0  0
+##        2    4   3  7   0 12
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.3867          
+##                  95% CI : (0.2764, 0.5062)
+##     No Information Rate : 0.3067          
+##     P-Value [Acc > NIR] : 0.08608         
+##                                           
+##                   Kappa : 0.1426          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: 0 Class: 0.5 Class: 1 Class: 1.5 Class: 2
+## Sensitivity            0.8095    0.00000   0.0000    0.00000   0.5455
+## Specificity            0.4074    1.00000   1.0000    1.00000   0.7358
+## Pos Pred Value         0.3469        NaN      NaN        NaN   0.4615
+## Neg Pred Value         0.8462    0.90667   0.6933    0.97333   0.7959
+## Prevalence             0.2800    0.09333   0.3067    0.02667   0.2933
+## Detection Rate         0.2267    0.00000   0.0000    0.00000   0.1600
+## Detection Prevalence   0.6533    0.00000   0.0000    0.00000   0.3467
+## Balanced Accuracy      0.6085    0.50000   0.5000    0.50000   0.6407
+```
+
+```r
+#sensitivity=producer's accuracy and specificity=user's accuracy
+
+spodintmodel2 <- rpart(newcolumn ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = train, method = "class")
+printcp(spodintmodel2)
+```
+
+```
+## 
+## Classification tree:
+## rpart(formula = newcolumn ~ rainfall + geology + aachn + dem10m + 
+##     downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + 
+##     landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref + 
+##     ndvi + northeastn + northness + northwestn + planc100 + proc100 + 
+##     protection + relpos11 + slp50 + solar + tanc75, data = train, 
+##     method = "class")
+## 
+## Variables actually used in tree construction:
+## [1] aachn    eastness minc100  proc100  slp50    tanc75  
+## 
+## Root node error: 81/175 = 0.46286
+## 
+## n= 175 
+## 
+##         CP nsplit rel error  xerror     xstd
+## 1 0.345679      0   1.00000 1.00000 0.081433
+## 2 0.043210      1   0.65432 0.71605 0.076878
+## 3 0.037037      4   0.51852 0.81481 0.079156
+## 4 0.010000      7   0.40741 0.80247 0.078913
+```
+
+```r
+pruned2 <- prune(spodintmodel2, cp=0.050459)
+pred2 <- predict(pruned2, newdata=test, type="class") #predicting class of test data using the pruned model
+confusionMatrix(pred2, test$newcolumn) #computes confusion matrix and summary statistics
+```
+
+```
+## Confusion Matrix and Statistics
+## 
+##            Reference
+## Prediction  nonspodic spodic
+##   nonspodic        12     12
+##   spodic           16     35
+##                                           
+##                Accuracy : 0.6267          
+##                  95% CI : (0.5073, 0.7357)
+##     No Information Rate : 0.6267          
+##     P-Value [Acc > NIR] : 0.5514          
+##                                           
+##                   Kappa : 0.1784          
+##  Mcnemar's Test P-Value : 0.5708          
+##                                           
+##             Sensitivity : 0.4286          
+##             Specificity : 0.7447          
+##          Pos Pred Value : 0.5000          
+##          Neg Pred Value : 0.6863          
+##              Prevalence : 0.3733          
+##          Detection Rate : 0.1600          
+##    Detection Prevalence : 0.3200          
+##       Balanced Accuracy : 0.5866          
+##                                           
+##        'Positive' Class : nonspodic       
+## 
+```
+
+The accuracy of the spodintmodel using split sample internal validation was 39% (61% misclassification error). The model incorrectly classified all spodic intensity ratings of 0.5 and 1.5. The accuracy of the spodintmodel2 was 63% (37% misclassification error). The model was able to predict spodic better than nonspodic. Notice that both of the misclassification errors increased slightly using the split sample validation versus the deafult internal 10-fold cross-validation used in by the rpart package. It is not uncommon to see slight differences in overall model performance between validations. In this case, it confirms that the first model is relatively 40% accurate and the second model is relatively 63% accurate. 
+
+As a side note: The default 10-fold internal cross-validation in rpart divides the data into 10 subsets, using 9 sets as 'learning samples' to create trees, and 1 set as 'test samples' to calculate error rates. This process is repeated for all possible combinations of learning and test samples (a total of 10 times), and error rates are averaged to estimate the error rate for the full data set.
 
 
-### Exercise 1: rpart
-Using the soildata dataset, construct a rpart model to predict tipmound. Prune the model if necessary and answer the following questions:
+### 8.2.1 Exercise 2: rpart
+The examples above dealt with classification trees which resulted in categorical terminal nodes determined by majority votes. In a regression tree model, terminal nodes reflect the mean of the observations in that node. Using the **soildata** dataset, construct a rpart regression tree model to predict total O horizon thickness. Prune the model if necessary and answer the following questions:
 
-1) What are the most important variables for separating tip and mound ratings?
-2) What is the cross-validation error of the pruned model?
-3) How could you improve this model?
+** 1) Was the majority of the variance in total O horizon thickness captured with the rpart model?**
 
-## 8.2 Random Forest
+** 2) What were the most important variables in the model?**
+
+** 3) How could the model be improved?**
+
+
+## 8.3 Random Forest
 The randomForest algorithm fits hundreds to thousands of CART models to random subsets of input data and combines the trees for prediction. Similarly to rpart, randomForest allows all data types to be used as independent variables, regardless of whether the model is a classification or regression tree. Unlike rpart, the randomForest algorithm does not straight forwardly handle missing values with surrogate splits. There is a function called `rfImpute()` that uses a proximity matrix from the randomForest to populate missing values with either the weighted average of the non-missing observations (weighted by the proximities) for continuous predictors or the category with the largest average proximity for categorical predictors. 
 
-Going back to the soildata dataset, it is also of particular interest to determine what properties best predict total O horizon thickness (Otot). Just like rpart, randomForest has the same basic model function: (y ~ x).
+Going back to the **soildata** dataset, let's generate a random forest regression model for total O horizon thickness and compare it to the one we just generated in rpart. Just like rpart, randomForest has the same basic model function: (y ~ x).
 
 
 ```r
-rf<-randomForest(Otot~x+y+Overtype+Underconifer+spodint+ps+drainage+slope+surfacetex+stoniness+depthclass+bedrockdepth+hillslope+tipmound+rainfall+geology+aachn+dem10m+downslpgra+eastness+greenrefl+landsatb1+landsatb2+landsatb3+landsatb7+maxc100+maxent+minc100+mirref+ndvi+northeastn+northness+northwestn+planc100+proc100+protection+relpos11+slp50+solar+tanc75, data=soildata, importance=TRUE) 
-#Oi, Oe, Oa, order, subgroup, and epipedon were omitted as independent variables
-#importance=TRUE will allow the generation of a variable importance plot
+rf <- randomForest(Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata, importance=TRUE, ntree=1000, mtry=10) #importance=TRUE will allow the generation of a variable importance plot
 
-rf # statistical summary
+rf #statistical summary
 ```
 
 ```
 ## 
 ## Call:
-##  randomForest(formula = Otot ~ x + y + Overtype + Underconifer +      spodint + ps + drainage + slope + surfacetex + stoniness +      depthclass + bedrockdepth + hillslope + tipmound + rainfall +      geology + aachn + dem10m + downslpgra + eastness + greenrefl +      landsatb1 + landsatb2 + landsatb3 + landsatb7 + maxc100 +      maxent + minc100 + mirref + ndvi + northeastn + northness +      northwestn + planc100 + proc100 + protection + relpos11 +      slp50 + solar + tanc75, data = soildata, importance = TRUE) 
+##  randomForest(formula = Otot ~ rainfall + geology + aachn + dem10m +      downslpgra + eastness + greenrefl + landsatb1 + landsatb2 +      landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref +      ndvi + northeastn + northness + northwestn + planc100 + proc100 +      protection + relpos11 + slp50 + solar + tanc75, data = soildata,      importance = TRUE, ntree = 1000, mtry = 10) 
 ##                Type of random forest: regression
-##                      Number of trees: 500
-## No. of variables tried at each split: 13
+##                      Number of trees: 1000
+## No. of variables tried at each split: 10
 ## 
-##           Mean of squared residuals: 21.4013
-##                     % Var explained: 40.49
+##           Mean of squared residuals: 28.08342
+##                     % Var explained: 21.9
 ```
 
 ```r
-plot(rf)  #out of bag (OOB) error rate versus number of trees
+plot(rf)  #out of bag (OOB) error rate versus number of trees; this will help us tune the ntree parameter
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-11-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
-The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 40% of the variance and produced a mean square error (sum of squared residuals divided by n) of 21 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly due to the random subsetting and averaging in the randomForest algorithm. 
+The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 23% of the variance and produced a mean square error (sum of squared residuals divided by n) of 28 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly due to the random subsetting and averaging in the randomForest algorithm. **How does this compare with the rpart model?**
 
-Recall that the rpart model that we constructed earlier for Otot produced a relative error of ~57%, meaning that the rpart model explained approximately 43% of the variance. In this example, the pruned rpart model performed slightly better (meaning that it was able to explain more variance) than the rf model. 
+Recall that the **soildata** dataset had one Histosol observation:
+
+```r
+hist(soildata$Otot)
+```
+
+![](treemodels_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+
+Let's remove that observation to see how it impacted our model. 
+
+```r
+file <- 'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+download.file(file, destfile = "soildata.csv")
+soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+soildata2 <- droplevels(subset(soildata, order!="histosol")) #remove Histosol observation
+
+rf2 <- randomForest(Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata2, importance=TRUE, ntree=1000, mtry=9) 
+#importance=TRUE will allow the generation of a variable importance plot
+
+rf2 # statistical summary
+```
+
+```
+## 
+## Call:
+##  randomForest(formula = Otot ~ rainfall + geology + aachn + dem10m +      downslpgra + eastness + greenrefl + landsatb1 + landsatb2 +      landsatb3 + landsatb7 + maxc100 + maxent + minc100 + mirref +      ndvi + northeastn + northness + northwestn + planc100 + proc100 +      protection + relpos11 + slp50 + solar + tanc75, data = soildata2,      importance = TRUE, ntree = 1000, mtry = 9) 
+##                Type of random forest: regression
+##                      Number of trees: 1000
+## No. of variables tried at each split: 9
+## 
+##           Mean of squared residuals: 24.27255
+##                     % Var explained: 22.64
+```
+
+
+**Did removing the outlier Histosol observation improve the model?** 
 
 The defaults for the number of trees (`ntree`) and number of variables tried at each split (`mtry`) may need to be adjusted in the `randomForest` command to explain more variance in the data and to reduce model over-fitting. For most datasets, manually tweaking these parameters and examining the statistical summary is often sufficient. The `tuneRF()` function can be used to determine the optimal `mtry` value, but some users have claimed that this algorithm leads to bias. Feel free to manually tweak the `ntree` and `mtry` settings to see how they effect the overall model performance. 
 
@@ -486,88 +706,91 @@ Another way to assess the rf model is to look at the variable importance plot.
 
 
 ```r
-varImpPlot(rf)
+varImpPlot(rf2)
 ```
 
-![](treemodels_files/figure-html/unnamed-chunk-12-1.png)
+![](treemodels_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ```r
-importance(rf) #tabular summary
+imp <- as.data.frame(sort(importance(rf2)[,1],decreasing = TRUE),optional = T)
+names(imp) <- "% Inc MSE"
+imp # sorted tabular summary
 ```
 
 ```
-##                 %IncMSE IncNodePurity
-## x             2.7466611     203.74556
-## y             7.0623477     323.85785
-## Overtype      6.1671432     454.37620
-## Underconifer  2.6873455      32.61779
-## spodint      18.9422746    1543.42277
-## ps           -1.1766319      48.45761
-## drainage     -1.1316555      13.90926
-## slope         1.1842654     115.06059
-## surfacetex    6.4940362    1012.70739
-## stoniness     2.5314740      67.61651
-## depthclass   -0.2866298      26.60054
-## bedrockdepth -0.6370323      12.35880
-## hillslope     5.0595186      59.80030
-## tipmound      2.3436125      27.11789
-## rainfall      5.8006666      77.38009
-## geology       1.9713885      18.05937
-## aachn         0.8662600     138.10070
-## dem10m        3.2320090     151.67036
-## downslpgra    1.9896186      99.84497
-## eastness     -3.7785542     658.16152
-## greenrefl     4.2563289     178.78592
-## landsatb1     1.4048135      98.25968
-## landsatb2     1.7322221     120.69122
-## landsatb3     0.7610440      60.02267
-## landsatb7     6.5944514     494.92055
-## maxc100       1.8477057     124.05165
-## maxent        5.4363242     493.16763
-## minc100       0.6259799      93.66140
-## mirref        2.2580097     273.04452
-## ndvi          0.3290258     113.27927
-## northeastn    2.0245942     329.05479
-## northness     0.6611449     124.77783
-## northwestn    3.9733863     238.06246
-## planc100     -0.6615894     132.25190
-## proc100      -0.3324362     122.38564
-## protection    1.9910928     140.59312
-## relpos11      0.5163321     113.35519
-## slp50         1.2685970     123.98450
-## solar         2.7873116     126.61789
-## tanc75        0.8166283     158.30040
+##             % Inc MSE
+## landsatb7  22.9225825
+## maxent     17.4622144
+## protection 10.8817679
+## rainfall    9.7008362
+## northwestn  9.3653088
+## solar       8.7599168
+## relpos11    7.5613310
+## dem10m      5.0931953
+## downslpgra  5.0218564
+## slp50       4.7589916
+## aachn       4.5511298
+## eastness    4.5355225
+## proc100     4.4813472
+## geology     4.4692365
+## maxc100     4.4669093
+## northness   4.0126574
+## minc100     3.7458066
+## planc100    3.6890158
+## greenrefl   3.4760112
+## northeastn  3.4415975
+## landsatb2   2.9299042
+## landsatb3   2.3168437
+## ndvi        2.0321966
+## mirref      0.4491754
+## landsatb1   0.2836085
+## tanc75     -1.9336032
 ```
 
 For each tree, each predictor in the OOB sample is randomly permuted and passed through the tree to obtain an error rate (mean square error (MSE) for regression and Gini index for classification). The error rate from the unpermuted OOB is then subtracted from the error rate of the permuted OOB data, and averaged across all trees. When this value is large, it implies that a variable is highly correlated to the dependent variable and is needed in the model. 
 
 In a regression tree analysis, randomForest uses %IncMSE and IncNodePurity to rank variable importance. %IncMSE is simply the average increase in squared residuals of the test set when variables are randomly permuted (little importance = little change in model when variable is removed or added) and IncNodePurity is the increase in homogeneity in the data partitions. In a classification tree analysis, randomForest uses MeanDecreaseAccuracy and MeanDecreaseGini. For MeanDecreaseAccuracy, the more the accuracy of the model decreases due to the addition of a single variable, the more important the variable is deemed. MeanDecreaseGini is a measure of how each variable contributes to the homogeneity of the nodes and leaves.
 
-In the rf model, it is apparent that spodint is the most important variable used in the model, followed by y, landsatb7, Overtype, surfacetex, maxent, hillslope, slp50, rainfall, and protection index. 
+In the rf2 model, it is apparent that landsatb7 is the most important variable used in the model, followed by maxent, protection index, northwestness, solar, and rainfall. 
 
-### Exercise 2: randomForest
-Using the soildata dataset, construct a randomForest model to predict soil order. Hint: remove the one histosol observation before constructing the model (`soildata2<-droplevels(subset(soildata, order!="histosol")) `) and do not include spodint, series, taxon, or subgroup. When finished, answer the following questions:
 
-1) What are the most important variables for separating Inceptisols from Spodosols from Ultisols?
-2) What is the out-of-bag error rate?
-3) Which soil order was best predicted by the model?
+### 8.3.1 Exercise 3: randomForest
+Using the **soildata** dataset, construct a randomForest model to predict the probability of a folistic epipedon. Be sure to tweak the ntree and mtry parameters to capture the most variability. Use the following code to combine ochric and umbric into a new category called nonfolistic. 
 
-## 8.3 Prediction using Tree-based Models
+
+```r
+soildata$epipedon2 <- soildata$epipedon
+levels(soildata$epipedon2)[levels(soildata$epipedon2)=="ochric"] <- "nonfolistic"
+levels(soildata$epipedon2)[levels(soildata$epipedon2)=="umbric"] <- "nonfolistic"
+```
+
+
+** 1) What is the out-of-bag error rate?**
+
+** 2) Compare this model with the total O horizon thickness regression model. Which would be better for spatial interpolation?**
+
+** 3) How could you improve this model?**
+
+
+## 8.4 Prediction using Tree-based Models
 As with any modeling technique, tree-based models can be used for prediction and can be spatially interpolated using environmental covariates. In order to interpolate a model, R requires that all raster images have a common datum, common cell resolution, are coregistered, and are preferably .img files. The function `stack()` combines all of the rasters into a "raster stack." The `predict()` function is then used in the form of: `predict(rasterstack, fittedmodel, type="")`. Follow along through the example below to interpolate the rpart total O horizon thickness model:
 
 
 ```r
 library(raster)
-rasters<-stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines rasters with a .img file extension stored in the working directory
+rasters <- stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines rasters with a .img file extension stored in the working directory
 
 rasters 
 
-model<-rpart(Otot~maxent+slp50+protection, data=soildata)
+model <- randomForest(Otot~landsatb7+maxent+protection+northwestn+solar, data=soildata2)
 
-predict(rasters,model, type="vector",progress="window",overwrite=TRUE,filename="rpartpredict.img") #type: "vector" for mean response at the node, "prob" for matrix of class probabilities, or "class" for a factor of classifications based on the responses
+predict(rasters,model,progress="window",overwrite=TRUE,filename="rfpredict.img") 
+#type not specified=vector of predicted values, "response" for predicted class, "prob" for probabilities, or "vote" for matrix of vote counts (one column for each class and one row for each new input); either in raw counts or in fractions (if norm.votes=TRUE)
+
+#options for predicting rpart model: type= "vector" for mean response at the node, "prob" for matrix of class probabilities, or "class" for a factor of classifications based on the responses
 ```
 
-The output raster "rpartpredict.img" can be added and viewed in ArcMap. 
+The output raster "rfpredict.img" can be added and viewed in ArcMap. 
 
 ![R GUI image](figure/ch8_predicted.jpg)  
 
@@ -575,17 +798,17 @@ The output raster "rpartpredict.img" can be added and viewed in ArcMap.
 You can also view the interpolated model in R:
 
 ```r
-rpartpredict <- raster("rpartpredict.img")
-plot(rpartpredict, xlab="Easting (m)", ylab="Northing (m)", main="Total O Horizon Thickness (cm)")
+rfpredict <- raster("rfpredict.img")
+plot(rfpredict, xlab="Easting (m)", ylab="Northing (m)", main="Total O Horizon Thickness (cm)")
 ```
 
-## 8.4 Summary
-Tree-based models are intuitive, quick to run, nonparametric, and are often ideal for exploratory data analysis and prediction. Both rpart and randomForest produce graphical and tabular outputs to aid interpretation. Both packages also perform internal validataion (rpart=10-fold cross validation; randomForest=OOB error estimates) to assess model performance. Tree-based models do require pruning and/or tweaking of model parameters to reduce over-fitting and are unstable in that removing observations (especially outliers) or independent predictors can greatly alter the tree structure. In general,  tree-based models are robust against multicollinearity and low n, high p datasets (low sample size and many predictors).
+
+## 8.5 Summary
+Tree-based models are intuitive, quick to run, nonparametric, and are often ideal for exploratory data analysis and prediction. Both rpart and randomForest produce graphical and tabular outputs to aid interpretation. Both packages also perform internal validataion (rpart=10-fold cross validation; randomForest=OOB error estimates) to assess model performance. Tree-based models do require pruning and/or tweaking of model parameters to reduce over-fitting and are unstable in that removing observations (especially outliers) or independent predictors can greatly alter the tree structure. In general, tree-based models are robust against multicollinearity and low n, high p datasets (low sample size and many predictors).
 
 
-## 8.5 Additional Reading
+## 8.6 Additional Reading
 
 Gareth, J., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
 
 Rad, M.R.P., N. Toomanian, F. Khormali, C.W. Brungard, C.B. Komaki, and P. Bogaert. 2014. Updating soil survey maps using random forest and conditioned Latin hypercube sampling in the loess derived soils of northern Iran. Geoderma. 232-234: 97-106. 
-

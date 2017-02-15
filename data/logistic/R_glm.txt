@@ -1,0 +1,85 @@
+### Predict surface using model from rpart using raster stack created from img files
+### Read point training set, view first record, attach database so actual variable names may be used
+
+require(sp)
+require(raster)
+require(rgdal)
+require(rpart)
+require(rms)
+setwd("C:/WorkSpace/arc_sie/training/WV_DSM_workshop/class_data")
+pts = read.csv("training_pts.csv") 
+head(pts, 1) 
+attach(pts)
+
+### Create generalized linear model
+
+# GLM.1 <- glm(PREDICT ~ dep_cst, family=binomial, data=pts)
+# summary(GLM.1)
+
+### Look at Nagelkerke R2  - generically called pseudo R squared
+GLM.1b <- lrm(spod_pres_cons ~ dem10m + maxent + northeastn + northness, data=pts)
+print(GLM.1b)
+
+## # Read img files, create stack – img files need to be in working directory and names in stack  
+###  MUST match variable names in training set point file- view rasters to verify
+
+rasters=stack(list.files(getwd(),pattern="img$",full.names=FALSE))
+rasters
+
+### Predict model and write results to an img file. Type=response returns probability for each cell)
+
+## arg' should be one of “lp”, “fitted”, “fitted.ind”, “mean”, “x”, “data.frame”, “terms”, “cterms”, “ccterms”, “adjto”, “adjto.data.frame”, “model.frame”
+
+predict(rasters,GLM.1b, type="probit",progress="window",overwrite=TRUE,filename="spodic_cons_GLM1c.img")
+
+
+## Spodic presence - liberal classification
+
+GLM.3 <- lrm(spod_pres_lib ~ dem10m + downslpgra + maxent + ndvi + northeastn + northness + protection, data = pts)
+
+predict(rasters,GLM.3, type="fitted",progress="window",overwrite=TRUE,filename="spodic_lib_GLM3.img")
+
+## Tip and mound presence
+
+GLM.4 <- lrm(tip_pres ~ aachn + dem10m + mirref, data=pts)
+print(GLM.4)
+predict(rasters,GLM.4, type="fitted",progress="window",overwrite=TRUE,filename="tip_mnd_GLM4.img")
+
+
+## Classification tree 
+
+spod_class <- rpart(as.factor(spod_pres_lib) ~ aachn + dem10m + downslpgra + eastness + greenrefl + maxc100 + minc100 + mirref + ndvi + nirref + northeastn + northness + northwestn + protection + solar, data = pts)
+
+par(mfrow=c(1,1), xpd=NA)
+
+plot(spod_class)
+
+text(spod_class, use.n=TRUE) 
+
+print(spod_class)
+
+summary(spod_class)
+
+plotcp(spod_class)  ## look at relationship between complexity factor and number of splits - useful for optimizing number of splits and avoiding overfitting
+
+spod_class <- rpart(as.factor(spod_pres_lib) ~ aachn + dem10m + downslpgra + eastness + greenrefl + maxc100 + minc100 + mirref + ndvi + nirref + northeastn + northness + northwestn + protection + solar, cp=0.046, data = pts)
+
+predict(rasters, spod_class, type="class",progress="window",overwrite=TRUE,filename="spod_class_rpart.img")
+predict(rasters, spod_class, type="prob",progress="window",overwrite=TRUE,filename="spod_prob_rpart.img")
+
+
+## Random Forest
+
+spod_classRF = randomForest(as.factor(pts$spod_pres_lib) ~ aachn + dem10m + downslpgra + eastness + greenrefl + maxc100 + minc100 + mirref + ndvi + nirref + northeastn + northness + northwestn + protection + solar, importance=TRUE, proximity=FALSE)
+
+#Check variable importance summary and plot
+
+importance(spod_classRF)
+varImpPlot(spod_classRF)
+
+print(spod_classRF)
+
+### Predict model and write results to an img file
+
+predict(rasters, spod_classRF, type="response",index=2,na.rm=TRUE,progress="window",overwrite=TRUE,filename="spod_classRF.img")
+
