@@ -1,34 +1,8 @@
----
-title: Chapter 1 Introduction to R and RStudio
-author: Stephen Roecker, Katey Yoast, and Skye Wills 
-date: "Tuesday, February 24, 2015"
-output:
-  html_document:
-    keep_md: yes
-    number_sections: yes
-    toc: yes
-    toc_float:
-      collapsed: yes
-      smooth_scroll: no
----
+# Chapter 1 Introduction to R and RStudio
+Stephen Roecker, Katey Yoast, and Skye Wills  
+Tuesday, February 24, 2015  
 
-```{r, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE,  results = 'asis', eval=FALSE)
 
-# load required packages
-library(aqp)
-library(soilDB)
-library(lattice)
-library(latticeExtra)
-
-# modify ggplot2like latticeExtra theme
-opar <- trellis.par.get()
-trellis.par.set(theme = ggplot2like())
-tpg <- trellis.par.get()
-tpg$axis.line <-  list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
-tpg$strip.border <- list(alpha = 1, col = "#000000", lty = rep(1, 7), lwd = rep(0.2, 7))
-trellis.par.set(tpg)
-```
 
 ![](figure/logo.jpg)
 
@@ -42,33 +16,7 @@ R is a free, open-source software and programming language developed in 1995 at 
 
 While some people find the use of a commandline environment daunting, it is becoming a necessary skill for scientists as the volume and variety of data has grown. Thus scripting or programming has become a third language for many scientists, in addition to their native language and disipline specific terminology.
 
-```{r, echo=FALSE, eval=TRUE}
-
-# fetch all KSSL data 'correlated as' Hartleton from the December 2015 snapshot
-# details on the data processing: https://github.com/dylanbeaudette/process-kssl-snapshot
-pedons <- fetchKSSL(series='Hartleton') 
-
-# slab() is used to aggregate selected variables within a collections of soil profiles along depth-slices; in this example we are aggregating clay, sand, and organic carbon
-s <- slab(pedons, taxonname ~ clay + sand + oc, slab.structure = 5)
-
-#specify color and line width to be used in plot
-tps <- list(superpose.line=list(col='black', lwd=2)) 
-
-# slice-wise median and 25th/75th percentiles are reasonable estimations of central tendency and spread
-xyplot(top ~ p.q50 | variable, data = s,
-       layout = c(3, 1), ylim = c(105, -5), 
-       scales = list(x = list(relation = 'free')),
-       ylab='Depth', xlab='median bounded by 25th and 75th percentiles',
-       lower=s$p.q25, upper=s$p.q75, cf=s$contributing_fraction,
-       alpha=0.25, sync.colors=TRUE,
-       panel = panel.depth_function, 
-       prepanel = prepanel.depth_function,
-       par.settings = tps
-       )
-
-# default plot method for SoilProfileCollection objects
-# plot(pedons, name='hzn_desgn', cex.names=0.85, axis.line.offset=-4, color='clay')
-``` 
+![](1_introduction_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
 
 
 # RStudio
@@ -124,7 +72,8 @@ Before working in R, create a working directory (a folder) to hold all of your R
 
 At the beginning of each R session, whether you are using R or Rstudio, you should set your working directory. Change the working directory in R to the new folder you set up using the following command:   
 
-```{r, eval=TRUE}
+
+```r
 setwd("C:/workspace")
 
 # beware R uses forward slashes / instead of back slashes \ for file paths
@@ -132,7 +81,8 @@ setwd("C:/workspace")
 
 To check the file path of the current working directory (which should now be "C:\workspace"), type:
 
-```{r}
+
+```r
 getwd()
 ```
 
@@ -167,7 +117,8 @@ west,range,B,24,24
 
 This dataset can either be simply imported into R using the **Import Dataset** button from the Environment tab, or by typing the following command into the R console:  
 
-```{r, eval=TRUE}
+
+```r
 sand <- read.csv("C:/workspace/sand_example.csv") 
 
 # if your workspace was already set you could simply use the filename, like so
@@ -180,11 +131,12 @@ sand <- read.csv("C:/workspace/sand_example.csv")
 
 To export data from R, use the command `write.csv()`. Since we have already set our working directory, R automatically saves our file into the working directory.  
 
-```{r}
+
+```r
 write.csv(sand, file = "sand_example2.csv")
 
 # or use the write.table() function to export other text file types
-``` 
+```
 
 
 ## Viewing Data
@@ -207,7 +159,8 @@ Function  | Description                                         |
 
 Try entering the following commands to view your dataset in R: 
 
-```{r}
+
+```r
 str(sand)
 
 names(sand)
@@ -215,11 +168,12 @@ names(sand)
 head(sand)
 
 ls()
-``` 
+```
 
 A data object is anything you've created or imported and assigned a name to in R. The Environment tab allows you to see what data objects are in your R session and expand their structure. Right now sand should be the only data object listed. If you wanted to delete all data objects from your R session, you could **click the broom icon** from the Environments tab. Otherwise you could type:
 
-```{r}
+
+```r
 # Remove all R objects
 rm(list = ls(all = TRUE)) 
 
@@ -242,7 +196,8 @@ To learn more about the function you are using and the options and arguments ava
 
 Other arguments are available for use with `read.csv()`. A quick way to find out what arguments are available for a given command is to type `help(command)`. In this example, you would type:
 
-```{r}
+
+```r
 help(read.csv) 
 
 # or
@@ -252,15 +207,17 @@ help(read.csv)
 
 These help commands bring up a webpage that describes all of the possible arguments for a command. The help pages also typically provide examples. You should also notice by reading the help page for `read.csv()` that it is just one of several functions for reading text files.
 
-```{r}
+
+```r
 help.search("histogram")
-``` 
+```
 
 ![](figure/ch1_fig36_rgui.jpg)  
 
 Look through the usage and arguments in the help documents. Re-enter the `hist` function; evaluate the effects of changing color, breaks, freq, and labels.  
 
-```{r}
+
+```r
 hist(sand$sand, freq=TRUE, breaks=12, xlim = c(15, 40), main = "Histogram of Sand", sub = "with 12 bins", col ="lightblue", ylab = "Counts", xlab = "Total Sand") 
 ```
 
@@ -292,36 +249,40 @@ Within the RStudio lower-left hand window if can select the **Packages** tab. Yo
 
 To find out what packages are installed on your computer, use the following commands:
 
-```{r}
+
+```r
 library() 
 
 #or
 
 installed.packages()
-``` 
+```
 
 Prior to downloading and installing a package, you need to select a CRAN mirror site to download from. Select the site closest to your physical location.
 
 The soilDB package allows you to import soil data from NASIS or SoilWeb. The following command shows how to install this package if you do not have currently have it downloaded:  
 
-```{r}
+
+```r
 install.packages("soilDB", dep = TRUE) #dep=TRUE will install all packages that "soilDB" depends on to work correctly
-``` 
+```
 
 
 ### Loading Packages
 
 Once a package is installed, it must be loaded into the R session to be used. 
 
-```{r}
+
+```r
 library(soilDB)
 ```
 
 You can also install and load packages using the **Packages** drop-down menu. Documentation about the soilDB package is available from the help functions in R. 
 
-```{r}
+
+```r
 help(package = "soilDB")
-``` 
+```
 
 This help command sends you to a webpage. Scroll down and select the link "fetchKSSL". This link brings up a webpage that has instructions on how to use the `fetchKSSL()` function in R. 
 
@@ -331,10 +292,13 @@ The "series" argument specifies a character string naming a soil series. The str
 
 Next we can call the `fetchKSSL()` function from the soilDB package.
 
-```{r, eval=TRUE}
+
+```r
 antigo <- fetchKSSL("antigo")
 plot(antigo, name = "hzn_desgn")
-``` 
+```
+
+![](1_introduction_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 Try a soil series from your home State.
 
@@ -345,7 +309,8 @@ Try some of the examples included at the end of the soilDB {soilDB} documentatio
 
 In RStudio, set your working directory to C:\workspace either by using the drop-down menus (Session, Set Working Directory, or Choose Directory) or by typing the following into the RStudio Console window and pressing **Enter**: 
 
-```{r}
+
+```r
 setwd("C:/workspace")
 ```
 
@@ -381,7 +346,8 @@ The R workspace consists of all the data objects you've created or loaded during
 ![](figure/ch1_save_workspace.png)    
 
 The R command for saving your workspace is:
-```{r}
+
+```r
 save.image(file="workspace.RData")
 ```
 
@@ -407,7 +373,8 @@ An R history file is a copy of all your key strokes. You can think of it as brut
 
 You can also use the command line to load or save your history.  
 
-```{r}
+
+```r
 savehistory(file = "sand.Rhistory")  
 loadhistory(file = "sand.Rhistory")  
 history(max.show=Inf) #displays all previous commands
@@ -417,11 +384,15 @@ history(max.show=Inf) #displays all previous commands
 
 Graphic outputs can be saved in various formats. 
  
-```{r, echo=FALSE, eval=TRUE}
-library(knitr)
-test <- data.frame(Function = c('pdf("graphic.pdf")', 'win.metafile("graphic.wmf")', 'png("graph.png")', 'jpeg("graph.jpg")', 'bmp("graph.bmp")', 'postscript("graph.ps")'), Output = c("pdf file", "window metafile", "png file", "jpeg file", "bmp file", "postscript file"))
-kable(test)
-```
+
+Function                      Output          
+----------------------------  ----------------
+pdf("graphic.pdf")            pdf file        
+win.metafile("graphic.wmf")   window metafile 
+png("graph.png")              png file        
+jpeg("graph.jpg")             jpeg file       
+bmp("graph.bmp")              bmp file        
+postscript("graph.ps")        postscript file 
 
 To save a graphic: (1) Click in the **Graphics Device** window to bring it to focus, (2) click the **File** menu and then the **Save as** command, and (3) click the desired image format.  
 
@@ -429,11 +400,15 @@ To save a graphic: (1) Click in the **Graphics Device** window to bring it to fo
 
 The R command for saving a graphic is:  
 
-```{r, eval=TRUE}
+
+```r
 png(file = "sand.png")
 plot(sand$sand)
 dev.off()
 ```
+
+png 
+  2 
 
 The first line of this command creates a blank file named sand with a JPEG extension.  The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the JPEG file we are creating). The third line closes the graphics device.  
 
@@ -444,7 +419,8 @@ While we recommend the use of RStudio for some of the reasons listed above, many
 
 To take a quick peak at Rcmdr, it can be loadeload by **entering** the following command into the R console.
 
-```{r, echo=TRUE, eval=FALSE}
+
+```r
 install.packages(Rcmdr)
 library(Rcmdr)
 ```
@@ -481,4 +457,4 @@ Given what you now know about R, try to answer the following questions:
 
 # References
 
-Ihaka, R., and R. Gentleman. 1996. R: A language for data analysis and graphics. Journal of Computational and Graphical Statistics 5(3):399–314. [https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf)  
+Ihaka, R., and R. Gentleman. 1996. R: A language for data analysis and graphics. Journal of Computational and Graphical Statistics 5(3):399â314. [https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf)  
