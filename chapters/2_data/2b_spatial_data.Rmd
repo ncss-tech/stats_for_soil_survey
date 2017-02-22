@@ -1,12 +1,12 @@
 ---
-title: Chapter 2: Part 2, Spatial Data
-author: Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello
+title: "Spatial Data"
+author: "Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello""
 date: "`r Sys.Date()`"
 output:
   html_document:
     keep_md: no
     number_sections: yes
-    toc: yes
+    toc: no
     toc_depth: 3
     toc_float:
       collapsed: true
@@ -14,23 +14,155 @@ output:
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+# setup
 library(knitr, quietly=TRUE)
+library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
 
 # options for R functions
 options(width=100, stringsAsFactors=FALSE)
+
+# captions added to figures
+knit_hooks$set(htmlcap = function(before, options, envir) {
+  if(!before) {
+    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
+    }
+    })
 ```
 
-![Statistics for pedologists course banner image](figure/logo.jpg)  
+<hr><br>
+
+# Introduction
+
+Most of us are familiar with spatial data types, sources, and the jargon used to describe interaction with these data. GIS software provides a convenient framework for most of the spatial analysis that we do, however, the combination of statistical routines, advanced graphics, and data access functionality make *R* and ideal environment for soil science. For example, with a couple of lines of *R* code, it is possible to quickly integrate soil morphology (NASIS), lab data (KSSL), map unit polygons (SSURGO), and climate data (PRISM raster files). 
+
+This chapter is a very brief demonstration of several possible ways to process spatial data in R. A much more thorough description can be found in [*Applied Spatial Data Analysis with R*](http://www.asdar-book.org/) (Bivand et al., 2013) or [*Spatial Data Analysis and Modeling with R*](http://rspatial.org/spatial/) (Hijmans, 2016).
+
+
+## Objectives
+ * Gain experience with creating, editing, and exporting spatial data objects in R.
+ * Lean the basics of the `sp` classes and functions.
+ * Learn the basics of the `raster` classes and functions.
+ * Develop a strategy for navigating the many possible spatial data processing methods.
+ * Learn how to integrate multiple data sources to create something new.
+ 
+
+# Spatial Data in R
+
+There are several foundational libraries that extend the basic functionality of the R environment to accommodate the special requirements of spatial data:
+
+ * `sp`: vector / raster storage and processing (memory-bound operations)
+ * `raster`: raster access and efficient processing of large files (not memory-bound)
+ * `rgdal`: interface to GDAL library for data import/export and coordinate system transformations
+ 
+There are [many, many more packages](https://cran.r-project.org/web/views/Spatial.html) available for working with spatial data, however we only have time to cover the above libraries. 
+ 
+
+The next couple of sections will require loading these libraries into the R session.
+```{r}
+library(sp)
+library(raster)
+library(rgdal)
+```
+
+If you haven't yet done so, please setup the sample datasets for this module.
+```{r, eval=FALSE}
+# make a place to store chapter 2b example data
+dir.create('C:/workspace/chapter-2b', recursive = TRUE)
+
+# download example data from github
+# polygons
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-mu-polygons.zip', 'C:/workspace/chapter-2b/chapter-2b-mu-polygons.zip')
+
+# raster data
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-PRISM.zip', 'C:/workspace/chapter-2b/chapter-2b-PRISM.zip')
+
+# unzip
+unzip('C:/workspace/chapter-2b/chapter-2b-mu-polygons.zip', exdir = 'C:/workspace/chapter-2b', overwrite = TRUE)
+unzip('C:/workspace/chapter-2b/chapter-2b-PRISM.zip', exdir = 'C:/workspace/chapter-2b', overwrite = TRUE)
+```
+
+
+
+
+## The `sp` Library and Classes
+
+The data structures ("classes") and functions provided by the [`sp`](https://cran.r-project.org/web/packages/sp/index.html) package have served a foundational role in the handling of spatial data in R. Many of the following examples will reference names such as `SpatialPoints`, `SpatialPointsDataFrame`, and `SpatialPolygonsDataFrame`. These are specialized classes, implemented by the `sp` package, that maintain linkages between all of the components of spatial data. For example, a point, line, or polygon feature will typically be associated with:
+ 
+ * coordinate geometry
+ * bounding box
+ * coordinate reference system
+ * attribute table
+
+
+Load some of the chapter 2 sample data for a simple demonstration of the `SpatialPolyhonsDataFrame` class.
+```{r}
+mlra <- readOGR('C:/workspace/chapter-2b/)
+
+```
+
+See the [sp gallery](https://edzer.github.io/sp/) and vignettes [1](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf) [2](https://cran.r-project.org/web/packages/sp/vignettes/over.pdf) for a much more detailed description of the `sp` classes and associated spatial operations.
+
+### Coordinate System Transformations and the `proj4` Syntax
+
+
+
+define vs. alter CRS
+```{r }
+p <- SpatialPoints(cbind(-97.721210, 40.446068))
+
+'+proj=longlat +datum=WGS84'
+```
+
+
+
+Note: `sp` is being re-written as part of the `sf` library.
+
+
+## The `raster` Library and Classes
+
+
+
+
+
+# GDAL: The Spatial Data Chainsaw 
+`rgdal` Library
+
+
+```{r eval=FALSE}
+maat <- raster('C:/workspace/chapter-2b/MAAT.tif')
+x <- projectRaster(maat, crs = CRS('+proj=utm +zone=11 +datum=WGS84'))
+gdalwarp('C:/workspace/chapter-2b/MAAT.tif', 'C:/workspace/chapter-2b/MAAT-utm.tif', t_srs='+proj=utm +zone=11 +datum=WGS84', overwrite=TRUE, verbose=TRUE)
+
+```
+
+
+
+
+# Spatial Data Manipulation
+
+
+
+
+## Vector Data
+
+## Raster Data
+
+
+# Example: Generating Sampling Points
+
+
+
+# Example: Extracting Spatial Data at NASIS Pedon Locations
+
+
+# Example: Summarizing PRISM Data by MLRA
+
+
+
+# Further Examples on the AQP Website
 
  
-# Accuracy, Precision, and Significant Figures  
-
-**Accuracy.** The closeness of a number to its actual value.
-
-**Precision.** The closeness of repeated measurements to each other.
-
-**Significant figures.** The digits in a number that define the precision of a measurement. The value of 6 cm has one significant digit. The implied range is 1 cm. The true value lies between 5.50 and 6.49. The value of 6.2 cm has two significant digits. The implied range is 0.1 cm. The true value lies between 6.150 and 6.249. The implied precision is greater for the number 6.0 cm than 6 cm. See page 37 of the [Keys to Soil Taxonomy](http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/class/taxonomy/?cid=nrcs142p2_053580) for a discussion of how significant figures are applied in Soil Taxonomy. 
 
 
 # Raster Data
