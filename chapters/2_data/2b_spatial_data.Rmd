@@ -88,7 +88,7 @@ str(p)
 
 This is an "S4" object with "slots" (e.g. `@data`) that are used to store various components. Most all S4 objects have specialized functions for getting and setting the contents of the slots. For example, the `bbox()` function is used to get or set the contents of the `@bbox` slot.
 
-See the [sp gallery](https://edzer.github.io/sp/) and vignettes [1](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf) [2](https://cran.r-project.org/web/packages/sp/vignettes/over.pdf) for a much more detailed description of the `sp` classes. Currently, much of the functionality of the `sp` package is being re-imagined as part of the `sf` library--still a work in progress.
+See the [sp gallery](https://edzer.github.io/sp/) and vignettes [1](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf) [2](https://cran.r-project.org/web/packages/sp/vignettes/over.pdf) for a much more detailed description of the `sp` classes.
 
 
 ### Coordinate Reference Systems and `proj4` Syntax
@@ -154,8 +154,14 @@ Note that in the second example the trailing "/" is ommitted from the `dsn` (dat
 
 
 
+## Things to Keep in Mind
 
-
+ * `sp` class objects are memory-bound, you won't likely be able to load the full gSSURGO grid any time soon
+ * operations on `sp` class objects (e.g. CRS transformations) are relatively slow
+    + this isn't a problem unless you are working with 100k+ features
+    + the `sp` package is being re-imagined as part of the `sf` library, it is likely much more efficient
+ * it is not possible to efficiently "warp" raster data as `sp` class objects
+    + usually much faster warp raster data via GDAL command line tools (`gdalUtils` package) or GIS
 
 
 ## The `raster` Library and Classes
@@ -163,9 +169,7 @@ Note that in the second example the trailing "/" is ommitted from the `dsn` (dat
 
 
 
-
-# Working With Real Data
-
+# Intermission
 
 If you haven't yet done so, please setup the sample datasets for this module.
 ```{r, eval=FALSE}
@@ -183,6 +187,13 @@ download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/dat
 unzip('C:/workspace/chapter-2b/chapter-2b-mu-polygons.zip', exdir = 'C:/workspace/chapter-2b', overwrite = TRUE)
 unzip('C:/workspace/chapter-2b/chapter-2b-PRISM.zip', exdir = 'C:/workspace/chapter-2b', overwrite = TRUE)
 ```
+
+
+
+# Working With Real Data
+
+
+
 
 
 
@@ -211,7 +222,10 @@ mlra <- readOGR(dsn='C:/workspace/chapter-2b')
 
 
 # Further Examples on the AQP Website
-
+  * [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
+  * [Export pedons to Google Earth](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html)
+  * [Export NASIS pedons to SHP](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html)
+  * [Series extent mapping](http://ncss-tech.github.io/AQP/soilDB/series-extent.html)
  
 
 
