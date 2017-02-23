@@ -1,6 +1,6 @@
 ---
 title: "Spatial Data"
-author: "Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello""
+author: "Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -65,6 +65,108 @@ library(raster)
 library(rgdal)
 ```
 
+
+## The `sp` Library and Classes
+
+The data structures ("classes") and functions provided by the [`sp`](https://cran.r-project.org/web/packages/sp/index.html) package have served a foundational role in the handling of spatial data in R. Many of the following examples will reference names such as `SpatialPoints`, `SpatialPointsDataFrame`, and `SpatialPolygonsDataFrame`. These are specialized classes, implemented by the `sp` package, that maintain linkages between all of the components of spatial data. For example, a point, line, or polygon feature will typically be associated with:
+ 
+ * coordinate geometry
+ * bounding box
+ * coordinate reference system
+ * attribute table
+
+While it is possible to hand-make `sp` class objects, it is usually faster to import existing raster or vector files from disk. More on this soon. For the sake of demonstration we will make a `SpatialPointsDataFrame` object. This is analogous to the point type feature class or shapefile.
+
+```{r}
+# create point geometry from coordinates
+p <- SpatialPoints(coords = cbind(-97.721210, 40.446068))
+# attach attribute table
+p <- SpatialPointsDataFrame(p, data=data.frame(id=1, taxonname='alpha'))
+# check internal structure
+str(p)
+```
+
+This is an "S4" object with "slots" (e.g. `@data`) that are used to store various components. Most all S4 objects have specialized functions for getting and setting the contents of the slots. For example, the `bbox()` function is used to get or set the contents of the `@bbox` slot.
+
+See the [sp gallery](https://edzer.github.io/sp/) and vignettes [1](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf) [2](https://cran.r-project.org/web/packages/sp/vignettes/over.pdf) for a much more detailed description of the `sp` classes. Currently, much of the functionality of the `sp` package is being re-imagined as part of the `sf` library--still a work in progress.
+
+
+### Coordinate Reference Systems and `proj4` Syntax
+
+Spatial data aren't all that useful without an accurate description of the coordinate reference system (CRS). This type of information is typically stored within the ".prj" component of a shapefile, or in the header of a GeoTiff. Without a CRS it is not possible to perform coordinate transformations (e.g. conversion of geographic coordinates to projected coordinates), spatial overlay (e.g. intersection), or geometric calculations (e.g. distance or area).
+
+In R, CRS information is encoded using ["proj4" notation](http://proj4.org/), which looks something like this: `'+proj=longlat +datum=WGS84'` (geographic coordinates referened to the WGS84 datum). You can look-up CRS definitions in many different formats on the [spatialreference.org](http://spatialreference.org/) website. Some examples:
+
+ * `+proj=longlat +datum=NAD83`: geographic coordinate system, NAD83 datum
+ * `+proj=longlat +datum=NAD27`: geographic coordinate system, NAD27 datum
+ * `+proj=utm +zone=10 +datum=NAD83`: projected coordinate system (UTM zone 10), NAD83 datum
+ * `+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m`: AEA CONUS
+
+
+Returning to the example from above, lets **assign** a CRS to this point using the `proj4string()` function. Note that this process doesn't alter the geometry of the object.
+```{r }
+proj4string(p) <- '+proj=longlat +datum=WGS84' 
+str(p)
+```
+
+Transformation of points, lines, and polygons is a simple matter--as long the source and destination CRS data are available.
+```{r}
+# transform to UTM zone 14
+p.utm <- spTransform(p, CRS('+proj=utm +zone=14 +datum=NAD83'))
+cbind(gcs=coordinates(p), utm=coordinates(p.utm))
+
+# transform to GCS NAD27
+p.nad27 <- spTransform(p, CRS('+proj=longlat +datum=NAD27'))
+cbind(coordinates(p), coordinates(p.nad27))
+```
+
+CRS definitions can also be generated from [EPSG](http://epsg.io/) codes. For example, a geographic coordinate system referenced to the WGS84 datum can be accessed using EPSG code 4326:
+```{r}
+CRS('+init=epsg:4326')
+```
+
+
+## Accessing Spatial Data Sources via GDAL/OGR
+Many of the vector data sources we use can be directly translated to `sp` class objects via `rgdal` package. The `rgdal` package provides linkages to the powerful [GDAL/OGR](http://www.gdal.org/) library, the details of which are well beyond the scope of this training. Suffice to say, `rgdal` makes it possible to import just about any vector or raster data using two basic functions:
+
+ * `readOGR()`: vector data sources such as shapefiles, KML, etc.
+ * `readGDAL()`: raster data sources such as GeoTiff, IMG, ArcGRID, ASCII grids, etc.
+ 
+A full listing of available drivers can be accessed with `ogrDrivers()` and `gdalDrivers()`. Note that it is not yet possible to load raster data from an ESRI File Geodatabase.
+
+This module will not cover importing or exporting raster data via `rgdal` package as the `raster` package provides a much more convenient interface to the GDAL library.
+
+
+### Importing / Exporting Vector Data
+In order to accommodate a wide range of possible formats, the `readOGR()` and `writeOGR()` functions expect a specialized description of the data source. 
+
+Import the `ca630_a` feature class from a ESRI File Geodatabase:
+```{r eval=FALSE}
+x <- readOGR(dsn='E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer='ca630_a')
+```
+
+Import data from shapefile stored at `E:/gis_data/ca630/pedon_locations.shp`:
+```{r eval=FALSE}
+x <- readOGR(dsn='E:/gis_data/ca630', layer='pedon_locations')
+```
+
+Note that in the second example the trailing "/" is ommitted from the `dsn` (data source name) and the ".shp" suffix is ommitted from the `layer`.
+
+
+
+
+
+
+
+## The `raster` Library and Classes
+
+
+
+
+
+# Working With Real Data
+
+
 If you haven't yet done so, please setup the sample datasets for this module.
 ```{r, eval=FALSE}
 # make a place to store chapter 2b example data
@@ -84,63 +186,11 @@ unzip('C:/workspace/chapter-2b/chapter-2b-PRISM.zip', exdir = 'C:/workspace/chap
 
 
 
-
-## The `sp` Library and Classes
-
-The data structures ("classes") and functions provided by the [`sp`](https://cran.r-project.org/web/packages/sp/index.html) package have served a foundational role in the handling of spatial data in R. Many of the following examples will reference names such as `SpatialPoints`, `SpatialPointsDataFrame`, and `SpatialPolygonsDataFrame`. These are specialized classes, implemented by the `sp` package, that maintain linkages between all of the components of spatial data. For example, a point, line, or polygon feature will typically be associated with:
- 
- * coordinate geometry
- * bounding box
- * coordinate reference system
- * attribute table
-
-
 Load some of the chapter 2 sample data for a simple demonstration of the `SpatialPolyhonsDataFrame` class.
-```{r}
-mlra <- readOGR('C:/workspace/chapter-2b/)
-
-```
-
-See the [sp gallery](https://edzer.github.io/sp/) and vignettes [1](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf) [2](https://cran.r-project.org/web/packages/sp/vignettes/over.pdf) for a much more detailed description of the `sp` classes and associated spatial operations.
-
-### Coordinate System Transformations and the `proj4` Syntax
-
-
-
-define vs. alter CRS
-```{r }
-p <- SpatialPoints(cbind(-97.721210, 40.446068))
-
-'+proj=longlat +datum=WGS84'
-```
-
-
-
-Note: `sp` is being re-written as part of the `sf` library.
-
-
-## The `raster` Library and Classes
-
-
-
-
-
-# GDAL: The Spatial Data Chainsaw 
-`rgdal` Library
-
-
 ```{r eval=FALSE}
-maat <- raster('C:/workspace/chapter-2b/MAAT.tif')
-x <- projectRaster(maat, crs = CRS('+proj=utm +zone=11 +datum=WGS84'))
-gdalwarp('C:/workspace/chapter-2b/MAAT.tif', 'C:/workspace/chapter-2b/MAAT-utm.tif', t_srs='+proj=utm +zone=11 +datum=WGS84', overwrite=TRUE, verbose=TRUE)
+mlra <- readOGR(dsn='C:/workspace/chapter-2b')
 
 ```
-
-
-
-
-# Spatial Data Manipulation
-
 
 
 
@@ -171,7 +221,7 @@ The raster format is a common GIS format designed primarily for displaying conti
 
 ## Importing Raster Data With the `raster` Package
 
-```{r raster, message=FALSE, warning=FALSE}
+```{r raster, eval=FALSE, message=FALSE, warning=FALSE}
 # Example importing raster data
 
 library(sp)
@@ -195,7 +245,7 @@ plot(r)
 
 Multiple sets of raster data can be loaded and then stacked using the `stack()` function in the `raster` package.  Note that a number will be appended onto rasters with the same name to make the names unique within the raster stack.
 
-```{r}
+```{r eval=FALSE}
 # create a raster stack of multiple rasters - in this case we are stacking the 'f' raster on top of itself
 # note names in the plot of this raster stack
 s <- stack(f, f) 
@@ -205,7 +255,7 @@ plot(s)
 
 ## Importing Raster Data With the `rgdal` Package
 
-```{r raster1, eval=FALSE, message=FALSE, warning=FALSE}
+```{r raster1, eval=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
 ## import raster data using the rgdal package
 r2 <- readGDAL(f)
 
@@ -217,7 +267,7 @@ spplot(r2)
 
 ## Exporting Raster Data
 
-```{r raster2, eval= TRUE, message=FALSE, warning=FALSE}
+```{r raster2, eval= FALSE, message=FALSE, warning=FALSE}
 
 # raster package
 # for large datasets the progress option is helpful
@@ -233,7 +283,7 @@ The vector format is a common GIS format designed for displaying points, lines, 
 
 ## Importing Vector Data
 
-```{r}
+```{r  eval=FALSE}
 # load libraries
 library(sp)
 library(rgdal)
@@ -251,14 +301,14 @@ plot(pol, axes = TRUE)
 
 Tabular data associated with a vector layer can be accessed via the `@data` slot within the `SpatialPolygonsDataFrame` object.  You can use the `head()` function to look at the columns in the data.
 
-```{r}
+```{r eval=FALSE}
 # access tabular data table for vector data using '@data' slot
 head(pol)
 ```
 
 
 ## Exporting Vector Data
-```{r}
+```{r eval=FALSE}
 # export vector data
 writeOGR(pol, dsn = "C:/workspace/test.shp", layer = "test", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 ```
@@ -270,7 +320,7 @@ Typically, you will need to reproject a file before you can combine it with anot
 
 A catalog of spatial reference systems that are compatible with R and ArcGIS can be seen at [spatialreference.org](http://spatialreference.org/) or [http://epsg.io/](http://epsg.io/). Generally, it is simplest to use the EPSG code to specify the reference system; otherwise, you have to manually specify the projection, ellipsoid, and datum. 
 
-```{r}
+```{r eval=FALSE}
 # reproject polygons
 
 proj4string(pol) # get the original projection
@@ -340,7 +390,7 @@ test <- data.frame(p_sp$site_id, extract(rs, p_sp))
 ```
 
 
-```{r}
+```{r eval=FALSE}
 load(file = "C:/workspace/ca794_pedons.Rdata")
 
 summary(test)
