@@ -1,10 +1,10 @@
 # Chapter 1 Introduction to R and RStudio
-Stephen Roecker, Katey Yoast, and Skye Wills  
+Katey Yoast, Stephen Roecker, Tom D'Avello and Skye Wills  
 `r Sys.Date()`  
 
 
 
-![](figure/logo.jpg)
+![Example of depth plots summarizing the central range (50%) for clay, sand and organic carbon](figure/logo.jpg)
 
 
 # Introduction
@@ -14,27 +14,36 @@ R is a free, open-source software and programming language developed in 1995 at 
 - reproducibility (numerous Excel horror stories of scientific studies gone wrong exist)([TED Talk](https://www.youtube.com/watch?v=dXKbkpilQME))
 - large community of users that contribute disipline specific functionality, including soil science and ecology
 
-While some people find the use of a commandline environment daunting, it is becoming a necessary skill for scientists as the volume and variety of data has grown. Thus scripting or programming has become a third language for many scientists, in addition to their native language and disipline specific terminology. Other popular programming languages include: Python, JavaScript, and SQL. 
+While some people find the use of a commandline environment daunting, it is becoming a necessary skill for scientists as the volume and variety of data has grown. Thus scripting or programming has become a third language for many scientists, in addition to their native language and disipline specific terminology. Other popular programming languages include: SQL (i.e. NASIS), Python (i.e. ArcGIS), and JavaScript. 
+
+**Soil Survey R Applications**
+
+- Analyze data
+- Create graphics
+- Develop reports
+- Construct a sampling plan
+- Develop pedotransfer functions (e.g. NASIS calculations)
+- Digital soil mapping
 
 ![](1_introduction_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
 
 
-# RStudio
+# RStudio: A Ingegrated Development Environment (IDE) for R
 
 RStudio is an integrated development environment (IDE) that allows you to interact with R more readily. RStudio is similar to the standard RGui, but is considerably more user friendly. It has more drop-down menus, windows with multiple tabs, and many customization options. The first time you open RStudio, you will see three windows. A forth window is hidden by default, but can be opened by clicking the **File** drop-down menu, then **New File,** and then **R Script.**. Detailed information on using RStudio can be found at at [RStudio's Website](https://support.rstudio.com/hc/en-us/sections/200107586-Using-RStudio).
  
 
-RStudio Windows / Tabs  | Location    | Description                     |
-------------------------|-------------|---------------------------------|
+RStudio Windows / Tabs  | Location    | Description                                  |
+------------------------|-------------|----------------------------------------------|
 Console Window          | lower-left  | location were commands are entered and the output is printed |
-Source Tabs             | upper-left  | built-in text editor |
-Environment Tab         | upper-right | interactive list of loaded R objects |
+Source Tabs             | upper-left  | built-in text editor                         |
+Environment Tab         | upper-right | interactive list of loaded R objects         |
 History Tab             | upper-right | list of key strokes entered into the Console |
-Files Tab               | lower-right | file explorer to navigate C drive folders |
-Plots Tab               | lower-right | output location for plots  |
-Packages Tab            | lower-right | list of packages and links to package specific help files |
+Files Tab               | lower-right | file explorer to navigate C drive folders    |
+Plots Tab               | lower-right | output location for plots                    |
+Packages Tab            | lower-right | list of installed packages                   |
 Help Tab                | lower-right | output location for help commands and help search window |
-Viewer Tab              | lower-right | advanced tab for local web content |
+Viewer Tab              | lower-right | advanced tab for local web content           |
 
 
 ![](figure/ch1_rstudio2.png)  
@@ -42,7 +51,7 @@ Viewer Tab              | lower-right | advanced tab for local web content |
 
 ## USDA Computer Setup
 
-R and RStudio have been installed on all USDA computers which have NASIS installed. R and RStudio are typically updated and CCE-approved once a year. The versions on USDA machines may be one to three releases behind the latest version available for public download. Having an outdated version of R  rarely creates a problem, although warnings may appear.  
+R and RStudio have been installed on all USDA computers which have NASIS installed. R and RStudio are typically updated and CCE-approved once a year. The versions on USDA machines may be one to three releases behind the latest version available for public download. Having an outdated version of R rarely creates a problem, although warnings may appear.
 
 
 ## Basic Tips for using R  
@@ -102,7 +111,7 @@ hist(npk$yield)
 
 ## Data Management in RStudio  
 
-Before you begin working in R, should set your working directory (a folder to hold all of your project files); for example, "C:\\workspace\\...". This directory is the location where all your input data-sets and R scripts are be stored. It also serves as the default location for plots and other objects exported from R. If set, it conviently allows you to import data into R with just a file name, not the entire file path.
+Before you begin working in R, you should set your working directory (a folder to hold all of your project files); for example, "C:\\workspace\\...". This directory is the location where all your input data-sets are be stored. It also serves as the default location for plots and other objects exported from R. If set, it conviently allows you to import data into R with just a file name, not the entire file path.
 
 Typically at the beginning of each R session you should set your working directory. To change the working directory in RStudio, select the **Files Tab > More > Set As Working Directory**. 
 
@@ -131,7 +140,7 @@ getwd()
 
 After your working directory is set, you can import data from .csv, .txt, etc. One basic command for importing data into R is `read.csv()`. The command is followed by the file name and then some optional instructions for how to read the file.    
 
-First, create an example file by copying the contents below. Paste the content into Notepad and save the file as sand_example.csv in your C:\\workspace folder.  
+First, create an example file by **copying** the contents below. **Paste** the content into Notepad and **save** the file as sand_example.csv in your C:\\workspace folder.  
 
 location,landuse,horizon,depth,sand  
 city,crop,A,14,19  
@@ -153,7 +162,7 @@ west,pasture,B,31,26
 west,range,A,14,23  
 west,range,B,24,24  
 
-This dataset can either be simply imported into R using the **Import Dataset** button from the Environment tab, or by typing the following command into the R console:  
+This dataset can either be imported into R using the **Import Dataset** button from the Environment tab, or by typing the following command into the R console:  
 
 
 ```r
@@ -163,14 +172,15 @@ sand <- read.csv("C:/workspace/sand_example.csv")
 
 # sand <-read.csv("sand_example.csv")
 ```
-#### Note on Excel files
+
+#### Note on Microsoft Excel files
 
 R can import Excel files, but generally speaking it is a bad to use Excel. Excel has a dangerous default which automatically converts data with common notations to their standard format without warning or notice. For example, the character "11-JUN" entered into a cell automatically becomes the date 6/11/2017, even though the data is still displayed as 11-JUN. The only way to avoid this default behavior is to manually import your data into Excel via the **Data Tab>Get External Data Ribbon**, and manually set the data type of all your columns to text. Failure to do so has resulted in numerous retracted research articles ([Washington Post Article](https://www.washingtonpost.com/news/wonk/wp/2016/08/26/an-alarming-number-of-scientific-papers-contain-excel-errors/?utm_term=.9352a35dca6f)). 
 
 
 ### Exporting Data
 
-To export data from R, use the command `write.csv()`. Since we have already set our working directory, R automatically saves our file into the working directory.  
+To export data from R, use the command `write.csv()` function. Since we have already set our working directory, R automatically saves our file into the working directory.  
 
 
 ```r
@@ -228,15 +238,13 @@ rm(sand)
 
 ## Getting Help 
 
-R has extensive documentation, numerous online communities, and countless books (many which are free and listed at end of each chapter for this course). The built in help files are sometimes cryptic, and the online replies can be terse, but if you seek help you shall find it. To learn more about the function you are using and the options and arguments available, take advantage of some of the following help functions in RStudio:
+R has [extensive documentation](https://cran.r-project.org/manuals.html), numerous [mailing lists](https://www.r-project.org/mail.html), and [countless books](https://www.r-project.org/doc/bib/R-books.html) (many of which are free and listed at end of each chapter for this course). The built in help files are sometimes cryptic, and the online replies can be terse, but if you seek help you shall find it. To learn more about the function you are using and the options and arguments available, learn to help yourself by taking advantage of some of the following help functions in RStudio:
 
 1. Use the Help tab in the lower-right Window to search commands (such as hist) or topics (such as histogram). 
 
 ![](figure/ch1_help_tab.png)
 
-2. Just as in R, you can type `help(hist) or ?hist` in the Console window to bring up a help page. Results will appear in the Help tab in the lower-right hand window. 
-    - The help tab may also be triggered after typing a command (such as hist) in the Console window, by placing your cursor at the end of the function and press **F1** on your keyboard to bring up more information about the command. 
-    - Certain functions may require quotations, such as `help("+")`.
+2. Type `help(read.csv) or ?read.csv` in the Console window to bring up a help page. Results will appear in the Help tab in the lower-right hand window. Certain functions may require quotations, such as `help("+")`.
 
 
 ```r
@@ -247,12 +255,16 @@ help(read.csv)
 # or
 
 ?read.csv
+
+# or
+
+help("+")
 ```
 
 
-## Exercise
+### Exercise: Examine the `read.csv()` function
 
-Read the help file for `read.csv()` and determine how you would disable the first row in the sand dataset from being intrepreted as a header.
+**Read** the help file for the `read.csv()` function. How would how you would disable the first row in the sand dataset from being intrepreted as a header? Report your answer to your mentor.
 
 
 ## Packages
@@ -329,9 +341,25 @@ TT.plot( class.sys = "USDA.TT", tri.data = example)
 For more examples see the the [soiltexture vignette](http://cran.r-project.org/web/packages/soiltexture/vignettes/soiltexture_vignette.pdf). Vignettes are a short tutorials that provide detailed examples and descriptions of packages. Unfortunately not all packages come with a vignette.
 
 
-## Working with Scripts  
+## Writing Scripts  
 
+RStudio's Source Tabs serve as a built-in text editor. Prior to excuting R functions at the Console, commands are typically written down (or scripted). Scripting is essentially showing your work. The sequence of functions necessary to complete a task are scripted in order to document or automate a task. While scripting may seems cumbersome at first, it ultimately saves time in the long run, particularly for repetitive tasks ([humorous YouTube Video on Scripting](https://www.youtube.com/watch?time_continue=1&v=s3JldKoA0zw)). Benefits include:
 
+- allows others to reproduce your work, which is the foundation of science
+- serves as instruction/reminder on how to perform a task
+- allows rapid iteration, which saves time and allows the evaluation of incremental changes
+- reduces the chance of human error
+
+### Basic Tips of Scripting
+
+To write a script, simply open a new R script file by clicking **File>New File>R Script**. Within the text editor **type** out a sequence of functions.
+
+ - Place each function (e.g. `read.csv()`) on a separate line.
+ - If a function has a long list of arguments, place each argument on a separate line.
+ - A command can be excuted from the text editor by placing the cursor on a line and typing **Crtl + Enter**, or by **clicking** the Run button.
+ - An entire R script file can be excuted by **clicking** the Source button. 
+
+![](figure/ch1_text_editor.png)
 
 
 ## Saving R Files  
@@ -343,7 +371,7 @@ In R, you can save several types of files to keep track of the work you do. The 
 
 An R script is simply a text file of R commands that you've typed. 
 
-You may want to save your scripts (whether they were written in R Editor or another program such as Notepad) so that you can reference them in the future, edit them as needed, and keep track of what you've done. To save R scripts in RStudio, simply **click the save button** from your R script tab. Save scripts with the .R extension. R assumes that script files are saved with only that extension. If you are using another text editor, you won't need to worry about saving your scripts in R. You can always copy them from your text editor and then paste them into the R Console or R Editor.  
+You may want to save your scripts (whether they were written in R Editor or another program such as Notepad) so that you can reference them in the future, edit them as needed, and keep track of what you've done. To save R scripts in RStudio, simply **click the save button** from your R script tab. Save scripts with the .R extension. R assumes that script files are saved with only that extension. If you are using another text editor, you won't need to worry about saving your scripts in R. You can open text files in the RStudio text editor, but beware copying and pasting from Word files as discussed below.  
 
 ![](figure/ch1_save_script.png)  
 
@@ -351,6 +379,9 @@ To open an R script, **click the file icon**.
 
 ![](figure/ch1_file_icon.png)
 
+#### Note on Microsoft Word Files
+
+Using Microsoft Word to write or save R scripts is generally a bad idea. Certain keyboard characters, such as quotations "", are not stored the same in Word (e.g. "" vs. ""). The difference is largely indistinguishable to the human eye, but will not run in R. 
 
 ### Workspace (.Rdata)  
 
@@ -384,7 +415,7 @@ history(max.show=Inf) #displays all previous commands
 Graphic outputs can be saved in various formats. 
  
 
-Formats           Function                    
+Format            Function                    
 ----------------  ----------------------------
 pdf               pdf("graphic.pdf")          
 window metafile   win.metafile("graphic.wmf") 
@@ -406,15 +437,12 @@ plot(npk$yield)
 dev.off()
 ```
 
-png 
-  2 
-
 The first line of this command creates a blank file named sand with a JPEG extension.  The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the JPEG file we are creating). The third line closes the graphics device.  
 
 
 # Rcmdr (R Commander): A Graphical User Interface for R
 
-While we recommend the use of RStudio for some of the reasons listed above, many people new to R might benefit from a graphical user interface (GUI) that allows users to run basic functions using a point and click interface. Luckily for beginners R has the R Commander (Rcmdr) GUI, which is similiar to [JMP](https://www.jmp.com/en_us/learning-library/using-jmp.html). Rcmdr was created by [John Fox](http://socserv.socsci.mcmaster.ca/jfox/Misc/Rcmdr/index.html) for his introductory statistics students so they could see how the software worked without learning a large number of function names and arguments. Rcmdr is a great way to begin familiarizing yourself with R and statistics within a GUI environment. Regretable we know of no GUI that allows users to perform the majority of soil survey applications demonstrated in this course, and thus won't Rcmdr won't be covered. For those who wish to pursue Rcmdr, alternative instructions can be viewed at [Andy Chang & G. Jay Kerns website](http://gchang.people.ysu.edu/r/R_Instructions.htm).
+While we recommend the use of RStudio for some of the reasons listed above, many people new to R might benefit from a graphical user interface (GUI) that allows the user to run basic functions using a point and click interface. Luckily for beginners R has the R Commander (Rcmdr) GUI, which is similiar to [JMP](https://www.jmp.com/en_us/learning-library/using-jmp.html). Rcmdr was created by [John Fox](http://socserv.socsci.mcmaster.ca/jfox/Misc/Rcmdr/index.html) for his introductory statistics students so they could see how the software worked without learning a large number of function names and arguments. Rcmdr is a great way to begin familiarizing yourself with R and statistics within a GUI environment. Regretable we know of no GUI that allows users to perform the majority of soil survey applications demonstrated in this course, and thus won't Rcmdr won't be covered. For those who wish to pursue Rcmdr, alternative instructions can be viewed at [Andy Chang & G. Jay Kerns website](http://gchang.people.ysu.edu/r/R_Instructions.htm).
 
 To take a quick peak at Rcmdr, it can be opened by **entering** the following command into the R console.
 
