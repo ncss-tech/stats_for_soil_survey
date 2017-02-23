@@ -11,7 +11,7 @@
 
 <meta name="author" content="Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D’Avello" />
 
-<meta name="date" content="2017-02-22" />
+<meta name="date" content="2017-02-23" />
 
 <title>Spatial Data</title>
 
@@ -119,7 +119,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Spatial Data</h1>
 <h4 class="author"><em>Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D’Avello</em></h4>
-<h4 class="date"><em>2017-02-22</em></h4>
+<h4 class="date"><em>2017-02-23</em></h4>
 
 </div>
 
@@ -154,8 +154,8 @@ $(document).ready(function () {
 <pre class="r"><code>library(sp)
 library(raster)
 library(rgdal)</code></pre>
-<div id="the-sp-library-and-classes" class="section level2">
-<h2><span class="header-section-number">2.1</span> The <code>sp</code> Library and Classes</h2>
+<div id="the-sp-package" class="section level2">
+<h2><span class="header-section-number">2.1</span> The <code>sp</code> Package</h2>
 <p>The data structures (“classes”) and functions provided by the <a href="https://cran.r-project.org/web/packages/sp/index.html"><code>sp</code></a> package have served a foundational role in the handling of spatial data in R. Many of the following examples will reference names such as <code>SpatialPoints</code>, <code>SpatialPointsDataFrame</code>, and <code>SpatialPolygonsDataFrame</code>. These are specialized classes, implemented by the <code>sp</code> package, that maintain linkages between all of the components of spatial data. For example, a point, line, or polygon feature will typically be associated with:</p>
 <ul>
 <li>coordinate geometry</li>
@@ -163,7 +163,7 @@ library(rgdal)</code></pre>
 <li>coordinate reference system</li>
 <li>attribute table</li>
 </ul>
-<p>While it is possible to hand-make <code>sp</code> class objects, it is usually faster to import existing raster or vector files from disk. More on this soon. For the sake of demonstration we will make a <code>SpatialPointsDataFrame</code> object. This is analogous to the point type feature class or shapefile.</p>
+<p>While it is possible to hand-make <code>sp</code> class objects, it is usually faster to import existing raster or vector files from disk. More on this later. For the sake of demonstration we will make a <code>SpatialPointsDataFrame</code> object. This is analogous to the point type feature class or shapefile.</p>
 <pre class="r"><code># create point geometry from coordinates
 p &lt;- SpatialPoints(coords = cbind(-97.721210, 40.446068))
 # attach attribute table
@@ -186,7 +186,17 @@ str(p)</code></pre>
 ##   ..@ proj4string:Formal class 'CRS' [package &quot;sp&quot;] with 1 slot
 ##   .. .. ..@ projargs: chr NA</code></pre>
 <p>This is an “S4” object with “slots” (e.g. <code>@data</code>) that are used to store various components. Most all S4 objects have specialized functions for getting and setting the contents of the slots. For example, the <code>bbox()</code> function is used to get or set the contents of the <code>@bbox</code> slot.</p>
-<p>See the <a href="https://edzer.github.io/sp/">sp gallery</a> and vignettes <a href="https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf">1</a> <a href="https://cran.r-project.org/web/packages/sp/vignettes/over.pdf">2</a> for a much more detailed description of the <code>sp</code> classes. Currently, much of the functionality of the <code>sp</code> package is being re-imagined as part of the <code>sf</code> library–still a work in progress.</p>
+<p>There is a convenient shortcut for “upgrading” point data that is stored in a <code>data.frame</code>. This is especially useful for preparing NASIS/KSSL data for spatial operations.</p>
+<pre class="r"><code># make some fake data
+d &lt;- data.frame(x=40.446068, y=-97.721210, id=1, taxonname='alpha')
+# upgrade to SpatialPointsDataFrame
+coordinates(d) &lt;- ~ x + y
+# check
+class(d)</code></pre>
+<pre><code>## [1] &quot;SpatialPointsDataFrame&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;sp&quot;</code></pre>
+<p>See the <a href="https://edzer.github.io/sp/">sp gallery</a> and <a href="https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf">this vignette</a> for a much more detailed description of the <code>sp</code> classes.</p>
 <div id="coordinate-reference-systems-and-proj4-syntax" class="section level3">
 <h3><span class="header-section-number">2.1.1</span> Coordinate Reference Systems and <code>proj4</code> Syntax</h3>
 <p>Spatial data aren’t all that useful without an accurate description of the coordinate reference system (CRS). This type of information is typically stored within the “.prj” component of a shapefile, or in the header of a GeoTiff. Without a CRS it is not possible to perform coordinate transformations (e.g. conversion of geographic coordinates to projected coordinates), spatial overlay (e.g. intersection), or geometric calculations (e.g. distance or area).</p>
@@ -272,154 +282,182 @@ cbind(coordinates(p), coordinates(p.nad27))</code></pre>
 <li><code>readGDAL()</code>: raster data sources such as GeoTiff, IMG, ArcGRID, ASCII grids, etc.</li>
 </ul>
 <p>A full listing of available drivers can be accessed with <code>ogrDrivers()</code> and <code>gdalDrivers()</code>. Note that it is not yet possible to load raster data from an ESRI File Geodatabase.</p>
-<p>This module will not cover importing or exporting raster data via <code>rgdal</code> package as the <code>raster</code> package provides a much more convenient interface to the GDAL library.</p>
+<p>This module will not cover importing or exporting raster data via <code>rgdal</code> as the <code>raster</code> package provides a much more convenient interface to the GDAL library.</p>
 <div id="importing-exporting-vector-data" class="section level3">
 <h3><span class="header-section-number">2.2.1</span> Importing / Exporting Vector Data</h3>
 <p>In order to accommodate a wide range of possible formats, the <code>readOGR()</code> and <code>writeOGR()</code> functions expect a specialized description of the data source.</p>
 <p>Import the <code>ca630_a</code> feature class from a ESRI File Geodatabase:</p>
 <pre class="r"><code>x &lt;- readOGR(dsn='E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer='ca630_a')</code></pre>
-<p>Import data from shapefile stored at <code>E:/gis_data/ca630/pedon_locations.shp</code>:</p>
+<p>Import data from shapefile stored at <code>E:/gis_data/ca630/pedon_locations.shp</code>. Note that the trailing “/” is ommitted from the <code>dsn</code> (data source name) and the “.shp” suffix is ommitted from the <code>layer</code>.</p>
 <pre class="r"><code>x &lt;- readOGR(dsn='E:/gis_data/ca630', layer='pedon_locations')</code></pre>
-<p>Note that in the second example the trailing “/” is ommitted from the <code>dsn</code> (data source name) and the “.shp” suffix is ommitted from the <code>layer</code>.</p>
+<p>Export object <code>x</code> to shapefile. Note that the trailing “/” is ommitted from the <code>dsn</code> (data source name) and the “.shp” suffix is ommitted from the <code>layer</code>.</p>
+<pre class="r"><code>writeOGR(x, dsn='E:/gis_data/ca630', layer='pedon_locations', driver = 'ESRI Shapefile')</code></pre>
+<p>The <code>readOGR()</code> and <code>writeOGR()</code> functions have many arguments and format-specific details. It is worth spending some time with the associated manual pages.</p>
+</div>
+<div id="things-to-keep-in-mind" class="section level3">
+<h3><span class="header-section-number">2.2.2</span> Things to Keep in Mind</h3>
+<ul>
+<li><code>sp</code> class objects are memory-bound, you won’t likely be able to load the full gSSURGO grid any time soon</li>
+<li>operations on <code>sp</code> class objects (e.g. CRS transformations) are relatively slow
+<ul>
+<li>this isn’t a problem unless you are working with 100k+ features</li>
+<li>much of the functionality in the <code>sp</code> package is being re-imagined as part of the <code>sf</code> package, it is likely much more efficient</li>
+</ul></li>
+<li>it is not possible to efficiently “warp” raster data stored in <code>sp</code> class objects
+<ul>
+<li>usually much faster warp raster data via GDAL command line tools (<code>gdalUtils</code> package) or GIS</li>
+</ul></li>
+</ul>
 </div>
 </div>
-<div id="the-raster-library-and-classes" class="section level2">
-<h2><span class="header-section-number">2.3</span> The <code>raster</code> Library and Classes</h2>
+<div id="the-raster-package" class="section level2">
+<h2><span class="header-section-number">2.3</span> The <code>raster</code> Package</h2>
+<p>The release of the <a href="https://cran.r-project.org/web/packages/raster/index.html"><code>raster</code> package</a> was a transformative event for scientists working with spatial data in R because of the unique way in which <code>RasterLayer</code> objects can be accessed <em>on-disk</em>. Previously, most of the available data structures (e.g. <code>SpatialGridDataFrame</code>, <code>SpatialPixelsDataFrame</code>, <code>matrix</code>, etc.) for storing raster data were memory-bound and not efficient for very large (&gt; 10,000 x 10,000 cells) grids. That said, these data structures are still very useful for collections of raster data that fit into available memory. Many packages that perform advanced spatial analysis (e.g. <code>gstat</code> and <code>spatstat</code> packages) rely on the older data structures.</p>
+<p>A more complete background on the capabilities of the <code>raster</code> package are described in the <a href="https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf"><em>Introduction to the raster package</em></a> vignette and recently released <a href="http://rspatial.org/"><em>Spatial Data Analysis and Modeling with R</em></a> online book.</p>
+<div id="importing-exporting-data" class="section level3">
+<h3><span class="header-section-number">2.3.1</span> Importing / Exporting Data</h3>
+<p>Importing data is a simple matter. Note that the object <code>r</code> is a reference to the file.</p>
+<pre class="r"><code># use an example from the raster package
+f &lt;- system.file(&quot;external/test.grd&quot;, package=&quot;raster&quot;)
+# create a reference to this raster
+r &lt;- raster(f)
+# print the details
+print(r)</code></pre>
+<pre><code>## class       : RasterLayer 
+## dimensions  : 115, 80, 9200  (nrow, ncol, ncell)
+## resolution  : 40, 40  (x, y)
+## extent      : 178400, 181600, 329400, 334000  (xmin, xmax, ymin, ymax)
+## coord. ref. : +init=epsg:28992 +towgs84=565.237,50.0087,465.658,-0.406857,0.350733,-1.87035,4.0812 +proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +no_defs 
+## data source : C:\Users\Dylan.Beaudette\Documents\R\win-library\3.3\raster\external\test.grd 
+## names       : test 
+## values      : 128.434, 1805.78  (min, max)</code></pre>
+<pre class="r"><code># default plot method
+plot(r)</code></pre>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABIAAAASACAIAAAAIyqENAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nOzdW2xk2X4f5rXIvs6cmemZOfdDSi3LattBO75AjlWMW7IVZZAIiiKPi3BIwUGQfsmDk2AmrwG4iSRvyTnIW4CgX/JABmB5AkhGYDcCJPE4LCAxEgjqBEbbsFpmSTqXObe59pUrD8UqFll/klUkexfJ+j7wobW4dtVi19F0/bhW/XYupSQAAABevplJLwAAAGBaCGAAAAA1EcAAAABqIoABAADURAADAACoiQAGAABQEwEMAACgJgIYAABATQQwAACAmghgAAAANRHAAAAAaiKAAQAA1EQAAwAAqIkABgAAUBMBDAAAoCYCGAAAQE0EMAAAgJoIYAAAADURwAAAAGoigAEAANREAAMAAKiJAAYAAFATAQwAAKAmAhgAAEBNBDAAAICaCGAAAAA1EcAAAABqIoABAADURAADAACoiQAGAABQEwEMAACgJgIYAABATQQwAACAmghgAAAANRHAAAAAaiKAAQAA1EQAAwAAqIkABgAAUBMBDAAAoCYCGAAAQE0EMAAAgJoIYAAAADURwAAAAGoigAEAANREAAMAAKiJAAYAAFATAQwAAKAmAhgAAEBNBDAAAICaCGAAAAA1EcAAAABqIoABAADURAADAACoiQAGAABQEwEMAACgJgIYAABATQQwAACAmghgAAAANRHAAAAAaiKAAQAA1EQAAwAAqIkABgAAUBMBDAAAoCYCGAAAQE0EMAAAgJoIYAAAADURwAAAAGoigAEAANREAAMAAKiJAAYAAFATAQwAAKAmAhgAAEBNBDAAAICaCGAAAAA1EcAAAABqIoABAADURAADAACoiQAGAABQEwEMAACgJgIYAABATQQwAACAmghgAAAANRHAAAAAaiKAAQAA1EQAAwAAqIkABgAAUBMBDAAAoCYCGAAAQE0EMAAAgJoIYAAAADURwAAAAGoigAEAANREAAMAAKiJAAYAAFATAQwAAKAmAhgAAEBNBDAAAICaCGAAAAA1EcAAAABqIoABAADURAADAACoiQAGAABQEwEMAACgJgLYYdqr+TCr7UkvEAAAOE8EsEBnfbGbsBaqQ+dVC5IYAAAwulxKmfQazpLO+uL8cus4V1abZaVx2ssBAAAuEjtg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" width="576" style="display: block; margin: auto;" /></p>
+<p>The disk-based reference can be converted to an in-memory <code>RasterLayer</code> with the <code>readAll()</code> function. Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory.</p>
+<pre class="r"><code># check: file is on disk
+inMemory(r)</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<pre class="r"><code># load into memory, if possible
+r &lt;- readAll(r)
+# check: file is in memory
+inMemory(r)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>Exporting data requires consideration of the output format, datatype, encoding of NODATA, and other options such as compression. See the manual pages for <code>writeRaster()</code>, <code>writeFormats()</code>, and <code>dataType()</code> for details. For example, suppose you had a <code>RasterLayer</code> object that you wanted to save to disk as an internaly-compressed GeoTiff:</p>
+<pre class="r"><code># using previous example data set
+writeRaster(r, filename='r.tif', options=c(&quot;COMPRESS=LZW&quot;))</code></pre>
+<p>The <code>writeRaster()</code> function interprets the given (and missing) arguments as:</p>
+<ul>
+<li>‘.tif’ suffix interpreted as <code>format=GTiff</code></li>
+<li>creation options of “LZW compression” passed to GeoTiff driver</li>
+<li>default <code>datatype</code></li>
+<li>default <code>NAflag</code></li>
+</ul>
+<div id="data-types" class="section level4">
+<h4><span class="header-section-number">2.3.1.1</span> Data Types</h4>
+<p>It is worth spending a couple minutes going over some the commonly used <code>datatypes</code>; “unsigned integer”, &quot; signed integer“, and”floating point&quot; of variable precision.</p>
+<ul>
+<li><code>INT1U</code>: integers from 0 to 255</li>
+<li><code>INT2U</code>: integers from 0 to 65,534</li>
+<li><code>INT2S</code>: integers from -32,767 to 32,767</li>
+<li><code>INT4S</code>: integers from -2,147,483,647 to 2,147,483,647</li>
+<li><code>FLT4S</code>: floating point from -3.4e+38 to 3.4e+38</li>
+<li><code>FLT8S</code>: floating point from -1.7e+308 to 1.7e+308</li>
+</ul>
+<p>It is wise to manually specify an output <code>datatype</code> that will “just fit” the required precision. For exmaple, if you have generated a <code>RasterLayer</code> that warrants integer precision and ranges from 0 to 100, then the <code>INT1U</code> data type would provide enough precision to store all possible values <em>and</em> the NODATA value. Raster data stored as integers will always be smaller (sometimes 10-100x) than floating point, especially when internall compression is enabled.</p>
 </div>
 </div>
-<div id="working-with-real-data" class="section level1">
-<h1><span class="header-section-number">3</span> Working With Real Data</h1>
+<div id="object-properties" class="section level3">
+<h3><span class="header-section-number">2.3.2</span> Object Properties</h3>
+<p><code>RasterLayer</code> objects similar to <code>sp</code> objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of <code>RasterLayer</code> objects should be performed using functions such as:</p>
+<ul>
+<li><code>NAvalue(r)</code>: get / set the NODATA value</li>
+<li><code>crs(r)</code> or <code>proj4string(r)</code>: get / set the coordinate reference system</li>
+<li><code>res(r)</code>: get / set the resolution</li>
+<li><code>extent(r)</code>: get / set the extent</li>
+<li><code>dataType(r)</code>: get / set the data type</li>
+<li>… many more, see the <code>raster</code> package manual</li>
+</ul>
+</div>
+<div id="things-to-keep-in-mind-1" class="section level3">
+<h3><span class="header-section-number">2.3.3</span> Things to Keep in Mind</h3>
+<ul>
+<li>the <code>raster</code> package provides data structures for working with grids either in memory or on disk
+<ul>
+<li>this enables relatively fast processing of small grids and reasonable processing of large grids</li>
+</ul></li>
+<li>the <code>raster</code> package provides functions for performing most types of grid-based analysis
+<ul>
+<li>this is very convenient when working with small grids (no need to switch to GIS)</li>
+<li>raster operations on large grids will always be faster with a dedicated GIS or GDAL tools</li>
+</ul></li>
+<li>time spent with the <code>raster</code> <a href="http://rspatial.org/">documentation</a> is well invested</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="intermission" class="section level1">
+<h1><span class="header-section-number">3</span> Intermission</h1>
 <p>If you haven’t yet done so, please setup the sample datasets for this module.</p>
-<pre class="r"><code># make a place to store chapter 2b example data
-dir.create('C:/workspace/chapter-2b', recursive = TRUE)
+<pre class="r"><code># store path as a variable, in case you want to keep it somewhere else
+ch2b.data.path &lt;- 'C:/workspace/chapter-2b'
+# make a place to store chapter 2b example data
+dir.create(ch2b.data.path, recursive = TRUE)
 
 # download example data from github
 # polygons
-download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-mu-polygons.zip', 'C:/workspace/chapter-2b/chapter-2b-mu-polygons.zip')
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-mu-polygons.zip', paste0(ch2b.data.path, '/chapter-2b-mu-polygons.zip'))
 
 # raster data
-download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-PRISM.zip', 'C:/workspace/chapter-2b/chapter-2b-PRISM.zip')
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-PRISM.zip', paste0(ch2b.data.path, '/chapter-2b-PRISM.zip'))
 
 # unzip
-unzip('C:/workspace/chapter-2b/chapter-2b-mu-polygons.zip', exdir = 'C:/workspace/chapter-2b', overwrite = TRUE)
-unzip('C:/workspace/chapter-2b/chapter-2b-PRISM.zip', exdir = 'C:/workspace/chapter-2b', overwrite = TRUE)</code></pre>
-<p>Load some of the chapter 2 sample data for a simple demonstration of the <code>SpatialPolyhonsDataFrame</code> class.</p>
-<pre class="r"><code>mlra &lt;- readOGR(dsn='C:/workspace/chapter-2b')</code></pre>
+unzip(paste0(ch2b.data.path, '/chapter-2b-mu-polygons.zip'), exdir = ch2b.data.path, overwrite = TRUE)
+unzip(paste0(ch2b.data.path, '/chapter-2b-PRISM.zip'), exdir = ch2b.data.path, overwrite = TRUE)</code></pre>
+</div>
+<div id="applied-examples-exercises" class="section level1">
+<h1><span class="header-section-number">4</span> Applied Examples / Exercises</h1>
+<pre class="r"><code># establish path to example data
+ch2b.data.path &lt;- 'C:/workspace/chapter-2b'
+# load MLRA polygons
+mlra &lt;- readOGR(dsn=ch2b.data.path, layer='mlra-18-15-AEA')</code></pre>
 <div id="vector-data" class="section level2">
-<h2><span class="header-section-number">3.1</span> Vector Data</h2>
+<h2><span class="header-section-number">4.1</span> Vector Data</h2>
 </div>
 <div id="raster-data" class="section level2">
-<h2><span class="header-section-number">3.2</span> Raster Data</h2>
+<h2><span class="header-section-number">4.2</span> Raster Data</h2>
 </div>
 </div>
-<div id="example-generating-sampling-points" class="section level1">
-<h1><span class="header-section-number">4</span> Example: Generating Sampling Points</h1>
+<div id="extracting-raster-data-at-nasis-pedon-locations" class="section level1">
+<h1><span class="header-section-number">5</span> Extracting Raster Data at NASIS Pedon Locations</h1>
 </div>
-<div id="example-extracting-spatial-data-at-nasis-pedon-locations" class="section level1">
-<h1><span class="header-section-number">5</span> Example: Extracting Spatial Data at NASIS Pedon Locations</h1>
+<div id="generating-sampling-points" class="section level1">
+<h1><span class="header-section-number">6</span> Generating Sampling Points</h1>
+<div id="sampling-via-sp-functions" class="section level2">
+<h2><span class="header-section-number">6.1</span> Sampling via <code>sp</code> Functions</h2>
 </div>
-<div id="example-summarizing-prism-data-by-mlra" class="section level1">
-<h1><span class="header-section-number">6</span> Example: Summarizing PRISM Data by MLRA</h1>
+<div id="sampling-via-raster-functions" class="section level2">
+<h2><span class="header-section-number">6.2</span> Sampling via <code>raster</code> Functions</h2>
+</div>
+<div id="sampling-via-sharpshootr-functions" class="section level2">
+<h2><span class="header-section-number">6.3</span> Sampling via <code>sharpshootR</code> Functions</h2>
+</div>
+</div>
+<div id="summarizing-prism-data-by-mlra" class="section level1">
+<h1><span class="header-section-number">7</span> Summarizing PRISM Data by MLRA</h1>
 </div>
 <div id="further-examples-on-the-aqp-website" class="section level1">
-<h1><span class="header-section-number">7</span> Further Examples on the AQP Website</h1>
-</div>
-<div id="raster-data-1" class="section level1">
-<h1><span class="header-section-number">8</span> Raster Data</h1>
-<p>The raster format is a common GIS format designed primarily for displaying continuous data. The format is similar to matrices in R, although it contains additional information, such as spatial projection and resolution. R and many other GIS, including ArcGIS, use the Geospatial Data Abstraction Library (GDAL) to import raster data. GDAL supports a wide variety of raster formats. Popular formats include GeoTIFF (.tif) and Erdas Imagine (.img), but exclude rasters stored in ESRI’s propriety file geodatabase format. Either the <code>readGDAL()</code> or <code>raster()</code> function can be used to import raster data. These functions are from the rgdal and raster packages respectively. The raster package is preferred for working with large raster datasets because it doesn’t require reading the raster files into the computer’s random access memory (RAM). The raster package also contains a wider variety of functions similar to those found in the ArcGIS Spatial Analyst extension.</p>
-<div id="importing-raster-data-with-the-raster-package" class="section level2">
-<h2><span class="header-section-number">8.1</span> Importing Raster Data With the <code>raster</code> Package</h2>
-<pre class="r"><code># Example importing raster data
-
-library(sp)
-library(rgdal)
-library(raster)
-library(gdalUtils)
-
-f &lt;- system.file(&quot;external/tahoe_lidar_highesthit.tif&quot;, package=&quot;gdalUtils&quot;) # pointer to example raster file
-
-# import raster data using the raster package
-r &lt;- raster(f)
-
-str(r, max.level = 2)
-proj4string(r) # get or set the coordinate reference system
-bbox(r) # get bounding box
-
-plot(r)</code></pre>
-</div>
-<div id="stacking-rasters" class="section level2">
-<h2><span class="header-section-number">8.2</span> Stacking Rasters</h2>
-<p>Multiple sets of raster data can be loaded and then stacked using the <code>stack()</code> function in the <code>raster</code> package. Note that a number will be appended onto rasters with the same name to make the names unique within the raster stack.</p>
-<pre class="r"><code># create a raster stack of multiple rasters - in this case we are stacking the 'f' raster on top of itself
-# note names in the plot of this raster stack
-s &lt;- stack(f, f) 
-
-plot(s)</code></pre>
-</div>
-<div id="importing-raster-data-with-the-rgdal-package" class="section level2">
-<h2><span class="header-section-number">8.3</span> Importing Raster Data With the <code>rgdal</code> Package</h2>
-<pre class="r"><code>## import raster data using the rgdal package
-r2 &lt;- readGDAL(f)
-
-str(r2, max.level = 2)
-
-## sp package plotting method based on lattice package
-spplot(r2) </code></pre>
-</div>
-<div id="exporting-raster-data" class="section level2">
-<h2><span class="header-section-number">8.4</span> Exporting Raster Data</h2>
-<pre class="r"><code># raster package
-# for large datasets the progress option is helpful
-writeRaster(r, filename = &quot;C:/workspace/test.tif&quot;, format = &quot;GTiff&quot;, progress = &quot;text&quot;, overwrite = TRUE) 
-
-# rgdal package: example syntax for exporting a raster
-# writeGDAL(r2, fname = &quot;C:/workspace/test.tif&quot;, drivername = &quot;GTiff&quot;)</code></pre>
-</div>
-</div>
-<div id="vector-data-1" class="section level1">
-<h1><span class="header-section-number">9</span> Vector Data</h1>
-<p>The vector format is a common GIS format designed for displaying points, lines, and polygons. To import vector files, R uses the rgdal package, which is a wrapper for GDAL. During the import process, R converts all vector files to its own format, which is a complicated series of lists. This conversion means R is impractical for handling large vector datasets. However, R can call other GIS and spatial databases, such as SAGA, GRASS, and PostGIS.</p>
-<div id="importing-vector-data" class="section level2">
-<h2><span class="header-section-number">9.1</span> Importing Vector Data</h2>
-<pre class="r"><code># load libraries
-library(sp)
-library(rgdal)
-
-pol &lt;- readOGR(dsn = &quot;C:/workspace/ca794.shp&quot;, layer = &quot;ca794&quot;)
-
-str(pol, max.level  = 2)
-proj4string(pol)
-bbox(pol)
-
-plot(pol, axes = TRUE)</code></pre>
-</div>
-<div id="accessing-vector-tabular-data" class="section level2">
-<h2><span class="header-section-number">9.2</span> Accessing Vector Tabular Data</h2>
-<p>Tabular data associated with a vector layer can be accessed via the <code>@data</code> slot within the <code>SpatialPolygonsDataFrame</code> object. You can use the <code>head()</code> function to look at the columns in the data.</p>
-<pre class="r"><code># access tabular data table for vector data using '@data' slot
-head(pol)</code></pre>
-</div>
-<div id="exporting-vector-data" class="section level2">
-<h2><span class="header-section-number">9.3</span> Exporting Vector Data</h2>
-<pre class="r"><code># export vector data
-writeOGR(pol, dsn = &quot;C:/workspace/test.shp&quot;, layer = &quot;test&quot;, driver = &quot;ESRI Shapefile&quot;, overwrite_layer = TRUE)</code></pre>
-</div>
-</div>
-<div id="reprojecting-data" class="section level1">
-<h1><span class="header-section-number">10</span> Reprojecting Data</h1>
-<p>Typically, you will need to reproject a file before you can combine it with another. You can reproject using either the <code>spTranform()</code> function for sp objects or the <code>projectRaster()</code> function for raster objects. For large raster files, however, the raster package is slow; so it’s better to either call another GIS or spatial databases via R or reproject the files manually in a GIS.</p>
-<p>A catalog of spatial reference systems that are compatible with R and ArcGIS can be seen at <a href="http://spatialreference.org/">spatialreference.org</a> or <a href="http://epsg.io/" class="uri">http://epsg.io/</a>. Generally, it is simplest to use the EPSG code to specify the reference system; otherwise, you have to manually specify the projection, ellipsoid, and datum.</p>
-<pre class="r"><code># reproject polygons
-
-proj4string(pol) # get the original projection
-
-CRS(&quot;+init=epsg:5070&quot;) # get a projection using the EPSG code
-
-pol2 &lt;- spTransform(pol, CRS(&quot;+init=epsg:26911&quot;)) # reproject the pol SpatialPolygonsDataFrame to NAD83 UTM Zone 11</code></pre>
+<h1><span class="header-section-number">8</span> Further Examples on the AQP Website</h1>
+<ul>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html">SDA</a></li>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html">Export pedons to Google Earth</a></li>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html">Export NASIS pedons to SHP</a></li>
+<li><a href="http://ncss-tech.github.io/AQP/soilDB/series-extent.html">Series extent mapping</a></li>
+</ul>
 <p>The standard projection for point data in NASIS and Web Soil Survey is now long/lat WGS84 (i.e., EPSG code 4326). This is a geographic coordinate system. It projects the Earth as a sphere and measures distances in decimal degrees. Many spatial operations are necessary to use a projected coordinate system, which projects the Earth as a flat surface and measures distances in meters. All projected coordinate systems distort the Earth’s surface to some degree. Within the continental U.S., a good choice is the USA Contiguous Albers Equal Area Conic USGS projection, which corresponds with EPSG code 5070.</p>
 </div>
 <div id="extracting-spatial-data" class="section level1">
-<h1><span class="header-section-number">11</span> Extracting Spatial Data</h1>
+<h1><span class="header-section-number">9</span> Extracting Spatial Data</h1>
 <p>When using soil survey data, you’re typically interested in the values for spatial data that overlap point locations or polygons. This gives you information on the geomorphic setting of soil observations. You can then use this information to make predictions about the spatial distribution of soil properties or classes at unobserved sites (e.g., raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.</p>
 <p>Before you can extract spatial data for the purpose of spatial prediction, the data must meet the following conditions:</p>
 <ul>
@@ -428,55 +466,18 @@ pol2 &lt;- spTransform(pol, CRS(&quot;+init=epsg:26911&quot;)) # reproject the p
 <li>All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the <em>Snap Raster</em> in the ArcGIS Processing Environment prior to the creation of raster derivatives can ensure cell alignment. An ERDAS model is also available to perform this task.</li>
 </ul>
 <div id="r-tools-for-extracting-spatial-data" class="section level2">
-<h2><span class="header-section-number">11.1</span> R Tools for Extracting Spatial Data</h2>
+<h2><span class="header-section-number">9.1</span> R Tools for Extracting Spatial Data</h2>
 <p>To extract point data using R, you can use either the <code>sp</code> or <code>raster</code> packages. For large raster data sets, it is best to use the <code>extract()</code> function from the raster package.</p>
 <p>The following example takes pedon data locations from the CA794 soil survey, filters out pedons that are missing coordinates, and creates a <code>SpatialPointsDataFrame</code> object. Rasters of 30-m elevation and slope are then imported and stacked. The <code>extract()</code> function is used to intersect the raster values at the pedon point locations.</p>
-<pre class="r"><code># load libraries
-library(soilDB)
-library(raster)
-
-# fetch pedon data
-p &lt;- fetchNASIS()
-
-# extract site level data
-s &lt;- site(p)
-
-# create an index to filter out pedons that are missing coordinates in WGS84
-idx &lt;- complete.cases(s[c(&quot;x&quot;, &quot;y&quot;)]) 
-# subset pedon using idx
-p2 &lt;- p[idx] 
-
-# set the coordinates to the pedon object
-coordinates(p2) &lt;- ~ x + y 
-# set the projection of the pedon object
-proj4string(p2) &lt;- CRS(&quot;+init=epsg:4326&quot;)
-# extract a SpatialPointsDataFrame 
-p_sp &lt;- as(p2, &quot;SpatialPointsDataFrame&quot;) 
-# 
-# set working directory for output
-setwd(&quot;M:/geodata/project_data/8VIC/&quot;)
-
-# create a raster stack
-rs &lt;- stack(c(elev = &quot;ned30m_8VIC.tif&quot;, slope = &quot;ned30m_8VIC_slope5.tif&quot;))
-# assign projection to the raster stack
-proj4string(rs) &lt;- CRS(&quot;+init=epsg:5070&quot;)
-
-# extract data from the stack 
-test &lt;- data.frame(p_sp$site_id, extract(rs, p_sp)) 
-
-# save output data table as .Rdata file
- save(p, p_sp, test, file = &quot;C:/workspace/ca794_pedons.Rdata&quot;)</code></pre>
-<pre class="r"><code>load(file = &quot;C:/workspace/ca794_pedons.Rdata&quot;)
-
-summary(test)</code></pre>
-<div id="exercise-1-extracting-spatial-data" class="section level3">
-<h3><span class="header-section-number">11.1.1</span> Exercise 1: Extracting Spatial Data</h3>
+</div>
+</div>
+<div id="exercise-extracting-spatial-data" class="section level1">
+<h1><span class="header-section-number">10</span> Exercise: Extracting Spatial Data</h1>
 <p>Using your own point data, extract the raster values for several pedons.</p>
 <p>Submit the results to your coach.</p>
 </div>
-</div>
-<div id="arcgis-tools-for-extracting-spatial-data-extracting-point-data-from-a-raster" class="section level2">
-<h2><span class="header-section-number">11.2</span> ArcGIS Tools for Extracting Spatial Data: Extracting Point Data from a Raster</h2>
+<div id="arcgis-tools-for-extracting-spatial-data-extracting-point-data-from-a-raster" class="section level1">
+<h1><span class="header-section-number">11</span> ArcGIS Tools for Extracting Spatial Data: Extracting Point Data from a Raster</h1>
 <p>This section discusses the use of the “Extract Multi Values to Points” tool, which assigns the cell value of specified raster data sets to existing points. The “Extract Values to Points” and “Sample” tools achieve similar results. These tools are described in the ESRI help section <a href="http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/">An Overview of the Extraction Tools</a>.</p>
 <p>To start, assume you have 50 observations across an area of interest in an ArcGIS point file that has numerous observed soil properties. In your analysis, you will also consider such variables as slope, profile curvature, solar insolation, topographic wetness index, relative position, and elevation.</p>
 <p>The Extract Multi Values to Points tool is the most expedient way to populate raster values to a point file. If your spatial extent is large and you have many raster layers; e.g., 12, it may be best to proceed using 3 or 4 rasters at a time and running the tool 3 or 4 times.</p>
@@ -496,7 +497,6 @@ summary(test)</code></pre>
 <p class="caption">R GUI image</p>
 </div>
 <p>The resulting point file may also be saved as a text file for use in R.</p>
-</div>
 </div>
 <div id="additional-reading" class="section level1">
 <h1><span class="header-section-number">12</span> Additional Reading</h1>
