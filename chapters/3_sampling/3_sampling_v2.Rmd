@@ -2,7 +2,7 @@
 html_document:
   keep_md: yes
 author: Tom D'Avello, Stephen Roecker, Skye Wills
-date: "Monday, February 14, 2016"
+date: `r sy
 output: 
   html_document: 
     keep_md: yes
@@ -57,15 +57,15 @@ power.t.test(power = 0.95, sd = 3, delta = 16 - 19)
 
 # Generate a graphical comparison of the fictitious clay example with 2 standard deviations
 x1 <- seq(12, 20, 0.1)
-test1 <- dnorm(x1, mean = 16, sd = 2)
+y1 <- dnorm(x1, mean = 16, sd = 2)
 
 x2 <- seq(15, 23, 0.1)
-test2 <- dnorm(x2, mean = 19, sd = 2)
+y2 <- dnorm(x2, mean = 19, sd = 2)
 
 summary(c(x1, x2))
 
-plot(x1, test1, type = "l", xlim = range(c(x1, x2)), main = "Overlapping Populations", xlab = "Clay %")
-lines(x2, test2)
+plot(x1, y1, type = "l", xlim = range(c(x1, x2)), main = "Overlapping Populations", xlab = "Clay %")
+lines(x2, y2)
 abline(v = mean(c(x1, x2)), lty = 2)
 ```
 
@@ -256,13 +256,22 @@ To gauge the representativeness of a sampling strategy, you can compare the resu
 The simple example below demonstrates how to compare several sampling strategies by evaluating how well they replicate the distribution of elevation. 
 
 ```{r seval}
-test <- as(extent(volcano_r), "SpatialPolygons") # create a polygon from the spatial extent of the volcano dataset
+# create a polygon from the spatial extent of the volcano dataset
+test <- as(extent(volcano_r), "SpatialPolygons")
 
-sr400 <- spsample(test, n = 400, type = "random") # take a large random sample
-sr <- spsample(test, n = 20, type = "random") # take a small random sample
-str <- spsample(test, n = 23, type = "stratified", iter = 1000)[1:20] # take a small stratified random sample
-# cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE) # take a cLHS sample
+# take a large random sample
+sr400 <- spsample(test, n = 400, type = "random")
 
+# take a small random sample
+sr <- spsample(test, n = 20, type = "random")
+
+# take a small stratified random sample
+str <- spsample(test, n = 23, type = "stratified", iter = 1000)[1:20]
+
+# take a cLHS sample
+# cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+
+# Combind and Extract Samples
 s <- rbind(data.frame(method = "Simple Random 400", extract(rs, sr400)),
            data.frame(method = "Simple Random", extract(rs, sr)),
            data.frame(method = "Stratified Random", extract(rs, str)),

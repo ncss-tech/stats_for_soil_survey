@@ -2,14 +2,18 @@
 html_document:
     keep_md: yes
 author: Tom D'Avello, Stephen Roecker, Skye Wills
-date: "Monday, February 14, 2016"
-output: html_document
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: yes
 title: Chapter 3 - Sampling Design
 ---
 
 ```{r setup, echo=FALSE, warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
+library(ggplot2)
+
 opts_chunk$set(message=FALSE, warning=FALSE, background="#F7F7F7", fig.retina=1, dev="png", tidy=FALSE, verbose=FALSE)
 ```
 
@@ -51,15 +55,21 @@ If you have prior knowledge about the soil attribute being sampled, you can use 
 power.t.test(power = 0.95, sd = 2, delta = 16 - 19) # delta = the difference between the two means
 power.t.test(power = 0.95, sd = 3, delta = 16 - 19)
 
-# Generate a graphical comparison of the fictitious clay example with 2 standard deviations
-test1 <- rnorm(1:1000000, mean = 16, sd = 2)
-test2 <- rnorm(1:1000000, mean = 19, sd = 2)
+# Generate a graphical comparison of a fictitious clay example with 2 standard deviations
+x1 <- seq(12, 20, 0.1)
+y1 <- dnorm(x1, mean = 16, sd = 2)
 
-summary(c(test1, test2))
+x2 <- seq(15, 23, 0.1)
+y2 <- dnorm(x2, mean = 19, sd = 2)
 
-plot(density(test1), xlim = range(c(test1, test2)), main = "Overlapping Populations", xlab = "Clay %")
-lines(density(test2))
-abline(v = mean(c(test1, test2)), lty = 2)
+summary(c(x1, x2))
+
+plot(x1, y1, type = "l", xlim = range(c(x1, x2)), 
+     main = "Overlapping Populations", 
+     xlab = "Clay %"
+     )
+lines(x2, y2)
+abline(v = mean(c(x1, x2)), lty = 2)
 ```
 
 From the figure above, you can see how difficult it is to separate two overlapping populations (e.g., horizons). Also, a 1-unit increase in the standard deviation doubles the number of samples required. This simplistic example, although enlightening, is hard to implement in practice and serves only as a theoretical exercise. 
@@ -214,20 +224,26 @@ To perform cLHS using R, you can use the clhs package (Roudier, 2011).
 library(clhs)
 library(raster)
 
-data(volcano) # details at http://geomorphometry.org/content/volcano-maungawhau
-volcano_r <- raster(as.matrix(volcano[87:1, 61:1]), crs = CRS("+init=epsg:27200"), xmn = 2667405, xmx = 2667405 + 61*10, ymn = 6478705, ymx = 6478705 + 87*10) # import volcano DEM
+# import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau
+data(volcano)
+volcano_r <- raster(as.matrix(volcano[87:1, 61:1]), crs = CRS("+init=epsg:27200"), xmn = 2667405, xmx = 2667405 + 61*10, ymn = 6478705, ymx = 6478705 + 87*10)
 names(volcano_r) <- "elev"
-slope_r <- terrain(volcano_r, opt = "slope", unit = "radians") # calculate slope from the DEM
 
+# calculate slope from the DEM
+slope_r <- terrain(volcano_r, opt = "slope", unit = "degrees")
+
+# Stack Elevation and Slope
 rs <- stack(volcano_r, slope_r)
 
-cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE) # generate cLHS design
+# generate cLHS design
+cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
 
+# Plot cLHS Samples
 plot(volcano_r)
 points(cs$sampled_data)
 
 # Summary of clhs object
-summary(cs$sampled_data)
+summary(cs$sampled_data)$data
 
 # Summary of raster objects
 cbind(summary(volcano_r), summary(slope_r))
@@ -249,38 +265,44 @@ To gauge the representativeness of a sampling strategy, you can compare the resu
 The simple example below demonstrates how to compare several sampling strategies by evaluating how well they replicate the distribution of elevation. 
 
 ```{r seval}
-library(Hmisc)
+# create a polygon from the spatial extent of the volcano dataset
+test <- as(extent(volcano_r), "SpatialPolygons")
 
-test <- as(extent(volcano_r), "SpatialPolygons") # create a polygon from the spatial extent of the volcano dataset
+# take a large random sample
+sr400 <- spsample(test, n = 400, type = "random")
 
-sr400 <- spsample(test, n = 400, type = "random") # take a large random sample
-sr <- spsample(test, n = 20, type = "random") # take a small random sample
-str <- spsample(test, n = 23, type = "stratified", iter = 1000) # take a small stratified random sample
-str <- str[1:20]
-# cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE) # take a cLHS sample
+# take a small random sample
+sr <- spsample(test, n = 20, type = "random")
 
-sr400 <- data.frame(extract(rs, sr400)) # extract the raster values from the sample locations
-s <- data.frame(sr = extract(rs, sr), str = extract(rs, str), cs = cs$sampled_data)
+# take a small stratified random sample
+str <- spsample(test, n = 23, type = "stratified", iter = 1000)[1:20]
 
-# Plot back to back histograms to compare the distributions between the large and small samples
-histbackback(sr400$elev, s$sr.elev, probability = TRUE, main = "Simple random comparison")
-histbackback(sr400$elev, s$str.elev, probability = TRUE, main = "Stratified random comparison")
-histbackback(sr400$elev, s$cs.elev, probability = TRUE, main = "cLHS comparison")
+# take a cLHS sample
+# cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+
+# Combind and Extract Samples
+s <- rbind(data.frame(method = "Simple Random 400", extract(rs, sr400)),
+           data.frame(method = "Simple Random", extract(rs, sr)),
+           data.frame(method = "Stratified Random", extract(rs, str)),
+           data.frame(method = "cLHS", cs$sampled_data@data)
+           )
 
 # Summarize the sample values
-cbind(sr400 = summary(sr400$elev), sr = summary(s$sr.elev), str = summary(s$str.elev), clhs = summary(cs$sampled_data$elev))
+aggregate(slope ~ method, data = s, function(x) round(summary(x * 100)))
 
-# plot the spatial locations
+# Plot overlapping density plots to compare the distributions between the large and small samples
+ggplot(s, aes(x = slope, col = method)) + geom_density(cex = 2)
+
+# plot the spatial locations            
 par(mfrow = c(1, 3))
-plot(volcano_r, main = "Simple random")
-points(sr, pch = 1)
+plot(volcano_r, main = "Simple random", cex.main = 2)
+points(sr, pch = 3, cex = 1.2)
 
-plot(volcano_r, main = "Stratified random")
-points(str, pch = 2)
+plot(volcano_r, main = "Stratified random", cex.main = 2)
+points(str, pch = 3, cex = 1.2)
 
-plot(volcano_r, main = "cLHS")
-points(cs$sampled_data, pch = 3)
-
+plot(volcano_r, main = "cLHS", cex.main = 2)
+points(cs$sampled_data, pch = 3, cex = 1.2)
 dev.off()
 ```
 
