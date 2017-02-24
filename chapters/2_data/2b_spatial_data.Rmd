@@ -16,7 +16,6 @@ output:
 ```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 # setup
 library(knitr, quietly=TRUE)
-library(printr, quietly=TRUE)
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
 
 # options for R functions
@@ -37,7 +36,6 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
 Most of us are familiar with spatial data types, sources, and the jargon used to describe interaction with these data. GIS software provides a convenient framework for most of the spatial analysis that we do, however, the combination of statistical routines, advanced graphics, and data access functionality make *R* and ideal environment for soil science. For example, with a couple of lines of *R* code, it is possible to quickly integrate soil morphology (NASIS), lab data (KSSL), map unit polygons (SSURGO), and climate data (PRISM raster files). 
 
 This chapter is a very brief demonstration of several possible ways to process spatial data in R. A much more thorough description can be found in [*Applied Spatial Data Analysis with R*](http://www.asdar-book.org/) (Bivand et al., 2013) or [*Spatial Data Analysis and Modeling with R*](http://rspatial.org/spatial/) (Hijmans, 2016).
-
 
 ## Objectives
  * Gain experience with creating, editing, and exporting spatial data objects in R.
@@ -257,12 +255,22 @@ It is wise to manually specify an output `datatype` that will "just fit" the req
   * time spent with the `raster` [documentation](http://rspatial.org/) is well invested
 
 
+# Conclusions
+
+Common themes:
+  * sample &rarr; summarize &rarr; report
+  * sample &rarr; model &rarr; predict
+  
+  
+
 # Intermission
 
 If you haven't yet done so, please setup the sample datasets for this module.
 ```{r, eval=FALSE}
 # store path as a variable, in case you want to keep it somewhere else
 ch2b.data.path <- 'C:/workspace/chapter-2b'
+ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
+
 # make a place to store chapter 2b example data
 dir.create(ch2b.data.path, recursive = TRUE)
 
@@ -281,78 +289,245 @@ unzip(paste0(ch2b.data.path, '/chapter-2b-PRISM.zip'), exdir = ch2b.data.path, o
 
 
 
-# Applied Examples / Exercises
+# Applied Examples
 
+## Load Example Data
+
+We will be using polygons associated with MLRAs 15 and 18 as part of this demonstration. Import these data now with `readOGR()`; recall the somewhat strange syntax.
 ```{r results='hide'}
 # establish path to example data
 ch2b.data.path <- 'C:/workspace/chapter-2b'
+ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
+
 # load MLRA polygons
 mlra <- readOGR(dsn=ch2b.data.path, layer='mlra-18-15-AEA')
 ```
 
+Next, load in the example raster data with the `raster()` function. These are 800m PRISM data that have been cropped to the exent of the MLRA 15 and 18 polygons.
 ```{r}
+# mean annual air temperature, Deg C
+maat <- raster(paste0(ch2b.data.path, '/MAAT.tif'))
+# mean annual precipitation, mm
+map <- raster(paste0(ch2b.data.path, '/MAP.tif'))
+# frost-free days
+ffd <- raster(paste0(ch2b.data.path, '/FFD.tif'))
+# growing degree days
+gdd <- raster(paste0(ch2b.data.path, '/GDD.tif'))
+# percent of annual PPT as rain
+rain_fraction <- raster(paste0(ch2b.data.path, '/rain_fraction.tif'))
+# annual sum of monthly PPT - ET_p
+ppt_eff <- raster(paste0(ch2b.data.path, '/effective_preciptitation.tif'))
+```
 
+Sometimes it is convenient to "stack" raster data that share a common grid size, extent, and coordinate reference system into a single `RasterStack` object.
+```{r}
+rs <- stack(maat, map, ffd, gdd, rain_fraction, ppt_eff)
+# reset layer names
+names(rs) <- c('MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT')
+```
+
+Quick inspection of the data.
+```{r}
+# object class
+class(mlra)
+class(maat)
+class(rs)
+
+# the raster package provides a nice "print" method for raster and sp classes
+print(maat)
+
+# coordinate reference systems
+proj4string(mlra)
+proj4string(maat)
+proj4string(rs)
 ```
 
 
-## Vector Data
+Basic plot methods (class-specific functions) for the data. We can't overlay the two data sources (yet) because the coordinate reference systems (CRS) are not the same.
+```{r, fig.width=5, fig.height=6.75}
+# mlra polygons
+plot(mlra, main='MLRA 15 and 18')
+box()
 
-## Raster Data
+# maat raster
+plot(maat, main='PRISM Mean Annual Air Temperature (deg C)')
+```
 
 
-# Extracting Raster Data at NASIS Pedon Locations
+## Spatial Overlay Operations
+
+Spatial data are lot more useful when "combined" (overlay, intersect, spatial query, etc.) to generate something new. For simplicity, we will refer to this kind of operation as an "extraction".
+
+The attribute data in one `sp` object can be extracted from another using the `over()` function, as long as the CRS are the same. Access the associated vignette by pasting `vignette("over")` in the console.
+```{r}
+# hand make a SpatialPoints object
+# note that this is GCS
+p <- SpatialPoints(coords = cbind(-120, 37.5), proj4string = CRS('+proj=longlat +datum=WGS84'))
+
+# spatial extraction of MLRA data requires a CRS transformation
+p.aea <- spTransform(p, proj4string(mlra))
+over(p.aea, mlra)
+```
+
+The values stored in a `RasterLayer` or `RasterStack` object can be extracted using the `extract()` function. As long a the "query" feature has a valid CRS defined, the `extract()` function will automatically perform any required CRS transformation.
+```{r}
+# extract from a single RasterLayer
+extract(maat, p)
+# extract from a RasterStack
+extract(rs, p)
+```
 
 
-# Generating Sampling Points
+The `extract()` function can perform several operations in one pass, such as buffering (in projected units) then extracting. See the manual page for an extensive listing of optional arguments and what they do.
+```{r}
+# extract using a buffer with radius specified in meters (1000m)
+extract(rs, p, buffer=1000)
+```
 
 
-## Sampling via `sp` Functions
 
-## Sampling via `raster` Functions
 
-## Sampling via `sharpshootR` Functions
+## Sampling
 
+Collecting a subset of values from raster data ... sampling. Summaries derived from [samples](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html) ... .
+
+`RasterLayer` and `RasterStack` objects can be sampled in several ways.
+
+Sampling and extraction, result is a `matrix` object.
+```{r, eval=FALSE}
+sampleRegular(maat, size=10)
+sampleRegular(rs, size=10)
+```
+
+Sampling and extract, result is a `SpatialPointsDataFrame` object.
+```{r fig.width=8, fig.height=4}
+par(mfcol=c(1,2), mar=c(1,1,3,1))
+
+# regular sampling + extraction of raster values
+x <- sampleRegular(maat, size = 100, sp=TRUE)
+plot(maat, axes=FALSE, legend=FALSE)
+points(x)
+
+# random sample + extraction of raster values
+x <- sampleRandom(maat, size = 100, sp=TRUE)
+plot(maat, axes=FALSE, legend=FALSE)
+points(x)
+```
+
+
+```{r, fig.width=10, fig.height=5}
+# convert extent (bounding-box) of MAAT raster into a SpatialPolygons object
+poly <- as(extent(maat), 'SpatialPolygons')
+
+# demonstrate some of the `sp` sampling methods
+par(mfcol=c(2,3))
+for(i in c('random', 'stratified', 'regular', 'hexagonal', 'clustered', 'nonaligned')) {
+  plot(poly, main=i)
+  points(spsample(poly, n = 50, type=i))
+}
+```
+
+  * `spsample()`: new sampling points distributed across **all** features in a `sp` object, many sampling types
+  * `sampleRegular()`: regular sampling points + extraction of values from a `raster` object
+  * `sampleRandom()`: random sampling points + extraction of values from a `raster` object
+  * `extract()` or `over()`: extract values from pre-established sampling points, lines, or polygons
+
+... Explain caveats.
+
+
+
+# Extracting Raster Data at KSSL Pedon Locations
+OK lets work on something more concrete. This time, we want to extract PRISM data at the coordinates associated with KSSL pedons that have been correlated to the [AUBURN](https://casoilresource.lawr.ucdavis.edu/sde/?series=auburn) series. We will use the [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html) function from the `soilDB` package to get KSSL data from the most recent snapshot. This example can readily be applied to data extracted from NASIS using [`fetchNASIS()`](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
+
+Get some KSSL data and upgrade the "site" data to a `SpatialPointsDataFrame`.
+```{r}
+library(soilDB)
+# result is a SoilProfileCollection object
+auburn <- fetchKSSL(series = 'auburn')
+# extract site data
+s <- site(auburn)
+# these are GCS WGS84 coordinates from NASIS
+coordinates(s) <- ~ x + y
+proj4string(s) <- '+proj=longlat +datum=WGS84'
+```
+
+Extract PRISM data (the `RasterStack` object we made earlier) at the Auburn KSSL locations.
+```{r}
+# return the result as a data.frame object
+e <- extract(rs, s, df=TRUE)
+# check out the extracted data
+summary(e[, -1])
+```
+
+Join the extracted PRISM data with the original `SoilProfileCollection` object. More information on [`SoilProfileCollection objects here`](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
+```{r}
+# combine site data with extracted raster values, row-order is identical
+res <- cbind(as.data.frame(s), e)
+# extract unique IDs and PRISM data
+res <- res[, c('pedon_key', 'MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT')]
+# join with original SoilProfileCollection object via pedon_key
+site(auburn) <- res
+```
+
+The extracted values are now part of the "auburn" `SoilProfileCollection` object.
+```{r fig.width=12, fig.height=6}
+# create an ordering of pedons based on the extracted effective PPT
+new.order <- order(auburn$eff.PPT)
+
+# setup figure margins
+par(mar=c(3,2,4,2))
+# plot profile sketches
+plot(auburn, name='hzn_desgn', print.id=FALSE, color='clay', plot.order=new.order)
+# add an axis with extracted raster values
+axis(side=1, at = 1:length(auburn), labels = round(auburn$eff.PPT[new.order]), cex.axis=0.75)
+```
+
+
+
+# Summarizing PRISM Data by Series Extent
+
+[Series extent mapping](http://ncss-tech.github.io/AQP/soilDB/series-extent.html)
+
+```{r}
+amador <- seriesExtent(s = 'amador')
+class(amador)
+
+s <- spsample(amador, n = 100, type = 'hexagonal')
+
+par(mar=c(1,1,1,1))
+plot(maat)
+plot(amador, add=TRUE)
+points(s, cex=0.25)
+```
 
 
 # Summarizing PRISM Data by MLRA
 
+[soilReports](https://github.com/ncss-tech/soilReports)
+
+Constant density sampling.
+```{r eval=FALSE}
+library(sharpshootR)
+
+mlra$pID <- 1:nrow(mlra)
+s <- constantDensitySampling(mlra, n.pts.per.ac=0.0001)
+```
+
+Extract raster values.
+```{r}
+```
+
+Graphically summarize.
 
 
 # Further Examples on the AQP Website
   * [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
   * [Export pedons to Google Earth](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html)
   * [Export NASIS pedons to SHP](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html)
-  * [Series extent mapping](http://ncss-tech.github.io/AQP/soilDB/series-extent.html)
  
 
 
 
-The standard projection for point data in NASIS and Web Soil Survey is now long/lat WGS84 (i.e., EPSG code 4326). This is a geographic coordinate system. It projects the Earth as a sphere and measures distances in decimal degrees. Many spatial operations are necessary to use a projected coordinate system, which projects the Earth as a flat surface and measures distances in meters. All projected coordinate systems distort the Earth's surface to some degree. Within the continental U.S., a good choice is the USA Contiguous Albers Equal Area Conic USGS projection, which corresponds with EPSG code 5070.
-
-
-# Extracting Spatial Data
-
-When using soil survey data, you're typically interested in the values for spatial data that overlap point locations or polygons. This gives you information on the geomorphic setting of soil observations. You can then use this information to make predictions about the spatial distribution of soil properties or classes at unobserved sites (e.g., raster cells). The procedure for extracting spatial data at point locations is a simple process of intersecting the point coordinates with the spatial data and recording their values. This can be accomplished with almost any GIS program, including R.
-
-Before you can extract spatial data for the purpose of spatial prediction, the data must meet the following conditions:  
-
- - All data conforms to a common projection and datum,
- - All raster data have a common cell resolution, and
- - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can ensure cell alignment. An ERDAS model is also available to perform this task.  
-
-
-## R Tools for Extracting Spatial Data
-
-To extract point data using R, you can use either the `sp` or `raster` packages. For large raster data sets, it is best to use the `extract()` function from the raster package.
-
-The following example takes pedon data locations from the CA794 soil survey, filters out pedons that are missing coordinates, and creates a `SpatialPointsDataFrame` object.  Rasters of 30-m elevation and slope are then imported and stacked. The `extract()` function is used to intersect the raster values at the pedon point locations.
-
-
-# Exercise: Extracting Spatial Data
-
-Using your own point data, extract the raster values for several pedons.
-
-Submit the results to your coach.
 
 
 # ArcGIS Tools for Extracting Spatial Data: Extracting Point Data from a Raster
