@@ -1,7 +1,7 @@
 ---
 title:
 author: Tom D'Avello and Stephen Roecker
-date: "Friday, February 27, 2015"
+date: "`r Sys.Date()`"
 output: html_document
 html_document:
     keep_md: yes
@@ -129,8 +129,8 @@ summary(h[vars])
 
 # or
 
-sub <- subset(h, select = c("genhz", "clay", "total_frags_pct", "phfield", "effervescence"))
-summary(sub)
+# sub <- subset(h, select = vars)
+# summary(sub)
 ```
 
 The `summary()` function is known as a generic R function. It will return a preprogrammed summary for any R object. Because `h` is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e., number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they are present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
@@ -146,7 +146,7 @@ A quick check for typos would be to examine the list of levels for a factor or c
 ```{r}
 levels(h$genhz)  # just for factors
 
-unique(h$hzname) # for characters and factors
+# unique(h$hzname) # for characters and factors
 
 sort(unique(h$hzname)) # sort the results
 ```
@@ -204,22 +204,25 @@ A Gaussian distribution is often referred to as "Bell Curve", and has the follow
 ```{r, echo=FALSE, fig.align="center"}
 # http://www.alisonsinclair.ca/2011/03/shading-between-curves-in-r/
 
-r <- rnorm(1:1000000, sd = 2)
-d <- density(r)
+r <- seq(-5, 5, 0.1)
+d <- list(x = r, y = dnorm(r, sd = 2))
 
 par(mfrow = c(1, 2))
 par(pty = "s")
-plot(d, main = "68% highlighted", xlab = "")
+
+plot(d, type = "l", main = "68% highlighted", xlab = "")
 q <- quantile(r, prob = c(0.16, 0.84)) 
 select <- q[1] <= d$x & d$x <= q[2]
 polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
 abline(v = quantile(r, p = 0.5), lty =2)
 
-plot(d, main = "95% highlighted", xlab = "")
+plot(d, type = "l", main = "95% highlighted", xlab = "")
 q <- quantile(r, prob = c(0.025, 0.975)) 
 select <- q[1] <= d$x & d$x <= q[2]
 polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
 abline(v = quantile(r, p = 0.5), lty = 2)
+
+dev.off()
 ```
 
 Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically normal, Bimodal or Skewed:  
@@ -231,8 +234,8 @@ Figure 2. Sample histograms
 Occasionally distributions are Uniform, or nearly so:
 
 ```{r, echo = FALSE, warning=FALSE}
-test <- data.frame(x = seq(0, 1, by = 0.1), y = rep(1, 11))
-plot(test, type = "line", main = "Uniform Distribution: Minimum = 0, Maximum = 1")
+r <- seq(-1, 2, 0.1)
+plot(r, dunif(r), type = "l", main = "Uniform Distribution: Minimum = 0, Maximum = 1")
 ```
 
 Figure 3. Uniform distribution  
@@ -241,15 +244,14 @@ Figure 3. Uniform distribution
 ```{r, echo=FALSE, eval=FALSE}
 # An idealized normal distribution is shown in Figure 1:
 
-test <- rnorm(1000000)
-plot(density(test), main = "Normal Distribution: Mean = 0, Standard Deviation = 1")
+plot(d, type = "l", main = "Normal Distribution: Mean = 0, Standard Deviation = 1")
 
 # 1. Normal Distribution
 
 # Figure 1 indicates that the data that is symmetrically distributed, such that there is an equal distribution on either side of the highest point on the graph. By contrast, Fig. 2 and 3 are asymmetrical, with a higher distribution of values on the low end and high end of the spectrum respectively.  
 
-test <- rbeta(1000000, shape1 = 2, shape2 = 1000)
-plot(density(test), main = "Beta Distribution: Shape 1 = 2, Shape 2 = 1000")
+test <- dbeta(r, shape1 = 2, shape2 = 1000)
+plot(r, test, type = "l", main = "Beta Distribution: Shape 1 = 2, Shape 2 = 1000")
 
 # Figure 2. Example of a positively skewed distribution.  
 
