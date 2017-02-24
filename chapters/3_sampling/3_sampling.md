@@ -105,7 +105,7 @@ x <- mapunit_geom_by_ll_bbox(b)
 
 ```
 ## OGR data source with driver: GML 
-## Source: "C:\Users\STEPHE~1.ROE\AppData\Local\Temp\1\Rtmpm0Mlbo\file24b470d34f59.gml", layer: "mapunitpoly"
+## Source: "C:\Users\STEPHE~1.ROE\AppData\Local\Temp\1\RtmpWSr2CA\file1e6c35a1705e.gml", layer: "mapunitpoly"
 ## with 14 features
 ## It has 8 fields
 ```
@@ -277,12 +277,12 @@ summary(cs$sampled_data)$data
 
 ```
 ##       elev           slope       
-##  Min.   : 96.0   Min.   : 0.000  
-##  1st Qu.:109.2   1st Qu.: 7.571  
-##  Median :123.5   Median :14.178  
-##  Mean   :129.9   Mean   :14.273  
-##  3rd Qu.:148.0   3rd Qu.:21.430  
-##  Max.   :180.0   Max.   :30.108
+##  Min.   : 94.0   Min.   : 1.013  
+##  1st Qu.:106.8   1st Qu.: 7.632  
+##  Median :120.0   Median :14.185  
+##  Mean   :124.2   Mean   :14.987  
+##  3rd Qu.:140.8   3rd Qu.:21.563  
+##  Max.   :175.0   Max.   :33.946
 ```
 
 ```r
@@ -346,15 +346,15 @@ aggregate(slope ~ method, data = s, function(x) round(summary(x)))
 
 ```
 ##              method slope.Min. slope.1st Qu. slope.Median slope.Mean
-## 1 Simple Random 400          0             7           15         15
-## 2     Simple Random          0             7           14         13
-## 3 Stratified Random          0            10           13         14
-## 4              cLHS          0             8           14         14
+## 1 Simple Random 400          0             8           14         15
+## 2     Simple Random          0             8           15         16
+## 3 Stratified Random          0             8           13         14
+## 4              cLHS          1             8           14         15
 ##   slope.3rd Qu. slope.Max.
-## 1            23         41
-## 2            18         32
-## 3            18         28
-## 4            21         30
+## 1            20         41
+## 2            26         33
+## 3            23         34
+## 4            22         34
 ```
 
 ```r
@@ -502,8 +502,6 @@ The results compared well to the extent of the population.
 # References
 
 Franklin, J., and J.A. Miller. 2009. Mapping species distributions: Spatial inference and prediction. Cambridge: Cambridge University Press. [http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction](http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction).
-
-Hengl, T. 2006. Finding the right pixel size. Computers & Geosciences. 32(9):1283â1298. [http://www.sciencedirect.com/science/article/pii/S0098300405002657](http://www.sciencedirect.com/science/article/pii/S0098300405002657).
 
 Hengl, T. 2009. A practical guide to geostatistical mapping, 2nd Ed. University of Amsterdam. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf).
 
