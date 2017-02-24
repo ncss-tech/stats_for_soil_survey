@@ -6,26 +6,8 @@ Tom D'Avello, Stephen Roecker, Skye Wills
 
 ![Statistics for pedologists course banner image](figure/logo.jpg)  
 
-# CHAPTER 3: Sampling Design
 
-- [3.0 Introduction](#intro)
-- [3.1 Sampling Strategies](#strat) 
-    - [3.1.1 Simple Random](#simp)
-    - [3.1.2 Stratified Random](#sr)
-    - [3.1.3 Multistage Stratified Random](#ms)
-    - [3.1.4 Systematic](#reg)
-    - [3.1.5 Cluster](#cluster)
-    - [3.1.6 Conditioned Latin Hypercube](#clhs) 
-- [3.2 Evaluating a Sampling Strategy](#eval)
-    - [3.2.1 Exercise: Design a Sampling Strategy](#ex1)
-- [3.3 Other Tools for Selecting Random Features](#tools)
-    - [3.3.1 cLHS Using TEUI](#teui)
-    - [3.3.2 Two-Stage Stratified Random Sample Design Using ArcGIS](#arcgis)
-- [3.4 References](#ref)
-- [3.5 Additional Reading](#add)
-
-
-## <a id="intro")></a>3.0 Introduction   
+# Introduction   
 
 Sampling is a fundamental part of statistics. Samples are collected to achieve an understanding of a population because it is typically not feasible to observe all members of the population. The goal is to collect samples that provide an accurate representation of the population. Constraints on time and money dictate that the sampling effort must be efficient. More samples are needed to characterize the nature of highly variable populations than less variable populations.  
 
@@ -75,32 +57,13 @@ power.t.test(power = 0.95, sd = 3, delta = 16 - 19)
 ## NOTE: n is number in *each* group
 ```
 
-```r
-# Generate a graphical comparison of a fictitious clay example with 2 standard deviations
-x1 <- seq(12, 20, 0.1)
-y1 <- dnorm(x1, mean = 16, sd = 2)
-
-x2 <- seq(15, 23, 0.1)
-y2 <- dnorm(x2, mean = 19, sd = 2)
-
-summary(c(x1, x2))
-```
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##    12.0    15.5    17.5    17.5    19.5    23.0
 ```
 
-```r
-plot(x1, y1, type = "l", xlim = range(c(x1, x2)), 
-     main = "Overlapping Populations", 
-     xlab = "Clay %"
-     )
-lines(x2, y2)
-abline(v = mean(c(x1, x2)), lty = 2)
-```
-
-![](3_sampling_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
+![](3_sampling_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
 
 From the figure above, you can see how difficult it is to separate two overlapping populations (e.g., horizons). Also, a 1-unit increase in the standard deviation doubles the number of samples required. This simplistic example, although enlightening, is hard to implement in practice and serves only as a theoretical exercise. 
 
@@ -111,9 +74,9 @@ Some rules of thumb for regression models are as follows:
 - Never use n < 5*m (Rossiter, 2015).
 
 
-## <a id="strat")></a>3.1 Sampling Strategies
+# Sampling Strategies
  
-### <a id="simp")></a>3.1.1 Simple Random 
+## Simple Random 
 
 In simple random sampling, all samples within the region have an equal chance of being selected. A simple random selection of points can be made using either the `spsample()` function within the sp R package or the Create Random Points tool in ArcGIS.
 
@@ -132,23 +95,35 @@ In simple random sampling, all samples within the region have an equal chance of
 
 
 ```r
-# load sp package
-library(sp)
+# load dataset from Soil Data Access
+library(soilDB)
+library(raster)
 
-# Create a sixteen square polygon
-grd <- GridTopology(c(1, 1), c(1, 1), c(4, 4))
-polys <- as.SpatialPolygons.GridTopology(grd)
-plot(polys, main = "Simple random sample")
+b <- c(-86.35,39.82,-86.34,39.83)
+x <- mapunit_geom_by_ll_bbox(b)
+```
+
+```
+## OGR data source with driver: GML 
+## Source: "C:\Users\STEPHE~1.ROE\AppData\Local\Temp\1\Rtmpm0Mlbo\file24b470d34f59.gml", layer: "mapunitpoly"
+## with 14 features
+## It has 8 fields
+```
+
+```r
+polys <- crop(x, extent(b[c(1, 3, 2, 4)]))
+
+plot(polys)
 
 # Generate simple random sample
-test <- spsample(polys, n = 16, type = "random")
-points(test)
+test <- spsample(polys, n = 15, type = "random")
+points(test, pch = 19)
 ```
 
 ![](3_sampling_files/figure-html/simple-1.png)<!-- -->
 
 
-### <a id="sr")></a>3.1.2 Stratified Random
+## Stratified Random
 
 In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area, it can be used to develop the strata. Strata may be sampled equally or in proportion to area; however, if the target of interest is rare in the population, it may be preferable to sample the strata equally (Franklin and Miller, 2009).
 
@@ -166,8 +141,8 @@ In stratified random sampling, the sampling region is spatially subset into diff
 plot(polys, main = "Stratified random sample")
 
 # Generate a spatially stratified random sample
-test <- spsample(polys, n = 16, type = "stratified")
-points(test)
+test <- spsample(polys, n = 15, type = "stratified")
+points(test, pch = 19)
 ```
 
 ![](3_sampling_files/figure-html/stratified-1.png)<!-- -->
@@ -175,7 +150,7 @@ points(test)
 Note that the `spsample()` function only stratifies the points spatially. Other more sophisticated designs can be implemented using the spsurvey, spcosa, or clhs packages.
 
 
-### <a id="ms")></a>3.1.3 Multistage Stratified Random
+## Multistage Stratified Random
 
 In multistage random sampling, the region is separated into different subsets that are randomly selected (i.e., first stage), and then the selected subsets are randomly sampled (i.e., second stage). This is similar to stratified random sampling, except that with stratified random sampling each strata is sampled.
 
@@ -194,15 +169,15 @@ In multistage random sampling, the region is separated into different subsets th
 plot(polys, main = "Two-stage random")
 
 # Select 8 samples from each square
-s <- sapply(slot(polys, 'polygons'), function(x) spsample(x, n = 8, type = "random"))
-points(sample(s, 1)[[1]]) # randomly select 1 square and plot
-points(sample(s, 1)[[1]]) # randomly select 1 square and plot
+s <- sapply(slot(polys, "polygons"), function(x) spsample(x, n = 5, type = "random"))
+points(sample(s, 1)[[1]], pch = 19) # randomly select 1 square and plot
+points(sample(s, 1)[[1]], pch = 19) # randomly select 1 square and plot
 ```
 
 ![](3_sampling_files/figure-html/two_stage-1.png)<!-- -->
 
 
-### <a id="reg")></a>3.1.4 Systematic
+## Systematic
 
 In systematic sampling, a sample is taken according to a regularized pattern. This approach ensures even spatial coverage. Patterns may be rectilinear, triangular, or hexagonal. This sampling strategy can be inaccurate if the variation in the population doesn't coincide with the regular pattern (e.g., if the population exhibits periodicity).
 
@@ -220,14 +195,14 @@ In systematic sampling, a sample is taken according to a regularized pattern. Th
 plot(polys, main = "Systematic sample")
 
 # Generate systematic random sample
-test <- spsample(polys, n = 16, type = "regular")
-points(test)
+test <- spsample(polys, n = 15, type = "regular")
+points(test, pch = 19)
 ```
 
 ![](3_sampling_files/figure-html/systematic-1.png)<!-- -->
 
 
-### <a id="cluster")></a>3.1.5 Cluster
+## Cluster
 
 In cluster sampling, a cluster or group of points is selected at one or more sites. The transect is an example of this strategy, although other shapes are possible (e.g., square, triangle, or cross shapes). It is common to orient the transect in the direction of greatest variability.
 
@@ -245,14 +220,14 @@ In cluster sampling, a cluster or group of points is selected at one or more sit
 plot(polys, main = "Clustered (n = 3) random sample")
 
 # Generate cluster random sample
-test <- spsample(polys, n = 16, type = "clustered", nclusters = 3)
-points(test)
+test <- spsample(polys, n = 15, type = "clustered", nclusters = 3, iter = 10)
+points(test, pch = 19)
 ```
 
 ![](3_sampling_files/figure-html/clustered-1.png)<!-- -->
 
 
-### <a id="clhs")></a> 3.1.6 Conditioned Latin Hypercube (cLHS)
+## Conditioned Latin Hypercube (cLHS)
 
 Conditioned Latin hypercube sampling is a stratified random sampling technique to obtain representative samples from feature (attribute) space (Minasny and McBratney, 2006). For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
 
@@ -272,7 +247,11 @@ library(raster)
 
 # import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau
 data(volcano)
-volcano_r <- raster(as.matrix(volcano[87:1, 61:1]), crs = CRS("+init=epsg:27200"), xmn = 2667405, xmx = 2667405 + 61*10, ymn = 6478705, ymx = 6478705 + 87*10)
+volcano_r <- raster(as.matrix(volcano[87:1, 61:1]), 
+                    crs = CRS("+init=epsg:27200"), 
+                    xmn = 2667405, xmx = 2667405 + 61 * 10, 
+                    ymn = 6478705, ymx = 6478705 + 87 * 10
+                    )
 names(volcano_r) <- "elev"
 
 # calculate slope from the DEM
@@ -299,12 +278,11 @@ summary(cs$sampled_data)$data
 ```
 ##       elev           slope       
 ##  Min.   : 96.0   Min.   : 0.000  
-##  1st Qu.:108.5   1st Qu.: 8.131  
-##  Median :125.0   Median :14.278  
-##  Mean   :130.2   Mean   :15.442  
-##  3rd Qu.:147.2   3rd Qu.:22.243  
-##  Max.   :180.0   Max.   :36.055  
-##                  NA's   :2
+##  1st Qu.:109.2   1st Qu.: 7.571  
+##  Median :123.5   Median :14.178  
+##  Mean   :129.9   Mean   :14.273  
+##  3rd Qu.:148.0   3rd Qu.:21.430  
+##  Max.   :180.0   Max.   :30.108
 ```
 
 ```r
@@ -332,9 +310,9 @@ sub_s <- sampleRandom(volcano_r, size = 200, sp = TRUE) # random sample function
 ```
 
 
-## <a id="eval")></a> 3.2 Evaluating a Sampling Strategy
+# Evaluating a Sampling Strategy
 
-To gauge the representativeness of a sampling strategy, you can compare the results it produces to the results for other variables you think might coincide with the soil properties or classes of interest. Examples include slope gradient, slope aspect, and vegetative cover. These other variables may be used to stratify the sampling design or to assess the representativeness of our existing samples (e.g., NASIS pedons).
+To gauge the representativeness of a sampling strategy, you can compare the results it produces to the results for other variables you think might coincide with the soil properties or classes of interest (Hengl, 2009). Examples include slope gradient, slope aspect, and vegetative cover. These other variables may be used to stratify the sampling design or to assess the representativeness of our existing samples (e.g., NASIS pedons).
 
 The simple example below demonstrates how to compare several sampling strategies by evaluating how well they replicate the distribution of elevation. 
 
@@ -363,24 +341,25 @@ s <- rbind(data.frame(method = "Simple Random 400", extract(rs, sr400)),
            )
 
 # Summarize the sample values
-aggregate(slope ~ method, data = s, function(x) round(summary(x * 100)))
+aggregate(slope ~ method, data = s, function(x) round(summary(x)))
 ```
 
 ```
 ##              method slope.Min. slope.1st Qu. slope.Median slope.Mean
-## 1 Simple Random 400          0           694         1380       1475
-## 2     Simple Random        286           996         1594       1431
-## 3 Stratified Random        226           929         1857       1705
-## 4              cLHS          0           813         1428       1544
+## 1 Simple Random 400          0             7           15         15
+## 2     Simple Random          0             7           14         13
+## 3 Stratified Random          0            10           13         14
+## 4              cLHS          0             8           14         14
 ##   slope.3rd Qu. slope.Max.
-## 1          2123       4187
-## 2          1849       2794
-## 3          2315       3334
-## 4          2224       3606
+## 1            23         41
+## 2            18         32
+## 3            18         28
+## 4            21         30
 ```
 
 ```r
 # Plot overlapping density plots to compare the distributions between the large and small samples
+library(ggplot2)
 ggplot(s, aes(x = slope, col = method)) + geom_density(cex = 2)
 ```
 
@@ -410,22 +389,22 @@ dev.off()
 ##           1
 ```
 
-The back-to-back histogram figures above illustrate the differences between large and small sets of samples using several sampling designs. Clearly the cLHS approach best duplicates the distribution of elevation (because elevation is explicitly used in the stratification process). The contrast is less severe in the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible using the approaches in the following chapters.
+The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs. Clearly the cLHS approach best duplicates the distribution of elevation (because elevation is explicitly used in the stratification process). The contrast is less severe in the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible using the approaches in the following chapters.
 
 
-### <a id="ex1")></a> 3.2.1 Exercise: Design a Sampling Strategy
+## Exercise: Design a Sampling Strategy
 
 - Using the "tahoe\_lidar\_highesthit.tif" dataset in the gdalUtils package or using your own dataset (highly encouraged), compare two or more sampling approaches.
 - Show your work and submit the results to your coach.
 
 
 
-## <a id="tools")></a> 3.3 Other Tools for Selecting Random Features  
+# Other Tools for Selecting Random Features  
 
 An ArcGIS tool for selecting random features is available from the [Job Aids page](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&ext=pdf). This tool randomly selects the specified number of features from a dataset or set of selected features in ArcGIS. It is an ideal tool for the first stage of a two-stage random sample.  
 
 
-### <a id="teui")></a> 3.3.1 cLHS Using TEUI  
+## cLHS Using TEUI  
 
 The TEUI toolkit includes a tool for generating cLHS samples on large raster datasets. The tool is based on the clhs R package (Roudier, 2011).
 
@@ -468,7 +447,7 @@ Comparing the frequency distribution of the samples to the population shows a re
 ![R GUI image](figure/ch3_fig23.jpg) 
 
 
-### <a id="arcgis")></a> 3.3.2 Two-Stage Stratified Random Sample Design Using ArcGIS
+## Two-Stage Stratified Random Sample Design Using ArcGIS
 
 The following example examines a sampling design used by investigators in the Monongahela National Forest. They were interested in quantifying the depth of organic surface horizons in soils that correlated to the Mandy soil series and formed under red spruce canopy on backslopes in the Upper Greenbrier Watershed (HUC 8 -05050003).  
 
@@ -520,7 +499,7 @@ The results compared well to the extent of the population.
 
 
 
-## <a id="ref")></a> 3.4 References
+# References
 
 Franklin, J., and J.A. Miller. 2009. Mapping species distributions: Spatial inference and prediction. Cambridge: Cambridge University Press. [http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction](http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction).
 
@@ -539,7 +518,7 @@ Minasny, B., and A.B. McBratney. 2006. A conditioned Latin hypercube method for 
 Vaughan, R., and K. Megown. 2015. The Terrestrial Ecological Unit Inventory (TEUI) Geospatial Toolkit: User guide v5.2. RSAC-10117-MAN1. Salt Lake City, UT: U.S. Department of Agriculture, Forest Service, Remote Sensing Applications Center.  [http://www.fs.fed.us/eng/rsac/programs/teui/about.html](http://www.fs.fed.us/eng/rsac/programs/teui/about.html).
 
 
-## <a id="add")></a> 3.5 Additional Reading
+# Additional Reading
 
 de Gruijter, J., D.J. Brus, M.F.P. Bierkens, and M. Knotters. 2006. Sampling for natural resource monitoring: Springer. [http://www.springer.com/us/book/9783540224860](http://www.springer.com/us/book/9783540224860).
 
