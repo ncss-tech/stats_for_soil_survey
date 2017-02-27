@@ -24,20 +24,6 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-# Introduction
-
-What if you could extract, organize, and visualize data from NASIS (or many other commonly used sources) with a couple of lines of code? You can! 
-
-```{r eval=FALSE}
-library(soilDB)
-pedons <- fetchNASIS()
-# a couple more steps ...
-plot(pedons)
-```
-
-<img src="figure/aqp_profile_plot_example_sjer.png" border="0">
-
-
 ## Objectives
 - Learn more about R and how to inspect objects and data types
 - Use the soilDB package to load NASIS pedon data into R
@@ -46,6 +32,41 @@ plot(pedons)
 - Learn ways to filter and subset SPC data in R
 - Learn how functions can be used to bundle operations
 - Review additional data that is accessible via extended data functions
+
+
+# The SoilDB Package
+
+What if you could extract, organize, and visualize data from NASIS or many other commonly used sources with a couple of lines of code? 
+
+![](figure/soilDB_figure.png)
+
+### Convenience Functions in the SoilDB Package
+
+- **fetchNASISLabData()**
+    - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
+- **fetchNASIS_component_data()**
+    - Gets selected NASIS map unit and component data from a local NASIS database.
+        + [NASIS Component Data](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html)
+- **fetchKSSL()**
+    - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
+        + [KSSL Data Demo](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html)
+        + [Water Retention Curve Development from KSSL Data](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
+- **fetchOSD()**
+    - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
+- **fetchRaCA()**
+    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
+        + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)
+- **fetchSCAN()**
+    - Queries soil and climate data from USDA-NRCS SCAN Stations.
+      + [A Unified Interface to SCAN/SNOTEL Data](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
+- **fetchHenry()**
+    - Downloads data from the Henry Mount Soil Climate Database.
+        + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
+- **fetchPedonPC()**
+    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
+- **SDA_query**
+    - Submits queries to the Soil Data Access system.
+        + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
 
 
 ## Importance of Pedon Data
@@ -80,7 +101,7 @@ The following examples are meant to be copied from this document and pasted into
   
 ## Classes of Objects Used in R
  
-One of the most versatile things about R is that it can manipulate and work with data in many ways.  Below are examples of ways to create and reference information in several data types that are commonly used with soil data. Within the R session, *objects* contain information that is loaded from files, extracted from NASIS, created on the fly, or calculated by some function. If none of the base classes are sufficient for a task, it is possible to define custom classes. The `SoilProfileCollection` is one such example.
+One of the most versatile things about R is that it can manipulate and work with data in many ways.  Below are examples of ways to create and reference information in a common data type called a dataframe. Within the R session, *objects* contain information that is loaded from files, extracted from NASIS, created on the fly, or calculated by some function. If none of the base classes are sufficient for a task, it is possible to define custom classes. The `SoilProfileCollection` is an example of a custom class which is tailored to the structure and organization of soil pedon and horizon data.
 
 For a more in-depth review of data types in R, please review the [**Chapter 2a Appendix - Data Types**](http://ncss-tech.github.io/stats_for_soil_survey/tree/master/chapters/2_data/2a_appendix_data_types.html).  
 
@@ -148,38 +169,17 @@ How would you remove a vector or column from a dataframe?
 `d$tax_subgroup <- NULL` will remove this column from the dataframe.
 
 
+So how can we visualize soil pedon data from NASIS? 
 
-# The SoilDB Package
+```{r eval=FALSE}
+library(soilDB)
+pedons <- fetchNASIS()
+# a couple more steps ...
+plot(pedons)
+```
 
-![](figure/soilDB_figure.png)
+<img src="figure/aqp_profile_plot_example_sjer.png" border="0">
 
-### Convenience Functions in the SoilDB Package
-
-- **fetchNASISLabData()**
-    - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
-- **fetchNASIS_component_data()**
-    - Gets selected NASIS map unit and component data from a local NASIS database.
-        + [NASIS Component Data](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html)
-- **fetchKSSL()**
-    - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
-        + [KSSL Data Demo](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html)
-        + [Water Retention Curve Development from KSSL Data](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
-- **fetchOSD()**
-    - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
-- **fetchRaCA()**
-    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
-        + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)
-- **fetchSCAN()**
-    - Queries soil and climate data from USDA-NRCS SCAN Stations.
-      + [A Unified Interface to SCAN/SNOTEL Data](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
-- **fetchHenry()**
-    - Downloads data from the Henry Mount Soil Climate Database.
-        + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
-- **fetchPedonPC()**
-    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
-- **SDA_query**
-    - Submits queries to the Soil Data Access system.
-        + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
 
 ## How does it work and what does it do?
 
