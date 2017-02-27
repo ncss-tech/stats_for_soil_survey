@@ -1,62 +1,28 @@
 ---
-title:
+title: Chapter 4 - Exploratory Data Analysis
 author: Tom D'Avello and Stephen Roecker
 date: "`r Sys.Date()`"
-output: html_document
-html_document:
+output:
+  html_document:
     keep_md: yes
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
 ---
-![Statistics for pedologists course banner image](figure/logo.jpg)  
 
-# CHAPTER 4: EXPLORATORY DATA ANALYSIS  
- 
- - [4.0 Introduction](#intro)  
- - [4.1 Data inspection](#data)  
-     - [Exercise 1: fetch and inspect](#ex1)
- - [4.2 Examining Distributions](#dist)
-      - [4.2.1 The normal distribution](#norm)       
-      - [4.2.2 Histograms & density curves](#hist) 
-      - [4.3.3 Quantile comparison plots](#qq)       
- - [4.3 Measures of Central Tendency](#cent)        
- - [4.4 Measures of Dispersion](#disp)      
-     - [4.3.1 Box plots](#box)       
- - [4.5 Measures of Association](#asso)
-     - [4.5.1 Correlation matrix](#cor) 
-     - [4.5.2 Scatterplot](#splom)       
- - [4.6 Transformations](#transform)       	
-     - [4.6.1 pH](#ph)       
-     - [4.6.2 Circular data](#circular)       
- - [4.7 R Markdown Reports](#rmd)
-     - [Exercise 2: run the pedon_summary_by_taxonname.Rmd](#ex2)
- - [4.8 Zonal Statistics](#zonal)
-     - [4.8.1 Zonal Statistics in R](#rtools)
-          - [Exercise 3: calculating zonal statistics](#ex3)
-     - [4.8.2 TEUI toolkit](#teui)
-     - [4.8.3 ArcGIS tools](#arcgis)
- - [4.9 References](#ref)   
- - [4.10 Additional Reading](#add)
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+# setup
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
+```
 
-##<a id="intro")></a>4.0  Introduction
+![](figure/logo.jpg)  
+
+
+#  Introduction
 
 Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This is typically done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
-
-Filliben (2004), describes EDA as: 
-*"an approach/philosophy for data analysis that employs a variety of techniques (mostly  graphical) to maximize":*
-
- 1. insight into a data set  
- 2. uncover underlying structure  
- 3. extract important variables  
- 4. detect outliers and anomalies  
- 5. test underlying assumptions  
- 6. develop parsimonious models and  
- 7. determine optimal factor settings  
-  
-Tukey (1980) summarized:  
-*"If we need a short suggestion of what exploratory data analysis is, I would suggest that"*
-
- 1. It is an attitude, AND  
- 2.	A flexibility, AND  
- 3.	Some graph paper (or transparencies, or both)  
 
 *"No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper and transparencies are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated."*
 
@@ -81,36 +47,49 @@ Graphical methods include:
  - **Scatter plots** - a graphical display of one variable plotted on the x axis and another on the y axis
  - **Radial plots** - plots formatted for the representation of circular data 
 
+## Objectives
 
-##<a id="data")></a> 4.1  Data Inspection
+- Determine Low, RV, and High values (e.g. mean, median, etc...) for component and horizon data.
+- Visualize your data to identify trends, using Rs base and ggplot2 graphics.
+- Learn how to use the soilReports package to generate Rmarkdown reports.
+- Learn how to properly transform your data for analysis.
+
+#  Data Inspection
 
 Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine appropriate statistical analyses. For this chapter we'll use the loafercreek dataset from the CA630 Soil Survey Area.
 
 ```{r, warning=FALSE, message=FALSE}
 library(soilDB)
-library(lattice)
-library(car)
 
-data("loafercreek") # load from the soilDB package
+# Load from the the loakercreek dataset
+data("loafercreek") 
 
 # Generalized the horizon designations
-n <- c('A',
-       'Bt1',
-       'Bt2',
-       'Bt3',
-       'Cr',
-       'R')
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
 # REGEX rules
-p <- c('^A$|Ad|Ap',
-       'Bt1$',
-       '^Bt2$',
-       '^Bt3|^Bt4|CBt$|BCt$|2Bt|2CB$|^C$',
-       'Cr',
-       'R')
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+# Compute genhz labels and add to loafercreek dataset
 loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
 
-h <- horizons(loafercreek) # extract the horizon table
-s <- site(loafercreek) # extract the site table
+# Extract the horizon table
+h <- horizons(loafercreek) 
+
+# Extract the site table
+s <- site(loafercreek)
+
+# Examine the matching of pairing of the genhz label to the hznames
+with(h, table(genhz, hzname))
 ```
 
 As noted in Chapter 1, a visual examination of the raw data is possible by looking at the R object:  
@@ -144,11 +123,14 @@ When you do have missing data and the function you want to run will not run with
 A quick check for typos would be to examine the list of levels for a factor or character, such as:  
 
 ```{r}
-levels(h$genhz)  # just for factors
+# just for factors
+levels(h$genhz)
 
-# unique(h$hzname) # for characters and factors
+# for characters and factors
+# unique(h$hzname) 
 
-sort(unique(h$hzname)) # sort the results
+# sort unique hznames
+sort(unique(h$hzname)) 
 ```
 
 If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make an adjustment in R, such as:
@@ -165,14 +147,14 @@ h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 # edit(h)
 ```
 
-Typo errors such as these are common problem with old pedon data in NASIS.
+Typo errors such as these are a common problem with old pedon data in NASIS.
 
-### <a id="ex1")></a> Exercise: fetch and inspect
+##  Exercise: fetch and inspect
 
 - Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset 
 - Apply the generalized horizon rules below or develop your own, see the following [job-aid](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html)
-- Summarize the depths, genhz, texture class, sand, and fine gravel
-- Show your work and submit the results to your coach
+- Summarize the depths, genhz, texture class, sand, and fine gravel.
+- Show your work and submit the results to your mentor.
 
 
 ```{r}
@@ -182,12 +164,12 @@ p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
 ```
 
 
-## <a id="dist")></a> 4.2  Examining Distributions  
+#   Examining Distributions  
 
 Now that we've checked for missing values and typos and made corrections, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center (e.g., RV) and spread or dispersion (e.g., low and high) of our data. Typically in introductory statistics the normal (i.e., Gaussian) distribution is emphasized.
 
 
-### <a id="norm")></a> 4.2.1  The normal distribution
+##   The normal distribution
 
 What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Applying certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e., Low, RV and High values). Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data are normally distributed. However, if the data are skewed, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality and can be found in the fBasics package, but Webster (2001) cautions against using significance tests for assessing normality. The preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
 
@@ -207,27 +189,28 @@ A Gaussian distribution is often referred to as "Bell Curve", and has the follow
 r <- seq(-5, 5, 0.1)
 d <- list(x = r, y = dnorm(r, sd = 2))
 
+old.par <- par(no.readonly = TRUE)
 par(mfrow = c(1, 2))
 par(pty = "s")
 
-plot(d, type = "l", main = "68% highlighted", xlab = "")
+plot(d, type = "l", main = "1 Standard Deviation \n (68% highlighted)", xlab = "")
 q <- quantile(r, prob = c(0.16, 0.84)) 
 select <- q[1] <= d$x & d$x <= q[2]
 polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
 abline(v = quantile(r, p = 0.5), lty =2)
 
-plot(d, type = "l", main = "95% highlighted", xlab = "")
+plot(d, type = "l", main = "2 Standard Deviation \n (95% highlighted)", xlab = "")
 q <- quantile(r, prob = c(0.025, 0.975)) 
 select <- q[1] <= d$x & d$x <= q[2]
 polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
 abline(v = quantile(r, p = 0.5), lty = 2)
 
-dev.off()
+par(old.par)
 ```
 
 Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically normal, Bimodal or Skewed:  
 
-![R GUI image](figure/ch4_fig35.jpg)
+![](figure/ch4_fig35.jpg)
 
 Figure 2. Sample histograms    
 
@@ -264,28 +247,25 @@ plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 ```
 
 
-### <a id="hist")></a> 4.2.2  Histograms and density curves  
+## Histograms and density curves  
 
-Next we'll review the `histogram()` and `densityplot()` functions which plot a histogram and density curve respectively.  
+Next we'll review the ggplot2 `geom_histogram()` and `geom_density()` functions which plot a histogram and density curve respectively.  
 
 ```{r}
-histogram(~ clay + sand + total_frags_pct, data = h, scales = list(relation = "free"))
+library(ggplot2)
+
+ggplot(h, aes(x = clay)) +
+  geom_histogram(bins = nclass.Sturges(h$clay))
 
 # or
 
-histogram(~ clay | genhz, data = h) # grouped by genhz
-
-# or individually
-
-# histogram(~ clay, data = h)
+ggplot(h, aes(x = clay)) +
+  geom_histogram(bins = nclass.Sturges(h$clay)) +
+  facet_wrap(~ genhz)
 
 # or using the graphics package
 
-# par(mfrow = c(1, 3))
 # hist(h$clay, col = "grey")
-# hist(h$sand, col = "grey")
-# hist(h$total_frags_pct, col = "grey")
-# dev.off()
 ```
 
 Figure 4. Histogram  
@@ -294,15 +274,13 @@ Figure 4. Histogram
 Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution. A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram.  
  
 ```{r}
-histogram(~ clay + sand + total_frags_pct, data = h,
-          type = "density",
-          panel = function(x, ...) {
-            panel.histogram(x, ...)
-            panel.densityplot(x, ..., darg = list(na.rm  = TRUE))
-            }
-          )
+ggplot(h, aes(x = clay, y = ..density..)) +
+  geom_histogram(bins = nclass.Sturges(h$clay)) +
+  geom_line(stat = "density") +
+  facet_wrap(~genhz)
 
-densityplot(~ clay + sand + total_frags_pct, data = h, auto.key = TRUE)
+ggplot(h, aes(x = clay)) +
+  geom_line(stat = "density")
 
 # or using the graphics package
 
@@ -316,7 +294,7 @@ Figure 5. The Kernel density plot depicts a smoothed line of the distribution
 Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. Notice how the histogram of clay seems to emphasis the long right tail of values, which we might question as to whether we have a normal distribution. One curious feature of the density curve is the hint of a bimodal distribution. Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
 
-### <a id="qq")></a> 4.2.3  Quantile comparison plots (QQplot)  
+## Quantile comparison plots (QQplot)  
 
 A QQplot is a plot of the actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).  
 
@@ -338,7 +316,7 @@ A more detailed explanation of QQplots may be found on Wikipedia:
 [https://en.wikipedia.org/wiki/QQ_plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)  
 
 
-## <a id="cent")></a>4.3  Measures of Central Tendency  
+# Measures of Central Tendency  
 
 These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used measures for our purposes.
 
@@ -383,20 +361,23 @@ aggregate(clay ~ genhz, data = h, summary)
 In this example the mean and median are only slightly different, so we can safely assume that we have a normal distribution. However many soil variables often have a non-normal distribution. For example, let's look at graphical examination of the mean vs. median for clay and rock fragments:  
 
 ```{r}
-test <- density(clay)
-plot(test, main = "Clay")
-amean <- mean(clay)
+amean = mean(clay)
 amed <- median(clay)
-abline(v = amed, col = "blue") # plot the median as a blue vertical line 
-abline(v = amean, col = "orange") # plot the mean as a orange vertical line
 
-frags <- h$total_frags_pct
-test <- density(frags)
-plot(test, main = "Rock Fragments")
-amean <- mean(frags)
-amed <- median(frags)
-abline(v = amed, col = "blue") # plot the median as a blue vertical line 
-abline(v = amean, col = "orange") # plot the mean as a orange vertical line
+ggplot(h, aes(x = clay)) +
+  geom_line(stat = "density") +
+  geom_vline(xintercept = amean, col = "blue") +
+  geom_vline(xintercept = amed, col = "orange") +
+  ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Clay Content")
+
+amean <- mean(h$total_frags_pct)
+amed <- median(h$total_frags_pct)
+
+ggplot(h, aes(x = total_frags_pct)) +
+  geom_line(stat = "density") +
+  geom_vline(xintercept = amean, col = "blue") +
+  geom_vline(xintercept = amed, col = "orange") +
+  ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Rock Fragments")
 ```
 
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
@@ -420,12 +401,12 @@ table(h$clay) # show a frequency table
 sort(table(round(h$clay)), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
 ```
 
-## <a id="disp")></a> 4.4  Measures of Dispersion  
+# Measures of Dispersion  
 
 These are measures used to determine the spread of values around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point. In NASIS speak these values might equate to the low (L) and high (H) values for numeric and integer data.
 
 
-**Variance**  is a positive value indicating deviation from the mean:![R GUI image](figure/ch4_fig20.jpg)  
+**Variance**  is a positive value indicating deviation from the mean: ![](figure/ch4_fig20.jpg)  
 
 This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the *standard deviation*. Variance for the sample dataset is:  
 
@@ -433,7 +414,7 @@ This is the square of the sum of the deviations from the mean, divided by the nu
 var(clay)
 ```
 
-**Standard Deviation**  is the square root of the variance:![R GUI image](figure/ch4_fig22.jpg)  
+**Standard Deviation**  is the square root of the variance: ![](figure/ch4_fig22.jpg)  
 
 The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:  
 
@@ -500,7 +481,7 @@ IQR(clay)
 ```
 
 
-### <a id="box")></a>4.3.1  Box plots  
+## Box plots  
 
 Box plots are a graphical representation of the five number summary, depicting quartiles, minimum, maximum and outliers (if present). Boxplots convey the shape of the data distribution, the presence of extreme values, and the ability to compare with other variables using the same scale, providing an excellent tool for screening data quality, determining thresholds for variables and developing working hypotheses.  
 
@@ -517,7 +498,8 @@ Figure 8. Boxplot description (Seltman, 2009)
 A boxplot of sand content by horizon may be made for the sample dataset as:  
 
 ```{r boxplots}
-bwplot(clay ~ genhz, xlab = "Horizon", ylab = "Clay (%)", data = h)
+ggplot(h, (aes(x = genhz, y = clay))) +
+  geom_boxplot()
 
 # or using the graphics package
 
@@ -563,15 +545,15 @@ round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100)
 ```
 
 
+# Measures of Association 
 
-## <a id="asso")></a> 4.5 Measures of Association 
-
-### <a id="cor")></a> 4.5.1 Correlation matrix
+## Correlation matrix
 
 A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:  
 
 ```{r}
-h$hzdepm <- with(h, (hzdepb - hzdept) /2)
+h$hzdepm <- with(h, (hzdepb - hzdept) / 2) # Compute the middle horizon depth
+
 vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
 
 round(cor(h[vars], use = "complete.obs"), 2)
@@ -581,7 +563,7 @@ As seen in the output, variables are perfectly correlated with themselves and ha
 
 
 
-### <a id="splom")></a> 4.5.2 Scatterplots
+## Scatterplots
 
 Plotting points of one ratio or interval variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offers the potential to correlate soil attributes with a large variety of raster datasets.  
 
@@ -590,41 +572,47 @@ The purpose of a scatterplot is to see how one variable relates to another. With
 Create a basic scatter plot using the loafercreek dataset.
 
 ```{r}
-xyplot(clay ~ sand, data = h)
+ggplot(h, aes(x = clay, y = hzdepm)) +
+  geom_point()
 
 # or
 
-# plot(clay ~ sand, data = h)
+# plot(clay ~ hzdepm, data = h)
 ```
 
 Figure 10. Scatter Plot
 
-This plots clay on the Y axis and pH on the X axis. As shown in Figure 10, there is a weak correlation between these variables.  
+This plots clay on the X axis and depth on the X axis. As shown in Figure 10, there is a moderate correlation between these variables.  
 
 The function below produces a scatterplot matrix for all the numeric variables in the dataset. This is a good command to use for determining rough linear correlations for continuous variables.  
 
 ```{r}
-splom(h[vars])
+# Load the car package
+library(car)
 
-# or
+# Create a scatter plot matrix
+spm(h[vars])
 
+# or using base graphics
+
+## Create a scatter plot matrix
 # pairs(h[vars])
 ```
 
 
-## <a id="transform")></a> 4.6  Transformations
+# Transformations
 
 Slope aspect and pH are two common variables warranting special consideration for pedologists.  
 
-### <a id="ph")></a> 4.6.1  pH
+## pH
 
-Since **pH** has a logarithmic distribution, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log(0.000001 + 0.00001/2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The higher the pH, the greater the difference between the geometric and arithmetic mean. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
+Since **pH** has a logarithmic distribution, the use of median and quantile ranges are the [preferred](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm) measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively.  The actual average is 5.26;  -log10((0.000001 + 0.00001) / 2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the pH range, the greater the difference between the geometric and arithmetic mean. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
 
 If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:
 
 ```{r}
 # arithematic mean
--log10(mean(10^-h$phfield, na.rm = TRUE)) 
+-log10(mean(1/10^-h$phfield, na.rm = TRUE)) 
 
 # geometric mean
 mean(h$phfield, na.rm = TRUE) 
@@ -678,7 +666,7 @@ Opening the table for the Event layer:
 ![R GUI image](figure/ch4_fig53.jpg)  
 
 
-### <a id="circular")></a> 4.6.2  Circular data
+## Circular data
 
 **Slope aspect** - requires the use of circular statistics for summarizing numerically, or graphical interpretation using circular plots. For example, if soil map units being summarized have a uniform distribution of slope aspects ranging from 335 degrees to 25 degrees, the Zonal Statistics tool in ArcGIS would return a mean of 180.  
 
@@ -703,43 +691,57 @@ Figure 11. Rose Diagram
 
 
 
-## <a id="rmd")></a> 4.7 R Markdown Reports (.Rmd)
+# Soil Reports
 
-R Markdown (.Rmd) is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS. 
+One of the strengths of NASIS is that it that has a wealth of existing queries and reports. This makes it easy for the average user to load their data and run numerous reports. In R the soilDB similarly has many fetch functions to load data. Recently the soilReports package was developed to replicate NASIS's report repository. Currently soilReports contains a small collection of reports designed to summarize field and laboratory pedons, and map unit polygons. This collection of reports automates many of methods reviewed thus far, but are no substitute for interacting with your data and asking questions. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). 
 
-To generate summarizes of pedon and GIS data, several reports have been developed. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). Some examples show customized reports developed to generate zonal statistics of map units. Instructions can be found at the following SharePoint [link](https://ems-team.usda.gov/sites/NRCS_SSRA/mo-11/Soils%20%20GIS/Forms/AllItems.aspx?RootFolder=%2Fsites%2FNRCS%5FSSRA%2Fmo%2D11%2FSoils%20%20GIS%2Fguides%2FR&FolderCTID=0x0120007929E36D8FF15644B2C3F1488664C3CD&View=%7BFE55388F%2DFD5F%2D4A7B%2D98BD%2DA1F618066492%7D). Here we'll demonstrate how to run an existing .Rmd to summarize a series of pedons for a given soil series.
+The soilReports R package is largely just a collection of R Markdown (.Rmd) reports. R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS.
 
-**Objectives**
+Lets get busy and demonstrate how to run an existing .Rmd to summarize a series of pedons for a given soil series.
 
--	Load your NASIS selected set with Pedon and Site tables (both are required)
--	Run the R setup file
--	Run knitr report
 
-**Requirements**
+## Requirements
 
 -	Data are properly populated, otherwise the report may fail. Common examples include:
     -	Horizon depths don't lineup
-    -	Both the Pedon and Site tables aren't loaded
--	The user is familiar with RStudio, if not see the Job-Aids webpage for an introduction
--	ODBC connection to NASIS is setup, if not see the Job-Aids webpage for instructions
--	The user has assigned generalized horizon labels (GHL) to the "Comp_Layer_ID" column within the pedon horizon table within NASIS, or setup a GHL using pattern matching. For an introduction to pattern matching see the Job-Aid, [Assigning Generalized Horizon Labels.](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html)
+    -	Either the Pedon or Site tables isn't loaded
+-	ODBC connection to NASIS is setup
+- Beware each report has a unique configuration file that may need to be edited. 
 
-**Instructions**
 
-1. **Load** NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by upedonid and Taxon Name" to load your selected set. Be sure to target both the pedon and site tables. **Remove** from your selected set the pedons and sites you wish to exclude from the report.
-2.	**Open** RStudio  and the run setup file. **Copy and paste** the box below into the R console. 
+## Instructions
+
+1. **Load** your NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by upedonid and Taxon Name" from the Region 11 report folder to load your selected set. Be sure to target both the site, pedon and lab layer tables. **Remove** from your selected set the pedons and sites you wish to exclude from the report.
+
+2.	**Install/rei-install** the soilReports package. This package is updated regularly (e.g. weekly), and should be re-installed from GitHub regularly.
 
 ```{r, eval=FALSE}
-# Download .Rprofile and setup
-download.file("https://raw.githubusercontent.com/ncss-tech/soil-pit/master/sandbox/stephen/r_setup.R", "C:/workspace/soil-pit/r_setup.R", method = "libcurl")
-
-# Run R setup file
-source("C:/workspace/soil-pit/r_setup.R")
+# Install the soilReports package
+devtools::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
-The setup only needs to be run once. Afterwards you only need to update your R packages intermittently, by clicking the update button on the Packages tab in the lower right hand window. The first time can be a bit lengthy, so go get some coffee or bug your boss. 
+3. **View** the list of available reports.
+
+```{r, eval=FALSE}
+# Load the soilReports package
+library(soilReports)
+
+
+```
 
 3. **Open** the pedon report. **Navigate** to the file path specified above and **open** the pedon_summary_by_taxonname.Rmd or lab_summary_by_taxonname.Rmd file in Rstudio.
+
+```{r, eval=FALSE}
+# Load the rmarkdown package
+library(rmarkdown)
+
+# Define the report file path
+report_path <- system.file(paste0('reports/', reportName), package='soilReports')
+
+# Run the report
+render(input = report_path, output_file = "C:/workspace/test.html")
+
+```
  
 4. **Check** or **create** a genhz_rules file for your soil series. In order to aggregate the pedons by horizon designation, a genhz_rules file (e.g., Genesee_rules.R) is needed. See below.
 
@@ -763,7 +765,7 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 
 
-### <a id="ex2")></a> Exercise 2: run the pedon\_summary\_by\_taxonname.Rmd
+## Exercise 2: run the pedon\_summary\_by\_taxonname.Rmd
 
 - Load your selected set with the pedon and site table for an existing GHL file, or make your own (highly encouraged)
 - Run the pedon_summary_by_taxonname.Rmd report on a soil series of your choice.
@@ -771,7 +773,7 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 
 
-## <a id="zonal")></a> 4.8 Zonal Statistics
+# Zonal Statistics
 
 To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g., a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
 
@@ -781,7 +783,7 @@ Before extracting spatial data for the purpose of spatial prediction, it is nece
  - All raster data have a common cell resolution
  - All raster data are co-registered, that is, the geographic coordinates of cell centers are the same for all layers. Setting the _Snap Raster_ in the ArcGIS Processing Environment prior to the creation of raster derivatives can ensure cell alignment. An ERDAS model is also available to perform this task.  
 
-### <a id="rtools")></a> 4.8.1 Zonal Statistics in R
+## Zonal Statistics in R
 
 Zonal statistics in R can be implemented using either the census or sample approach. While R can compute zonal statistics using the census approach with the `zonal()` function in the raster package, it is considerably faster to call another GIS via the RSAGA or spgrass6 packages. These additional GIS packages provide R functions to access SAGA and GRASS commands. For this example the RSAGA package will be used.
 
@@ -794,13 +796,13 @@ Zonal statistics in R can be implemented using either the census or sample appro
 # writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile", overwrite_layer = TRUE) # export shapefile
 # 
 # library(RSAGA)
-# myenv <- rsaga.env(path = "C:/Program Files/QGIS Wien/apps/saga") # set rsaga path
+# myenv <- rsaga.env(path = "C:/Program Files/QGIS Essen/apps/saga") # set rsaga path
 # ned <- raster("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat") # load DEM
 # test <- raster(extent(ca794), ext = extent(ned), crs = crs(ned), res = res(ned))  # create a blank raster that matches the DEM
 # writeRaster(test, file = "M:/geodata/project_data/8VIC/sdat/ca794.sdat", format = "SAGA", progress = "text", overwrite = TRUE) # export the raster
 # 
-# Convert the CA794 shapefile to a rsaga raster
-#
+# # Convert the CA794 shapefile to a rsaga raster
+# 
 # rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
 #   INPUT = "C:/workspace/ca794.shp",
 #   FIELD = "mukey2",
@@ -816,15 +818,15 @@ Zonal statistics in R can be implemented using either the census or sample appro
 # )
 # )
 # 
-# Extract the zonal statistics for 2 rasters
-#
+# # Extract the zonal statistics for 2 rasters
+# 
 # rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
 #   ZONES = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
 #   STATLIST = paste(c("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "M:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
-#   OUTTAB = "C:/workspace/test.csv"
+#   OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
 # ))
-
-test <- read.csv("C:/workspace/test.csv") # import the results
+# 
+test <- read.csv("C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") # import the results
 names(test)[1] <- "mukey" # rename the mukey column
 test[test$mukey == 2480977, ] # examine mukey 2480977
 ```
@@ -832,7 +834,7 @@ test[test$mukey == 2480977, ] # examine mukey 2480977
 To implement the sample approach to zonal statistics we can use the `extract()` and `over()` functions in the raster and sp packages respectively.
 
 ```{r}
-# s <- spsample(ca794, n = 100000, type = "stratified") # take a stratified random sample
+# s <- spsample(ca794, n = 1000, type = "stratified") # take a stratified random sample
 # 
 # setwd("M:/geodata/project_data/8VIC/")
 # 
@@ -843,9 +845,9 @@ To implement the sample approach to zonal statistics we can use the `extract()` 
 # test1 <- over(s, ca794) # extract the map unit polygon values
 # test2 <- data.frame(extract(rs, s)) # extract the raster values
 # test2 <- cbind(test1, test2) # combine the two datasets
-# save(test2, file = "C:/workspace/ch2_sample.Rdata")
+# save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
-load(file = "C:/workspace/ch2_sample.Rdata")
+load(file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
 summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
 ```
@@ -853,7 +855,7 @@ summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
 Compare the results of the census and sample approaches above. While the census approach surveyed 204,460 cells, the sample approach only surveyed 5,777. However we can see that the results are largely similar between the two approaches.
 
 
-#### <a id="ex3")></a> Exercise 3: calculating zonal statistics
+### Exercise 3: calculating zonal statistics
 
 - Use your own data
 - Extract the zonal statistics for one soil survey area or several polygons, using the sample approach
@@ -861,7 +863,7 @@ Compare the results of the census and sample approaches above. While the census 
 
 
 
-### <a id="teui")></a> 4.8.2  TEUI toolkit
+## TEUI toolkit
 
 The TEUI toolkit works in a similar manner to *Zonal Statistics as Table* within ArcGIS, with the added benefit of interactive graphics to aid in the assessment. TEUI is an ArcGIS Add-in and may be installed without Administrator privilege. Additional information and downloads are available here:  
 
@@ -1122,7 +1124,7 @@ The statistical data summaries produced by the toolkit can be exported to excel 
 
 
 
-### <a id="arcgis")></a> 4.8.3 ArcGIS tools
+## ArcGIS tools
 
 Gathering statistics of raster data cells for polygon data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* function from the *Spatial Analyst toolbox*. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
 
@@ -1168,12 +1170,10 @@ In another example using a Box plot for assessment of a map unit with a slope cl
 
 
 
-## <a id="ref")></a> 4.9 References  
+# References  
 
 FAO Corporate Document Repository. 
 [http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm](http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm)    
-
-Filliben, J. J. 2004. NIST/SEMATECH e-Handbook of Statistical Methods. [http://www.itl.nist.gov/div898/handbook/index.htm](http://www.itl.nist.gov/div898/handbook/index.htm)    
 
 Lane, D.M. Online Statistics Education: A Multimedia Course of Study [(http://onlinestatbook.com/](http://onlinestatbook.com/) Project Leader: [David M. Lane](http://www.ruf.rice.edu/~lane/), Rice University
 
@@ -1183,12 +1183,11 @@ Vaughan, R., & Megown, K., 2015. The Terrestrial Ecological Unit Inventory (TEUI
 
 Tukey, John. 1977. Exploratory Data Analysis, Addison-Wesley    
 
-Tukey, J. 1980. We need both exploratory and confirmatory. The American Statistician, 34:1, 23-25  
-
+Tukey, J. 1980. We need both exploratory and confirmatory. The American Statistician, 34:1, 23-25 
 Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract)
 
 
-## <a id="add")></a> 4.10 Additional Reading
+# Additional Reading
 
 de Smith, M.J., 2015. STATSREF: Statistical Analysis Handbook: a web-based statistics
 resource. The Winchelsea Press, Winchelsea, UK.  [http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  
