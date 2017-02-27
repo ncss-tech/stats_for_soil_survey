@@ -4,6 +4,9 @@ author: "Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello
 date: "`r Sys.Date()`"
 output:
   html_document:
+    mathjax: null
+    jquery: null
+    smart: no
     keep_md: no
     number_sections: yes
     toc: no
@@ -35,21 +38,16 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
 
 Most of us are familiar with spatial data types, sources, and the jargon used to describe interaction with these data. GIS software provides a convenient framework for most of the spatial analysis that we do, however, the combination of statistical routines, advanced graphics, and data access functionality make *R* and ideal environment for soil science. For example, with a couple of lines of *R* code, it is possible to quickly integrate soil morphology (NASIS), lab data (KSSL), map unit polygons (SSURGO), and climate data (PRISM raster files). 
 
-This chapter is a very brief demonstration of several possible ways to process spatial data in R. A much more thorough description can be found in [*Applied Spatial Data Analysis with R*](http://www.asdar-book.org/) (Bivand et al., 2013) or [*Spatial Data Analysis and Modeling with R*](http://rspatial.org/spatial/) (Hijmans, 2016).
-
-
-## Spatial Data Sources
-
-TODO: outline some of the many available via R / `soilDB`.
-
+This chapter is a very brief demonstration of several possible ways to process spatial data in R. A much more thorough description can be found in [*Applied Spatial Data Analysis with R*](http://www.asdar-book.org/) (Bivand et al., 2013) or [*Spatial Data Analysis and Modeling with R*](http://rspatial.org/spatial/) (Hijmans, 2016). The [*Spatial Cheatsheet*](http://www.maths.lancs.ac.uk/~rowlings/Teaching/UseR2012/cheatsheet.html) is a convenient summary of the most commonly used functions.
 
 ## Objectives
  * Gain experience with creating, editing, and exporting spatial data objects in R.
  * Lean the basics of the `sp` classes and functions.
  * Learn the basics of the `raster` classes and functions.
+ * Learn about some interfaces to NCSS spatial data sources.
  * Develop a strategy for navigating the many possible spatial data processing methods.
  * Learn how to integrate multiple data sources to create something new.
- 
+
 
 # Spatial Data in R
 
@@ -67,7 +65,39 @@ The next couple of sections will require loading these libraries into the R sess
 library(sp)
 library(raster)
 library(rgdal)
+library(soilDB)
 ```
+
+
+## Spatial Data Sources
+
+Conventional spatial data sources:
+
+  * raster data sources (elevation, PRISM, etc.): GeoTiff, ERDAS, BIL, ASCII grid, WMS, ...
+  * vector data sources (points/lines/polygons): ShapeFile, "file" geodatabase, KML, GeoJSON, GML, WFS, ...
+
+Conventional data sources that can be *upgraded* to spatial data:
+
+  * NASIS/LIMS reports
+  * web pages
+  * Excel files
+  * CSV files
+
+R-based interfaces to NCSS data sources via [`soilDB`](https://cran.r-project.org/web/packages/soilDB/index.html) package:
+
+  * functions that return tabular data which can be *upgraded* to spatial data:
+    + [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html): KSSL "site" data contain x,y coordinates
+    + [`fetchNASIS()`](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html): NASIS "site" data contain x,y, coordinates
+    + [`fetchRaCA()`](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html): RaCA central pedon x,y coordinates
+    
+  * functions that return spatial data:
+    + [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html): simplified series extent as polygons
+    + [`fetchHenry()`](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html): sensor / weather station locations as points
+    + [`SDA_query()`](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html): SSURGO data as points, lines, polygons (via SDA)
+    + `mapunit_geom_by_ll_bbox()`: SSURGO data as polygons (via WFS)
+
+
+**Note:** currently, there is no way to read raster or tabular data from ESRI "file" geodatabases. Vector data (and associated attribute tables) can be accessed.
 
 
 ## The `sp` Package
@@ -96,7 +126,7 @@ This is an "S4" object with "slots" (e.g. `@data`) that are used to store variou
 There is a convenient shortcut for "upgrading" point data that is stored in a `data.frame`. This is especially useful for preparing NASIS/KSSL data for spatial operations.
 ```{r}
 # make some fake data
-d <- data.frame(x=40.446068, y=-97.721210, id=1, taxonname='alpha')
+d <- data.frame(x=runif(10), y=runif(10), id=1:10, code=letters[1:10])
 # upgrade to SpatialPointsDataFrame
 coordinates(d) <- ~ x + y
 # check
@@ -104,6 +134,43 @@ class(d)
 ```
 
 See the [sp gallery](https://edzer.github.io/sp/) and [this vignette](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf) for a much more detailed description of the `sp` classes.
+
+
+
+### Interacting with `sp` Objects
+
+`sp` objects are modeled after `data.frame` objects; rows (features) and columns (attributes) are accessed using `[]` or `$` notation.
+
+Extract the first 5 features (and all associated attributes) from a `SpatialPointsDataFrame` object:
+```{r }
+# [rows, columns]
+# [features, attributes]
+d[1:5, ]
+```
+
+Extract the attributed called `id`:
+```{r}
+d$id
+```
+
+Create some random numbers and save to a new attribute called `rand`:
+```{r}
+# new data must be of the same length as number of features, otherwise recycling will occur
+d$rand <- rnorm(n=nrow(d))
+```
+
+Filter features based on attributes:
+```{r}
+idx <- which(d$rand > 0)
+d[idx, ]
+```
+
+Convert back to a `data.frame` object:
+```{r}
+as(d, 'data.frame')
+```
+
+
 
 
 ### Coordinate Reference Systems and `proj4` Syntax
@@ -187,8 +254,19 @@ The `readOGR()` and `writeOGR()` functions have many arguments and format-specif
 ## The `raster` Package
 The release of the [`raster` package](https://cran.r-project.org/web/packages/raster/index.html) was a transformative event for scientists working with spatial data in R because of the unique way in which `RasterLayer` objects can be accessed *on-disk*. Previously, most of the available data structures (e.g. `SpatialGridDataFrame`, `SpatialPixelsDataFrame`, `matrix`, etc.) for storing raster data were memory-bound and not efficient for very large (> 10,000 x 10,000 cells) grids. That said, these data structures are still very useful for collections of raster data that fit into available memory. Many packages that perform advanced spatial analysis (e.g. `gstat` and `spatstat` packages) rely on the older data structures.
 
-A more complete background on the capabilities of the `raster` package are described in the [*Introduction to the raster package*](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf) vignette and recently released [*Spatial Data Analysis and Modeling with R*](http://rspatial.org/) online book.
+The `raster` package provides most of the commonly used grid processing functionality that one might find in a conventional GIS:
+  
+  * re-sampling / interpolation
+  * warping (coordinate system transformations of gridded data)
+  * cropping, mosaicing, masking
+  * local and focal functions
+  * raster algebra
+  * contouring
+  * raster/vector conversions
+  * terrain analysis
+  * model-based prediction (more on this in later chapters)
 
+A more complete background on the capabilities of the `raster` package are described in the [*Introduction to the raster package*](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf) vignette and recently released [*Spatial Data Analysis and Modeling with R*](http://rspatial.org/) online book.
 
 ### Importing / Exporting Data
 
@@ -275,7 +353,7 @@ If you haven't yet done so, please setup the sample datasets for this module.
 ```{r, eval=FALSE}
 # store path as a variable, in case you want to keep it somewhere else
 ch2b.data.path <- 'C:/workspace/chapter-2b'
-ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
+# ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
 
 # make a place to store chapter 2b example data
 dir.create(ch2b.data.path, recursive = TRUE)
@@ -303,7 +381,7 @@ We will be using polygons associated with MLRAs 15 and 18 as part of this demons
 ```{r results='hide'}
 # establish path to example data
 ch2b.data.path <- 'C:/workspace/chapter-2b'
-ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
+# ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
 
 # load MLRA polygons
 mlra <- readOGR(dsn=ch2b.data.path, layer='mlra-18-15-AEA')
@@ -438,7 +516,6 @@ OK lets work on something more concrete. This time, we want to extract PRISM dat
 
 Get some KSSL data and upgrade the "site" data to a `SpatialPointsDataFrame`.
 ```{r}
-library(soilDB)
 # result is a SoilProfileCollection object
 auburn <- fetchKSSL(series = 'auburn')
 # extract site data
