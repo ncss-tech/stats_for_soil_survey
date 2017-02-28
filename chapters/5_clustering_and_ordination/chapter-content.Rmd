@@ -1278,61 +1278,166 @@ title('Map Unit Terrain Signatures')
 
 The following is an example of the use of ordination to investigate patterns in species composition. It is from MLRA 22A-Sierra Nevada Mountains, CA. Data courtesy of David Evans (Sonora, CA).
 
-```{r}
+```{r, eval=FALSE}
 library(reshape2)
 library(vegan)
+library(cluster)
 
-# init a temp file
-tf <- tempfile()
+# read-in species data, with slightly modified column names
+x <- read.csv('C:/home/R_code/Stats4SoilScien(2017)/blue.csv', stringsAsFactors = FALSE)
 
-# read species data from online CSV
-download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/ca630-22A-species.csv', destfile = tf, quiet = TRUE)
+# read-in environmental data
+prd <- read.csv('C:/home/R_code/Stats4SoilScien(2017)/blue_env.csv', stringsAsFactors = FALSE)
 
-x <- read.csv(tf, stringsAsFactors = FALSE)
-
-# check: long-format
+# check: looks good, except for the leading whitespace in the species codes
+str(x)
 head(x)
 
-# any missing cover values should be converted to trace values of 0.1
-idx <- which(is.na(x$cover))
-if(length(idx) > 0)
-  x$cover[idx] <- 0.1
+# strip out whitespace
+x$species <- gsub(pattern=' ', replacement='', x=x$species)
 
-# # keep only tree species
-# idx <- which(grepl('^T', x$stratum))
-# x <- x[idx, ]
-
-# add stratum as a suffix for tree species (^T*)
-x$modified.symbol <- ifelse(grepl('^T', x$stratum), paste0(x$symbol, '/', x$stratum), x$symbol)
+# compute mean pct cover
+x$pct_mean <- with(x, (pct_low + pct_high) / 2)
 
 # convert "long" format to full community matrix, "wide" format using the mean pct cover
 # 1 row / ES ID, each column is a species
-m <- dcast(x, site_id ~ modified.symbol, value.var = 'cover', fun.aggregate = mean)
+p <- dcast(x, es_id ~ species, value.var = 'pct_mean')
 
-# assign abbreviated user site ID to row names
-row.names(m) <- gsub('CA630', '', m$site_id) 
-
-# convert to matrix, excluding the first column (site id)
-m <- as.matrix(m[, -1])
-
-# check first row and first 20 columns: looks good, except missing data (NA) should be 0
-head(m, 1)[, 1:20]
+# check: looks good, except missing data (NA) should be 0
+str(p)
+head(p, 1)
 
 # replace NA in the community matrix with 0
-m[is.na(m)] <- 0
+p[is.na(p)] <- 0
 
-# all-in-one!
-# non-metrix multidimensional scaling with default distance metric and standardization
-nmds <- metaMDS(m)
+# check range in mean pct cover, using all but the first column (the ES ID)
+# looks good
+summary(unlist(p[, -1]))
+
+# re-order environmental data so that row order == community matrix
+new.order <- match(p$es_id, prd$es_id)
+# check
+all(prd$es_id[new.order] == p$es_id)
+# re-order
+prd <- prd[new.order, ]
+
+
+
+
+## now do something with the community matrix
+
+# functions in the vegan package use the row names as IDs
+
+# transfer the full ES ID to row names
+row.names(p) <- p$es_id
+
+## optional fun stuff
+
+# how much of the ES ID can we trim-off?
+# convert to a matrx and check by column
+e.ids <- do.call('rbind', strsplit(p$es_id, split = ''))
+column.unique.vals <- apply(e.ids, 2, function(i) length(unique(i)))
+unique.cols <- which(column.unique.vals > 1)
+
+# transfer the truncated IDs to row names
+row.names(p) <- apply(e.ids[, unique.cols], 1, paste, collapse='')
+
+# compute distance between ES
+d <- metaMDSdist(p[, -1])
+
+# try ordination: non-metrix multidimensional scaling with default distance metric and standardization
+# use all columns except first: the ES ID
+nmds <- metaMDS(p[, -1])
+
+# evaluate nmMDS fit
+stressplot(nmds)
+
+# GOF by site, smaller = better
+goodness(nmds)
+
+
+# plot
+par(mar=c(2,2,1,1))
+# blue = species
+fig <- ordiplot(nmds, type='none', cex.axis=0.75)
+abline(h=0, v=0, lty=2, col='grey')
+text(fig, "species", col="blue", cex=0.5)
+
+# re-use the ordination object 'fig'
+
+# black= truncated ES IDs
+ordiplot(fig, type='none', cex.axis=0.75)
+abline(h=0, v=0, lty=2, col='grey')
+text(fig, "sites", col="black", cex=0.85)
+
+# another view: blue = species, black= truncated ES IDs
+# clusters connected with orange lines
+ordiplot(fig, type='none', cex.axis=0.75)
+abline(h=0, v=0, lty=2, col='grey')
+ordicluster(fig, agnes(d, method='ward'), prune=3, col = "orange")
+text(fig, "sites", col="black", cex=0.75, font=2)
+text(fig, "species", col="blue", cex=0.5)
+
+
+## community matrix as heatmap
+tabasco(p[, -1])
+# standardized community matrix
+tabasco(wisconsin(p[, -1]))
+# add site clustering of distance matrix
+tabasco(wisconsin(p[, -1]), use=agnes(d, method='ward'))
+# sort rows / columns based on NMMDS results
+tabasco(wisconsin(p[, -1]), use=nmds)
+
+
+## add environmental data
+
+# production
+fig <- ordiplot(nmds, type='none', cex.axis=0.75)
+abline(h=0, v=0, lty=2, col='grey')
+text(fig, "species", col="blue", cex=0.5)
+ordilabel(fig, "sites", col="black", cex=0.75, font=2)
+fit <- ordisurf(fig, prd$prod_normal, add=TRUE)
+
+
+
+# nmds.production <- MDSrotate(nmds, prd$prod_normal)
+# fig <- ordiplot(nmds.production, type='none', cex.axis=0.75)
+# abline(h=0, v=0, lty=2, col='grey')
+# text(fig, "sites", col="black", cex=0.75, font=2)
+# text(fig, "species", col="blue", cex=0.5)
+# fit <- ordisurf(fig, prd$prod_normal, add=TRUE)
+
+
+### things to tinker with:
+
+specaccum(p[, -1])
+diversity(p[, -1])
+
+## disconnected distances via threshold...?
+distconnected(d)
+
+# indicator power ... ?
+ip <- indpower(p[, -1])
+diag(ip) <- NA
+ip[, 1]
+which.max(ip[, 1])
+
+
+
+
+## spanning tree
+tr <- spantree(d)
+## Add tree to a metric scaling 
+plot(tr, nmds, type = "t")
 ```
 
-```{r, fig.width=5, fig.height=5}
+```{r, eval=FALSE, fig.width=5, fig.height=5}
 # evaluate nmMDS fit
 par(mar=c(5,5,1,1))
 stressplot(nmds, cex=0.5)
 ```
 
-```{r, fig.width=10, fig.height=5}
+```{r, eval=FALSE, fig.width=10, fig.height=5}
 # plot
 par(mar=c(1,1,1,1), mfcol=c(1,2))
 
