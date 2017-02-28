@@ -1,6 +1,6 @@
 ---
 title: "Spatial Data"
-author: "Stephen Roecker, Jay Skovlin, Dylan Beaudette, Skye Wills, Tom D'Avello"
+author: "Dylan Beaudette, Stephen Roecker, Jay Skovlin, Skye Wills, Tom D'Avello"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -9,7 +9,7 @@ output:
     smart: no
     keep_md: no
     number_sections: yes
-    toc: yes
+    toc: no
     toc_depth: 3
     toc_float:
       collapsed: true
@@ -354,7 +354,7 @@ If you haven't yet done so, please setup the sample datasets for this module.
 ```{r, eval=FALSE}
 # store path as a variable, in case you want to keep it somewhere else
 ch2b.data.path <- 'C:/workspace/chapter-2b'
-# ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
+ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
 
 # make a place to store chapter 2b example data
 dir.create(ch2b.data.path, recursive = TRUE)
@@ -382,7 +382,7 @@ We will be using polygons associated with MLRAs 15 and 18 as part of this demons
 ```{r results='hide'}
 # establish path to example data
 ch2b.data.path <- 'C:/workspace/chapter-2b'
-# ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
+ch2b.data.path <- '/Users/sgtpepp/Desktop/ch2'
 
 # load MLRA polygons
 mlra <- readOGR(dsn=ch2b.data.path, layer='mlra-18-15-AEA')
@@ -552,38 +552,43 @@ res <- res[, c('pedon_key', 'MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.P
 site(auburn) <- res
 ```
 
-The extracted values are now part of the "auburn" `SoilProfileCollection` object. Does there appear to be a relationship between soil morphology and "effective precipitation"? Maybe.
-```{r fig.width=12, fig.height=6}
+The extracted values are now part of the "auburn" `SoilProfileCollection` object. Does there appear to be a relationship between soil morphology and "effective precipitation"?
+```{r fig.width=12, fig.height=6.5}
 # create an ordering of pedons based on the extracted effective PPT
 new.order <- order(auburn$eff.PPT)
 
 # setup figure margins
-par(mar=c(3,2,4,2))
+par(mar=c(5,2,4,2))
 # plot profile sketches
 plot(auburn, name='hzn_desgn', print.id=FALSE, color='clay', plot.order=new.order)
 # add an axis with extracted raster values
 axis(side=1, at = 1:length(auburn), labels = round(auburn$eff.PPT[new.order]), cex.axis=0.75)
+mtext('Effective Precipitation (mm)', side=1, line=2)
 ```
 
+Note that negative values are associated with a net deficit in monthly precipitation vs. estimated ET.
 
 
 # Summarizing PRISM Data by Series Extent
 
-Get an approximate extent for the [Amador](http://casoilresource.lawr.ucdavis.edu/sde/?series=amador) soil series from [SoilWeb](https://casoilresource.lawr.ucdavis.edu/see/).
+
+The [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) function from the `soilDB` package provides a simple interface to [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/) data files. Note that these series extents have been generalized for rapid display at regional to continental scales. A more precise representation of "series extent" can be generated from SSURGO polygons and queried from [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html).
+
+Get an approximate extent for the [Amador](http://casoilresource.lawr.ucdavis.edu/sde/?series=amador) soil series from [SEE](https://casoilresource.lawr.ucdavis.edu/see/#amador). See the manual page for `seriesExtent` for additional options and related functions.
 ```{r}
 amador <- seriesExtent(s = 'amador')
 class(amador)
 ```
 
-Generate 100 sampling points within the extent, using a hexagonal grid. These will be used to extract raster values.
+Generate 100 sampling points within the extent, using a hexagonal grid. These will be used to extract raster values from our `RasterStack` of PRISM data.
 ```{r}
 s <- spsample(amador, n = 100, type = 'hexagonal')
 ```
 
 Graphically check sampling points.
 ```{r fig.width=4, fig.height=5}
-par(mar=c(1,1,1,1))
-plot(maat, ext=extent(s), main='MAAT, Amador Extent, Sampling Points')
+par(mar=c(1,1,3,1))
+plot(maat, ext=extent(s), main='MAAT and Amador Extent\n100 Sampling Points', axes=FALSE)
 plot(amador, add=TRUE)
 points(s, cex=0.25)
 ```
@@ -596,7 +601,7 @@ e <- extract(rs, s, df=TRUE)
 summary(e[, -1])
 ```
 
-See the [series extent mapping](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) tutorial for more ideas.
+Basic climate summaries from a standardized source (e.g. PRISM) might be a useful addition to an OSD. Think about how you could adapt this example to compare climate summaries derived from NASIS pedons to similar summaries derived from map unit polygons or generalized soil series extents.
 
 
 # Summarizing PRISM Data by MLRA
