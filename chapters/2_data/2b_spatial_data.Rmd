@@ -563,14 +563,13 @@ par(mar=c(5,2,4,2))
 plot(auburn, name='hzn_desgn', print.id=FALSE, color='clay', plot.order=new.order)
 # add an axis with extracted raster values
 axis(side=1, at = 1:length(auburn), labels = round(auburn$eff.PPT[new.order]), cex.axis=0.75)
-mtext('Effective Precipitation (mm)', side=1, line=2)
+mtext('Annual Sum of Monthly (PPT - ET_p) (mm)', side=1, line=2)
 ```
 
 Note that negative values are associated with a net deficit in monthly precipitation vs. estimated ET.
 
 
 # Summarizing PRISM Data by Series Extent
-
 
 The [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) function from the `soilDB` package provides a simple interface to [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/) data files. Note that these series extents have been generalized for rapid display at regional to continental scales. A more precise representation of "series extent" can be generated from SSURGO polygons and queried from [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html).
 
@@ -601,7 +600,7 @@ e <- extract(rs, s, df=TRUE)
 summary(e[, -1])
 ```
 
-Basic climate summaries from a standardized source (e.g. PRISM) might be a useful addition to an OSD. Think about how you could adapt this example to compare climate summaries derived from NASIS pedons to similar summaries derived from map unit polygons or generalized soil series extents.
+Basic climate summaries from a standardized source (e.g. PRISM) might be a useful addition to an OSD. Think about how you could adapt this example to compare climate summaries derived from NASIS pedons to similar summaries derived from map unit polygons and generalized soil series extents.
 
 
 # Summarizing PRISM Data by MLRA
@@ -614,32 +613,71 @@ http://ncss-tech.github.io/example-reports/mu-comparison/CA630-mu-comparison.htm
 http://ncss-tech.github.io/example-reports/mu-comparison/MLRA-comparison-report.html
 
 
-Constant density sampling.
-```{r eval=FALSE}
-library(sharpshootR)
 
-mlra$pID <- 1:nrow(mlra)
-s <- constantDensitySampling(mlra, n.pts.per.ac=0.0001)
-```
-
-Extract raster values.
+Check MLRA polygons, how many features per MLRA symbol? Note that some MLRA have more than one polygon.
 ```{r}
+table(mlra$MLRARSYM)
 ```
 
-Graphically summarize.
+Convert polygon area from square meters to acres.
+```{r}
+poly.area <- round(sapply(mlra@polygons, slot, 'area') * 0.000247105)
+summary(poly.area)
+sum(poly.area)
+```
 
 
-# Further Examples on the AQP Website
-  * [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
-  * [Export pedons to Google Earth](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html)
-  * [Export NASIS pedons to SHP](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html)
- 
+Sample each polygon at a constant sampling density of `0.001` samples per acre (1 sample for every 1,000 ac.). At this sampling density we should expect approximately 16,700 samples--more than enough for our simple example.
+```{r}
+library(sharpshootR)
+# the next function requires a polygon ID
+mlra$pID <- 1:nrow(mlra)
+s <- constantDensitySampling(mlra, n.pts.per.ac=0.001)
+```
+
+Extract MLRA symbol at sample points using the `over()` function. The result will be a `data.frame` object with all attributes from our MLRA polygons that intersect sampling points `s`.
+```{r}
+# spatial overlay: sampling points and MLRA polygons
+res <- over(s, mlra)
+# row / feature order is preserved, so we can directly copy
+s$mlra <- res$MLRARSYM
+# tabulate number of samples per MLRA
+table(s$mlra)
+```
+
+Extract values from the `RasterStack` of PRISM data as a `data.frame`.
+```{r}
+# raster stack extraction at sampling points
+e <- extract(rs, s, df=TRUE)
+# convert sampling points from SpatialPointsDataFrame to data.frame
+s.df <- as(s, 'data.frame')
+# join columns from extracted values and sampling points
+s.df <- cbind(s.df, e)
+# check results
+head(s.df)
+```
+
+Graphical summary of the results. This requires reshaping our results from "wide" to "long" format.
+```{r, fig.width=8, fig.height=4}
+library(lattice)
+library(reshape2)
+
+# reshape from wide to long format
+m <- melt(s.df, id.vars = c('mlra'), measure.vars = c('MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT'))
+head(m)
+
+# tabular summary of mean values
+tapply(m$value, list(m$mlra, m$variable), mean)
+
+bwplot(mlra ~ value | variable, data=m, as.table=TRUE, scales=list(alternating=3, relation='free'), strip=strip.custom(bg=grey(0.9)), panel=function(...) {
+  panel.grid(-1, -1)
+  panel.bwplot(...)
+})
+```
 
 
 
-
-
-# ArcGIS Tools for Extracting Spatial Data: Extracting Point Data from a Raster
+# Extracting Point Data from a Raster in ArcGIS
 
 This section discusses the use of the "Extract Multi Values to Points" tool, which assigns the cell value of specified raster data sets to existing points. The "Extract Values to Points" and "Sample" tools achieve similar results. These tools are described in the ESRI help section [An Overview of the Extraction Tools](http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/An_overview_of_the_Extraction_tools/009z00000028000000/).  
 
