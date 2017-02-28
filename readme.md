@@ -1,3 +1,6 @@
+## Course Content
+
+[Current Table of Contents](http://ncss-tech.github.io/stats_for_soil_survey/chapters/)
 
 
 ## Update on "Statistics for Soil Survey" course
@@ -44,10 +47,4 @@ There may be overlap between slides and the web-based content. That should not b
 
 ## Datasets
 Standard data sets for teaching, student data for exercises.
-
-## Example Links to pages
-* [main page](http://ncss-tech.github.io/stats_for_soil_survey/)
-* [pre-class assignment](http://ncss-tech.github.io/stats_for_soil_survey/chapters/0_pre-class-assignment/)
-* [ordination](http://ncss-tech.github.io/stats_for_soil_survey/chapters/5_clustering_and_ordination/)
-
 
