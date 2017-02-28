@@ -790,16 +790,16 @@ Zonal statistics in R can be implemented using either the census or sample appro
 ```{r r_poly_extract}
 # library(rgdal)
 # 
-# ca794 <- readOGR(dsn = "M:/geodata/soils/CA794/spatial", layer = "soilmu_a_ca794") # import CA794 map unit polygons
+# ca794 <- readOGR(dsn = "E:/geodata/project_data/8VIC/ca794", layer = "ca794") # import CA794 map unit polygons
 # ca794 <- spTransform(ca794, CRS("+init=epsg:5070")) # reproject
 # ca794$mukey2 <- as.integer(as.character(ca794$MUKEY)) # convert MUKEY to  an integer
 # writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile", overwrite_layer = TRUE) # export shapefile
 # 
 # library(RSAGA)
 # myenv <- rsaga.env(path = "C:/Program Files/QGIS Essen/apps/saga") # set rsaga path
-# ned <- raster("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat") # load DEM
+# ned <- raster("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat") # load DEM
 # test <- raster(extent(ca794), ext = extent(ned), crs = crs(ned), res = res(ned))  # create a blank raster that matches the DEM
-# writeRaster(test, file = "M:/geodata/project_data/8VIC/sdat/ca794.sdat", format = "SAGA", progress = "text", overwrite = TRUE) # export the raster
+# writeRaster(test, file = "E:/geodata/project_data/8VIC/sdat/ca794.sdat", format = "SAGA", progress = "text", overwrite = TRUE) # export the raster
 # 
 # # Convert the CA794 shapefile to a rsaga raster
 # 
@@ -809,7 +809,7 @@ Zonal statistics in R can be implemented using either the census or sample appro
 #   OUTPUT = "2",
 #   TARGET = "0",
 #   GRID_TYPE = "2",
-#   USER_GRID = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   USER_GRID = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
 #   USER_XMIN = extent(test)[1] + 15,
 #   USER_XMAX = extent(test)[2] - 15,
 #   USER_YMIN = extent(test)[3] + 15,
@@ -821,14 +821,14 @@ Zonal statistics in R can be implemented using either the census or sample appro
 # # Extract the zonal statistics for 2 rasters
 # 
 # rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
-#   ZONES = "M:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-#   STATLIST = paste(c("M:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "M:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
+#   ZONES = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+#   STATLIST = paste(c("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "E:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
 #   OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
 # ))
 # 
 test <- read.csv("C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") # import the results
 names(test)[1] <- "mukey" # rename the mukey column
-test[test$mukey == 2480977, ] # examine mukey 2480977
+subset(test, mukey == 2480977) # examine mukey 2480977
 ```
 
 To implement the sample approach to zonal statistics we can use the `extract()` and `over()` functions in the raster and sp packages respectively.
@@ -836,7 +836,7 @@ To implement the sample approach to zonal statistics we can use the `extract()` 
 ```{r}
 # s <- spsample(ca794, n = 1000, type = "stratified") # take a stratified random sample
 # 
-# setwd("M:/geodata/project_data/8VIC/")
+# setwd("E:/geodata/project_data/8VIC/ca794")
 # 
 # rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif")) # create a raster stack
 # proj4string(rs) <- CRS("+init=epsg:5070") # set the spatial projection
@@ -849,7 +849,7 @@ To implement the sample approach to zonal statistics we can use the `extract()` 
 
 load(file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
-summary(test2[test2$MUKEY == 2480977, ]) # examine summary for mukey 2480977
+summary(subset(test2, MUKEY == 2480977)) # examine summary for mukey 2480977
 ```
 
 Compare the results of the census and sample approaches above. While the census approach surveyed 204,460 cells, the sample approach only surveyed 5,777. However we can see that the results are largely similar between the two approaches.
