@@ -1000,12 +1000,11 @@ print(d)
 Just for fun, use hierarchical clustering and nMDS on soil color data from the OSDs that were used in the previous example.
 
 ```{r, fig.width=6, fig.height=6}
-# these are moist colors
-
 # extract horizon data from select OSDs in above example
 h <- horizons(s)
 
 # convert Munsell color notation to sRGB
+# these are moist colors
 rgb.data <- munsell2rgb(h$hue, h$value, h$chroma, return_triplets = TRUE)
 
 # check
@@ -1118,7 +1117,8 @@ mtext('Profile Sketches are from OSDs', 1)
 
 ### MLRA Summaries: PRISM and Elevation
 
-**TODO: describe use of ordination / density contours for sampled PRISM data**
+This example generates an ordination of environmental variables (PRSIM and elevation) associated with MLRAs 15, 18, 22A, and 22B. The contours contain 75% (dotted line), 50% (dashed line), and 25% (solid line) of the points. See comments in the code for details. Note that this example was [extracted from the Region 2 Map Unit Comparison Report](https://github.com/ncss-tech/soilReports).
+
 ```{r, fig.width=8, fig.height=8, results='hide'}
 library(MASS)
 library(vegan)
@@ -1149,14 +1149,19 @@ cols <- cols[c(1:5,7,9)]
 # http://stackoverflow.com/questions/16225530/contours-of-percentiles-on-level-plot
 kdeContours <- function(i, prob, cols, m, ...) {
   
+  # need more than 2 rows of data
   if(nrow(i) < 2) {
     return(NULL)
   }
   
+  # keep track of colors
   this.id <- unique(i$.id)
   this.col <- cols[match(this.id, m)]
-  dens <- kde2d(i$x, i$y, n=200); ## estimate the z counts
-
+  
+  # estimate density
+  dens <- kde2d(i$x, i$y, n=200)
+  
+  # differentiate to estimate quantiles
   dx <- diff(dens$x[1:2])
   dy <- diff(dens$y[1:2])
   sz <- sort(dens$z)
@@ -1171,12 +1176,12 @@ kdeContours <- function(i, prob, cols, m, ...) {
 }
 
 ## NOTE: data with very low variability will cause warnings
-# eval numerical distance, removing 'sid' and '.id' columns
+# eval numerical distance, removing first 3 columns of IDs
 d.dist <- daisy(d.sub[, -c(1:3)], stand=TRUE)
 
 ## map distance matrix to 2D space via principal coordinates
-d.betadisper <- vegan::betadisper(d.dist, group=d.sub$.id, bias.adjust = TRUE, sqrt.dist = TRUE, type='median')
-d.scores <- vegan::scores(d.betadisper)
+d.betadisper <- betadisper(d.dist, group=d.sub$.id, bias.adjust = TRUE, sqrt.dist = TRUE, type='median')
+d.scores <- scores(d.betadisper)
 
 # split data into a list by ID
 s <- data.frame(x=d.scores$sites[, 1], y=d.scores$sites[, 2], .id=d.sub$.id)
@@ -1187,25 +1192,35 @@ par(mar=c(1,1,3,1))
 plot(d.scores$sites, type='n', axes=FALSE)
 abline(h=0, v=0, lty=2, col='grey')
 
-# NOTE: lines are not added if data are too densely spaced for evaluation of requested prob. level 
 # add contours of prob density
+# NOTE: lines are not added if data are too densely spaced for evaluation of requested prob. level 
 res <- lapply(s, kdeContours, prob=c(0.75), cols=cols, m=levels(d.sub$.id), lwd=1, lty=3)
 res <- lapply(s, kdeContours, prob=c(0.5), cols=cols, m=levels(d.sub$.id), lwd=1, lty=2)
 res <- lapply(s, kdeContours, prob=c(0.25), cols=cols, m=levels(d.sub$.id), lwd=2, lty=1)
 
+# add sample points
 points(d.scores$sites, cex=0.45, col=cols[as.numeric(d.sub$.id)], pch=16)
+
 # note special indexing for cases when low-var MU have been removed
-vegan::ordilabel(d.betadisper, display='centroids', col=cols[match(mu.set, levels(d.sub$.id))])
+ordilabel(d.betadisper, display='centroids', col=cols[match(mu.set, levels(d.sub$.id))])
 title('Ordination of Raster Samples (cLHS Subset) with 25%, 50%, 75% Density Contours')
 box()
 ```
 
+**Thoughts on interpretation:**
+
+ * The relative position of points and contours are meaningful; absolute position will vary each time the figure is generated.
+ * Look for "diffuse" vs. "concentrated" clusters: these suggest relatively broadly vs. narrowly defined concepts.
+ * Nesting of clusters (e.g. smaller cluster contained by larger cluster) suggests superset/subset relationships.
+ * Overlap is proportional to similarity.
+ 
 
 
 ### Topographic Signatures
 
+**TODO: finish this**
 
-The following is an investigation of topographic "signatures" in the initial soil mapping project for Sequoia and Kings Canyon, California.
+The following is an investigation of topographic "signatures" from the initial soil mapping project of Sequoia and Kings Canyon National Park, CA.
 
 ```{r, fig.width=8, fig.height=8, results='hide'}
 library(plyr)
@@ -1227,15 +1242,14 @@ head(x)
 # get terrain variable names
 vars <- c('elev', 'solar', 'slope', 'tci', 'ppt', 'maat', 'tpi', 'tri', 'pi')
 
+# covnvert wide to long format for summary by MY symbol
 x.long <- melt(x, id.vars = 'MUSYM', measure.vars = vars)
-
 x.summary <- ddply(x.long, c('MUSYM', 'variable'), .fun=plyr::summarize, m=median(value, na.rm = TRUE))
-
 head(x.summary)
 
+# retain median values, convert back to wide format
 x.wide <- dcast(x.summary, MUSYM ~ variable, value.var = 'm')
 row.names(x.wide) <- x.wide$MUSYM
-
 head(x.wide, 2)
 
 # generate lookup table of MUSYM - MU groups
@@ -1245,17 +1259,15 @@ lut <- unique(x[, c('MUSYM', 'gensym')])
 x.wide <- join(x.wide, lut, by='MUSYM', type='left', match='first')
 x.wide$gensym <- factor(x.wide$gensym, levels = c("riparian", "xx10", "xx20", "xx30", "xx40", "xx50"), labels = c("riparian", "basins and cirques", "glacial valleys", "bedrock controlled mountain slopes and valley walls", "non bedrock controlled slopes", "plateaus, till plains, outwash plains"))
 
-head(x.wide, 2)
-
-# eval signatures from LHS samples
+# perform non-metric MDS
 nmds <- metaMDS(x.wide[, vars], distance = 'gower', autotransform = FALSE, wascores=FALSE)
 
+# setup colors
 cols <- c('RoyalBlue', 'black', 'DarkGreen', 'orange3', 'red', 'brown')
 site.colors <- cols[as.numeric(x.wide$gensym)]
 
-# plot
+# plot ordination
 par(mar=c(1,1,1,1))
-# clusters connected with orange lines
 fig <- ordiplot(nmds, type='none', cex.axis=0.75, axes=FALSE)
 abline(h=0, v=0, lty=2, col='grey')
 text(fig, "sites", cex=0.65, font=2, col=site.colors)
@@ -1263,8 +1275,20 @@ legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, b
 title('Map Unit Terrain Signatures')
 ```
 
+```{r}
+# overlay slope values
+par(mar=c(1,1,1,1))
+fig <- ordiplot(nmds, type='none', cex.axis=0.75, axes=FALSE)
+abline(h=0, v=0, lty=2, col='grey')
+text(fig, "sites", cex=0.65, font=2, col=site.colors)
+ordisurf(fig, x.wide$slope, add=TRUE, col='black')
+title('Map Unit Terrain Signatures')
+```
+
 
 ## Species Composition
+
+**TODO: finish this**
 
 The following is an example of the use of ordination to investigate patterns in species composition. It is from MLRA 22A-Sierra Nevada Mountains, CA. Data courtesy of David Evans (Sonora, CA).
 
@@ -1338,12 +1362,6 @@ d <- metaMDSdist(p[, -1])
 # try ordination: non-metrix multidimensional scaling with default distance metric and standardization
 # use all columns except first: the ES ID
 nmds <- metaMDS(p[, -1])
-
-# evaluate nmMDS fit
-stressplot(nmds)
-
-# GOF by site, smaller = better
-goodness(nmds)
 
 
 # plot
