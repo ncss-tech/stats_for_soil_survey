@@ -378,6 +378,25 @@ ggplot(h, aes(x = total_frags_pct)) +
   geom_vline(xintercept = amean, col = "blue") +
   geom_vline(xintercept = amed, col = "orange") +
   ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Rock Fragments")
+
+# # or in base graphics
+# 
+# amean <- mean(clay)
+# amed <- median(clay)
+# 
+# test <- density(clay)
+# plot(test, main = "Clay")
+# abline(v = amed, col = "blue") # plot the median as a blue vertical line
+# abline(v = amean, col = "orange") # plot the mean as a orange vertical line
+# 
+# frags <- h$total_frags_pct
+# amean <- mean(frags)
+# amed <- median(frags)
+# 
+# test <- density(frags)
+# plot(test, main = "Rock Fragments")
+# abline(v = amed, col = "blue") # plot the median as a blue vertical line
+# abline(v = amean, col = "orange") # plot the mean as a orange vertical line
 ```
 
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
@@ -700,6 +719,7 @@ The soilReports R package is largely just a collection of R Markdown (.Rmd) repo
 Lets get busy and demonstrate how to run an existing .Rmd to summarize a series of pedons for a given soil series.
 
 
+
 ## Requirements
 
 -	Data are properly populated, otherwise the report may fail. Common examples include:
@@ -716,48 +736,68 @@ Lets get busy and demonstrate how to run an existing .Rmd to summarize a series 
 2.	**Install/rei-install** the soilReports package. This package is updated regularly (e.g. weekly), and should be re-installed from GitHub regularly.
 
 ```{r, eval=FALSE}
-# Install the soilReports package
+# Install the soilReports package from GitHub
 devtools::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade_dependencies=FALSE)
 ```
 
 3. **View** the list of available reports.
 
 ```{r, eval=FALSE}
-# Load the soilReports package
+# Load the soilReports and rmarkdown package
 library(soilReports)
-
-
-```
-
-3. **Open** the pedon report. **Navigate** to the file path specified above and **open** the pedon_summary_by_taxonname.Rmd or lab_summary_by_taxonname.Rmd file in Rstudio.
-
-```{r, eval=FALSE}
-# Load the rmarkdown package
 library(rmarkdown)
 
-# Define the report file path
-report_path <- system.file(paste0('reports/', reportName), package='soilReports')
-
-# Run the report
-render(input = report_path, output_file = "C:/workspace/test.html")
-
+# List reports
+listReports()
 ```
- 
-4. **Check** or **create** a genhz_rules file for your soil series. In order to aggregate the pedons by horizon designation, a genhz_rules file (e.g., Genesee_rules.R) is needed. See below.
+
+4. **Copy** the lab summary to your working directory.
+
+```{r, eval=FALSE}
+# Copy report to your directory
+reportInit(reportName = "region11/lab_summary_by_taxonname", outputDir = "C:/workspace/lab_sum")
+```
+
+5. **Examine** the report folders contents. The reported is titled report.Rmd. Notice their are several other support files. The parameters for the report are contained in the config.R file.
+
+![](figure/report_folder.png)
+
+6. **Check** or **create** a genhz\_rules file for a soil series. In order to aggregate the pedons by horizon designation, a genhz\_rules file (e.g., Miamian_rules.R) is needed. See below.
 
 ![](figure/ghl_folder.png)
 
 If none exists see the following job aid on how to create one, [Assigning Generalized Horizon Labels](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html).
 
-![](figure/ghl_rules.png)
+![](figure/miamian_rules.png)
 
 Pay special attention to how carrot "^" and dollar "\$" symbols are used. They function as anti-wildcards. For example, a "^" placed before an A horizon, "^A", will match any horizon designation that follows A, such as Ap, Ap1, etc. Also, placing a "\$" after a Bt horizon, "Bt\$", will match any horizon designation that precedes Bt, such as 2Bt or 3Bt. Encapsulating a horizon with both "^" and "\$" symbols will result only in exact matches. For example ^A$, will only match A, not Ap or A1.
 
-5.	**Enter/replace** the soil series of interest, and **hit** the knit button. Be sure to encase the soil series name in quotations, using either double or single quotations, such as `"series"` or `'series'`.
+6. **Excute** the report.
 
-![](figure/genesee.png)
+**Command-line approach**
 
-6.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e., C:/workspace/soil-pit/reports/pedon_summary_by_taxonname.html), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing, or convert it to a pdf. Also when reopening the .html with Internet Explorer, click on "Allow blocked content" if prompted. Otherwise Internet Explorer may alter the formatting within the document.
+```{r, eval=FALSE}
+# Set report parameters
+series <- "Miamian"
+
+# report file path
+report_path <- "C:/workspace/lab_sum/report.Rmd"
+
+# Run the report
+render(input = report_path)
+```
+
+**Manual approach**
+
+**Open** the config.R file, **enter/replace** the soil series of interest, and **remove** the # comment before series object. Be sure to encase the soil series name in quotations, using either double or single quotations, such as `"series"` or `'series'`.
+
+![](figure/config.png)
+
+**Open** the report.Rmd, and **hit** the knit button. 
+
+![](figure/knit_button.png)
+
+7.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e., C:/workspace/lab\_sum/report.html), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing, or convert it to a pdf. Also beware when reopening the .html with Internet Explorer, click on "Allow blocked content" if prompted. Otherwise Internet Explorer may alter the formatting within the document.
 
 **Sample pedon report**
  
@@ -765,11 +805,11 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 
 
-## Exercise 2: run the pedon\_summary\_by\_taxonname.Rmd
+## Exercise 2: run the lab\_summary\_by\_taxonname.Rmd
 
 - Load your selected set with the pedon and site table for an existing GHL file, or make your own (highly encouraged)
-- Run the pedon_summary_by_taxonname.Rmd report on a soil series of your choice.
-- Show your work and submit the results to your coach.
+- Run the lab_summary_by_taxonname.Rmd report on a soil series of your choice.
+- Show your work and submit the results to your mentor.
 
 
 
@@ -834,22 +874,36 @@ subset(test, mukey == 2480977) # examine mukey 2480977
 To implement the sample approach to zonal statistics we can use the `extract()` and `over()` functions in the raster and sp packages respectively.
 
 ```{r}
-# s <- spsample(ca794, n = 1000, type = "stratified") # take a stratified random sample
+# # Take a stratified random sample
+# s <- spsample(ca794, n = 1000, type = "stratified")
 # 
 # setwd("E:/geodata/project_data/8VIC/ca794")
 # 
-# rs <- stack(c(elev = "ned30m_8VIC.tif", slope = "ned30m_8VIC_slope5.tif")) # create a raster stack
-# proj4string(rs) <- CRS("+init=epsg:5070") # set the spatial projection
+# # Create a raster stack
+# rs <- stack(c(
+#   elev = "ned30m_8VIC.tif", 
+#   slope = "ned30m_8VIC_slope5.tif")
+#   )
+# # Set the spatial projection
+# proj4string(rs) <- CRS("+init=epsg:5070") 
 # 
-# 
-# test1 <- over(s, ca794) # extract the map unit polygon values
-# test2 <- data.frame(extract(rs, s)) # extract the raster values
-# test2 <- cbind(test1, test2) # combine the two datasets
+# # Extract the map unit polygon value
+# test1 <- over(s, ca794)
+#
+# # Extract the raster values
+# test2 <- data.frame(extract(rs, s))
+#
+# # Combine the two datasets
+# test2 <- cbind(test1, test2)
+#
+# # Cache/save the results 
 # save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
+# Load the cache/saved results
 load(file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
-summary(subset(test2, MUKEY == 2480977)) # examine summary for mukey 2480977
+# Examine summary for mukey 2480977
+summary(subset(test2, MUKEY == 2480977)) 
 ```
 
 Compare the results of the census and sample approaches above. While the census approach surveyed 204,460 cells, the sample approach only surveyed 5,777. However we can see that the results are largely similar between the two approaches.
