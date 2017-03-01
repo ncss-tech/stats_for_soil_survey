@@ -79,7 +79,7 @@ library(cluster)
 library(ape)
 library(RColorBrewer)
 library(MASS)
-
+library(lattice)
 ```
 
 <hr>
@@ -184,14 +184,40 @@ $$D(p,q) = \sqrt{ \sum_{i=1}^{n}{(p_{i} - q_{i})^{2}} }$$
 
 In the equation above, $i$ is one of $n$ total characteristics. Imagining what distance "looks like" is difficult if there are more than three dimensions. Instead, examine the distance matrix calculated using all five characteristics.
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
+```{r, echo=FALSE, fig.width=6.5, fig.height=6.5}
 d <- dist(sp4.scaled[, -1])
 m <- as.matrix(d)
 dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
-round(m, 2)
+
+# remove upper triangle
+m[upper.tri(m)] <- NA
+
+# "nice" colors
+cols <- c(rev(brewer.pal(11, 'Spectral')))
+col.palette <- colorRampPalette(cols)
+
+levelplot(round(m, 2), col.regions=col.palette, colorkey=list(tick.number=10), xlab='', ylab='', main='Pair-Wise Distances', scales=list(alternating=3), panel=function(x, y, z, ...) {
+  panel.levelplot(x, y, z, ...)
+  idx <- which(!is.na(z))
+  panel.text(x[idx], y[idx], z[idx], font=2)
+  panel.abline(h=seq(from=0.5, to=length(y), by=1), col=grey(0.45))
+  panel.abline(v=seq(from=0.5, to=length(x), by=1), col=grey(0.45))
+})
 ```
 
-You can now begin to describe dissimilarity between individuals using an arbitrary number of (relevant) characteristics. You can make statements like "The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon." Although this is a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
+Rescaling to the interval {0,1}.
+```{r, echo=FALSE, fig.width=6.5, fig.height=6.5}
+m <- m / max(m, na.rm = TRUE)
+levelplot(round(m, 2), col.regions=col.palette, colorkey=list(tick.number=10), xlab='', ylab='', main='Pair-Wise Distances', scales=list(alternating=3), panel=function(x, y, z, ...) {
+  panel.levelplot(x, y, z, ...)
+  idx <- which(!is.na(z))
+  panel.text(x[idx], y[idx], z[idx], font=2)
+  panel.abline(h=seq(from=0.5, to=length(y), by=1), col=grey(0.45))
+  panel.abline(v=seq(from=0.5, to=length(x), by=1), col=grey(0.45))
+})
+```
+
+You can now begin to describe dissimilarity between individuals using an arbitrary number of (relevant) characteristics. You can make statements like *"The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon."* Although this is a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
 ### Review and Discuss
 
@@ -201,7 +227,7 @@ You can now begin to describe dissimilarity between individuals using an arbitra
   * **Key point:** Each characteristic is its own dimension in property-space.
     + Sand, clay, and CEC = 3 dimensions.
     + Sand, clay, CEC, OC, and horizon depth = 5 dimensions.
-    + Multiple dimensions are simple to define in code but are hard to visualize.
+    + Multiple dimensions are simple to define in code but [are hard to visualize](https://youtu.be/N0WjV6MmCyM).
    
 
 ## Quick Detour: Missing Data
@@ -270,8 +296,9 @@ There isn't much difference between these two figures because most of the charac
   1. Suitable characteristics and standardization method,
   2. Appropriate clustering algorithm,
   3. Criteria to determine the "right" number of clusters,
-  4. Interpretation of the final grouping based on subject knowledge, and
-  5. The possibility of needing to start over at step 1.
+  4. Limitations of the selected algorithm,
+  5. Interpretation of the final grouping based on subject knowledge, and
+  6. The possibility of needing to start over at step 1.
 
 
 ### Using Color to Communicate Results of Clustering or Ordination
@@ -320,6 +347,8 @@ There are two main types of hierarchical clustering.
 
 Both methods are strongly influenced by the choice of **standardization** method and **distance metric**. Both methods require a full, pair-wise distance matrix as input. This requirement can limit the use of hierarchical clustering to datasets that can be fit into memory.
 
+<div style="width: 75%; margin: auto; border: 1px solid black; padding 5px;"><img src="static-figures/which-direction.png"></div>
+
 The agglomerative methods also depends on the choice of [linkage criterion](https://en.wikipedia.org/wiki/Hierarchical_clustering#Linkage_criteria). Some of these criteria include:
 
   * Single linkage,
@@ -333,7 +362,7 @@ More on these criteria later.
 ##### Review and Discuss
   * The simplicity and lack of decisions make the divisive method convenient for most work. 
   * The top-down approach is similar to the way in which we describe soil morphology and taxonomy.
-  * When selecting a method, think about it; don't just go "fishing."
+  * When selecting a method, read/think about it; don't just go "fishing."
 
 
 ### Centroid and Medoid (Partitioning) Clustering
@@ -384,6 +413,10 @@ This section describes three (out of many) of the most important partitioning-ty
 
 All of these methods are sensitive to the type of **standardization** applied to the characteristics. These methods rely on iterative minimization of one or more criteria; therefore, each clustering "run" may generate slightly different output. Most implementations re-run the algorithm until it stabilizes.
 
+**TODO**: 
+  * [K-mean: important limitations / strategies](http://varianceexplained.org/r/kmeans-free-lunch/)
+  * medoids are actual observations, centroids are hypothetical
+
 
 ##### Review and Discuss
 
@@ -393,9 +426,15 @@ All of these methods are sensitive to the type of **standardization** applied to
 
 
 ## Ordination: Visualization in a Reduced Space
-Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortions.
+Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortions. [Carl Sagan gives a beautiful demonstration of this concept using shadows, in this excerpt from *Cosmos*. ](https://youtu.be/N0WjV6MmCyM)
 
-[Principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. The rest of this chapter is focused on [multidimensional scaling](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). Methods of ordination that use ["Non-metric" multidimensional scaling](https://en.wikipedia.org/wiki/Multidimensional_scaling#Non-metric_multidimensional_scaling) (nMDS) attempt to generate a reduced space that minimizes distortion in proportional similarity; i.e., similar individuals are near each other in the reduced space, dissimilar individuals are farther apart.
+[Principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the simplest and most widely used ordination methods. The reduced space ("principal components") are defined by linear combinations of characteristics. The rest of this chapter is focused on [multidimensional scaling](https://en.wikipedia.org/wiki/Multidimensional_scaling) (MDS). Methods of ordination that use ["Non-metric" multidimensional scaling](https://en.wikipedia.org/wiki/Multidimensional_scaling#Non-metric_multidimensional_scaling) (nMDS) attempt to generate a reduced space that minimizes distortion in proportional similarity; i.e., similar individuals are near each other in the reduced space, dissimilar individuals are farther apart. The "non-metric" adjective implies that exact distances are not preserved.
+
+
+Hole and Hironaka [-@Hole1960] were some of the first pedologists to apply ordination methods to soils data. The main figure from [their classic paper](https://dl.sciencesocieties.org/publications/sssaj/pdfs/24/4/SS0240040309) was hand-drawn, based on a physical model (constructed from wooden dowels and spheres!) of the ordination.
+<div style="width: 75%; margin: auto; border: 1px solid black; padding 5px;"><img src="static-figures/hole-et-al-ordination.png"></div>
+
+
 
 
 ### An Example of nMDS Applied to Soil Data
@@ -1291,6 +1330,12 @@ title('Map Unit Terrain Signatures')
 **TODO: finish this**
 
 The following is an example of the use of ordination to investigate patterns in species composition. It is from MLRA 22A-Sierra Nevada Mountains, CA. Data courtesy of David Evans (Sonora, CA).
+
+  > These analyses were based on data summaries from AKSite.  Previous work in the vegan package, I had supplied the entire dataset for MLRA 18.  This included every single observation, including trace species occurring on plots that were outside central concepts and questionable community phases.
+To simplify this set, I selected aggregated data plant cover (% ocular estimates of canopy cover) from only the representative data community (reference phase) and included only the species that were contained in more than one plot.  Therefore, many of the trace species and rare plants will have been precluded.  
+In essence, this dataset is aggregated and based on ecological sites.  My previous set was from point data and I was able to fit a number of environmental factors to the NMDS plots.  However, because these were aggregated data, they were not spatially explicit.  I did fit some production data, however I need to note some disclaimers on the validity of the production data.  Production data should only be collected during a narrow timeframe over the course of the year (i.e. during a specific phenology of the plant in question) usually in the spring.  Therefore, the production data is a bit limited and I had to scrape a couple of different sources together.  There were a couple of ecological sites in this analysis that had no production data. I did my best to find low, RV, and high values based out of the data we had collected.  However, in certain circumstances, I had an RV and a low, but no high, or vice versa.  In these cases, I made a judgement call based on my experience in these systems.   
+
+
 
 ```{r}
 library(reshape2)
