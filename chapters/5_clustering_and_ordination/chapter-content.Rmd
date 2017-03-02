@@ -8,7 +8,7 @@ output:
     smart: no
     keep_md: no
     number_sections: yes
-    toc: yes
+    toc: no
     toc_depth: 3
     toc_float:
       collapsed: true
@@ -268,7 +268,7 @@ Interpretation is simple. Euclidean distance in property-space is directly propo
 
 
 ## Cluster Analysis: Finding Groups in Data
-[**Cluster analysis**](https://en.wikipedia.org/wiki/Cluster_analysis) is a massive topic that deals with the seemingly simple task of finding useful groups within a dataset. This topic and the methods used are also referred to as "unsupervised classification" in the fields of remote sensing and GIS. All of the available algorithms will find groups in a given dataset; however, it is up to the subject expert to determine the following:
+[**Cluster analysis**](https://en.wikipedia.org/wiki/Cluster_analysis) is a massive topic that deals with the seemingly simple task of finding useful groups within a dataset. This topic and the methods used are also referred to as "unsupervised classification" in the fields of remote sensing and GIS. All of the [available algorithms](https://cran.r-project.org/web/views/Multivariate.html) will find groups in a given dataset; however, it is up to the subject expert to determine the following:
  
   1. Suitable characteristics and standardization method,
   2. Appropriate clustering algorithm,
@@ -972,7 +972,44 @@ points(sp4.std$Mg, sp4.std$Ca, bg=cl$clustering, col='black', cex=1.25, pch=21)
 ```
 
 
-## Ordination (Non-Metric Multidimensional Scaling)
+
+## Ordination
+
+### Principal Component Analysis
+A simple, constrained ordination based on variance. This method does not use the distance matrix, rather it seeks to find a new set of axes that describe maximum variance via linear combinations of characteristics. Standardization is essential.
+
+```{r results='hide', fig.width=6, fig.height=6}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
+
+# PCA
+# note that we are leaving out the first column: the horizon names
+# note the syntax used to extract the principal components
+# note that PCA doesn't use the distance matrix
+pca <- predict(princomp(sp4.scaled[, -1]))
+
+## perform clustering to highlight structure in the PCA
+# distance matrix
+d <- dist(sp4.scaled[, -1])
+m <- as.matrix(d)
+dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
+d <- as.dist(m)
+# dendrogram from divisive clustering
+dd <- diana(d)
+h <- as.hclust(dd)
+p <- as.phylo(h)
+
+# define colors based on cutting a divisive hierarchical clustering into 4 groups
+cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
+
+# plot first 2 PC
+plot(pca[, 1:2], asp=1, type='n', axes=FALSE, xlab='', ylab='', main="Principal Components 1 and 2")
+grid()
+text(pca[, 1:2], sp4.scaled$name, cex=0.75, col=cols, font=2)
+box()
+```
 
 ### Sammon's Non-linear Mapping
 Simple interface to nMDS, input is a distance matrix. Note that this algorithm will fail if there are 0's or ties within the distance matrix. See `?sammon` for details.
@@ -1042,10 +1079,9 @@ cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
 par(mar=c(3,1,3,1))
 fig <- ordiplot(s, type='none', cex.axis=0.75, axes=FALSE, xlab='', ylab='', main='nMDS by metaMDS()')
 abline(h=0, v=0, lty=2, col='grey')
-text(fig$sites, sp4$name, cex=0.65, font=2, col=cols)
+text(fig$sites, sp4$name, cex=0.75, font=2, col=cols)
 # ordicluster(fig, agnes(daisy(sp4.scaled[, -1]), method='ward'), prune=3, col = "orange")
 box()
-mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 ```
 
 
