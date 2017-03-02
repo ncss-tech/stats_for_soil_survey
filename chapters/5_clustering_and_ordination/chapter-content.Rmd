@@ -8,7 +8,7 @@ output:
     smart: no
     keep_md: no
     number_sections: yes
-    toc: no
+    toc: yes
     toc_depth: 3
     toc_float:
       collapsed: true
@@ -650,7 +650,7 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 
 
 ### Distance Calculations with Categorical Data
-The following example is excerpted from ["A Novel Display of Categorical Pedon Data"](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html). This example illustrates an application of clustering binary data (presence or absence of a diagnostic feature). Internally, the `diagnosticPropertyPlot` function uses the `daisy` function to compute pair-wise distances using the "general dissimilarity coefficient" of Gower [@Gower1971]. A concise summary of this distance metric is in [@Kaufman2005].
+The following example is excerpted from ["A Novel Display of Categorical Pedon Data"](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html). This example illustrates an application of clustering binary data (presence or absence of a diagnostic feature). Internally, the `diagnosticPropertyPlot()` function uses the `daisy()` function to compute pair-wise distances using the "general dissimilarity coefficient" of Gower [@Gower1971]. A concise summary of this distance metric is in [@Kaufman2005].
 
 ```{r, fig.width=8.5, fig.height=4}
 # load some example NASIS data
@@ -672,7 +672,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
 ```
 
-If you are wondering what is in the object `x`, the `str` function or manual page (`?diagnosticPropertyPlot`) can help.
+If you are wondering what is in the object `x`, the `str()` function or manual page (`?diagnosticPropertyPlot`) can help.
 
 
 ## Hierachrical Clustering
@@ -974,8 +974,8 @@ points(sp4.std$Mg, sp4.std$Ca, bg=cl$clustering, col='black', cex=1.25, pch=21)
 
 ## Ordination (Non-Metric Multidimensional Scaling)
 
-### Sammon's Nonlinear Mapping
-**TODO: add limitations here **
+### Sammon's Non-linear Mapping
+Simple interface to nMDS, input is a distance matrix. Note that this algorithm will fail if there are 0's or ties within the distance matrix. See `?sammon` for details.
 
 ```{r results='hide', fig.width=6, fig.height=6}
 # re-make data, this time with all profiles
@@ -993,24 +993,26 @@ dd <- diana(d)
 h <- as.hclust(dd)
 p <- as.phylo(h)
 
-# define colors based on natural groupings
+# define colors based on cutting a divisive hierarchical clustering into 4 groups
 cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
 
-# MDS
+# nMDS from distance matrix
 s <- sammon(d)
 
-plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
+# plot
+par(mar=c(3,1,3,1))
+plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='', main="nMDS by Sammon's Non-Linear Mapping")
 # abline(v=0, h=0, col='black')
 grid()
 text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
 box()
-mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 ```
 
 ### nMDS with the `vegan` Package
 
 The following example is quite brief. See the [*Introduction to ordination in vegan*](https://cran.r-project.org/web/packages/vegan/vignettes/intro-vegan.pdf) vignette for some excellent worked examples and ecological interpretation. The [vegan package FAQ](https://cran.r-project.org/web/packages/vegan/vignettes/FAQ-vegan.html) is another excellent resource. [*Numerical Ecology with R*](http://www.springer.com/us/book/9781441979759) can be used as both reference and learning resource.
 
+The `metaMDS()` function from the `vegan` package provides a convenience function that automates most of the steps required to create an oridination.
 ```{r results='hide', fig.width=6, fig.height=6}
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
@@ -1023,10 +1025,24 @@ cols <- brewer.pal(9, 'Set1')
 # distance calc + ordination
 s <- metaMDS(sp4.scaled[, -1], distance = 'gower', autotransform = FALSE, wascores=FALSE)
 
+## this is used to generate 4 classes from a divisive hierarchical clustering
+# manually compute distance matrix
+d <- dist(sp4.scaled[, -1])
+m <- as.matrix(d)
+dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
+d <- as.dist(m)
+# dendrogram from divisive clustering
+dd <- diana(d)
+h <- as.hclust(dd)
+
+# define colors based on cutting a divisive hierarchical clustering into 4 groups
+cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
+
 # plot ordination
-fig <- ordiplot(s, type='none', cex.axis=0.75, axes=FALSE, xlab='', ylab='')
+par(mar=c(3,1,3,1))
+fig <- ordiplot(s, type='none', cex.axis=0.75, axes=FALSE, xlab='', ylab='', main='nMDS by metaMDS()')
 abline(h=0, v=0, lty=2, col='grey')
-text(fig$sites, sp4$name, cex=0.65, font=2)
+text(fig$sites, sp4$name, cex=0.65, font=2, col=cols)
 # ordicluster(fig, agnes(daisy(sp4.scaled[, -1]), method='ward'), prune=3, col = "orange")
 box()
 mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
@@ -1036,7 +1052,6 @@ mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side
 # Practical Applications
 
 Before you work through the following examples, you should review the [SoilProfileCollection object tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
-
 
 
 ## Pair-Wise Distances Between Soil Profiles 
