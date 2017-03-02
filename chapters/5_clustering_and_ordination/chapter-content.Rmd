@@ -242,8 +242,6 @@ Missing data are a fact of life. Soil scientists are quite familiar with missing
 
 ## Visualizing Pair-Wise Distances: The Dendrogram
 
-**TODO: document missing link between distances / dendrogram: clustering**
-
 [Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient approximation of [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) between individuals (after application of hierarchical grouping criteria; more on this later). Dissimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity; branching at lower levels suggests greater similarity. Consider the previous example in which distance between individuals was defined in terms of sand and clay percentages.
 
 ```{r, echo=FALSE, fig.width=10, fig.height=5}
@@ -414,7 +412,8 @@ This section describes three (out of many) of the most important partitioning-ty
 
 All of these methods are sensitive to the type of **standardization** applied to the characteristics. These methods rely on iterative minimization of one or more criteria; therefore, each clustering "run" may generate slightly different output. Most implementations re-run the algorithm until it stabilizes.
 
-**TODO**: 
+**TODO**:
+
   * [K-mean: important limitations / strategies](http://varianceexplained.org/r/kmeans-free-lunch/)
   * medoids are actual observations, centroids are hypothetical
 
@@ -588,7 +587,7 @@ Tinker with some `SoilProfileCollection` objects.
 
 The `aqp` package provides two functions for checking the fraction of missing data within a `SoilProfileCollection` object. The first function (`evalMissingData`) generates an index that ranges from 0 (all missing) to 1 (all present) for each profile. This index can be used to subset or rank profiles for further investigation. The second function (`missingDataGrid`) creates a visualization of the *fraction* of data missing within each horizon. Both functions can optionally filter-out horizons that don't typically have data, for example Cr, Cd, and R horizons.
 
-The following examples run the functions on the `gopheridge` sample dataset.
+The following examples are based on the `gopheridge` sample dataset.
 
 **evalMissingData**
 ```{r, fig.width=10, fig.height=4}
@@ -598,8 +597,8 @@ data("gopheridge", package = "soilDB")
 # compute data completeness
 gopheridge$data.complete <- evalMissingData(gopheridge, vars = c('clay', 'sand', 'phfield'), name = 'hzname', p = 'Cr|R|Cd')
 
-# check range
-# summary(gopheridge$data.complete)
+# check range in missing data
+summary(gopheridge$data.complete)
 
 # rank
 new.order <- order(gopheridge$data.complete)
@@ -935,7 +934,7 @@ points(sp4.std$Mg, sp4.std$Ca, bg=cl$clustering, col='black', cex=1.25, pch=21)
 ### Sammon's Nonlinear Mapping
 **TODO: add limitations here **
 
-```{r, eval=FALSE, echo=FALSE, results='hide', fig.width=10, fig.height=5}
+```{r results='hide', fig.width=6, fig.height=6}
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -961,42 +960,34 @@ plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
 # abline(v=0, h=0, col='black')
 grid()
 text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
-axis(1, cex.axis=0.95, line=-2)
-axis(4, cex.axis=0.95, line=0.5, las=1)
+box()
 mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 ```
 
-
-
 ### nMDS with the `vegan` Package
 
-### Interpretation and Goodness of Fit
-**TODO: add some explanation here **
+**TODO: add details here **
 
-[Shephard diagram](http://cc.oulu.fi/~jarioksa/softhelp/vegan/html/goodness.metaMDS.html)
-```{r, eval=FALSE}
-# MASS library
-d.shep <- Shepard(d, d.sammon$points)
-plot(d.shep, pch='.')
-lines(d.shep$x, d.shep$yf, type = 'S', col='blue', lwd=2)
+```{r results='hide', fig.width=6, fig.height=6}
+# re-make data, this time with all profiles
+data('sp4', package = 'aqp')
+sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
+sp4.scaled <- data.frame(name=sp4[, 1], round(scale( sp4[, -1]), 2))
 
-## vegan library
-# compute distance between ES
-d <- metaMDSdist(m[, -1])
+# define colors based on natural groupings
+cols <- brewer.pal(9, 'Set1')
 
-# try ordination: non-metrix multidimensional scaling with default distance metric and standardization
-# use all columns except first: the ES ID
-nmds <- metaMDS(m[, -1])
+# distance calc + ordination
+s <- metaMDS(sp4.scaled[, -1], distance = 'gower', autotransform = FALSE, wascores=FALSE)
 
-# evaluate nmMDS fit
-stressplot(nmds)
-
-# GOF by site, smaller = better
-hist(goodness(nmds))
-
+# plot ordination
+fig <- ordiplot(s, type='none', cex.axis=0.75, axes=FALSE, xlab='', ylab='')
+abline(h=0, v=0, lty=2, col='grey')
+text(fig$sites, sp4$name, cex=0.65, font=2)
+# ordicluster(fig, agnes(daisy(sp4.scaled[, -1]), method='ward'), prune=3, col = "orange")
+box()
+mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 ```
-
-
 
 
 # Practical Applications
@@ -1287,8 +1278,6 @@ box()
 
 
 ### Topographic Signatures
-
-**TODO: finish this**
 
 The following is an investigation of topographic "signatures" from the initial soil mapping project of Sequoia and Kings Canyon National Park, CA.
 
