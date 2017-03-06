@@ -1,7 +1,7 @@
 ---
 title: "Uncertainty_Validation"
 author: "Skye Wills"
-date: "December 22, 2015"
+date: "`r Sys.Date()`"
 output:
   html_document:
     number_sections: yes
@@ -11,7 +11,11 @@ output:
       smooth_scroll: no
 ---
 
-![Statistics for pedologists course banner image](figure/logo.jpg)
+```{r, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
+```
+
+![](figure/logo.jpg)
 
 # Introduction
  
@@ -39,91 +43,98 @@ Errors are simply the difference between reality and our representation of reali
   
   * Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared $CV = \frac{SD}{x}$
 
-Create and example dataset and evaluate dispersion.
-```{r, fig.width=6, fig.width=6}
-#set random seed so that we all get the same results
-set.seed(3)
-# we are creating a sample set with 10 values between 20 - 60
-Depth <- sample(x = 20:60, size=10, replace = FALSE)
 
-range(Depth)
-quantile(Depth)
-
-#we are creating a sample set with values between 40 - 50
-Depth2 <- sample(x=40:50, size=10, replace = FALSE)
-
-range(Depth2)
-quantile(Depth2)
-
-# compare with box plots
-boxplot(list(example.1=Depth, example.2=Depth2), ylab='Depth (cm)', boxwex = 0.5)
-```
-    
 ## Exercise
 
-1. Export depth as a csv file
-2. Calculate Square Error for each row.
-3. Summarize sum of Squares, Variance, and Standard Deviation
-  
-Dispersion or variance is a characteristic of the population being evaluated. While more or better sample collection might give you better precision of those estimates, we would not expect them to change the dispersion calculated. Conversely, measures of certainty of the central tendency (how sure are you of the typical value reported) depends both on the characteristic dispersion/variance and the number of samples collected.
+-Create an example dataset and evaluate dispersion.
 
+```{r}
+library(ggplot2)
+
+# set random seed, so that we all get the same results
+set.seed(123)
+
+# create a sample set with 10 values between 20 - 60
+d1 <- data.frame(
+  soil = "alpha",
+  depth = sample(20:60, size = 10, replace = TRUE)
+  )
+
+quantile(d1$depth)
+
+# example box plot
+ggplot(d1, aes(x = soil, y = depth)) + geom_boxplot()
+```
+    
 **Measures of certainty**
 
 - Standard Error: represents the variance of the mean that would be found with repeated sampling. Estimated by dividing standard deviation by the square root of n. The concept of standard error is important for hypothesis testing.
-- Confidence interval: Interval in which you are confident that a given percentage (known as the confidence limit 95, 80, 75%) of the population lie. If a normal distribution is assumed, for a 95% confidence interval, it can be estimated that the value is 95% likely to fall between as SDx1.96 +/- mean.    
+- Confidence interval: Interval in which you are confident that a given percentage (known as the confidence limit 95, 80, 75%) of the population lie. If a normal distribution is assumed, for a 95% confidence interval, it can be estimated that the value is 95% likely to fall between as SD * 1.96 +/- mean.    
   
 ## Exercise 
 
-4. Calculate Standard Error
-5. Calculate Condfidence interval (95%)
-6. Resample 10 times, each time calculate mean and variance.
+- Calculate Standard Error
+- Calculate Condfidence interval (95%)
+- Resample 10 times, each time calculate mean and variance.
 
 
 ```{r}
-#set seed so that we all get the same results
-set.seed(3)
+# set random seed, so that we all get the same results
+set.seed(123)
 
-#simulate a dataset with two soil names with depth values from 20 - 60 (some values occur more than once)
-d <- data.frame(
-  soil <- sample(c("A", "B"), size=100, replace = TRUE),
-  depth <- sample(20:60, size=100, replace = TRUE)
-)
+# simulate a dataset with two soil names with depth values from 20 - 60 (some values occur more than once)
+d2 <- data.frame(
+  soil = "beta",
+  depth = sample(20:60, size = 100, replace = TRUE)
+  )
 
-range(d$depth)
-quantile(d$depth)
-boxplot(depth ~ soil, data=d, horizontal = TRUE, las=1)
+quantile(d2$depth)
 
-#calculate the mean of depth
-m <- mean(d$depth)
+# combine d1 and d2
+d3 <- rbind(d1, d2)
+
+# examine box plots
+ggplot(d3, aes(x = soil, y = depth)) + geom_boxplot()
+
+# calculate the mean of depth
+m <- mean(d2$depth)
  
-#subtract mean from each value and square
-d$S <- (d$depth - m)^2
+# subtract mean from each value and square (i.e. residuals)
+d2$S <- (d2$depth - m)^2
  
 #calculate overall sum of squares
-SS <- sum(d$S)
+SS <- sum(d2$S)
  
-#calculate sample vaiance (lenth gives us the total number of sample/observations)
-samp_var <- SS / length(d$depth) - 1
- 
-# Note the differences in range and variance calcualted for Depth in both examples (10 samples vs. 100)
-
-quantile(Depth)
-quantile(d$depth)
-
-var(Depth)
-var(d$depth)
-
-# Now Compare Standard Error (standard deviation / n- 1)
-sd(Depth) / sqrt(length(Depth))
-sd(d$depth) / sqrt(length(d$depth))
-
-# Why are standard errors different?
+#calculate sample variance (length gives us the total number of sample/observations)
+SS / (length(d2$depth) - 1)
 ```
+
+Note the differences in range and variance calculated for Depth in both examples (10 samples vs. 100)
+
+```{r}
+aggregate(depth ~ soil, data = d3, quantile)
+aggregate(depth ~ soil, data = d3, var)
+```
+
+Now Compare Standard Error (standard deviation / square root of n)
+
+```{r}
+SE <- function(x) sd(x) / sqrt(length(x))
+
+aggregate(depth ~ soil, data = d3, SE)
+```
+
+Why are the standard errors different?
 
 
 # Theory of Uncertainty
   
-At it's most basic level, uncertainty is simply a lack of certainty. In soil survey, uncertainty encompasses both of these aspects: 1) you've gathered multiple observations and you need to describe them in relation to one another, and 2) you must predict a property or characteristic at unobserved locations. It is difficult to quantify the knowledge we have about data and information uncertainty. While we may have good data of the accuracy of our GPS, how likely are we to include that in our estimates of model error? How important is it? In other disciplines, they spend a lot of time quantifying and tracking measurement error. In soil science, we tend to treat measurement as having an exact known location and value. Given the unknowns in mapping and predicting soil properties, this is a reasonable treatment of relatively small levels of error.
+At it's most basic level, uncertainty is simply a lack of certainty. In soil survey, uncertainty encompasses both of these aspects:
+
+1. you've gathered multiple observations and you need to describe them in relation to one another, and 
+2. you must predict a property or characteristic at unobserved locations. 
+
+It is difficult to quantify the knowledge we have about data and information uncertainty. While we may have good data of the accuracy of our GPS, how likely are we to include that in our estimates of model error? How important is it? In other disciplines, they spend a lot of time quantifying and tracking measurement error. In soil science, we tend to treat measurement as having an exact known location and value. Given the unknowns in mapping and predicting soil properties, this is a reasonable treatment of relatively small levels of error.
 
 When using secondary information as data (or data that is actually a prior prediction or result of a model, including soil components), considering incorporated error can be crucial. One way to deal with this is through resampling an alternate way is to through error propagation theory. The most common way to deal with this in soil survey and digital soil mapping is to assess error through model validation.
 	
@@ -143,46 +154,46 @@ When calculating many basic statistical parameters, the assumption is that the d
 Resampling is a general term that defines any procedure to repeatedly draw samples form a given dataset. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Resampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation (Good, 2001).  
 
 ```{r}
-#this bootstrap is estimating the uncertainty associated with the variance of d$depth
+# this bootstrap is estimating the uncertainty associated with the variance of d2$depth
+# an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
 
-#abbreviate our data to simply the commands
-d <- d$depth
+# abbreviate our data to simply the commands
+d <- d2$depth
 n <- length(d)
 
-#set number of iterations
+# set number of iterations
 N <- 50
 
-#create a vector to store results
-stat <- numeric(N)
+# create a data frame to store the results
+boot_stats <- data.frame(
+  vars = numeric(N),
+  means = numeric(N)
+  )
 
 for (i in 1:N){ # for each instance (i) in the set from 1 to N (50 in this case)
-  dB <- sample(d, n, replace = T) #create a new variable dB from each bootstrap sample of d
-  stat[i] <- var(dB)
-}
-
-quantile(stat)
-stripchart(stat)
-boxplot(stat)
-
-#an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
-
-N <- 100
-boot.means <- numeric(N)
-
-for (i in 1:N){
-  boot.sample <- sample(d, 100, replace = T)
-  boot.means[i] <- mean(boot.sample)
+  boot.sample = sample(d, n, replace = TRUE) #create a new variable dB from each bootstrap sample of d
+  boot_stats$means[i] = mean(boot.sample)
+  boot_stats$vars[i] = var(boot.sample)
   }
 
-quantile(boot.means, c(0.05, 0.95))
+quantile(boot_stats$vars)
 
-#traditional approach
-#lower
-mean(d) - 1.96 * sd(d) / sqrt(n)
-#upper
-mean(d) + 1.96 * sd(d) / sqrt(n)
+stripchart(boot_stats$vars)
 
+# Traditional Approach
+ci <- c(
+  # lower 5th
+  l = mean(d) - 1.96 * sd(d) / sqrt(n),
+  # upper 95th
+  u = mean(d) + 1.96 * sd(d) / sqrt(n)
+  )
+
+# Compare Bootstrap to Confidence Interval
+quantile(boot_stats$means, c(0.05, 0.95))
+
+ci
 ```
+
 
 # Validation
   
@@ -204,10 +215,10 @@ Validation refers to the process and the result of a process where the validity 
 - Categorical
     - Confusion (error) matrix
     - Types of Accuracy
-        - Overall Acuraccy - number of correct observations divided by total number of observations
-        - User's Accuracy - probability that a class on the map actually represents that category on the ground
-        - Producer's Accuracy - probability that a ground reference observation was assigned to the correct class in the map
-  
+        - Overall Acuraccy - proportion of observations that were correctly classified, to all classes
+        - Precision (e.g. user's Accuracy, errors of commision (Type II) - proportion of observations that were correctly classifed, to an individual class
+        - Sensitivity (e.g. producer's accuracy, errors of omission (Type I)) - proportion of predictions that were correctly classified, to an individual class
+        
 In soil science, we typically use the term model validation to refer to a statistical analysis that assesses how well a model will predict at an unknown location. A complete model should have a formal statistical evaluation that can be reported and stored as model and output meta-data. That is the portion of validation we will focus. For this discussion, validation can be thought of as an assessment of prediction error and variance.
 
 **Three types of validation used in the course**
@@ -258,80 +269,85 @@ In this exploratory and explanatory phase you are looking for relationships that
 
 ```{r, message=FALSE, warning=FALSE}
 library(caret)
-library(randomForest)
 
 set.seed(123)
 
 ### Linear model example
 
 # Load and modify data
-load(file = "C:/workspace/ch7_data.Rdata")
-train <- data
-train <- subset(train, frags > 0 & frags < 100)
+load(file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+train_lm <- data
+train_lm <- subset(train_lm, frags > 0 & frags < 100)
 
 # Custom logit and inverse logit function
 logit <- function(x) log(x / (1 - x)) # logit transform
 ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit 
 
 # Transform
-train$fragst <- logit(train$frags / 100)
+train_lm$fragst <- logit(train_lm$frags / 100)
 
 # Subset
-train <- subset(train, select = c(pc_2, pc_1, temp, twi, precipsum, fragst))
+train_lm <- subset(train_lm, select = c(pc_2, pc_1, temp, twi, precipsum, fragst))
 
 # Create linear model
-fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
+fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train_lm)
 
 # Create folds
-folds <- createFolds(train$fragst, k = 10)
+folds <- createFolds(train_lm$fragst, k = 10)
 
 # Cross validate
-cv_results <- lapply(folds, function(x) {
-  train <- train[-x,]
-  test <- train[x,]
-  model <- lm(fragst ~ ., data = train)
-  actual <- ilogit(test$fragst) * 100
-  predict <- ilogit(predict(model, test)) * 100
-  RMSE <- sqrt(mean((actual - predict)^2, na.rm = TRUE))
-  R2 <- cor(actual, predict, use = "pairwise")^2
+lm_cv <- lapply(folds, function(x) {
+  train   = train_lm[-x,]
+  test    = train_lm[x,]
+  model   = lm(fragst ~ ., data = train)
+  actual  = ilogit(test$fragst) * 100
+  predict = ilogit(predict(model, test)) * 100
+  RMSE    = sqrt(mean((actual - predict)^2, na.rm = TRUE))
+  R2      = cor(actual, predict, use = "pairwise")^2
   return(c(RMSE = RMSE, R2 = R2))
   }
   )
 
 # Convert to a data.frame
-cv_results <- do.call(rbind, cv_results)
+lm_cv <- do.call(rbind, lm_cv)
 
-# Summarize results
-summary(cv_results)
 
 ### Random forest example
+library(randomForest)
 
 # Modify data
-train2 <- data
-train2 <- subset(train2, frags > 0 & frags < 100)
-train2 <- subset(train2, select = - c(pedon_id, taxonname, x_std, y_std, describer2, landform.string, argillic.horizon, landform, tax_subgroup, cluster2, cluster_mast, aspect, mast, gsi, ndvi, sw))
+train_rf <- data
+train_rf <- subset(train_rf, frags > 0 & frags < 100, 
+                 select = - c(pedon_id, taxonname, x_std, y_std, describer2, landform.string,
+                              argillic.horizon, landform, tax_subgroup, cluster2, cluster_mast,
+                              aspect, mast, gsi, ndvi, sw)
+                 )
 
 # Create folds
-folds2 <- createFolds(train2$frags, k = 10)
+folds2 <- createFolds(train_rf$frags, k = 10)
 
-# Cross validate
-cv_results2 <- lapply(folds2, function(x) {
-  train <- train2[-x,]
-  test <- train2[x,]
-  model <- randomForest(frags ~ ., data = train, na.action = na.exclude)
-  actual <- test$frags
-  predict <- predict(model, test)
-  RMSE <- sqrt(mean((actual - predict)^2, na.rm = TRUE))
-  R2 <- cor(actual, predict, use = "pairwise")^2
-  return(c(RMSE = RMSE, R2 = R2))
-  }
-  )
+# # Cross validate
+# rf_cv <- lapply(folds2, function(x) {
+#   train   = train_rf[-x,]
+#   test    = train_rf[x,]
+#   model   = randomForest(frags ~ ., data = train, na.action = na.exclude)
+#   actual  = test$frags
+#   predict = predict(model, test)
+#   RMSE    = sqrt(mean((actual - predict)^2, na.rm = TRUE))
+#   R2      = cor(actual, predict, use = "pairwise")^2
+#   return(c(RMSE = RMSE, R2 = R2))
+#   }
+#   )
+# 
+# save(rf_cv, file = "temp.RData")
+load("C:/workspace/temp.RData")
 
 # Convert to a data.frame
-cv_results2 <- do.call(rbind, cv_results2)
+rf_cv <- do.call(rbind, rf_cv)
 
 # Summarize results
-summary(cv_results2)
+summary(lm_cv)
+summary(rf_cv)
 ```
 
   
