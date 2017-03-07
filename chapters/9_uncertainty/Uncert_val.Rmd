@@ -42,7 +42,7 @@ Errors are simply the difference between reality and our representation of reali
 - Standard deviation: Used to return variance to the original units $sd = \sqrt{\frac{SS}{n-1}}$
 - Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared $CV = \frac{SD}{x}$
 
-**Measures of certainty**
+**Measures of Certainty**
 
 - Standard Error: represents the variance of the mean that would be found with repeated sampling. Estimated by dividing standard deviation by the square root of n. The concept of standard error is important for hypothesis testing.
 - Confidence interval: Interval in which you are confident that a given percentage (known as the confidence limit 95, 80, 75%) of the population lie. If a normal distribution is assumed, for a 95% confidence interval, it can be estimated that the value is 95% likely to fall between as SD * 1.96 +/- mean.   
@@ -50,7 +50,7 @@ Errors are simply the difference between reality and our representation of reali
 
 ## Exercise - Dispersion
 
--Create an example data-set and evaluate dispersion.
+Create an example data-set and evaluate dispersion.
 
 ```{r}
 library(ggplot2)
@@ -79,13 +79,12 @@ aggregate(depth ~ soil, data = d3, quantile)
 ggplot(d3, aes(x = soil, y = depth)) + geom_boxplot()
 ```
 
+Dispersion or variance is a characteristic of the population being evaluated. While more or better sample collection might give you better precision of those estimates, we would not expect them to change the dispersion calculated. Conversely, measures of certainty of the central tendency (how sure are you of the typical value reported) depends both on the characteristic dispersion/variance and the number of samples collected.
+
   
-## Exercise 
+## Exercise - Variation and Certainty
 
-- Calculate Standard Error
-- Calculate Confidence interval (95%)
-- Re-sample 10 times, each time calculate mean and variance.
-
+Create an example data-set and and evaluate variation and certainty.
 
 ```{r}
 
@@ -145,6 +144,9 @@ When calculating many basic statistical parameters, the assumption is that the d
 
 Re-sampling is a general term that defines any procedure to repeatedly draw samples form a given data-set. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Re-sampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation (Good, 2001).  
 
+
+## Exercise - Resampling
+
 ```{r}
 # this bootstrap is estimating the uncertainty associated with the variance of d2$depth
 # an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
@@ -186,29 +188,30 @@ quantile(boot_stats$means, c(0.05, 0.95))
 ci
 ```
 
-# Prediction Accuracy
+# Performance Metrics
 
-The correctness of the parameter being predicted by the model (soil taxa, property etc.). Ideally this is done with an independent set of data. 
+**Numerical**
 
-Error Metrics                   | Description              | Formula                             |
---------------------------------|--------------------------|-------------------------------------|
-**Numerical**                   |                          |                                     | 
-Coefficient of variation ($R^2$)|  % of variance explained | cor(predicted, observed)^2          | 
-Mean Error (ME)                 | average error            | mean(predicted - observed)          |
-Root Mean Square Error (RMSE)   | average residual         | sqrt((mean(predicted - observed)^2))| 
-**Categorical**                 | derivatives of confusion matrix |                                |
-Overall Accuracy                | % of observations that were correctly classified, for all classes                                                                     | (TP + TN) / (TP + TN + FP + FN) |
-Precision (i.e. user's accuracy, errors of commission (Type II)                                                                               | % of observations that were correctly classified, for an individual class                                                              | TP / (TP + TN)                      |
-Sensitivity (i.e. producer's accuracy, errors of omission (Type I))                                                                          | % of predictions that were correctly classified, for an individual class                                                              | TP / (TP + FP)                      |
+- Coefficient of variation ($R^2$): % of variance explained
+- Mean Error (ME): average error
+- Root Mean Square Error (RMSE): average residual
+
+**Categorical** (derivatives of confusion matrix)
+
+- Overall Accuracy: % of observations that were correctly classified, for all classes
+- Precision (i.e. user's accuracy, errors of commission (Type II): % of observations that were correctly classified, for an individual class
+- Sensitivity (i.e. producer's accuracy, errors of omission (Type I)): % of predictions that were correctly classified, for an individual class
+
 
 Confusion Matrix | Observed           |                     |
 -----------------|--------------------|---------------------|
-**Predicted**    | Yes                | No                  |
-Yes              | True Positive (TP) | False Positive (FP) |
-No               | False Negative (FP)| True Negative (TN)  |
+**Predicted**    | No                 | Yes                 |
+No               | True Negative (TN) | False Negative (FN) |
+Yes              | False Positive (FP)| True Positive (TP)  |
 
 
-## Exercise - Numeric Error Metrics
+## Exercise - Numeric Metrics
+
 ```{r}
 ### Numeric error metrics
 
@@ -216,8 +219,8 @@ No               | False Negative (FP)| True Negative (TN)  |
 
 # Create a Ficticous Data-set
 d_num <- data.frame(
-  depth = 21:60,
-  slope = 60:21 + rnorm(40, mean = 0, sd = 10)
+  depth = 21:60 + rnorm(40, mean = 0, sd = 10),
+  slope = 60:21
   )
 
 num_lm <- lm(depth ~ slope, data = d_num, y = TRUE)
@@ -240,26 +243,34 @@ sqrt(mean((predicted - observed)^2))
 ```
 
 
-## Exercise - Categorical Error Metrics
+## Exercise - Categorical Metrics
 ```{r}
 # Create a Ficticous Data-set
-test <- rep(c("alpha", "beta"), 100)
+r <- runif(175)
+idx <- sample(which(r > 0.5), 75)
+r <- r[-idx]
 
 d_cat = data.frame(
-  predicted = sample(test, 20), 
-  observed  = sample(test, 20)
+  predicted = r, 
+  observed  = (r + rnorm(100, sd = 0.2)) > 0.5
   )
 
 # Compute Confusion Matrix
-table(d_cat$predicted, d_cat$observed)
+table(d_cat$predicted > 0.5, d_cat$observed)
 
 # or
 
 library(caret)
-cm <- confusionMatrix(d_cat$predicted, d_cat$observed, positive = "alpha")
+cm <- confusionMatrix(d_cat$predicted > 0.5, d_cat$observed, positive = "TRUE")
 cm$table
 cm$overall
-cm$byClass
+round(cm$byClass, 2)
+
+# Trade Precision for Sensitivity by Varying the Threshold 
+cm <- confusionMatrix(d_cat$predicted > 0.4, d_cat$observed, positive = "TRUE")
+cm$table
+cm$overall["Accuracy"]
+round(cm$byClass, 2)
 ```
 
 # Validation
@@ -270,6 +281,7 @@ Validation refers to the process and the result of a process where the validity 
 
 **Theoretical Analysis:** compare the results of the model to what is theoretically possible. In systems modeling, this might include diagnostics statistics including residual analysis, cross-correlation of variables and outputs, sensitivity analysis and model analysis such as Akaike Information Criterion (AIC). This can also include simple comparison of output to known possible values. This is especially important for linear regression where the slope of the model is assumed to be steady no matter the values of the dependent variables.  
 
+**Prediction Accuracy**: The correctness of the parameter being predicted by the model (soil taxa, property etc.). Ideally this is done with an independent set of data.
 
 In soil science, we typically use the term model validation to refer to a statistical analysis that assesses how well a model will predict at an unknown location. A complete model should have a formal statistical evaluation that can be reported and stored as model and output meta-data. That is the portion of validation we will focus. For this discussion, validation can be thought of as an assessment of prediction error and variance.
 
