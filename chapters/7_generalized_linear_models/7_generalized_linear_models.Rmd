@@ -144,12 +144,14 @@ Evaluating the results involves review of several key values as noted in the sum
 Run a prediction of the model using the dem10m, eastness, northness, and maxent raster files. These files will be downloaded, a raster stack will be built and the GLM.1 model applied. When using your own data, the "stack" code only works if all rasters are co-registered, are .img files, have the same projection and spatial extent, and are stored in your working directory. In practice, other GDAL file formats should also work. 
 
 ```{r predict raster}
-# githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_raster.RData"
-# load(url(githubURL))
-load("C:/workspace/wv_raster.RData")
+githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_raster.RData"
+load(url(githubURL))
 
-# glm_r <- predict(rasters, GLM.1, filename = "spodic_pres_GLM1.img", type = "fitted", progress = "text", overwrite = TRUE)
-glm_r <- raster("C:/workspace/spodic_pres_GLM1.img")
+# load("C:/workspace/wv_raster.RData")
+# glm_r <- raster("C:/workspace/spodic_pres_GLM1.img")
+
+glm_r <- predict(rasters, GLM.1, filename = "spodic_pres_GLM1.img", type = "fitted", progress = "text", overwrite = TRUE)
+
 plot(glm_r)
 ```
 
@@ -349,7 +351,7 @@ plot(ca794, axes = TRUE)
 plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 
 # Write shapefile of pedons
-# writeOGR(pedons_sp, dsn = "F:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") 
+writeOGR(pedons_sp, dsn = "C:/workspace", "pedons_sp", driver = "ESRI Shapefile") 
 ```
 
 
@@ -608,6 +610,13 @@ plot(raster("C:/workspace/argi.tif"))
 plot(ca794, add = TRUE)
 plot(raster("C:/workspace/argi_se.tif"))
 plot(ca794, add = TRUE)
+```
+
+```{r, eval=FALSE}
+# Download clipped example from Pinto Basin Joshua Tree
+githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/argi_pb.zip"
+download.file(githubURL, destfile = "C:/workspace/argi_pb.zip")
+unzip(zipfile="C:/workspace/argi_pb.zip", exdir="C:/workspace")
 ```
 
 ### Exercise 2: View the prediction in ArcGIS
