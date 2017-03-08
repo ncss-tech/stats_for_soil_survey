@@ -16,7 +16,6 @@ output:
 knitr::opts_chunk$set(message=FALSE, warning=FALSE, tidy=FALSE, verbose=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', antialias='cleartype', cache=FALSE)
 ```
 
-
 ![](figure/logo.jpg)  
 
 # Introduction
@@ -413,6 +412,7 @@ data$cluster2 <- reorder(data$cluster, data$cluster_mast)
 data$gsi <- with(data, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
 data$ndvi <- with(data, (ls_4 - ls_3) / (ls_4 + ls_3))
 data$sw <- cos(data$aspect - 255)
+data$twi_sc <- abs(data$twi - 13.8) # 13.8 = twi median
 
 # save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
 
@@ -428,7 +428,7 @@ data$sw <- cos(data$aspect - 255)
 
 With our spatial data in hand, we can now see whether any of the variables will help us separate the presence/absence of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).  
 
-```{r spatial}
+```{r spatial, fig.width=8, fig.height=10}
 # Load data
 load(file = "C:/workspace/ch7_data.Rdata")
 train <- data
@@ -447,10 +447,6 @@ data_m <- melt(train2, id = "argillic")
 ggplot(data_m, aes(x = argillic, y = value)) +
   geom_boxplot() +
   facet_wrap(~ variable, scales = "free")
-
-# Transform twiI, as argillic horizons seem to occur over a limited range
-aggregate(twi ~ argillic, data = train, summary)
-train$twi_sc <- abs(train$twi - 13.8)
 ```
 
 # Modeling
@@ -508,20 +504,26 @@ vif(argi_glm)
 ```
 
 
-Because we're dealing with a classification problem, we have to consider both errors of commission (Type I) and omission (Type II), or their corresponding accuracies of sensitivity (producer's accuracy) and specificity (user's accuracy) respectively. Before we can assess the error, however, we need to select a probability threshold. 
+Because we're dealing with a classification problem, we have to consider both errors of commission (Type I) and omission (Type II), or their corresponding accuracies of sensitivity (producer's accuracy) and positive predicted value (user's accuracy or precision) respectively. Before we can assess the error, however, we need to select a probability threshold. 
 
 - **Sensitivity** and **specificity** examine how well the ground truth or reference data compares to the predictions. 
 - **Positive** and **negative** predicted values (user's accuracy) examine the inverse concept of how well the predictions match the reference data
 
 ```{r}
-comp <- cbind(train[c("argillic", "cluster2")], pred = predict(argi_glm, train, type = "response") > 0.5)
+comp <- data.frame(train[c("argillic", "cluster2")], 
+                   pred = predict(argi_glm, train, type = "response") > 0.5
+                   )
 confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
 
 # Deviance squared
-D2 <- with(argi_glm, round((null.deviance - deviance) / null.deviance, 2))
+D2 <- with(argi_glm, 
+           round((null.deviance - deviance) / null.deviance, 2)
+           )
 
 # Adjusted deviance squared
-adjD2 <- with(argi_glm, round(1 - ((df.null / df.residual) * (1 - D2)), 2))
+adjD2 <- with(argi_glm, 
+              round(1 - ((df.null / df.residual) * (1 - D2)), 2)
+              )
 adjD2
 ```
 
@@ -552,7 +554,9 @@ sub_glm <- glm(argillic ~ slope + twi_sc + ls_1 + mrvbf + z2str + ch, data = tra
 
 # summary(sub_glm)
 
-comp <- cbind(train_sub[c("argillic", "cluster2")], pred = predict(sub_glm, train_sub, type = "response") > 0.4)
+comp <- data.frame(train_sub[c("argillic", "cluster2")], 
+                   pred = predict(sub_glm, train_sub, type = "response") > 0.4
+                   )
 confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
 
 comp_sub <- subset(comp, argillic == TRUE)
@@ -561,7 +565,8 @@ temp <- by(comp_sub, list(comp_sub$cluster2), function(x) with(x, data.frame(
   cluster = unique(cluster2),
   sum_arg = sum(argillic, na.rm = T),
   sum_pred = sum(pred, na.rm = T), 
-  sensitivity = round(sum(pred == argillic) / length(argillic), 2))))
+  sensitivity = round(sum(pred == argillic) / length(argillic), 2)
+  )))
 temp <- do.call(rbind, temp)
 temp
 
