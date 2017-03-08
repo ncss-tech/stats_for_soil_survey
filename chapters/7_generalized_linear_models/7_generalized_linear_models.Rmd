@@ -149,8 +149,23 @@ Evaluating the results involves review of several key values as noted in the sum
 
 Plot *partial* effects. Each panel shows the partial effect of a single predictor variable, while holding all other predictors constant at their respective median values. The [`rms` package](http://biostat.mc.vanderbilt.edu/wiki/Main/RmS) has many specialized functions for fitting, evaluating, and validating regression models.
 ```{r, fig.width=7, fig.height=7}
-plot(Predict(GLM.1, fun=plogis), main='Pr(spod_pres_cons)')
+# use default assumptions (x-vars held at median values) to generate partial predictor plot
+pp <- Predict(GLM.1, fun=plogis) 
+# this is a funky interface to lattice graphics
+plot(pp, main='Pr(spod_pres_cons)')
 ```
+
+The `rms` "model summary" is another unique way to investigate the relative magnitude and uncertainty of predictor variables. 
+```{r, fig.width=7, fig.height=4}
+plot(summary(GLM.1))
+```
+
+Models can be simplified into a field-usable [nomogram](https://en.wikipedia.org/wiki/Nomogram) using the `nomogram()` function.
+```{r fig.width=7, fig.height=6}
+plot(nomogram(GLM.1))
+```
+
+
 
 
 
@@ -364,7 +379,7 @@ plot(ca794, axes = TRUE)
 plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 
 # Write shapefile of pedons
-writeOGR(pedons_sp, dsn = "C:/workspace", "pedons_sp", driver = "ESRI Shapefile") 
+writeOGR(pedons_sp, dsn = "C:/workspace", "pedons_sp", driver = "ESRI Shapefile", overwrite_layer = TRUE) 
 ```
 
 
