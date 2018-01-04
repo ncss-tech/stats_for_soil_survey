@@ -149,7 +149,7 @@ Note in dataframe `d` that each row has an index number in front of it.  Using t
   d$tax_subgroup
   
   # Other useful functions for checking objects and working with dataframes
-  # the 'str()' function will show you the structure of an object and the data types of the vectors within it
+  # the structure 'str()' function will show you the structure of an object and the data types of the vectors within it
   str(d)
   # 'class()' will tell you the object type or data type
   class(d)
@@ -175,7 +175,7 @@ So how can we visualize soil pedon data from NASIS?
 
 ```{r eval=FALSE}
 library(soilDB)
-pedons <- fetchNASIS()
+pedons <- fetchNASIS(from = 'pedons')
 # a couple more steps ...
 plot(pedons)
 ```
@@ -275,11 +275,26 @@ For more information on the design of soilDB functions, see the following docume
 
 There are two default options that can be set within `fetchNASIS(rmHzErrors = TRUE, nullFragsAreZero = TRUE)`.  
 
+- **from = 'pedons' or 'components'** 
+    - This option allows you to select which data you want to load from the local NASIS database. 
+    
+- **SS = TRUE/FALSE** 
+    - The Selected Set (SS) option allows you to choose whether you want the data to load from your current selected set in NASIS or from the local database tables.  The default is set to **TRUE** so if unspecified `fetchNASIS()` will always load from the data in the selected set. 
+    
+- **stringAsFactors = TRUE/FALSE** 
+    - This option allows you to select whether to convert strings into factors or not.  The default is set to **FALSE**, which will handle strings as character formats. Manually set this option to **TRUE** if you wish to handle character strings as factors.   
+
 - **rmHzErrors = TRUE/FALSE** 
     - Setting this value to **TRUE** (the default) enables checks for horizon depth consistency. Consider setting this argument to **FALSE** if you aren't concerned about horizon-depth errors or if you know that your selected set contains many combination horizons (e.g., consisting of E/Bt horizons or similar two-part horizons described individually for the same depth range). Note that any pedons flagged as having horizon-depth errors (rmHzErrors = TRUE) are omitted from the data returned by `fetchNASIS()`.
     
 - **nullFragsAreZero = TRUE/FALSE**
     - Setting this value to **TRUE** (the default) converts null entries for rock fragment volumes to 0. This is typically the right assumption because rock fragment data are typically populated only when observed. If you know that your data contain a combination of omitted information (e.g. no rock fragment volumes are populated) then consider setting this argument to **FALSE.**
+    
+- **soilColorState = 'moist' or 'dry'** 
+    - This option allows you to select whether to treat strings as factors or not.  The default is set to **FALSE**, which will not treat strings as factors.
+    
+- **lab = TRUE/FALSE** 
+    - This option allows for loading the data associated with horizons that may be in the phlabresults table.  The default is set to **FALSE**, which will not load records from the phlabresults table.
   
 For more information on the data checks and adjusting the default options to `fetchNASIS()` function, see the following resource: [**Tips on Getting Data from NASIS into R**](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
 
@@ -371,7 +386,7 @@ library(soilDB)
 library(aqp)
 
 # load data from a NASIS selected set
-f <- fetchNASIS()
+f <- fetchNASIS(from = 'pedons')
 
 # what kind of object is this?
 class(f)
@@ -498,12 +513,12 @@ table(f$taxonname)
 sort(table(f$taxonname), decreasing=TRUE)
 
 # could do the same thing for taxonomic subgroups or any column of the SPC at the site or horizon levels
-table(f$tax_subgroup)
-sort(table(f$tax_subgroup), decreasing=TRUE)
+table(f$taxsubgrp)
+sort(table(f$taxsubgrp), decreasing=TRUE)
 
 # table() is also useful when testing for null data using IS NA, is.na() or IS NOT NA, !is.na()
-table(is.na(f$tax_subgroup))
-table(!is.na(f$tax_subgroup))
+table(is.na(f$taxsubgrp))
+table(!is.na(f$taxsubgrp))
 
 # it can also be applied to horizon level columns in the SPC
 sort(table(f$texture), decreasing=TRUE)
@@ -521,11 +536,11 @@ Note that the `grep()` below also has an ***invert option***, which is specified
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # use of grep() to filter and create an index, then apply that index to the SPC 
 # and create a new SPC called 'f1' using the square bracket notation
-idx <- grep('lithic', f$tax_subgroup, invert=FALSE)
+idx <- grep('lithic', f$taxsubgrp, invert=FALSE)
 # save this subset of 'lithic' soils for later use  
 f1 <- f[idx, ]
 # or use the index directly to summarize a field
-sort(table(f$part_size_class[idx]), decreasing=TRUE)
+sort(table(f$taxpartsize[idx]), decreasing=TRUE)
 ```
 
 Do a quick graphical check to ensure that the "lithic" profiles are selected. Plot them in R using the `SoilProfileCollection` "plot" method (e.g., specialized version of the generic `plot()` function).
@@ -544,11 +559,11 @@ For more information on using regular expressions in `grep()` for pattern matchi
 #### Additional syntax options for REGEX pattern matching
 
   - `|` Equivalent to "or" in SQL.
-    - Example:  `grep('loamy | sandy', f$part_size_class)`
+    - Example:  `grep('loamy | sandy', f$taxpartsize)`
   - `^` Anchors to the left side of the string.
-    - Example:  `grep('^sandy', f$part_size_class)`.
+    - Example:  `grep('^sandy', f$taxpartsize)`.
   - `$` Anchors to the right side of the string.
-    - Example:  `grep('skeletal$', f$part_size_class)`.
+    - Example:  `grep('skeletal$', f$taxpartsize)`.
 
 
 ### Filtering Data by Specifying a Criteria Using the `which()` Function
@@ -558,19 +573,19 @@ Another method of subsetting a collection of soil profiles is to specify a crite
 ```{r owndata_f, results='show', fig.width=8, fig.height=4}
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # first: use grep to pattern match the tax_subgroup field for the string 'aqu'
-idx <- grep('aqu', f$tax_subgroup)
+idx <- grep('aqu', f$taxsubgrp)
 # save this subset
 f1 <- f[idx, ]
 # check taxonomic range of particle size classes in the data
-sort(table(f1$tax_subgroup), decreasing=TRUE)
-sort(table(f1$part_size_class), decreasing=TRUE)
+sort(table(f1$taxsubgrp), decreasing=TRUE)
+sort(table(f1$taxpartsize), decreasing=TRUE)
 
 # then further query the subset for only those profiles with particle size class of 'sandy-skeletal'
 # notice: a double equal sign '==' is used for exact character or numeric criteria
-idx <- which(f1$part_size_class == 'sandy-skeletal')
+idx <- which(f1$taxpartsize == 'sandy-skeletal')
 # save this subset
 f2 <- f1[idx, ]
-table(f2$part_size_class)
+table(f2$taxpartsize)
 # plot  profiles 1 thru 10
 par(mar=c(0,0,2,1))
 plot(f2[1:10, ], label='site_id')
@@ -580,7 +595,7 @@ title('Sandy-skeletal particle size control section class')
 #### Additional syntax options for use in `which()` criteria
 
   - `%in%` Equivalent to IN() in SQL. Can use `c()` to concatenate lists of vectors.
-    - Example:   `which(f$part_size_class %in% c('loamy-skeletal', 'sandy-skeletal'))`
+    - Example:   `which(f$taxpartsize %in% c('loamy-skeletal', 'sandy-skeletal'))`
   - `!=` Not-equal-to character "string."
   - `==` Note in the example above that R uses a double equal sign as "equal to."
   - `<, >, <=, >=` Less than, greater than, less than or equal to, and greater than or equal to.
@@ -803,7 +818,7 @@ f.limy <- function(i) {
   # subset these horizons
   h2 <- h[idx, ] 
   # subset columns in resulting dataframe
-  res <- h2[, c('peiid', 'phiid', 'hzname', 'hzdept', 'hzdepb', 'phfield', 'effervescence')]
+  res <- h2[, c('peiid', 'phiid', 'hzname', 'hzdept', 'hzdepb', 'phfield', 'effclass')]
   # return data
   return(res)
 }
@@ -853,13 +868,13 @@ e <- get_extended_data_from_NASIS_db()
 
 ### site and pedon related extended data
 # vegetation data summary
-colnames(e$veg) 
+colnames(e$ecositehistory) 
 
 # diagnostic features
 colnames(e$diagnostic) 
 
 # surface rock fragments
-colnames(e$surf_frag_summary) 
+colnames(e$surf_frag_summary)
 
 # geomorphic description
 colnames(e$geomorph)
@@ -878,7 +893,7 @@ colnames(e$pm)
 colnames(e$frag_summary) 
 
 # soil texture modifers
-colnames(e$texmodifier) 
+colnames(e$texmodifier)
 
 # soil structure data
 colnames(e$struct) 
@@ -892,9 +907,9 @@ The "Geomorphic description" and "parent materials" attributes are important soi
 library(soilDB)
 library(Hmisc)  # required for dotchart2()
 # load data from a NASIS selected set
-f <- fetchNASIS()
+f <- fetchNASIS(from = 'pedons')
 # create 'lf' object of landform factors sorted in descending order
-lf <- sort(table(f$landform.string), decreasing = TRUE)
+lf <- sort(table(f$landform_string), decreasing = TRUE)
 # plot top 10
 dotchart2(lf[1:10], col='black', xlim = c(0, max(lf)), cex.labels = 0.75)
 ```
@@ -938,13 +953,13 @@ hist(f$depth_to_argillic_cm, xlab='Depth to argillic diagnostic (cm)', main='')
 
 ```{r owndata_j4, eval=TRUE, echo=TRUE, results='show', warning=FALSE}
 # start fresh with your own data
-f <- fetchNASIS()
+f <- fetchNASIS(from = 'pedons')
 # get diagnostic features associated with pedons loaded from selected set
 d <- diagnostic_hz(f)
 # summary of the diagnostic features in your data!
-unique(d$diag_kind)
+unique(d$featkind)
 # top 5 most frequent
-sort(table(d$diag_kind), decreasing = TRUE)[1:5]
+sort(table(d$featkind), decreasing = TRUE)[1:5]
 
 # subset argillic horizons - or choose your own diagnostic feature and modify this script!
 #idx <- which(d$diag_kind == 'your_diagnostic')
@@ -987,7 +1002,7 @@ library(soilDB)
 library(sharpshootR)
 
 # load data
-f<- fetchNASIS()
+f<- fetchNASIS(from = 'pedons')
 
 # may need to subset to a particular series or taxa here....to reduce the number of pedons!
 
@@ -995,9 +1010,6 @@ f<- fetchNASIS()
 # get all diagnostic feature columns from site data by pattern matching on '[.]' in the colnames
 idx <- grep('[.]', colnames(site(gopheridge)))
 v <- colnames(site(gopheridge))[idx]
-# remove 'landform.string' from this vector using a negative index
-idx <- which(v == 'landform.string')
-v <- v[-idx]
 v
 
 # or insert diagnostics of interest found in your data here from the list of possible diagnostics in 'v'
