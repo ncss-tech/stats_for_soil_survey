@@ -1,0 +1,303 @@
+---
+title: "Introduction to R and RStudio"
+author: "Stephen Roecker, Tom D'Avello, and Katy Yoast"
+date: '`r Sys.Date()`'
+output:
+  slidy_presentation:
+    fig_caption: yes
+    fig_height: 3
+    fig_width: 3
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
+```
+
+
+## Objectives
+
+1. What is R?
+2. Why should I use R?
+3. What can R do?
+4. How do I get started?
+    1. RStudio interface
+    2. How to import, export, and view files
+    3. How to navigate the Help tab
+    4. What are packages?
+    5. How to save files
+
+
+---
+
+
+## What is R? - Open Source Project
+
+* an environment: calculator, visualizations, GIS, statistics, programming, etc...
+* a language: vocabulary to explore, summarize, and model data
+
+![](static-figures/rproject.png){ width=150% }
+
+
+---
+
+
+## What is R? - One Tool
+
+![*ODBC and GDAL link R to nearly all possible formats/interfaces*](static-figures/triangle.png){ width=50% }
+
+
+---
+
+
+## Why should I use R? - 3 Reasons!
+
+1. [Reproducible Research](https://en.wikipedia.org/wiki/Reproducibility#Reproducible_research) (*self-documenting, repeatable*)
+    + repeatable: 
+        + code + output in a single document *(trust but verify)*
+        + easier the next time
+        + numerous Excel horror stories of scientific studies gone wrong exist ([TED Talk](https://www.youtube.com/watch?v=dXKbkpilQME))
+    + scalable: applicable to small or large problems
+
+2. R in a Community
+    + [Numerous Discipline Specific R Groups](https://cran.r-project.org/web/views/)
+    + [Numerous Local R User Groups](https://jumpingrivers.github.io/meetingsR/r-user-groups.html#north-america)
+    + [Mailing Lists](https://www.r-project.org/mail.html)
+
+3. Learning Resources *(quantity and quality)*
+    + [R books](https://www.r-project.org/doc/bib/R-books.html)
+    + [(Free Online) R Books](https://bookdown.org/)
+
+
+---
+
+
+## What can R do? - Packages
+* Base R (*functionality is extended through packages*)
+    + basic summaries of quantitative or qualitative data
+    + data exploration via graphics
+    + [GIS](https://cran.r-project.org/web/views/Spatial.html) data processing and analysis
+
+* Soil Science R Packages
+    + [soilDB](https://github.com/ncss-tech/soilDB) - access to commonly used soil databases
+    + [soilReports](https://github.com/ncss-tech/soilReports) - handful of report templates
+    + [aqp](https://github.com/ncss-tech/aqp) - visualization, aggregation, classification
+    + [soiltexture](http://soiltexture.r-forge.r-project.org/) - textural triangles
+
+* [Ecology](https://cran.r-project.org/web/views/Environmetrics.html) R packages
+    + [vegan](http://vegan.r-forge.r-project.org/) - ordination, diversity analysis, etc...
+    + [dismo](http://rspatial.org/sdm/) -  species distribution modeling
+
+
+---
+
+
+## What can R do? - Draw Soil Profiles
+
+```{r, echo=FALSE, fig.dim=c(10, 8)}
+library(soilDB)
+data("loafercreek")
+
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
+# REGEX rules
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+# Compute genhz labels and add to loafercreek dataset
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+plot(loafercreek[1:5], color = "genhz", label = "pedon_id")
+
+```
+
+---
+
+
+## What can R do? - Draw Depth Plots
+
+```{r, echo=FALSE, fig.dim=c(10, 7)}
+library(ggplot2)
+
+test_s <- aqp::slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
+test_s <- aqp::slab(test_s, fm = ~ clay + phfield + total_frags_pct, slab.fun = function(x) quantile(x, c(0, 0.5, 1), na.rm = TRUE))
+
+ggplot(test_s, aes(x = top, y = X50.)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = X0., ymax = X100., x = top), alpha = 0.2) +
+  xlim(c(100, 0)) + xlab("depth (cm)") + ylab("") +
+  coord_flip() +
+  facet_wrap(~ variable, scales = "free_x") +
+  ggtitle("Loafercreek")
+
+```
+
+---
+
+
+## What can R do? - Estimate RIC
+
+```{r, echo=FALSE}
+library(knitr)
+
+h <- horizons(loafercreek)
+h$genhz <- factor(h$genhz, levels = rev(levels(h$genhz)))
+
+vars <- c("clay", "phfield", "total_frags_pct")
+h2 <- reshape(h[c("genhz", vars)],
+              direction = "long",
+              timevar = "variable", times = vars,
+              v.names = "value",    varying = vars
+              )
+# h3 <- select(h, genhz, clay, phfield, total_frags_pct) %>% 
+#   gather(key = "variable", value = "value", clay, phfield, total_frags_pct)
+
+# ggplot(h2, aes(x = genhz, y = value)) +
+#   geom_boxplot() +
+#   facet_wrap(~ variable, scales = "free_x") +
+#   coord_flip()
+
+vars <- c("variable", "genhz")
+test <- {
+  split(h2, h2[vars]) ->.;
+  lapply(., function(x) data.frame(
+    x[1, vars],
+    pct10  = round(quantile(x$value,  0.1,  na.rm = TRUE)),
+    median = round(median(x$value, na.rm = TRUE)),
+    pct90  = round(quantile(x$value, 0.9,  na.rm = TRUE))
+    )) ->.;
+  do.call("rbind", .) ->.;
+  .[order(.$variable, rev(.$genhz)), ] ->.;
+  }
+
+# test <- group_by(h2, variable, genhz) %>% 
+#   summarize(
+#     pct10    = round(quantile(value,  0.1,  na.rm = TRUE)),
+#     median = round(median(value, na.rm = TRUE)),
+#     pct90    = round(quantile(value, 0.9,  na.rm = TRUE))
+#     ) %>%
+#   arrange(variable, rev(genhz)) %>%
+#   as.data.frame()
+
+test <- test[!is.na(test$median), ]
+kable(test)
+
+```
+
+
+----
+
+
+## What can R do? - Create Maps
+
+![](static-figures/acres_gg2.png){ width=100% }
+
+
+---
+
+
+### RStudio - Integrated Development Environment
+
+![](figure/ch1_rstudio2.png){ width=100% }
+
+---
+
+
+### Brief Examples
+
+```{r, echo = TRUE, fig.dim=c(8, 5)}
+# Assignment
+test <- 1 # or test = 1
+
+# Math
+test * 10
+
+# Print Text
+"Hello World"
+
+# Plot Histogram
+hist(rnorm(100))
+```
+
+
+---
+
+
+### Data Management in RStudio  
+
+![](figure/ch1_setwd.png){ width=60% }
+
+```{r, eval=FALSE}
+# set current working directory
+
+setwd("C:/workspace2")
+
+# beware R uses forward slashes / instead of back slashes \ for file path names
+```
+
+```{r, eval=FALSE}
+# check current working directory
+
+getwd()
+```
+
+
+---
+
+
+### Importing Text Files
+
+location,landuse,horizon,depth,sand  
+west,pasture,B,31,26  
+west,range,A,14,23  
+west,range,B,24,24  
+
+
+```{r, eval=FALSE}
+sand <- read.csv("C:/workspace/sand_example.csv") 
+
+# if your workspace was already set you could simply use the filename, like so
+
+# sand <-read.csv("sand_example.csv")
+```
+
+```{r, echo = FALSE}
+sand <- read.csv("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/sand_example.csv")
+```
+
+* [Beware Excel Files](https://www.washingtonpost.com/news/wonk/wp/2016/08/26/an-alarming-number-of-scientific-papers-contain-excel-errors/?utm_term=.9352a35dca6f)
+
+
+---
+
+
+### Viewing and Removing Data
+
+![](figure/ch1_view_dataframe.png)
+
+
+---
+
+
+## (Free) R Learning Resources
+
+* [R Manuals](https://cran.r-project.org/manuals.html)
+
+* Introductory R Books
+    + [Quick-R](https://www.statmethods.net/)
+    + [R Cookbook](http://www.cookbook-r.com/)
+
+* Soil Science R Applications
+    + [aqp and soilDB tutorials](http://ncss-tech.github.io/AQP/)
+    + [Global Soil Information Facilities](http://www.isric.org/utilise/capacity-building/tutorials)
+    + [David Rossiter's R Applications](http://www.css.cornell.edu/faculty/dgr2/pubs/list.html#pubs_m_R)
+
