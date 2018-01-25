@@ -1,9 +1,10 @@
 ---
 title: "Introduction to R and RStudio"
-author: "Stephen Roecker, Tom D'Avello, and Katy Yoast"
+author: "Stephen Roecker, Katey Yoast, Skye Wills and Tom D'Avello"
 date: '`r Sys.Date()`'
 output:
   slidy_presentation:
+    css: css/hpstr.css
     fig_caption: yes
     fig_height: 3
     fig_width: 3
@@ -19,9 +20,9 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
 ## Objectives
 
 1. What is R?
-2. Why should I use R?
-3. What can R do?
-4. How do I get started?
+    1. Why should I use R?
+    2. What can R do?
+2. How do I get started?
     1. RStudio interface
     2. How to import, export, and view files
     3. How to navigate the Help tab
@@ -34,16 +35,16 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
 
 ## What is R? - Open Source Project
 
-* an environment: calculator, visualizations, GIS, statistics, programming, etc...
+* a software environment: statistics, graphics, programming, calculator, GIS, etc...
 * a language: vocabulary to explore, summarize, and model data
 
-![](static-figures/rproject.png){ width=150% }
+![](static-figures/rproject.png){ width=80% }
 
 
 ---
 
 
-## What is R? - One Tool
+## What is R? - "One Tool""
 
 ![*ODBC and GDAL link R to nearly all possible formats/interfaces*](static-figures/triangle.png){ width=50% }
 
@@ -53,17 +54,17 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
 
 ## Why should I use R? - 3 Reasons!
 
-1. [Reproducible Research](https://en.wikipedia.org/wiki/Reproducibility#Reproducible_research) (*self-documenting, repeatable*)
+1. [Reproducible Research](http://christophergandrud.github.io/RepResR-RStudio/) (*self-documenting, repeatable*)
     + repeatable: 
-        + code + output in a single document *(trust but verify)*
+        + code + output in a single document [*(trust but verify)*](https://www.youtube.com/watch?time_continue=1&v=s3JldKoA0zw)
         + easier the next time
         + numerous Excel horror stories of scientific studies gone wrong exist ([TED Talk](https://www.youtube.com/watch?v=dXKbkpilQME))
     + scalable: applicable to small or large problems
 
 2. R in a Community
     + [Numerous Discipline Specific R Groups](https://cran.r-project.org/web/views/)
-    + [Numerous Local R User Groups](https://jumpingrivers.github.io/meetingsR/r-user-groups.html#north-america)
-    + [Mailing Lists](https://www.r-project.org/mail.html)
+    + [Numerous Local R User Groups (including R-Ladies Groups)](https://jumpingrivers.github.io/meetingsR/r-user-groups.html#north-america)
+    + [Stack Overflow](https://stackoverflow.com/)
 
 3. Learning Resources *(quantity and quality)*
     + [R books](https://www.r-project.org/doc/bib/R-books.html)
@@ -95,7 +96,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
 
 ## What can R do? - Draw Soil Profiles
 
-```{r, echo=FALSE, fig.dim=c(10, 8)}
+```{r, echo=FALSE, fig.dim=c(10, 5)}
 library(soilDB)
 data("loafercreek")
 
@@ -125,15 +126,18 @@ plot(loafercreek[1:5], color = "genhz", label = "pedon_id")
 
 ## What can R do? - Draw Depth Plots
 
-```{r, echo=FALSE, fig.dim=c(10, 7)}
+```{r, echo=FALSE, fig.dim=c(10, 5)}
+
+s <- aqp::slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
+s <- aqp::slab(s, fm = ~ clay + phfield + total_frags_pct, slab.fun = function(x) quantile(x, c(0, 0.5, 1), na.rm = TRUE))
+names(s) <- gsub("\\.", "", names(s))
+names(s) <- gsub("^X", "p", names(s))
+
+
 library(ggplot2)
-
-test_s <- aqp::slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
-test_s <- aqp::slab(test_s, fm = ~ clay + phfield + total_frags_pct, slab.fun = function(x) quantile(x, c(0, 0.5, 1), na.rm = TRUE))
-
-ggplot(test_s, aes(x = top, y = X50.)) +
+ggplot(s, aes(x = top, y = p50)) +
   geom_line() +
-  geom_ribbon(aes(ymin = X0., ymax = X100., x = top), alpha = 0.2) +
+  geom_ribbon(aes(ymin = p0, ymax = p100, x = top), alpha = 0.2) +
   xlim(c(100, 0)) + xlab("depth (cm)") + ylab("") +
   coord_flip() +
   facet_wrap(~ variable, scales = "free_x") +
@@ -189,7 +193,8 @@ test <- {
 #   as.data.frame()
 
 test <- test[!is.na(test$median), ]
-kable(test)
+rownames(test) <- NULL
+kable(test[1:8, ])
 
 ```
 
@@ -199,20 +204,38 @@ kable(test)
 
 ## What can R do? - Create Maps
 
-![](static-figures/acres_gg2.png){ width=100% }
+![](static-figures/acres_gg2.png){ width=80% }
 
 
 ---
 
 
-### RStudio - Integrated Development Environment
+## RStudio - Integrated Development Environment
 
-![](figure/ch1_rstudio2.png){ width=100% }
+![](figure/ch1_rstudio2.png){ width=80% }
+
 
 ---
 
 
-### Brief Examples
+## Data Management in RStudio  
+
+![](figure/ch1_setwd.png){ width=40% }
+
+```{r, eval=FALSE}
+# set current working directory
+setwd("C:/workspace2")
+
+# beware R uses forward slashes / instead of back slashes \ for file path names
+
+# get the current working directory
+getwd()
+```
+
+---
+
+
+## Brief Examples
 
 ```{r, echo = TRUE, fig.dim=c(8, 5)}
 # Assignment
@@ -223,7 +246,15 @@ test * 10
 
 # Print Text
 "Hello World"
+```
 
+
+---
+
+
+## Brief Examples
+
+```{r, echo = TRUE, fig.dim=c(5, 3)}
 # Plot Histogram
 hist(rnorm(100))
 ```
@@ -232,57 +263,118 @@ hist(rnorm(100))
 ---
 
 
-### Data Management in RStudio  
+## Text Files
 
-![](figure/ch1_setwd.png){ width=60% }
-
-```{r, eval=FALSE}
-# set current working directory
-
-setwd("C:/workspace2")
-
-# beware R uses forward slashes / instead of back slashes \ for file path names
-```
-
-```{r, eval=FALSE}
-# check current working directory
-
-getwd()
-```
+![](static-figures/sand.png){ width=40% }
 
 
----
+----
 
 
-### Importing Text Files
+## Importing and Exporting Text Files
 
-location,landuse,horizon,depth,sand  
-west,pasture,B,31,26  
-west,range,A,14,23  
-west,range,B,24,24  
+* [Beware of Excel Files](https://www.washingtonpost.com/news/wonk/wp/2016/08/26/an-alarming-number-of-scientific-papers-contain-excel-errors/?utm_term=.9352a35dca6f)
 
+![](static-figures/import.png){ width=40% }
 
 ```{r, eval=FALSE}
+# Importing
 sand <- read.csv("C:/workspace/sand_example.csv") 
 
-# if your workspace was already set you could simply use the filename, like so
-
-# sand <-read.csv("sand_example.csv")
+# Exporting
+write.csv(sand, file = "sand_example.csv"))
 ```
-
-```{r, echo = FALSE}
-sand <- read.csv("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/sand_example.csv")
-```
-
-* [Beware Excel Files](https://www.washingtonpost.com/news/wonk/wp/2016/08/26/an-alarming-number-of-scientific-papers-contain-excel-errors/?utm_term=.9352a35dca6f)
 
 
 ---
 
 
-### Viewing and Removing Data
+## Viewing Data
 
-![](figure/ch1_view_dataframe.png)
+![](figure/ch1_str_sand.png){ width=40% }
+
+Function  | Description                                         |
+----------|-----------------------------------------------------|
+`print()` | prints the entire object (avoid with large tables)  |
+`head()`  | prints the first 6 lines of your data               |
+`str()`   | shows the data structure of an R object             |
+`names()` | lists the column names (i.e., headers) of your data |
+`ls()`    | lists all the R objects in your workspace directory |
+
+
+---
+
+
+## Removing Data
+
+![](figure/ch1_clear_workspace.png){ width=40% }
+
+```{r, eval=FALSE}
+
+# Remove all R objects
+rm(list = ls(all = TRUE)) 
+
+# Remove individal objects
+rm(sand)
+
+```
+
+---
+
+
+## Getting Help
+
+![](figure/ch1_help_tab.png){ width=40% }
+
+```{r, eval=FALSE}
+# Help file for a function
+help(read.csv) # or ?read.csv
+
+# Help files for a package
+help(package = "soiltexture")
+```
+
+
+---
+
+
+## Installing Packages
+
+![](figure/ch1_install_packages.png){ width=80% }
+
+```{r, eval=FALSE}
+# CRAN
+installed.packages(c("aqp", "soilDB", "soilReports", "soiltexture"))
+
+# GitHub
+devtools::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade_dependencies=FALSE)
+``` 
+
+
+---
+
+
+## Loading Packages
+
+![](figure/ch1_load_packages.png){ width=60% }
+
+```{r, eval=TRUE}
+# Load Package from Library
+library(soiltexture)
+```
+
+
+---
+
+
+## Basic Tips of Scripting
+
+![](figure/ch1_text_editor.png){ width=50%}
+
+* Place each function (e.g. `read.csv()`) on a separate line.
+* If a function has a long list of arguments, place each argument on a separate line.
+* A command can be excuted from the text editor by placing the cursor on a line and typing **Crtl + Enter**, or by **clicking** the Run button.
+* An entire R script file can be excuted by **clicking** the Source button. 
 
 
 ---
@@ -290,14 +382,18 @@ sand <- read.csv("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_sur
 
 ## (Free) R Learning Resources
 
-* [R Manuals](https://cran.r-project.org/manuals.html)
-
 * Introductory R Books
     + [Quick-R](https://www.statmethods.net/)
     + [R Cookbook](http://www.cookbook-r.com/)
+    + [Reproducible Research with R & RStudio](http://christophergandrud.github.io/RepResR-RStudio/)
+    
+* Advanced DSM R Books
+    + [A Practical Guide to Geostatistical Mapping](http://spatial-analyst.net/book/)
+    + [Using R for Digital Soil Mapping (not free)](http://www.springer.com/us/book/9783319443256)
 
 * Soil Science R Applications
     + [aqp and soilDB tutorials](http://ncss-tech.github.io/AQP/)
     + [Global Soil Information Facilities](http://www.isric.org/utilise/capacity-building/tutorials)
-    + [David Rossiter's R Applications](http://www.css.cornell.edu/faculty/dgr2/pubs/list.html#pubs_m_R)
+    + [David Rossiter's Cornell Homepage](http://www.css.cornell.edu/faculty/dgr2/)
+
 
