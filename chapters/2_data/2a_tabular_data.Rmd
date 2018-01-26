@@ -43,12 +43,13 @@ What if you could extract, organize, and visualize data from NASIS and many othe
 ### Convenience Functions in the SoilDB Package
 
 - **fetchNASIS()**
-    - Gets NASIS pedon/horizon data from a local NASIS database.
+    - Gets and re-packages data from a local NASIS database.
+        + [NASIS pedon/horizon data](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html)
+        + [NASIS DMU/MU/component data](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html)
+        
 - **fetchNASISLabData()**
     - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
-- **fetchNASIS_component_data()**
-    - Gets selected NASIS map unit and component data from a local NASIS database.
-        + [NASIS Component Data](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html)
+    
 - **fetchKSSL()**
     - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
         + [KSSL Data Demo](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html)
@@ -66,7 +67,7 @@ What if you could extract, organize, and visualize data from NASIS and many othe
         + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
 - **fetchPedonPC()**
     - Fetches commonly used site and horizon data from a PedonPC v.5 database.
-- **SDA_query**
+- **SDA_query()**
     - Submits queries to the Soil Data Access system.
         + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
 
@@ -114,7 +115,7 @@ Cummulative_Pedons <- c(310, 312, 330, 356,
 #assemble into data.frame
 #d <- data.frame(Year, Decade, Pedons, Pedons_c)
 
-cat("# pedons = ", formatC(sum(Pedons), big.mark = ",", format = "fg"), "\n", "# lab pedons = ~64,000", sep = "")
+# cat("# pedons = ", formatC(sum(Pedons), big.mark = ",", format = "fg"), "\n", "# lab pedons = ~64,000", sep = "")
 
 # plot number of pedons in NASIS 
 ggplot(data.frame(Pedons, Year), aes(x=Year, y=Pedons)) + geom_histogram(stat="identity") + scale_y_continuous(name="Pedons", labels = scales::comma)
@@ -380,7 +381,8 @@ The `plot()` function applied to a `SoilProfileCollection` object generates sket
 
 ```{r, fig.width=10, fig.height=4}
 par(mar=c(1,1,1,1))
-plot(gopheridge, print.id=FALSE)
+# ommiting pedon IDs and horizon designations
+plot(gopheridge, print.id=FALSE, name='')
 title('Pedons from the `gopheridge` sample dataset', line=-0.5)
 ```
 
@@ -476,6 +478,7 @@ par(mar=c(0,0,0,0))
 map('county', 'california')
 # add pedon data locations, note symbol styling
 points(gopher.locations, cex=0.5, pch=3, col='red')
+box()
 
 # plot again but zoom in by setting xlim, ylim extents
 map('county', 'California', xlim=c(-122.25, -119.75), ylim=c(37, 38.5))
@@ -784,6 +787,8 @@ Bt.horizons.top <- ddply(Bt.horizons, 'peiid', summarise, depth_to_argillic_cm=m
 site(f) <- Bt.horizons.top
 
 # summary of depth to argillic in the data using a histogram
+# reset figure margins
+par(mar=c(4.5,4.5,1,1))
 hist(f$depth_to_argillic_cm, xlab='Depth to Bt Horizon (cm)', main='')
 ```
  
@@ -823,6 +828,8 @@ organic1 <- ddply(organic, 'peiid', summarise, organic_thickness_cm=max(hzdepb))
 site(f) <- organic1
 
 # summary of organic thickness in the data
+# reset figure margins
+par(mar=c(4.5,4.5,1,1))
 hist(f$organic_thickness_cm, xlab='Thickness of Organic horizons (cm)', main='')
 ```
 
@@ -881,6 +888,8 @@ limy1 <- ddply(limy, 'peiid', summarise, depth_to_carbonates_cm=min(hzdept))
 site(f) <- limy1
 
 # summary of depth to carbonates in the data using a histogram
+# reset figure margins
+par(mar=c(4.5,4.5,1,1))
 hist(f$depth_to_carbonates_cm, xlab='Depth to Calcium Carbonates (cm)', main='')
 ```
 
@@ -942,11 +951,15 @@ The "Geomorphic description" and "parent materials" attributes are important soi
 # graphically tabulate the occurrence of landforms
 # load required libraries
 library(soilDB)
-library(Hmisc)  # required for dotchart2()
+# required for dotchart2()
+library(Hmisc)
+
 # load data from a NASIS selected set
 f <- fetchNASIS(from = 'pedons')
+
 # create 'lf' object of landform factors sorted in descending order
 lf <- sort(table(f$landform_string), decreasing = TRUE)
+
 # plot top 10
 dotchart2(lf[1:10], col='black', xlim = c(0, max(lf)), cex.labels = 0.75)
 ```
@@ -964,24 +977,36 @@ The following is an example of how you could use the diagnostic features (if pop
 ```{r owndata_j3, results='show', warning=FALSE, fig.width=6, fig.height=4}
 # rename gopheridge data
 f <- gopheridge
+
 # get diagnostic features associated with pedons loaded from selected set
 d <- diagnostic_hz(f)
+
 # summary of the diagnostic features in your data!
 unique(d$featkind)
 sort(table(d$featkind), decreasing = TRUE)
+
 # subset argillic horizons
 d <- d[which(d$featkind == 'argillic horizon'), ]
+
 # create a new column and subtract the upper from the lower depth
 d$argillic_thickness_cm <- d$featdepb - d$featdept
+
 # create another new column with the upper depth to the diagnostic feature
 d$depth_to_argillic_cm <- d$featdept
+
 # omit NA values
 d <- na.omit(d)
+
 # subset to pedon records IDs and calculated thickness
 d <- d[, c('peiid', 'argillic_thickness_cm', 'depth_to_argillic_cm')]
 head(d)
+
 # join these data with existing site data
 site(f) <- d
+
+# plot as histogram
+# reset figure margins
+par(mar=c(4.5,4.5,1,1))
 hist(f$argillic_thickness_cm, xlab='Thickness of argillic diagnostic (cm)', main='')
 hist(f$depth_to_argillic_cm, xlab='Depth to argillic diagnostic (cm)', main='')
 ```
@@ -1010,7 +1035,7 @@ What can you do with the Boolean diagnostic feature data?
 
 ### Diagnostic Feature Diagrams
 
-```{r owndata_k, eval=TRUE, echo=TRUE, results='show', warning=FALSE}
+```{r owndata_k, eval=TRUE, echo=TRUE, results='show', warning=FALSE, fig.height=9, fig.width=7}
 ## work up diagnostic plot based on gopheridge dataset
 library(aqp)
 library(soilDB)
@@ -1034,19 +1059,19 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 Use the following script to generate a diagnostic-feature diagram for the pedon data you've loaded from your NASIS selected set.
 Note: If the data includes more than about 20 pedons, the script might generate figures that are very hard to read. You also need to be certain that pedon diagnostic feature were populated in your data.
 
-```{r owndata_l, eval=FALSE, echo=TRUE, results='hide', warning=FALSE}
+```{r owndata_l, eval=FALSE, echo=TRUE, results='hide', warning=FALSE, fig.height=9, fig.width=7}
 library(soilDB)
 library(sharpshootR)
 
 # load data
-f<- fetchNASIS(from = 'pedons')
+f <- fetchNASIS(from = 'pedons')
 
 # may need to subset to a particular series or taxa here....to reduce the number of pedons!
 
 # select a series of diagnostic properties or automatically pull diagnostic feature columns
 # get all diagnostic feature columns from site data by pattern matching on '[.]' in the colnames
-idx <- grep('[.]', colnames(site(gopheridge)))
-v <- colnames(site(gopheridge))[idx]
+idx <- grep('[.]', colnames(site(f)))
+v <- colnames(site(f))[idx]
 v
 
 # or insert diagnostics of interest found in your data here from the list of possible diagnostics in 'v'
