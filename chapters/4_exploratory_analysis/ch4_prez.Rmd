@@ -1,0 +1,120 @@
+---
+title: Chapter 4 - Exploratory Data Analysis
+author: Tom D'Avello and Stephen Roecker
+date: "`r Sys.Date()`"
+output:
+  slidy_presentation:
+    css: css/hpstr.css
+    fig_caption: yes
+    fig_height: 3
+    fig_width: 3
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
+```
+
+
+## Objectives
+
+* Determine Low, RV, and High values (e.g. mean, median, etc...) for component and horizon data.
+* Visualize your data to identify trends, using Rs base and ggplot2 graphics.
+* Learn how to use the soilReports package to generate Rmarkdown reports.
+* Learn how to properly transform your data for analysis.
+
+
+---
+
+
+##  Descriptive statistics
+
+```{r, echo=FALSE}
+
+desc <- data.frame(
+  Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Interquartile Range"),
+  NASIS = c(rep("RV", 3), rep("L & H", 2)),
+  Description = c("arithmetic average", 
+                  "middle value", 
+                  "most frequent value", "variation", 
+                  "range encompasses 50% of the values"
+                  ),
+  'R function' = c("mean()", "median()", "sort(table(), decreasting = TRUE)[1]", "sd()", "IQR()"),
+  check.names = FALSE
+  )
+knitr::kable(desc)
+
+```
+ 
+ ---
+ 
+
+## Graphical methods
+
+```{r, echo=FALSE}
+
+figs <- data.frame(
+  Types = c("Histogram", "Density Plots", "Quantile-Quantile Plots", "Box Plots", "Scatter Plots", "Radial Plots"),
+  Description = c("a bar plot where each bar represents the frequency of observations for a given range of values",
+                  "an estimation of the frequency distribution based on the sample data",
+                  "a plot of the actual data values against a normal distribution",
+                  "a visual representation of median, quartiles, symmetry, skewness, and outliers",
+                  
+                  "a graphical display of one variable plotted on the x axis and another on the y axis",
+                  "plots formatted for the representation of circular data"
+                  ),
+  'Base R' = c("hist()", "plot(density())", "qqnorm()", "boxplot()", "plot()", NA),
+  'ggplot geoms' = c("geom_histogram()", "geom_density()", "geom_qq()", "geom_boxplot()", "geom_point()", NA),
+  check.names = FALSE
+  )
+
+knitr::kable(figs)
+
+```
+
+---
+
+
+```{r, echo=FALSE}
+
+library(soilDB)
+library(ggplot2)
+library(gridExtra)
+
+data(loafercreek)
+h <- horizons(loafercreek)
+
+amean <- mean(h$clay,  na.rm = TRUE)
+amed <- median(h$clay, na.rm = TRUE)
+
+ggplot(h, aes(x = clay)) +
+  geom_line(stat = "density") +
+  geom_vline(xintercept = amean, col = "blue") +
+  geom_vline(xintercept = amed, col = "orange") +
+  ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Clay Content")
+
+```
+
+---
+
+
+## Data Inspection - Missing Data
+
+ 1. **Exclude** all rows or columns that contain missing values using the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g., horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such as `clay <- na.exclude(h$clay)`.
+ 2.	**Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$clay <- ifelse(is.na(h$clay), 0, h$clay) # or h[is.na(h$clay), ] <- 0`.
+ 3. **Read** the help file for the function you're attempting to use. Many functions have additional arguments for dealing with missing values, such as `na.rm`.
+
+
+---
+
+
+# Additional Reading
+
+Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
+
+Wickham, H., and G. Grolemund, 2017, 7 - Exploratory Data Analysis, pp: 81-109. In H. Wickham and G. Grolemund. R for Data Science. O'Reilly Media Inc., Sebastopol, CA. [http://r4ds.had.co.nz/exploratory-data-analysis.html](http://r4ds.had.co.nz/exploratory-data-analysis.html)
+
+Healy, K., 2018. Data Visualization: a practical introduction. Princeton University Press.[http://socviz.co/](http://socviz.co/)
+
+Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)
