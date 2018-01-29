@@ -1,6 +1,6 @@
 ---
 title: Chapter 4 - Exploratory Data Analysis
-author: Tom D'Avello and Stephen Roecker
+author: Stephen Roecker and Tom D'Avello
 date: "`r Sys.Date()`"
 output:
   slidy_presentation:
@@ -13,7 +13,41 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
+
+library(soilDB)
+library(ggplot2)
+
+data(loafercreek)
+data("metadata")
+
+# Generalized the horizon designations
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
+# REGEX rules
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+h <- horizons(loafercreek)
+h <- within(h, {
+  hzdepm = (hzdept + hzdepb) / 2
+  texture_class = factor(texture_class, 
+                         levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
+                         )
+  })
+
+
 ```
 
 
@@ -28,44 +62,42 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
 ---
 
 
-##  Descriptive statistics
+##  Descriptive Statistics
 
 ```{r, echo=FALSE}
 
 desc <- data.frame(
-  Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Interquartile Range"),
+  Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
   NASIS = c(rep("RV", 3), rep("L & H", 2)),
   Description = c("arithmetic average", 
-                  "middle value", 
+                  "middle value, 50% quantile", 
                   "most frequent value", "variation", 
-                  "range encompasses 50% of the values"
+                  "percent rank of values, such that all values are <= p"
                   ),
-  'R function' = c("mean()", "median()", "sort(table(), decreasting = TRUE)[1]", "sd()", "IQR()"),
+  'R function' = c("mean()", "median()", "sort(table(), decreasting = TRUE)[1]", "sd()", "quantile()"),
   check.names = FALSE
   )
 knitr::kable(desc)
 
 ```
  
- ---
- 
 
-## Graphical methods
+---
+
+
+## Graphical Methods - Descriptions
 
 ```{r, echo=FALSE}
 
 figs <- data.frame(
-  Types = c("Histogram", "Density Plots", "Quantile-Quantile Plots", "Box Plots", "Scatter Plots", "Radial Plots"),
-  Description = c("a bar plot where each bar represents the frequency of observations for a given range of values",
+  'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
+   Description = c("a plot where each bar represents the frequency of observations for a 'group'",
+                   "a plot where each bar represents the frequency of observations for a 'given range of values'",
                   "an estimation of the frequency distribution based on the sample data",
                   "a plot of the actual data values against a normal distribution",
                   "a visual representation of median, quartiles, symmetry, skewness, and outliers",
-                  
-                  "a graphical display of one variable plotted on the x axis and another on the y axis",
-                  "plots formatted for the representation of circular data"
+                   "a graphical display of one variable plotted on the x axis and another on the y axis"
                   ),
-  'Base R' = c("hist()", "plot(density())", "qqnorm()", "boxplot()", "plot()", NA),
-  'ggplot geoms' = c("geom_histogram()", "geom_density()", "geom_qq()", "geom_boxplot()", "geom_point()", NA),
   check.names = FALSE
   )
 
@@ -73,28 +105,287 @@ knitr::kable(figs)
 
 ```
 
----
 
+---
+ 
+
+## Graphical Methods - Functions
 
 ```{r, echo=FALSE}
 
-library(soilDB)
-library(ggplot2)
-library(gridExtra)
+figs <- data.frame(
+  'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
+  # Description = c("a bar plot where each bar represents the frequency of observations for a given range of values",
+  #                "an estimation of the frequency distribution based on the sample data",
+  #                "a plot of the actual data values against a normal distribution",
+  #                "a visual representation of median, quartiles, symmetry, skewness, and outliers",
+  #                 "a graphical display of one variable plotted on the x axis and another on the y axis",
+  #                "plots formatted for the representation of circular data"
+  #                ),
+  'Base R' = c("barplot()", "hist()", "plot(density())", "qqnorm()", "boxplot()", "plot()"),
+  'lattice' = c("barchart()", "histogram()", "densityplot()", "qq()", "bwplot()", "xyplot"),
+  'ggplot geoms' = c("geom_bar()", "geom_histogram()", "geom_density()", "geom_qq()", "geom_boxplot()", "geom_point()"),
+  check.names = FALSE
+  )
 
-data(loafercreek)
-h <- horizons(loafercreek)
-
-amean <- mean(h$clay,  na.rm = TRUE)
-amed <- median(h$clay, na.rm = TRUE)
-
-ggplot(h, aes(x = clay)) +
-  geom_line(stat = "density") +
-  geom_vline(xintercept = amean, col = "blue") +
-  geom_vline(xintercept = amed, col = "orange") +
-  ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Clay Content")
+knitr::kable(figs)
 
 ```
+
+
+---
+
+
+## Distributions
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+# bar plot
+p_b <- ggplot(h, aes(x = texture_class)) +
+  geom_bar() +
+  ylab("count (n)") + xlab("texture class") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Bar Plot")
+
+# histogram
+p <- ggplot(data = h, aes(x = clay))
+
+p_h <- p + 
+  geom_histogram() + 
+  xlab("clay (%)") + ylab("count (n)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Histogram")
+
+# density plot
+p_d <- p + 
+  geom_density(fill = "grey", alpha = 0.5) + 
+  xlab("clay (%)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Density Plot")
+
+gridExtra::grid.arrange(p_b, p_h, p_d, ncol = 3)
+
+```
+
+
+---
+
+
+## The 'Normal Distribution
+
+```{r, echo = FALSE, fig.dim = c(8, 4)}
+
+dnorm_limit_1 <- function(x) {
+  y <- dnorm(x)
+  y[-1 > x | x > 1] <- NA
+  return(y)
+  }
+dnorm_limit_2 <- function(x) {
+  y <- dnorm(x)
+  y[-2 > x | x > 2] <- NA
+  return(y)
+  }
+
+# ggplot() with dummy data
+ggplot(data.frame(x=c(-3, 3)), aes(x=x)) + 
+  stat_function(fun=dnorm) +
+  stat_function(fun=dnorm_limit_1, geom="area", fill="blue", alpha=0.2) +
+  stat_function(fun=dnorm_limit_2, geom="area", fill="orange", alpha=0.2) +
+  annotate("text", x = 0, y = 0.2, label = "1 sd = 68%") +
+  annotate("text", x = -1.5, y = 0.03, label = "2 sd = 95%")
+
+```
+
+
+---
+
+
+## Mean vs Median
+
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+p   <- c(0.025, 0.25, 0.5, 0.75, 0.975)
+
+avg <- mean(h$clay, na.rm = TRUE)
+std <- sd(h$clay,   na.rm = TRUE)
+
+clay <- rbind(
+  data.frame(
+    value = c(avg - 2 * std, avg, avg + 2 * std),
+    variable = "mean & sd",
+    stringsAsFactors = TRUE
+    ),
+  data.frame(
+    value    = quantile(h$clay, p, na.rm = TRUE),
+    variable = "quantiles",
+    stringsAsFactors = TRUE
+    )
+  )
+
+avg <- mean(h$total_frags_pct, na.rm = TRUE)
+std <- sd(h$total_frags_pct,   na.rm = TRUE)
+
+frags <- rbind(
+  data.frame(
+    variable = "mean & sd",
+    value = c(avg - 2 * std, avg, avg + 2 * std),
+    stringsAsFactors = TRUE
+    ),
+  data.frame(
+    variable = "quantiles", 
+    value    = quantile(h$total_frags_pct, p, na.rm = TRUE),
+    stringsAsFactors = TRUE
+    )
+  )
+
+p1 <- ggplot(h, aes(x = clay)) +
+  geom_density(fill = "grey", alpha = 0.5) +
+  geom_vline(data = clay, aes(xintercept = value, lty = variable)) +
+  xlab("%") +
+  #xlim(-5, max(h$total_frags_pct)) +
+  theme(aspect.ratio = 1) +
+  ggtitle("Clay")
+
+p2 <- ggplot(h, aes(x = total_frags_pct)) +
+  geom_density(fill = "grey", alpha = 0.5) +
+  geom_vline(data = frags, aes(xintercept = value, lty = variable)) +
+  xlab("%") +
+  #xlim(-5, max(h$total_frags_pct)) +
+  theme(aspect.ratio = 1) +
+  ggtitle("Rock Fragments")
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+
+```
+
+
+---
+
+
+## Distributions
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+# qq plot
+p_qq <- ggplot(h, aes(sample = clay)) + 
+  geom_qq() +
+  geom_qq_line() +
+  xlab("clay (%)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Q-Q Plot")
+
+# box plot
+p_box <- ggplot(h, aes(x = 1, y = clay)) + 
+  geom_boxplot() +
+  ylab("clay (%)") +
+  theme(aspect.ratio = 1) +
+  coord_flip() +
+  ggtitle("Box Plot")
+
+gridExtra::grid.arrange(p_box, p_qq, ncol = 2)
+
+```
+
+
+---
+
+
+## Relationships
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+# scatter plot
+p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
+  geom_point() +
+  ylim(100, 0) +
+  ylab("depth (cm)") + xlab("clay (%)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Scatter Plot")
+
+# line graph
+p_l <- ggplot(h, aes(y = clay, x = hzdepm)) +
+  geom_smooth(se = FALSE, col = "black") +
+  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+  xlab("depth (cm)") + ylab("clay (%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1) +
+  ggtitle("Line Plot")
+
+gridExtra::grid.arrange(p_s, p_l, ncol = 2)
+
+```
+
+
+---
+
+
+## 3rd Dimension - Groups
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+h$genhz2 <- factor(h$genhz, levels = rev(levels(h$genhz)))
+idx <- h$genhz %in% c("Cr", "R", "not-used")
+
+p_b <- ggplot(h[!idx, ], aes(x = genhz2, y = clay)) + 
+  geom_boxplot() +
+  ylab("clay (%)") + xlab("genhz") +
+  theme(aspect.ratio = 1) +
+  coord_flip()
+
+p_d <- ggplot(h[!idx, ], aes(x = clay, col = genhz)) +
+  geom_density(alpha = 0.5, lwd = 1.5) +
+  xlab("%") +
+  theme(aspect.ratio = 1)
+
+gridExtra::grid.arrange(p_b, p_d, ncol = 2)
+
+
+```
+
+
+---
+
+
+## 3rd Dimesion - Color, Shape, Size, etc...
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
+
+ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(se = FALSE, col = "black") +
+  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+  xlab("depth (cm)") + ylab("clay (%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1)
+
+```
+
+
+---
+
+## Stacked Bar Plots
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+p_sb1 <- ggplot(h, aes(x = genhz2, fill = texture_class)) +
+  geom_bar(position = "stack") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Stacked Bar Plot") +
+  coord_flip()
+
+p_sb2 <- ggplot(h, aes(x = genhz, fill = texture_class)) +
+  geom_bar(position = "fill") +
+  ylab("Proportion") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Proportional \n Stacked Bar Plot") + 
+  coord_flip()
+
+gridExtra::grid.arrange(p_sb1, p_sb2, ncol = 2)
+
+```
+
 
 ---
 
@@ -109,12 +400,12 @@ ggplot(h, aes(x = clay)) +
 ---
 
 
-# Additional Reading
+## Additional Reading
 
 Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
 
 Wickham, H., and G. Grolemund, 2017, 7 - Exploratory Data Analysis, pp: 81-109. In H. Wickham and G. Grolemund. R for Data Science. O'Reilly Media Inc., Sebastopol, CA. [http://r4ds.had.co.nz/exploratory-data-analysis.html](http://r4ds.had.co.nz/exploratory-data-analysis.html)
 
-Healy, K., 2018. Data Visualization: a practical introduction. Princeton University Press.[http://socviz.co/](http://socviz.co/)
+Healy, K., 2018. Data Visualization: a practical introduction. Princeton University Press. [http://socviz.co/](http://socviz.co/)
 
 Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)
