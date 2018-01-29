@@ -1,0 +1,144 @@
+---
+title: "Shiny Web Apps"
+author: "John R. Hammerly"
+date: "`r format(Sys.Date(), format='%B %d %Y')`"
+output:
+  html_document:
+    toc: True
+    toc_float: TRUE
+bibliography: bibliography.bib
+nosite: |
+  @Shiny, @Shinyapps, @Shinydashboard
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## The Shiny Package
+
+Shiny is an R package which combines R programming with the interactivity of the web.
+
+```{r, eval=FALSE, echo=TRUE, include=TRUE}
+install.packages("shiny")
+```
+
+Methods for Use
+
+- Online
+- Locally
+
+<div class="notes">
+The shiny package, created by RStudio, enables users to not only use interactive applications created by others, but to build them as well.  Statistics for Soil Survey II will cover how shiny apps are built in greater detail.
+</div>
+
+## Online
+
+Easiest Method
+
+- Click a Link:  https://gallery.shinyapps.io/lake_erie_fisheries_stock_assessment_app/
+- Open a web browser
+- Navigate to a URL
+
+<div class="notes">
+The ability to use a shiny app online is one of the most useful features of the package.  All of the R code is executed on a remote computer which sends the results over a live http connection.  Very little is required of the user in order to obtain results.
+</div>
+
+## Locally
+
+No Internet required once configured
+
+- Install R and RStudio (done)
+- Install Required packages (app dependent)
+- Download, open in RStudio and click "Run App"
+
+<div class="notes">
+The online method may be easy for the user, but it does require a significant amount of additional effort for the creator. We won't get into those details here! The local method, however simply requires the creator to share a single app.R file.  It is the user which needs to put forth the additional effort.
+</div>
+
+## Web App Demonstration
+
+Online:
+
+- https://usda.shinyapps.io/r11_app
+
+Local:
+
+- https://github.com/ncss-tech/soil-pit/raw/master/sandbox/john/r11_smp_app/app.R
+
+<div class="notes">
+Online apps such as the Region 11 Web App are useful tools, available for all to use during soil survey, ecological site development, or other evaluations.  The Region 11 app is however limited to data which is already available online, such as SDA (Soil Data Access) and LIMS (Laboratory Information Management System).  It is also relient on the successful operation of those data systems.  If LIMS or SDA is down for maintanence, the app fails.
+Local apps have the ability to leverage local data systems more easily like NASIS or other proprietary data.
+</div>
+
+## Shiny App Embedding
+
+
+<iframe src="https://gallery.shinyapps.io/064-telephones-by-region?showcase=0", style="border:none; width: 900px; height: 500px">
+</iframe>
+
+<div class="notes">
+Shiny apps are extremely versatile, they can be embedded into presentations, markdown, or html.  Those same formats can also be embedded in to a shiny app.  This is a very simple example of a shiny app which consists of an interactive dropdown menu which controls what region is displayed in the bar chart.  Let's take a look at the code.
+</div>
+
+## Shiny App Code
+
+```{r, eval=FALSE, echo=TRUE, include=TRUE}
+shinyApp(
+  
+  ui = 
+# Rely on the 'WorldPhones' dataset in the datasets
+# package (which generally comes preloaded).
+library(datasets)
+
+# Use a fluid Bootstrap layout
+fluidPage(    
+  
+  # Give the page a title
+  titlePanel("Telephones by region"),
+  
+  # Generate a row with a sidebar
+  sidebarLayout(      
+    
+    # Define the sidebar with one input
+    sidebarPanel(
+      selectInput("region", "Region:", 
+                  choices=colnames(WorldPhones)),
+      hr(),
+      helpText("Data from AT&T (1961) The World's Telephones.")
+    ),
+    
+    # Create a spot for the barplot
+    mainPanel(
+      plotOutput("phonePlot")  
+    )
+    
+  )
+)
+  server = 
+# Rely on the 'WorldPhones' dataset in the datasets
+# package (which generally comes preloaded).
+library(datasets)
+
+# Define a server for the Shiny app
+function(input, output) {
+  
+  # Fill in the spot we created for a plot
+  output$phonePlot <- renderPlot({
+    
+    # Render a barplot
+    barplot(WorldPhones[,input$region]*1000, 
+            main=input$region,
+            ylab="Number of Telephones",
+            xlab="Year")
+  })
+}
+)
+```
+
+<div class="notes">
+Shiny apps consist of a *ui* and a *server*. The ui is the part of the shiny app the user sees, the user interface.  In the ui, a user can choose or enter inputs for processing and view the results.  The server takes the inputs, performs some data processing and rendering of those inputs and generates the outputs for the ui to display.
+</div>
+
+## References
