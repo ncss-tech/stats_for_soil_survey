@@ -14,49 +14,43 @@ editor_options:
 
 ```{r setup, include=FALSE}
 
-knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 
 library(soilDB)
 library(ggplot2)
-
-data(loafercreek)
-data("metadata")
-
-# Generalized the horizon designations
-n <- c("A",
-       "BAt",
-       "Bt1",
-       "Bt2",
-       "Cr",
-       "R")
-# REGEX rules
-p <- c("A",
-       "BA|AB",
-       "Bt|Bw",
-       "Bt3|Bt4|2B|C",
-       "Cr",
-       "R")
-
-loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
-
-h <- horizons(loafercreek)
-h <- within(h, {
-  hzdepm = (hzdept + hzdepb) / 2
-  texture_class = factor(texture_class, 
-                         levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
-                         )
-  })
-
 
 ```
 
 
 ## Objectives
 
-* Determine Low, RV, and High values (e.g. mean, median, etc...) for component and horizon data.
-* Visualize your data to identify trends, using Rs base and ggplot2 graphics.
-* Learn how to use the soilReports package to generate Rmarkdown reports.
-* Learn how to properly transform your data for analysis.
+* Review methods for estimating Low, RV, and High values
+* Visualize data using ggplot2 package
+* Learn how to use the soilReports package to generate reports
+* Learn how to properly transform your data for analysis
+
+
+---
+
+
+## Range in Characteristics (RIC)
+
+* Why does the L, RV, and H clay represent?
+    + What taxonomic unit do they refer too?
+* What is the L and H for texture?
+
+```{r, echo=FALSE}
+
+crosby <- fetchSDA_component(WHERE = "muname LIKE 'Crosby%'")
+attach(crosby)
+c2 <- subsetProfiles(spc, s = "cokey == 14842603")
+c_h <- horizons(c2)
+names(c_h) <- gsub("total", "", names(c_h)) 
+
+vars <- c("hzname", "clay_l", "clay_r", "clay_h", "texture")
+knitr::kable(c_h[vars])
+
+```
 
 
 ---
@@ -81,6 +75,43 @@ knitr::kable(desc)
 
 ```
  
+
+---
+
+
+## Descriptive Statistics - Numeric Data
+
+```{r}
+data("loafercreek")
+h <- horizons(loafercreek) 
+h$texture_class <- factor(h$texture_class)
+
+vars <- c("clay", "phfield", "total_frags_pct", "texture_class")
+summary(h[vars])
+
+```
+
+
+---
+
+
+## Descriptive Statistics - Categorical Data
+
+```{r}
+with(h, table(genhz, texture_class, useNA = "ifany"))
+
+```
+
+
+---
+
+
+## Data Inspection - Missing Data
+
+ 1. **Exclude** all rows or columns that contain missing values using the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g., horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such as `clay <- na.exclude(h$clay)`.
+ 2.	**Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$clay <- ifelse(is.na(h$clay), 0, h$clay) # or h[is.na(h$clay), ] <- 0`.
+ 3. **Read** the help file for the function you're attempting to use. Many functions have additional arguments for dealing with missing values, such as `na.rm`.
+
 
 ---
 
@@ -139,6 +170,33 @@ knitr::kable(figs)
 ## Distributions
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+data("metadata")
+
+# Generalized the horizon designations
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
+# REGEX rules
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+h <- horizons(loafercreek)
+h <- within(h, {
+  hzdepm = (hzdept + hzdepb) / 2
+  texture_class = factor(texture_class, 
+                         levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
+                         )
+  })
 
 idx <- is.na(h$texture_class)
 
@@ -453,16 +511,6 @@ p <- ggplot(data = h, aes(x = clay, y = hzdept, color = genhz))
 p + geom_point()
 
 ```
-
-
----
-
-
-## Data Inspection - Missing Data
-
- 1. **Exclude** all rows or columns that contain missing values using the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g., horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such as `clay <- na.exclude(h$clay)`.
- 2.	**Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$clay <- ifelse(is.na(h$clay), 0, h$clay) # or h[is.na(h$clay), ] <- 0`.
- 3. **Read** the help file for the function you're attempting to use. Many functions have additional arguments for dealing with missing values, such as `na.rm`.
 
 
 ---
