@@ -669,7 +669,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
        'shallow', 'mod.deep', 'deep', 'very.deep')
 
 # do the analysis and save the results to object 'x'
-x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrock_kind', dend.label = 'taxonname')
+x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrckkind', dend.label = 'taxonname')
 ```
 
 If you are wondering what is in the object `x`, the `str()` function or manual page (`?diagnosticPropertyPlot`) can help.
@@ -1149,9 +1149,33 @@ print(d)
 ```
 
 
+## Soil Color Signatures
+Integrate [related tutorial](http://ncss-tech.github.io/AQP/aqp/soil-color-signatures.html)
+Explain.
+```{r fig.width=12, fig.height=5}
+# manually convert Munsell -> sRGB
+rgb.data <- munsell2rgb(s$hue, s$value, s$chroma, return_triplets = TRUE)
+s$r <- rgb.data$r
+s$g <- rgb.data$g
+s$b <- rgb.data$b
 
+# eval color signature
+pig <- soilColorSignature(s, RescaleLightnessBy = 5, method='depthSlices')
 
-## Soil Color
+# display results as table
+knitr::kable(head(pig), digits = 3, row.names = FALSE)
+
+# move row names over for distance matrix
+row.names(pig) <- pig[, 1]
+d <- daisy(pig[, -1])
+dd <- diana(d)
+
+# plot
+par(mar=c(1,1,1,1))
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.25, y.offset = 6, width=0.15, cex.names=0.45)
+```
+
+## Clustering of Soil Colors
 Just for fun, use hierarchical clustering and nMDS on soil color data from the OSDs that were used in the previous example.
 
 ```{r, fig.width=6, fig.height=6}

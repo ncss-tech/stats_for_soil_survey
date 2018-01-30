@@ -8,7 +8,7 @@
 * categorical data: sub-group level taxa
 * categorical data: diagnostic properties
 * soil-profiles!
-  * species composition matrix
+* species composition matrix
 
 ## visuals / tangibles
 * old papers
