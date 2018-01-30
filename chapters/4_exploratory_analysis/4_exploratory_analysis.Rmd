@@ -10,6 +10,8 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
@@ -184,28 +186,29 @@ A Gaussian distribution is often referred to as "Bell Curve", and has the follow
  7. Approximately **95%** of the area of a Gaussian distribution is within two standard deviations of the mean
 
 ```{r, echo=FALSE, fig.align="center"}
-# http://www.alisonsinclair.ca/2011/03/shading-between-curves-in-r/
 
-r <- seq(-5, 5, 0.1)
-d <- list(x = r, y = dnorm(r, sd = 2))
+library(ggplot2)
 
-old.par <- par(no.readonly = TRUE)
-par(mfrow = c(1, 2))
-par(pty = "s")
+dnorm_limit_1 <- function(x) {
+  y <- dnorm(x)
+  y[-1 > x | x > 1] <- NA
+  return(y)
+  }
+dnorm_limit_2 <- function(x) {
+  y <- dnorm(x)
+  y[-2 > x | x > 2] <- NA
+  return(y)
+  }
 
-plot(d, type = "l", main = "1 Standard Deviation \n (68% highlighted)", xlab = "")
-q <- quantile(r, prob = c(0.16, 0.84)) 
-select <- q[1] <= d$x & d$x <= q[2]
-polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
-abline(v = quantile(r, p = 0.5), lty =2)
+df <-data.frame(x = c(-3, 3))
 
-plot(d, type = "l", main = "2 Standard Deviation \n (95% highlighted)", xlab = "")
-q <- quantile(r, prob = c(0.025, 0.975)) 
-select <- q[1] <= d$x & d$x <= q[2]
-polygon(x = c(q[1], d$x[select], q[2]), y = c(0, d$y[select], 0), col='grey')
-abline(v = quantile(r, p = 0.5), lty = 2)
+ggplot(df, aes(x = x)) + 
+  stat_function(fun=dnorm) +
+  stat_function(fun=dnorm_limit_1, geom="area", fill="blue", alpha=0.2) +
+  stat_function(fun=dnorm_limit_2, geom="area", fill="orange", alpha=0.2) +
+  annotate("text", x = 0, y = 0.2, label = "1 sd = 68%") +
+  annotate("text", x = -1.5, y = 0.03, label = "2 sd = 95%")
 
-par(old.par)
 ```
 
 Viewing a histogram or density plot of your data provides a quick visual reference for determining normality as discussed in section 4.1. Distributions are typically normal, Bimodal or Skewed:  
@@ -217,8 +220,13 @@ Figure 2. Sample histograms
 Occasionally distributions are Uniform, or nearly so:
 
 ```{r, echo = FALSE, warning=FALSE}
-r <- seq(-1, 2, 0.1)
-plot(r, dunif(r), type = "l", main = "Uniform Distribution: Minimum = 0, Maximum = 1")
+
+r <- data.frame(y = dunif(seq(-1, 2, 0.1)), x = 1:31)
+
+ggplot(r, aes(x = x, y = y)) +
+  geom_line() +
+  ggtitle("Uniform Distribution: Minimum = 0, Maximum = 1")
+
 ```
 
 Figure 3. Uniform distribution  
@@ -255,12 +263,12 @@ Next we'll review the ggplot2 `geom_histogram()` and `geom_density()` functions 
 library(ggplot2)
 
 ggplot(h, aes(x = clay)) +
-  geom_histogram(bins = nclass.Sturges(h$clay))
+  geom_histogram()
 
 # or
 
 ggplot(h, aes(x = clay)) +
-  geom_histogram(bins = nclass.Sturges(h$clay)) +
+  geom_histogram() +
   facet_wrap(~ genhz)
 
 # or using the graphics package
@@ -275,12 +283,12 @@ Since histograms are dependent on the number of bins, for small datasets they're
  
 ```{r}
 ggplot(h, aes(x = clay, y = ..density..)) +
-  geom_histogram(bins = nclass.Sturges(h$clay)) +
-  geom_line(stat = "density") +
-  facet_wrap(~genhz)
+  geom_histogram() +
+  geom_density() +
+  facet_wrap(~ genhz)
 
 ggplot(h, aes(x = clay)) +
-  geom_line(stat = "density")
+  geom_density()
 
 # or using the graphics package
 
@@ -301,11 +309,17 @@ A QQplot is a plot of the actual data values against a normal distribution (whic
 A QQplot of sand content may be made for the sample dataset as: 
 
 ```{r}
-qqnorm(h$clay, main = "Normal Q-Q Plot for Clay")
-qqline(h$clay)
 
-qqnorm(h$total_frags_pct, main = "Normal Q-Q Plot for Rock Fragments")
-qqline(h$total_frags_pct)
+ggplot(h, aes(sample = clay)) + 
+  geom_qq() +
+  geom_qq_line() +
+  ggtitle("Normal Q-Q Plot for Clay")
+
+ggplot(h, aes(sample = total_frags_pct)) + 
+  geom_qq() +
+  geom_qq_line() +
+  ggtitle("Normal Q-Q Plot for Frags")
+
 ```
 
 Figure 6. QQplot  
@@ -365,7 +379,7 @@ amean = mean(clay)
 amed <- median(clay)
 
 ggplot(h, aes(x = clay)) +
-  geom_line(stat = "density") +
+  geom_density() +
   geom_vline(xintercept = amean, col = "blue") +
   geom_vline(xintercept = amed, col = "orange") +
   ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Clay Content")
@@ -374,29 +388,11 @@ amean <- mean(h$total_frags_pct)
 amed <- median(h$total_frags_pct)
 
 ggplot(h, aes(x = total_frags_pct)) +
-  geom_line(stat = "density") +
+  geom_density() +
   geom_vline(xintercept = amean, col = "blue") +
   geom_vline(xintercept = amed, col = "orange") +
   ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Rock Fragments")
 
-# # or in base graphics
-# 
-# amean <- mean(clay)
-# amed <- median(clay)
-# 
-# test <- density(clay)
-# plot(test, main = "Clay")
-# abline(v = amed, col = "blue") # plot the median as a blue vertical line
-# abline(v = amean, col = "orange") # plot the mean as a orange vertical line
-# 
-# frags <- h$total_frags_pct
-# amean <- mean(frags)
-# amed <- median(frags)
-# 
-# test <- density(frags)
-# plot(test, main = "Rock Fragments")
-# abline(v = amed, col = "blue") # plot the median as a blue vertical line
-# abline(v = amean, col = "orange") # plot the mean as a orange vertical line
 ```
 
 Figure 7. Comparison of the mean vs median for clay and rock fragments.  
@@ -517,12 +513,14 @@ Figure 8. Boxplot description (Seltman, 2009)
 A boxplot of sand content by horizon may be made for the sample dataset as:  
 
 ```{r boxplots}
+
 ggplot(h, (aes(x = genhz, y = clay))) +
   geom_boxplot()
 
 # or using the graphics package
 
 # boxplot(clay ~ genhz, xlab = "Horizon", ylab="Clay (%)", data = h)
+
 ```
 
 Figure 9. Box plot of clay by horizon  
@@ -571,7 +569,7 @@ round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100)
 A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:  
 
 ```{r}
-h$hzdepm <- with(h, (hzdepb - hzdept) / 2) # Compute the middle horizon depth
+h$hzdepm <- with(h, (hzdepb + hzdept) / 2) # Compute the middle horizon depth
 
 vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
 
@@ -606,11 +604,14 @@ This plots clay on the X axis and depth on the X axis. As shown in Figure 10, th
 The function below produces a scatterplot matrix for all the numeric variables in the dataset. This is a good command to use for determining rough linear correlations for continuous variables.  
 
 ```{r}
-# Load the car package
-library(car)
+# Load the GGally package
+library(GGally)
 
 # Create a scatter plot matrix
-spm(h[vars])
+vars <- c("hzdepm", "clay", "phfield", "total_frags_pct")
+
+GGally::ggpairs(h[vars])
+
 
 # or using base graphics
 
@@ -866,7 +867,7 @@ Zonal statistics in R can be implemented using either the census or sample appro
 #   OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
 # ))
 # 
-test <- read.csv("C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") # import the results
+test <- read.csv("C:/workspace2/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") # import the results
 names(test)[1] <- "mukey" # rename the mukey column
 subset(test, mukey == 2480977) # examine mukey 2480977
 ```
@@ -900,7 +901,7 @@ To implement the sample approach to zonal statistics we can use the `extract()` 
 # save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
 # Load the cache/saved results
-load(file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
+load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
 # Examine summary for mukey 2480977
 summary(subset(test2, MUKEY == 2480977)) 
@@ -1243,9 +1244,10 @@ Webster, R. 2001. Statistics to support soil research and their presentation. Eu
 
 # Additional Reading
 
-de Smith, M.J., 2015. STATSREF: Statistical Analysis Handbook: a web-based statistics
-resource. The Winchelsea Press, Winchelsea, UK.  [http://www.statsref.com/HTML/index.html](http://www.statsref.com/HTML/index.html)  
+Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
 
-Diez, D.M., Barr, C.D., and Cetinkaya-Rundel, M., 2015. OpenIntro Statistics. 3rd edition. openintro.org. [https://www.openintro.org/stat/](https://www.openintro.org/stat/)
+Wickham, H., and G. Grolemund, 2017, 7 - Exploratory Data Analysis, pp: 81-109. In H. Wickham and G. Grolemund. R for Data Science. O'Reilly Media Inc., Sebastopol, CA. [http://r4ds.had.co.nz/exploratory-data-analysis.html](http://r4ds.had.co.nz/exploratory-data-analysis.html)
+
+Healy, K., 2018. Data Visualization: a practical introduction. Princeton University Press. [http://socviz.co/](http://socviz.co/)
 
 Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)

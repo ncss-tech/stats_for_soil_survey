@@ -140,8 +140,10 @@ knitr::kable(figs)
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
 
+idx <- is.na(h$texture_class)
+
 # bar plot
-p_b <- ggplot(h, aes(x = texture_class)) +
+p_b <- ggplot(h[!idx, ], aes(x = texture_class)) +
   geom_bar() +
   ylab("count (n)") + xlab("texture class") +
   theme(aspect.ratio = 1) +
@@ -304,7 +306,13 @@ p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
   ggtitle("Scatter Plot")
 
 # line graph
+depth <- c(1, 5, 15, 30, 50, 70, 90)
+lo_fit <- loess(clay ~ hzdepm, data = h, na.action = na.exclude)
+clay <- predict(lo_fit, depth)
+df <- data.frame(depth, clay)
+
 p_l <- ggplot(h, aes(y = clay, x = hzdepm)) +
+  geom_point(data = df, aes(x = depth, y = clay), size = 2, show.legend = FALSE) +
   geom_smooth(se = FALSE, col = "black") +
   xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
   xlab("depth (cm)") + ylab("clay (%)") +
@@ -320,11 +328,56 @@ gridExtra::grid.arrange(p_s, p_l, ncol = 2)
 ---
 
 
-## 3rd Dimension - Groups
+## 3rd Dimension - Color, Shape, Size, Layers, etc...
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
+
+ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, col = "black") +
+  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+  xlab("depth (cm)") + ylab("clay (%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1)
+
+```
+
+
+---
+
+
+## 3rd Dimension - Color
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
 
 h$genhz2 <- factor(h$genhz, levels = rev(levels(h$genhz)))
+
+p_sb1 <- ggplot(h, aes(x = genhz2, fill = texture_class)) +
+  geom_bar(position = "stack") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Stacked Bars") +
+  coord_flip()
+
+p_sb2 <- ggplot(h, aes(x = genhz2, fill = texture_class)) +
+  geom_bar(position = "fill") +
+  ylab("Proportion") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Proportional Stacked Bars") + 
+  coord_flip()
+
+gridExtra::grid.arrange(p_sb1, p_sb2, ncol = 2)
+
+```
+
+
+---
+
+
+## 3rd Dimension - Groups
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
 idx <- h$genhz %in% c("Cr", "R", "not-used")
 
 p_b <- ggplot(h[!idx, ], aes(x = genhz2, y = clay)) + 
@@ -347,42 +400,57 @@ gridExtra::grid.arrange(p_b, p_d, ncol = 2)
 ---
 
 
-## 3rd Dimesion - Color, Shape, Size, etc...
+## 3rd Dimension - Facets
+
+```{r, echo = FALSE, fig.dim = c(8, 4)}
+
+df <- reshape2::melt(h, 
+                     id.vars = c("peiid", "genhz2", "hzdepm"), 
+                     measure.vars = c("clay", "phfield", "total_frags_pct")
+                     )
+
+idx <- df$genhz2 %in% c("Cr", "R", "not-used")
+
+ggplot(df[!idx, ], aes(y = value, x = genhz2)) +
+  geom_boxplot() +
+  xlab("genhz") +
+  facet_wrap(~ variable, scales = "free_x") +
+  coord_flip()
+```
+
+
+---
+
+
+## 3rd Dimension - Correlation
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
-h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
 
-ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
-  geom_point(size = 2, alpha = 0.7) +
-  geom_smooth(se = FALSE, col = "black") +
-  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
-  xlab("depth (cm)") + ylab("clay (%)") +
-  coord_flip() +
-  theme(aspect.ratio = 1)
+h <- transform(h, 
+               frags = total_frags_pct,
+               depth = hzdepm
+               )
+vars <- c("depth", "clay", "phfield", "frags")
+
+GGally::ggpairs(h[vars])
 
 ```
 
 
 ---
 
-## Stacked Bar Plots
 
-```{r, echo=FALSE, fig.dim = c(8, 4)}
+## ggplot2 basics
 
-p_sb1 <- ggplot(h, aes(x = genhz2, fill = texture_class)) +
-  geom_bar(position = "stack") +
-  theme(aspect.ratio = 1) +
-  ggtitle("Stacked Bar Plot") +
-  coord_flip()
+```{r, eval=TRUE}
 
-p_sb2 <- ggplot(h, aes(x = genhz, fill = texture_class)) +
-  geom_bar(position = "fill") +
-  ylab("Proportion") +
-  theme(aspect.ratio = 1) +
-  ggtitle("Proportional \n Stacked Bar Plot") + 
-  coord_flip()
+h <- horizons(loafercreek)
 
-gridExtra::grid.arrange(p_sb1, p_sb2, ncol = 2)
+# set figure axis and aesthetics
+p <- ggplot(data = h, aes(x = clay, y = hzdept, color = genhz))
+
+# add layers
+p + geom_point()
 
 ```
 
