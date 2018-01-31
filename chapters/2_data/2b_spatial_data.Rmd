@@ -438,14 +438,23 @@ proj4string(rs)
 ```
 
 
-Basic plot methods (class-specific functions) for the data. We can't overlay the two data sources (yet) because the coordinate reference systems (CRS) are not the same.
+Basic plot methods (class-specific functions) for the data. Note that this approach requires that all layers in the "map" are in the same coordinate refrence system (CRS).
 ```{r, fig.width=5, fig.height=6.75}
-# mlra polygons
+# MLRA polygons in native coordinate system
+# recall that mlra is a SpatialPolygonsDataFrame
 plot(mlra, main='MLRA 15 and 18')
 box()
 
-# maat raster
+# MAAT raster
+# recall that maat is a raster object
 plot(maat, main='PRISM Mean Annual Air Temperature (deg C)')
+
+
+# plot MAAT raster with MLRA polygons on top
+# this requires transforming to CRS of MAAT
+mlra.gcs <- spTransform(mlra, CRS(proj4string(maat)))
+plot(maat, main='PRISM Mean Annual Air Temperature (deg C)')
+plot(mlra.gcs, main='MLRA 15 and 18', add=TRUE)
 ```
 
 
@@ -468,6 +477,7 @@ The values stored in a `RasterLayer` or `RasterStack` object can be extracted us
 ```{r}
 # extract from a single RasterLayer
 extract(maat, p)
+
 # extract from a RasterStack
 extract(rs, p)
 ```
@@ -498,6 +508,7 @@ Sampling and extraction, result is a `matrix` object.
 ```{r, eval=FALSE}
 # sampling single RasterLayer
 sampleRegular(maat, size=10)
+
 # sampling RasterStack
 sampleRegular(rs, size=10)
 ```
@@ -522,6 +533,7 @@ Note that the mean can be efficiently estimated, even with a relatively small nu
 ```{r}
 # this will be very slow for large grids
 mean(values(maat), na.rm=TRUE)
+
 # generally much faster and just as good, given reasonable sampling strategy and sample size
 mean(x.regular$MAAT, na.rm=TRUE)
 mean(x.random$MAAT, na.rm=TRUE)
@@ -537,8 +549,10 @@ Get some KSSL data and upgrade the "site" data to a `SpatialPointsDataFrame`.
 ```{r}
 # result is a SoilProfileCollection object
 auburn <- fetchKSSL(series = 'auburn')
+
 # extract site data
 s <- site(auburn)
+
 # these are GCS WGS84 coordinates from NASIS
 coordinates(s) <- ~ x + y
 proj4string(s) <- '+proj=longlat +datum=WGS84'
@@ -548,6 +562,7 @@ Extract PRISM data (the `RasterStack` object we made earlier) at the Auburn KSSL
 ```{r}
 # return the result as a data.frame object
 e <- extract(rs, s, df=TRUE)
+
 # summarize out the extracted data
 # note that we are "leaving out" the first column which contains an ID
 summary(e[, -1])
@@ -557,13 +572,15 @@ Join the extracted PRISM data with the original `SoilProfileCollection` object. 
 ```{r}
 # combine site data with extracted raster values, row-order is identical
 res <- cbind(as.data.frame(s), e)
+
 # extract unique IDs and PRISM data
 res <- res[, c('pedon_key', 'MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT')]
+
 # join with original SoilProfileCollection object via pedon_key
 site(auburn) <- res
 ```
 
-The extracted values are now part of the "auburn" `SoilProfileCollection` object. Does there appear to be a relationship between soil morphology and "effective precipitation"?
+The extracted values are now part of the "auburn" `SoilProfileCollection` object. Does there appear to be a relationship between soil morphology and "effective precipitation"? Not really.
 ```{r fig.width=12, fig.height=6.5}
 # create an ordering of pedons based on the extracted effective PPT
 new.order <- order(auburn$eff.PPT)
@@ -572,9 +589,10 @@ new.order <- order(auburn$eff.PPT)
 par(mar=c(5,2,4,2))
 # plot profile sketches
 plot(auburn, name='hzn_desgn', print.id=FALSE, color='clay', plot.order=new.order)
+
 # add an axis with extracted raster values
 axis(side=1, at = 1:length(auburn), labels = round(auburn$eff.PPT[new.order]), cex.axis=0.75)
-mtext('Annual Sum of Monthly (PPT - ET_p) (mm)', side=1, line=2)
+mtext('Annual Sum of Monthly (PPT - ET_p) (mm)', side=1, line=2.5)
 ```
 
 Note that negative values are associated with a net deficit in monthly precipitation vs. estimated ET.
@@ -637,7 +655,7 @@ Back to our example data. The first step is to check the MLRA polygons (`mlra`);
 table(mlra$MLRARSYM)
 ```
 
-Convert polygon area from square meters to acres and summarize.
+Convert polygon area from square meters to acres and summarize. Note that this will only make sense when using a projected CRS with units of meters!
 ```{r}
 poly.area <- round(sapply(mlra@polygons, slot, 'area') * 0.000247105)
 summary(poly.area)
@@ -646,9 +664,10 @@ sum(poly.area)
 
 
 Sample each polygon at a constant sampling density of `0.001` samples per acre (1 sample for every 1,000 ac.). At this sampling density we should expect approximately 16,700 samples--more than enough for our simple example.
-```{r}
+```{r, warning=TRUE}
 library(sharpshootR)
-# the next function requires a polygon ID
+
+# the next function requires a polygon ID: each polygon gets a unique number 1--number of polygons
 mlra$pID <- 1:nrow(mlra)
 s <- constantDensitySampling(mlra, n.pts.per.ac=0.001)
 ```
@@ -657,8 +676,10 @@ Extract MLRA symbol at sample points using the `over()` function. The result wil
 ```{r}
 # spatial overlay: sampling points and MLRA polygons
 res <- over(s, mlra)
+
 # row / feature order is preserved, so we can directly copy
 s$mlra <- res$MLRARSYM
+
 # tabulate number of samples per MLRA
 table(s$mlra)
 ```
@@ -667,10 +688,13 @@ Extract values from the `RasterStack` of PRISM data as a `data.frame`.
 ```{r}
 # raster stack extraction at sampling points
 e <- extract(rs, s, df=TRUE)
+
 # convert sampling points from SpatialPointsDataFrame to data.frame
 s.df <- as(s, 'data.frame')
+
 # join columns from extracted values and sampling points
 s.df <- cbind(s.df, e)
+
 # check results
 head(s.df)
 ```
@@ -682,6 +706,7 @@ library(reshape2)
 
 # reshape from wide to long format
 m <- melt(s.df, id.vars = c('mlra'), measure.vars = c('MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT'))
+
 # check "wide" format
 head(m)
 ```
@@ -695,10 +720,20 @@ tapply(m$value, list(m$mlra, m$variable), mean)
 Lattice graphics are useful for summarizing grouped comparisons. The syntax is a little rough, but there is a lot of [documentation online](http://www.statmethods.net/advgraphs/trellis.html). [Box and whisker plots](https://en.wikipedia.org/wiki/Box_plot) are usually the first step in a graphical comparison of samples. We will go over the interpretation of these kind of figures in [chapter 4](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/4_exploratory_analysis.html).
 
 ```{r, fig.width=8, fig.height=4}
-bwplot(mlra ~ value | variable, data=m, as.table=TRUE, scales=list(alternating=3, relation='free'), strip=strip.custom(bg=grey(0.9)), panel=function(...) {
-  panel.grid(-1, -1)
-  panel.bwplot(...)
-})
+tps <- list(box.rectangle=list(col='black'), box.umbrella=list(col='black', lty=1), box.dot=list(cex=0.75), plot.symbol=list(col=rgb(0.1, 0.1, 0.1, alpha = 0.25, maxColorValue = 1), cex=0.25))
+
+
+bwplot(mlra ~ value | variable, data=m,                 # setup plot and data source
+       as.table=TRUE,                                   # start panels in top/left corner
+       varwidth=TRUE,                                   # scale width of box by number of obs
+       scales=list(alternating=3, relation='free'),     # setup scales
+       strip=strip.custom(bg=grey(0.9)),                # styling for strips
+       par.settings=tps,                                # apply box/line/point styling
+       panel=function(...) {                            # within in panel, do the following
+          panel.grid(-1, -1)                            # make grid lines at all tick marks
+          panel.bwplot(...)                             # make box-whisker plot
+      }
+)
 ```
 
 
