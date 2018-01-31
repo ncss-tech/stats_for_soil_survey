@@ -25,9 +25,7 @@ library(ggplot2)
 ## Objectives
 
 * Review methods for estimating Low, RV, and High values
-* Visualize data using ggplot2 package
-* Learn how to use the soilReports package to generate reports
-* Learn how to properly transform your data for analysis
+* Review different methods for visualing soil data
 
 
 ---
@@ -480,6 +478,30 @@ ggplot(df[!idx, ], aes(y = value, x = genhz2)) +
 ---
 
 
+## 3rd Dimension - Facets
+
+```{r, echo=FALSE, fig.dim=c(8, 4)}
+
+s <- aqp::slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
+s <- aqp::slab(s, fm = ~ clay + phfield + total_frags_pct, slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE))
+names(s) <- gsub("\\.", "", names(s))
+names(s) <- gsub("^X", "p", names(s))
+
+
+ggplot(s, aes(x = top, y = p50)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = p10, ymax = p90, x = top), alpha = 0.2) +
+  xlim(c(100, 0)) + xlab("depth (cm)") + ylab("") +
+  coord_flip() +
+  facet_wrap(~ variable, scales = "free_x") +
+  ggtitle("Loafercreek")
+
+```
+
+
+---
+
+
 ## 3rd Dimension - Correlation
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
@@ -491,6 +513,30 @@ h <- transform(h,
 vars <- c("depth", "clay", "phfield", "frags")
 
 GGally::ggpairs(h[vars])
+
+```
+
+
+---
+
+
+## Summary of Components
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+co <- get_component_from_SDA(WHERE = "compname = 'Crosby'")
+co2 <- subset(co, majcompflag == "Yes")
+h  <- get_chorizon_from_SDA(WHERE = "compname = 'Crosby'")
+test <- subset(h, cokey %in% co2$cokey)
+
+# ordering of groups is handled by ggplot2
+ggplot(test, aes(x = jitter(hzdept_r, 3), y = claytotal_r)) + 
+  geom_line(aes(group = cokey), alpha = 0.2) + 
+  geom_smooth(method = "loess") + 
+  xlim(100, 0) + ylab("clay percent") + xlab("clay(%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1) +
+  ggtitle("Crosby Components")
 
 ```
 
@@ -511,6 +557,19 @@ p <- ggplot(data = h, aes(x = clay, y = hzdept, color = genhz))
 p + geom_point()
 
 ```
+
+
+---
+
+## Questions
+
+1. What do the L, RV, and H represent?
+
+2. What are quantiles?
+
+3. What is the difference between a histogram and bar plot?
+
+4. How can you add a 3rd dimension to plots?
 
 
 ---

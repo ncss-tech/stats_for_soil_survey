@@ -713,7 +713,7 @@ Figure 11. Rose Diagram
 
 # Soil Reports
 
-One of the strengths of NASIS is that it that has a wealth of existing queries and reports. This makes it easy for the average user to load their data and run numerous reports. In R the soilDB similarly has many fetch functions to load data. Recently the soilReports package was developed to replicate NASIS's report repository. Currently soilReports contains a small collection of reports designed to summarize field and laboratory pedons, and map unit polygons. This collection of reports automates many of methods reviewed thus far, but are no substitute for interacting with your data and asking questions. Examples can be found at the following link, [https://github.com/ncss-tech/soil-pit/tree/master/examples](https://github.com/ncss-tech/soil-pit/tree/master/examples). 
+One of the strengths of NASIS is that it that has a wealth of existing queries and reports. This makes it easy for the average user to load their data and run numerous reports. In R the soilDB similarly has many fetch functions to load data. Recently the soilReports package was developed to replicate NASIS's report repository. Currently soilReports contains a small collection of reports designed to summarize field and laboratory pedons, and map unit polygons. This collection of reports automates many of methods reviewed thus far, but are no substitute for interacting with your data and asking questions. Examples can be found at the following link, [https://github.com/ncss-tech/soilReports#example-output](https://github.com/ncss-tech/soilReports#example-output). 
 
 The soilReports R package is largely just a collection of R Markdown (.Rmd) reports. R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS.
 
@@ -756,7 +756,7 @@ listReports()
 
 ```{r, eval=FALSE}
 # Copy report to your directory
-reportInit(reportName = "region11/lab_summary_by_taxonname", outputDir = "C:/workspace/lab_sum")
+copyReport(reportName = "region11/lab_summary_by_taxonname", outputDir = "C:/workspace2/lab_sum")
 ```
 
 5. **Examine** the report folders contents. The reported is titled report.Rmd. Notice their are several other support files. The parameters for the report are contained in the config.R file.
@@ -779,22 +779,27 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 ```{r, eval=FALSE}
 # Set report parameters
-series <- "Miamian"
+series <- "Crosby"
+genhz_rules <- "C:/workspace2/lab_sum/genhz_rules/Crosby_rules.R"
 
 # report file path
-report_path <- "C:/workspace/lab_sum/report.Rmd"
+report_path <- "C:/workspace2/lab_sum/report.Rmd"
 
 # Run the report
-render(input = report_path)
+render(input = report_path, 
+       output_dir = "C:/workspace2", 
+       output_file = "C:/workspace2/lab_sum.html", 
+       envir = new.env(), 
+       params = list(series = series,
+                     genhz_rules = genhz_rules
+                     )
+       )
+
 ```
 
 **Manual approach**
 
-**Open** the config.R file, **enter/replace** the soil series of interest, and **remove** the # comment before series object. Be sure to encase the soil series name in quotations, using either double or single quotations, such as `"series"` or `'series'`.
-
-![](figure/config.png)
-
-**Open** the report.Rmd, and **hit** the knit button. 
+**Open** the report.Rmd, **hit** the Knit drop down arrow, and select **Knit with Parameters**. 
 
 ![](figure/knit_button.png)
 
@@ -867,7 +872,7 @@ Zonal statistics in R can be implemented using either the census or sample appro
 #   OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
 # ))
 # 
-test <- read.csv("C:/workspace2/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") # import the results
+test <- read.csv("C:/workspace2/github/stats_for_soil_survey.git/trunk/data/ca794_zonal.csv") # import the results
 names(test)[1] <- "mukey" # rename the mukey column
 subset(test, mukey == 2480977) # examine mukey 2480977
 ```
@@ -901,7 +906,7 @@ To implement the sample approach to zonal statistics we can use the `extract()` 
 # save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
 # Load the cache/saved results
-load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
+load(file = "C:/workspace2/github/stats_for_soil_survey.git/trunk/data/ch2_sample.Rdata")
 
 # Examine summary for mukey 2480977
 summary(subset(test2, MUKEY == 2480977)) 
