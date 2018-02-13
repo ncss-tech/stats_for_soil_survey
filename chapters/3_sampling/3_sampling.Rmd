@@ -4,7 +4,7 @@ author: Skye Wills, Stephen Roecker, Tom D'Avello
 date: "`r Sys.Date()`"
 output:
   html_document:
-    keep_md: yes
+    keep_md: no
     number_sections: yes
     toc: yes
     toc_float:
@@ -129,7 +129,7 @@ test <- spsample(polys, n = 15, type = "stratified")
 points(test, pch = 19)
 ```
 
-Note that the `spsample()` function only stratifies the points spatially. Other more sophisticated designs can be implemented using the spsurvey, spcosa, or clhs packages.
+Note that the `spsample()` function only stratifies the points spatially. Other more sophisticated designs can be implemented using the [spsurvey](https://cran.r-project.org/package=spsurvey), [spcosa](https://cran.r-project.org/package=spcosa), [sharpshootR](http://ncss-tech.github.io/sharpshootR/docs/reference/constantDensitySampling.html), or [clhs](https://cran.r-project.org/package=clhs) packages.
 
 
 ## Multistage Stratified Random
@@ -213,7 +213,7 @@ The cLHS procedure iteratively selects samples from the strata variables such th
 
 To perform cLHS using R, you can use the clhs package (Roudier, 2011).
 
-```{r clhs}
+```{r clhs, fig.width=4, fig.height=4}
 library(clhs)
 library(raster)
 
@@ -236,7 +236,8 @@ rs <- stack(volcano_r, slope_r)
 cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
 
 # Plot cLHS Samples
-plot(volcano_r)
+par(mar=c(1,1,1,3))
+plot(volcano_r, axes=FALSE)
 points(cs$sampled_data)
 
 # Summary of clhs object
@@ -290,18 +291,19 @@ aggregate(slope ~ method, data = s, function(x) round(summary(x)))
 # Plot overlapping density plots to compare the distributions between the large and small samples
 library(ggplot2)
 ggplot(s, aes(x = slope, col = method)) + geom_density(cex = 2)
+```
 
+```{r fig.width=8, fig.height=3.5}
 # plot the spatial locations            
-par(mfrow = c(1, 3))
-plot(volcano_r, main = "Simple random", cex.main = 2)
+par(mfrow = c(1, 3), mar=c(1,2,4,2))
+plot(volcano_r, main = "Simple random", cex.main = 2, axes=FALSE)
 points(sr, pch = 3, cex = 1.2)
 
-plot(volcano_r, main = "Stratified random", cex.main = 2)
+plot(volcano_r, main = "Stratified random", cex.main = 2, axes=FALSE)
 points(str, pch = 3, cex = 1.2)
 
-plot(volcano_r, main = "cLHS", cex.main = 2)
+plot(volcano_r, main = "cLHS", cex.main = 2, axes=FALSE)
 points(cs$sampled_data, pch = 3, cex = 1.2)
-dev.off()
 ```
 
 The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs. Clearly the cLHS approach best duplicates the distribution of elevation (because elevation is explicitly used in the stratification process). The contrast is less severe in the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible using the approaches in the following chapters.
@@ -426,7 +428,7 @@ Roudier, P. 2011. cLHS: A R package for conditioned Latin hypercube sampling. [h
 
 Rossiter, D. 2015. Spatial modelling and analysis applied to agronomic and environmental systems [Lecture notes]. [http://www.css.cornell.edu/faculty/dgr2/teach/CSS6200.html](http://www.css.cornell.edu/faculty/dgr2/teach/CSS6200.html).
 
-Minasny, B., and A.B. McBratney. 2006. A conditioned Latin hypercube method for sampling in the presence of ancillary information. Computers & Geosciences. 32(9):1378–1388. [http://www.sciencedirect.com/science/article/pii/S009830040500292X](http://www.sciencedirect.com/science/article/pii/S009830040500292X).
+Minasny, B., and A.B. McBratney. 2006. A conditioned Latin hypercube method for sampling in the presence of ancillary information. Computers & Geosciences. 32(9):1378-1388. [http://www.sciencedirect.com/science/article/pii/S009830040500292X](http://www.sciencedirect.com/science/article/pii/S009830040500292X).
 
 Vaughan, R., and K. Megown. 2015. The Terrestrial Ecological Unit Inventory (TEUI) Geospatial Toolkit: User guide v5.2. RSAC-10117-MAN1. Salt Lake City, UT: U.S. Department of Agriculture, Forest Service, Remote Sensing Applications Center.  [http://www.fs.fed.us/eng/rsac/programs/teui/about.html](http://www.fs.fed.us/eng/rsac/programs/teui/about.html).
 
