@@ -1,0 +1,92 @@
+library(caret)
+library(lattice)
+library(Hmisc)
+library(tables)
+require (reshape2)
+require (ggplot2)
+
+### read csv file and creates dataframe. Replace *.txt with your comma delimited file
+
+x <- read.table("VT_DSM_sample_NULL_data_points_utm_all_predictors.csv", sep=",", header=TRUE)  
+str(x)
+
+### the column named "soilid" contains integer values representing soil series
+### this needs to be changed to a factor so R does not treat it as integer
+
+x$soilid <- as.factor(x$soilid)
+str(x)
+
+### Take a look at wetness index by soil using density plot
+### create kernal density plot of WETM for classes
+
+attach(x)
+densityplot(~WETM, groups=FEATURE, data=x, auto.key = list(corner = c(0.95, 0.95)))
+
+### boxplot of WETM ordered by WETM
+
+bwplot(WETM~reorder(FEATURE,WETM), x, scales=  list(x= list(rot = 90)))
+
+### look at summary statistics
+
+summary(x)
+
+summary(x$SLP, na.rm=TRUE)
+
+### summary by group - soil series in this case
+
+tabular(FEATURE ~ (SLP + WETM)*((n = 1) + mean + sd), data = x)
+
+### the tables package does not handle NA values directly, so create a function
+### that ignores NA
+
+Mean <- function(x) base::mean(x, na.rm=TRUE)
+
+tabular(Mean ~SLP, data=x)
+
+### subset data by soil
+
+cabot <- subset(x, FEATURE=="Cabot")
+
+colonel <- subset(x, FEATURE=="Colonel")
+
+dixfield <- subset(x, FEATURE=="Dixfield")
+
+### summary stats on cabot SLP
+
+summary(cabot$SLP)
+
+### impute missing values for SLP based on mean and median
+
+cabot$imputed_slpmean <- with(cabot, impute(SLP, mean))
+
+cabot$imputed_slpmedian <- with(cabot, impute(SLP, median))
+
+
+### impute using fitted linear model. This uses the Hmisc package
+### create subset of cabot using just SLP and WETM columns
+
+cabotSLP <- cabot[c(5:6)]
+impute_arg <- aregImpute(~ SLP + WETM, data = cabotSLP, n.impute = 5)
+impute_arg$imputed$SLP
+
+### add value from second imputation to NA of cabotSLP
+
+cabotSLPimpute <- impute.transcan(impute_arg, imputation=2, data=cabotSLP, list.out=TRUE,pr=FALSE, check=FALSE)
+
+cabotImputed <- data.frame(cabotSLPimpute)
+
+summary(cabotImputed)
+
+write.csv(cabotImputed, file = "cabotImputed.csv")
+
+### boxplot of SLP comparing original with NULL and imputed mean and median and skipping the frst column, which are record numbers
+
+boxplot(cabotImputed[2:4], use.cols=TRUE)
+
+### kernal density plots of same data
+### convert "wide" format dataframe into "long" format using melt
+### this creates a dataframe with two columns , value, which is a factor, and the respective values for each factor
+
+long = melt(cabotImputed, id.vars= "X")
+p <- ggplot(aes(x=value, colour=variable), data=long)
+p + geom_density()

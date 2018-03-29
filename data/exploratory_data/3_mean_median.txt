@@ -1,0 +1,71 @@
+## Script for Exploratory Data Analysis exercises
+## Compare Mean and Median for clay percent
+
+library(soilDB)
+library(ggplot2)
+
+## Use loafercreek data from the soilDB package
+## Create horizon object, make texture class a factor and
+## summarize data for clay, ph, total coarse fragments and texture class
+
+data("loafercreek")
+h <- horizons(loafercreek) 
+
+p   <- c(0.025, 0.25, 0.5, 0.75, 0.975)
+
+avg <- mean(h$clay, na.rm = TRUE)
+std <- sd(h$clay,   na.rm = TRUE)
+
+clay <- rbind(
+  data.frame(
+    value = c(avg - 2 * std, avg, avg + 2 * std),
+    variable = "mean & sd",
+    stringsAsFactors = TRUE
+    ),
+  data.frame(
+    value    = quantile(h$clay, p, na.rm = TRUE),
+    variable = "quantiles",
+    stringsAsFactors = TRUE
+    )
+  )
+
+avg <- mean(h$total_frags_pct, na.rm = TRUE)
+std <- sd(h$total_frags_pct,   na.rm = TRUE)
+
+frags <- rbind(
+  data.frame(
+    variable = "mean & sd",
+    value = c(avg - 2 * std, avg, avg + 2 * std),
+    stringsAsFactors = TRUE
+    ),
+  data.frame(
+    variable = "quantiles", 
+    value    = quantile(h$total_frags_pct, p, na.rm = TRUE),
+    stringsAsFactors = TRUE
+    )
+  )
+
+p1 <- ggplot(h, aes(x = clay)) +
+  geom_density(fill = "grey", alpha = 0.5) +
+  geom_vline(data = clay, aes(xintercept = value, lty = variable)) +
+  xlab("%") +
+  #xlim(-5, max(h$total_frags_pct)) +
+  theme(aspect.ratio = 1) +
+  ggtitle("Clay")
+
+p2 <- ggplot(h, aes(x = total_frags_pct)) +
+  geom_density(fill = "grey", alpha = 0.5) +
+  geom_vline(data = frags, aes(xintercept = value, lty = variable)) +
+  xlab("%") +
+  #xlim(-5, max(h$total_frags_pct)) +
+  theme(aspect.ratio = 1) +
+  ggtitle("Rock Fragments")
+
+## Plot of clay
+gridExtra::grid.arrange(p1, ncol = 1)
+
+## Plot of co frags
+gridExtra::grid.arrange(p2, ncol = 1)
+
+## Both plots together
+gridExtra::grid.arrange(p1, p2, ncol = 2)

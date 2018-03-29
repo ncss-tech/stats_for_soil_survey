@@ -1,0 +1,77 @@
+## Script for Exploratory Data Analysis exercises
+## Scatter plot of clay percent by depth
+
+library(soilDB)
+library(ggplot2)
+
+## Use loafercreek data from the soilDB package
+## Create horizon object, make texture class a factor and
+## summarize data for clay, ph, total coarse fragments and texture class
+
+
+data("loafercreek")
+
+data("metadata")
+
+# Create Generalized the horizon designations
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
+# REGEX rules
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+
+h <- horizons(loafercreek) 
+
+h <- within(h, {
+  hzdepm = (hzdept + hzdepb) / 2
+  texture_class = factor(texture_class, 
+                         levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
+                         )
+  })
+
+idx <- is.na(h$texture_class)
+
+p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
+  geom_point() +
+  ylim(100, 0) +
+  ylab("depth (cm)") + xlab("clay (%)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Scatter Plot")
+
+# line graph
+depth <- c(1, 5, 15, 30, 50, 70, 90)
+lo_fit <- loess(clay ~ hzdepm, data = h, na.action = na.exclude)
+clay <- predict(lo_fit, depth)
+df <- data.frame(depth, clay)
+
+p_l <- ggplot(h, aes(y = clay, x = hzdepm)) +
+  geom_point(data = df, aes(x = depth, y = clay), size = 2, show.legend = FALSE) +
+  geom_smooth(se = FALSE, col = "black") +
+  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+  xlab("depth (cm)") + ylab("clay (%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1) +
+  ggtitle("Line Plot")
+
+gridExtra::grid.arrange(p_s, p_l, ncol = 2)
+
+h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
+
+ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, col = "black") +
+  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+  xlab("depth (cm)") + ylab("clay (%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1)

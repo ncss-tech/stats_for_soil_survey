@@ -1,0 +1,38 @@
+## Script for Exploratory Data Analysis exercises
+
+library(soilDB)
+library(ggplot2)
+
+## Use loafercreek data from the soilDB package
+## Create horizon object, make correlation matrix
+
+data("loafercreek")
+
+h <- horizons(loafercreek) 
+
+h <- within(h, {hzdepm = (hzdept + hzdepb) / 2})
+
+h <- transform(h, 
+               frags = total_frags_pct,
+               depth = hzdepm
+               )
+
+vars <- c("depth", "clay", "phfield", "frags")
+
+# Received the error below when running GGally
+# put in two other examples (pairs and scatterplotMatrix) to generate same info
+# GGally::ggpairs(h[vars])
+# Error in loadNamespace(name) : there is no package called ‘GGally’
+
+# Simple correlation matrix
+
+pairs(~depth+clay+phfield+frags,data=h, upper.panel=NULL, main="Simple Scatterplot Matrix")
+
+# Scatterplot using the car package, which includes the linear best fit line in green, non-parametric best fit line in red, smoothed conditional spread as
+# red dashed lines, which are square root of variance of mean fitted line 
+
+library(car)
+
+scatterplotMatrix(~depth+clay+phfield+frags, data=h, upper.panel=NULL, main="Scatterplot Matrix with best fit lines")
+
+

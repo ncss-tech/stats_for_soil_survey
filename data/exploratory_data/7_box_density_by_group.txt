@@ -1,0 +1,53 @@
+## Script for Exploratory Data Analysis exercises
+## Box plot and Density plot of clay percent by horizon
+
+library(soilDB)
+library(ggplot2)
+
+## Use loafercreek data from the soilDB package
+## Create horizon object, make texture class a factor and
+## summarize data for clay, ph, total coarse fragments and texture class
+
+
+data("loafercreek")
+
+data("metadata")
+
+# Create Generalized the horizon designations
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
+# REGEX rules
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+h <- horizons(loafercreek)
+
+h$genhz2 <- factor(h$genhz, levels = rev(levels(h$genhz)))
+
+idx <- h$genhz %in% c("Cr", "R", "not-used")
+
+p_b <- ggplot(h[!idx, ], aes(x = genhz2, y = clay)) + 
+  geom_boxplot() +
+  ylab("clay (%)") + xlab("genhz") +
+  theme(aspect.ratio = 1) +
+  coord_flip()
+
+p_d <- ggplot(h[!idx, ], aes(x = clay, col = genhz)) +
+  geom_density(alpha = 0.5, lwd = 1.5) +
+  xlab("%") +
+  theme(aspect.ratio = 1)
+
+gridExtra::grid.arrange(p_b, p_d, ncol = 2)
+
+
+

@@ -1,0 +1,56 @@
+## Script for Exploratory Data Analysis exercises
+## Box plot of variables by generalized horizon
+
+library(soilDB)
+library(ggplot2)
+
+## Use loafercreek data from the soilDB package
+## Create horizon object, make texture class a factor and
+## summarize data for clay, ph, total coarse fragments and texture class
+
+
+data("loafercreek")
+
+data("metadata")
+
+# Create Generalized the horizon designations
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
+# REGEX rules
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+h <- horizons(loafercreek)
+
+vars <- c("clay", "phfield", "total_frags_pct")
+
+h$genhz2 <- factor(h$genhz, levels = rev(levels(h$genhz)))
+
+idx <- h$genhz2 %in% c("Cr", "R", "not-used")
+
+h <- within(h, {hzdepm = (hzdept + hzdepb) / 2})
+
+df <- reshape2::melt(h, 
+                     id.vars = c("peiid", "genhz2", "hzdepm"), 
+                     measure.vars = c("clay", "phfield", "total_frags_pct")
+                     )
+
+ggplot(df[!idx, ], aes(y = value, x = genhz2)) +
+  geom_boxplot() +
+  xlab("genhz") +
+  facet_wrap(~ variable, scales = "free_x") +
+  coord_flip()
+
+
+
+

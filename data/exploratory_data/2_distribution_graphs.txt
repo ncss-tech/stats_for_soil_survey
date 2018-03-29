@@ -1,0 +1,73 @@
+## Script for Exploratory Data Analysis exercises
+## Create bar plot of texture class
+## Create histogram of clay percent
+## Create density plot of clay percent
+
+library(soilDB)
+library(ggplot2)
+
+## Use loafercreek data from the soilDB package
+## Create horizon object, make texture class a factor and
+## summarize data for clay, ph, total coarse fragments and texture class
+
+data("loafercreek")
+
+data("metadata")
+
+# Create Generalized the horizon designations
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
+# REGEX rules
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+
+h <- horizons(loafercreek) 
+
+h <- within(h, {
+  hzdepm = (hzdept + hzdepb) / 2
+  texture_class = factor(texture_class, 
+                         levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
+                         )
+  })
+
+idx <- is.na(h$texture_class)
+
+# bar plot
+p_b <- ggplot(h[!idx, ], aes(x = texture_class)) +
+  geom_bar() +
+  ylab("count (n)") + xlab("texture class") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Bar Plot")
+
+# histogram
+p <- ggplot(data = h, aes(x = clay))
+
+p_h <- p + 
+  geom_histogram() + 
+  xlab("clay (%)") + ylab("count (n)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Histogram")
+
+# density plot
+p_d <- p + 
+  geom_density(fill = "grey", alpha = 0.5) + 
+  xlab("clay (%)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Density Plot")
+
+gridExtra::grid.arrange(p_b, p_h, p_d, ncol = 3)
+
+## Just do kernal density plot
+
+gridExtra::grid.arrange(p_d, ncol = 1)
