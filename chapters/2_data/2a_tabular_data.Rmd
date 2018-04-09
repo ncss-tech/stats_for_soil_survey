@@ -18,7 +18,7 @@ output:
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 library(knitr, quietly=TRUE)
-# library(printr, quietly=TRUE)
+
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
 
 # options for R functions
@@ -348,6 +348,59 @@ For more information on the data checks and adjusting the default options to `fe
 
 <!-- insert section labels for references via URL -->
 <a id="spc-object-structure"></a>
+
+
+## Customized Queries to Local NASIS Database
+
+```{r, fig.width=6, fig.height=4}
+library(RODBC)
+
+## setup local NASIS with query for:
+# user site ID ~ %MT647%
+
+## get soil temp measurements
+q <- "
+SELECT siteiid as siteiid, peiid, usiteid as site_id, upedonid as pedon_id, obsdate as obs_date,
+soitemp, soitempdep
+
+FROM
+
+site_View_1 
+INNER JOIN siteobs_View_1 ON site_View_1.siteiid = siteobs_View_1.siteiidref
+LEFT OUTER JOIN sitesoiltemp_View_1 ON siteobs_View_1.siteobsiid = sitesoiltemp_View_1.siteobsiidref
+LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref
+order by obs_date, siteiid;"
+
+# setup connection local NASIS
+channel <- odbcDriverConnect(connection="DSN=nasis_local;UID=NasisSqlRO;PWD=nasisRe@d0n1y")
+
+# exec query
+d <- sqlQuery(channel, q, stringsAsFactors=FALSE)
+
+# close connection
+odbcClose(channel)
+
+# check results
+str(d)
+
+# remove records missing values
+d <- na.omit(d)
+
+# tabulate unique soil depths
+table(d$soitempdep)
+
+# extract doy of year
+d$doy <- as.integer(format(d$obs_date, "%j"))
+
+# when where measurements collected?
+hist(d$doy, xlim=c(1,366), breaks=30, las=1, main='Soil Temperature Measurements', xlab='Day of Year')
+
+# soil temperature by day of year
+plot(soitemp ~ doy, data=d, type='p', xlim=c(1, 366), ylim=c(-5, 30), xlab='Day of Year', ylab='Soil Temperature at 50cm (deg C)', las=1)
+```
+
+
+
 
 ## Internal Structure of an `SoilProfileCollection` (SPC) Object
 
