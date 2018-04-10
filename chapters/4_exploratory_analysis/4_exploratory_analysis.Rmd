@@ -4,7 +4,6 @@ author: Tom D'Avello and Stephen Roecker
 date: "`r Sys.Date()`"
 output:
   html_document:
-    keep_md: yes
     number_sections: yes
     toc: yes
     toc_float:
@@ -22,6 +21,14 @@ knitr::opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.al
 ![](figure/logo.jpg)  
 
 
+# Objectives
+
+* Review methods for estimating Low, RV, and High values
+* Review different methods for visualing soil data
+* Review data transformations
+* Introduce the soilReports package
+
+
 #  Introduction
 
 Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This is typically done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.  
@@ -35,7 +42,7 @@ Descriptive statistics include:
  - **Mean** - arithmetic average  
  - **Median** - middle value  
  - **Mode** - most frequent value  
- - **Standard Deviation** - variation about the mean  
+ - **Standard Deviation** - variation around the mean  
  - **Interquartile Range** - range encompasses 50% of the values  
  - **Kurtosis** - peakedness of the data distribution  
  - **Skewness** - symmetry of the data distribution  
@@ -49,12 +56,6 @@ Graphical methods include:
  - **Scatter plots** - a graphical display of one variable plotted on the x axis and another on the y axis
  - **Radial plots** - plots formatted for the representation of circular data 
 
-## Objectives
-
-- Determine Low, RV, and High values (e.g. mean, median, etc...) for component and horizon data.
-- Visualize your data to identify trends, using Rs base and ggplot2 graphics.
-- Learn how to use the soilReports package to generate Rmarkdown reports.
-- Learn how to properly transform your data for analysis.
 
 #  Data Inspection
 
@@ -105,7 +106,7 @@ View(h)
 This view is fine for a small dataset, but can be cumbersome for larger ones. The `summary()` function can be used to quickly summarize a dataset however, even for our small example dataset, the output can be voluminous. Therefore in the interest of saving space we'll only look at a sample of columns.  
 
 ```{r}
-vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effervescence")
+vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effclass")
 summary(h[vars])
 
 # or
@@ -165,13 +166,304 @@ n <- c('A', 'Bt1', 'Bt2', 'Bt3','Cr','R')
 p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
 ```
 
+# Descriptive Statistics
 
-#   Examining Distributions  
+```{r, echo = FALSE}
+desc <- data.frame(
+  Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
+  NASIS = c(rep("RV", 3), rep("L & H", 2)),
+  Description = c("arithmetic average", 
+                  "middle value, 50% quantile", 
+                  "most frequent value", "variation around mean", 
+                  "percent rank of values, such that all values are <= p"
+                  ),
+  'R function' = c("mean()", "median()", "sort(table(), decreasting = TRUE)[1]", "sd()", "quantile()"),
+  check.names = FALSE
+  )
+knitr::kable(desc)
+```
+
+## Measures of Central Tendency  
+
+These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used measures for our purposes.
+
+**Mean** - is the arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which sums ( $\sum$ ) all the X values in the sample and divides by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
+
+The mean clay content from the loafercreek dataset may be determined:  
+
+```{r}
+clay <- na.exclude(h$clay) # first remove missing values and create a new vector
+
+mean(clay)
+
+# or use the additional na.rm argument
+
+mean(h$clay, na.rm = TRUE)
+```
+
+**Median**  is the middle measurement of a sample set, and as such is a more robust estimate of central tendency than the mean. This is known as the middle or 50th quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.
+
+The median from the sample dataset may be determined:  
+
+```{r}
+median(clay)
+```
+
+**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. In following example you can see where it looks like someone entered the laboratory data into the pedon horizon data. It's hard to tell from the example, but the first column in each sequence shows the values and the following columns show the number occurrences for that value.
+
+```{r}
+table(h$clay) # show a frequency table
+
+# we can fix the rounding error like so
+
+# table(round(h$clay))
+
+# or
+
+# table(as.integer(h$clay)) 
+
+sort(table(round(h$clay)), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
+```
+
+
+**Frequencies**
+
+To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using the `table()` function.
+
+```{r}
+table(h$genhz)
+
+# or
+
+# summary(h$genhz)
+```
+
+This gives us a count of the number of observations for each horizon. If we want to see the comparison between two different factors or characters, we can include two variables.
+
+```{r}
+table(h$genhz, h$hzname)
+
+table(h$genhz, h$texture_class)
+```
+
+We can also easily add margin totals to the table or convert the table frequencies to proportions.
+
+```{r}
+# append the table with row and column sums
+
+addmargins(table(h$genhz, h$texture_class))
+
+# calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
+
+round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) 
+```
+
+To determine the mean by a group or category, use the aggregate command:
+
+```{r}
+aggregate(clay ~ genhz, data = h, mean)
+```
+
+To determine the median by group or category, use the aggregate command again:  
+
+```{r}
+aggregate(clay ~ genhz, data = h, median)
+
+# or we could use the summary() function to get both the mean and median
+
+aggregate(clay ~ genhz, data = h, summary)
+```
+
+
+## Measures of Dispersion  
+
+These are measures used to determine the spread of values around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point. In NASIS speak these values might equate to the low (L) and high (H) values for numeric and integer data.
+
+
+**Variance**  is a positive value indicating deviation from the mean: ![](figure/ch4_fig20.jpg)  
+
+This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the *standard deviation*. Variance for the sample dataset is:  
+
+```{r}
+var(clay)
+```
+
+**Standard Deviation**  is the square root of the variance: ![](figure/ch4_fig22.jpg)  
+
+The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:  
+
+```{r}
+sd(clay)
+
+# or
+
+# sqrt(var(clay))
+```
+
+**Coefficient of Variation** (CV)  is a relative (i.e., unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
+
+CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:  
+
+```{r}
+cv <- sd(clay) / mean(clay) * 100
+cv
+```
+
+
+**Quantiles (a.k.a. Percentiles)** - the percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
+
+The default for the `quantile()` function returns the  min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
+
+```{r}
+quantile(clay)
+
+# or
+
+quantile(clay, c(0.05, 0.5, 0.95))
+```
+
+Thus, for the five number summary 25% of the observations fall between each of the intervals. Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpretation.
+
+
+**Range**  is the difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
+
+```{r}
+range(clay)
+```
+
+which returns the minimum and maximum values observed, or:  
+
+```{r}
+diff(range(clay))
+
+# or
+
+# max(clay) - min(clay)
+```
+
+which returns the value of the range  
+
+
+**Interquartile Range** (IQR)  is the range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:  
+
+```{r}
+IQR(clay)
+
+# or
+
+# diff(quantile(clay, c(0.25, 0.75)))
+```
+
+# Graphical Methods
 
 Now that we've checked for missing values and typos and made corrections, we can graphically examine the sample data distribution of our integer and numeric data. Frequency distributions are useful because they can help us visualize the center (e.g., RV) and spread or dispersion (e.g., low and high) of our data. Typically in introductory statistics the normal (i.e., Gaussian) distribution is emphasized.
 
 
-##   The normal distribution
+## Descriptions
+
+```{r, echo = FALSE}
+figs <- data.frame(
+  'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
+   Description = c("a plot where each bar represents the frequency of observations for a 'group'",
+                   "a plot where each bar represents the frequency of observations for a 'given range of values'",
+                  "an estimation of the frequency distribution based on the sample data",
+                  "a plot of the actual data values against a normal distribution",
+                  "a visual representation of median, quartiles, symmetry, skewness, and outliers",
+                   "a graphical display of one variable plotted on the x axis and another on the y axis"
+                  ),
+  check.names = FALSE
+  )
+
+knitr::kable(figs)
+```
+
+
+## R fuctions
+
+```{r}
+figs <- data.frame(
+  'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
+  # Description = c("a bar plot where each bar represents the frequency of observations for a given range of values",
+  #                "an estimation of the frequency distribution based on the sample data",
+  #                "a plot of the actual data values against a normal distribution",
+  #                "a visual representation of median, quartiles, symmetry, skewness, and outliers",
+  #                 "a graphical display of one variable plotted on the x axis and another on the y axis",
+  #                "plots formatted for the representation of circular data"
+  #                ),
+  'Base R' = c("barplot()", "hist()", "plot(density())", "qqnorm()", "boxplot()", "plot()"),
+  'lattice' = c("barchart()", "histogram()", "densityplot()", "qq()", "bwplot()", "xyplot"),
+  'ggplot geoms' = c("geom_bar()", "geom_histogram()", "geom_density()", "geom_qq()", "geom_boxplot()", "geom_point()"),
+  check.names = FALSE
+  )
+
+knitr::kable(figs)
+```
+
+
+## Distributions
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+data("metadata")
+
+# Generalized the horizon designations
+n <- c("A",
+       "BAt",
+       "Bt1",
+       "Bt2",
+       "Cr",
+       "R")
+# REGEX rules
+p <- c("A",
+       "BA|AB",
+       "Bt|Bw",
+       "Bt3|Bt4|2B|C",
+       "Cr",
+       "R")
+
+loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+
+h <- horizons(loafercreek)
+h <- within(h, {
+  hzdepm = (hzdept + hzdepb) / 2
+  texture_class = factor(texture_class, 
+                         levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
+                         )
+  })
+
+idx <- is.na(h$texture_class)
+
+library(ggplot2)
+
+# bar plot
+p_b <- ggplot(h[!idx, ], aes(x = texture_class)) +
+  geom_bar() +
+  ylab("count (n)") + xlab("texture class") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Bar Plot")
+
+# histogram
+p <- ggplot(data = h, aes(x = clay))
+
+p_h <- p + 
+  geom_histogram() + 
+  xlab("clay (%)") + ylab("count (n)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Histogram")
+
+# density plot
+p_d <- p + 
+  geom_density(fill = "grey", alpha = 0.5) + 
+  xlab("clay (%)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Density Plot")
+
+gridExtra::grid.arrange(p_b, p_h, p_d, ncol = 3)
+
+```
+
+
+###   The 'Normal' distribution
 
 What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Applying certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e., Low, RV and High values). Often a rule-of thumb similar to: "two standard deviations" is used to define the low and high values of a variable. This is fine if the data are normally distributed. However, if the data are skewed, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality and can be found in the fBasics package, but Webster (2001) cautions against using significance tests for assessing normality. The preceding sections and chapters will demonstrate various methods to cope with alternative distributions.
 
@@ -255,6 +547,36 @@ plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 # Displaying data in this manner provides a visual means to determine if your data have a wide, flat, narrow, peaked, normal, or skewed distribution.  
 ```
 
+In this example the mean and median are only slightly different, so we can safely assume that we have a normal distribution. However many soil variables often have a non-normal distribution. For example, let's look at graphical examination of the mean vs. median for clay and rock fragments:  
+
+```{r}
+amean = mean(clay)
+amed <- median(clay)
+
+library(ggplot2)
+
+ggplot(h, aes(x = clay)) +
+  geom_density() +
+  geom_vline(xintercept = amean, col = "blue") +
+  geom_vline(xintercept = amed, col = "orange") +
+  ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Clay Content")
+
+amean <- mean(h$total_frags_pct)
+amed <- median(h$total_frags_pct)
+
+ggplot(h, aes(x = total_frags_pct)) +
+  geom_density() +
+  geom_vline(xintercept = amean, col = "blue") +
+  geom_vline(xintercept = amed, col = "orange") +
+  ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Rock Fragments")
+
+```
+
+Figure 7. Comparison of the mean vs median for clay and rock fragments.  
+
+
+The blue vertical line represents the breakpoint for the median and the orange represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a long tailed distribution (e.g., skewed). Using the mean in this instance would overestimate the rock fragments. Although in this instance the difference between the mean and median is only `r round(amean - amed)` percent.
+
 
 ## Histograms and density curves  
 
@@ -303,198 +625,6 @@ Figure 5. The Kernel density plot depicts a smoothed line of the distribution
 Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. Notice how the histogram of clay seems to emphasis the long right tail of values, which we might question as to whether we have a normal distribution. One curious feature of the density curve is the hint of a bimodal distribution. Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
 
-## Quantile comparison plots (QQplot)  
-
-A QQplot is a plot of the actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).  
-
-A QQplot of sand content may be made for the sample dataset as: 
-
-```{r}
-
-ggplot(h, aes(sample = clay)) + 
-  geom_qq() +
-  ggtitle("Normal Q-Q Plot for Clay")
-
-ggplot(h, aes(sample = total_frags_pct)) + 
-  geom_qq() +
-  ggtitle("Normal Q-Q Plot for Frags")
-
-```
-
-Figure 6. QQplot  
-
-The line represents the quantiles of a normal distribution. If the data set is perfectly normal, the data points will fall along the line. Overall this plot shows that our clay example is more or less normally distributed. However the second plot again shows that our rock fragments are far from normally distributed.
-
-A more detailed explanation of QQplots may be found on Wikipedia:  
-[https://en.wikipedia.org/wiki/QQ_plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)  
-
-
-# Measures of Central Tendency  
-
-These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used measures for our purposes.
-
-**Mean** - is the arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which sums ( $\sum$ ) all the X values in the sample and divides by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
-
-The mean clay content from the loafercreek dataset may be determined:  
-
-```{r}
-clay <- na.exclude(h$clay) # first remove missing values and create a new vector
-
-mean(clay)
-
-# or use the additional na.rm argument
-
-mean(h$clay, na.rm = TRUE)
-```
-
-To determine the mean by a group or category, use the aggregate command:
-
-```{r}
-aggregate(clay ~ genhz, data = h, mean)
-```
-
-**Median**  is the middle measurement of a sample set, and as such is a more robust estimate of central tendency than the mean. This is known as the middle or 50th quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.
-
-The median from the sample dataset may be determined:  
-
-```{r}
-median(clay)
-```
-
-To determine the median by group or category, use the aggregate command again:  
-
-```{r}
-aggregate(clay ~ genhz, data = h, median)
-
-# or we could use the summary() function to get both the mean and median
-
-aggregate(clay ~ genhz, data = h, summary)
-```
-
-In this example the mean and median are only slightly different, so we can safely assume that we have a normal distribution. However many soil variables often have a non-normal distribution. For example, let's look at graphical examination of the mean vs. median for clay and rock fragments:  
-
-```{r}
-amean = mean(clay)
-amed <- median(clay)
-
-ggplot(h, aes(x = clay)) +
-  geom_density() +
-  geom_vline(xintercept = amean, col = "blue") +
-  geom_vline(xintercept = amed, col = "orange") +
-  ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Clay Content")
-
-amean <- mean(h$total_frags_pct)
-amed <- median(h$total_frags_pct)
-
-ggplot(h, aes(x = total_frags_pct)) +
-  geom_density() +
-  geom_vline(xintercept = amean, col = "blue") +
-  geom_vline(xintercept = amed, col = "orange") +
-  ggtitle("Comparison of the Mean (Blue) and Median (Orange) for Rock Fragments")
-
-```
-
-Figure 7. Comparison of the mean vs median for clay and rock fragments.  
-
-
-The blue vertical line represents the breakpoint for the median and the orange represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a long tailed distribution (e.g., skewed). Using the mean in this instance would overestimate the rock fragments. Although in this instance the difference between the mean and median is only `r round(amean - amed)` percent.
-
-**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. In following example you can see where it looks like someone entered the laboratory data into the pedon horizon data. It's hard to tell from the example, but the first column in each sequence shows the values and the following columns show the number occurrences for that value.
-
-```{r}
-table(h$clay) # show a frequency table
-
-# we can fix the rounding error like so
-
-# table(round(h$clay))
-
-# or
-
-# table(as.integer(h$clay)) 
-
-sort(table(round(h$clay)), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
-```
-
-# Measures of Dispersion  
-
-These are measures used to determine the spread of values around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point. In NASIS speak these values might equate to the low (L) and high (H) values for numeric and integer data.
-
-
-**Variance**  is a positive value indicating deviation from the mean: ![](figure/ch4_fig20.jpg)  
-
-This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the *standard deviation*. Variance for the sample dataset is:  
-
-```{r}
-var(clay)
-```
-
-**Standard Deviation**  is the square root of the variance: ![](figure/ch4_fig22.jpg)  
-
-The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:  
-
-```{r}
-sd(clay)
-
-# or
-
-# sqrt(var(clay))
-```
-
-**Coefficient of Variation** (CV)  is a relative (i.e., unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
-
-CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:  
-
-```{r}
-cv <- sd(clay) / mean(clay) * 100
-cv
-```
-
-
-**Quantiles (a.k.a. Percentiles)** - the percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.
-
-The default for the `quantile()` function returns the  min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
-
-```{r}
-quantile(clay)
-
-# or
-
-quantile(clay, c(0.05, 0.5, 0.95))
-```
-
-Thus, for the five number summary 25% of the observations fall between each of the intervals. Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpretation.
-
-
-**Range**  is the difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
-
-```{r}
-range(clay)
-```
-
-which returns the minimum and maximum values observed, or:  
-
-```{r}
-diff(range(clay))
-
-# or
-
-# max(clay) - min(clay)
-```
-
-which returns the value of the range  
-
-
-**Interquartile Range** (IQR)  is the range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:  
-
-```{r}
-IQR(clay)
-
-# or
-
-# diff(quantile(clay, c(0.25, 0.75)))
-```
-
-
 ## Box plots  
 
 Box plots are a graphical representation of the five number summary, depicting quartiles, minimum, maximum and outliers (if present). Boxplots convey the shape of the data distribution, the presence of extreme values, and the ability to compare with other variables using the same scale, providing an excellent tool for screening data quality, determining thresholds for variables and developing working hypotheses.  
@@ -528,40 +658,35 @@ The xlab and ylab parameters control the titles of the x and y axis.
 
 The above box plot shows a steady increase in clay content with depth. Notice the outliers in the box plots, identified by the individual circles.
 
-**Frequencies**
 
-To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using the `table()` function.
+## Quantile comparison plots (QQplot)  
 
-```{r}
-table(h$genhz)
+A QQplot is a plot of the actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).  
 
-# or
-
-# summary(h$genhz)
-```
-
-This gives us a count of the number of observations for each horizon. If we want to see the comparison between two different factors or characters, we can include two variables.
+A QQplot of sand content may be made for the sample dataset as: 
 
 ```{r}
-table(h$genhz, h$hzname)
 
-table(h$genhz, h$texture_class)
+ggplot(h, aes(sample = clay)) + 
+  geom_qq() +
+  ggtitle("Normal Q-Q Plot for Clay")
+
+ggplot(h, aes(sample = total_frags_pct)) + 
+  geom_qq() +
+  ggtitle("Normal Q-Q Plot for Frags")
+
 ```
 
-We can also easily add margin totals to the table or convert the table frequencies to proportions.
+Figure 6. QQplot  
 
-```{r}
-# append the table with row and column sums
+The line represents the quantiles of a normal distribution. If the data set is perfectly normal, the data points will fall along the line. Overall this plot shows that our clay example is more or less normally distributed. However the second plot again shows that our rock fragments are far from normally distributed.
 
-addmargins(table(h$genhz, h$texture_class))
-
-# calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
-
-round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) 
-```
+A more detailed explanation of QQplots may be found on Wikipedia:  
+[https://en.wikipedia.org/wiki/QQ_plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)  
 
 
-# Measures of Association 
+
+# Relationships 
 
 ## Correlation matrix
 
@@ -871,7 +996,7 @@ Zonal statistics in R can be implemented using either the census or sample appro
 #   OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
 # ))
 # 
-test <- read.csv("C:/workspace2/github/stats_for_soil_survey.git/trunk/data/ca794_zonal.csv") # import the results
+test <- read.csv("C:/workspace2/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") # import the results
 names(test)[1] <- "mukey" # rename the mukey column
 subset(test, mukey == 2480977) # examine mukey 2480977
 ```
@@ -905,7 +1030,7 @@ To implement the sample approach to zonal statistics we can use the `extract()` 
 # save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
 # Load the cache/saved results
-load(file = "C:/workspace2/github/stats_for_soil_survey.git/trunk/data/ch2_sample.Rdata")
+load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
 # Examine summary for mukey 2480977
 summary(subset(test2, MUKEY == 2480977)) 
