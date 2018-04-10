@@ -8,14 +8,21 @@ css: custom.css
 
 Jay Skovlin, Dylan Beaudette, Stephen Roecker
 
-<br><br><br><br><br><br><br><br><br><br>
-<span style="color: white; font-size:65%;">This document is based on:<br>`aqp` (`r utils::packageDescription("aqp", field="Version")`), `soilDB` (`r utils::packageDescription("soilDB", field="Version")`), and `sharpshootR` (`r utils::packageDescription("sharpshootR", field="Version")`).</span>
+<br><br><br><br><br><br><br>
+<span style="color: white; font-size:65%;">This document is based on:</span>
+<ul style="color: white; font-size:65%;">
+<li> `aqp` (`r utils::packageDescription("aqp", field="Version")`)</li>
+<li> `soilDB` (`r utils::packageDescription("soilDB", field="Version")`)</li>
+<li> `sharpshootR` (`r utils::packageDescription("sharpshootR", field="Version")`)</li>
+</ul>
 
 
-```{r setup, echo=FALSE, results='hide', warning=FALSE}
+
+
+
+```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 library(knitr, quietly = TRUE)
-library(printr, quietly = TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, fig.align='center', dev='png', tidy=TRUE, tidy.opts=list(width.cutoff=100), cache=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, dpi=120, fig.align='center', retina=2, dev='png', dev.args=list(pointsize=10), tidy=TRUE, tidy.opts=list(width.cutoff=100), cache=TRUE)
 ```
 
 ```{r packages-data-pre-processing, tidy=FALSE, echo=FALSE}
@@ -32,301 +39,37 @@ library(diagram)
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-R Packages for working with soil data
+
+
+Chapter 2: Common Data Sources
 ========================================================
 
-What if you could extract, organize, and visualize data from NASIS and many other commonly used soil database sources with a couple of lines of code? 
-
-![](static-figures/soilDB-demo.png)
-
-Suite of R packages specific to Soil Survey work
-========================================================
-
-![alt text](static-figures/pinn-transect.png)
-
-- soil data are complex, inherently visual
-- reproducibility is increasingly important
-- focus on the interesting questions, not boilerplate
-- a common vocabulary for soil data analysis would be nice
-
-
-aqp Package: Algorithms for Quantitative Pedology
-========================================================
-class: smaller
-
-![alt text](static-figures/sketches.png)
-
-- **special data structures:** avoids annoying book-keeping code
-- **visualization:** soil profile sketches, transect diagrams, Munsell &#8594;&nbsp; RGB
-- **re-sampling:** regular depth-slicing or EA spline (coming soon)
-- **aggregation:** summary by depth-slice or arbitrary "slabs"
-- **classification:** pair-wise dissimilarity of profiles
-- **utility functions:** soil depth, missing data eval., simulation, ...
-
-
-soilDB Package: Soil Database Interface
-========================================================
-
-![](static-figures/soilDB_figure.png)
-
-
-
-sharpshootR Package: Prototypes / Specialized Stuff
-========================================================
-class: small-code
-<span class="oneliner">profile sketches organized by taxonomy</span>
-
-```{r sharpshootR-0, fig.width=12, fig.height=5, eval=TRUE, echo=FALSE}
-# soils of interest
-s.list <- c('hornitos', 'perkins', 'argonaut', 'inks', 'mokelumne', 'dunstone', 'auburn', 'pentz', 'pardee', 'peters', 'amador', 'laniger')
-
-# fetch data from SoilWeb server and return as SoilProfileCollection
-s <- fetchOSD(s.list)
-
-# organize and plot according to subgroup level taxonomic data
-SoilTaxonomyDendrogram(s, cex.taxon.labels=0.8)
-```
-
-soilReports Package: Generate unique reports
-========================================================
-class: small-code
-<span class="oneliner">generate unique comparison and summary reports</span>
-
-![](static-figures/mu-summary-bwplot-1.png)
-
-soilReports Package: Generate unique reports
-========================================================
-class: small-code
-<span class="oneliner">generate unique comparison and summary reports</span>
-
-![](static-figures/mu-summary-density-1.png)
-
-
-Why R?
-========================================================
- 
-- repeatable, self-documenting work:
- - 2800+ packages on CRAN: 100+ packages on GIS, ecology, and **soils**!
- - package system: algorithms + docs + sample data
-
-- applies a scripting approach to repetitive analysis work 
- 
-- advanced data visualization capabilities
- - testing by eye: simple graphical "grammar" used to plot data
- - formalized testing: correlation, regression, classification, ordination, ...
- - I/O capabilities: file, URL, SOAP, SQL, ODBC, PDF, PNG, SHP, KML, ...
- - optimizers, matrix operations, custom data structures, ...
-
-
-
-
-
-
-Examples
-========================================================
-
-
-soilDB: OSD Summaries
-========================================================
-class: small-code
-<span class="oneliner">basic morphologic / taxonomic data from OSD and SC databases [<a href="http://casoilresource.lawr.ucdavis.edu/see/">SoilWeb</a>]</span>
-
-```{r soilDB-OSD, fig.width=10, fig.height=5, eval=TRUE, tidy=FALSE}
-# soils of interest
-s.list <- c('hornitos', 'argonaut', 'mokelumne', 'dunstone', 'auburn', 'pentz', 'pardee', 'peters', 'amador', 'laniger')
-
-# fetch data from SoilWeb server and return as SoilProfileCollection
-s <- fetchOSD(s.list)
-
-# plot
-par(mar=c(0,0,0,0))
-plot(s, name='hzname', id.style='side', cex.name=0.75, axis.line.offset=-4.5)
-```
-
-
-soilDB: Soil Series Extent
-========================================================
-class: small-code
-<span class="oneliner">simplified series extent maps [<a href="http://casoilresource.lawr.ucdavis.edu/see/">SoilWeb</a>]</span>
-
-```{r soilDB-series-extent, eval=FALSE}
-amador <- seriesExtent("amador") # result is a SpatialPolygonsDataFrame
-writeOGR(amador, driver='ESRI Shapefile', ...) # save to SHP
-```
-
-![alt text](static-figures/series-extent-example.png)
-
-
-
-soilDB: KSSL Data
-========================================================
-class: small-code
-<span class="oneliner">characterization and current taxonomic data [<a href="http://casoilresource.lawr.ucdavis.edu/see/">SoilWeb</a>]</span>
-
-```{r soilDB-KSSL, eval=FALSE}
-musick <- fetchKSSL('musick') # result is a SoilProfileCollection
-```
-
-![alt text](static-figures/kssl-slab-example.png)
-
-soilDB: SCAN and SNOTEL climate data
-========================================================
-class: small-code
-<span class="oneliner">plot time series and summaries of above and below ground sensors</span>
-
-![alt text](static-figures/SCAN_data_time_series.jpeg)
-
-
-
-sharpshootR: Soil Taxonomy Visualization
-========================================================
-class: small-code
-<span class="oneliner">profile sketches organized by taxonomy</span>
-
-```{r sharpshootR-1, fig.width=12, fig.height=5, eval=TRUE}
-# soils of interest
-s.list <- c('hornitos', 'perkins', 'argonaut', 'inks', 'mokelumne', 'dunstone', 'auburn', 'pentz', 'pardee', 'peters', 'amador', 'laniger')
-
-# fetch data from SoilWeb server and return as SoilProfileCollection
-s <- fetchOSD(s.list)
-
-# organize and plot according to subgroup level taxonomic data
-SoilTaxonomyDendrogram(s, cex.taxon.labels=0.8)
-```
-
-
-
-sharpshootR: Component Relationships
-========================================================
-<span class="oneliner">investigate the relationship between component data from SSURGO / NASIS</span>
-
-```{r sharpshootR-comp-relationship-1, fig.width=15, fig.height=15, results='hide', echo=TRUE, eval=TRUE, tidy=FALSE}
-# get data from SDA
-q <- "SELECT component.mukey, comppct_r, lower(compname) as compname 
-FROM legend 
-INNER JOIN mapunit ON mapunit.lkey = legend.lkey 
-LEFT OUTER JOIN component ON component.mukey = mapunit.mukey 
-WHERE legend.areasymbol IN ('CA654') AND compkind IN ('Series', 'Taxadjunct')
-ORDER BY mukey, comppct_r DESC"
-
-# run query, process results, and return as data.frame object
-res <- SDA_query(q)
-```
-
-```{r sharpshootR-comp-relationship-2, echo=TRUE, eval=FALSE, tidy=TRUE}
-# compute adjacency matrix
-m <- component.adj.matrix(res)
-# plot component relationships as network diagram
-par(mar=c(0,0,2,0)) 
-plotSoilRelationGraph(m) 
-title('CA654 Components')
-```
-
-<span class="link-to-details">&#8594;&nbsp;[SDA_query() manual page](http://aqp.r-forge.r-project.org/soilDB-html-manual/SDA_query.html)</span>
 <br>
-<span class="link-to-details">&#8594;&nbsp;[component.adj.matrix() manual page](http://aqp.r-forge.r-project.org/sharpshootR-html-manual/component.adj.matrix.html)</span>
-<br>
-<span class="link-to-details">&#8594;&nbsp;[plotSoilRelationGraph() manual page](http://aqp.r-forge.r-project.org/sharpshootR-html-manual/plotSoilRelationGraph.html)</span>
+
+**You need data before you can analyze it**
+
+- loading data from various sources
+- visualizing pedon / component data via "sketches"
+- filtering pedon / component data via pattern matching
+- exporting pedon / component data to text files or GIS data files
 
 
-sharpshootR: Component Relationships
-========================================================
-title: none
-```{r sharpshootR-comp-relationship-3, fig.width=15, fig.height=15, results='hide', echo=FALSE, eval=TRUE}
-m <- component.adj.matrix(res)
-par(mar=c(0,0,2,0)) ; plotSoilRelationGraph(m) ; title('CA654 Components')
-```
-
-sharpshootR: ESD Relationships
-========================================================
-<span class="oneliner">investigate the relationship between ESD and component data from SSURGO / NASIS</span>
-
-![alt text](static-figures/ESD_relation_diagram.png)
+**Most of our data aren't in the form of CSV files**
+- R packages to assist with loading soil survey data
+- R packages for modeling the complexities of soil data
+- R packages for routine analysis of pedon / component / ESC objects
 
 
-sharpshootR: Component Relationships
-========================================================
-<span class="oneliner">generate hillslope position probability matrix by series name</span>
-
-```{r sharpshootR-comp-relationship-4, eval=FALSE, echo=TRUE, results='hide'}
-top.10 <- names(sort(table(res$compname), decreasing=TRUE)[1:10])
-hp <- hillslope.probability(top.10)
-```
-
-```{r sharpshootR-comp-relationship-5, eval=FALSE, echo=FALSE}
-print(hp)
-```
-
-Potential uses: 
-- disaggregation clues
-- stratification / weighting for sampling mission
-- survey update work / ESD work
+<br><hr>
+[Chapter 2 reference material](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html)
 
 
-soilReports: Mapunit and MLRA comparisons
-========================================================
-
-- Reports that:
-   + summarize component data for an MLRA project
-   + summarize lab data from NASIS Lab Layer table
-   + summarize mupolygon layer from a geodatabase
-   + summarize field pedons from NASIS pedon table
-   + compare MLRA using pre-made, raster sample databases
-
-
-Convenience 'fetch' Functions in the SoilDB Package
-========================================================
-
-- **fetchNASIS(from='pedons')**
-    - Gets NASIS pedon/horizon data from a local NASIS database.
-    
-- **fetchNASIS(from='components')**
-    - Gets selected NASIS map unit and component daa from a local NASIS database.
-      + [NASIS Component Data](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html)
-    
-
-Fetch lab data sources
-========================================================
-
-- **fetchNASISLabData()**
-    - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
-- **fetchKSSL()**
-    - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
-        + [KSSL Data Demo](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html)
-        + [Water Retention Curve Development from KSSL Data](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
-- **fetchRaCA()**
-    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
-        + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)  
-        
- 
-Fetch other soil data sources
-========================================================       
-- **SDA_query**
-    - Submits queries to the Soil Data Access system.
-        + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
-        
-- **fetchOSD()**
-    - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
-    
-- **fetchPedonPC()**
-    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
-    
-Fetch soil climate-related sources
-======================================================== 
-
-- **fetchSCAN()**
-    - Queries soil and climate data from USDA-NRCS SCAN Stations.
-      + [A Unified Interface to SCAN/SNOTEL Data](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
-      
-- **fetchHenry()**
-    - Downloads data from the Henry Mount Soil Climate Database.
-        + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
 
 
 Why do all of this?  
 ========================================================
 
-```{r echo=FALSE, results='hide', fig.height=7, fig.width=9, dpi=120}
+```{r echo=FALSE, results='hide', fig.height=6.5, fig.width=9, dpi=120}
 library(ggplot2)
 # assemble data on number of pedon by decade
 #Pedons <- c(577, 6152, 9517, 19058, 42587, 112182, 231609, 184913)
@@ -367,9 +110,9 @@ Cummulative_Pedons <- c(310, 312, 330, 356,
 ggplot(data.frame(Pedons, Year), aes(x=Year, y=Pedons)) + geom_bar(stat="identity") + scale_y_continuous(name="Pedons", labels = scales::comma)
 ``` 
 
-Cummulative trend
+That is a lot of (perhaps underutilized) data!
 ========================================================
-```{r pedons_a1, echo=FALSE, results='hide',fig.height=7, fig.width=9, dpi=120}
+```{r pedons_a1, echo=FALSE, results='hide',fig.height=6.5, fig.width=9, dpi=120}
 # plot the cummulative number of pedons in NASIS 
 ggplot(data.frame(Cummulative_Pedons, Year), aes(x=Year, y=Cummulative_Pedons)) + geom_bar(stat="identity") + scale_y_continuous(name="Cummulative Pedons", labels = scales::comma)
 ``` 
@@ -391,69 +134,176 @@ Common Issues with Pedon Data
   + Use a cutoff depth, for example 100 cm, can be used to truncate observations to a zone of greater confidence.
   + Show the relative confidence of the data with depth.
 
-SoilDB Package - How does it work and what does it do?
+
+
+Suite of R packages specific to Soil Survey work
 ========================================================
-- extracts data from a NASIS selected set via Structured Query Language (SQL)
-- Runs basic data checks as the data are loaded
-- data are assembled into a custom site-level and horizon-level data structure object within R called a `Soil Profile Collection (SPC)`.
+
+![alt text](static-figures/pinn-transect.png)
+
+- soil data are complex, inherently visual
+- reproducibility is increasingly important
+- focus on the interesting questions, not boilerplate
+- a common vocabulary for soil data analysis would be nice
+
+
+aqp: Algorithms for Quantitative Pedology
+========================================================
+class: smaller
+
+![alt text](static-figures/sketches.png)
+
+- **special data structures:** avoids annoying book-keeping code
+- **visualization:** soil profile sketches, transect diagrams, Munsell &#8594;&nbsp; RGB
+- **re-sampling:** regular depth-slicing or EA spline (coming soon)
+- **aggregation:** summary by depth-slice or arbitrary "slabs"
+- **classification:** pair-wise dissimilarity of profiles
+- **utility functions:** soil depth, missing data eval., simulation, ...
+
+
+aqp: Algorithms for Quantitative Pedology
+========================================================
+class: smaller
+
+![](static-figures/aqp-demo.png)
+
+
+soilDB: Soil Database Interface
+========================================================
+
+![](static-figures/soilDB_figure.png)
+
+
+
+sharpshootR: Prototypes / Specialized Stuff
+========================================================
+class:smaller
+![](static-figures/sharpshootR-demo.png)
+
+
+
+
+
+soilReports: Summarize / Compare Map Unit Concepts
+========================================================
+class: small
+
+![](static-figures/mu-summary-bwplot-1.png)
+
+
+
+soilReports: Summarize / Compare Map Unit Concepts
+========================================================
+class: small
+
+![](static-figures/mu-summary-density-1.png)
+
+
+soilReports: Summarize / Compare Map Unit Concepts
+========================================================
+class: smaller
+
+![](static-figures/mu-summary-geomorphons.png)
+
+
+
+
+Interlude: Applied Examples / Pretty Pictures
+========================================================
+
+<br><br>
+
+- [AQP project homepage](http://ncss-tech.github.io/AQP/)
+
+- [2017 presentation on USDA-NCSS data and AQP suite of packages](http://ncss-tech.github.io/AQP/presentations/2017-CZO-UCR-data-sources-aqp/presentation.html)
+
+- [soilReports setup, documentation, and examples](https://github.com/ncss-tech/soilReports/)
+
+- [PDF poster with an aqp, soilDB, and sharpshootR montage](https://github.com/dylanbeaudette/2017Pedometrics/raw/master/AQP-poster/2017-AQP-poster.pdf)
+
+<br>
+
+- [aqp package reference](http://ncss-tech.github.io/aqp/docs/reference/index.html)
+- [soilDB package reference](http://ncss-tech.github.io/soilDB/docs/reference/index.html)
+- [sharpshootR package reference](http://ncss-tech.github.io/sharpshootR/docs/reference/index.html)
+
+
+Getting Data with soilDB "fetch" Functions
+========================================================
+
+- **fetchNASIS(from='pedons')**
+    - Gets [NASIS pedon/horizon data from a local NASIS database](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
+    
+    
+- **fetchNASIS(from='components')**
+    - Gets [NASIS map unit and component daa from a local NASIS database](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html).
+    
+
+- **fetchNASISLabData()**
+    - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
+
+
+Convenient 'fetch' Functions in the SoilDB Package
+========================================================
+
+
+- **fetchKSSL()**
+    - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
+        + [KSSL Data Demo](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html)
+        + [Water Retention Curve Development from KSSL Data](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
+- **fetchRaCA()**
+    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
+        + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)  
+        
+ 
+Fetch other soil data sources
+========================================================       
+- **SDA_query()**
+    - Submits queries to the Soil Data Access system.
+        + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
+        + [SDA Queries for Spatial Data](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html)
+        
+- **fetchOSD()**
+    - (Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system)(http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html).
+    
+    
+- **fetchPedonPC()**
+    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
+
+
+Fetch soil climate-related sources
+======================================================== 
+
+- **fetchSCAN()**
+    - Queries soil and climate data from USDA-NRCS SCAN Stations.
+      + [A Unified Interface to SCAN/SNOTEL Data](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
+      
+- **fetchHenry()**
+    - Downloads data from the Henry Mount Soil Climate Database.
+        + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
+
+
+fetchNASIS() - How does it work and what does it do?
+========================================================
+- Extracts data from the local NASIS database via Structured Query Language (SQL). The selected set or entire local database can be queried.
+- Runs basic data checks as the data are loaded.
+- data are assembled into a custom site-level and horizon-level data structure object within R called a `SoilProfileCollection`.
 - The [`SoilProfileCollection`](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) class simplifies the process of working with collections of data associated with soil profiles, e.g., site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc. 
 
 
-Distillation of the NASIS Site/Pedon data structure into an SPC
-========================================================
-
-```{r structure_diagram_a, echo=FALSE, results='hide', fig.height=7, fig.width=9, dpi=120}
-library(diagram, quietly=TRUE)
-# reset figure margins
-par(mar = c(1, 1, 1, 1))
-
-# simple diagram of the pedon data structure
-names <- c("Site", "Siteobs", "Pedon", "Horizon")
-M <- matrix(nrow = 4, ncol = 4, byrow = TRUE, data = 0)
-M[4, 3] <- M[3, 2] <- M[2, 1] <- ""
-pos <- cbind (c(1, 1, 1, 1))
-plotmat(M, pos = pos, name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.1, box.type = "square", box.prop = 0.4, mx=-0.2)
-
-# parallel simplified SPC structure
-names <- c("Site-level", "Horizon-level")
-M <- matrix(nrow = 2, ncol = 2, byrow = TRUE, data = 0)
- M[2, 1] <- ""
-#pos <- cbind (c(2, 2))
-plotmat(M, pos = c(1, 1), name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.14, box.type = "square", box.prop = 0.75, mx=0.3, my=-0.1, add=TRUE)
-
-# add arrows to the diagram
-arrows(0.42, 0.1, x1=0.65, y1=0.1, length = 0.25, code=2, lwd=2, angle = 15)
-arrows(0.42, 0.35, x1=0.65, y1=0.54, length = 0.25, code=2, lwd=2, angle = 15)
-arrows(0.42, 0.61, x1=0.65, y1=0.61, length = 0.25, code=2, lwd=2, angle = 15)
-arrows(0.42, 0.87, x1=0.65, y1=0.68, length = 0.25, code=2, lwd=2, angle = 15)
-```
-
-SoilProfileCollection objects
-========================================================
-
-```{r SPC-1, echo=FALSE}
-# sample dataset, extracted from NASIS
-library(soilDB)
-data(loafercreek)
-str(loafercreek, 2)
-```
-
-```{r SPC-2, fig.width=10, fig.height=4, echo=FALSE}
-par(mar=c(0,0,0,0))
-plot(loafercreek[1:10, ], name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4, max.depth=150)
-```
 
 Limitations
 ========================================================
-- `fetchNASIS()` is not comprehensive
-- The SPC does not contain all of the data for every table related to site/pedon data in NASIS
+- `fetchNASIS()` is not comprehensive!
+- The SPC does not contain all of the data for every table related to site/pedon data in NASIS.
 - Queries the most commonly used pedon and horizon data.  
 - The nested complexity of the NASIS data structure is simplified and flattened in the resulting SPC object.  
     + Higher level functions like `fetchNASIS()` bundle a series of lower level functions that get specific parts of the data structure. 
 
 - Data that is not automatically brought into the SPC can often be loaded using the 'get_extended_data from_NASIS_db' function and then joined back to the SPC data.
 
-Data Checks Run by the fetchNASIS() Function
+
+Data Checks Run by fetchNASIS()
 ========================================================
 
 - **Inconsistent horizon boundaries**. Pedons with inconsistent horizon boundaries are not loaded.  
@@ -483,6 +333,93 @@ d
 - **Presence of multiple map datums**. Results reported to the user and the data are not modified.
 
 - **Sites missing pedon records**. Data without corresponding horizons are not loaded.
+
+
+Flattening of NASIS Objects into a SoilProfileCollection
+========================================================
+
+```{r structure_diagram_a, echo=FALSE, results='hide', fig.height=7, fig.width=9, dpi=120}
+library(diagram, quietly=TRUE)
+# reset figure margins
+par(mar = c(1, 1, 1, 1))
+
+# simple diagram of the pedon data structure
+names <- c("Site", "Siteobs", "Pedon", "Horizon")
+M <- matrix(nrow = 4, ncol = 4, byrow = TRUE, data = 0)
+M[4, 3] <- M[3, 2] <- M[2, 1] <- ""
+pos <- cbind (c(1, 1, 1, 1))
+plotmat(M, pos = pos, name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.1, box.type = "square", box.prop = 0.4, mx=-0.2)
+
+# parallel simplified SPC structure
+names <- c("Site-level", "Horizon-level")
+M <- matrix(nrow = 2, ncol = 2, byrow = TRUE, data = 0)
+ M[2, 1] <- ""
+#pos <- cbind (c(2, 2))
+plotmat(M, pos = c(1, 1), name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.14, box.type = "square", box.prop = 0.75, mx=0.3, my=-0.1, add=TRUE)
+
+# add arrows to the diagram
+arrows(0.42, 0.1, x1=0.65, y1=0.1, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.35, x1=0.65, y1=0.54, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.61, x1=0.65, y1=0.61, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.87, x1=0.65, y1=0.68, length = 0.25, code=2, lwd=2, angle = 15)
+```
+
+
+SoilProfileCollection Objects
+========================================================
+
+```{r SPC-1, echo=FALSE}
+# sample dataset, extracted from NASIS
+library(soilDB)
+data(loafercreek)
+str(loafercreek, 2)
+```
+
+```{r SPC-2, fig.width=10, fig.height=4, echo=FALSE}
+par(mar=c(0,0,0,0))
+plot(loafercreek[1:10, ], name='hzname', print.id=FALSE, cex.names=0.8, axis.line.offset=-4, max.depth=150)
+```
+
+
+SoilProfileCollection Objects
+========================================================
+class: small-code
+
+- <span style="font-size: 80%;">object inspection</span>
+```{r SPC-functions-1, eval=FALSE, tidy=FALSE}
+idname(sp4) # pedon ID name
+horizonDepths(sp4) # colum names containing top and bottom depths
+depth_units(sp4) # defaults to 'cm'
+metadata(sp4) # data.frame with 1 row
+profile_id(sp4) # vector of profile IDs
+```
+
+- <span style="font-size: 80%;">overloads to common functions</span>
+```{r SPC-functions-2, eval=FALSE, tidy=FALSE}
+length(sp4) # number of profiles in the collection
+nrow(sp4) # number of horizons in the collection
+names(sp4) # column names from site and horizon data
+min(sp4) # shallowest profile depth in collection
+max(sp4) # deepest profile depth in collection
+sp4[i, j] # get profile "i", horizon "j"
+```
+
+- <span style="font-size: 80%;">getting / setting of components</span>
+```{r SPC-functions-3, eval=FALSE, tidy=FALSE}
+horizons(sp4) # get / set horizon data
+site(sp4)  # get / set site data
+diagnostic_hz(sp4) # get / set diagnostic horizons
+proj4string(sp4) # get / set CRS
+coordinates(sp4) # get / set coordinates
+```
+
+- <span style="font-size: 80%;">coercion to `SpatialPointsDataFrame` or `data.frame`</span>
+```{r SPC-functions-4, eval=FALSE, tidy=FALSE}
+as(sp4, 'SpatialPointsDataFrame')
+as(sp4, 'data.frame')
+```
+
+
 
 
 
