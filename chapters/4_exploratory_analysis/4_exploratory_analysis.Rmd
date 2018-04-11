@@ -645,13 +645,13 @@ A QQplot of sand content may be made for the sample dataset as:
 
 ```{r}
 
+# Normal Q-Q Plot for Clay
 ggplot(h, aes(sample = clay)) + 
-  geom_qq() +
-  ggtitle("Normal Q-Q Plot for Clay")
+  geom_qq()
 
+# Normal Q-Q Plot for Frags
 ggplot(h, aes(sample = total_frags_pct)) + 
-  geom_qq() +
-  ggtitle("Normal Q-Q Plot for Frags")
+  geom_qq()
 
 ```
 
@@ -664,6 +664,24 @@ A more detailed explanation of QQplots may be found on Wikipedia:
 
 
 # Relationships 
+
+## Correlation matrix
+
+A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:  
+
+```{r}
+h$hzdepm <- (h$hzdepb + h$hzdept) / 2 # Compute the middle horizon depth
+
+vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
+
+round(cor(h[vars], use = "complete.obs"), 2)
+```
+
+As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0. Negative values indicate a negative relationship between variables. What is considered highly correlated? A good rule of thumb is anything with a value of **0.7** or greater is considered highly correlated. 
+
+
+
+## Scatterplots and Line Plots
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
 
@@ -694,24 +712,6 @@ gridExtra::grid.arrange(p_s, p_l, ncol = 2)
 
 ```
 
-## Correlation matrix
-
-A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:  
-
-```{r}
-h$hzdepm <- with(h, (hzdepb + hzdept) / 2) # Compute the middle horizon depth
-
-vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
-
-round(cor(h[vars], use = "complete.obs"), 2)
-```
-
-As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0. Negative values indicate a negative relationship between variables. What is considered highly correlated? A good rule of thumb is anything with a value of **0.7** or greater is considered highly correlated. 
-
-
-
-## Scatterplots
-
 Plotting points of one ratio or interval variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offers the potential to correlate soil attributes with a large variety of raster datasets.  
 
 The purpose of a scatterplot is to see how one variable relates to another. With modeling in general the goal is parsimony (i.e., simple). The goal is to determine the fewest number of variables required to explain or describe a relationship. If two variables explain the same thing, i.e., they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.
@@ -740,7 +740,7 @@ library(GGally)
 # Create a scatter plot matrix
 vars <- c("hzdepm", "clay", "phfield", "total_frags_pct")
 
-GGally::ggpairs(h[vars])
+ggpairs(h[vars])
 
 
 # or using base graphics
@@ -762,7 +762,7 @@ If you have a table with pH values and wish to calculate the arithmetic mean usi
 
 ```{r}
 # arithematic mean
--log10(mean(1/10^-h$phfield, na.rm = TRUE)) 
+log10(mean(1/10^-h$phfield, na.rm = TRUE)) 
 
 # geometric mean
 mean(h$phfield, na.rm = TRUE) 
