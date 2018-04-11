@@ -4,6 +4,11 @@ author: Tom D'Avello
 date: "`r Sys.Date()`"
 output:
   html_document:
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
 editor_options: 
   chunk_output_type: console
 ---
@@ -16,7 +21,7 @@ knitr::opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.al
 ![](figure/logo.jpg)  
 
 
-# ArcGIS tools
+# Zonal Statistics
 
 Gathering statistics of raster data cells for polygon data sets like SSURGO is typically achieved by the use of the *Zonal Statistics as Table* function from the *Spatial Analyst toolbox*. The output will be a tabular summary for the specified *Zone*, usually map unit symbol or individual polygons.  
 
@@ -59,4 +64,54 @@ In this example, 4 polygons of *ChC2*, *Coshocton silt loam, 6 to 15 percent slo
 In another example using a Box plot for assessment of a map unit with a slope class of 15 to 25 percent slopes, indicates half of the polygons with an average slope less than 15 percent:  
 
 ![](figure/ch5_fig10.jpg)  
+
+
+# Transformations
+
+If there is a need to create a surface of pH values, i.e., interpolate values from point observations, the operation of determining values at unknown points is analogous to determining an average and the use of hydrogen ion concentration would be the proper input.  
+
+If spatial interpolation is going to be performed, the following steps should be executed:  
+
+ 1. transform pH to the actual H+ concentration 
+ 2.	interpolate
+ 3.	back transform to log value
+
+Here is a brief example for interpolating pH using common software:
+
+1. Assume a comma delimited text file with pH, and x and y coordinates named "Excel_ph2.csv"
+2.	Open the file in Excel and it looks similar to this:  
+![R GUI image](figure/ch4_fig44.jpg)  
+3.  Format a column as numeric with ~15 decimals and a header named H_concentration
+4.	Enter a formula in the first empty cell as: =(1/10^B2) * 1000000
+5.	Drag the cell down to all empty records, which results in a transformed H+ concentration
+![R GUI image](figure/ch4_fig45.jpg)
+ 
+This is a workaround for ArcGIS, which truncates data that are extremely small like the H+ concentration for pH > 7.  
+
+6.  Bring the text file into ArcGIS as points using Make XY Event Layer
+
+![R GUI image](figure/ch4_fig46.jpg)  
+
+![R GUI image](figure/ch4_fig47.jpg)  
+
+Opening the table for the Event layer:  
+
+![R GUI image](figure/ch4_fig48.jpg)  
+
+7. Interpolate using the interpolation method of choice - Spline will be used in this example    
+
+![R GUI image](figure/ch4_fig49.jpg)  
+![R GUI image](figure/ch4_fig50.jpg)  
+
+8. The resulting values correspond to H+ concentration * 10<sup>6</sup>  
+
+![R GUI image](figure/ch4_fig51.jpg)  
+
+9. Convert values to pH using Raster Calculator  
+
+![R GUI image](figure/ch4_fig52.jpg)  
+
+10. The values now correspond to pH
+
+![R GUI image](figure/ch4_fig53.jpg)  
 

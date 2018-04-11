@@ -171,14 +171,14 @@ desc <- data.frame(
   'R function' = c("mean()", "median()", "sort(table(), decreasting = TRUE)[1]", "sd()", "quantile()"),
   check.names = FALSE
   )
-knitr::kable(desc, caption = "Short Description of Descriptive Statistics")
+knitr::kable(desc, caption = "Short Description of Descriptive Statistics and R Functions")
 ```
 
 ## Measures of Central Tendency  
 
 These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used measures for our purposes.
 
-**Mean** - is the arithmetic average all are familiar with, formally expressed as:![R GUI image](figure/ch4_fig13.jpg) which sums ( $\sum$ ) all the X values in the sample and divides by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
+**Mean** - is the arithmetic average all are familiar with, formally expressed as:![](figure/ch4_fig13.jpg) which sums ( $\sum$ ) all the X values in the sample and divides by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.  
 
 The mean clay content from the loafercreek dataset may be determined:  
 
@@ -200,26 +200,16 @@ The median from the sample dataset may be determined:
 median(clay)
 ```
 
-**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. In following example you can see where it looks like someone entered the laboratory data into the pedon horizon data. It's hard to tell from the example, but the first column in each sequence shows the values and the following columns show the number occurrences for that value.
+**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. R does not include a function for calculating the mode, but we can calculate it using the following example.
 
 ```{r}
-table(h$clay) # show a frequency table
-
-# we can fix the rounding error like so
-
-# table(round(h$clay))
-
-# or
-
-# table(as.integer(h$clay)) 
-
 sort(table(round(h$clay)), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
 ```
 
 
 **Frequencies**
 
-To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using the `table()` function.
+To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using the `table()` or `xtabs()` functions.
 
 ```{r}
 table(h$genhz)
@@ -232,9 +222,7 @@ table(h$genhz)
 This gives us a count of the number of observations for each horizon. If we want to see the comparison between two different factors or characters, we can include two variables.
 
 ```{r}
-table(h$genhz, h$hzname)
-
-table(h$genhz, h$texture_class)
+table(h$genhz, h$texcl)
 ```
 
 We can also easily add margin totals to the table or convert the table frequencies to proportions.
@@ -242,7 +230,7 @@ We can also easily add margin totals to the table or convert the table frequenci
 ```{r}
 # append the table with row and column sums
 
-addmargins(table(h$genhz, h$texture_class))
+addmargins(table(h$genhz, h$texcl))
 
 # calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
 
@@ -271,15 +259,19 @@ aggregate(clay ~ genhz, data = h, summary)
 These are measures used to determine the spread of values around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point. In NASIS speak these values might equate to the low (L) and high (H) values for numeric and integer data.
 
 
-**Variance**  is a positive value indicating deviation from the mean: ![](figure/ch4_fig20.jpg)  
+**Variance**  is a positive value indicating deviation from the mean: 
+
+$s^2 = \frac{\sum_{i=1}^{n}(x_i - \bar{x})^2} {n - 1}$ 
 
 This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the *standard deviation*. Variance for the sample dataset is:  
 
 ```{r}
-var(clay)
+var(h$clay)
 ```
 
-**Standard Deviation**  is the square root of the variance: ![](figure/ch4_fig22.jpg)  
+**Standard Deviation**  is the square root of the variance: 
+
+$s = \sqrt\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2} {n - 1}$ 
 
 The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:  
 
@@ -291,7 +283,9 @@ sd(clay)
 # sqrt(var(clay))
 ```
 
-**Coefficient of Variation** (CV)  is a relative (i.e., unitless) measure of standard deviation:![R GUI image](figure/ch4_fig24.jpg)  
+**Coefficient of Variation** (CV)  is a relative (i.e., unitless) measure of standard deviation:
+
+$CV = \frac{s}{\bar{x}} \times 100$
 
 CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:  
 
@@ -448,6 +442,50 @@ gridExtra::grid.arrange(p_b, p_h, p_d, ncol = 3)
 
 ```
 
+## Histograms and density curves  
+
+First lets review the ggplot2 `geom_histogram()` and `geom_density()` functions which plot a histogram and density curve respectively.  
+
+```{r}
+library(ggplot2)
+
+ggplot(h, aes(x = clay)) +
+  geom_histogram()
+
+# or
+
+ggplot(h, aes(x = clay)) +
+  geom_histogram() +
+  facet_wrap(~ genhz)
+
+# or using the graphics package
+
+# hist(h$clay, col = "grey")
+```
+
+Figure 4. Histogram  
+
+
+Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution. A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram.  
+ 
+```{r}
+ggplot(h, aes(x = clay, y = ..density..)) +
+  geom_histogram() +
+  geom_density() +
+  facet_wrap(~ genhz)
+
+ggplot(h, aes(x = clay)) +
+  geom_density()
+
+# or using the graphics package
+
+# test <- density(h$clay, na.rm = TRUE)
+# plot(test) 
+```
+
+Figure 5. The Kernel density plot depicts a smoothed line of the distribution 
+
+Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. Notice how the histogram of clay seems to emphasis the long right tail of values, which we might question as to whether we have a normal distribution. One curious feature of the density curve is the hint of a bimodal distribution. Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
 ###   The 'Normal' distribution
 
@@ -533,7 +571,8 @@ plot(density(test), main = "Beta Distribution: Shape 1 = 1000, Shape 2 = 2")
 # Displaying data in this manner provides a visual means to determine if your data have a wide, flat, narrow, peaked, normal, or skewed distribution.  
 ```
 
-In this example the mean and median are only slightly different, so we can safely assume that we have a normal distribution. However many soil variables often have a non-normal distribution. For example, let's look at graphical examination of the mean vs. median for clay and rock fragments:  
+
+With the loafercreek dataset the mean and median are only slightly different, so we can safely assume that we have a normal distribution. However many soil variables often have a non-normal distribution. For example, let's look at graphical examination of the mean vs. median for clay and rock fragments:  
 
 ```{r}
 amean = mean(clay)
@@ -562,53 +601,6 @@ Figure 7. Comparison of the mean vs median for clay and rock fragments.
 
 
 The blue vertical line represents the breakpoint for the median and the orange represents the mean. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes. The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example from Figure 7 for clay again indicates that distribution is approximately normal. However for rock fragments, we see a long tailed distribution (e.g., skewed). Using the mean in this instance would overestimate the rock fragments. Although in this instance the difference between the mean and median is only `r round(amean - amed)` percent.
-
-
-## Histograms and density curves  
-
-Next we'll review the ggplot2 `geom_histogram()` and `geom_density()` functions which plot a histogram and density curve respectively.  
-
-```{r}
-library(ggplot2)
-
-ggplot(h, aes(x = clay)) +
-  geom_histogram()
-
-# or
-
-ggplot(h, aes(x = clay)) +
-  geom_histogram() +
-  facet_wrap(~ genhz)
-
-# or using the graphics package
-
-# hist(h$clay, col = "grey")
-```
-
-Figure 4. Histogram  
-
-
-Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution. A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram.  
- 
-```{r}
-ggplot(h, aes(x = clay, y = ..density..)) +
-  geom_histogram() +
-  geom_density() +
-  facet_wrap(~ genhz)
-
-ggplot(h, aes(x = clay)) +
-  geom_density()
-
-# or using the graphics package
-
-# test <- density(h$clay, na.rm = TRUE)
-# plot(test) 
-```
-
-Figure 5. The Kernel density plot depicts a smoothed line of the distribution  
-
-
-Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. Notice how the histogram of clay seems to emphasis the long right tail of values, which we might question as to whether we have a normal distribution. One curious feature of the density curve is the hint of a bimodal distribution. Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
 
 ## Box plots  
@@ -671,8 +663,36 @@ A more detailed explanation of QQplots may be found on Wikipedia:
 [https://en.wikipedia.org/wiki/QQ_plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)  
 
 
-
 # Relationships 
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+
+# scatter plot
+p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
+  geom_point() +
+  ylim(100, 0) +
+  ylab("depth (cm)") + xlab("clay (%)") +
+  theme(aspect.ratio = 1) +
+  ggtitle("Scatter Plot")
+
+# line graph
+depth <- c(1, 5, 15, 30, 50, 70, 90)
+lo_fit <- loess(clay ~ hzdepm, data = h, na.action = na.exclude)
+clay <- predict(lo_fit, depth)
+df <- data.frame(depth, clay)
+
+p_l <- ggplot(h, aes(y = clay, x = hzdepm)) +
+  geom_point(data = df, aes(x = depth, y = clay), size = 2, show.legend = FALSE) +
+  geom_smooth(se = FALSE, col = "black") +
+  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+  xlab("depth (cm)") + ylab("clay (%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1) +
+  ggtitle("Line Plot")
+
+gridExtra::grid.arrange(p_s, p_l, ncol = 2)
+
+```
 
 ## Correlation matrix
 
@@ -748,53 +768,6 @@ If you have a table with pH values and wish to calculate the arithmetic mean usi
 mean(h$phfield, na.rm = TRUE) 
 ```
 
-If there is a need to create a surface of pH values, i.e., interpolate values from point observations, the operation of determining values at unknown points is analogous to determining an average and the use of hydrogen ion concentration would be the proper input.  
-
-If spatial interpolation is going to be performed, the following steps should be executed:  
-
- 1. transform pH to the actual H+ concentration 
- 2.	interpolate
- 3.	back transform to log value
-
-Here is a brief example for interpolating pH using common software:
-
-1. Assume a comma delimited text file with pH, and x and y coordinates named "Excel_ph2.csv"
-2.	Open the file in Excel and it looks similar to this:  
-![R GUI image](figure/ch4_fig44.jpg)  
-3.  Format a column as numeric with ~15 decimals and a header named H_concentration
-4.	Enter a formula in the first empty cell as: =(1/10^B2) * 1000000
-5.	Drag the cell down to all empty records, which results in a transformed H+ concentration
-![R GUI image](figure/ch4_fig45.jpg)
- 
-This is a workaround for ArcGIS, which truncates data that are extremely small like the H+ concentration for pH > 7.  
-
-6.  Bring the text file into ArcGIS as points using Make XY Event Layer
-
-![R GUI image](figure/ch4_fig46.jpg)  
-
-![R GUI image](figure/ch4_fig47.jpg)  
-
-Opening the table for the Event layer:  
-
-![R GUI image](figure/ch4_fig48.jpg)  
-
-7. Interpolate using the interpolation method of choice - Spline will be used in this example    
-
-![R GUI image](figure/ch4_fig49.jpg)  
-![R GUI image](figure/ch4_fig50.jpg)  
-
-8. The resulting values correspond to H+ concentration * 10<sup>6</sup>  
-
-![R GUI image](figure/ch4_fig51.jpg)  
-
-9. Convert values to pH using Raster Calculator  
-
-![R GUI image](figure/ch4_fig52.jpg)  
-
-10. The values now correspond to pH
-
-![R GUI image](figure/ch4_fig53.jpg)  
-
 
 ## Circular data
 
@@ -820,8 +793,6 @@ The numeric output is fine, but a following graphic is more revealing, which sho
 ```{r}
 rose.diag(aspect, bins = 8, col="grey")
 ```
-
-Figure 11. Rose Diagram  
 
 
 
