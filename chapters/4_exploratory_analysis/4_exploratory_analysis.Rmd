@@ -746,6 +746,93 @@ ggpairs(h[vars])
 ```
 
 
+## 3rd Dimension - Color, Shape, Size, Layers, etc...
+
+```{r, echo=FALSE, fig.dim = c(8, 4)}
+h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
+
+ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, col = "black") +
+  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+  xlab("depth (cm)") + ylab("clay (%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1)
+```
+
+
+### Color and Groups
+
+```{r color, fig.dim = c(8, 4)}
+
+idx <- h$genhz %in% c("Cr", "R", "not-used")
+
+# scatter plot
+ggplot(h[!idx, ], aes(x = clay, y = hzdepm, color = genhz)) +
+  geom_point(size = 3) +
+  ylim(100, 0)
+
+# density plot
+ggplot(h[!idx, ], aes(x = clay, color = genhz)) +
+  geom_density(size = 2)
+
+# bar plot
+ggplot(h, aes(x = genhz, fill = texture_class)) +
+  geom_bar()
+
+# box plot
+ggplot(h[!idx, ], aes(x = genhz, y = clay)) + 
+  geom_boxplot()
+
+# heat map (pseudo bar plot)
+s <- site(loafercreek)
+
+ggplot(s, aes(x = landform_string, y = pmkind)) + 
+  geom_tile(alpha = 0.2) 
+  
+```
+
+### Facets - box plots
+
+```{r facets, fig.dim = c(8, 4)}
+
+# convert to long format
+df <- reshape2::melt(h, 
+                     id.vars = c("peiid", "genhz", "hzdepm"), 
+                     measure.vars = c("clay", "phfield", "total_frags_pct")
+                     )
+
+idx <- df$genhz %in% c("Cr", "R", "not-used")
+
+ggplot(df[!idx, ], aes(x = genhz, y = value)) +
+  geom_boxplot() +
+  xlab("genhz") +
+  facet_wrap(~ variable, scales = "free_x")
+
+```
+
+
+### Facets - depth plots
+
+```{r, echo=FALSE, fig.dim=c(8, 4)}
+
+library(aqp)
+
+s <- slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
+s <- slab(s, fm = ~ clay + phfield + total_frags_pct, 
+          slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE)
+          )
+
+ggplot(s, aes(x = top, y = X50.)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = X10., ymax = X90., x = top), alpha = 0.2) +
+  xlim(c(100, 0)) +
+  coord_flip() +
+  facet_wrap(~ variable, scales = "free_x")
+
+```
+
+
 # Transformations
 
 Slope aspect and pH are two common variables warranting special consideration for pedologists.  
@@ -1021,6 +1108,8 @@ Webster, R. 2001. Statistics to support soil research and their presentation. Eu
 
 
 # Additional Reading
+
+Kabacoff, R.I., 2015. R in Action. Manning Publications Co. Shelter Island, NY. [https://www.statmethods.net/](https://www.statmethods.net/)
 
 Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
 
