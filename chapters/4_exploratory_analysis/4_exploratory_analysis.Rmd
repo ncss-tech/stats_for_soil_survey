@@ -18,7 +18,7 @@ editor_options:
 knitr::opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
 ```
 
-![](figure/logo.jpg)  
+![](../1_introduction/figure/logo.jpg)  
 
 
 # Objectives
@@ -810,7 +810,7 @@ idx <- df$genhz %in% c("Cr", "R", "not-used")
 ggplot(df[!idx, ], aes(x = genhz, y = value)) +
   geom_boxplot() +
   xlab("genhz") +
-  facet_wrap(~ variable, scales = "free_x")
+  facet_wrap(~ variable, scales = "free_y")
 
 ```
 
@@ -934,9 +934,7 @@ copyReport(reportName = "region11/lab_summary_by_taxonname", outputDir = "C:/wor
 
 ![](figure/report_folder.png)
 
-6. **Check** or **create** a genhz\_rules file for a soil series. In order to aggregate the pedons by horizon designation, a genhz\_rules file (e.g., Miamian_rules.R) is needed. See below.
-
-![](figure/ghl_folder.png)
+6. **Check** or **create** a genhz\_rules file for a soil series. In order to aggregate the pedons by horizon designation, a genhz\_rules file (e.g., Miamian_rules.R) is needed. See above.
 
 If none exists see the following job aid on how to create one, [Assigning Generalized Horizon Labels](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html).
 
@@ -950,8 +948,8 @@ Pay special attention to how carrot "^" and dollar "\$" symbols are used. They f
 
 ```{r, eval=FALSE}
 # Set report parameters
-series <- "Crosby"
-genhz_rules <- "C:/workspace2/lab_sum/genhz_rules/Crosby_rules.R"
+series <- "Miami"
+genhz_rules <- "C:/workspace2/lab_sum/Miami_rules.R"
 
 # report file path
 report_path <- "C:/workspace2/lab_sum/report.Rmd"
@@ -992,7 +990,7 @@ render(input = report_path,
 
 # Zonal Statistics
 
-To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g., a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the census survey method, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the sample survey method, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
+To summarize spatial data for a polygon, some form of zonal statistics can be used. Zonal statistics is a generic term for statistics that aggregate data for an area or zone (e.g., a set of map unit polygons). This can be accomplished via two methods. The most common method provided by most GIS is the **census survey method**, which computes a statistical summary of all the raster cells that overlap a polygon or map unit. This approach is generally faster and provides a complete summary of the spatial data. An alternative approach is the **sample survey method**, which takes a collection of random samples from each polygon or map unit. While the sample approach is generally slower and does not sample every cell that overlaps a polygon it does offer certain advantages. For example the census approach used by most GIS typically only provides basic statistics such as: the min, max, mean, standard deviation, and sum. However, for skewed data sets the mean and standard deviation may be unreliable. A better alternative for skewed data sets is to use non-parametric statistics like quantiles. Examples of non-parametric statistics are covered in Chapter 4. The advantage of the sample approach is that it allows us to utilize alternative statistics, such as quantiles, and perform a more thorough exploratory analysis. While some people might prefer the census approach because it provides a complete summary of all the data that overlaps a map unit, it is important to remember that all spatial data are only approximations of the physical world and therefore are only estimates themselves with varying levels of precision.
 
 Before extracting spatial data for the purpose of spatial prediction, it is necessary that the data meet the following conditions:  
 
@@ -1002,80 +1000,118 @@ Before extracting spatial data for the purpose of spatial prediction, it is nece
 
 ## Zonal Statistics in R
 
-Zonal statistics in R can be implemented using either the census or sample approach. While R can compute zonal statistics using the census approach with the `zonal()` function in the raster package, it is considerably faster to call another GIS via the RSAGA or spgrass6 packages. These additional GIS packages provide R functions to access SAGA and GRASS commands. For this example the RSAGA package will be used.
+Zonal statistics in R can be implemented using either the census or sample approach. While R can compute zonal statistics using the census approach with the `zonal()` function in the raster package, it is considerably faster to call another GIS via the RSAGA or spgrass6 packages. These additional GIS packages provide R functions to access SAGA and GRASS commands. 
 
-```{r r_poly_extract}
-# library(rgdal)
-# 
-# ca794 <- readOGR(dsn = "E:/geodata/project_data/8VIC/ca794", layer = "ca794") # import CA794 map unit polygons
-# ca794 <- spTransform(ca794, CRS("+init=epsg:5070")) # reproject
-# ca794$mukey2 <- as.integer(as.character(ca794$MUKEY)) # convert MUKEY to  an integer
-# writeOGR(ca794, dsn = "C:/workspace", layer = "ca794", driver = "ESRI Shapefile", overwrite_layer = TRUE) # export shapefile
-# 
-# library(RSAGA)
-# myenv <- rsaga.env(path = "C:/Program Files/QGIS Essen/apps/saga") # set rsaga path
-# ned <- raster("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat") # load DEM
-# test <- raster(extent(ca794), ext = extent(ned), crs = crs(ned), res = res(ned))  # create a blank raster that matches the DEM
-# writeRaster(test, file = "E:/geodata/project_data/8VIC/sdat/ca794.sdat", format = "SAGA", progress = "text", overwrite = TRUE) # export the raster
-# 
-# # Convert the CA794 shapefile to a rsaga raster
-# 
-# rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
-#   INPUT = "C:/workspace/ca794.shp",
-#   FIELD = "mukey2",
-#   OUTPUT = "2",
-#   TARGET = "0",
-#   GRID_TYPE = "2",
-#   USER_GRID = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-#   USER_XMIN = extent(test)[1] + 15,
-#   USER_XMAX = extent(test)[2] - 15,
-#   USER_YMIN = extent(test)[3] + 15,
-#   USER_YMAX = extent(test)[4] - 15,
-#   USER_SIZE = res(test)[1]
-# )
-# )
-# 
-# # Extract the zonal statistics for 2 rasters
-# 
-# rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
-#   ZONES = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-#   STATLIST = paste(c("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "E:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
-#   OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
-# ))
-# 
-test <- read.csv("C:/workspace2/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") # import the results
-names(test)[1] <- "mukey" # rename the mukey column
-subset(test, mukey == 2480977) # examine mukey 2480977
+### Census Survey Example
+
+For this example the RSAGA package will be used.
+
+```{r r_poly_extract, eval = FALSE}
+# load rgdal package
+library(rgdal)
+
+# import CA794 map unit polygons
+ca794 <- readOGR(dsn = "E:/geodata/project_data/8VIC/ca794", layer = "ca794") 
+
+# reproject
+ca794 <- spTransform(ca794, CRS("+init=epsg:5070")) 
+
+# convert MUKEY to  an integer
+ca794$mukey2 <- as.integer(as.character(ca794$MUKEY)) 
+
+# export shapefile
+writeOGR(ca794, 
+         dsn = "C:/workspace", 
+         layer = "ca794", 
+         driver = "ESRI Shapefile", 
+         overwrite_layer = TRUE
+         ) 
+
+# load RSAGA package
+library(RSAGA)
+
+# set rsaga path
+myenv <- rsaga.env(path = "C:/Program Files/QGIS Essen/apps/saga") 
+
+# load DEM
+ned <- raster("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat") 
+
+# create a blank raster that matches the DEM
+test <- raster(extent(ca794), ext = extent(ned), crs = crs(ned), res = res(ned))  
+
+# export the raster
+writeRaster(test, 
+            file = "E:/geodata/project_data/8VIC/sdat/ca794.sdat", 
+            format = "SAGA", 
+            progress = "text", 
+            overwrite = TRUE
+            ) 
+
+# Convert the CA794 shapefile to a rsaga raster
+rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
+  INPUT = "C:/workspace/ca794.shp",
+  FIELD = "mukey2",
+  OUTPUT = "2",
+  TARGET = "0",
+  GRID_TYPE = "2",
+  USER_GRID = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+  USER_XMIN = extent(test)[1] + 15,
+  USER_XMAX = extent(test)[2] - 15,
+  USER_YMIN = extent(test)[3] + 15,
+  USER_YMAX = extent(test)[4] - 15,
+  USER_SIZE = res(test)[1]
+  ))
+
+# Extract the zonal statistics for 2 rasters
+rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
+  ZONES = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
+  STATLIST = paste(c("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "E:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
+  OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
+  ))
 ```
+```{r poly extract2}
+# import the results
+test <- read.csv("C:/workspace2/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") 
+
+# rename the mukey column
+names(test)[1] <- "mukey" 
+
+# examine mukey 2480977
+subset(test, mukey == 2480977) 
+```
+
+### Sample Survey Example
 
 To implement the sample approach to zonal statistics we can use the `extract()` and `over()` functions in the raster and sp packages respectively.
 
-```{r}
-# # Take a stratified random sample
-# s <- spsample(ca794, n = 1000, type = "stratified")
-# 
-# setwd("E:/geodata/project_data/8VIC/ca794")
-# 
-# # Create a raster stack
-# rs <- stack(c(
-#   elev = "ned30m_8VIC.tif", 
-#   slope = "ned30m_8VIC_slope5.tif")
-#   )
-# # Set the spatial projection
-# proj4string(rs) <- CRS("+init=epsg:5070") 
-# 
-# # Extract the map unit polygon value
-# test1 <- over(s, ca794)
-#
-# # Extract the raster values
-# test2 <- data.frame(extract(rs, s))
-#
-# # Combine the two datasets
-# test2 <- cbind(test1, test2)
-#
-# # Cache/save the results 
-# save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
+```{r, eval = FALSE}
+# Take a stratified random sample
+s <- spsample(ca794, n = 1000, type = "stratified")
 
+setwd("E:/geodata/project_data/8VIC/ca794")
+
+# Create a raster stack
+rs <- stack(c(
+  elev = "ned30m_8VIC.tif",
+  slope = "ned30m_8VIC_slope5.tif")
+  )
+# Set the spatial projection
+proj4string(rs) <- CRS("+init=epsg:5070")
+
+# Extract the map unit polygon value
+test1 <- over(s, ca794)
+
+# Extract the raster values
+test2 <- data.frame(extract(rs, s))
+
+# Combine the two datasets
+test2 <- cbind(test1, test2)
+
+# Cache/save the results
+save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
+```
+
+```{r}
 # Load the cache/saved results
 load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 
