@@ -100,14 +100,75 @@ R-based interfaces to NCSS data sources via [`soilDB`](https://cran.r-project.or
     + `mapunit_geom_by_ll_bbox()`: SSURGO data as polygons (via WFS)
 
 
-**Note:** currently, there is no way to read raster or tabular data from ESRI "file" geodatabases. Vector data (and associated attribute tables) can be accessed.
+**Note:** currently, there is no way to read raster data from ESRI "file" geodatabases. Vector data (and associated attribute tables) can be accessed.
 
 
-## Bleeding Edge: the `sf` Package
 
-The [sf package](https://r-spatial.github.io/sf/) represents the latest and greatest in spatial data processing within the comfort of an R session. `sf` combines the functionality of many packages that we will be discussing in this presentation. It is also more efficient than the well-respected `sp` package. Hoever, since `sf` is still a work in progress (although very much ready to use), we will be covering the tried-and-true suite of older "spatial data" packages in this module.
+## Recent Additions to the R Spatial Data Suite 
 
-If you are working with massive vector datasets or just curious, be sure to see the [`sf`](https://r-spatial.github.io/sf/) website and this [excellent tutorial by Pierre Roudier](http://pierreroudier.github.io/teaching/20171014-DSM-Masterclass-Hamilton/spatial-data-in-R.html).
+We won't be talking much about these packages, but they are worth considering when you start your project.
+
+### A new foundation: `sf`
+
+The [sf package](https://r-spatial.github.io/sf/) represents the latest and greatest in spatial data processing within the comfort of an R session. `sf` combines the functionality of many packages that we will be discussing in this presentation, but relies on more efficient algorithms and a simpler representation of spatial data. 
+
+
+### Interactive mapping: `mapview` and `leaflet`
+
+These packages make it possible to display interactive maps of spatial objects in RStudio, or within an HTML document generated via R Markdown (e.g. this document).
+
+```{r}
+# you may have to install this
+library(mapview)
+
+# get series extents from SoilWeb
+pentz <- seriesExtent('pentz')
+redding <- seriesExtent('redding')
+
+# make a simple map
+m <- mapview(pentz)
+# add more data to the map and display
+addFeatures(m, redding, color='black', fillColor='red', weight=1)
+```
+
+
+### FAST raster sampling: `velox`
+
+The `velox` package provides an interesting approach to sampling raster values that intersect with vector features, *as long as the raster data fit into available memory*. For example, sampling all of the raster values that overlap with the estimated extent of the Cecil soil series (about 5.9 million acres) takes about 2.5 seconds.
+
+```{r fig.width=6, fig.height=5, results='hide'}
+library(soilDB)
+library(raster)
+library(lattice)
+
+# you may have to install this package
+library(velox)
+
+# 5-10 seconds for download of SEE data, 
+s <- seriesExtent('cecil')
+
+# load pointer to PRISM data, note that this file is stored on my local machine:
+r <- raster('E:/gis_data/prism/ffd_50_pct_800m.tif')
+
+# 2.5 seconds sampling
+vx <- velox(r)
+system.time(e <- vx$extract(s))
+
+# simple summary
+densityplot(e$CECIL, plot.points=FALSE, bw=2, lwd=2, col='RoyalBlue', xlab='Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', ylab='Density', main='FFD Estimate for Extent of Cecil Series')
+```
+
+
+### Related Tutorials and Documentation
+
+   * [`sf` package website](https://r-spatial.github.io/sf/)
+   * [`mapview` package website](https://github.com/r-spatial/mapview)
+   * [`leaflet` package website](https://rstudio.github.io/leaflet/)
+   * [`velox` package website](https://hunzikp.github.io/velox/)
+   * [R Advanced Spatial Lessons by Ben Best](http://benbestphd.com/R-adv-spatial-lessons/)
+   * [Spatial Data in R by Pierre Roudier](http://pierreroudier.github.io/teaching/20171014-DSM-Masterclass-Hamilton/spatial-data-in-R.html)
+
+
 
 
 ## The `sp` Package
