@@ -9,6 +9,8 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
@@ -200,7 +202,7 @@ library(soilDB) # NASIS and SDA import functions
 library(raster) # guess
 library(rgdal) # spatial import
 library(ggplot2) # graphing
-library(reshape2) # data manipulation
+library(tidyr) # data manipulation
 library(caret) # classification and regression training
 library(car) # additional regression tools
 ```
@@ -210,11 +212,14 @@ library(car) # additional regression tools
 Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you! Once data are captured in NASIS it is much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS, it may as well not exist.
 
 ```{r import data}
+
 # pedons <- fetchNASIS()
 githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata"
 load(url(githubURL))
 
-str(pedons, max.level = 2) # Examine the makeup of the data we imported from NASIS.
+# Examine the makeup of the data we imported from NASIS
+str(pedons, max.level = 2)
+
 ```
 
 # Exploratory analysis
@@ -224,30 +229,36 @@ str(pedons, max.level = 2) # Examine the makeup of the data we imported from NAS
 Generally before we begin modeling you should spend some time exploring the data. By examining a simple summary we can quickly see the breakdown of how many argillic horizons we have. Unfortunately, odds are good that all the argillic horizons haven't been consistently populated in the diagnostic horizon table like they should be. Luckily for us, the desert argillic horizons always pop up in the taxonomic name, so we can use pattern matching to extract it. By doing this we gain an additional 11 pedons with argillic horizons and are able to label the missing values (i.e. NA). At a minimum for modeling purposes we probably need 10 pedons of the target we're interested in and a total of 100 observations overall.
 
 ```{r consistency}
+
 # Check consistency of argillic horizon population
 
-s <- site(pedons) # get the site table
+# get the site table
+s <- site(pedons) 
 
-table(s$argillic.horizon, useNA = "ifany") # tabulate the number of argillic horizons observed
+# tabulate the number of argillic horizons observed
+table(s$argillic.horizon, useNA = "ifany") 
 
 # or
 
 # summary(s$argillic.horizon) 
 
 # Extract argillic presence from the taxonomic subgroup
-
 s$argillic <- grepl("arg", s$tax_subgroup)
 
 table(s$argillic, useNA = "ifany")
+
 ```
 
 Ideally, if the diagnostic horizon table had been populated consistently we could have used the upper depth to diagnostic feature to filter out argillic horizons that start below 50cm, which may not be representative of "good" argillic horizons and may therefore have gotten correlated to a Torripsamments anyway. Not only are unrepresentative sites confusing for scientists, they're equally confusing for models. However, as we saw earlier, some pedons don't appear to be fully populated, so we'll stick with those pedons that have the argillic specified in their taxonomic subgroup name, since it gives us the biggest sample.
 
+
 ```{r diagnostic}
+
 d <- diagnostic_hz(pedons)
-peiid <- d[d$diag_kind == "argillic horizon" & d$featdept < 50, "peiid"]
+peiid <- subset(d, diag_kind == "argillic horizon" & featdept < 50, select = peiid)
 test <- s$peiid %in% unique(peiid)
 summary(test)
+
 ```
 
 ## Geomorphic data
@@ -256,6 +267,7 @@ Another obvious place to look is at the geomorphic data in the site table. This 
 
 
 ```{r landform}
+
 # Landform vs argillic presence
 
 # Subset
@@ -270,11 +282,14 @@ test[test > 3,]
 
 # generalize the landform.string
 s$landform <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform.string), "fan", "hill") 
+
 ```
 
 Examining the above frequency table we can see that argillic horizons occur predominantly on fan remnants as was alluded too earlier. However, they also seem to occur frequently on other landforms - some of which are curious combinations of landforms or redundant terms.
 
+
 ```{r slope}
+
 # Hillslope position
 
 # Subset fan landforms
@@ -287,16 +302,17 @@ with(s_sub, round(
   ) 
 
 # Slope shape
-
 with(s_sub, round(
   prop.table(table(paste(shapedown, shapeacross), argillic, useNA = "ifany"), 2)
   * 100)
   )
+
 ```
 
 Looking at the hillslope position of fan landforms we can see a slightly higher proportion of argillic horizons are found on summits, while less are found on toeslopes. Slope shape doesn't seem to provide any useful information for distinguishing argillic horizons.
 
 ```{r surface}
+
 # Surface morphometry, depth and surface rock fragments
 
 # Recalculate gravel
@@ -309,12 +325,14 @@ s$frags <- apply(s[grepl("surface", names(s))], 1, sum)
 # Subset to just look and fans, and select numeric columns
 s_sub <- subset(s, landform == "fan", select = c(argillic, bedrckdepth, slope_field, elev_field, frags)) 
 
-s_m <- melt(s_sub, id = "argillic") # convert s_sub to wide data format
-head(s_m, 2)
+# convert s_sub to wide data format
+s_w <- gather(s_sub, key = key, value = value, - argillic) 
+head(s_w, 2)
 
-ggplot(s_m, aes(x = argillic, y = value)) +
+ggplot(s_w, aes(x = argillic, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ variable, scale = "free")
+  facet_wrap(~ key, scale = "free")
+
 ```
 
 Looking at our numeric variables only depth to bedrock seems to show much separation between the presence/absence of argillic horizons.
@@ -324,21 +342,20 @@ Looking at our numeric variables only depth to bedrock seems to show much separa
 
 Next we'll look at soil scientist bias. The question being: Are some soil scientists more likely to describe argillic horizons than others? Due to the excess number of soil scientist that have worked on CA794, including detailees, we've filtered the names of soil scientist to include just the top 3 mappers and given priority to the most senior soil scientists when they occur together.
 
-```{r bias}
-# Custom function to filter out the top 3 soil scientists
-desc_test <- function(old) {
-  old <- as.character(old)
-  new <- NA
-  # ranked by seniority
-  if (is.na(old)) {new <- "other"}
-  if (grepl("Stephen", old)) {new <- "Stephen"} # least senior
-  if (grepl("Paul", old)) {new <- "Paul"} 
-  if (grepl("Peter", old)) {new <- "Peter"} # most senior
-  if (is.na(new)) {new <- "other"}
- return(new)
-}
+```{r bias, eval=FALSE}
 
-s$describer2 <- sapply(s$describer, desc_test)
+# Custom function to filter out the top 3 soil scientists
+s <- within(s, {
+  old = describer
+  describer2 = NA
+  describer2[grepl("Stephen", old)] = "Stephen" # least senior
+  describer2[grepl("Paul",    old)] = "Paul"
+  describer2[grepl("Peter",   old)] = "Peter"   # most senior
+  })
+
+```
+
+```{r bias2}
 
 s_sub <- subset(s, landform == "fan")
 
@@ -350,15 +367,18 @@ with(s_sub, round(
   prop.table(table(describer2, argillic), margin = 1)
   * 100)
   )
+
 ```
 
 For fan landforms, none of the soil scientists seem more likely than the others to describe argillic horizons. However while this information is suggestive, it is far from definitive in showing a potential bias because it doesn't take into account other factors. We'll examine this more closely later.
+
 
 ## Plot coordinates
 
 Where do our points plot? We can plot the general location in R, but for this task we will export them to a Shapefile, so we can view them in a proper GIS, and really inspect them. Notice in the figure below the number of points that fall outside the survey boundary. What it doesn't show is the points that may plot in the Ocean or Mexico!
 
 ```{r plot}
+
 # Convert soil profile collection to a spatial object
 pedons2 <- pedons
 slot(pedons2, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
@@ -379,7 +399,8 @@ plot(ca794, axes = TRUE)
 plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 
 # Write shapefile of pedons
-writeOGR(pedons_sp, dsn = "C:/workspace", "pedons_sp", driver = "ESRI Shapefile", overwrite_layer = TRUE) 
+writeOGR(pedons_sp, dsn = "C:/workspace", "pedons_sp", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+
 ```
 
 
@@ -395,7 +416,11 @@ writeOGR(pedons_sp, dsn = "C:/workspace", "pedons_sp", driver = "ESRI Shapefile"
 Prior to any spatial analysis or modeling, you will need to develop a suite of geodata files that can be intersected with your field data locations. This is, in and of itself a difficult task, and should be facilitated by your Regional GIS Specialist. Typically, these geodata files would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R, and then extract the geodata values where they intersect with field data.
 
 ```{r extract, eval=FALSE}
-folder <- "F:/geodata/project_data/8VIC/ca794/"
+
+# set file path
+folder <- "I:/geodata/project_data/R8-VIC/ca794/"
+
+# list of file names
 files <- c(
   elev   = "ned30m_8VIC.tif", # elevation
   slope  = "ned30m_8VIC_slope5.tif", # slope gradient
@@ -421,28 +446,28 @@ files <- c(
 
 # combine the folder directory and file names
 geodata_f <- paste0(folder, files) 
+names(geodata_f) <- names(files)
 
 # Create a raster stack
 geodata_r <- stack(geodata_f)
 
-# Extract the geodata and imbed in a data frame
-data <- data.frame(
-   as.data.frame(pedons_sp)[c("pedon_id", "taxonname", "frags", "x_std", "y_std", "describer2", "landform.string", "landform", "tax_subgroup")],
-   extract(geodata_r, pedons_sp)
-   )
+# Extract the geodata and add to a data frame
+data <- raster::extract(geodata_r, pedons_sp, sp = TRUE)@data
 
 # Modify some of the geodata variables
-data$mast <- data$temp - 4
-idx <- aggregate(mast ~ cluster, data = data, function(x) round(mean(x, na.rm = TRUE), 2))
+idx <- aggregate(mast ~ cluster, data = data, mean, na.rm = TRUE)
 names(idx)[2] <- "cluster_mast"
-data <- merge(data, idx, by = "cluster", all.x = TRUE)
+data <- merge(data, idx, by = "cluster", all.x =  TRUE)
 
-data$cluster <- factor(data$cluster, levels = 1:15)
-data$cluster2 <- reorder(data$cluster, data$cluster_mast)
-data$gsi <- with(data, (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1))
-data$ndvi <- with(data, (ls_4 - ls_3) / (ls_4 + ls_3))
-data$sw <- cos(data$aspect - 255)
-data$twi_sc <- abs(data$twi - 13.8) # 13.8 = twi median
+data <- within(data, {
+  mast = temp - 4
+  cluster  = factor(cluster, levels = 1:15)
+  cluster2 = reorder(cluster, cluster_mast)
+  gsi      = (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1)
+  ndvi     = (ls_4 - ls_3) / (ls_4 + ls_3)
+  sw       = cos(aspect - 255)
+  twi_sc   = abs(twi - 13.8) # 13.8 = twi median
+  })
 
 # save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
 
@@ -451,6 +476,7 @@ data$twi_sc <- abs(data$twi - 13.8) # 13.8 = twi median
 # slot(pedons, "site") <- s
 # data[c("describer2", "x_std", "y_std")] <- NA
 # save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+
 ```
 
 
@@ -459,6 +485,7 @@ data$twi_sc <- abs(data$twi - 13.8) # 13.8 = twi median
 With our spatial data in hand, we can now see whether any of the variables will help us separate the presence/absence of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).  
 
 ```{r spatial, fig.width=8, fig.height=10}
+
 # Load data
 load(file = "C:/workspace/ch7_data.Rdata")
 train <- data
@@ -472,11 +499,12 @@ train$argillic <- ifelse(grepl("arg", train$tax_subgroup) &
 train <- subset(train, !is.na(argillic), select = - c(pedon_id, taxonname, x_std, y_std, landform.string, cluster, cluster_mast, argillic.horizon, tax_subgroup, frags)) 
 
 train2 <- subset(train, select = - c(describer2, landform, cluster2))
-data_m <- melt(train2, id = "argillic")
+data_m <- gather(train2, key = key, value = value, - argillic)
 
 ggplot(data_m, aes(x = argillic, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ variable, scales = "free")
+  facet_wrap(~ key, scales = "free")
+
 ```
 
 # Modeling
@@ -488,15 +516,19 @@ Modeling is an iterative process that cycles between fitting and evaluating alte
 The example below is known as a forward selection procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models the Akaike's Information Criterion (AIC) is used. When using the AIC to assess predictor significance, a smaller number is better.
 
 ```{r fitting, fig.width=10, fig.height=4}
+
 full <- glm(argillic ~ ., data = train, family = binomial()) # "~ ." includes all columns in the data set
 null <- glm(argillic ~ 1, data = train, family = binomial()) # "~ 1" just includes an intercept
 
 add1(null, full, test = "Chisq") # using the AIC test the effect of adding additional predictors, generally select the predictor with the smallest AIC unless it goes against your intuition
+
 ```
 
 We can see as the boxplots showed earlier that twi\_sc has the smallest AIC and reduces the deviances the most. So let's add twi\_sc to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions,  until the model is saturated.  
 
+
 ```{r}
+
 argi_glm <- update(null, . ~ . + twi_sc) # add twi_sc to the model, "-" will subtract predictors
 
 # or refit
@@ -510,6 +542,7 @@ argi_glm <- update(null, . ~ . + twi_sc) # add twi_sc to the model, "-" will sub
 argi_glm <- glm(argillic ~ twi_sc + slope + ls_1 + ch + z2str + mrvbf, data = train, family = binomial())
 
 summary(argi_glm) # examine the effect and error for each predictors
+
 ```
 
 After the model is saturated you should end up with a model similar to the one above. 
@@ -519,18 +552,22 @@ After the model is saturated you should end up with a model similar to the one a
 After we're satisfied no additional variables will improve the fit, we need to evaluate it's residuals, collinearity, accuracy, and model coefficients.
 
 ```{r evaluation}
+
 # Standard diagnostic plots for glm() objects
 # plot(argi_glm) # plot regression diagnostics
 
 # Term and partial residual plots
 # termplot(argi_glm, partial.resid = TRUE)
+
 ```
 
 The **variance inflation factor** (VIF) is used to assess collinearity amongst the predictors. Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 2 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
 
 ```{r}
+
 # Variance inflation, greater than 5 or 10 is bad
-vif(argi_glm)
+car::vif(argi_glm)
+
 ```
 
 
@@ -540,10 +577,11 @@ Because we're dealing with a classification problem, we have to consider both er
 - **Positive** and **negative** predicted values (user's accuracy) examine the inverse concept of how well the predictions match the reference data
 
 ```{r}
+
 comp <- data.frame(train[c("argillic", "cluster2")], 
                    pred = predict(argi_glm, train, type = "response") > 0.5
                    )
-confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
+caret::confusionMatrix(table(comp$pred, comp$argillic), positive = "TRUE")
 
 # Deviance squared
 D2 <- with(argi_glm, 
@@ -555,23 +593,24 @@ adjD2 <- with(argi_glm,
               round(1 - ((df.null / df.residual) * (1 - D2)), 2)
               )
 adjD2
+
 ```
 
 - Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some clusters appear to be dominated by specific soil series, these data aren't clean enough (nor are the series concepts usually) to model series separately, however, we could use the clusters as an additional model to attempt to separate the series. Do the hyperthermic clusters perform differently.
 
 ```{r}
-comp_sub <- subset(comp, argillic == TRUE)
-temp <- by(comp_sub, list(comp_sub$cluster), function(x) with(x, data.frame(
-  cluster = unique(cluster2),
-  sum_arg = sum(argillic, na.rm = T),
-  sum_pred = sum(pred, na.rm = T),
-  sensitivity = round(sum(pred == argillic) / length(argillic), 2)
-  )))
-temp <- do.call(rbind, temp)
-temp
 
-ggplot(temp, aes(x = cluster, y = sensitivity)) +
+temp <- subset(comp, argillic == TRUE) %>%
+  group_by(cluster2) %>%
+  summarize(
+    sum_arg = sum(argillic, na.rm = T),
+    sum_pred = sum(pred, na.rm = T),
+    sensitivity = round(sum(pred == argillic) / length(argillic), 2)
+    )
+
+ggplot(temp, aes(x = cluster2, y = sensitivity)) +
   geom_point()
+
 
 # Remove hyperthermic points         
 train_sub <- subset(train, temp < 22 + 4)
@@ -587,7 +626,7 @@ sub_glm <- glm(argillic ~ slope + twi_sc + ls_1 + mrvbf + z2str + ch, data = tra
 comp <- data.frame(train_sub[c("argillic", "cluster2")], 
                    pred = predict(sub_glm, train_sub, type = "response") > 0.4
                    )
-confusionMatrix(comp$pred, comp$argillic, positive = "TRUE")
+caret::confusionMatrix(table(comp$pred, comp$argillic), positive = "TRUE")
 
 comp_sub <- subset(comp, argillic == TRUE)
 
