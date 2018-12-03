@@ -1,0 +1,196 @@
+---
+title: Chapter 5 - Generalized Linear Models
+author: Stephen Roecker and Tom D'Avello
+date: "`r Sys.Date()`"
+output:
+  slidy_presentation:
+    css: C:/workspace2/github/stats_for_soil_survey/trunk/chapters/4_exploratory_analysis/css/hpstr.css
+    fig_caption: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, echo=FALSE)
+
+library(soilDB)
+library(ggplot2)
+
+```
+
+
+## Objectives
+
+* Introduce GLMs
+* Review Examples
+
+
+---
+
+
+## Pesky 'Linear Model' Assumptions (review)
+
+* ***Linearity*** - Y is _linearly_ related to X. 
+* ***Independence of Error*** - the error (residual) is _independent_ for each value of X.
+* ***Homoscedasticity*** - the _variation_ around the regression line is _constant_ for all values of X.
+* ***Normality*** - the values of Y are _normally_ distributed at each value of X.
+
+
+---
+
+
+## Generalized Linear Models (fewer assumptions)
+
+```{r family}
+glm <- data.frame(
+  `Family (or Distribution)` = c("Binomial", "Poisson"),
+  `Link Function` = c("logit*, probit, cloglog", "log*, identity, sqrt"),
+  `Data Type`     = c("binary (yes/no) or binomial (proportions)", "counts"),
+  Example         = c("Presense of Mollisols", "Number of Species"),
+  check.names = FALSE
+  )
+knitr::kable(glm)
+```
+
+---
+
+
+## Overview - Logistic Regression
+
+* Technique used to analyze a dependent variable with a discrete response
+* The independent variables are used to estimate the probability of occurrence for the dependent variable
+* Output values range from 0 - 1.0 (indicating 0 - 100% probability)
+* A threshold value, often 0.5, is used to determine if the prediction is part of the modeled class
+
+
+---
+
+
+## Example 1: Probability of Mollisols
+
+![Beaudette &  O'Geen, 2009](C:/workspace2/github/stats_for_soil_survey/trunk/chapters/7_generalized_linear_models/figure/mollisol.png)
+
+
+---
+
+
+## Example 2: Probability of Red Clay
+
+![Evans & Hartemink, 2014](C:/workspace2/github/stats_for_soil_survey/trunk/chapters/7_generalized_linear_models/figure/redclay.png) 
+
+
+---
+
+
+## Logistic Function
+
+Does this look familiar?
+
+```{r}
+p <- sort(c(rbinom(100, 1:100, 1)) / 100)
+logp <- log(p / (1 - p))
+test <- data.frame(p, logp)[!is.infinite(logp), ]
+fit <- lm(p ~ logp, data = test)
+
+plot(logp, p, type = "l", ylim = c(0, 1), las = 1,
+     ylab = "proportion (p)", xlab = "logit transform (log(p / (1 - p)))"
+     )
+```
+
+---
+
+
+## Logistic Function
+
+```{r}
+library(sp)
+
+data(meuse)
+meuse <- meuse[order(meuse$dist.m), ]
+meuse$lime <- ifelse(as.numeric(meuse$lime) == 2, 1, 0)
+
+lm_fit <- lm(as.numeric(lime) ~ dist.m, data = meuse)
+glm_fit <- glm(lime ~ dist.m, data = meuse, family = binomial())
+
+par(mfrow = c(1, 3))
+    plot(meuse$dist.m, lm_fit$fitted.values, type = "l", ylim = c(0, 1), las=1, 
+         ylab = "probability", xlab = "predictor", main = "Linear Fit"
+         )
+    with(meuse, points(dist.m, lime))
+    plot(meuse$dist.m, glm_fit$fitted.values, type = "l", ylim = c(0, 1), las=1,
+         ylab = "probability", xlab = "predictor", main = "Logistic Fit"
+         )
+    with(meuse, points(dist.m, lime))
+    boxplot(dist.m ~ lime, data = meuse, las = 1, col = "grey", horizontal = TRUE,
+            xlab = "predictor", ylab = "presence or absence", main = "Box Plot"
+            )
+```
+
+---
+
+
+## Sampling Requirements
+
+* The minimum number of cases per independent variable is 10:1
+* The preferred number of cases per independent variable is 20:1
+* The preferred number of cases per independent variable is 50:1 when using stepwise logistic regression 
+
+
+---
+
+
+## Fitting
+
+
+---
+
+
+## Accuracy
+
+
+---
+
+
+## Interpreting the Coefficients
+
+
+---
+
+
+## Checking Assumptions
+
+
+---
+
+
+## Residual Plots
+
+
+---
+
+
+## Variable Selection
+
+
+---
+
+
+# References
+
+Beaudette, D. E., & O'Geen, A. T, 2009. Quantifying the aspect effect: an application of solar radiation modeling for soil survey. Soil Science Society of America Journal, 73:1345-1352
+
+Evans, D.M. and Hartemink, A.E., 2014. Digital soil mapping of a red clay subsoil covered by loess. Geoderma, 230:296-304.
+
+
+---
+
+
+# Additional reading
+
+Lane, P.W., 2002. Generalized linear models in soil science. European Journal of Soil Science 53, 241- 251. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2002.00440.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2002.00440.x/abstract)
+
+James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+
+Hengl, T. 2009. A Practical Guide to Geostatistical Mapping, 2nd Edt. University of Amsterdam, www.lulu.com, 291 p. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf)
+
