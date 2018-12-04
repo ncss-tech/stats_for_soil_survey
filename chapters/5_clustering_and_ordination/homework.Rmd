@@ -1,0 +1,120 @@
+---
+title: "Chapter 5 Homework"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+---
+  
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+# Setup
+
+First, you will need to load some packages. Be sure to install these if missing, and install the latest versions of `soilDB` and `sharpshootR` as much of this tutorial depends on recent updates.
+```{r eval=TRUE}
+library(soilDB)
+library(sharpshootR)
+library(latticeExtra)
+library(reshape2)
+library(RColorBrewer)
+library(cluster)
+library(ape)
+```
+
+
+
+
+# Climate Summaries
+
+## Estimates from a single point per map unit polygon
+
+Annual and monthly climate summaries have been estimated from the [SSR2 standard stack of 1981--2010 PRISM data](https://ncss-tech.github.io/soilReports/docs/region2_mu-comparison-data-sources.html). For now, percentiles are estimates from a single sample from within each map unit polygon, weighted by:
+
+$$log(polygon\ area * component\ percentage)$$
+
+```{r fig.width=10, fig.height=6}
+soils <- c('Ava', 'Drummer', 'Cisne', 'Pierre', 'Cecil', 'San Joaquin', 'Redding')
+s <- fetchOSD(soils, extended = TRUE)
+```
+
+Here is a preview of the data: 8 annual summaries and monthly summaries for PPT and PET.
+```{r echo=FALSE}
+kable_styling(kable(s$climate.annual[1:8, ], format='html', digits = 2), font_size = 9, full_width = FALSE)
+kable_styling(kable(s$climate.monthly[c(1:3, 13:15), ], format='html', digits = 2), font_size = 9, full_width = FALSE)
+```
+
+
+Visualization of the annual climate summaries using select percentiles.
+```{r fig.width=12, fig.height=5.5}
+segplot(factor(series) ~ q05 + q95 | climate_var, centers=q50, data=s$climate.annual, draw.bands=FALSE, segments.fun=panel.arrows, ends='both', angle=90, length=1, unit='mm', scales=list(y=list(alternating=3), x=list(relation='free')), as.table=TRUE, col='RoyalBlue', strip=strip.custom(bg=grey(0.85), par.strip.text=list(cex=0.7)), xlab='5th-25th-50th-75th-95th Percentiles', panel=function(x, y, z, q25=s$climate.annual$q25, q75=s$climate.annual$q75, subscripts, ...) {
+  # basic plot
+  panel.grid(h=FALSE, v=-1, col='grey', lty=3)
+  panel.abline(h=1:length(unique(s$climate.annual$series)), col='grey', lty=3)
+  panel.segplot(x, y, z, subscripts=subscripts, ...)
+  
+  # add interquartile range
+  q25 <- q25[subscripts]
+  q75 <- q75[subscripts]
+  zz <- z[subscripts]
+  panel.rect(xleft=q25, xright=q75, ybottom=as.numeric(zz) - 0.025, ytop=as.numeric(zz) + 0.025, border='RoyalBlue', col='RoyalBlue')
+})
+```
+
+
+# Your Turn
+
+## Get and Prepare Data
+
+```{r}
+soils <- c('Ava', 'Drummer', 'Cisne', 'Pierre', 'Cecil', 'San Joaquin', 'Redding')
+s <- fetchOSD(soils, extended = TRUE)
+
+x <- s$climate.annual
+
+x.wide <- dcast(x, series ~ climate_var, value.var = 'q50')
+
+row.names(x.wide) <- x.wide$series
+```
+
+## Evaluate Distance based on Annual Climate Data
+
+```{r}
+# distance matrix
+d <- daisy(x.wide[, -1], metric = 'gower', stand = TRUE)
+
+# divising clustering
+dd <- diana(d)
+
+# convert to ape class, via hclust class
+h <- as.hclust(dd)
+p <- as.phylo(h)
+
+```
+
+## Organize via Hierarchical Clustering
+
+```{r}
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85, main='dendrogram')
+
+
+```
+
+## Visualize via Ordination
+
+```{r}
+
+
+
+```
+
+
