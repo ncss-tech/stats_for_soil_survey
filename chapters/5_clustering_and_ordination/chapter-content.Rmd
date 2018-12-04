@@ -22,7 +22,6 @@ bibliography: bibliography.bib
 # setup
 library(knitr, quietly=TRUE)
 library(kableExtra, quietly=TRUE)
-library(viridis)
 
 opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
 
@@ -83,6 +82,7 @@ library(ape)
 library(RColorBrewer)
 library(MASS)
 library(lattice)
+library(viridis)
 ```
 
 <hr>
@@ -441,6 +441,7 @@ The following example is based on a **data matrix** containing lab measurements 
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
 
 
+Note that distances between individuals, within clusters, and between clusters is more apparent the nMDS representation of the distance matrix. Similar information is embedded in the dendrogram but it is not as intuitive.
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=5}
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
@@ -794,8 +795,10 @@ h.div <- cor(d, cophenetic(diana(d)))
 
 # combine results into a table
 res <- data.frame(method=c('average', 'single', 'complete', 'ward', 'divisive'), cophenetic.correlation=c(h.avg, h.single, h.complete, h.ward, h.div))
+```
 
-print(res)
+```{r echo=FALSE}
+kable_styling(kable(res, row.names = FALSE, format = 'html', digits = 3), full_width = FALSE)
 ```
 
 Test the "flexible" linkage criteria by iterating over values of `alpha`. Looks like a value near `0.5` would be ideal (e.g. highest cophenetic correlation). Interestingly, this is very close to the cophenetic correlation associated with the "average" linkage criteria.
