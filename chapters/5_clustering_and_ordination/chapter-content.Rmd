@@ -326,7 +326,7 @@ tiplabels(pch=15, col=cols)
 
 #### Methods
 
-There are two main types of hierarchical clustering.
+There are two main types of [hierarchical clustering](https://en.wikipedia.org/wiki/Hierarchical_clustering).
 
   * **Agglomerative:** Start with individuals and iteratively combine into larger and larger groups.
   * **Divisive:** Start with all individuals and iteratively split into smaller and smaller groups.
@@ -343,16 +343,17 @@ The agglomerative methods also depend on the choice of [linkage criterion](https
   3. Complete linkage: usually generates small, compact clusters,
   4. Ward's (minimum variance) method,
   6. Weighted average (or Gower's) linkage: spherical clusters of roughly equal size, and
-  7. Flexible linkage: adjustable linkage based on parameter `alpha`.  
+  7. "Flexible strategy": adjustable linkage based on parameter $\alpha$.  
+  8. "Flexible UPGMA" [@belbin1992]: adjustable linkage based on parameter $\beta$.  
 
-See [@Kaufman2005], [@Arkley1976], and [@Legendre1998] for a detailed description of these linkage criteria. Selection of linkage criteria can be quantitatively evaluated using the [cophenetic correlation](https://en.wikipedia.org/wiki/Cophenetic_correlation); and index of how well a dendrogram preserves the original pair-wise distances. More on this later.
+See [@Kaufman2005], [@Arkley1976], [@Legendre1998], and [`agnes()` manual page](https://www.rdocumentation.org/packages/cluster/versions/2.0.7-1/topics/agnes) for a detailed description of these linkage criteria. Selection of linkage criteria can be quantitatively evaluated using the [cophenetic correlation](https://en.wikipedia.org/wiki/Cophenetic_correlation); and index of how well a dendrogram preserves the original pair-wise distances. [This thread](https://stats.stackexchange.com/questions/195446/choosing-the-right-linkage-method-for-hierarchical-clustering) on StackExchange has a nice summary of various linkage criteria. More on this later.
 
 ##### Review and Discuss
   * The simplicity and lack of decisions make the divisive method convenient for most work. 
   * The top-down approach is similar to the way in which we describe soil morphology and taxonomy.
   * Linkage criteria should be selected based on the hypothesized shape of clusters or prior subject knowledge.
   * When selecting a method, read/think about it; don't just go "fishing."
-  * *Personal opinion:* I usually select divisive hierarchical clustering over the other methods: structures more interpretable.
+  * *Personal opinion:* I usually select divisive hierarchical clustering over the other methods: structures *seem* to be generally more interpretable.
 
 
 ### Centroid and Medoid (Partitioning) Clustering
@@ -774,8 +775,8 @@ tiplabels(pch=15, col=cols)
 
 
 ### Evaluation of Dendrogram Representation
-The correlation between original distance matrix and [cophenetic distance matrix](https://en.wikipedia.org/wiki/Cophenetic) is a reasonable index of how faithfully a dendrogram preserves the original pair-wise distances.
 
+Re-visiting our sample data from before, develop hierarchical clusterings using several strategies (methods / linkage criteria).
 ```{r}
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
@@ -784,44 +785,97 @@ sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
 # distance matrix
 d <- daisy(sp4[, -1], metric = 'euclidean', stand = TRUE)
 
+# hierarchical clustering based on several strategies
+# agglomerative
+h.avg <- agnes(d, method='average')
+h.single <- agnes(d, method='single')
+h.complete <- agnes(d, method='complete')
+h.ward <- agnes(d, method='ward')
+h.flexible <- agnes(d, method='gaverage', par.method = 0.01)
+
+# divisive
+h.div <- diana(d)
+```
+
+
+The correlation between original distance matrix and [cophenetic distance matrix](https://en.wikipedia.org/wiki/Cophenetic) is a reasonable index of how faithfully a dendrogram preserves the original pair-wise distances.
+```{r}
 # agglomerative hierarchical clustering with various linkage criteria
-h.avg <- cor(d, cophenetic(agnes(d, method='average')))
-h.single <- cor(d, cophenetic(agnes(d, method='single')))
-h.complete <- cor(d, cophenetic(agnes(d, method='complete')))
-h.ward <- cor(d, cophenetic(agnes(d, method='ward')))
+corr.avg <- cor(d, cophenetic(h.avg))
+corr.single <- cor(d, cophenetic(h.single))
+corr.complete <- cor(d, cophenetic(h.complete))
+corr.ward <- cor(d, cophenetic(h.ward))
+corr.flexible <- cor(d, cophenetic(h.flexible))
 
 # divisive hierarchical clustering
-h.div <- cor(d, cophenetic(diana(d)))
+corr.div <- cor(d, cophenetic(h.div))
+```
 
-# combine results into a table
-res <- data.frame(method=c('average', 'single', 'complete', 'ward', 'divisive'), cophenetic.correlation=c(h.avg, h.single, h.complete, h.ward, h.div))
+Combine the results into a table for quick comparison. Note that the [`agnes`](https://www.rdocumentation.org/packages/cluster/versions/2.0.7-1/topics/agnes.object) and [`diana`](https://www.rdocumentation.org/packages/cluster/versions/2.0.7-1/topics/diana) functions provide an agglomerative / divisive coefficient that can be used to evaluate clustering efficiency (e.g. cluster size and "compactness"). Depending on the application, one metric may be more informative than the other.
+```{r}
+res <- data.frame(
+  method=c('average', 'single', 'complete', 'ward', 'flexible UPGMA', 'divisive'), 
+  cophenetic.correlation=c(corr.avg, corr.single, corr.complete, corr.ward, corr.flexible, corr.div),
+  agg_div.coefficient=c(h.avg$ac, h.single$ac, h.complete$ac, h.ward$ac, h.flexible$ac, h.div$dc)
+)
+
+# re-order
+res <- res[order(res$cophenetic.correlation, decreasing = TRUE), ]
 ```
 
 ```{r echo=FALSE}
 kable_styling(kable(res, row.names = FALSE, format = 'html', digits = 3), full_width = FALSE)
 ```
 
-Test the "flexible" linkage criteria by iterating over values of `alpha`. Looks like a value near `0.5` would be ideal (e.g. highest cophenetic correlation). Interestingly, this is very close to the cophenetic correlation associated with the "average" linkage criteria.
-```{r fig.width=6, fig.height=4}
-# init a sequence spanning 0.01 to 1
-alpha <- seq(from=0.01, to=1, length.out = 100)
+Investigate differences graphically.
+```{r fig.width=8, fig.height=5}
+par(mar=c(0,0.25,1.5,0.25), mfrow=c(2,3))
+
+plot(as.phylo(as.hclust(h.avg)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Average')
+tiplabels(pch=15, col=col.set[cutree(h.avg, 4)])
+
+plot(as.phylo(as.hclust(h.single)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Single')
+tiplabels(pch=15, col=col.set[cutree(h.single, 4)])
+
+plot(as.phylo(as.hclust(h.complete)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Complete')
+tiplabels(pch=15, col=col.set[cutree(h.complete, 4)])
+
+plot(as.phylo(as.hclust(h.ward)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Ward')
+tiplabels(pch=15, col=col.set[cutree(h.ward, 4)])
+
+plot(as.phylo(as.hclust(h.flexible)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Flexible (0.01)')
+tiplabels(pch=15, col=col.set[cutree(h.flexible, 4)])
+
+plot(as.phylo(as.hclust(h.div)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Divisive')
+tiplabels(pch=15, col=col.set[cutree(h.div, 4)])
+```
+
+TODO: interpret main differences in shape
+
+
+#### More on the Flexible UPGMA method
+Test the "flexible UPGMA" method [@belbin1992] by iterating over possible values for $\beta$. Looks like a value near `0.01` would be ideal (e.g. highest cophenetic correlation). Interestingly, this is very close to the cophenetic correlation associated with the "average" linkage criteria.
+```{r fig.width=6.5, fig.height=4}
+# init a sequence spanning -1 to 1
+beta <- seq(from=-1, to=1, length.out = 100)
 # init an empty vector to store results
-r <- vector(mode='numeric', length = length(alpha))
+r <- vector(mode='numeric', length = length(beta))
 
 # iterate over values of alpha and compute cophenetic correlation
 for(i in 1:length(r)) {
-  r[i] <- cor(d, cophenetic(agnes(d, method='flexible', par.meth = alpha[i])))
+  r[i] <- cor(d, cophenetic(agnes(d, method='gaverage', par.method = beta[i])))
 }
 
 # plot
 par(mar=c(5,5,1,1))
-plot(alpha, r, type='l', xlab='alpha parameter', ylab='cophenetic correlation', pch=16)
+plot(beta, r, type='l', xlab='beta parameter', ylab='cophenetic correlation', pch=16, las=1)
 # locate the max coph. corr.
 idx <- which.max(r)
 # mark this point and label
-points(alpha[idx], r[idx], col='red', cex=2, lwd=2)
-text(alpha[idx], r[idx], labels = round(alpha[idx], 3), pos=4)
+points(beta[idx], r[idx], col='red', cex=2, lwd=2)
+text(beta[idx], r[idx], labels = round(beta[idx], 3), pos=4)
 ```
+
 
 
 ### Comparison of Dendrograms

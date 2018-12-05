@@ -15,3 +15,10 @@
 * article by Sokal
 * article by Arkley
 
+## TODO
+* elaborate on the flexible linkage criteria (`cluster::agnes(..., method=gavergage)`)
+   - belbin1992
+   - used by Pierre
+   - compare methods?
+
+
