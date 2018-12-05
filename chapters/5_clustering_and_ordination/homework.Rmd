@@ -8,8 +8,7 @@ output:
 jquery: null
 smart: no
 ---
-  
-  
+
 ```{r setup, echo=FALSE, results='hide', warning=FALSE}
 # setup
 library(knitr, quietly=TRUE)
@@ -18,9 +17,29 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
-# Setup
+# Objectives
+Using the concepts (and code) from the [Numerical Taxonomy and Ordination](chapter-content.html) chapter, compute pair-wise distances between soil series concepts from a suite of 8 phyiscal and climatic variables. These 8 variables (*characteristics*) will be used to develop a climate signature for each soil series (*individual*). Present and interpret the results using both a dendrogram and ordination.
 
-First, you will need to load some packages. Be sure to install these if missing, and install the latest versions of `soilDB` and `sharpshootR` as much of this tutorial depends on recent updates.
+Key steps:
+
+   * select your favorite soil series (5-10) and get the data via `fetchOSD`
+   * develop the **data matrix**
+   * develop the **distance matrix**, ideally after standardization of characteristics
+   * develop a dendrogram via hierarchical cluster analysis
+   * develop an ordination via `sammon` or `metaMDS`
+   * interpret the results
+
+
+# Brief Description of the Data Source
+Annual and monthly climate summaries have been estimated from the [SSR2 standard stack of 1981--2010 PRISM data](https://ncss-tech.github.io/soilReports/docs/region2_mu-comparison-data-sources.html). [Weighted percentiles](https://www.rdocumentation.org/packages/Hmisc/versions/4.1-1/topics/wtd.stats) were estimated from a single sample from within each map unit delineation, weighted by 
+
+$$log(polygon\ area * component\ percentage)$$
+We will be using the annual climate summaries. See this [document](http://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html) for more information on how summaries like these have been developed and how to access them via `fetchOSD`.
+
+
+## Setup
+
+First, you will need to load some packages. If you have completed the [pre-class assignment](http://ncss-tech.github.io/stats_for_soil_survey/chapters/0_pre-class-assignment/pre-class-assignment.html) then all of these packages should be in place.
 ```{r eval=TRUE}
 library(soilDB)
 library(sharpshootR)
@@ -29,33 +48,28 @@ library(reshape2)
 library(RColorBrewer)
 library(cluster)
 library(ape)
+library(vegan)
+library(MASS)
 ```
 
 
 
+# An Example
 
-# Climate Summaries
-
-## Estimates from a single point per map unit polygon
-
-Annual and monthly climate summaries have been estimated from the [SSR2 standard stack of 1981--2010 PRISM data](https://ncss-tech.github.io/soilReports/docs/region2_mu-comparison-data-sources.html). For now, percentiles are estimates from a single sample from within each map unit polygon, weighted by:
-
-$$log(polygon\ area * component\ percentage)$$
-
+The `fetchOSD` function from the `soilDB` package is a simple interface data that have been extracted from the text OSDs and summarized from the current SSURGO snapshot. The `extended=TRUE` argument is used to access the climate data we will be using in this assignment.
 ```{r fig.width=10, fig.height=6}
-soils <- c('Ava', 'Drummer', 'Cisne', 'Pierre', 'Cecil', 'San Joaquin', 'Redding')
+soils <- c('Ava', 'Drummer', 'Cisne', 'Pierre', 'Cecil', 'Appling', 'San Joaquin', 'Redding', 'Corning')
 s <- fetchOSD(soils, extended = TRUE)
 ```
 
-Here is a preview of the data: 8 annual summaries and monthly summaries for PPT and PET.
+Select percentiles are provided for 7 annual climate summaries and elevation. Note that "q50" is the median value and "n" is the number of samples (i.e. number of delineations) used to estimate the percentiles.
 ```{r echo=FALSE}
 kable_styling(kable(s$climate.annual[1:8, ], format='html', digits = 2), font_size = 9, full_width = FALSE)
-kable_styling(kable(s$climate.monthly[c(1:3, 13:15), ], format='html', digits = 2), font_size = 9, full_width = FALSE)
 ```
 
 
-Visualization of the annual climate summaries using select percentiles.
-```{r fig.width=12, fig.height=5.5}
+The data look something like this. Your assignment is to compute pair-wise distances between series concepts, using median values (filled circles in the figure) from these data.
+```{r fig.width=12, fig.height=5.5, echo=FALSE}
 segplot(factor(series) ~ q05 + q95 | climate_var, centers=q50, data=s$climate.annual, draw.bands=FALSE, segments.fun=panel.arrows, ends='both', angle=90, length=1, unit='mm', scales=list(y=list(alternating=3), x=list(relation='free')), as.table=TRUE, col='RoyalBlue', strip=strip.custom(bg=grey(0.85), par.strip.text=list(cex=0.7)), xlab='5th-25th-50th-75th-95th Percentiles', panel=function(x, y, z, q25=s$climate.annual$q25, q75=s$climate.annual$q75, subscripts, ...) {
   # basic plot
   panel.grid(h=FALSE, v=-1, col='grey', lty=3)
@@ -70,51 +84,104 @@ segplot(factor(series) ~ q05 + q95 | climate_var, centers=q50, data=s$climate.an
 })
 ```
 
-
-# Your Turn
-
-## Get and Prepare Data
-
-```{r}
-soils <- c('Ava', 'Drummer', 'Cisne', 'Pierre', 'Cecil', 'San Joaquin', 'Redding')
-s <- fetchOSD(soils, extended = TRUE)
-
+The results might look something like this.
+```{r echo=FALSE, fig.width=8.5, fig.height=4, results='hide'}
 x <- s$climate.annual
-
 x.wide <- dcast(x, series ~ climate_var, value.var = 'q50')
-
 row.names(x.wide) <- x.wide$series
-```
 
-## Evaluate Distance based on Annual Climate Data
-
-```{r}
-# distance matrix
-d <- daisy(x.wide[, -1], metric = 'gower', stand = TRUE)
-
-# divising clustering
+d <- daisy(x.wide[, -1], stand = TRUE, metric = 'gower')
 dd <- diana(d)
-
-# convert to ape class, via hclust class
 h <- as.hclust(dd)
 p <- as.phylo(h)
 
+# define colors based on cutting a divisive hierarchical clustering into 4 groups
+cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
+
+# nMDS from distance matrix
+s <- sammon(d)
+
+par(mar=c(1,1,2,1), mfcol=c(1,2))
+plot(p, label.offset=0.125, direction='right', font=1, cex=0.85, main='Divisive Hierarchical Clustering')
+tiplabels(pch=15, col=cols)
+
+
+plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='', main="nMDS by Sammon's Non-Linear Mapping", xlim=c(-0.3, 0.6))
+abline(v=0, h=0, col='black')
+grid()
+text(s$points, rownames(s$points), cex=0.65, col=cols, font=2)
+box()
 ```
 
-## Organize via Hierarchical Clustering
+---------------------
+
+
+# Your Turn
+We will help with the data preparation but it will be up to you to finish the process.
+
+## Get and Prepare Data
+Adjust the vector of soil series names assigned to the `soils` character vector below. 5 to 10 should be enough, but feel free to use all [50 state soils](https://raw.githubusercontent.com/ncss-tech/soil-color-book/master/state-soils/state_soils.csv).
+```{r eval=FALSE}
+# define series names and get data
+## you will need to edit this accordingly
+soils <- c('your favorite here', 'another favorite', 'maybe the state soil', ...)
+s <- fetchOSD(soils, extended = TRUE)
+
+# extract annual climate + elevation data
+x <- s$climate.annual
+
+# check structure of the data
+str(x)
+head(x)
+```
+
+Develop the **data matrix**. The data are in "long format" (multiple rows per series, one for each variable) but we need the data in "wide format" (single row per series, columns containing medians).
+```{r eval=FALSE}
+# re-shape into wide format
+x.wide <- dcast(x, series ~ climate_var, value.var = 'q50')
+
+# save the series names into row names for later
+# remember code examples from chapter 5?
+row.names(x.wide) <- x.wide$series
+
+# check structure
+str(x.wide)
+head(x.wide)
+```
+
+## Develop Distance Matrix
+Don't forget to standardize characteristics.
 
 ```{r}
-plot(p, label.offset=0.125, direction='right', font=1, cex=0.85, main='dendrogram')
-
+# dist() and daisy() 
 
 ```
 
-## Visualize via Ordination
-
+## Hierarchical Clustering
+There are several methods and linkage critera. How do you choose?
 ```{r}
+# hclust(), agnes(), diana()
 
+# possibly convert to ape class for better figures, via hclust class
+# as.hclust()
+# as.phylo()
+```
 
+## Ordination
+```{r}
+# sammon() or metaMDS()
 
 ```
+
+## Visualize Pair-Wise Distances via Dendrogram and Ordination
+```{r}
+# most hierarchical clustering objects have a plot() method
+
+```
+
+## Interpret
+Do these figures tell you anything that you didn't already know? Does the hierarchy suggested by the dendrogram mean anything? Does cutting the dendrogram into $n$ clusters result in groups that follow intuition? Which representation (dendrogram vs. ordination) is more useful? Do the axes of the 2D representation (e.g. ordination) of the original 8D data space map to meaningful climatic gradients? How might we use the pair-wise distances computed from select characteristics of all soil series concepts?
+
+
 
 
