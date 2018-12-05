@@ -99,7 +99,7 @@ require(raster)
 require(rgdal)
 require(rms)
 
-setwd("C:/workspace")
+setwd("C:/workspace2")
 ```
 
 Select sample file, create data frame and view the first few records
@@ -177,8 +177,8 @@ Run a prediction of the model using the dem10m, eastness, northness, and maxent 
 githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_raster.RData"
 load(url(githubURL))
 
-# load("C:/workspace/wv_raster.RData")
-# glm_r <- raster("C:/workspace/spodic_pres_GLM1.img")
+# load("C:/workspace2/wv_raster.RData")
+# glm_r <- raster("C:/workspace2/spodic_pres_GLM1.img")
 
 glm_r <- predict(rasters, GLM.1, filename = "spodic_pres_GLM1.img", type = "fitted", progress = "text", overwrite = TRUE)
 
@@ -342,7 +342,7 @@ Looking at our numeric variables only depth to bedrock seems to show much separa
 
 Next we'll look at soil scientist bias. The question being: Are some soil scientists more likely to describe argillic horizons than others? Due to the excess number of soil scientist that have worked on CA794, including detailees, we've filtered the names of soil scientist to include just the top 3 mappers and given priority to the most senior soil scientists when they occur together.
 
-```{r bias, eval=FALSE}
+```{r bias, eval=TRUE}
 
 # Custom function to filter out the top 3 soil scientists
 s <- within(s, {
@@ -399,7 +399,7 @@ plot(ca794, axes = TRUE)
 plot(pedons_sp, add = TRUE) # notice the points outside the boundary
 
 # Write shapefile of pedons
-writeOGR(pedons_sp, dsn = "C:/workspace", "pedons_sp", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+writeOGR(pedons_sp, dsn = "C:/workspace2", "pedons_sp", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 
 ```
 
@@ -418,7 +418,7 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 ```{r extract, eval=FALSE}
 
 # set file path
-folder <- "I:/geodata/project_data/R8-VIC/ca794/"
+folder <- "D:/geodata/project_data/R8-VIC/ca794/"
 
 # list of file names
 files <- c(
@@ -469,13 +469,13 @@ data <- within(data, {
   twi_sc   = abs(twi - 13.8) # 13.8 = twi median
   })
 
-# save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
+# save(data, ca794, pedons, file = "C:/workspace2/ch7_data.Rdata")
 
 # Strip out location and personal information before uploading to the internet
 # s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
 # slot(pedons, "site") <- s
 # data[c("describer2", "x_std", "y_std")] <- NA
-# save(data, ca794, pedons, file = "C:/workspace/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# save(data, ca794, pedons, file = "C:/workspace2/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 
 ```
 
@@ -487,7 +487,7 @@ With our spatial data in hand, we can now see whether any of the variables will 
 ```{r spatial, fig.width=8, fig.height=10}
 
 # Load data
-load(file = "C:/workspace/ch7_data.Rdata")
+load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
 train <- data
 
 # Select argillic horizons with "arg" in the subgroup name and on fans
@@ -512,6 +512,9 @@ ggplot(data_m, aes(x = argillic, y = value)) +
 ## Model training
 
 Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. In addition, the order is which the variables are included or excluded from the model effects the significance of the others, and thus several weak predictors might mask the effect of one strong predictor. Therefore, it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
+
+
+### Variable Selection
 
 The example below is known as a forward selection procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models the Akaike's Information Criterion (AIC) is used. When using the AIC to assess predictor significance, a smaller number is better.
 
@@ -599,6 +602,7 @@ adjD2
 - Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some clusters appear to be dominated by specific soil series, these data aren't clean enough (nor are the series concepts usually) to model series separately, however, we could use the clusters as an additional model to attempt to separate the series. Do the hyperthermic clusters perform differently.
 
 ```{r}
+library(dplyr)
 
 temp <- subset(comp, argillic == TRUE) %>%
   group_by(cluster2) %>%
@@ -642,11 +646,11 @@ temp
 ggplot(temp, aes(x = cluster, y = sensitivity)) +
   geom_point()
 
-# Examine the coefficients
+# Examine the coefficients, stored in log odds
 summary(argi_glm)
 
 # Convert the coefficients to an odds scale, who here gambles?
-round(binomial(link = "logit")$linkinv(coef(argi_glm)), 2) 
+exp(coef(argi_glm))
 
 # Importance of each predictor assessed by the amount of deviance they explain
 anova(argi_glm) 
@@ -673,17 +677,17 @@ predfun <- function(model, data) {
 # writeRaster(r[[1]], "argi.tif", overwrite = T, progress = "text")
 # writeRaster(r[[2]], "argi_se.tif", overwrite = T, progress = "text")
 
-plot(raster("C:/workspace/argi.tif"))
+plot(raster("C:/workspace2/argi.tif"))
 plot(ca794, add = TRUE)
-plot(raster("C:/workspace/argi_se.tif"))
+plot(raster("C:/workspace2/argi_se.tif"))
 plot(ca794, add = TRUE)
 ```
 
 ```{r, eval=FALSE}
 # Download clipped example from Pinto Basin Joshua Tree
 githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/argi_pb.zip"
-download.file(githubURL, destfile = "C:/workspace/argi_pb.zip")
-unzip(zipfile="C:/workspace/argi_pb.zip", exdir="C:/workspace")
+download.file(githubURL, destfile = "C:/workspace2/argi_pb.zip")
+unzip(zipfile="C:/workspace2/argi_pb.zip", exdir="C:/workspace2")
 ```
 
 ### Exercise 2: View the prediction in ArcGIS

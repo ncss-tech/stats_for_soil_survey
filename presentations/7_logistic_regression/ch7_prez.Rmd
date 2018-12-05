@@ -1,5 +1,5 @@
 ---
-title: Chapter 5 - Generalized Linear Models
+title: Chapter 5 - Generalized Linear Models (GLM)
 author: Stephen Roecker and Tom D'Avello
 date: "`r Sys.Date()`"
 output:
@@ -22,9 +22,14 @@ library(ggplot2)
 
 ## Objectives
 
-* Introduce GLMs
-* Review Examples
-
+* Introduce GLMs broadly
+* Examine Logistic Regression
+    * Examples
+    * Fitting
+    * Accuracy
+    * Interpret
+    * Assumptions
+    * Variable Selection
 
 ---
 
@@ -40,14 +45,30 @@ library(ggplot2)
 ---
 
 
+## Comparison between Linear Models and GLMs
+
+```{r comparison}
+comp <- data.frame(
+  Type = c("Linear", "GLM"),
+  Distributions = c("Gaussian (i.e. Normal)", "Any Exponential Family"),
+  `Estimation Method` = c("least squares", "maximum-likelihood"),
+  `Goodnesss of Fit`     = c("variance", "deviance"),
+  check.names = FALSE
+  )
+knitr::kable(comp)
+
+```
+
+---
+
 ## Generalized Linear Models (fewer assumptions)
 
 ```{r family}
 glm <- data.frame(
-  `Family (or Distribution)` = c("Binomial", "Poisson"),
-  `Link Function` = c("logit*, probit, cloglog", "log*, identity, sqrt"),
-  `Data Type`     = c("binary (yes/no) or binomial (proportions)", "counts"),
-  Example         = c("Presense of Mollisols", "Number of Species"),
+  `Family (or Distribution)` = c("Gaussian", "Binomial", "Poisson"),
+  `Default Link Function` = c("identity", "logit", "log"),
+  `Data Type`     = c("interval or ratio", "binary (yes/no) or binomial (proportions)", "counts"),
+  Example         = c("clay content", "presense of mollisols", "# of species"),
   check.names = FALSE
   )
 knitr::kable(glm)
@@ -58,9 +79,8 @@ knitr::kable(glm)
 
 ## Overview - Logistic Regression
 
-* Technique used to analyze a dependent variable with a discrete response
-* The independent variables are used to estimate the probability of occurrence for the dependent variable
-* Output values range from 0 - 1.0 (indicating 0 - 100% probability)
+* Response = binary (yes or no)(1 or 0) or binomial (0 to 1)(0 to 100%)
+* Prediction = probability ( e.g. 0 - 100%)
 * A threshold value, often 0.5, is used to determine if the prediction is part of the modeled class
 
 
@@ -83,7 +103,7 @@ knitr::kable(glm)
 ---
 
 
-## Logistic Function
+## Logistic Link Function
 
 Does this look familiar?
 
@@ -101,7 +121,7 @@ plot(logp, p, type = "l", ylim = c(0, 1), las = 1,
 ---
 
 
-## Logistic Function
+## Logistic Fit
 
 ```{r}
 library(sp)
@@ -142,29 +162,83 @@ par(mfrow = c(1, 3))
 
 ## Fitting
 
+```{r}
+githubURL <- "C:/workspace2/github/stats_for_soil_survey/trunk/data/logistic/wv_transect_editedforR.csv"
+wv <- read.csv(githubURL)
+
+wv$spod <- ifelse(wv$spodint <= 1, 0, 1)
+
+```
+```{r, echo=TRUE}
+spod.glm <- glm(spod ~ dem10m + eastness + northness + maxent, family = binomial(link = "logit"), data = wv)
+print(spod.glm)
+```
 
 ---
 
 
-## Accuracy
+## Accuracy - rms R package
+
+```{r acc1, echo=TRUE}
+library(rms)
+lrm(spod ~ dem10m + eastness + northness + maxent, data = wv)
+```
 
 
 ---
+
+
+# Accuracy - modEvA R package
+
+```{r acc2, echo=TRUE}
+library(modEvA)
+cbind(d.squared     = Dsquared(spod.glm), 
+      adj.d.squared = Dsquared(spod.glm, adjust = TRUE)
+      )
+rbind(RsqGLM(spod.glm))
+```
+
+
+----
 
 
 ## Interpreting the Coefficients
 
+```{r coef1, echo=TRUE}
+# extract coefficient, stored in log(odds)
+coef(spod.glm)
+
+# convert coefficient to odds
+exp(coef(spod.glm))
+```
+
 
 ---
 
+## Interpreting the Coefficients - Partial-Residual Plots
 
-## Checking Assumptions
+```{r coef2}
+car::crPlots(spod.glm)
+```
 
 
 ---
 
+## Checking Assumptions - Residual Plots
 
-## Residual Plots
+```{r assum1, messages=FALSE}
+par(mfrow = c(2, 2))
+plot(spod.glm)
+dev.off()
+```
+
+---
+
+## Checking Assumptions - Resdiual Plots
+
+```{r}
+car::residualPlots(spod.glm, main = "Residual Plots")
+```
 
 
 ---
