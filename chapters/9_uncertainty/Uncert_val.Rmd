@@ -9,6 +9,8 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include=FALSE}
@@ -164,8 +166,10 @@ boot_stats <- data.frame(
   means = numeric(N)
   )
 
-for (i in 1:N){ # for each instance (i) in the set from 1 to N (50 in this case)
-  boot.sample = sample(d, n, replace = TRUE) #create a new variable dB from each bootstrap sample of d
+# for each instance (i) in the set from 1 to N (50 in this case)
+for (i in 1:N) {
+  # create a new variable dB from each bootstrap sample of d
+  boot.sample = sample(d, n, replace = TRUE) 
   boot_stats$means[i] = mean(boot.sample)
   boot_stats$vars[i] = var(boot.sample)
   }
@@ -173,6 +177,7 @@ for (i in 1:N){ # for each instance (i) in the set from 1 to N (50 in this case)
 quantile(boot_stats$vars)
 
 stripchart(boot_stats$vars)
+
 
 # Traditional Approach
 ci <- c(
@@ -244,7 +249,9 @@ sqrt(mean((predicted - observed)^2))
 
 
 ## Exercise - Categorical Metrics
+
 ```{r}
+
 # Create a Ficticous Data-set
 r <- runif(175)
 idx <- sample(which(r > 0.5), 75)
@@ -256,21 +263,30 @@ d_cat = data.frame(
   )
 
 # Compute Confusion Matrix
-table(d_cat$predicted > 0.5, d_cat$observed)
+cm <- table(d_cat$predicted > 0.5, d_cat$observed)
+print(cm)
 
 # or
 
 library(caret)
-cm <- confusionMatrix(d_cat$predicted > 0.5, d_cat$observed, positive = "TRUE")
+cm <- confusionMatrix(cm, positive = "TRUE")
 cm$table
 cm$overall
 round(cm$byClass, 2)
 
+
+# Examine threshoold
+ggplot(d_cat, aes(x = predicted, color = observed)) +
+  geom_density(lwd = 1.5)
+
+
 # Trade Precision for Sensitivity by Varying the Threshold 
-cm <- confusionMatrix(d_cat$predicted > 0.4, d_cat$observed, positive = "TRUE")
+cm <- table(d_cat$predicted > 0.4, d_cat$observed)
+cm <- confusionMatrix(cm, positive = "TRUE")
 cm$table
 cm$overall["Accuracy"]
 round(cm$byClass, 2)
+
 ```
 
 # Validation
