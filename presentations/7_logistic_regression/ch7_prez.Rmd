@@ -16,6 +16,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, echo=FALSE)
 
 library(soilDB)
 library(ggplot2)
+library(dplyr)
 
 ```
 
@@ -107,7 +108,7 @@ knitr::kable(glm)
 
 Does this look familiar?
 
-```{r}
+```{r link}
 p <- sort(c(rbinom(100, 1:100, 1)) / 100)
 logp <- log(p / (1 - p))
 test <- data.frame(p, logp)[!is.infinite(logp), ]
@@ -123,7 +124,7 @@ plot(logp, p, type = "l", ylim = c(0, 1), las = 1,
 
 ## Logistic Fit
 
-```{r}
+```{r logit}
 library(sp)
 
 data(meuse)
@@ -150,27 +151,17 @@ par(mfrow = c(1, 3))
 ---
 
 
-## Sampling Requirements
-
-* The minimum number of cases per independent variable is 10:1
-* The preferred number of cases per independent variable is 20:1
-* The preferred number of cases per independent variable is 50:1 when using stepwise logistic regression 
-
-
----
-
-
 ## Fitting
 
-```{r}
+```{r wv}
 githubURL <- "C:/workspace2/github/stats_for_soil_survey/trunk/data/logistic/wv_transect_editedforR.csv"
 wv <- read.csv(githubURL)
 
-wv$spod <- ifelse(wv$spodint <= 1, 0, 1)
+wv$spod <- ifelse(wv$spodint <= 1, FALSE, TRUE)
 
 ```
-```{r, echo=TRUE}
-spod.glm <- glm(spod ~ dem10m + eastness + northness + maxent, family = binomial(link = "logit"), data = wv)
+```{r glm, echo=TRUE}
+spod.glm <- glm(spod ~ dem10m + eastness + northness + maxent, family = binomial, data = wv)
 print(spod.glm)
 ```
 
@@ -189,7 +180,7 @@ print(spod.lrm)
 ---
 
 
-# Accuracy - modEvA R package
+## Accuracy - modEvA R package
 
 ```{r acc2, echo=TRUE}
 library(modEvA)
@@ -199,8 +190,33 @@ cbind(d.squared     = Dsquared(spod.glm),
 rbind(RsqGLM(spod.glm))
 ```
 
+---
 
-----
+
+## Accuracy - Confusion Matrix
+
+```{r cm}
+library(caret)
+cm <- table(wv$spod, predict(spod.glm, type = "response") > 0.5)
+confusionMatrix(cm, positive = "TRUE")
+
+```
+
+---
+
+
+## Accuracy - Probability Threshold
+
+```{r thres}
+wv$pred <- predict(spod.glm, type = "response")
+
+ggplot(wv, aes(x = pred, col = spod)) +
+  geom_density(lwd = 1.5) +
+  geom_vline(aes(xintercept = 0.5), lty = "dashed") +
+  xlim(0, 1) + xlab("probability")
+```
+
+---
 
 
 ## Interpreting the Coefficients
@@ -223,6 +239,31 @@ ef <- effects::allEffects(spod.glm)
 plot(ef, rug = FALSE)
 ```
 
+---
+
+
+## Interpreting the Coeficiencts - Deviance Explained
+
+```{r dev1}
+anova(spod.glm)
+```
+
+---
+
+
+## Interpreting the Coeficiencts - Deviance Explained
+
+```{r dev2, echo=FALSE}
+an <- anova(spod.glm)
+mutate(an, 
+       Variable = row.names(an),
+       Variable = reorder(Variable, Deviance, sum)
+       ) %>%
+  ggplot(aes(x = Variable, y = Deviance)) +
+  geom_bar(stat = "identity") +
+  coord_flip()
+```
+
 
 ---
 
@@ -237,8 +278,8 @@ plot(spod.glm)
 
 ## Checking Assumptions - Resdiual Plots
 
-```{r}
-car::residualPlots(spod.glm, main = "Residual Plots")
+```{r residuals}
+car::residualPlots(spod.glm, main = "Residual Plots", fitted = FALSE)
 ```
 
 
