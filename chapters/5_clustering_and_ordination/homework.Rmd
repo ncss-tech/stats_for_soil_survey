@@ -139,21 +139,31 @@ Develop the **data matrix**. The data are in "long format" (multiple rows per se
 ```{r eval=FALSE}
 # re-shape into wide format
 x.wide <- dcast(x, series ~ climate_var, value.var = 'q50')
+```
+
+Check the structure of `x.wide` one more time: note that the first column contains the soil series name. This is something we want to "keep track of" but not include in the pair-wise distance calculation.
+```{r eval=FALSE}
+head(x.wide)
 
 # save the series names into row names for later
 # remember code examples from chapter 5?
 row.names(x.wide) <- x.wide$series
 
-# check structure
-str(x.wide)
-head(x.wide)
+
+# consider two possible ways of excluding the first column
+# [] subsetting via negative column index
+# this doesn't change x.wide but is hand for an on-the-fly modification
+head(x.wide[, -1])
+
+# delete the series column permanently
+x.wide$series <- NULL
 ```
 
 ## Develop Distance Matrix
-Don't forget to standardize characteristics.
+Don't forget to standardize characteristics: `dist()` doesn't know how to standardize but `daisy()` does. See `?daisy` for clues.
 
 ```{r}
-# dist() and daisy() 
+# dist() or daisy() 
 
 ```
 
@@ -168,6 +178,7 @@ There are several methods and linkage critera. How do you choose?
 ```
 
 ## Ordination
+Note that this is based on the distance matrix. Be sure to inspect the structure of the results with `str()`.
 ```{r}
 # sammon() or metaMDS()
 
