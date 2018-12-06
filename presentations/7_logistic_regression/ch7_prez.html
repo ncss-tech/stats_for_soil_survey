@@ -7,7 +7,7 @@
   <meta name="generator" content="pandoc" />
   <meta name="author" content="Stephen Roecker and Tom D’Avello" />
   <meta name="date" content="2018-12-06" />
-  <title>Chapter 5 - Generalized Linear Models (GLM)</title>
+  <title>Chapter 5 - Logistic Regression</title>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
 div.sourceCode { overflow-x: auto; }
@@ -52,7 +52,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </head>
 <body>
 <div class="slide titlepage">
-  <h1 class="title">Chapter 5 - Generalized Linear Models (GLM)</h1>
+  <h1 class="title">Chapter 5 - Logistic Regression</h1>
   <p class="author">
 Stephen Roecker and Tom D’Avello
   </p>
@@ -62,7 +62,7 @@ Stephen Roecker and Tom D’Avello
 
 <h2 id="objectives">Objectives</h2>
 <ul>
-<li>Introduce GLMs broadly</li>
+<li>Introduce Generalized Linear Models (GLMs) broadly</li>
 <li>Examine Logistic Regression
 <ul>
 <li>Examples</li>
@@ -186,18 +186,38 @@ Stephen Roecker and Tom D’Avello
 
 <h2 id="fitting">Fitting</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">spod.glm &lt;-<span class="st"> </span><span class="kw">glm</span>(spod <span class="op">~</span><span class="st"> </span>dem10m <span class="op">+</span><span class="st"> </span>eastness <span class="op">+</span><span class="st"> </span>northness <span class="op">+</span><span class="st"> </span>maxent, <span class="dt">family =</span> binomial, <span class="dt">data =</span> wv)
-<span class="kw">print</span>(spod.glm)</code></pre></div>
+<span class="kw">summary</span>(spod.glm)</code></pre></div>
 <pre><code>## 
-## Call:  glm(formula = spod ~ dem10m + eastness + northness + maxent, 
+## Call:
+## glm(formula = spod ~ dem10m + eastness + northness + maxent, 
 ##     family = binomial, data = wv)
 ## 
-## Coefficients:
-## (Intercept)       dem10m     eastness    northness       maxent  
-##    7.450480    -0.008974    -0.864715     0.675560     0.031468  
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.7958  -0.7920  -0.4946   0.8902   2.3825  
 ## 
-## Degrees of Freedom: 249 Total (i.e. Null);  245 Residual
-## Null Deviance:       307.1 
-## Residual Deviance: 254.5     AIC: 264.5</code></pre>
+## Coefficients:
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  7.450480   2.328311   3.200 0.001375 ** 
+## dem10m      -0.008974   0.002347  -3.823 0.000132 ***
+## eastness    -0.864715   0.256272  -3.374 0.000740 ***
+## northness    0.675560   0.230950   2.925 0.003443 ** 
+## maxent       0.031468   0.008573   3.671 0.000242 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 307.11  on 249  degrees of freedom
+## Residual deviance: 254.47  on 245  degrees of freedom
+## AIC: 264.47
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<!--
+* "Fail to converge" error often indicates small sample size or very few cases of one outcome (i.e. unbalanced dataset)
+* Standard errors of predictors > 2 (not including the intercept), then reject remove predictor variables
+* Low p values (e.g. < 0.05) indicate significant relationship
+-->
 </div>
 <div class="slide section level1">
 
@@ -225,6 +245,13 @@ spod.lrm &lt;-<span class="st"> </span><span class="kw">lrm</span>(spod <span cl
 ##  northness  0.6756 0.2310  2.93  0.0034  
 ##  maxent     0.0315 0.0086  3.67  0.0002  
 ## </code></pre>
+<!--
+"C" refers to the concordance aka c-index or AUC, with the following suggested scale (Hosmer & Lemeshow, 2013)
+0.5 = no discrimination
+0.7 - 0.8 acceptable discrimination
+0.8 - 0.9 excellent discrimination
+>0.9 outstanding discrimination
+-->
 </div>
 <div class="slide section level1">
 

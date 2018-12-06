@@ -1,5 +1,5 @@
 ---
-title: Chapter 5 - Generalized Linear Models (GLM)
+title: Chapter 5 - Logistic Regression
 author: Stephen Roecker and Tom D'Avello
 date: "`r Sys.Date()`"
 output:
@@ -23,7 +23,7 @@ library(dplyr)
 
 ## Objectives
 
-* Introduce GLMs broadly
+* Introduce Generalized Linear Models (GLMs) broadly
 * Examine Logistic Regression
     * Examples
     * Fitting
@@ -158,12 +158,19 @@ githubURL <- "C:/workspace2/github/stats_for_soil_survey/trunk/data/logistic/wv_
 wv <- read.csv(githubURL)
 
 wv$spod <- ifelse(wv$spodint <= 1, FALSE, TRUE)
+dd <- rms::datadist(wv); options(datadist = "dd")
 
 ```
 ```{r glm, echo=TRUE}
 spod.glm <- glm(spod ~ dem10m + eastness + northness + maxent, family = binomial, data = wv)
-print(spod.glm)
+summary(spod.glm)
 ```
+
+<!--
+* "Fail to converge" error often indicates small sample size or very few cases of one outcome (i.e. unbalanced dataset)
+* Standard errors of predictors > 2 (not including the intercept), then reject remove predictor variables
+* Low p values (e.g. < 0.05) indicate significant relationship
+-->
 
 ---
 
@@ -175,7 +182,13 @@ library(rms)
 spod.lrm <- lrm(spod ~ dem10m + eastness + northness + maxent, data = wv)
 print(spod.lrm)
 ```
-
+<!--
+"C" refers to the concordance aka c-index or AUC, with the following suggested scale (Hosmer & Lemeshow, 2013)
+0.5 = no discrimination
+0.7 - 0.8 acceptable discrimination
+0.8 - 0.9 excellent discrimination
+>0.9 outstanding discrimination
+-->
 
 ---
 
