@@ -267,19 +267,54 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 ```
 
 
-# Implementation
+# Example Implementation
 
-**finish this**
+Consider the following table of predicted probabilities (classes A,B,C,D,E) and observed class (actual).
 
 ```{r echo=TRUE}
 library(aqp)
 
-# a very simple example
-p <- c(0.25, 0.25, 0.4, 0.05, 0.05)
-shannonEntropy(p)
+# example data
+d <- structure(list(A = c(0.0897243494322252, 0.0537087411977284, 
+0.0643087579284512, 0.0582791533521884, 0.0655491726966812, 0.0878056947034425, 
+0.0550727743006022, 0.10724015754623, 0.0332599961787985, 0.0555131608754956
+), B = c(0.191110141078936, 0.187244044389649, 0.119214057525671, 
+0.198461646003737, 0.161851348940294, 0.172157251906694, 0.113611770097243, 
+0.178697159594029, 0.194607795787689, 0.188977055949146), C = c(0.121941735763077, 
+0.0770539012535731, 0.0977753159795662, 0.0774293724263895, 0.072198187957068, 
+0.0366921003115242, 0.151033286139089, 0.0974443429098862, 0.124876574685048, 
+0.0864142563046045), D = c(0.351108807309283, 0.322120077305279, 
+0.440632731639948, 0.401063395801608, 0.312647702445919, 0.304193047630158, 
+0.270239142407351, 0.258895264130713, 0.422747316475851, 0.252724366285052
+), E = c(0.246114966416479, 0.359873235853771, 0.278069136926363, 
+0.264766432416077, 0.387753587960038, 0.399151905448182, 0.410043027055715, 
+0.357723075819142, 0.224508316872614, 0.416371160585702), id = c("1", 
+"10", "100", "1000", "101", "102", "103", "104", "105", "106"
+), actual = c("D", "B", "D", "E", "D", "D", "E", "E", "D", "E"
+)), .Names = c("A", "B", "C", "D", "E", "id", "actual"), row.names = c(NA, 
+10L), class = "data.frame")
 
-# brierScore()
+# check it out
+# predictions, and actual, observed class
+head(d)
 ```
+
+Brier scores (accuracy) are computed over all predictions and associated observed classes.
+```{r}
+# compute Brier score from all predictions
+brierScore(d, classLabels = c('A', 'B', 'C', 'D', 'E'), actual = 'actual')
+```
+
+
+Shannon entropy (uncertainty) is computed from each vector of predicted probabilities.
+```{r}
+# shannon entropy for first row, could be a single pixel or obs. point
+shannonEntropy(d[1, c('A', 'B', 'C', 'D', 'E')])
+
+# compute shannon entropy for all rows
+apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
+```
+
 
 
 
@@ -293,6 +328,7 @@ shannonEntropy(p)
  * [AUROC](https://stats.stackexchange.com/questions/90659/why-is-auc-higher-for-a-classifier-that-is-less-accurate-than-for-one-that-is-mo/90705#90705)
  * [Scoring Rules](https://en.wikipedia.org/wiki/Scoring_rule)
  * [Frank Harrel's Website + links](http://biostat.mc.vanderbilt.edu/wiki/Main/RmS)
+ * [Classification vs. Prediction](http://www.fharrell.com/post/classification/)
 
 ## Sampling and Stability of Estimates
   
