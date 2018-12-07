@@ -32,8 +32,6 @@ library(dplyr)
     * Assumptions
     * Variable Selection
 
----
-
 
 ## Pesky 'Linear Model' Assumptions (review)
 
@@ -41,9 +39,6 @@ library(dplyr)
 * ***Independence of Error*** - the error (residual) is _independent_ for each value of X.
 * ***Homoscedasticity*** - the _variation_ around the regression line is _constant_ for all values of X.
 * ***Normality*** - the values of Y are _normally_ distributed at each value of X.
-
-
----
 
 
 ## Comparison between Linear Models and GLMs
@@ -60,7 +55,6 @@ knitr::kable(comp)
 
 ```
 
----
 
 ## Generalized Linear Models (fewer assumptions)
 
@@ -75,8 +69,6 @@ glm <- data.frame(
 knitr::kable(glm)
 ```
 
----
-
 
 ## Overview - Logistic Regression
 
@@ -85,23 +77,18 @@ knitr::kable(glm)
 * A threshold value, often 0.5, is used to determine if the prediction is part of the modeled class
 
 
----
-
-
 ## Example 1: Probability of Mollisols
 
 ![Beaudette &  O'Geen, 2009](C:/workspace2/github/stats_for_soil_survey/trunk/chapters/7_generalized_linear_models/figure/mollisol.png)
-
-
----
 
 
 ## Example 2: Probability of Red Clay
 
 ![Evans & Hartemink, 2014](C:/workspace2/github/stats_for_soil_survey/trunk/chapters/7_generalized_linear_models/figure/redclay.png) 
 
+## Example 3: Probability of Ponding
 
----
+![NRCS Unpublished](C:/workspace2/github/stats_for_soil_survey/trunk/chapters/7_generalized_linear_models/figure/ponded.png) 
 
 
 ## Logistic Link Function
@@ -118,8 +105,6 @@ plot(logp, p, type = "l", ylim = c(0, 1), las = 1,
      ylab = "proportion (p)", xlab = "logit transform (log(p / (1 - p)))"
      )
 ```
-
----
 
 
 ## Logistic Fit
@@ -148,8 +133,6 @@ par(mfrow = c(1, 3))
             )
 ```
 
----
-
 
 ## Fitting
 
@@ -158,8 +141,8 @@ githubURL <- "C:/workspace2/github/stats_for_soil_survey/trunk/data/logistic/wv_
 wv <- read.csv(githubURL)
 
 wv$spod <- ifelse(wv$spodint <= 1, FALSE, TRUE)
-dd <- rms::datadist(wv); options(datadist = "dd")
 
+dd <- rms::datadist(wv); options(datadist = "dd")
 ```
 ```{r glm, echo=TRUE}
 spod.glm <- glm(spod ~ dem10m + eastness + northness + maxent, family = binomial, data = wv)
@@ -167,12 +150,12 @@ summary(spod.glm)
 ```
 
 <!--
+This example will provide a quick introduction to logistic regression by exploring the presence of soils with spodic characteristics in the Central Appalachians of West Virginia. Spodisols and soils with spodic properties form under the process of podzolization. The process of podzolization involves the removal (eluviation) of organic material, aluminum and iron from upper soil horizons (O, A and E) and the accumulation (illuviation) of these materials in the subsoil spodic horizon(s). In this region, these soils are associated with the past and present occurence of red spruce forest cover. 
+
 * "Fail to converge" error often indicates small sample size or very few cases of one outcome (i.e. unbalanced dataset)
 * Standard errors of predictors > 2 (not including the intercept), then reject remove predictor variables
 * Low p values (e.g. < 0.05) indicate significant relationship
 -->
-
----
 
 
 ## Accuracy - rms R package
@@ -190,8 +173,6 @@ print(spod.lrm)
 >0.9 outstanding discrimination
 -->
 
----
-
 
 ## Accuracy - modEvA R package
 
@@ -203,19 +184,15 @@ cbind(d.squared     = Dsquared(spod.glm),
 rbind(RsqGLM(spod.glm))
 ```
 
----
-
 
 ## Accuracy - Confusion Matrix
 
-```{r cm}
+```{r cm, echo=TRUE}
 library(caret)
-cm <- table(wv$spod, predict(spod.glm, type = "response") > 0.5)
+cm <- table(observed = wv$spod, predicted = predict(spod.glm, type = "response") > 0.5)
 confusionMatrix(cm, positive = "TRUE")
 
 ```
-
----
 
 
 ## Accuracy - Probability Threshold
@@ -229,8 +206,6 @@ ggplot(wv, aes(x = pred, fill = spod)) +
   xlim(0, 1) + xlab("probability")
 ```
 
----
-
 
 ## Interpreting the Coefficients
 
@@ -243,30 +218,24 @@ exp(coef(spod.glm))
 ```
 
 
----
+## Interpreting the Coefficients - Partial Effect Plots
 
-## Interpreting the Coefficients - Effects Plots
-
-```{r coef2}
-ef <- effects::allEffects(spod.glm)
-plot(ef, rug = FALSE)
+```{r coef2, echo=TRUE}
+library(effects)
+plot(allEffects(spod.glm), rug = FALSE)
 ```
-
----
 
 
 ## Interpreting the Coeficiencts - Deviance Explained
 
-```{r dev1}
+```{r dev1, echo=TRUE}
 anova(spod.glm)
 ```
 
----
-
 
 ## Interpreting the Coeficiencts - Deviance Explained
 
-```{r dev2, echo=FALSE}
+```{r dev2}
 an <- anova(spod.glm)
 mutate(an, 
        Variable = row.names(an),
@@ -279,8 +248,6 @@ mutate(an,
 ```
 
 
----
-
 ## Checking Assumptions - Residual Plots
 
 ```{r assum1}
@@ -288,35 +255,27 @@ par(mfrow = c(2, 2))
 plot(spod.glm)
 ```
 
----
 
 ## Checking Assumptions - Resdiual Plots
 
-```{r residuals, echo=FALSE}
-car::residualPlots(spod.glm, main = "Residual Plots", fitted = FALSE, tests = FALSE)
+```{r residuals, echo=TRUE}
+library(car)
+residualPlots(spod.glm, fit = FALSE, tests = FALSE)
 ```
-
-
----
 
 
 ## Variable Selection
 
 
----
 
-
-# References
+## References
 
 Beaudette, D. E., & O'Geen, A. T, 2009. Quantifying the aspect effect: an application of solar radiation modeling for soil survey. Soil Science Society of America Journal, 73:1345-1352
 
 Evans, D.M. and Hartemink, A.E., 2014. Digital soil mapping of a red clay subsoil covered by loess. Geoderma, 230:296-304.
 
 
----
-
-
-# Additional reading
+## Additional reading
 
 Lane, P.W., 2002. Generalized linear models in soil science. European Journal of Soil Science 53, 241- 251. [http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2002.00440.x/abstract](http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2002.00440.x/abstract)
 

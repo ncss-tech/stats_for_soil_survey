@@ -1,5 +1,5 @@
 ---
-title: Chapter7 Generalized Linear Models
+title: Chapter 7 Logistic Regression
 author: Stephen Roecker & Tom D'Avello
 date: "`r Sys.Date()`"
 output:
@@ -37,7 +37,7 @@ with $g(\mu)$ or $\eta$ symbolizing the link function.
 Another alteration of the classical linear model is that with GLM the coefficients are estimated iteratively by maximum likelihood estimation instead of ordinary least squares. This results in the GLM minimizing the deviance, instead of the sum of squares. However, for the Gaussian (i.e. normal) distributions the deviance and sum of squares are equivalent.
 
 
-# Logistic regression
+# Logistic Regression
 
 Logistic regression is a specific type of GLM designed to model data that has a binomial distribution (i.e. presence/absence, yes/no, or proportional data), which in statistical learning parlance is considered a classification problem. For binomial data the logit link transform is generally used. The effect of the logit transform can be seen in the following figure. It creates a sigmoidal curve, which enhances the separation between the two groups. It also has the effect of ensuring that the values range between 0 and 1.
 
@@ -71,124 +71,19 @@ par(mfrow = c(1, 3))
     boxplot(dist.m ~ lime, data = meuse, ylab = "predictor", xlab = "response", col = "grey", las=1)
 ```
 
-Examples of Logistic regression output showing probability of red clay parent material, mollisol and ponded components:  
 
-![Example 1](figure/redclay.png) 
-![Example 2](figure/mollisol.png)
-![Example 3](figure/ponded.png)
+# Examples 
 
-# Logistic regression rules of thumb
+![Example 1: Probability of Mollisols (Beaudette &  O'Geen, 2009)](figure/mollisol.png)
 
-- The response variable is discrete, i.e. binomial, present/absent, 0/1
-- The independent variables can be numeric or categorical  
-- No assumptions for normality among independent variables
-- Check for highly correlated variables and select accordingly
-- The minimum number of cases per independent variable is 10:1
-- The **preferred** number of cases per independent variable is 20:1
-- The **preferred** number of cases per independent variable is 50:1 when using stepwise logistic regression 
+![Example 2: Probability of Red Clay (Evans & Hartemink, 2014)](figure/redclay.png) 
 
-# Logistic regression quick example
-
-This example will provide a quick introduction to logistic regression by exploring the presence of soils with spodic characteristics in the Central Appalachians of West Virginia. Spodisols and soils with spodic properties form under the process of podzolization. The process of podzolization involves the removal (eluviation) of organic material, aluminum and iron from upper soil horizons (O, A and E) and the accumulation (illuviation) of these materials in the subsoil spodic horizon(s). In this region, these soils are associated with the past and present occurence of red spruce forest cover. 
-
-Load the required packages and set the working directory. Change the working directory to accomodate your working environment.
-
-```{r load}
-require(sp)
-require(raster)
-require(rgdal)
-require(rms)
-
-setwd("C:/workspace2")
-```
-
-Select sample file, create data frame and view the first few records
-
-```{r sample file}
-githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv"
-pts <- read.csv(githubURL)
-names(pts) 
-```
-
-Soil scientists developed a local, ad-hoc classification of the intensity of spodic expression for use in the region that is an ordered data type. This will need to be converted to a binary classification for modeling purposes.
-
-Add a column called spod\_pres\_cons to the pts object that converts spodint to a binary variable
-
-```{r convert to binary}
-pts$spod_pres_cons <- ifelse(pts$spodint <= 1, 0, 1)
-```
-
-Create a model using dem10m, eastness, northness, and maxent to predict spod\_pres\_con and view the summary
-
-```{r model}
-# rms-package specific "setup"
-# this will enable some specialized plotting / prediction functions
-dd <- datadist(pts)
-options(datadist="dd")
-
-GLM.1 <- lrm(spod_pres_cons ~ dem10m + eastness + northness + maxent, data=pts)
-print(GLM.1)
-```
-
-The summary will look similar to the following:
-
-![Summary output](figure/glm.png) 
-
-Evaluating the results involves review of several key values as noted in the summary figure:
-
-1. Is the ratio of observations to independent variables ok?
-2. What is the relationship between the dependent and independent variables? A low P value indicates there is a relationship between the DV and IV
-3. Is multicollinearity present? Standard Errors should be less than 2, which does not pertain to the intercept.
-4. Relationship of individual independent variables to the dependent variable. Small "p" values indicate the independent variable is a meaningful predictor
-5. Does the model perform better than random chance?
-"C" refers to the concordance aka c-index or AUC, with the following suggested scale (Hosmer & Lemeshow, 2013),
-0.5 = no discrimination,
-0.7 - 0.8 acceptable discrimination,
-0.8 - 0.9 excellent discrimination,
->0.9 outstanding discrimination
-6. What is the "Goodness of fit" for the model? The R2  of linear regression does not exist for Logistic regression. A measure called the pseudo R squared is only roughly analogous. There are several methods for calculating the pseudo R squared. In general, the higher the value the greater the variability that is explained by the independent variables. 
+![Example 3: Probability of Ponding (NRCS Unpublished)](figure/ponded.png)
 
 
-Plot *partial* effects. Each panel shows the partial effect of a single predictor variable, while holding all other predictors constant at their respective median values. The [`rms` package](http://biostat.mc.vanderbilt.edu/wiki/Main/RmS) has many specialized functions for fitting, evaluating, and validating regression models.
-```{r, fig.width=7, fig.height=7}
-# use default assumptions (x-vars held at median values) to generate partial predictor plot
-pp <- Predict(GLM.1, fun=plogis) 
-# this is a funky interface to lattice graphics
-plot(pp, main='Pr(spod_pres_cons)')
-```
+# Exercise
 
-The `rms` "model summary" is another unique way to investigate the relative magnitude and uncertainty of predictor variables. 
-```{r, fig.width=7, fig.height=4}
-plot(summary(GLM.1))
-```
-
-Models can be simplified into a field-usable form using the [`nomogram()`](https://en.wikipedia.org/wiki/Nomogram) function.
-```{r fig.width=7, fig.height=6}
-plot(nomogram(GLM.1))
-```
-
-
-
-
-
-Run a prediction of the model using the dem10m, eastness, northness, and maxent raster files. These files will be downloaded, a raster stack will be built and the GLM.1 model applied. When using your own data, the "stack" code only works if all rasters are co-registered, are .img files, have the same projection and spatial extent, and are stored in your working directory. In practice, other GDAL file formats should also work. 
-
-```{r predict raster}
-githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_raster.RData"
-load(url(githubURL))
-
-# load("C:/workspace2/wv_raster.RData")
-# glm_r <- raster("C:/workspace2/spodic_pres_GLM1.img")
-
-glm_r <- predict(rasters, GLM.1, filename = "spodic_pres_GLM1.img", type = "fitted", progress = "text", overwrite = TRUE)
-
-plot(glm_r)
-```
-
-
-# Logistic regression detailed example
-
-Now that we've discussed some of the basic background GLM theory we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter come from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert. The problem tackled here is a familiar one: Where can I expect to find argillic horizons on fan piedmonts? Argillic horizons within the Mojave are typically found on fan remnants, which are a stable landform that is a remnant of the Pleistocene (Peterson, 1981). Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or active deposition.
+Now that we've discussed some of the basic background GLM theory we'll move on to a real exercise, and address any additional theory where it relates to specific steps in the modeling process. The examples selected for this chapter come from Joshua Tree National Park (JTNP)(i.e. CA794) in the Mojave desert. The problem tackled here is a familiar one: Where can I expect to find argillic horizons on fan piedmonts? Argillic horizons within the Mojave are typically found on fan remnants, which are a stable landform that is a remnant of the Pleistocene (Peterson, 1981). Despite the low relief of most fans, fan remnants are uplands in the sense that they generally don't receive run-on or active deposition.
 
 With this dataset we'll encounter some challenges. To start with, fan piedmont landscapes typically have relatively little relief. Since most of our predictors will be derivatives of elevation, that won't leave us with much to work with. Also, our elevation data comes from the USGS National Elevation dataset (NED), which provides considerably less detail than say LiDAR or IFSAR data (Shi et al., 2012). Lastly our pedon dataset like most in NASIS, hasn't received near as much quality control as have the components. So we'll need to wrangle some of the pedon data before we can analyze it. These are all typical problems encountered in any data analysis and should be good practice. Ideally, it would be more interesting to try and model individual soil series with argillic horizons, but due to some of the challenges previously mentioned it would be difficult with this dataset. However, at the end we'll look at one simple approach to try and separate individual soil series with argillic horizons.
 
@@ -509,19 +404,16 @@ ggplot(data_m, aes(x = argillic, y = value)) +
 
 # Modeling
 
-## Model training
-
 Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. In addition, the order is which the variables are included or excluded from the model effects the significance of the others, and thus several weak predictors might mask the effect of one strong predictor. Therefore, it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
 
-
-### Variable Selection
+## Variable Selection
 
 The example below is known as a forward selection procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models the Akaike's Information Criterion (AIC) is used. When using the AIC to assess predictor significance, a smaller number is better.
 
 ```{r fitting, fig.width=10, fig.height=4}
 
-full <- glm(argillic ~ ., data = train, family = binomial()) # "~ ." includes all columns in the data set
-null <- glm(argillic ~ 1, data = train, family = binomial()) # "~ 1" just includes an intercept
+full <- glm(argillic ~ ., data = train, family = binomial) # "~ ." includes all columns in the data set
+null <- glm(argillic ~ 1, data = train, family = binomial) # "~ 1" just includes an intercept
 
 add1(null, full, test = "Chisq") # using the AIC test the effect of adding additional predictors, generally select the predictor with the smallest AIC unless it goes against your intuition
 
@@ -532,47 +424,60 @@ We can see as the boxplots showed earlier that twi\_sc has the smallest AIC and 
 
 ```{r}
 
-argi_glm <- update(null, . ~ . + twi_sc) # add twi_sc to the model, "-" will subtract predictors
+argi.glm <- update(null, . ~ . + twi_sc) # add twi_sc to the model, "-" will subtract predictors
 
 # or refit
 
-# argi_glm <- glm(argillic ~ twi_sc, data = train, family = binomial(link = "cloglog"))
+# argi.glm <- glm(argillic ~ twi_sc, data = train, family = binomial)
 
-# add1(argi_glm, full, test = "Chisq") # iterate until the model is saturated
+# add1(argi.glm, full, test = "Chisq") # iterate until the model is saturated
 
-# drop1(argi_glm, test = "Chisq") # test effect of dropping a predictor
+# drop1(argi.glm, test = "Chisq") # test effect of dropping a predictor
 
-argi_glm <- glm(argillic ~ twi_sc + slope + ls_1 + ch + z2str + mrvbf, data = train, family = binomial())
+argi.glm <- glm(argillic ~ twi_sc + slope + ls_1 + ch + z2str + mrvbf, data = train, family = binomial)
 
-summary(argi_glm) # examine the effect and error for each predictors
+# Examine the effect and error for each predictors
+summary(argi.glm) 
+
+# Convert the coefficients to an odds scale, who here gambles?
+exp(coef(argi.glm))
+
+# Importance of each predictor assessed by the amount of deviance they explain
+anova(argi.glm) 
 
 ```
 
 After the model is saturated you should end up with a model similar to the one above. 
 
-## Model evaluation
+
+## Residual Plots
 
 After we're satisfied no additional variables will improve the fit, we need to evaluate it's residuals, collinearity, accuracy, and model coefficients.
 
 ```{r evaluation}
 
-# Standard diagnostic plots for glm() objects
-# plot(argi_glm) # plot regression diagnostics
+# Residual Plots for GLM
+par(mfrow = c(2, 2))
+plot(argi.glm)
 
-# Term and partial residual plots
-# termplot(argi_glm, partial.resid = TRUE)
+residualPlots(argi.glm, fit = FALSE, tests = FALSE)
 
 ```
+
+
+## Multicolinearity
 
 The **variance inflation factor** (VIF) is used to assess collinearity amongst the predictors. Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 2 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
 
 ```{r}
 
 # Variance inflation, greater than 5 or 10 is bad
-car::vif(argi_glm)
+vif(argi.glm)
 
 ```
 
+
+## Accuracy Assement
 
 Because we're dealing with a classification problem, we have to consider both errors of commission (Type I) and omission (Type II), or their corresponding accuracies of sensitivity (producer's accuracy) and positive predicted value (user's accuracy or precision) respectively. Before we can assess the error, however, we need to select a probability threshold. 
 
@@ -580,80 +485,73 @@ Because we're dealing with a classification problem, we have to consider both er
 - **Positive** and **negative** predicted values (user's accuracy) examine the inverse concept of how well the predictions match the reference data
 
 ```{r}
+# examine possible thresholds
+train$predict <- predict(argi.glm, train, type = "response")
 
-comp <- data.frame(train[c("argillic", "cluster2")], 
-                   pred = predict(argi_glm, train, type = "response") > 0.5
-                   )
-caret::confusionMatrix(table(comp$pred, comp$argillic), positive = "TRUE")
+ggplot(train, aes(x = predict, fill = argillic)) +
+  geom_density(alpha = 0.5) +
+  geom_vline(aes(xintercept = 0.5), lty = "dashed") +
+  xlab("probability") +
+  scale_x_continuous(breaks = seq(0, 1, 0.2))
+
+train$predict <- train$predict > 0.35
+
+# Confusion Matrix
+cm <- table(predicted = train$predict, observed = train$argillic)
+confusionMatrix(cm, positive = "TRUE")
 
 # Deviance squared
-D2 <- with(argi_glm, 
-           round((null.deviance - deviance) / null.deviance, 2)
-           )
+library(modEvA)
+Dsquared(argi.glm)
 
 # Adjusted deviance squared
-adjD2 <- with(argi_glm, 
-              round(1 - ((df.null / df.residual) * (1 - D2)), 2)
-              )
-adjD2
+Dsquared(argi.glm, adjust = TRUE)
 
 ```
 
 - Discuss the variability of the predictions across the clusters, perhaps different models need to be constructed in each cluster, some clusters appear to be dominated by specific soil series, these data aren't clean enough (nor are the series concepts usually) to model series separately, however, we could use the clusters as an additional model to attempt to separate the series. Do the hyperthermic clusters perform differently.
 
 ```{r}
+
 library(dplyr)
 
-temp <- subset(comp, argillic == TRUE) %>%
+temp <- subset(train, argillic == TRUE) %>%
   group_by(cluster2) %>%
   summarize(
-    sum_arg = sum(argillic, na.rm = T),
-    sum_pred = sum(pred, na.rm = T),
-    sensitivity = round(sum(pred == argillic) / length(argillic), 2)
+    sum_arg = sum(argillic, na.rm = TRUE),
+    sum_pred = sum(predict, na.rm = TRUE),
+    sensitivity = round(sum(predict == argillic) / length(argillic), 2)
     )
 
 ggplot(temp, aes(x = cluster2, y = sensitivity)) +
   geom_point()
 
+# Remove outlier clusters         
+train_sub <- subset(train, ! cluster2 %in% c(12, 7))
 
-# Remove hyperthermic points         
-train_sub <- subset(train, temp < 22 + 4)
-
-# full <- glm(argillic ~ ., data = train_sub, family = binomial(link = "cloglog"))
-# null <- glm(argillic ~ 1, data = train_sub, family = binomial(link = "cloglog"))
+# full <- glm(argillic ~ ., data = train_sub, family = binomial)
+# null <- glm(argillic ~ 1, data = train_sub, family = binomial)
 # add1(null, full, train = "Chisq")
 
-sub_glm <- glm(argillic ~ slope + twi_sc + ls_1 + mrvbf + z2str + ch, data = train_sub, family = binomial())
+sub.glm <- glm(argillic ~ slope + twi_sc + ls_1 + mrvbf + z2str + ch, data = train_sub, family = binomial)
 
-# summary(sub_glm)
+# summary(sub.glm)
 
-comp <- data.frame(train_sub[c("argillic", "cluster2")], 
-                   pred = predict(sub_glm, train_sub, type = "response") > 0.4
-                   )
-caret::confusionMatrix(table(comp$pred, comp$argillic), positive = "TRUE")
+train_sub$predict <- predict(sub.glm, train_sub, type = "response") > 0.35
+cm <- table(predicted = train_sub$predict, observed = train_sub$argillic)
+confusionMatrix(cm, positive = "TRUE")
 
-comp_sub <- subset(comp, argillic == TRUE)
+temp <- subset(train_sub, argillic == TRUE) %>%
+  group_by(cluster2) %>%
+  summarize(
+    sum_arg  = sum(argillic, na.rm = TRUE),
+    sum_pred = sum(predict, na.rm = TRUE),
+    sensitivity = round(sum(predict == argillic) / length(argillic), 2)
+    )
 
-temp <- by(comp_sub, list(comp_sub$cluster2), function(x) with(x, data.frame(
-  cluster = unique(cluster2),
-  sum_arg = sum(argillic, na.rm = T),
-  sum_pred = sum(pred, na.rm = T), 
-  sensitivity = round(sum(pred == argillic) / length(argillic), 2)
-  )))
-temp <- do.call(rbind, temp)
-temp
-
-ggplot(temp, aes(x = cluster, y = sensitivity)) +
+ggplot(temp, aes(x = cluster2, y = sensitivity)) +
   geom_point()
 
-# Examine the coefficients, stored in log odds
-summary(argi_glm)
-
-# Convert the coefficients to an odds scale, who here gambles?
-exp(coef(argi_glm))
-
-# Importance of each predictor assessed by the amount of deviance they explain
-anova(argi_glm) 
 ```
 
 - View the results in ArcGIS and examine the accuracy at individual points
@@ -671,7 +569,7 @@ predfun <- function(model, data) {
   }
   
 # Generate spatial predictions
-# r <- predict(geodata_r, argi_glm, fun = predfun, index = 1:2, progress = "text")
+# r <- predict(geodata_r, argi.glm, fun = predfun, index = 1:2, progress = "text")
 
 # Export the results
 # writeRaster(r[[1]], "argi.tif", overwrite = T, progress = "text")
