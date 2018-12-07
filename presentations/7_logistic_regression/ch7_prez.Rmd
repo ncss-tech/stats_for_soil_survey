@@ -109,10 +109,11 @@ plot(logp, p, type = "l", ylim = c(0, 1), las = 1,
 
 ## Logistic Fit
 
-```{r logit}
-library(sp)
+```{r logit, fig.dim = c(12, 6)}
 
+library(sp)
 data(meuse)
+
 meuse <- meuse[order(meuse$dist.m), ]
 meuse$lime <- ifelse(as.numeric(meuse$lime) == 2, 1, 0)
 
@@ -141,6 +142,7 @@ githubURL <- "C:/workspace2/github/stats_for_soil_survey/trunk/data/logistic/wv_
 wv <- read.csv(githubURL)
 
 wv$spod <- ifelse(wv$spodint <= 1, FALSE, TRUE)
+wv <- subset(wv, select = c(aachn, dem10m, downslpgra, eastness, greenrefl, landsatb1, landsatb2, landsatb3, landsatb7, maxc100, maxent, minc100, mirref, ndvi, northeastn, northness, northwestn, planc100, proc100, protection, relpos11, slp50, solar, tanc75, spod))
 
 dd <- rms::datadist(wv); options(datadist = "dd")
 ```
@@ -247,6 +249,15 @@ mutate(an,
   coord_flip()
 ```
 
+## Checking Assumptions - Multicollinearity
+
+* Leads to unstable coefficients and large SE for coefficients
+* Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
+
+```{r vif}
+sqrt(vif(spod.glm))
+```
+
 
 ## Checking Assumptions - Residual Plots
 
@@ -266,6 +277,36 @@ residualPlots(spod.glm, fit = FALSE, tests = FALSE)
 
 ## Variable Selection
 
+```{r vs1, echo=TRUE}
+spod.glm2 <- glm(spod ~., data = wv)
+spod.step <- step(spod.glm2, trace = 0)
+
+summary(spod.step)
+```
+
+## Variable Selection
+
+* AIC = Akaike Information Criterion
+* drop smallest AIC
+
+```{r vs2, echo=TRUE}
+drop1(spod.step, test = "Chisq")
+```
+
+
+## Variable Selection - Deviance Explained
+
+```{r vs3}
+an <- anova(spod.step)
+mutate(an, 
+       Variable = row.names(an),
+       Variable = reorder(Variable, Deviance, sum)
+       ) %>%
+  filter(Variable != "NULL") %>%
+  ggplot(aes(x = Variable, y = Deviance)) +
+  geom_bar(stat = "identity") +
+  coord_flip()
+```
 
 
 ## References
