@@ -92,14 +92,14 @@ With this dataset we'll encounter some challenges. To start with, fan piedmont l
 To start, as always we need to load some extra packages. This will become a familiar routine every time you start R. Most of the basic functions we need to develop a logistic regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
 
 ```{r load packages, message=FALSE, warning=FALSE}
-library(aqp) # specialized soil classes and functions
-library(soilDB) # NASIS and SDA import functions
-library(raster) # guess
-library(rgdal) # spatial import
+library(aqp)     # specialized soil classes and functions
+library(soilDB)  # NASIS and SDA import functions
+library(raster)  # guess
+library(rgdal)   # spatial import
 library(ggplot2) # graphing
-library(tidyr) # data manipulation
-library(caret) # classification and regression training
-library(car) # additional regression tools
+library(tidyr)   # data manipulation
+library(caret)   # classification and regression training
+library(car)     # additional regression tools
 ```
 
 ## Read in data
@@ -404,38 +404,62 @@ ggplot(data_m, aes(x = argillic, y = value)) +
 
 # Modeling
 
-Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. In addition, the order is which the variables are included or excluded from the model effects the significance of the others, and thus several weak predictors might mask the effect of one strong predictor. Therefore, it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are typically discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model selection process. In addition, the order is which the variables are included or excluded from the model effects the significance of the others, and thus several weak predictors might mask the effect of one strong predictor. Therefore, it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
+
 
 ## Variable Selection
 
-The example below is known as a forward selection procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models the Akaike's Information Criterion (AIC) is used. When using the AIC to assess predictor significance, a smaller number is better.
+The example below is known as a 'forward selection' procedure, where a full model is fit and compared against a null model, to assess the importance (or contribution) of the different predictors. For testing alternative models the Akaike's Information Criterion (AIC) is used. When using AIC to assess predictor significance, a smaller number is better.
 
-```{r fitting, fig.width=10, fig.height=4}
+```{r fitting}
 
+# Fit full model
 full <- glm(argillic ~ ., data = train, family = binomial) # "~ ." includes all columns in the data set
+
+# Fit null model, 
 null <- glm(argillic ~ 1, data = train, family = binomial) # "~ 1" just includes an intercept
 
-add1(null, full, test = "Chisq") # using the AIC test the effect of adding additional predictors, generally select the predictor with the smallest AIC unless it goes against your intuition
+# Compute AIC
+add1(null, full)
 
 ```
 
-We can see as the boxplots showed earlier that twi\_sc has the smallest AIC and reduces the deviances the most. So let's add twi\_sc to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions,  until the model is saturated.  
+According to the `add1()` function, we can see that `twi_sc` gives us a model with the smallest AIC and residual deviance. This confirms what the exploratory analysis with the boxplots suggested to us earlier. So let's add twi\_sc to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions,  until the model is saturated.  
 
 
-```{r}
-
-argi.glm <- update(null, . ~ . + twi_sc) # add twi_sc to the model, "-" will subtract predictors
+```{r add, eval=FALSE}
+# add twi_sc to the model, "-" will subtract predictors
+argi.glm <- update(null, . ~ . + twi_sc) 
 
 # or refit
+argi.glm <- glm(argillic ~ twi_sc, data = train, family = binomial)
 
-# argi.glm <- glm(argillic ~ twi_sc, data = train, family = binomial)
+# iterate until the model is saturated
+add1(argi.glm, full) 
+```
 
-# add1(argi.glm, full, test = "Chisq") # iterate until the model is saturated
+If we keep iterating we might select a model similar to the one below.
 
-# drop1(argi.glm, test = "Chisq") # test effect of dropping a predictor
 
+```{r final}
 argi.glm <- glm(argillic ~ twi_sc + slope + ls_1 + ch + z2str + mrvbf, data = train, family = binomial)
+```
 
+However, in addition to adding variables via 'forward selection', we can also test the effect of dropping variables via 'backward selection' with the `drop1()' function, and examine their significance. 
+
+```{r drop}
+# Compute AIC
+drop1(argi.glm, test = "Chisq") 
+```
+
+It appears all the variables exceed the typical significance of 0.05.
+
+
+## Examine the Model
+
+After the model is saturated and all the variables are significant, you should end up with a model similar to the one below. 
+
+```{r summary}
 # Examine the effect and error for each predictors
 summary(argi.glm) 
 
@@ -446,8 +470,6 @@ exp(coef(argi.glm))
 anova(argi.glm) 
 
 ```
-
-After the model is saturated you should end up with a model similar to the one above. 
 
 
 ## Residual Plots
@@ -477,7 +499,7 @@ vif(argi.glm)
 ```
 
 
-## Accuracy Assement
+## Accuracy Assessment
 
 Because we're dealing with a classification problem, we have to consider both errors of commission (Type I) and omission (Type II), or their corresponding accuracies of sensitivity (producer's accuracy) and positive predicted value (user's accuracy or precision) respectively. Before we can assess the error, however, we need to select a probability threshold. 
 
@@ -558,7 +580,7 @@ ggplot(temp, aes(x = cluster2, y = sensitivity)) +
 - Discuss the effects of data quality, including both NASIS and GIS
 - Discuss how the modeling process isn't an end in itself, but serves to uncover trends, possibly generate additional questions and direct future investigations
 
-```{r prediction}
+```{r prediction, eval=FALSE}
 # Custom function to return the predictions and their standard errors
 predfun <- function(model, data) {
   v <- predict(model, data, type = "response", se.fit = TRUE)
@@ -569,12 +591,14 @@ predfun <- function(model, data) {
   }
   
 # Generate spatial predictions
-# r <- predict(geodata_r, argi.glm, fun = predfun, index = 1:2, progress = "text")
+r <- predict(geodata_r, argi.glm, fun = predfun, index = 1:2, progress = "text")
 
 # Export the results
-# writeRaster(r[[1]], "argi.tif", overwrite = T, progress = "text")
-# writeRaster(r[[2]], "argi_se.tif", overwrite = T, progress = "text")
+writeRaster(r[[1]], "argi.tif", overwrite = T, progress = "text")
+writeRaster(r[[2]], "argi_se.tif", overwrite = T, progress = "text")
+```
 
+```{r}
 plot(raster("C:/workspace2/argi.tif"))
 plot(ca794, add = TRUE)
 plot(raster("C:/workspace2/argi_se.tif"))

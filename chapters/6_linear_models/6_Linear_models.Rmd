@@ -409,62 +409,77 @@ Examining the density plots on the diagonal axis of the scatterplots we can see 
 
 # Modeling
 
-## Model Training
+# Model Training
 
 Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. For this reason, it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
 
-The example below is known as a forward selection procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models, the Akaike's Information Criterion (AIC) is used. When using AIC to assess predictor significance, a smaller number is better.
+
+## Variable Selection
+
+The example below is known as a 'forward selection' procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models, the Akaike's Information Criterion (AIC) is used. When using AIC to assess predictor significance, a smaller number is better.
 
 
 ```{r}
-
-load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# Subset training dataset
 train <- train[c("fragst", "frags", "cluster2", terrain1, terrain2, climate, pc, tc, rad)]
 
+# Fit full model
 full <- lm(fragst ~ . - frags, data = train) # "~ ." includes all columns in the data set, "-" removes variables
+
+# Fit null model
 null <- lm(fragst ~ 1, data = train) # "~ 1" just includes an intercept
 
-add1(null, full, test = "F") # using the AIC test the effect of '
-
+# Compute AIC
+add1(null, full)
 ```
 
-We can see as the correlation matrices showed earlier that the pc predictors have some of the smallest AIC and reduce the deviance the most. So let's add pc\_2 to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions, until the model is saturated.
+We can see as the correlation matrices showed earlier that the pc predictors have some of the smallest AIC and reduce the sum of squares the most. So let's add pc\_2 to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions, until the model is saturated.
 
 We can continue adding predictors to the model until we no longer see an increase in the adjusted R^2^. At some point the adjusted R^2^ will level off, versus the R^2^ which will continue to incrementally increase. The difference between the adjusted R^2^ vs the R^2^, is that the adjusted R^2^ is penalizes model for each additional predictor added to model, similarly to the AIC.
 
-```{r}
-
-fragst_lm <- update(null, . ~ . + pc_2) # add one or several variables to the model 
+```{r iterate, eval=FALSE}
+# add one or several variables to the model 
+fragst_lm <- update(null, . ~ . + pc_2) 
 
 # or refit
+fragst_lm <- lm(fragst ~ pc_2, data = train)
 
-# fragst_lm <- lm(fragst ~ pc_2, data = train)
-
-# add1(fragst_lm, full, test = "F") # iterate until the model is saturated
-
-# drop1(fragst_lm, test = "F") # test effect of dropping a predictor
-
-fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
-
-summary(fragst_lm)
-
+# iterate until the model is saturated
+add1(fragst_lm, full, test = "F") 
 ```
 
 
-## Model Evaluation
+```{r drop}
+# Fit final model
+fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
+
+# Compute AIC
+drop1(fragst_lm, test = "F")
+```
+
+
+## Examine the Model
+
+```{r summary}
+summary(fragst_lm)
+```
+
+
+## Residual Plots
 
 After we're satisfied no additional variables will improve the fit, we need to evaluate its residuals, collinearity, accuracy, and model coefficients.
 
 ```{r diagnostics}
-
 # Standard diagnostic plots for lm() objects
+par(mfrow = c(2, 2))
 plot(fragst_lm)
 
 # Term and partial residual plots
 termplot(fragst_lm, partial.resid = TRUE)
-
 ```
 
+
+## Multicolinearity
 
 The **variance inflation factor** (VIF) is used to assess collinearity amongst the predictors. Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 2 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
 
@@ -479,11 +494,14 @@ sqrt(car::vif(fragst_lm)) > 2
 
 ```
 
+## Accuracy Assessment
+
 **Accuracy** can be assessed using several different metrics.
 
 - Adjusted R^2^ = proportion of variance explained
 - Root mean square error (RMSE)
 - Mean absolute error(MAE)
+
 
 ```{r}
 
@@ -547,6 +565,7 @@ predfun <- function(model, data) {
 
 plot(raster("C:/workspace2/frags.tif"))
 plot(ca794, add = TRUE)
+
 plot(raster("C:/workspace2/frags_se.tif"))
 plot(ca794, add = TRUE)
 
