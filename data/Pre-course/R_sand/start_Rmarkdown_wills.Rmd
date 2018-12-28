@@ -1,8 +1,35 @@
-# this is a demo of how to use a saved R script in R studio
+---
+title: "Getting started"
+author: "Wills"
+date: "December 28, 2018"
+output: html_document
+---
+## R Markdown
+#### Setup
 
+Include packages that will be use and options that apply to the entire document
+
+```{r setup, include=FALSE}
+
+library(knitr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data
+
+I include a seperate chunk for data - though it's not required, so that I will not use
+
+```{r data}
 sand2 <- read.table("C:/R_data/sand_example.csv", header=TRUE, sep=",", 
   na.strings="NA", dec=".", strip.white=TRUE)
+```
 
+## Base Plots
+no extra packages are neeeded to run these
+
+
+```{r histograms}
 plot(depth~sand, data = sand2, ylim =c(50,-1), main = "Total Sand (%) by depth", 
      xlab = "Sand", ylab = "Depth")
 
@@ -13,10 +40,14 @@ hist(sand2$sand)
 hist(sand2$sand, col = 'blue', main = 'Histogram of Sand Content', xlab = 'Sand Content (%)')
 
 
+```
 
-install.packages(ggplot2)
-library(ggplot2)
+##ggplot
 
+These graphs require the ggplot2 package (it must be loaded with the libarary command within a code chunk.)  I avoided naming the chunk ggplot to avoide the confusion with the package. The # still comments lines in the code chunks.  We might want to pull these explanations out into the text section at some point.
+
+
+```{r GG_PLOTS}
 #simple histogram
 ggplot(data = sand2, aes(x = sand )) + geom_histogram()
 
@@ -42,7 +73,7 @@ lc <- b <- ggplot(data = sand2, aes(x = landuse, y = sand)) + geom_boxplot(aes(f
 lc
 
 #we can make a more complicated graph by filling with another variable
-lm <- b <- ggplot(data = sand2, aes(x = landuse, y = sand)) + geom_boxplot(aes(fill = Master))
+lm <- b <- ggplot(data = sand2, aes(x = landuse, y = sand)) + geom_boxplot(aes(fill = master))
 lm
 
 #we can add new command to the exsisting object 
@@ -63,3 +94,9 @@ lm + scale_fill_grey() + labs(x = "Landuse", y = "Sand Content (%)") +
 #there are many helpful websites
 
 
+
+
+```
+
+
+Note that the `echo = FALSE` parameter CAN BE added to the code chunk to prevent printing of the R code that generated the plot.
