@@ -75,7 +75,7 @@ n <- c("A",
        "Cr",
        "R")
 # REGEX rules
-p <- c("A",
+p <- c(
        "BA|AB",
        "Bt|Bw",
        "Bt3|Bt4|2B|C",
@@ -134,11 +134,11 @@ h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 
 # or
 
-# h$hzname[h$hzname == "BT"] <- "Bt"
+h$hzname[h$hzname == "BT"] <- "Bt"
 
 # or as a last resort we could manually edit the spreadsheet in R
 
-# edit(h)
+edit(h)
 ```
 
 Typo errors such as these are a common problem with old pedon data in NASIS.
@@ -168,7 +168,7 @@ desc <- data.frame(
                   "most frequent value", "variation around mean", 
                   "percent rank of values, such that all values are <= p"
                   ),
-  'R function' = c("mean()", "median()", "sort(table(), decreasting = TRUE)[1]", "sd()", "quantile()"),
+  'R function' = c("mean()", "median()", "sort(table(), decreasing = TRUE)[1]", "sd()", "quantile()"),
   check.names = FALSE
   )
 knitr::kable(desc, caption = "Short Description of Descriptive Statistics and R Functions")
@@ -420,7 +420,7 @@ loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
 h <- horizons(loafercreek)
 data("metadata")
 h <- within(h, {
-  hzdepm = (hzdept + hzdepb) / 2
+  hzdepm = (hzdepb + hzdept) / 2
   texture_class = factor(texture_class, 
                          levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
                          )
@@ -463,31 +463,26 @@ gridExtra::grid.arrange(p_b, p_h, p_d, ncol = 3)
 A bar plot is a graphical display of the frequency (i.e. number of observations (count or n)), such as soil texture, that fall within a given class. It is a graphical alternative to to the `table()` function.
 
 ```{r barplot}
+library(ggplot2)
+
 # find missing textures
 idx <- is.na(h$texture_class)
 
 # bar plot
 ggplot(h[!idx, ], aes(x = texcl)) +
   geom_bar()
-
-# or using the graphics package
-
-# barplot(table(h$texcl), col = "grey")
 ```
+
 
 ## Histogram
 
 A histogram is similar to a bar plot, except that instead of summarizing categorical data, it categorizes a continuous variable like clay content into non-overlappying intervals for the sake of display. The number of intervals can be specified by the user, or can be automatically determined using an algorithm, such as `nclass.Sturges()`. Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution. 
 
 ```{r histogram}
-library(ggplot2)
 
 ggplot(h, aes(x = clay)) +
   geom_histogram(bins = nclass.Sturges(h$clay))
 
-# or using the graphics package
-
-# hist(h$clay, col = "grey")
 ```
 
 
@@ -497,13 +492,10 @@ ggplot(h, aes(x = clay)) +
 A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram. Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. One curious feature of the density curve is the hint of a two peaks (i.e. bimodal distribution?). Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
 ```{r densityplot}
+
 ggplot(h, aes(x = clay)) +
   geom_density()
 
-# or using the graphics package
-
-# test <- density(h$clay, na.rm = TRUE)
-# plot(test) 
 ```
 
 
@@ -522,10 +514,6 @@ That is not to say the outlier points are in error, just that they are extreme c
 ggplot(h, (aes(x = genhz, y = clay))) +
   geom_boxplot()
 
-# or using the graphics package
-
-# boxplot(clay ~ genhz, data = h)
-
 ```
 
 The above box plot shows a steady increase in clay content with depth. Notice the outliers in the box plots, identified by the individual circles.
@@ -539,16 +527,14 @@ A QQ plot is a plot of the actual data values against a normal distribution (whi
 
 # QQ Plot for Clay
 ggplot(h, aes(sample = clay)) + 
-  geom_qq()
+  geom_qq() +
+  geom_qq_line()
 
 # QQ Plot for Frags
 ggplot(h, aes(sample = total_frags_pct)) + 
-  geom_qq()
+  geom_qq() +
+  geom_qq_line()
 
-# or using the graphics package
-
-# qqnorm(h$clay)
-# qqline(h$clay)
 ```
 
 If the data set is perfectly symmetric (i.e. normal), the data points will form a straight line. Overall this plot shows that our clay example is more or less symmetric. However the second plot shows that our rock fragments are far from evenly distributed.
@@ -681,7 +667,7 @@ The solid lines represent the breakpoint for the mean and standard deviations. T
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
 
 # scatter plot
-p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
+p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
   geom_point() +
   ylim(100, 0) +
   ylab("depth (cm)") + xlab("clay (%)") +
@@ -689,15 +675,11 @@ p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
   ggtitle("Scatter Plot")
 
 # line graph
-depth <- c(1, 5, 15, 30, 50, 70, 90)
-lo_fit <- loess(clay ~ hzdepm, data = h, na.action = na.exclude)
-clay <- predict(lo_fit, depth)
-df <- data.frame(depth, clay)
 
-p_l <- ggplot(df, aes(y = clay, x = depth)) +
-  geom_point(data = df, aes(x = depth, y = clay), size = 2, show.legend = FALSE) +
-  geom_smooth(se = FALSE, col = "black") +
-  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+p_l <- ggplot(h) +
+  geom_smooth(aes(y = clay, x = hzdepm), se = FALSE) +
+  geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
+  xlim(100, 0) +
   xlab("depth (cm)") + ylab("clay (%)") +
   coord_flip() +
   theme(aspect.ratio = 1) +
@@ -725,9 +707,6 @@ ggplot(h, aes(y = clay, x = hzdepm, group = peiid)) +
   coord_flip() +
   xlim(100, 0)
 
-# or
-
-# plot(clay ~ hzdepm, data = h)
 ```
 
 This plots clay on the X axis and depth on the X axis. As shown in the scatterplot above, there is a moderate correlation between these variables.  
@@ -743,9 +722,6 @@ vars <- c("hzdepm", "clay", "phfield", "total_frags_pct")
 
 ggpairs(h[vars])
 
-# or using base graphics
-
-# pairs(h[vars])
 ```
 
 
