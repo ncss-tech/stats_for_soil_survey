@@ -66,7 +66,7 @@ _Be prepared to discuss issues you may have had while implementing generalized h
 
 First, read over and run all the code in this document (using the first 30 pedons from `loafercreek` as a demonstration). This will help you get comfortable with some relatively well-behaved data. 
 
-Then you will apply the same strategy to NASIS pedons from _your_ area of repsonsibility.
+Then you will apply the same strategy to NASIS pedons from _your_ area of responsibility.
 
 ```{r, message=FALSE, warning=FALSE}
 library(soilDB)
@@ -111,7 +111,7 @@ We need a way to "simplify" this set of unique groups in order to support correl
 
 Depending on things like depth class and the nature of the parent material, the number of horizon RICs provided in a series is variable. _However, I can't think of any legitimate cases where there are more than 10, and more than 5 is probably pushing it for most soil concepts._ Many series concepts, especially older ones, provide RIC for only a couple _very_ generalized horizons (say, just an A and a Bt in a very deep soil) and avoid providing ranges for transitional horizons/vertical subdivisions. 
 
-More "modern" descriptions might have more layers broken out, but there are diminshing returns to this. More subdivision does not necessarily mean better/more accurate representation of the aggregate entity.
+More "modern" descriptions might have more layers broken out, but there are diminishing returns to this. More subdivision does not necessarily mean better/more accurate representation of the aggregate entity.
 
 The great thing about the _generalized horizon label_ approach is that you can "test" the effect of adding additional groups on the RIC for all of your groups together. Then you can decide if it is beneficial to have more or less groups based on the data you have.
 
@@ -232,7 +232,7 @@ For example, on these parent materials, C horizons are sometimes used to describ
 
 We will update our regular expression patterns to _include_ a mapping for the BC and C horizons in the input data. This is to illustrate that the development of _generalized horizon label_ patterns is an _iterative process_. We will look at the data for that group to see if it looks different from our other groups.
 
-For the new "BC prototype horizon" pattern we match all horizons that contain "C" and have zero or more characters that are NOT "r" or "t" and put them in the "C" group. 
+For the new "BC prototype horizon" pattern we match all horizons that contain "C" and have zero or more characters that are NOT "r" or "t" and put them in the "BC" group. 
 
 We apply the patterns as before, but create another generalized horizon label variable `pedons$newgenhz2` to hold the new result. 
 
@@ -279,14 +279,14 @@ Let's recreate the graph we did at the beginning, only now we will color horizon
 Compare the coloring (based on `pedons$newgenhz2`) with the field horizon designations (`pedons$hzname`) to the right of each profile.
 
 ```{r}
-# plot profile sketches
+# plot profile sketches - first 20 profiles
 par(mar=c(0,0,0,0))
-plotSPC(pedons, name='hzname', color='newgenhz2', print.id=FALSE, cex.names=0.8, axis.line.offset=-4)
+plotSPC(pedons[1:20, ], name='hzname', color='newgenhz2', print.id=FALSE, cex.names=0.5, axis.line.offset=-2)
 ```
 
 You can see some trends that shake out when the data are simplified this way. 
 
-Here are a few thinks that are evident for the loafercreek example:
+Here are a few things that are evident for the loafercreek example:
 _Our upper transitional horizon ('BA' group) captures 'BA' as well as 'Bw'. The bulk of the profile is the argillic horizon (Bt). Some pedons have lower gradational horizons (BC or C). Most pedons have Cr or Cr over R, but we treat the paralithic and lithic contacts as equivalent for this demo. In practice, for series criteria, you might be interested in how many pedons are Cr versus R and/or how thick the Cr typically is._
 
 We compare the the number of _original_ horizon designations from the field data with the number of unique _generalized_ horizon labels.
@@ -348,7 +348,7 @@ res <- lapply(genhz.list, FUN = function(d) {
 })
 
 # take each list element (a data frame) and rbind them together to make one data frame
-res.df <- do.call('rbind',res)
+res.df <- do.call('rbind', res)
 
 # show results
 res.df
