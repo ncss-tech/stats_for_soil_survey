@@ -61,11 +61,3 @@ str(web.report)
 
 plot(web.report$spc)
 
-## fetchOSD
-### extended=TRUE
-
-# The contents of an SPC
-
-# Filtering SPCs
-
-# Saving site data to a shapefile
