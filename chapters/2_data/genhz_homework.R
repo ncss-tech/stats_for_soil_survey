@@ -95,7 +95,7 @@ plotSPC(pedons, name='hzname', color='newgenhz2',
 # original field data (28 levels)
 length(unique(pedons$hzname))
 
-# new generalized data (5 levels, including not-used)
+# new generalized data (6 levels, including not-used)
 length(unique(pedons$newgenhz2))
 
 ## ------------------------------------------------------------------------
