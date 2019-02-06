@@ -39,14 +39,14 @@ library(ggplot2)
 
 ```{r, echo=FALSE}
 
-crosby <- fetchSDA_component(WHERE = "muname LIKE 'Crosby%'")
+crosby <- fetchSDA_component(WHERE = "muname LIKE 'Crosby%' AND majcompflag = 'Yes'")
 spc <- crosby
-c2 <- subsetProfiles(spc, s = "cokey == 14842603")
+c2 <- subsetProfiles(spc, s = "cokey == '16059045'")
 c_h <- horizons(c2)
 names(c_h) <- gsub("total", "", names(c_h)) 
 
 vars <- c("hzname", "clay_l", "clay_r", "clay_h", "texture")
-knitr::kable(c_h[vars])
+knitr::kable(c_h[vars], row.names = FALSE)
 
 ```
 
@@ -362,7 +362,7 @@ p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
   ggtitle("Scatter Plot")
 
 p_l <- ggplot(h) +
-  geom_smooth(aes(y = clay, x = hzdepm), se = FALSE) +
+  # geom_smooth(aes(y = clay, x = hzdepm), se = FALSE) +
   geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
   xlim(100, 0) +
   xlab("depth (cm)") + ylab("clay (%)") +
@@ -556,31 +556,35 @@ co$slope_phase <- cut(co$slope_r, c(0, 2, 4, 8, 15, 30, 50))
 co2 <- subset(co, majcompflag == "Yes")
 h  <- get_chorizon_from_SDA(WHERE = "compname = 'Miami'")
 test <- subset(h, cokey %in% co2$cokey)
-test <- merge(test, co[c("cokey", "slope_phase")], by = "cokey", all.x = TRUE)
+test <- merge(test, co[c("cokey", "erocl")], by = "cokey", all.x = TRUE)
 
 test2 <- test
 depths(test2) <- cokey ~ hzdept_r + hzdepb_r
-test3 <- aqp::slice(test2, seq(0, 100, 2) ~ claytotal_r + om_r + caco3_r + slope_phase)
+test3 <- aqp::slice(test2, seq(0, 100, 2) ~ claytotal_r + om_r + caco3_r + erocl)
 test3 <- horizons(test3)
 test3$hzdepm_r <- with(test3, (hzdepb_r + hzdept_r) / 2)
 
 hvars <- c("claytotal_r", "om_r", "caco3_r")
-pvars <- c("slope_phase")
+pvars <- c("erocl")
 test4 <- reshape(test3[c("cokey", "hzdept_r", hvars, pvars)],
                 direction = "long",
                 timevar = "variable", times = hvars,
                 v.names = "value",    varying = hvars
                 )
+test4$variable <- factor(test4$variable, levels = c("claytotal_r", "om_r", "caco3_r"))
+test4$erocl <- factor(test4$erocl, levels = levels(test4$erocl), labels = c("None - deposition", "Slightly", "Moderately", "Severely", "Extremely"))
+
 
 # ordering of groups is handled by ggplot2
 ggplot(test4, aes(x = hzdept_r, y = value)) +
-  geom_line(aes(group = cokey), alpha = 0.1) +
-  geom_smooth(aes(col = slope_phase), se = FALSE, lwd = 2) +
+  geom_step(aes(group = cokey), direction = "vh", alpha = 0.1) +
+  # geom_line(aes(group = cokey), alpha = 0.1) +
+  geom_smooth(aes(col = erocl), se = FALSE, lwd = 2) +
   xlim(100, 0) +
-  xlab("depth (cm)") + ylab("clay (%)") +
+  xlab("depth (cm)") + ylab("Percent (%)") +
   coord_flip() +
   facet_grid(~ variable, scale = "free_x") +
-  theme(aspect.ratio = 1) +
+  labs(col = "Erosion Class") +
   ggtitle("Miami Components")
 
 ```
@@ -591,10 +595,12 @@ ggplot(test4, aes(x = hzdept_r, y = value)) +
 
 ## Additional Reading
 
-Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
-
-Wickham, H., and G. Grolemund, 2017, 7 - Exploratory Data Analysis, pp: 81-109. In H. Wickham and G. Grolemund. R for Data Science. O'Reilly Media Inc., Sebastopol, CA. [http://r4ds.had.co.nz/exploratory-data-analysis.html](http://r4ds.had.co.nz/exploratory-data-analysis.html)
-
 Healy, K., 2018. Data Visualization: a practical introduction. Princeton University Press. [http://socviz.co/](http://socviz.co/)
 
 Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)
+
+Kabacoff, R.I., 2015. R in Action. Manning Publications Co. Shelter Island, NY. [https://www.statmethods.net/](https://www.statmethods.net/)
+
+Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
+
+Wickham, H., and G. Grolemund, 2017, 7 - Exploratory Data Analysis, pp: 81-109. In H. Wickham and G. Grolemund. R for Data Science. O'Reilly Media Inc., Sebastopol, CA. [http://r4ds.had.co.nz/exploratory-data-analysis.html](http://r4ds.had.co.nz/exploratory-data-analysis.html)

@@ -465,11 +465,8 @@ A bar plot is a graphical display of the frequency (i.e. number of observations 
 ```{r barplot}
 library(ggplot2)
 
-# find missing textures
-idx <- is.na(h$texture_class)
-
 # bar plot
-ggplot(h[!idx, ], aes(x = texcl)) +
+ggplot(h, aes(x = texcl)) +
   geom_bar()
 ```
 
@@ -676,9 +673,12 @@ p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
 
 # line graph
 
+# h2 <- slice(loafercreek, 0:100 ~ clay)@horizons
+
 p_l <- ggplot(h) +
-  geom_smooth(aes(y = clay, x = hzdepm), se = FALSE) +
+  # geom_line(aes(y = clay, x = hzdept, group = peiid)) +
   geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
+  geom_smooth(aes(y = clay, x = (hzdept + hzdepb) / 2), se = FALSE) +
   xlim(100, 0) +
   xlab("depth (cm)") + ylab("clay (%)") +
   coord_flip() +
@@ -744,15 +744,13 @@ ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
 
 ```{r color, fig.dim = c(8, 4)}
 
-idx <- h$genhz %in% c("Cr", "R", "not-used")
-
 # scatter plot
-ggplot(h[!idx, ], aes(x = clay, y = hzdepm, color = genhz)) +
+ggplot(h, aes(x = clay, y = hzdepm, color = genhz)) +
   geom_point(size = 3) +
   ylim(100, 0)
 
 # density plot
-ggplot(h[!idx, ], aes(x = clay, color = genhz)) +
+ggplot(h, aes(x = clay, color = genhz)) +
   geom_density(size = 2)
 
 # bar plot
@@ -760,7 +758,7 @@ ggplot(h, aes(x = genhz, fill = texture_class)) +
   geom_bar()
 
 # box plot
-ggplot(h[!idx, ], aes(x = genhz, y = clay)) + 
+ggplot(h, aes(x = genhz, y = clay)) + 
   geom_boxplot()
 
 # heat map (pseudo bar plot)
@@ -781,9 +779,7 @@ df <- reshape2::melt(h,
                      measure.vars = c("clay", "phfield", "total_frags_pct")
                      )
 
-idx <- df$genhz %in% c("Cr", "R", "not-used")
-
-ggplot(df[!idx, ], aes(x = genhz, y = value)) +
+ggplot(df, aes(x = genhz, y = value)) +
   geom_boxplot() +
   xlab("genhz") +
   facet_wrap(~ variable, scales = "free_y")
@@ -797,7 +793,7 @@ ggplot(df[!idx, ], aes(x = genhz, y = value)) +
 
 library(aqp)
 
-s <- slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
+s <- slice(loafercreek, 0:100 ~ clay + phfield + total_frags_pct)
 s <- slab(s, fm = ~ clay + phfield + total_frags_pct, 
           slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE)
           )
@@ -1124,12 +1120,12 @@ Webster, R. 2001. Statistics to support soil research and their presentation. Eu
 
 # Additional Reading
 
+Healy, K., 2018. Data Visualization: a practical introduction. Princeton University Press. [http://socviz.co/](http://socviz.co/)
+
+Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)
+
 Kabacoff, R.I., 2015. R in Action. Manning Publications Co. Shelter Island, NY. [https://www.statmethods.net/](https://www.statmethods.net/)
 
 Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
 
 Wickham, H., and G. Grolemund, 2017, 7 - Exploratory Data Analysis, pp: 81-109. In H. Wickham and G. Grolemund. R for Data Science. O'Reilly Media Inc., Sebastopol, CA. [http://r4ds.had.co.nz/exploratory-data-analysis.html](http://r4ds.had.co.nz/exploratory-data-analysis.html)
-
-Healy, K., 2018. Data Visualization: a practical introduction. Princeton University Press. [http://socviz.co/](http://socviz.co/)
-
-Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)
