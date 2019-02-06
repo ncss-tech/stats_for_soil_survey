@@ -40,7 +40,7 @@ library(ggplot2)
 ```{r, echo=FALSE}
 
 crosby <- fetchSDA_component(WHERE = "muname LIKE 'Crosby%'")
-attach(crosby)
+spc <- crosby
 c2 <- subsetProfiles(spc, s = "cokey == 14842603")
 c_h <- horizons(c2)
 names(c_h) <- gsub("total", "", names(c_h)) 
@@ -361,16 +361,10 @@ p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
   theme(aspect.ratio = 1) +
   ggtitle("Scatter Plot")
 
-# line graph
-depth <- c(1, 5, 15, 30, 50, 70, 90)
-lo_fit <- loess(clay ~ hzdepm, data = h, na.action = na.exclude)
-clay <- predict(lo_fit, depth)
-df <- data.frame(depth, clay)
-
-p_l <- ggplot(h, aes(y = clay, x = hzdepm)) +
-  geom_point(data = df, aes(x = depth, y = clay), size = 2, show.legend = FALSE) +
-  geom_smooth(se = FALSE, col = "black") +
-  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+p_l <- ggplot(h) +
+  geom_smooth(aes(y = clay, x = hzdepm), se = FALSE) +
+  geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
+  xlim(100, 0) +
   xlab("depth (cm)") + ylab("clay (%)") +
   coord_flip() +
   theme(aspect.ratio = 1) +
@@ -557,19 +551,37 @@ p + geom_point()
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
 
-co <- get_component_from_SDA(WHERE = "compname = 'Crosby'")
+co <- get_component_from_SDA(WHERE = "compname = 'Miami'")
+co$slope_phase <- cut(co$slope_r, c(0, 2, 4, 8, 15, 30, 50))
 co2 <- subset(co, majcompflag == "Yes")
-h  <- get_chorizon_from_SDA(WHERE = "compname = 'Crosby'")
+h  <- get_chorizon_from_SDA(WHERE = "compname = 'Miami'")
 test <- subset(h, cokey %in% co2$cokey)
+test <- merge(test, co[c("cokey", "slope_phase")], by = "cokey", all.x = TRUE)
+
+test2 <- test
+depths(test2) <- cokey ~ hzdept_r + hzdepb_r
+test3 <- aqp::slice(test2, seq(0, 100, 2) ~ claytotal_r + om_r + caco3_r + slope_phase)
+test3 <- horizons(test3)
+test3$hzdepm_r <- with(test3, (hzdepb_r + hzdept_r) / 2)
+
+hvars <- c("claytotal_r", "om_r", "caco3_r")
+pvars <- c("slope_phase")
+test4 <- reshape(test3[c("cokey", "hzdept_r", hvars, pvars)],
+                direction = "long",
+                timevar = "variable", times = hvars,
+                v.names = "value",    varying = hvars
+                )
 
 # ordering of groups is handled by ggplot2
-ggplot(test, aes(x = jitter(hzdept_r, 3), y = claytotal_r)) + 
-  geom_line(aes(group = cokey), alpha = 0.2) + 
-  geom_smooth(method = "loess") + 
-  xlim(100, 0) + ylab("clay percent") + xlab("clay(%)") +
+ggplot(test4, aes(x = hzdept_r, y = value)) +
+  geom_line(aes(group = cokey), alpha = 0.1) +
+  geom_smooth(aes(col = slope_phase), se = FALSE, lwd = 2) +
+  xlim(100, 0) +
+  xlab("depth (cm)") + ylab("clay (%)") +
   coord_flip() +
+  facet_grid(~ variable, scale = "free_x") +
   theme(aspect.ratio = 1) +
-  ggtitle("Crosby Components")
+  ggtitle("Miami Components")
 
 ```
 
