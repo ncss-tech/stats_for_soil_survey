@@ -47,14 +47,20 @@ f <- fetchNASIS()
 # coordinates(f) <- ~ x_std + y_std
 # Error: cannot initialize a SpatialPoints object with missing coordinates
 
+# create `f.with.spatial.info` which is just the NON-NA pedon locations
 f.with.spatial.info <- f[!is.na(f$x_std),]
+
+# now the call to coordinates() will work
 coordinates(f.with.spatial.info) <- ~ x_std + y_std
 proj4string(f.with.spatial.info) <- '+proj=longlat +datum=WGS84'
 
+# plot the spatial slot directly
 plot(f.with.spatial.info@sp)
 
+# the spatial slot is just one part of the SoilProfileCollection
 class(f.with.spatial.info)
-
-spdf.spc <- as(f.with.spatial.info, 'SpatialPointsDataFrame')
-class(spdf.spc)
-rgdal::writeOGR(spdf.spc, dsn = '.', layer='example_shapefile', driver = 'ESRI Shapefile')
+      
+# coerce SPC to SPDF
+spdf.from.spc <- as(f.with.spatial.info, 'SpatialPointsDataFrame')
+class(spdf.from.spc)
+rgdal::writeOGR(spdf.from.spc, dsn = '.', layer='example_shapefile', driver = 'ESRI Shapefile')

@@ -1,25 +1,8 @@
-## ----setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE-----
-# setup
-library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
-
-# options for R functions
-options(width=100, stringsAsFactors=FALSE)
-
-# captions added to figures
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
-
-## ------------------------------------------------------------------------
 library(sp)
 library(raster)
 library(rgdal)
 library(soilDB)
 
-## ------------------------------------------------------------------------
 # you may have to install this
 library(mapview)
 
@@ -32,7 +15,6 @@ m <- mapview(pentz)
 # add more data to the map and display
 addFeatures(m, redding, color='black', fillColor='red', weight=1)
 
-## ----fig.width=6, fig.height=5, results='hide'---------------------------
 library(soilDB)
 library(raster)
 library(lattice)
@@ -44,16 +26,13 @@ library(velox)
 s <- seriesExtent('cecil')
 
 # load pointer to PRISM data, note that this file is stored on my local machine:
-r <- raster('E:/gis_data/prism/ffd_50_pct_800m.tif')
+r <- raster('demo/FFD.tif')
 
 # 2.5 seconds sampling
 vx <- velox(r)
 system.time(e <- vx$extract(s))
 
-# simple summary
-densityplot(e$CECIL, plot.points=FALSE, bw=2, lwd=2, col='RoyalBlue', xlab='Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', ylab='Density', main='FFD Estimate for Extent of Cecil Series')
 
-## ------------------------------------------------------------------------
 # create point geometry from coordinates
 p <- SpatialPoints(coords = cbind(-97.721210, 40.446068))
 # attach attribute table
@@ -79,11 +58,17 @@ d$id
 
 ## ------------------------------------------------------------------------
 # new data must be of the same length as number of features, otherwise recycling will occur
-d$rand <- rnorm(n=nrow(d))
+d$rand <- rnorm(n = nrow(d))
+d$rand
+
+length(d$rand) == nrow(d)
 
 ## ------------------------------------------------------------------------
-idx <- which(d$rand > 0)
+vector.of.logicals <- d$rand > 0
+idx <- which(vector.of.logicals)
+idx
 d[idx, ]
+str(d)
 
 ## ------------------------------------------------------------------------
 as(d, 'data.frame')
@@ -95,6 +80,7 @@ str(p)
 ## ------------------------------------------------------------------------
 # transform to UTM zone 14
 p.utm <- spTransform(p, CRS('+proj=utm +zone=14 +datum=NAD83'))
+str(p.utm)
 cbind(gcs=coordinates(p), utm=coordinates(p.utm))
 
 # transform to GCS NAD27
@@ -131,9 +117,8 @@ r <- readAll(r)
 # check: file is in memory
 inMemory(r)
 
-## ----eval=FALSE----------------------------------------------------------
 ## # using previous example data set
-## writeRaster(r, filename='r.tif', options=c("COMPRESS=LZW"))
+writeRaster(r, filename='r.tif', options=c("COMPRESS=LZW"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # store path as a variable, in case you want to keep it somewhere else
@@ -155,7 +140,7 @@ inMemory(r)
 
 ## ----results='hide'------------------------------------------------------
 # establish path to example data
-ch2b.data.path <- 'C:/workspace/chapter-2b'
+ch2b.data.path <- 'E:/workspace/web/stats_for_soil_survey/chapters/2_data/demo'
 
 # load MLRA polygons
 mlra <- readOGR(dsn=ch2b.data.path, layer='mlra-18-15-AEA')

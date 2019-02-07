@@ -7,8 +7,8 @@ library(soilDB)
 # load sample `loafercreek` data from the soilDB package
 data("loafercreek")
 
-# keep only the first 30 pedons
-pedons <- loafercreek[1:30, ]
+# keep only the first 20 pedons
+pedons <- loafercreek[1:20, ]
 
 # plot profile sketches (set margins to 0)
 par(mar=c(0,0,0,0))
@@ -24,19 +24,20 @@ l$hzname
 
 ## ------------------------------------------------------------------------
 # create 4 generalized horizons: A, upper transitional, argillic and bedrock
-new.genhz.labels <- c('A',
+prototype.labels <- c('A',
                       'BA',
                       'Bt',
                       'Cr')
 
-# REGEX rules describing mapping from field data to new.genhz.labels
+## ------------------------------------------------------------------------
+# REGEX rules describing mapping from field data to prototype.labels
 patterns.to.match <- c('^A',
                       '^B.*[^Ct]$',
                       '.*B.*t.*',
                       'Cr|R')
 
 ## ------------------------------------------------------------------------
-pedons$newgenhz <- generalize.hz(x=pedons$hzname, new=new.genhz.labels, pat=patterns.to.match)
+pedons$newgenhz <- generalize.hz(x=pedons$hzname, new=prototype.labels, pat=patterns.to.match)
 
 ## ------------------------------------------------------------------------
 oldvsnew <- addmargins(table(pedons$newgenhz, pedons$hzname))
@@ -54,13 +55,13 @@ oldvsnew[, col.idx.not.used]
 
 ## ------------------------------------------------------------------------
 # create 5 generalized horizons: A, upper transitional, argillic, lower-transitional and bedrock
-new.genhz.labels.v2 <- c('A',
+prototype.labels.v2 <- c('A',
                          'BA',
                          'Bt',
                          'BC',
                          'Cr')
 
-# REGEX rules describing mapping from field data to new.genhz.labels
+# REGEX rules describing mapping from field data to prototype.labels
 patterns.to.match.v2 <- c('^A',
                           '^B.*[^Ct]$',
                           '.*B.*t.*',
@@ -69,7 +70,7 @@ patterns.to.match.v2 <- c('^A',
 
 # use generalize.hz() to apply a set of patterns and paired labels
 # to the `pedons$hzname` character vector containing field designations
-pedons$newgenhz2 <- generalize.hz(x=pedons$hzname, new=new.genhz.labels.v2, pat=patterns.to.match.v2)
+pedons$newgenhz2 <- generalize.hz(x=pedons$hzname, new=prototype.labels.v2, pat=patterns.to.match.v2)
 
 ## ------------------------------------------------------------------------
 # create a second cross-tabulation, using the updated genhz
@@ -92,7 +93,7 @@ plotSPC(pedons, name='hzname', color='newgenhz2',
         print.id=FALSE, cex.names=0.8)
 
 ## ------------------------------------------------------------------------
-# original field data (28 levels)
+# original field data (27 levels)
 length(unique(pedons$hzname))
 
 # new generalized data (6 levels, including not-used)
@@ -102,13 +103,13 @@ length(unique(pedons$newgenhz2))
 # get the horizon data frame out of the SPC
 hzdata <- horizons(pedons)
 
-# make a list of data frames from horizons, split based on the generalized horizon labels (`f`)
+# make a list of data frames from horizons, split based on the Generalized Horizon Labels (`f`)
 genhz.list <- split(hzdata, f = hzdata$newgenhz2)
 
 # use lapply() to apply a function to each element of `genhz.list`
 #  the anonymous function calculates some summary statistics on each subset dataframe (`d`)
 res <- lapply(genhz.list, FUN = function(d) {
-  # the variable 'd' contains the dataframe with all the data for a particular  general horizon label
+  # the variable 'd' contains the dataframe with all the data for a particular  Generalized Horizon Label
   
   # calculate mean clay content, removing NA and rounding to one decimal
   # we suppressWarnings() for the cases where all d$clay are NA (O horizons, bedrock)
@@ -152,6 +153,25 @@ res.df <- do.call('rbind', res)
 # show results
 res.df
 
+## ---- eval=F-------------------------------------------------------------
+## # save a text-based (comma-separated) version of the result table
+## write.csv(res.df, file = "RIC_table_output.csv")
+## 
+## # save a binary file representation of the R object containing result table
+## save(res.df, file = "RIC_table_output.Rda")
+
+## ----eval=FALSE----------------------------------------------------------
+## # then load data from the NASIS selected set into an R object called `pedons`
+## pedons <- fetchNASIS(from='pedons')
+
+## ----eval=FALSE----------------------------------------------------------
+## # optionally subset the data, FOR INSTANCE: by taxon name - replace Loafercreek with your taxon name
+## pedons <- pedons[grep(pattern='Loafercreek', x = f$taxonname, ignore.case=TRUE), ]
+
+## ----eval=FALSE----------------------------------------------------------
+## # check the number of sites/pedons in the `pedons` SPC subset
+## length(pedons)
+
 ## ------------------------------------------------------------------------
 # set output path
 rules.file <- 'C:/data/horizon_agg.txt'
@@ -169,16 +189,4 @@ h <- h[which(h$newgenhz != 'not-used'), c('phiid', 'newgenhz')]
 # append to NASIS import file
 write.table(h, file=rules.file, row.names=FALSE, quote=FALSE,
             na='', col.names=FALSE, sep='|', append=TRUE)
-
-## ----eval=FALSE----------------------------------------------------------
-## # then load data from the NASIS selected set into an R object called `pedons`
-## pedons <- fetchNASIS(from='pedons')
-
-## ----eval=FALSE----------------------------------------------------------
-## # optionally subset the data, FOR INSTANCE: by taxon name - replace Loafercreek with your taxon name
-## pedons <- pedons[grep(pattern='Loafercreek', x = f$taxonname, ignore.case=TRUE), ]
-
-## ----eval=FALSE----------------------------------------------------------
-## # check the number of sites/pedons in the `pedons` SPC subset
-## length(pedons)
 

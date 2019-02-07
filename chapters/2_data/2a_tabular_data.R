@@ -1,58 +1,5 @@
-## ----echo=FALSE, results='hide', warning=FALSE, message=FALSE------------
 library(knitr, quietly=TRUE)
-
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
-
-# options for R functions
-options(width=100, stringsAsFactors=FALSE)
-
-## ----pedons_a, echo=FALSE, results='hide', warning=FALSE-----------------
 library(ggplot2)
-# assemble data on number of pedon by decade
-#Pedons <- c(577, 6152, 9517, 19058, 42587, 112182, 231609, 184913)
-#Year <- c("<1950s", "1950s", "1960s", "1970s", "1980s", "1990s", "2000s", "2010s")
-
-Year <- as.numeric(c("1940", "1941", "1942", 
-"1943", "1944", "1945", "1946", "1947", "1948", "1949", "1950", 
-"1951", "1952", "1953", "1954", "1955", "1956", "1957", "1958", 
-"1959", "1960", "1961", "1962", "1963", "1964", "1965", "1966", 
-"1967", "1968", "1969", "1970", "1971", "1972", "1973", "1974", 
-"1975", "1976", "1977", "1978", "1979", "1980", "1981", "1982", 
-"1983", "1984", "1985", "1986", "1987", "1988", "1989", "1990", 
-"1991", "1992", "1993", "1994", "1995", "1996", "1997", "1998", 
-"1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", 
-"2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", 
-"2015", "2016", "2017"))
-Pedons <- c(21, 2, 18, 26, 54, 48, 2, 23, 39, 71, 96, 116, 80, 
-448, 692, 906, 992, 1107, 1168, 1367, 1249, 1461, 1384, 957, 
-1176, 1107, 1101, 1011, 1076, 1362, 1866, 1586, 1646, 1444, 1953, 
-2322, 2773, 3089, 3525, 3691, 3409, 3449, 3552, 3471, 4402, 4881, 
-3691, 5124, 5334, 9658, 11554, 8485, 10120, 11694, 11038, 10869, 
-12618, 12747, 12392, 13855, 14117, 18200, 15991, 15096, 23997, 
-20265, 25705, 33700, 37313, 37368, 42288, 59900, 35772, 19062, 
-26009, 12776, 11497, 11168)
-Cummulative_Pedons <- c(310, 312, 330, 356, 
-410, 458, 460, 483, 522, 593, 689, 805, 885, 1333, 2025, 2931, 
-3923, 5030, 6198, 7565, 8814, 10275, 11659, 12616, 13792, 14899, 
-16000, 17011, 18087, 19449, 21315, 22901, 24547, 25991, 27944, 
-30266, 33039, 36128, 39653, 43344, 46753, 50202, 53754, 57225, 
-61627, 66508, 70199, 75323, 80657, 90315, 101869, 110354, 120474, 
-132168, 143206, 154075, 166693, 179440, 191832, 205687, 219804, 
-238004, 253995, 269091, 293088, 313353, 339058, 372758, 410071, 
-447439, 489727, 549627, 585399, 604461, 630470, 643246, 654743, 
-665911)
-
-#assemble into data.frame
-#d <- data.frame(Year, Decade, Pedons, Pedons_c)
-
-# cat("# pedons = ", formatC(sum(Pedons), big.mark = ",", format = "fg"), "\n", "# lab pedons = ~64,000", sep = "")
-
-# plot number of pedons in NASIS 
-ggplot(data.frame(Pedons, Year), aes(x=Year, y=Pedons)) + geom_histogram(stat="identity") + scale_y_continuous(name="Pedons", labels = scales::comma)
-
-# plot the cummulative number of pedons in NASIS 
-ggplot(data.frame(Cummulative_Pedons, Year), aes(x=Year, y=Cummulative_Pedons)) + geom_bar(stat="identity") + scale_y_continuous(name="Cummulative Pedons", labels = scales::comma)
-#theme(axis.text.x = element_text(angle = 90, hjust = 1), cex=0.5)
 
 ## ----datatype2, eval=TRUE------------------------------------------------
   # Using the concatenate function we can create the following character and logical vectors
