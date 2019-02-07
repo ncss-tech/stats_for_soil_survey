@@ -90,7 +90,7 @@ oldvsnew2[, col.idx.not.used]
 # plot profile sketches - first 20 profiles
 par(mar=c(0,0,0,0))
 plotSPC(pedons, name='hzname', color='newgenhz2', 
-        print.id=FALSE, cex.names=0.8)
+        print.id=FALSE)
 
 ## ------------------------------------------------------------------------
 # original field data (27 levels)
