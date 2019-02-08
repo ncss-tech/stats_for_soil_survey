@@ -1,0 +1,246 @@
+---
+title: "_cLHS_ in R w/ existing (zero-cost) point observations"
+author: "Andrew Brown & Dave White [prepared the spatial datasets]"
+date: "February 8, 2019"
+output: 
+  html_document:
+    keep_md: no
+    number_sections: yes
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+First, you should understand the concepts in the __Original Demo by Dave White:__ http://ncss-tech.github.io/stats_for_soil_survey/presentations/examples/clhs.html
+
+# Concepts
+
+## Basics
+
+The basic premise of the _pre-existing data_ extension to _cost-constrained_ Conditioned Latin Hypercube Sampling is that you can "force" a `clhs::clhs()` routine include an arbitrary set  of (user-defined) samples _in your final result_. 
+
+These "forced" data come at "zero-cost" because, well (at least theoretically) you _already have them_. In theory, this _very-low-cost_ partially counteracts the fact that the existing locations are not likely to span the environmental variable space fully. 
+
+## This Demo
+
+This demo uses the demonstration dataset prepared by Dave White. 
+
+To simulate "existing data" a set of 20 random samples is collected from the non-NA extent of the _RasterStack_. These are hypothetical "pre-existing data". 
+
+This small number of random samples are less likely to consistently span the full range of the multivariate data space (the RasterStack), when compared to the exhaustive sampling approach to sampling.
+
+The _RasterStack_ is regularly sampled ("exhaustively"; n=10,000) and these regular samples are passed to the cLHS algorithm for optimization to the user defined number of samples.
+
+Both CLHS routines are run using the cost raster `r.cost`, but the second object created `s.with.existing` is set up to retain the 30 random samples in the last "set" of points cLHS algorithm evaluates. That is, the set that it has when the number of iterations set by the user is reached. 
+
+These observations are appended to the begining of the `all.observations` SpatialPointsDataFrame and indexed using a numeric index `1:30`. The ordering and index choice is important. Note the addition of the `include=1:30` to the `clhs()` call that makes `s.with.existing`.
+
+The final result plot shows the location of cost-constrained cLHS, with and without pre-existing samples on top of the cost raster
+
+__WARNING:__ Use this routine your own risk. The addition to the cLHS algorithm is new and may potentially have unintended effects on clhs result. This addition was just made to the latest official release of `clhs` (was published to CRAN mid-October 2018)
+
+# Sample Code
+
+## Load data into RasterStack
+
+Get the data if you need it.
+
+```{r eval=FALSE}
+# create a new directory to store the data
+dir.create("C:/workspace2/clhs", recursive = TRUE)
+
+# setting the working directory
+setwd("C:/workspace2/clhs/")
+
+# download data
+download.file(url = "http://github.com/dave-white2/data/raw/master/clhs/clhs_data.zip", destfile = "clhs.zip", method = "auto")
+
+# unzip data
+unzip(zipfile = "C:/workspace2/clhs/clhs.zip", overwrite = TRUE)
+```
+
+```{r}
+library(rgdal)
+library(raster)
+library(clhs)
+
+setwd("C:/workspace2/clhs/")
+
+# load raster data of same extent and resolution
+r.claymin <- raster("claymin.tif")
+r.mrrtf <- raster("mrrtf.tif")
+r.mrvbf <- raster("mrvbf.tif")
+r.ndvi <- raster("ndvi.tif")
+r.sagawi <- raster("sagawi.tif")
+r.cost <- raster("cost.tif")
+
+r.stack.cost <- stack(r.claymin, r.mrrtf, r.mrvbf, r.ndvi, r.sagawi, r.cost)
+names(r.stack.cost) <- c('claymin', 'mrrtf', 'mrvbf', 'ndvi', 'sagawi', 'cost')
+r.stack.cost <- readAll(r.stack.cost)
+
+r.extent.poly <- as(extent(r.stack.cost), "SpatialPolygons")
+
+proj4string(r.extent.poly) <- proj4string(r.stack.cost)
+```
+
+## Pre-existing data
+```{r}
+# take 20 point locations "randomly" for demonstration
+# these are our hypothetical existing obsrvations
+# we set na.rm = TRUE so our "observations" are not in `NA` raster space
+obs.existing <- sampleRandom(r.stack.cost, size = 20, sp=TRUE, na.rm=TRUE)
+```
+
+## Subsample the RasterStack
+
+use regular sampling to lower the number of cells (see `raster::ncell()`) we are plugging into `clhs()` algorithm.
+
+```{r}
+# use regular sampling to lower the number of cells 
+reg.samples <- sampleRegular(r.stack.cost, size = 10000, sp = TRUE)
+```
+
+## Match Coordinate Reference System
+
+Here we transform ("project") our existing data -- to ensure match the CRS of the regularly spaced subsample. We will be combining these two spatial objects for the second part of `clhs()`.
+
+```{r}
+obs.existing <- spTransform(obs.existing, CRS(proj4string(reg.samples)))
+```
+
+Combine existing data with regular (sub)sample.
+
+```{r}
+all.observations <- rbind(obs.existing, reg.samples)
+```
+
+Remove any records that may have `NA` cost, pending a fix in _clhs_ package.
+
+```{r}
+# pending a fix in clhs package (https://github.com/pierreroudier/clhs/issues/3)
+# NA cost values must be filtered from the samples
+reg.samples <- reg.samples[which(!is.na(reg.samples$cost)), ]
+all.observations <- all.observations[which(!is.na(all.observations$cost)), ]
+```
+
+## Cost-constrained c-cLHS
+
+Do the normal cost-constrained cLHS sampling.
+
+```{r}
+s <- clhs(reg.samples, 
+          size = 100,
+          iter = 10000,
+          cost = 'cost', 
+          simple = FALSE, 
+          progress = FALSE)
+```
+
+Do the cost-constrained cLHS but force-include the first `r nrow(obs.existing)` row-indexes that correspond to our existing data (that we appended to the _beginning_ of `all.observations`)
+
+```{r}
+idx.to.include <-1:nrow(obs.existing)
+
+idx.to.include
+
+s.with.existing <- clhs(all.observations, 
+                        size = 100, 
+                        iter = 10000,
+                        cost = 'cost', 
+                        include = idx.to.include,  
+                        simple = FALSE,
+                        progress = FALSE)
+```
+
+## Diagnostic plots
+
+_cLHS_object_ diagnostic plot for normal c-cLHS. This is a custom plotting function for the result obtained when the `clhs()` `simple` argument is `FALSE`.
+
+```{r}
+plot(s, mode = c("obj", "box"))
+```
+
+And... a diagnostic plot for c-cLHS _with existing data_.
+
+```{r}
+plot(s.with.existing, mode = c("obj", "box"))
+```
+
+## Combining results for comparison
+
+```{r}
+s.all <- rbind(data.frame(method = "c-cLHS", s$sampled_data@data),
+              data.frame(method = "c-cLHS (w/ existing)",  s.with.existing$sampled_data@data), 
+              data.frame(method = "Exhaustive", reg.samples@data))
+```
+
+
+## Visual comparison of two methods
+
+Create numeric vectors containing indices of the samples selected by the two cost-constrained cCLHS runs.
+
+```{r}
+samples.idx <- s$index_samples
+existing.idx <- s.with.existing$index_samples
+```
+
+Make a plot to show where the cLHS samples are located by the two methods.
+
+The yellow points are your existing data. Blue are the cLHS observations that come along with your existing data. 
+
+Red points are obtained from the ordinary (no existing data) cost-constrained cLHS. 
+
+There are 100 points in `BLUE+YELLOW`, and 100 in `RED`.
+
+Plot on an environmental variable (SAGA Wetness Index) and cost raster contour.
+
+```{r}
+# check point locations visually (on the sagawi raster)
+par(mar = c(1.5,1.5,1.5,1.5))
+
+plot(r.sagawi)
+contour(r.cost, nlevels=10, col='black', add=TRUE)
+
+ # plot the regularly-spaced samples that were selected by normal cLHS
+points(reg.samples[samples.idx, ], bg = 'red', pch=21)
+
+# plot the regularly-spaced samples that were selected when set to retain 
+# the n=30 existing points that were randomly sampled before running clhs
+points(all.observations[existing.idx, ], bg = 'blue', pch=21)
+
+# overplot with yellow to show which ones were the 30 that we started with 
+points(obs.existing, bg = 'yellow', pch=21)
+
+legend(x=728000, y=3416000,
+       legend = c("c-cLHS", "c-cLHS w/ existing", "Existing"),
+       pch=19, col=c("red","blue","yellow"), bg="#AAAAAA")
+```
+
+Plot on Cost Raster.
+
+```{r}
+# check visualy on the cost raster
+par(mar = c(1.5,1.5,1.5,1.5))
+
+# use cost raster as a backdrop
+plot(r.cost)
+
+# plot the regularly-spaced samples that were selected by normal cLHS
+points(s$sampled_data, bg = 'red', pch=21)
+
+# plot the regularly-spaced samples that were selected when set to retain 
+# the n=30 existing points that were randomly sampled before running clhs
+points(s.with.existing$sampled_data, bg = 'blue', pch=21)
+
+# overplot with yellow to show which ones were the 30 that we started with 
+points(obs.existing, bg = 'yellow', pch=21)
+
+legend(x=728000, y=3416000,
+       legend = c("c-cLHS", "c-cLHS w/ existing", "Existing"),
+       pch=19, col=c("red","blue","yellow"), bg="#AAAAAA")
+```
