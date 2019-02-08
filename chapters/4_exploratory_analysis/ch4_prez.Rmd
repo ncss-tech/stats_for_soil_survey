@@ -41,7 +41,7 @@ library(ggplot2)
 
 crosby <- fetchSDA_component(WHERE = "muname LIKE 'Crosby%' AND majcompflag = 'Yes'")
 spc <- crosby
-c2 <- subsetProfiles(spc, s = "cokey == '16059045'")
+c2 <- subsetProfiles(spc, s = paste0("cokey == ", sample(spc, 1)@site$cokey))
 c_h <- horizons(c2)
 names(c_h) <- gsub("total", "", names(c_h)) 
 
@@ -54,7 +54,7 @@ knitr::kable(c_h[vars], row.names = FALSE)
 ---
 
 
-##  Descriptive Statistics
+##  Descriptive Statistics - Estimates of L, RV & H
 
 ```{r, echo=FALSE}
 
@@ -96,7 +96,8 @@ summary(h[vars])
 ## Descriptive Statistics - Categorical Data
 
 ```{r}
-with(h, table(genhz, texture_class, useNA = "ifany"))
+
+table(h$genhz, h$texture_class, useNA = "ifany")
 
 ```
 
@@ -354,23 +355,44 @@ gridExtra::grid.arrange(p_box, p_qq, ncol = 2)
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
 
 # scatter plot
-p_s <- ggplot(h, aes(x = clay, y = hzdept)) +
+p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
   geom_point() +
   ylim(100, 0) +
   ylab("depth (cm)") + xlab("clay (%)") +
   theme(aspect.ratio = 1) +
-  ggtitle("Scatter Plot")
+  ggtitle("Scatter Plot (Soil Horizons)")
 
-p_l <- ggplot(h) +
+l_p <- ggplot(h) +
   # geom_smooth(aes(y = clay, x = hzdepm), se = FALSE) +
-  geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
+  geom_line(aes(y = clay, x = hzdepm, group = peiid)) +
   xlim(100, 0) +
   xlab("depth (cm)") + ylab("clay (%)") +
   coord_flip() +
   theme(aspect.ratio = 1) +
-  ggtitle("Line Plot")
+  ggtitle("Line Plot (Soil Profiles)")
 
-gridExtra::grid.arrange(p_s, p_l, ncol = 2)
+# l_s <- ggplot(h, aes(y = clay, x = hzdepm, group = peiid)) +
+#   geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh") +
+#   xlim(100, 0) +
+#   xlab("depth (cm)") + ylab("clay (%)") +
+#   coord_flip() +
+#   theme(aspect.ratio = 1) +
+#   ggtitle("Step Line Plot (Soil Profiles)")
+# 
+# test3 <- aqp::slice(loafercreek, seq(0, 100, 2) ~ clay)
+# test3 <- horizons(test3)
+# test3$hzdepm <- with(test3, (hzdepb + hzdept) / 2)
+# 
+# l_sm <- ggplot(test3, aes(y = clay, x = hzdept, group = peiid)) +
+#   geom_line(stat = "smooth", method = "loess", col = "black", alpha = 0.5) +
+#   xlim(100, 0) +
+#   xlab("depth (cm)") + ylab("clay (%)") +
+#   coord_flip() +
+#   theme(aspect.ratio = 1) +
+#   ggtitle("Line Plot (Soil Profiles)")
+
+
+gridExtra::grid.arrange(p_s, l_p, ncol = 2)
 
 ```
 
@@ -572,7 +594,7 @@ test4 <- reshape(test3[c("cokey", "hzdept_r", hvars, pvars)],
                 v.names = "value",    varying = hvars
                 )
 test4$variable <- factor(test4$variable, levels = c("claytotal_r", "om_r", "caco3_r"))
-test4$erocl <- factor(test4$erocl, levels = levels(test4$erocl), labels = c("None - deposition", "Slightly", "Moderately", "Severely", "Extremely"))
+test4$erocl <- factor(test4$erocl, levels = levels(test4$erocl), labels = c("None - deposition", "Slightly", "Moderately", "Severely", "Extremely")[1:length(levels(test4$erocl))])
 
 
 # ordering of groups is handled by ggplot2
@@ -603,4 +625,4 @@ Kabacoff, R.I., 2015. R in Action. Manning Publications Co. Shelter Island, NY. 
 
 Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
 
-Wickham, H., and G. Grolemund, 2017, 7 - Exploratory Data Analysis, pp: 81-109. In H. Wickham and G. Grolemund. R for Data Science. O'Reilly Media Inc., Sebastopol, CA. [http://r4ds.had.co.nz/exploratory-data-analysis.html](http://r4ds.had.co.nz/exploratory-data-analysis.html)
+Wilke, C.O., 2019. Fundamentals of Data Visualization. O'Reily Media, Inc. [https://serialmentor.com/dataviz/](https://serialmentor.com/dataviz/)
