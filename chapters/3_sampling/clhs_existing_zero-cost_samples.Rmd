@@ -16,23 +16,27 @@ First, you should understand the concepts in the __Original Demo by Dave White:_
 
 ## Basics
 
-The basic premise of the _pre-existing data_ extension to _cost-constrained_ Conditioned Latin Hypercube Sampling is that you can "force" a `clhs::clhs()` routine include an arbitrary set  of (user-defined) samples _in your final result_. This replaces samples selected by the cost-cLHS algorithm -- _an equal amount to the number of existing points you have_. Be aware of this when setting `size` argument of `clhs()`
+The basic premise of the _pre-existing data_ extension to _cost-constrained_ Conditioned Latin Hypercube Sampling is that you can "force" a `clhs::clhs()` routine include an arbitrary set  of (user-defined) samples _in your final result_. That is, the set of points that it has when the number of iterations set by the user is reached. 
 
-These "forced" data come at "zero-cost" because, well (at least theoretically) you _already have them_. In theory, this _very-low-cost_ partially counteracts the fact that pre-existing locations are not likely to span the environmental variable space (rasters). Samples can be biased in terms of the number of observations from certain kinds of areas, causing their influence to be over-represented in aggregate.
+This replaces samples selected by the cost-cLHS algorithm -- _an equal amount to the number of existing points you have_. Be aware of this when setting `size` argument of `clhs()`
+
+These "forced" data come at "zero-cost" because, well (at least theoretically) you _already have them_. In theory, this _very-low-cost_ partially counteracts the fact that pre-existing locations are not likely to span the environmental variable space (rasters). 
+
+Samples can be biased in terms of the number of observations from certain kinds of areas, causing their influence to be over-represented in aggregate.
 
 ## This Demo
 
 This demo uses the demonstration dataset prepared by Dave White. 
 
-To simulate "existing data" a set of 20 random samples is collected from the non-NA extent of the _RasterStack_. These are hypothetical "pre-existing data". 
+To simulate "existing data" a set of random samples is collected from the non-NA extent of the _RasterStack_. These are hypothetical "pre-existing data". 
 
 Even though random samples are truly "unbiased" -- a small number of random samples are less likely to consistently span the full range of the multivariate data space (the RasterStack) when compared to a much larger sample, or exhaustive, approach to sampling.
 
 The _RasterStack_ is regularly sampled ("exhaustively"; n=10,000) and these regular samples are passed to the cLHS algorithm for optimization to the user defined number of samples. If you are using very small cell resolutions or large rasters, you will need to adjust the number of exhaustive samples you take.
 
-Both CLHS routines are run using the cost raster `r.cost`, but the second object created `s.with.existing` is set up to retain the 30 random samples in the last "set" of points cLHS algorithm evaluates. That is, the set that it has when the number of iterations set by the user is reached. 
+The first three cLHS routines are run using the cost raster `r.cost`, and the fourth by the classic method. `s` is default cost cLHS, `s.with.existing` is set up to retain the random samples in the last "set" of points cLHS algorithm evaluates, `s.with.cheap` uses biased existing samples and `s.classic` is the Classic cLHS set of points. Also, tabular results for "Exhaustive" sampling (regular grid) and "Population" (whole RasterStack) are included.
 
-These observations are appended to the begining of the `all.observations` SpatialPointsDataFrame and indexed using a numeric index `1:10`. The ordering and index choice is important. Note the addition of the `include` argument to the `clhs()` call that makes `s.with.existing`.
+These observations are appended to the begining of the `all.observations` SpatialPointsDataFrame and indexed using a numeric index `1:n.existing`. The ordering and index choice is important. Note the addition of the `include` argument to the `clhs()` call that makes `s.with.existing` and `s.with.cheap`.
 
 The final result plot shows the location of cost-constrained cLHS, with and without pre-existing samples on top of the cost raster
 
@@ -245,7 +249,7 @@ plot(s.classic, mode = c("obj", "box"))
 
 ## Spatial comparison of Methods
 
-Create numeric vectors containing indices of the samples selected by the two cost-constrained cCLHS runs.
+Create numeric vectors containing indices of the samples selected by the cost-constrained cCLHS runs and the two sets of existing samples.
 
 ```{r}
 samples.idx <- s$index_samples
@@ -255,14 +259,6 @@ classic.idx <- s.classic$index_samples
 ```
 
 Make a plot to show where the cLHS samples are located by the three methods (c-CLHS, c-CLHS with Simple Random pre-existing, c-CLHS with "biased" pre-existing).
-
-The orange points are your Simple Random existing data. Blue are the cLHS observations that come _along with_ your random existing data. 
-
-The purple points are your "biased" existing data. Green are the cLHS observations that come _along with_ your random existing data. 
-
-Red points are obtained from the cost-constrained cLHS without prior data.
-
-Black points are the ideal classic cLHS points.
 
 Plot on an environmental variable (_SAGA Wetness Index_) and cost raster contours as a backdrop.
 
@@ -404,7 +400,7 @@ As you can see below, the median values obtained from the different methods are 
 ```{r echo=FALSE}
 n.obs <- data.frame(n.obs = sapply(split(s.all, f = s.all$method), nrow))
 
-match.order.idx <- match(rownames(n.obs), d.mu.wide[,1])
+match.order.idx <- match( unique(d.mu.wide[,1]), rownames(n.obs))
 d.mu.wide.nobs <- cbind(d.mu.wide, n.obs = n.obs[match.order.idx,])
 
 # "population" summary (every cell in raster stack)
