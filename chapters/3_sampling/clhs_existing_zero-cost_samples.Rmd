@@ -1,18 +1,12 @@
 ---
-title: "_cLHS_ in R w/ existing (zero-cost) point observations"
-author: "Andrew Brown & Dave White [prepared the spatial datasets]"
-date: "February 8, 2019"
-output: 
-  html_document:
-    keep_md: no
-    number_sections: yes
-    toc: yes
-    toc_float:
-      collapsed: yes
-      smooth_scroll: no
+title: "Pre-existing Samples in cost-constrained cLHS with the _clhs_ package"
+author: "Andrew Brown"
+date: "February 9, 2019"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
+set.seed(100)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -22,9 +16,9 @@ First, you should understand the concepts in the __Original Demo by Dave White:_
 
 ## Basics
 
-The basic premise of the _pre-existing data_ extension to _cost-constrained_ Conditioned Latin Hypercube Sampling is that you can "force" a `clhs::clhs()` routine include an arbitrary set  of (user-defined) samples _in your final result_. 
+The basic premise of the _pre-existing data_ extension to _cost-constrained_ Conditioned Latin Hypercube Sampling is that you can "force" a `clhs::clhs()` routine include an arbitrary set  of (user-defined) samples _in your final result_. This replaces samples selected by the cost-cLHS algorithm -- _an equal amount to the number of existing points you have_. Be aware of this when setting `size` argument of `clhs()`
 
-These "forced" data come at "zero-cost" because, well (at least theoretically) you _already have them_. In theory, this _very-low-cost_ partially counteracts the fact that the existing locations are not likely to span the environmental variable space fully. 
+These "forced" data come at "zero-cost" because, well (at least theoretically) you _already have them_. In theory, this _very-low-cost_ partially counteracts the fact that pre-existing locations are not likely to span the environmental variable space (rasters). Samples can be biased in terms of the number of observations from certain kinds of areas, causing their influence to be over-represented in aggregate.
 
 ## This Demo
 
@@ -32,13 +26,13 @@ This demo uses the demonstration dataset prepared by Dave White.
 
 To simulate "existing data" a set of 20 random samples is collected from the non-NA extent of the _RasterStack_. These are hypothetical "pre-existing data". 
 
-This small number of random samples are less likely to consistently span the full range of the multivariate data space (the RasterStack), when compared to the exhaustive sampling approach to sampling.
+Even though random samples are truly "unbiased" -- a small number of random samples are less likely to consistently span the full range of the multivariate data space (the RasterStack) when compared to a much larger sample, or exhaustive, approach to sampling.
 
-The _RasterStack_ is regularly sampled ("exhaustively"; n=10,000) and these regular samples are passed to the cLHS algorithm for optimization to the user defined number of samples.
+The _RasterStack_ is regularly sampled ("exhaustively"; n=10,000) and these regular samples are passed to the cLHS algorithm for optimization to the user defined number of samples. If you are using very small cell resolutions or large rasters, you will need to adjust the number of exhaustive samples you take.
 
 Both CLHS routines are run using the cost raster `r.cost`, but the second object created `s.with.existing` is set up to retain the 30 random samples in the last "set" of points cLHS algorithm evaluates. That is, the set that it has when the number of iterations set by the user is reached. 
 
-These observations are appended to the begining of the `all.observations` SpatialPointsDataFrame and indexed using a numeric index `1:30`. The ordering and index choice is important. Note the addition of the `include=1:30` to the `clhs()` call that makes `s.with.existing`.
+These observations are appended to the begining of the `all.observations` SpatialPointsDataFrame and indexed using a numeric index `1:10`. The ordering and index choice is important. Note the addition of the `include` argument to the `clhs()` call that makes `s.with.existing`.
 
 The final result plot shows the location of cost-constrained cLHS, with and without pre-existing samples on top of the cost raster
 
@@ -50,7 +44,7 @@ __WARNING:__ Use this routine your own risk. The addition to the cLHS algorithm 
 
 Get the data if you need it.
 
-```{r eval=FALSE}
+```{r eval=F}
 # create a new directory to store the data
 dir.create("C:/workspace2/clhs", recursive = TRUE)
 
@@ -79,8 +73,12 @@ r.ndvi <- raster("ndvi.tif")
 r.sagawi <- raster("sagawi.tif")
 r.cost <- raster("cost.tif")
 
-r.stack.cost <- stack(r.claymin, r.mrrtf, r.mrvbf, r.ndvi, r.sagawi, r.cost)
-names(r.stack.cost) <- c('claymin', 'mrrtf', 'mrvbf', 'ndvi', 'sagawi', 'cost')
+r.stack.cost <- stack(r.claymin,  r.mrvbf, r.ndvi, r.sagawi, r.cost)
+names(r.stack.cost) <- c('claymin',  'mrvbf', 'ndvi', 'sagawi', 'cost')
+
+# r.stack.cost <- stack(r.claymin, r.mrrtf, r.mrvbf, r.ndvi, r.sagawi, r.cost)
+# names(r.stack.cost) <- c('claymin', 'mrrtf', 'mrvbf', 'ndvi', 'sagawi', 'cost')
+
 r.stack.cost <- readAll(r.stack.cost)
 
 r.extent.poly <- as(extent(r.stack.cost), "SpatialPolygons")
@@ -94,26 +92,35 @@ Make up some hypothetical "existing observation" locations.
 
 ```{r}
 # how many existing sample locations to simulate?
-n.existing <- 20
+n.existing <- 10
+
+# an equal number of cLHS samples will be generated for pre-existing 
+# data runs of clhs() -- i.e. total points for all cLHS runs returned is n.existing*2
+
+# number of cCLHS iterations
+n.iter <- 10000
 ```
 
 We will compare two methods.
 
-The first method we will take a small (unbiased) Simple Random sample.
+The first method we will take a small Simple Random sample.
 
-Then we will take a biased sample that is likely more realistic for pre-existing data. To do this we take a large random sample, and _order it based on cost_. Then from that large sample, we take a stratified subsample -- selected from the _cheaper half of the large random sample_.
+Then we will take a biased sample that is likely more realistic for pre-existing data. 
+
+To do this we take a large random sample, and _order it based on cost_. Then from that large sample, we take a stratified subsample -- selected from the _cheaper half of the large random sample_.
 
 These hoops we jump through force the pre-existing data to have somewhat _lower cost_ than is typically obtained from a small Simple Random sample. 
+
 Of course, in practice, bias is present. It is not generally intentional. It arises through real operational constraints as well as personal (sometimes well-informed) biases about good places to sample and/or places that need to be sampled. 
 
-cLHS only gets a raster-based view of the variablity in the landscape. It may well be that it ALONE cannot capture all that is "important" about a landscape. 
+cLHS only gets a raster-based view of the variablity in the landscape. It may well be that it alone cannot capture all that is "important" about a landscape. 
 
 ```{r}
-# existing data as truly random
+# "existing data" that are truly random
 # we set na.rm = TRUE so our "observations" are not in `NA` raster space
 obs.existing <- sampleRandom(r.stack.cost, size = n.existing, sp=TRUE, na.rm=TRUE)
 
-# "realistic" existing data have bias 
+# "realistic" existing data have bias - make `obs.existing.cheap` to simulate
 # we use the cost raster to bias a subsample of a random sample
 obs.rnd <- sampleRandom(r.stack.cost, size = n.existing*10, sp=TRUE, na.rm=TRUE)
 obs.rnd <- obs.rnd[order(obs.rnd$cost),]
@@ -127,7 +134,7 @@ Use regular sampling to lower the number of cells (see `raster::ncell()`) we are
 
 ```{r}
 # use regular sampling to lower the number of cells 
-reg.samples <- sampleRegular(r.stack.cost, size = 10000, sp = TRUE)
+reg.samples <- sampleRegular(r.stack.cost, size = n.iter, sp = TRUE)
 ```
 
 ## Match Coordinate Reference System
@@ -158,12 +165,12 @@ all.observations.cheap <- all.observations.cheap[which(!is.na(all.observations.c
 
 ## Cost-constrained c-cLHS
 
-Do the normal cost-constrained cLHS sampling.
+Do the normal cost-constrained cLHS sampling. Same number as the existing points.
 
 ```{r}
 s <- clhs(reg.samples, 
-          size = 100,
-          iter = 10000,
+          size = n.existing*2,
+          iter = n.iter,
           cost = 'cost', 
           simple = FALSE, 
           progress = FALSE)
@@ -178,20 +185,35 @@ idx.to.include <-1:nrow(obs.existing)
 idx.to.include
 
 s.with.existing <- clhs(all.observations, 
-                        size = 100, 
-                        iter = 10000,
+                        size = n.existing*2, 
+                        iter = n.iter,
                         cost = 'cost', 
                         include = idx.to.include,  
                         simple = FALSE,
                         progress = FALSE)
 
 s.with.cheap <- clhs(all.observations.cheap, 
-                        size = 100, 
-                        iter = 10000,
+                        size = n.existing*2, 
+                        iter = n.iter,
                         cost = 'cost', 
                         include = idx.to.include,  
                         simple = FALSE,
                         progress = FALSE)
+```
+
+
+## Classic cLHS
+
+For a the purposes of full comparison of methods, we will also sample using _Classic_ cLHS (without cost constraints). _These samples still have a theoretical "cost"_ -- it is just not considered in the optimization.
+
+The Classic cLHS is important because we can see where the optimal samples would be placed _if cost were no issue_. This is the "ideal" representation.
+
+```{r}
+s.classic <- clhs(reg.samples, 
+                   size = n.existing*2,
+                   iter = n.iter,
+                   simple = FALSE, 
+                   progress = FALSE)
 ```
 
 ## Diagnostic plots
@@ -208,11 +230,18 @@ And... a diagnostic plot for c-cLHS _with existing data_.
 plot(s.with.existing, mode = c("obj", "box"))
 ```
 
-Finally, for the "cheap" _existing data_...
+For the "cheap" _existing data_...
 
 ```{r}
 plot(s.with.cheap, mode = c("obj", "box"))
 ```
+
+Finally, ol' reliable...
+
+```{r}
+plot(s.classic, mode = c("obj", "box"))
+```
+
 
 ## Spatial comparison of Methods
 
@@ -222,6 +251,7 @@ Create numeric vectors containing indices of the samples selected by the two cos
 samples.idx <- s$index_samples
 existing.idx <- s.with.existing$index_samples
 cheap.idx <- s.with.cheap$index_samples
+classic.idx <- s.classic$index_samples
 ```
 
 Make a plot to show where the cLHS samples are located by the three methods (c-CLHS, c-CLHS with Simple Random pre-existing, c-CLHS with "biased" pre-existing).
@@ -230,9 +260,9 @@ The orange points are your Simple Random existing data. Blue are the cLHS observ
 
 The purple points are your "biased" existing data. Green are the cLHS observations that come _along with_ your random existing data. 
 
-Red points are obtained from the ordinary (no existing data) cost-constrained cLHS. 
+Red points are obtained from the cost-constrained cLHS without prior data.
 
-There are 100 points in `BLUE+YELLOW`, 100 points in `PURPLE+GREEN` and 100 in `RED`.
+Black points are the ideal classic cLHS points.
 
 Plot on an environmental variable (_SAGA Wetness Index_) and cost raster contours as a backdrop.
 
@@ -243,90 +273,73 @@ par(mar = c(2,2,2,2))
 plot(r.sagawi)
 contour(r.cost, nlevels=10, col='black', add=TRUE)
 
- # plot the regularly-spaced samples that were selected by normal cLHS
+ # plot the regularly-spaced samples that were selected by classic & cost cLHS
+points(reg.samples[classic.idx, ], bg = 'black', pch=8)
 points(reg.samples[samples.idx, ], bg = 'red', pch=21)
 
 # plot the regularly-spaced samples that were selected when set to retain 
 # the existing points that were randomly sampled before running clhs
+points(reg.samples[samples.idx, ], bg = 'red', pch=21)
 points(all.observations[existing.idx, ], bg = 'blue', pch=21)
-points(all.observations.cheap[cheap.idx, ], bg = 'green', pch=21)
+points(all.observations.cheap[cheap.idx, ], bg = 'purple', pch=21)
 
-# overplot with yellow to show which ones were the 30 that we started with 
-points(obs.existing, bg = 'orange', pch=21)
-points(obs.existing.cheap, bg = 'purple', pch=21)
+# overplot with crosshairs to show existing points (less colors)
+points(obs.existing,  pch=3)
+points(obs.existing.cheap, pch=3)
 
 legend(x="topleft",
-       legend = c("cost-cLHS","cost-cLHS + Random","cost-cLHS + Biased","Random","Biased"),
-       pch=19, col=c("red","blue","green","orange","purple"), bg="#AAAAAA")
+       legend = c("cLHS","cost-cLHS","cost-cLHS + Random","cost-cLHS + Biased","Pre-existing"),
+       pch=c(8,19,19,19,3), col=c("black","red","blue","purple","black"), bg="#AAAAAA")
 ```
 
 Plot the same point groups for comparison on Cost Raster itself.
 
 ```{r}
-# check visualy on the cost raster
-par(mar = c(2,2,2,2))
+par(mar = c(2, 2, 2, 2))
 
-# use cost raster as a backdrop
 plot(r.cost)
 
- # plot the regularly-spaced samples that were selected by normal cLHS
+points(reg.samples[classic.idx, ], bg = 'black', pch=8)
 points(reg.samples[samples.idx, ], bg = 'red', pch=21)
-
-# plot the regularly-spaced samples that were selected when set to retain 
-# the existing points that were randomly sampled before running clhs
 points(all.observations[existing.idx, ], bg = 'blue', pch=21)
-points(all.observations.cheap[cheap.idx, ], bg = 'green', pch=21)
+points(all.observations.cheap[cheap.idx, ], bg = 'purple', pch=21)
 
-# overplot with yellow to show which ones were the 30 that we started with 
-points(obs.existing, bg = 'orange', pch=21)
-points(obs.existing.cheap, bg = 'purple', pch=21)
+# overplot with crosshairs to show existing points (less colors)
+points(obs.existing,  pch=3)
+points(obs.existing.cheap, pch=3)
 
 legend(x="topleft",
-       legend = c("cost-cLHS","cost-cLHS w/ random","cost-cLHS w/ biased","Random","Biased"),
-       pch=19, col=c("red","blue","green","orange","purple"), bg="#AAAAAA")
+       legend = c("cLHS","cost-cLHS","cost-cLHS + Random","cost-cLHS + Biased","Pre-existing"),
+       pch=c(8,19,19,19,3), col=c("black","red","blue","purple","black"), bg="#AAAAAA")
 ```
 
-Overall, it appears that the randomly sampled samples (yellow) occur at much higher cost postitions than the vast majority of the c-cLHS points and the "biased" points (purple).
+Overall, it appears that the randomly sampled existing points occur at much higher cost postitions than the vast majority of the c-cLHS points and the "cost-biased"  existing points.
 
 The densities of red, blue and green points do appear to be _generally_ similar and clustered in the same types of areas with respect to the `sagatwi` _and_ `cost` raster.
 
 # Proof of Concept
-
-## Ordinary cLHS
-
-For a the purposes of full comparison of methods, we will also sample using _ordinary_ cLHS (without cost constraints). We won't look at these points as we did above, but will have them handy. _These samples still have a theoretical "cost"_ -- it is just not considered in the optimization.
-
-The Ordinary cLHS is important because we can see where the optimal samples would be placed _if cost were no issue_. This is the "ideal" representation.
-
-```{r}
-s.ordinary <- clhs(reg.samples, 
-                   size = 100,
-                   iter = 10000,
-                   simple = FALSE, 
-                   progress = FALSE)
-```
 
 ## Combining results for comparison
 
 ```{r}
 s.all <- rbind(data.frame(method = "cost-cLHS", s$sampled_data@data),
               data.frame(method = "cost-cLHS + Random", s.with.existing$sampled_data@data),
-              data.frame(method = "cost-cLHS + Biased", s.with.cheap$sampled_data@data),
-              data.frame(method = "Ordinary cLHS", s.ordinary$sampled_data@data),
               data.frame(method = "Random Existing", all.observations[idx.to.include, ]@data),
-              data.frame(method = "Cheap Existing", all.observations.cheap[idx.to.include, ]@data),
+              data.frame(method = "cost-cLHS + Cheap", s.with.cheap$sampled_data@data),
+              data.frame(method = "Cheap Existing", all.observations.cheap[idx.to.include,]@data),
+              data.frame(method = "Classic cLHS", s.classic$sampled_data@data),
               data.frame(method = "Exhaustive", reg.samples@data))
+s.all$method <- as.character(s.all$method)
 ```
 
 ```{r, echo=FALSE, message=FALSE}
 library(data.table)
 
-# housekeeping before reshape and dcast
-s.all <- as.data.frame(s.all, stringsAsFactors=FALSE)
+# # housekeeping before reshape and dcast
 s.all$id <- rownames(s.all)
-rownames(s.all) <- NULL
-var.lut <- 1:6
-names(var.lut) <- names(s.all)[2:7]
+
+var.name.lut <- 1:length(names(r.stack.cost))
+names(var.name.lut) <- names(s.all)[var.name.lut+1]
 
 s.all.long <- reshape(s.all,
                       idvar="id",
@@ -335,14 +348,29 @@ s.all.long <- reshape(s.all,
                       direction="long",
                       varying=2:7)
 
-# use actual variable names not numeric index
-s.all.long$variable <- names(var.lut)[s.all.long$variable]
+s.all.long$variable <-  names(var.name.lut)[s.all.long$variable]
+s.all.long$value <- as.numeric(s.all.long$value)
+s.all.long <- s.all.long[complete.cases(s.all.long),]
+```
 
+```{r eval=F}
+#TODO
+library(lattice)
+
+plot(densityplot( ~ value | variable+method, layout=c(4,6), 
+               data = s.all.long, 
+               auto.key = list(corner = c(0.95, 0.95)), 
+               scales = list(alternating=3), 
+               strip = strip.custom(bg=grey(0.85))))
+
+```
+
+```{r}
 # calculate medians for each method X variable combinations
 d.mu.wide.no.cost <- dcast(s.all.long[s.all.long$variable != "cost",],
                    method ~ variable, 
                    value.var = 'value',
-                   fun=median, na.rm=TRUE)
+                   fun = median, na.rm=TRUE)
 
 # and sum for cost of all samples in group
 d.mu.wide.just.cost <- dcast(s.all.long[s.all.long$variable == "cost",],
@@ -350,21 +378,43 @@ d.mu.wide.just.cost <- dcast(s.all.long[s.all.long$variable == "cost",],
                    value.var = 'value',
                    fun=sum, na.rm=TRUE)
 
-total.cost <- d.mu.wide.just.cost[,2]
+# THE EXISTING SAMPLES COME AT NO COST (WE HAVE THEM)
+# make a column for additional cost (of the cLHS on topo of the free existing)
+d.mu.wide.just.cost[,3] <- d.mu.wide.just.cost[,2]
 
+# cheap existing - calculate additional cost for cLHS sample
+d.mu.wide.just.cost[4,3] <- d.mu.wide.just.cost[4,2] - d.mu.wide.just.cost[1,2]
+d.mu.wide.just.cost[1,3] <- 0
+
+# random existing - calculate additional cost for cLHS sample
+d.mu.wide.just.cost[5,3] <- d.mu.wide.just.cost[5,2] - d.mu.wide.just.cost[nrow(d.mu.wide.just.cost),3]
+d.mu.wide.just.cost[nrow(d.mu.wide.just.cost),3] <- 0
+
+total.cost <- d.mu.wide.just.cost[,2:3]
 d.mu.wide <- cbind(d.mu.wide.no.cost, total.cost)
+ncol <- length(names(d.mu.wide))
+rownames(d.mu.wide) <- 1:nrow(d.mu.wide)
+names(d.mu.wide) <- c(names(d.mu.wide.no.cost), c("total.cost", "additional.cost"))
+
+d.mu.wide <- d.mu.wide[order(d.mu.wide[,ncol], d.mu.wide[,ncol-1]),]
 ```
 
-As you can see below, the median values obtained from the different methods are quite similar. The cost is calculated as the sum of the costs for all the points in the group.
+As you can see below, the median values obtained from the different methods are quite similar. The cost is calculated as the sum of the costs for all the points in the group. Additional cost excludes the cost of existing samples.
 
 ```{r echo=FALSE}
-d.mu.wide.nobs <- cbind(d.mu.wide, 
-                        data.frame(n.obs = unlist(lapply(split(s.all, f = s.all$method), nrow))))
+n.obs <- data.frame(n.obs = sapply(split(s.all, f = s.all$method), nrow))
+
+match.order.idx <- match(rownames(n.obs), d.mu.wide[,1])
+d.mu.wide.nobs <- cbind(d.mu.wide, n.obs = n.obs[match.order.idx,])
 
 # "population" summary (every cell in raster stack)
 the.numbers <- c(as.numeric(apply(values(r.stack.cost), 2, median, na.rm=T)),
-                 ncell(r.stack.cost))
-the.numbers[length(the.numbers)-1] <- sum(values(r.stack.cost[['cost']]), na.rm=T)
+                 ncell(r.stack.cost), ncell(r.stack.cost))
+pop.cost <- sum(values(r.stack.cost[['cost']]), na.rm=T)
+
+the.numbers[length(the.numbers)-2] <- pop.cost
+the.numbers[length(the.numbers)-1] <- pop.cost
+
 df <- data.frame("Population", t(the.numbers), stringsAsFactors = F)
 names(df) <- names(d.mu.wide.nobs)
 
@@ -377,15 +427,17 @@ knitr::kable(d.mu.wide.nobs,
       caption="Comparison of Sample Medians Obtained by Different cLHS Sampling Methods")
 ```
 
-The cost of the Random Existing samples would be relatively high under ordinary cost-constrained cLHS. The cheap existing samples are a bit less costly, but still are expensive considering that set only gets you 20 observations. _Individual_ observations might be quite "good" in terms of amount of variation they explain -- especially _for their cost_. 
+Both of the small "Existing" samples appear to exhibit some sort of bias relative to the Classic cLHS, Exhaustive asnd Population values. All cost-cLHS methods have a lower additional cost than Classic cLHS, but Classic cLHS is the closest to the Exhaustive and "Population" values.
 
-The cost the Random existing samples is high -- but it might be that they can explain a great deal of variation on the landscape... but, they occur in areas that are not _favored_ by the cost constraints.
+Indeed, the Classic cLHS values may be more reflective of the areal abundance of some of the different variations we see in the raster space of this dataset. The Exhaustive values may be affected by the shape of the raster (non-`NA`) relative to the requested density of sampling. The "Population", similarly, is just a clipped out sample extent from a larger extent stack of rasters.
 
-Since they are provided "free of cost" to the `cost-cLHS w/ Random Existing` sample set, there are likely some benefits to having those data in the set. That said, Random Existing cost suggests they basically "cost more per sample" than samples obtained by _any_ of the cost-constrained cLHS methods (by about a factor of 3-5). It is comparable in per-sample "average cost" to Ordinary cLHS -- which of course does not _care_ about cost. 
+As expected, the synthetic pre-existing data generated by random sampling is the "cheapest" -- as just due to chance some of the observations are in "expensive" areas and the cLHS gets them for _free_.
 
 This "high cost" for a pre-existing dataset might not be a _realistic_. Operational limitations or personal choices would typically have some sort of bias effect on sampling (at least _relative_ to true Simple Random Sampling). 
 
-This is why we include the test group of _biased_ pre-existing locations. This Cheap Existing group shows a lower cost than the Random group. The cost is lower (per sample) than the Ordinary cLHS approach, but the medians also have some bias relative to the "population" median derived from all cells in the raster. This is partially due to the small sample size.
+To counteract, or at least estimate, possible cases of this effect --- we produced a biased set of points using the cost raster as well as some random-ness. 
+
+These biased samples show bias to certain parts of the raster space as reflected in their medians. They have a lower additional cost than a full sample set produced using cost-cLHS, but as a result they incur some bias. Comparing the values of the individual existing datasets with their corresponding cLHS group shows that the bias present in the original sample is still reflected, but to a smaller degree (i.e. direction greater or less than population/exhaustive).
 
 ## Visualizing differences between cLHS methods with nMDS
 
@@ -408,10 +460,17 @@ is.exhaustive <- s.all$method == "Exhaustive"
 # alternately, do not do any subsampling for population or exhaustive set
 s.all.2 <- s.all[!is.exhaustive,]
 
+# NB setting levels to preserve cost ordering
+s.all.2$method <- factor(s.all.2$method, levels=unique(s.all$method))
+
+# remove existing samples from the clhs... so we can see if holes are filled
+s.all.2 <- s.all.2[-which(s.all.2$method == "cost-cLHS + Cheap")[(n.existing+1):(n.existing*2)],]
+s.all.2 <- s.all.2[-which(s.all.2$method == "cost-cLHS + Random")[(n.existing+1):(n.existing*2)],]
+
 # remove ID column 
 # TODO: should the cost raster be _included_ in the dissimilarity calculations or NOT?
 #       the nMDS plot looks "odd" if you leave it out
-s.all.2 <- s.all.2[, !names(s.all.2) %in% c("id","cost")]
+s.all.2 <- s.all.2[, !names(s.all.2) %in% c("id")]#,"cost")]
 
 # calculate dissimilarity matrix
 d.dist <- daisy(s.all.2, stand=TRUE)
@@ -420,11 +479,14 @@ d.dist <- daisy(s.all.2, stand=TRUE)
 d.betadisper <- vegan::betadisper(d.dist, 
                                   group=s.all.2$method, 
                                   bias.adjust = TRUE, 
-                                  sqrt.dist = TRUE, 
-                                  type='median')
+                                  sqrt.dist = F, 
+                                  type = 'median')
 
 # get the scores
 d.scores <- vegan::scores(d.betadisper)
+# 
+# # scale scores so differences are more obvious
+# d.scores$sites <- d.scores$sites*3
 
 # add contours for fixed pct of data density using KDE
 s <- data.frame(x=d.scores$sites[, 1], y=d.scores$sites[, 2], .id=s.all.2$method)
@@ -462,21 +524,24 @@ kdeContours <- function(i, prob, cols, m, ...) {
   # points(median(i$x), median(i$y), pch=3, lwd=2, col=this.col)
 }
 
-lvls <- levels(factor(s.all.2$method))
-#       "cost-cLHS","cost-cLHS (w/ Random)","cost-cLHS (w/ Biased)","Ordinary cLHS","Existing (Random)","Existing (Biased)"
+lvls <- levels(factor(s.all.2$method, exclude = "Exhaustive"))
+#       "cost-cLHS","cost-cLHS (w/ Random)","cost-cLHS (w/ Biased)","Classic cLHS","Existing (Random)","Existing (Biased)"
 cols <- c("RED", "BLUE", "GREEN", "BLACK", "ORANGE","PURPLE")
 
 #vegan:::plot.betadisper(d.betadisper, ellipse = TRUE, hull = FALSE, col=cols, conf=0.5, segments=FALSE, xlab='', ylab='', main='', sub='', las=1)
 
-res <- lapply(s, kdeContours, prob=c(0.5), cols=cols, m=lvls, lwd=2, lty=3)
-res <- lapply(s, kdeContours, prob=c(0.95), cols=cols, m=lvls, lwd=1, lty=3)
+res <- lapply(s, kdeContours, prob=c(0.75), cols=cols, m=lvls, lwd=2, lty=3)
+# res <- lapply(s, kdeContours, prob=c(0.95), cols=cols, m=lvls, lwd=1, lty=3)
 
 # add individual sample points
-points(d.scores$sites, cex=0.6, col=cols[as.numeric(d.mu.wide$method)], pch=16)
+points(d.scores$sites, cex=0.6, col=cols[match(d.mu.wide$method, lvls)], pch=16)
 
-vegan::ordilabel(d.betadisper, display='centroids', col=cols[as.numeric(d.mu.wide$method)])
+vegan::ordilabel(d.betadisper, 
+                display='centroids',
+                fill=NA, border=0,
+                col=cols[as.numeric(d.mu.wide$method)])
 
-title('Ordination of cLHS Samples by various methods with 50 and 95% Density Contours')
+title('Ordination of cLHS Samples by various methods with 75% Density Contours')
 
 box()
 ```
@@ -489,17 +554,17 @@ We wrap each group's nMDS score point cloud with a 50% (median) density contour 
 
 When projected onto a 2D surface (the plot) the outline of the group hypervolumes appear to be similar, as shown by the similarities (proximity) of their 50% density contour. All groups are spanning a wide range on the X-axis, but are offset on the Y axis.
 
-If we consider the Ordinary cLHS to be the (in practice typically unachievable for Soil Survey) "gold standard", then we can consider any offset from that Ordinary cLHS point cloud to be bias due to our method.
+If we consider the Classic cLHS to be the (in practice typically unachievable for Soil Survey) "gold standard", then we can consider any offset from that Classic cLHS point cloud to be bias due to our method.
 
-Is the Ordinary cLHS picking up on variation in the landscape that the cost-cLHS methods see as "too costly?" 
+Is the Classic cLHS picking up on variation in the landscape that the cost-cLHS methods see as "too costly?" 
 
 _That is how I would interpret this graphic._ 
 
-The _cost-constrained_ results are offset substantially on the vertical axis from the _Ordinary_.
+The _cost-constrained_ results are offset substantially on the vertical axis from the _Classic_.
 
-The two clouds of _Existing_ (Cheap & Random) data plot near the origin. The "forced" inclusion of the existing data biases the _cost-cLHS_ in the direction of the _Existing_... and the cost-cLHS that use those existing data are _farther still_ from the "optimal" _Ordinary cLHS_! In the case where your existing data are not _Random_ but rather are are _Cheap_ (low-hanging-fruit) the offset from _Ordinary cLHS_ is even greater.
+The two clouds of _Existing_ (Cheap & Random) data plot near the origin. The "forced" inclusion of the existing data biases the _cost-cLHS_ in the direction of the _Existing_... and the cost-cLHS that use those existing data are _farther still_ from the "optimal" _Classic cLHS_! In the case where your existing data are not _Random_ but rather are are _Cheap_ (low-hanging-fruit) the offset from _Classic cLHS_ is even greater.
 
-This would suggest, as expected, that additional bias is introduced to cLHS by additional constraints on _Ordinary cLHS_ method. The degree of bias in the existing data you force-include in _cost-constrained cLHS_ will impact the deviation from the ideal. These differences seen in the nMDS may be essentially numerical noise -- given the precision/accuracy of input raster data and the scaling that occurs during the nMDS process.
+This would suggest, as expected, that additional bias is introduced to cLHS by additional constraints on _Classic cLHS_ method. The degree of bias in the existing data you force-include in _cost-constrained cLHS_ will impact the deviation from the ideal. These differences seen in the nMDS may be essentially numerical noise -- given the precision/accuracy of input raster data and the scaling that occurs during the nMDS process.
 
 Future work will try to re-state differences in cLHS in more practical terms. Further, the `clhs()` code will be reviewed to determine if there is a better way to make use of the information in prior data.
 
