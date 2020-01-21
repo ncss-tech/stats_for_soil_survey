@@ -42,7 +42,7 @@ lc <- b <- ggplot(data = sand2, aes(x = landuse, y = sand)) + geom_boxplot(aes(f
 lc
 
 #we can make a more complicated graph by filling with another variable
-lm <- b <- ggplot(data = sand2, aes(x = landuse, y = sand)) + geom_boxplot(aes(fill = Master))
+lm <- b <- ggplot(data = sand2, aes(x = landuse, y = sand)) + geom_boxplot(aes(fill = master))
 lm
 
 #we can add new command to the exsisting object 
