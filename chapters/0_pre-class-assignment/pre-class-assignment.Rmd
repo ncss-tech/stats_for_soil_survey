@@ -87,29 +87,31 @@ ipkCRAN(packages, up=TRUE)
 
 # install previous version of latticeExtra until we are at R >= 3.6.0
 install.packages('https://cran.r-project.org/src/contrib/Archive/latticeExtra/latticeExtra_0.6-28.tar.gz', repos = NULL)
-
-# get previous version of sharpshootR
-install.packages('https://cran.r-project.org/src/contrib/Archive/sharpshootR/sharpshootR_1.5.1.tar.gz', repo=NULL)
 ```
 
+Next, install the latest version of packages from the AQP suite. These are often in a state of flux so the CRAN version may be several months out of date. Windows 10 users will need the latest version of soilDB in order to connect to the local NASIS database.
 
-Next, install the latest version of packages from the AQP suite. These are often in a state of flux so the CRAN version may be several months out of date. Windows 10 users will need the latest version of `soilDB` in order to connect to the local NASIS database.
 ```{r, eval=FALSE}
 remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+
+# temporary CRAN fix - get previous version of sharpshootR
+install.packages('https://cran.r-project.org/src/contrib/Archive/sharpshootR/sharpshootR_1.5.1.tar.gz', repo=NULL)
+
+# then get latest version off GitHub
 remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 ```
-
 
 # Connect Local NASIS
 Establish an ODBC connection to NASIS by following the directions at the following hyperlink ([ODBC Connection to NASIS](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html)).
 
-Once you've successfully established a ODBC connection, prove it by loading your NASIS selected set with the site and pedon tables for any user pedon id (e.g. 11CA794317), run `fetchNASIS()` in the R console like the example below, and submit your results to Tom D'Avello.
+Once you've successfully established a ODBC connection, prove it by loading your NASIS selected set with the site and pedon tables for any user pedon id (e.g. 11CA794317), run `fetchNASIS()` in the R console like the example below, and submit your results to your mentor.
 
 ```{r eval=FALSE}
-# load previously installed package into the current session
-library(soilDB)
+# load packages into the current session
+library(aqp) # provides "SoilProfileCollection" object & more
+library(soilDB) # provides database access methods
 
 # get pedons from NASIS selected set
 test <- fetchNASIS(from = 'pedons')
@@ -120,7 +122,7 @@ str(test, max.level = 2)
 
 
 # Proof
-Follow the one line example below, copy the output, and submit the results to Tom D'Avello. This will help us to verify that all of the required packages have been installed.
+Follow the one line example below, copy the output, and submit the results to your mentor. This will help us to verify that all of the required packages have been installed.
 
 ```{r, eval=FALSE}
 # dump list of packages that are loaded into the current session
