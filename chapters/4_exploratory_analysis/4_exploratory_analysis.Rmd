@@ -62,6 +62,7 @@ Graphical methods include:
 Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine appropriate statistical analyses. For this chapter we'll use the loafercreek dataset from the CA630 Soil Survey Area.
 
 ```{r, warning=FALSE, message=FALSE}
+library(aqp)
 library(soilDB)
 
 # Load from the the loakercreek dataset
@@ -993,7 +994,7 @@ ca794$mukey2 <- as.integer(as.character(ca794$MUKEY))
 
 # export shapefile
 writeOGR(ca794, 
-         dsn = "C:/workspace", 
+         dsn = "C:/workspace2", 
          layer = "ca794", 
          driver = "ESRI Shapefile", 
          overwrite_layer = TRUE
@@ -1021,7 +1022,7 @@ writeRaster(test,
 
 # Convert the CA794 shapefile to a rsaga raster
 rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
-  INPUT = "C:/workspace/ca794.shp",
+  INPUT = "C:/workspace2/ca794.shp",
   FIELD = "mukey2",
   OUTPUT = "2",
   TARGET = "0",
@@ -1038,12 +1039,12 @@ rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
 rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
   ZONES = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
   STATLIST = paste(c("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "E:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
-  OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
+  OUTTAB = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
   ))
 ```
 ```{r poly extract2}
 # import the results
-test <- read.csv("C:/workspace2/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") 
+test <- read.csv("C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ca794_zonal.csv") 
 
 # rename the mukey column
 names(test)[1] <- "mukey" 
@@ -1080,12 +1081,12 @@ test2 <- data.frame(extract(rs, s))
 test2 <- cbind(test1, test2)
 
 # Cache/save the results
-save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
+save(test2, file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
 ```
 
 ```{r}
 # Load the cache/saved results
-load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
+load(file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch2_sample.Rdata")
 
 # Examine summary for mukey 2480977
 summary(subset(test2, MUKEY == 2480977)) 
@@ -1125,6 +1126,8 @@ Healy, K., 2018. Data Visualization: a practical introduction. Princeton Univers
 Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. [http://pubs.usgs.gov/twri/twri4a3/](http://pubs.usgs.gov/twri/twri4a3/)
 
 Kabacoff, R.I., 2015. R in Action. Manning Publications Co. Shelter Island, NY. [https://www.statmethods.net/](https://www.statmethods.net/)
+
+Kabacoff, R.I., 2018. Data Visualization in R. [https://rkabacoff.github.io/datavis/](https://rkabacoff.github.io/datavis/)
 
 Peng, R. D., 2016. Exploratory Data Analysis with R. Leanpub.  [https://bookdown.org/rdpeng/exdata/](https://bookdown.org/rdpeng/exdata/)  
 
