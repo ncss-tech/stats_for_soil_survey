@@ -1,7 +1,7 @@
 ---
 title: Chapter 1 Introduction to R and RStudio
 author: Stephen Roecker, Skye Wills, Katey Yoast and Tom D'Avello 
-date: "2020-01-19"
+date: "2020-01-31"
 output:
   html_document:
     keep_md: yes
@@ -263,25 +263,29 @@ test <- 1
 test = 1
 ```
 
+## Working Directories
 
-## Data Management in RStudio  
+### Setting the Working Directory
 
-Before you begin working in R, you should set your working directory (a folder to hold all of your project files); for example, "C:\\workspace2\\...". This directory is the location where all your input data-sets are be stored. It also serves as the default location for plots and other objects exported from R. If set, it conviently allows you to import data into R with just a file name, not the entire file path.
+Before you begin working in R, you should set your working directory (a folder to hold all of your project files); for example, "C:\\workspace2\\...". 
 
-Typically at the beginning of each R session you should set your working directory. To change the working directory in RStudio, select the **Files Tab > More > Set As Working Directory**. 
-
+To change the working directory in RStudio, select main menu **Session >> Set Working Directory >> ...**. Or, from the "Files" tab click **More >> Set As Working Directory** to use the _current location of the "Files" tab_ as your working directory.
 
 ![](figure/ch1_setwd.png)
 
 
-This can be accomplished in the Console by typing:
+Setting the working directory via the menus is the same as doing it in the Console with the `setwd()` command:
 
 
 ```r
 setwd("C:/workspace2")
-
-# beware R uses forward slashes / instead of back slashes \ for file path names
 ```
+
+This directory is where all your input data should be stored and also is the default location for plot files and other output. 
+
+Essentially, you want to have the inputs for your code to be found in the working directory so that you can refer to them using [relative file paths](https://excelquick.com/r-programming/importing-data-absolute-and-relative-file-paths-in-r/). Relative file paths make it easier if you move the folder containing your script(s) around. Or, if you share it with someone else, they will have little issue getting your code to work on their own file system. 
+
+**NOTE:** _Beware when specifying any file paths_ that **R** uses forward slashes `/` instead of back slashes `\`. Back slashes are reserved for use as an [escape character](https://campus.datacamp.com/courses/string-manipulation-in-r-with-stringr/string-basics?ex=4).
 
 To check the file path of the current working directory (which should now be "C:\\workspace2"), type:
 
@@ -290,6 +294,35 @@ To check the file path of the current working directory (which should now be "C:
 getwd()
 ```
 
+### RStudio Projects (.Rproj files)
+
+You can also manage your working directory using RStudio Projects. An RStudio Project file (_.Rproj_) is analogous to, for example, a _.mxd_ file for ArcMap. It contains information about the specific settings you may have set for a "project".
+
+You open or create projects using the drop down menu in the top right-hand corner of the RStudio window (_shown below_)
+
+![RStudio Project Menu](static-figures/rstudio_projectdropdown.png)
+
+Here is what a typical Project drop-down menu looks like:
+
+![RStudio Project Menu (expanded)](static-figures/rstudio_projectdropdown2.png)
+
+ * You can create new projects from existing or new directories with "New Project...".
+
+ * When you click "Open Project...", your working directory is _automatically set to the .Rproj file's location_ -- this is _extremely_ handy 
+
+ * Any projects you have created/used recently will show up in the "Project List"
+
+Keeping working directories simple and specific to a single "project" is a good practice that helps keeps your code and input data organized, and helps you come back to a project after some time away from it.
+
+### More RStudio Project Features
+
+Another neat thing about using Projects is that RStudio will provide additional tabs depending on the contents of your working directory. 
+
+For example, if your project folder contains a Git repository (_.git_ hidden directory), a Git tab (_below image, left_) is available for version control. Also, if the directory contains source code for an R package, the "Build" tab  (_below image, right_) provides commands from the `devtools` package. 
+
+![RStudio Projects - Git Repository and Build Tabs](static-figures/rstudio_projecttabs.png)
+
+## Data Management in RStudio  
 
 ### Importing Data
 
@@ -325,7 +358,7 @@ sand <- read.csv("C:/workspace2/sand_example.csv")
 
 # if your workspace was already set you could simply use the filename, like so
 
-sand <-read.csv("sand_example.csv")
+sand <- read.csv("sand_example.csv")
 ```
 
 
@@ -401,7 +434,7 @@ R has [extensive documentation](https://cran.r-project.org/manuals.html), numero
 
 ![](figure/ch1_help_tab.png)
 
-2. Type `help(read.csv) or ?read.csv` in the Console window to bring up a help page. Results will appear in the Help tab in the lower-right hand window. Certain functions may require quotations, such as `help("+")`.
+2. Type `help(read.csv) or ?read.csv` in the Console window to bring up a help page. Results will appear in the Help tab in the lower right-hand window. Certain functions may require quotations, such as `help("+")`.
 
 
 ```r
@@ -453,7 +486,7 @@ One extremely useful package for soil scientists is the soiltexture package, whi
 installed.packages(c("aqp", "soilDB", "soilReports", "soiltexture"))
 
 # GitHub (development version)
-devtools::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade_dependencies = FALSE)
+devtools::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade_dependencies = FALSE, build = FALSE)
 ```
 
 
