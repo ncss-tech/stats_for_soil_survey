@@ -4,7 +4,7 @@ Please access the web-based course content at the _ncss-tech.github.io_ link:
 
 http://ncss-tech.github.io/stats_for_soil_survey/chapters/
 
-# Schedule
+# Logistics
 ## Part 1
 
 | CDT | Tuesday | Wednesday | Thursday | Friday |
@@ -14,6 +14,16 @@ http://ncss-tech.github.io/stats_for_soil_survey/chapters/
 | 12:00-13:00    | *Lunch* | *Lunch* | *Lunch* | *Lunch* |
 | 13:00-14:00     | Tabular Data | EDA | Sampling | Open |
 | 14:00-15:00     | Open | EDA | Sampling | Open |
+
+### Instructors
+ 
+   * Philip Roberts: Introduction
+   * Jay Skovlin: Tabular Data
+   * Dylan Beaudette: Tabular Data / Spatial Data
+   * Stephen Roecker: EDA  
+   * John Hammerly: EDA
+   * Andrew Brown: EDA
+   * Skye Wills: Sampling
 
 ## Part 2
 TBD
