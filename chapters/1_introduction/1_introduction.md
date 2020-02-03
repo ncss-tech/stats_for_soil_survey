@@ -1,7 +1,7 @@
 ---
 title: Chapter 1 Introduction to R and RStudio
 author: Stephen Roecker, Skye Wills, Katey Yoast and Tom D'Avello 
-date: "2020-01-31"
+date: "2020-02-03"
 output:
   html_document:
     keep_md: yes
@@ -48,18 +48,19 @@ editor_options:
 
 ## Why is this training needed?
 
-- Long standing goal of the Soil Science Division to have a course in statistics
-- Opportunities to learn these techniques are limited, especially at the undergraduate level
+- Long standing goal of the Soil Science Division to have a course in statistics [(Mausbach, 2003)](https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs142p2_051833.pdf)
+- Opportunities to learn these techniques are limited, especially at the undergraduate level [(Hennemann and Rossiter, 2004)]([http://www.css.cornell.edu/faculty/dgr2/Docs/ChaAm/ChaAmKeynoteHennemann.pdf)
 - Consistent methodology (data analysis, data population, sampling design, etc.)
 - There is continually a greater need to use these techniques:
-- Mapping of lands at high production rates
-    - Ecological Sites
-    - Soil survey refinement (disaggregation) 
+    - Mapping of lands at high production rates ([MacMillan et al., 2007](https://www.sciencedirect.com/science/article/pii/S0016706107001152); [Kempen et al., 2012](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2011.0424); [Brevik et al., 2016](https://www.sciencedirect.com/science/article/pii/S034181621630220X))
+    - Ecological Sites [(Maynard et al., 2019)](dl.sciencesocieties.org/publications/sssaj/abstracts/83/3/666)
+    - Soil survey refinement (disaggregation) ([Chaney et al., 2016](https://www.sciencedirect.com/science/article/pii/S0016706116301434); [Ramcharan et al., 2017](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2017.04.0122))
+
 
 
 ## Why is course organized this way?
 
-- Our best judgement for assembling into 24 hours what could be 6 University level courses
+- Our best judgement for assembling into **24** hours what could be **6** University level courses
 - Mixture of slides and script enabled web pages is new for NRCS
 - The web content is a long-term investment and should serve as a permanent reference
 - Feel free to provide guidance for improving the class for future offerings
@@ -213,7 +214,12 @@ R and RStudio have been installed on all USDA computers which have NASIS install
  
 - The `$` symbol is used to select a particular column within the table (e.g., `table$column`).
 
-- Any text that you do not want R to act on (such as comments, notes, or instructions) needs to be preceded by the `#` symbol (a.k.a. hash-tag, comment, pound, or number symbol).  R ignores the remainder of the script line following `#`. For example: `plot(x, y) # This text will not affect the plot function because of the comment`
+- Any text that you do not want R to act on (such as comments, notes, or instructions) needs to be preceded by the `#` symbol (a.k.a. hash-tag, comment, pound, or number symbol).  R ignores the remainder of the script line following `#`. 
+
+For example: 
+
+```r
+plot(x, y) # This text will not affect the plot function because of the comment
 ```
 
 ### Brief Example
@@ -252,7 +258,7 @@ log10(100)
 hist(npk$yield)
 ```
 
-![](1_introduction_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](1_introduction_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
 # Assignment
@@ -314,13 +320,14 @@ Here is what a typical Project drop-down menu looks like:
 
 Keeping working directories simple and specific to a single "project" is a good practice that helps keeps your code and input data organized, and helps you come back to a project after some time away from it.
 
+<!-- Too much for first chapter...
 ### More RStudio Project Features
 
 Another neat thing about using Projects is that RStudio will provide additional tabs depending on the contents of your working directory. 
 
 For example, if your project folder contains a Git repository (_.git_ hidden directory), a Git tab (_below image, left_) is available for version control. Also, if the directory contains source code for an R package, the "Build" tab  (_below image, right_) provides commands from the `devtools` package. 
 
-![RStudio Projects - Git Repository and Build Tabs](static-figures/rstudio_projecttabs.png)
+![RStudio Projects - Git Repository and Build Tabs](static-figures/rstudio_projecttabs.png) -->
 
 ## Data Management in RStudio  
 
@@ -526,7 +533,7 @@ OC = c(20,14,15,05,12,15,07,21,25,30,05,28)
 TT.plot(class.sys = "USDA-NCSS.TT", tri.data = example)
 ```
 
-![](1_introduction_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](1_introduction_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 For more examples see the the [soiltexture vignette](http://cran.r-project.org/web/packages/soiltexture/vignettes/soiltexture_vignette.pdf). Vignettes are a short tutorials that provide detailed examples and descriptions of packages. Unfortunately not all packages come with a vignette.
 
@@ -682,8 +689,29 @@ Given what you now know about R, try to answer the following questions:
     + [OpenGeoHub YouTube Channel](https://www.youtube.com/channel/UC6HFFFYiV4zEYJlQMIXemWA/featured)
     + [David Rossiter's Cornell Homepage](http://www.css.cornell.edu/faculty/dgr2/)
     + [Pierre Roudier](https://pierreroudier.github.io/teaching/index.html)
+* Soil Sciences and Statistics Review Articles
+    + Arkely, R., 1976. Statistical Methods in Soil Classification Research. Advances in Agronomy 28:37-70. [https://www.sciencedirect.com/science/article/pii/S0065211308605520](https://www.sciencedirect.com/science/article/pii/S0065211308605520)
+    + Mausbach, M., and L. Wilding, 1991. Spatial Variability of Soils and Landforms. Soil Science Society of America, Madison. [https://dl.sciencesocieties.org/publications/books/tocs/sssaspecialpubl/spatialvariabil](https://dl.sciencesocieties.org/publications/books/tocs/sssaspecialpubl/spatialvariabil)
+    + Wilding, L., Smeck, N., and G. Hall, 1983.  Spatial Variability and Pedology. In : L. Widling, N. Smeck, and G. Hall (Eds). Pedogenesis and Soil Taxonomy I. Conceps and Interactions. Elseiver, Amsterdam, pp. 83-116. [https://www.sciencedirect.com/science/article/pii/S0166248108705993](https://www.sciencedirect.com/science/article/pii/S0166248108705993)
+
 
 
 # References
 
+Brevik, E.C., J.A. Homburg, B.A. Miller, T.E. Fenton, J.A. Doolittle, and S.J. Indorante, 2016. Selected highlights in American soil science history from the 1980s to the mid-2010s. Catena 146:128-146.
+
+Chaney, N., E. Wood, A.B. McBratney, J.W. Hempel, T.W. Nauman, C.W. Brungard, and N.P. Odgers, 2016. POLARIS: A 30-meter probabilistic soil series maps of the contiguous United States. Geoderma 274(15)54-67. [https://www.sciencedirect.com/science/article/pii/S0016706116301434](https://www.sciencedirect.com/science/article/pii/S0016706116301434)
+
+Hennemann, G.R., and Rossiter, DG., 2004. Training needs for the next generation of soil surveyors. International Conference on Innovative Techniques in Soil Survey; 22-26 March 2004, Cha-Am, Thailand. [http://www.css.cornell.edu/faculty/dgr2/Docs/ChaAm/ChaAmKeynoteHennemann.pdf](http://www.css.cornell.edu/faculty/dgr2/Docs/ChaAm/ChaAmKeynoteHennemann.pdf)
+
+Kempen, B., D. Brus, J. Stoorvogel, G. Heuvelink, F. de Vries, 2012. Efficiency Comparison of Conventional and Digital Soil Mapping for Updating Soil Maps. Geoderma 76(6)2095-2115. [https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2011.0424](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2011.0424)
+
 Ihaka, R., and R. Gentleman. 1996. R: A language for data analysis and graphics. Journal of Computational and Graphical Statistics 5(3):399–314. [https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf)
+
+MacMillian, R., D. Moon, and R. Coupe, 2007. Automated predictive ecological mapping in a Forest Region in B.C., Canada, 2001-2005. Geoderma 140(4)353-373. [www.sciencedirect.com/science/article/pii/S0016706107001152](www.sciencedirect.com/science/article/pii/S0016706107001152)
+
+Mausbach, 2003. The Importance of Statistical Documentation - Keeping Soil Survey Information Relevant in the 21st Century. 2003 National Cooperative Soil Survey Conference, Plymouth, MA. [https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs142p2_051833.pdf](https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs142p2_051833.pdf)
+
+Ramcharan, A., T. Hengl, T. Nauman, C. Brungard, S. Waltman, S. Wills, and J. Thompson, 2017. Soil Property and Class Mas of the Conterminous United States at 100-Meter Spatial Resolution. Soil Science Society of America Journal, 82(1)186-201. [https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2017.04.0122](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2017.04.0122)
+
+
