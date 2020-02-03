@@ -1,5 +1,6 @@
 knitr::opts_chunk$set(echo = TRUE)
 
+library(aqp)
 library(soilDB)
 
 # load sample `loafercreek` data from the soilDB package
@@ -8,17 +9,20 @@ data("loafercreek")
 # keep only the first 20 pedons
 pedons <- loafercreek[1:20, ]
 
-# plot profile sketches (set margins to 0)
-par(mar=c(0,0,0,0))
+# plot profile sketches
+par(mar=c(0,0,2,1))
 plot(pedons, name='hzname', print.id=FALSE)
 
-# these are the unique horizon designations in our subset `pedons`
+# tabulate hzname
+table(pedons$hzname)
+
+# these are the _unique_ horizon designations in our subset `pedons`
 unique(pedons$hzname)
 
 l <- fetchOSD('loafercreek')
 l$hzname
 
-# create 4 generalized horizons: A, upper transitional, argillic and bedrock
+# create 4 generalized horizon labels: A, upper transitional, argillic and bedrock
 prototype.labels <- c('A',
                       'BA',
                       'Bt',
@@ -74,10 +78,9 @@ oldvsnew2[, col.idx.not.used]
 ## # check for equality (assignment 1 versus assignment 2)
 ## pedons$newgenhz == pedons$newgenhz2
 
-# plot profile sketches - first 20 profiles
-par(mar=c(0,0,0,0))
-plotSPC(pedons, name='hzname', color='newgenhz2', 
-        print.id=FALSE)
+# plot profile sketches - first 20 profiles; color by gen hz.
+par(mar=c(0,0,2,1))
+plotSPC(pedons, name='hzname', color='newgenhz2', print.id=FALSE)
 
 # original field data (27 levels)
 length(unique(pedons$hzname))
@@ -139,19 +142,10 @@ res.df <- do.call('rbind', res)
 res.df
 
 ## # save a text-based (comma-separated) version of the result table
-## write.csv(res.df, file = "RIC_table_output.csv")
+## write.csv(res.df, file = "Your_RIC_table_output.csv")
 ## 
 ## # save a binary file representation of the R object containing result table
-## save(res.df, file = "RIC_table_output.Rda")
-
-## # then load data from the NASIS selected set into an R object called `pedons`
-## pedons <- fetchNASIS(from='pedons')
-
-## # optionally subset the data, FOR INSTANCE: by taxon name - replace Loafercreek with your taxon name
-## pedons <- pedons[grep(pattern='Loafercreek', x = f$taxonname, ignore.case=TRUE), ]
-
-## # check the number of sites/pedons in the `pedons` SPC subset
-## length(pedons)
+## save(res.df, file = "Your_RIC_table_output.Rda")
 
 # set output path
 rules.file <- 'C:/data/horizon_agg.txt'
@@ -169,3 +163,9 @@ h <- h[which(h$newgenhz != 'not-used'), c('phiid', 'newgenhz')]
 # append to NASIS import file
 write.table(h, file=rules.file, row.names=FALSE, quote=FALSE,
             na='', col.names=FALSE, sep='|', append=TRUE)
+
+## # then load data from the NASIS selected set into an R object called `pedons`
+## pedons <- fetchNASIS(from='pedons')
+
+## # optionally subset the data, FOR INSTANCE: by taxon name - replace Loafercreek with your taxon name
+## pedons <- pedons[grep(pattern='Loafercreek', x = f$taxonname, ignore.case=TRUE), ]
