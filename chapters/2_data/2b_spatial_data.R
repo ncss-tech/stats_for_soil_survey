@@ -38,17 +38,17 @@ library(lattice)
 library(velox)
 
 # 5-10 seconds for download of SEE data, 
-s <- seriesExtent('cecil')
+s <- seriesExtent('san joaquin')
 
 # load pointer to PRISM data, note that this file is stored on my local machine:
-r <- raster('E:/gis_data/prism/ffd_50_pct_800m.tif')
+r <- raster('C:/workspace/chapter-2b/ffd_50_pct_800m.tif')
 
 # 2.5 seconds sampling
 vx <- velox(r)
 system.time(e <- vx$extract(s))
 
 # simple summary
-densityplot(e$CECIL, plot.points=FALSE, bw=2, lwd=2, col='RoyalBlue', xlab='Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', ylab='Density', main='FFD Estimate for Extent of Cecil Series')
+densityplot(e$`SAN JOAQUIN`, plot.points=FALSE, bw=2, lwd=2, col='RoyalBlue', xlab='Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', ylab='Density', main='FFD Estimate for Extent of Cecil Series')
 
 # create point geometry from coordinates
 p <- SpatialPoints(coords = cbind(-97.721210, 40.446068))

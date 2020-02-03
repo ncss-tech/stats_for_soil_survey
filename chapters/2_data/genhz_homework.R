@@ -79,7 +79,7 @@ oldvsnew2[, col.idx.not.used]
 ## pedons$newgenhz == pedons$newgenhz2
 
 # plot profile sketches - first 20 profiles; color by gen hz.
-par(mar=c(0,0,2,1))
+par(mar=c(0,0,3,1))
 plotSPC(pedons, name='hzname', color='newgenhz2', print.id=FALSE)
 
 # original field data (27 levels)

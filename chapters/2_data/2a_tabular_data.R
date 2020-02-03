@@ -75,14 +75,18 @@ gridExtra::grid.arrange(g1, g3, ncol = 1)
   # character vector: taxonomic subgroup
   subgroup <- c("typic haplocryepts","andic haplocryepts","typic dystrocryepts")  
   subgroup
+  
   # logical vector: boolean field for presence or absence of andic soil properties diagnostic feature
-  andic <- c(FALSE,TRUE,FALSE) 
+  andic <- c(FALSE, TRUE, FALSE) 
   andic
   
   # Take our two character and logical vectors and convert them into a more useful dataframe.
   # we'll use the data.frame() function to glue these two vectors together into object 'd'
   d <- data.frame(subgroup, andic)
-  d
+  
+  # note that characters are converted to factors
+  # what is a factor?
+  str(d)
 
   # get the column names of a dataframe
   names(d)
@@ -172,7 +176,7 @@ horizonNames(gopheridge)
 
 par(mar=c(1,1,1,1))
 # ommiting pedon IDs and horizon designations
-plot(gopheridge, print.id=FALSE, name='')
+plot(gopheridge, print.id=FALSE, name='', width=0.3)
 title('Pedons from the `gopheridge` sample dataset', line=-0.5)
 
 s <- site(gopheridge)
@@ -200,21 +204,21 @@ library(soilDB)
 library(aqp)
 
 # load data from a NASIS selected set
-f <- fetchNASIS(from = 'pedons')
+pedons <- fetchNASIS(from = 'pedons')
 
 # what kind of object is this?
-class(f)
+class(pedons)
 
 # how many pedons
-length(f)
+length(pedons)
 
 # let's take a look at the fields at the site and horizon levels within the SPC
-siteNames(f)
-horizonNames(f)
+siteNames(pedons)
+horizonNames(pedons)
 
 # look at the first 2 rows of site and horizon data
-head(site(f), 2)
-head(horizons(f), 2)
+head(site(pedons), 2)
+head(horizons(pedons), 2)
 
 # plot the locations of the gopheridge pedons within R
 # Steps:
@@ -227,7 +231,7 @@ library(sp)
 library(mapview)
 
 # subset standard WGS84 decimal degree coordinates from the gopheridge SPC by specifying column names
-gopher.locations <- site(gopheridge)[, c('site_id', 'x_std', 'y_std')]
+gopher.locations <- site(gopheridge)
 
 # initialize coordinates in an SPDF
 coordinates(gopher.locations) <- ~ x_std + y_std
@@ -235,90 +239,92 @@ coordinates(gopher.locations) <- ~ x_std + y_std
 proj4string(gopher.locations) <- '+proj=longlat +datum=WGS84'
 
 # creat interactive map
-mapview(gopher.locations)
+mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.locations$site_id)
 
 ## # load libraries
+## library(aqp)
 ## library(soilDB)
 ## library(sp)
-## library(mapvew)
+## library(mapview)
 ## 
 ## # get pedons from the selected set
-## f <- fetchNASIS(from = 'pedons')
+## pedons <- fetchNASIS(from = 'pedons')
 ## 
-## # subset standard WGS84 decimal degree coordinates from the gopheridge SPC by specifying column names
-## f.locations <- site(f)[, c('site_id', 'x_std', 'y_std')]
-## nrow(f.locations)
+## # subset standard WGS84 decimal degree coordinates from the
+## # gopheridge SPC by specifying column names
+## pedons.sp <- site(pedons)[, c('site_id', 'x_std', 'y_std')]
+## nrow(pedons.sp)
 ## 
 ## # remove any sites lacking standard lat/long coordinates
 ## # notice that there may now be fewer rows of data
-## f.locations <- na.omit(f.locations)
-## nrow(f.locations)
+## pedons.sp <- na.omit(pedons.sp)
+## nrow(pedons.sp)
 ## 
 ## # initialize coordinates in an SPDF
-## coordinates(f.locations) <- ~ x_std + y_std
+## coordinates(pedons.sp) <- ~ x_std + y_std
 ## # define coordinate system
-## proj4string(f.locations) <- '+proj=longlat +datum=WGS84'
+## proj4string(pedons.sp) <- '+proj=longlat +datum=WGS84'
 ## 
 ## # plot
-## mapview(f.locations)
+## mapview(pedons.sp, legend=FALSE, map.types='OpenStreetMap', label=pedons.sp$site_id)
 
 # summarize which soil taxa we have loaded
-table(f$taxonname)
+table(pedons$taxonname)
 # sort results in descending order
-sort(table(f$taxonname), decreasing=TRUE)
+sort(table(pedons$taxonname), decreasing=TRUE)
 
 # could do the same thing for taxonomic subgroups or any column of the SPC at the site or horizon levels
-table(f$taxsubgrp)
-sort(table(f$taxsubgrp), decreasing=TRUE)
+table(pedons$taxsubgrp)
+sort(table(pedons$taxsubgrp), decreasing=TRUE)
 
 # table() is also useful when testing for null data using IS NA, is.na() or IS NOT NA, !is.na()
-table(is.na(f$taxsubgrp))
-table(!is.na(f$taxsubgrp))
+table(is.na(pedons$taxsubgrp))
+table(!is.na(pedons$taxsubgrp))
 
 # it can also be applied to horizon level columns in the SPC
-sort(table(f$texture), decreasing=TRUE)
+sort(table(pedons$texture), decreasing=TRUE)
 
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # use of grep() to filter and create an index, then apply that index to the SPC 
 # and create a new SPC called 'f1' using the square bracket notation
-idx <- grep('lithic', f$taxsubgrp, invert=FALSE)
+idx <- grep('lithic', pedons$taxsubgrp, invert=FALSE)
 # save this subset of 'lithic' soils for later use  
-f1 <- f[idx, ]
+subset1 <- pedons[idx, ]
 # or use the index directly to summarize a field
-sort(table(f$taxpartsize[idx]), decreasing=TRUE)
+sort(table(pedons$taxpartsize[idx]), decreasing=TRUE)
 
 # adjust margins
 par(mar=c(1,0,0,1))
-# plot the first 10 profiles of the 'f1' subset
+# plot the first 10 profiles of subset1
 # limit plotting to a depth of about 60cm
-plot(f1[1:10, ], label='site_id', max.depth=60)
+plot(subset1[1:10, ], label='site_id', max.depth=60)
 title('Pedons with the word "lithic" at subgroup-level of Soil Taxonomy', line=-2)
 
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # first: use grep to pattern match the tax_subgroup field for the string 'aqu'
-idx <- grep('lithic', f$taxsubgrp)
+idx <- grep('lithic', pedons$taxsubgrp)
 # save this subset
-f1 <- f[idx, ]
+subset1 <- pedons[idx, ]
 # check taxonomic range of particle size classes in the data
-sort(table(f1$taxsubgrp), decreasing=TRUE)
-sort(table(f1$taxpartsize), decreasing=TRUE)
+sort(table(subset1$taxsubgrp), decreasing=TRUE)
+sort(table(subset1$taxpartsize), decreasing=TRUE)
 
 # then further query the subset for only those profiles with particle size class of 'sandy-skeletal'
 # notice: a double equal sign '==' is used for exact character or numeric criteria
-idx <- which(f1$taxpartsize == 'sandy-skeletal')
+idx <- which(subset1$taxpartsize == 'loamy')
 # save this subset
-f2 <- f1[idx, ]
-table(f2$taxpartsize)
+subset2 <- subset1[idx, ]
+table(subset2$taxpartsize)
 # plot  profiles 1 thru 10
 par(mar=c(0,0,2,1))
-plot(f2[1:10, ], label='site_id')
-title('Sandy-skeletal particle size control section class')
+plot(subset2, label='site_id')
+title('Loamy particle size control section class')
 
 # extract site data from SPC into dataframe 's'
-s <- site(f)
+s <- site(pedons)
 names(s)
 # extract horizon data from SPC into dataframe 'h'
-h <- horizons(f)
+h <- horizons(pedons)
 names(h)
 
 ## # use each one of these to return a vector of the pedons where errors were detected
@@ -332,8 +338,8 @@ names(h)
 ## 
 ## # How could you then remove these from your SPC?
 ## # since the get() returns the string of bad pedon id's we can use a which() to query any pedon id's that don't match the bad id's
-## idx <- which(horizons(f)$pedon_id != get('bad.pedon.ids', envir=soilDB.env))
-## f <- f[idx, ]
+## idx <- which(! pedons$pedon_id %in% get('bad.pedon.ids', envir=soilDB.env))
+## pedons <- pedons[idx, ]
 
 # make a new object with a sequence of values from 1 to 10
 a <- seq(from=1, to=10, by=1)
@@ -355,13 +361,9 @@ aFunction(a)
 # load required libraries
 library(aqp)
 library(soilDB)
-library(plyr)
 
 # load example dataset
 data(gopheridge)
-
-# rename gopheridge as SPC object 'f'
-f <- gopheridge
 
 # the argument 'i' is a single soil profile
 findBtHorizons <- function(i) {
@@ -372,31 +374,30 @@ findBtHorizons <- function(i) {
   # subset these horizons
   h2 <- h[idx, ] 
   # subset columns in resulting dataframe
-  res <- h2[, c('peiid', 'phiid', 'hzname', 'hzdept', 'hzdepb', 'clay', 'phfield')]
+  res <- h2[, c('peiid', 'hzname', 'hzdept', 'hzdepb', 'clay', 'phfield')]
   # return data
   return(res)
 }
 
 # apply function to a single profile as a demonstration
-findBtHorizons(f[1, ])
+findBtHorizons(gopheridge[1, ])
 
-l <- profileApply(f, FUN=findBtHorizons, simplify=FALSE)
+Bt.horizons <- profileApply(gopheridge, FUN=findBtHorizons, frameify = TRUE)
 
-# convert list into a dataframe, dropping all pedons with no 't' horizons 
-Bt.horizons <- ldply(l)
+# apply a function by group
+Bt.horizons.top <- aggregate(hzdept ~ peiid, data = Bt.horizons, FUN = min, na.rm=TRUE)
 
-# standard ddply syntax is as follows (type '?ddply' into the R console):
-# ddply(.data, .variables, .fun)
-Bt.horizons.top <- ddply(Bt.horizons, 'peiid', summarise, depth_to_Bt_cm=min(hzdept))
+head(Bt.horizons.top)
+names(Bt.horizons.top)[2] <- 'depth_to_Bt_cm'
 
 # since we have peiid in the 'Bt.horizons.top' dataframe we can easy join it back to site data in the SPC
 # NOTE: when used in conjunction with site(), the assignment operator will perform a left-join
-site(f) <- Bt.horizons.top
+site(gopheridge) <- Bt.horizons.top
 
 # summary of depth to argillic in the data using a histogram
 # reset figure margins
 par(mar=c(4.5,4.5,1,1))
-hist(f$depth_to_Bt_cm, xlab='Depth to Bt Horizon (cm)', main='')
+hist(gopheridge$depth_to_Bt_cm, xlab='Depth to Bt Horizon (cm)', main='')
 
 # index to the first 15 profiles
 idx <- 1:15
@@ -405,10 +406,10 @@ idx <- 1:15
 par(mar=c(0,0.5,3,1))
 
 # plot indexed profiles, omitting IDs
-plot(f[idx, ], print.id=FALSE)
+plot(gopheridge[idx, ], print.id=FALSE)
 
 # add the top depth of the first "Bt" horizon
-points(x=1:15, y=f$depth_to_Bt_cm[idx], pch=21, bg='black', col='white')
+points(x=1:15, y=gopheridge$depth_to_Bt_cm[idx], pch=21, bg='black', col='white')
 
 # title / subtitle
 title(main = "Select pedons from the 'gopheridge' sample dataset", line=-0.5)
@@ -449,7 +450,7 @@ title(sub= "Depth to first 'Bt' horizon identified", line=-2)
 ## # summary of organic thickness in the data
 ## # reset figure margins
 ## par(mar=c(4.5,4.5,1,1))
-## hist(f$organic_thickness_cm, xlab='Thickness of Organic horizons (cm)', main='')
+## hist(pedons$organic_thickness_cm, xlab='Thickness of Organic horizons (cm)', main='')
 
 ## # load required libraries
 ## library(plyr)
@@ -491,7 +492,7 @@ title(sub= "Depth to first 'Bt' horizon identified", line=-2)
 ## # summary of depth to carbonates in the data using a histogram
 ## # reset figure margins
 ## par(mar=c(4.5,4.5,1,1))
-## hist(f$depth_to_carbonates_cm, xlab='Depth to Calcium Carbonates (cm)', main='')
+## hist(pedons$depth_to_carbonates_cm, xlab='Depth to Calcium Carbonates (cm)', main='')
 
 # fetch extended site and horizon data
 e <- get_extended_data_from_NASIS_db()
@@ -535,13 +536,13 @@ library(soilDB)
 library(Hmisc)
 
 # load data from a NASIS selected set
-f <- fetchNASIS(from = 'pedons')
+pedons <- fetchNASIS(from = 'pedons')
 
 # create 'lf' object of landform factors sorted in descending order
-lf <- sort(table(f$landform_string), decreasing = TRUE)
+lf <- sort(table(pedons$landform_string), decreasing = TRUE)
 
-# plot top 10
-dotchart2(lf[1:10], col='black', xlim = c(0, max(lf)), cex.labels = 0.75)
+# plot top 10 or length, whichever is shorter
+dotchart2(lf[1:pmin(10, length(lf))], col='black', xlim = c(0, max(lf)), cex.labels = 0.75)
 
 # rename gopheridge data
 f <- gopheridge
@@ -575,8 +576,8 @@ site(f) <- d
 # plot as histogram
 # reset figure margins
 par(mar = c(4.5,4.5,1,1))
-hist(f$argillic_thickness_cm, xlab = 'Thickness of argillic diagnostic (cm)', main='')
-hist(f$depth_to_argillic_cm, xlab = 'Depth to argillic diagnostic (cm)', main = '')
+hist(pedons$argillic_thickness_cm, xlab = 'Thickness of argillic diagnostic (cm)', main='')
+hist(pedons$depth_to_argillic_cm, xlab = 'Depth to argillic diagnostic (cm)', main = '')
 
 # start fresh with your own data
 f <- fetchNASIS(from = 'pedons')
