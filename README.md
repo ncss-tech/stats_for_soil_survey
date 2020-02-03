@@ -22,7 +22,7 @@ Please access the web-based course content at the _ncss-tech.github.io_ link:
    * Dylan Beaudette: Tabular Data / Spatial Data
    * Stephen Roecker: EDA  
    * John Hammerly: EDA
-   * Andrew Brown: EDA
+   * Andrew Brown: Tabular Homework / EDA
    * Skye Wills: Sampling
 
 ## Part 2
