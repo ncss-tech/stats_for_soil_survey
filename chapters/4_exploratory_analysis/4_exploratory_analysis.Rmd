@@ -897,7 +897,7 @@ mlra <- readOGR(dsn=ch2b.data.path, layer='mlra-18-15-AEA')
 ```
 
 Next, load in the example raster data with the `raster()` function. These are 800m PRISM data that have been cropped to the extent of the MLRA 15 and 18 polygons.
-```{r}
+```{r }
 # mean annual air temperature, Deg C
 maat <- raster(paste0(ch2b.data.path, '/MAAT.tif'))
 # mean annual precipitation, mm
@@ -1167,13 +1167,15 @@ render(input = report_path,
 - Show your work and submit the results to your mentor.
 
 
-## Exercise 3: run the "mapunit comparison" report
+## Exercise 3: run the mapunit comparison report
 
 You can create any R-based analysis in `soilReports` format. Another popular report is the `region2/mu-comparison` report. This report uses constant density sampling to extract numeric and categorical values from multiple raster data sources that overlap a set of polygons. In this example, we clip a small portion of SSURGO polygons from the CA630 soil survey area extent. 
 
-We select a small set of mapunit symbols (5012,3046,7083,7085,7088) that occur within the clipping extent that have soil forming factors we expect to contrast with one another.
+We select a small set of mapunit symbols (5012, 3046, 7083, 7085, 7088) (`mu.set` variable in `config.R`) that occur within the clipping extent, and that have soil forming factors we expect to contrast with one another. You can inspect some of the other mapunit symbols by changing this in the `config.R`.
 
-```{r, eval=FALSE}
+1. **Download** the demo data:
+
+```{r eval=FALSE}
 # set up ch4 path and path for report
 ch4.data.path <- "C:/workspace2/chapter4"
 ch4.mucomp.path <- paste0(ch4.data.path,"/mucomp")
@@ -1182,27 +1184,30 @@ ch4.mucomp.path <- paste0(ch4.data.path,"/mucomp")
 if(!dir.exists(ch4.mucomp.path))
   dir.create(ch4.mucomp.path, recursive = TRUE)
 
-# download raster data, clip of SSURGO from an area of CA630, and sample script for
-#  creating your own raster data clip
+# download raster data, SSURGO clip from CA630, and sample script for clipping your own raster data 
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_4-mucomp-data/ch4_mucomp-data.zip', paste0(ch4.mucomp.path, '/chapter_4-mucomp-data.zip'))
 
 unzip(paste0(ch4.mucomp.path, '/chapter_4-mucomp-data.zip'), exdir = ch4.mucomp.path, overwrite = TRUE)
+```
 
+2. **Create an instance** of the `region2/mu-comparison` report with `soilReports`:
+
+```{r eval=FALSE}
 # create new instance of reports 
 library(soilReports)
 copyReport('region2/mu-comparison', outputDir = ch4.mucomp.path, overwrite = TRUE)
 ```
 
-If you want, you can now set up the default `config.R` that is created by `copyReport()` to work with any of your own data. 
+If you want, you can now set up the default `config.R` that is created by `copyReport()` to work with your own data. OR you can use the "sample" `config.R` file (called `new_config.R`) in the ZIP file downloaded above. 
 
-The ZIP file downloaded above includes a "sample" `config.R` file (called `new_config.R`). Run the line of code below to replace the default with the sample data.
+3. Run the code below to **replace the default** `config.R` with the sample `config.R`:
 
-```{r}
+```{r eval=FALSE}
 # copy config file containing relative paths to rasters downloaded above
 file.copy(paste0(ch4.mucomp.path, "/new_config.R"), paste0(ch4.mucomp.path,"/config.R"), overwrite = TRUE)
 ```
 
-Now, open report.Rmd in the mucomp folder and click the "Knit" button at the top of the source pane
+4. **Open** `report.Rmd` in the `C:/workspace2/chapter4/mucomp` folder and click the "Knit" button at the top of the RStudio source pane to run the report.
 
 # References  
 
