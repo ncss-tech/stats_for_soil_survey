@@ -13,6 +13,9 @@ pedons <- loafercreek[1:20, ]
 par(mar=c(0,0,2,1))
 plot(pedons, name='hzname', print.id=FALSE)
 
+## # after loading your data as a SoilProfileCollection, save it
+## save(pedons, "my_pedons.Rda")
+
 # tabulate hzname
 table(pedons$hzname)
 
@@ -163,6 +166,9 @@ h <- h[which(h$newgenhz != 'not-used'), c('phiid', 'newgenhz')]
 # append to NASIS import file
 write.table(h, file=rules.file, row.names=FALSE, quote=FALSE,
             na='', col.names=FALSE, sep='|', append=TRUE)
+
+## # after updating genhz, save a new copy of the data
+## save(pedons, "my_pedons_FINAL.Rda")
 
 ## # then load data from the NASIS selected set into an R object called `pedons`
 ## pedons <- fetchNASIS(from='pedons')
