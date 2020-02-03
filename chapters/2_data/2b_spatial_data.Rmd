@@ -14,6 +14,8 @@ output:
     toc_float:
       collapsed: true
       smooth_scroll: false
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
@@ -136,7 +138,7 @@ addFeatures(m, redding, color='black', fillColor='red', weight=1)
 
 ### FAST raster sampling: `velox`
 
-The `velox` package provides an interesting approach to sampling raster values that intersect with vector features, *as long as the raster data fit into available memory*. For example, sampling all of the raster values that overlap with the estimated extent of the Cecil soil series (about 5.9 million acres) takes about 2.5 seconds.
+The `velox` package provides an interesting approach to sampling raster values that intersect with vector features, *as long as the raster data fit into available memory*. For example, sampling all of the raster values that overlap with the estimated extent of the San Joaquin soil series (about ~ 1 million acres) takes about 2.5 seconds.
 
 ```{r fig.width=6, fig.height=5, results='hide'}
 library(soilDB)
@@ -147,17 +149,17 @@ library(lattice)
 library(velox)
 
 # 5-10 seconds for download of SEE data, 
-s <- seriesExtent('cecil')
+s <- seriesExtent('san joaquin')
 
 # load pointer to PRISM data, note that this file is stored on my local machine:
-r <- raster('E:/gis_data/prism/ffd_50_pct_800m.tif')
+r <- raster('C:/workspace/chapter-2b/ffd_50_pct_800m.tif')
 
 # 2.5 seconds sampling
 vx <- velox(r)
 system.time(e <- vx$extract(s))
 
 # simple summary
-densityplot(e$CECIL, plot.points=FALSE, bw=2, lwd=2, col='RoyalBlue', xlab='Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', ylab='Density', main='FFD Estimate for Extent of Cecil Series')
+densityplot(e$`SAN JOAQUIN`, plot.points=FALSE, bw=2, lwd=2, col='RoyalBlue', xlab='Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', ylab='Density', main='FFD Estimate for Extent of Cecil Series')
 ```
 
 
@@ -667,14 +669,15 @@ Note that negative values are associated with a net deficit in monthly precipita
 
 # Additional Reading
    
-   * Ahmed, Zia. 2020. [https://zia207.github.io/geospatial-r-github.io/index.html](Geospatial Data Science with R).
+   * Ahmed, Zia. 2020. [Geospatial Data Science with R](https://zia207.github.io/geospatial-r-github.io/index.html).
+   
+   * Gimond, M., 2019. Intro to GIS and Spatial Analysis [https://mgimond.github.io/Spatial/](https://mgimond.github.io/Spatial/)
 
-   * Brenning, A., and D. Bangs. 2015. Introduction to terrain analysis with RSAGA: Landslide susceptibility modeling. [https://cran.r-project.org/web/packages/RSAGA/vignettes/RSAGA-landslides.pdf](https://cran.r-project.org/web/packages/RSAGA/vignettes/RSAGA-landslides.pdf).
-
-   * Hijmans, R.J. 2015. Introduction to the 'raster' package. [https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf).
+   * Hijmans, R.J. 2019. Spatial Data Science with R. [https://rspatial.org/](https://rspatial.org/)
+   
+   * Lovelace, R., J. Nowosad, and J. Muenchow, 2019. Geocomputation with R. CRC Press. [https://bookdown.org/robinlovelace/geocompr/](https://bookdown.org/robinlovelace/geocompr/)
 
    * Pebesma, E., and R.S. Bivand. 2005. Classes and methods for spatial data: The sp package. [https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
+   
+   * Pebesma, E. and R. Bivand, 2019. Spatial Data Science. [https://keen-swartz-3146c4.netlify.com/](https://keen-swartz-3146c4.netlify.com/)
 
-   * Venables, W.N., D.M. Smith, and the R Core Team, 2015. Introduction to R, Notes on R: A programming environment for data analysis and graphics, version (3.2.3, 2015-12-10). [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf).
-
-   * Wickham, H. 2014. Advanced R. CRC Press, New York. [http://adv-r.had.co.nz/](http://adv-r.had.co.nz/).
