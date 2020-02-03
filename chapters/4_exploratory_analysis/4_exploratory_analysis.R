@@ -1,8 +1,7 @@
-## ----setup, echo=FALSE, warning=FALSE, message=FALSE---------------------
 # setup
 knitr::opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
 
-## ---- warning=FALSE, message=FALSE---------------------------------------
+library(aqp)
 library(soilDB)
 
 # Load from the the loakercreek dataset
@@ -16,7 +15,7 @@ n <- c("A",
        "Cr",
        "R")
 # REGEX rules
-p <- c(
+p <- c("A",
        "BA|AB",
        "Bt|Bw",
        "Bt3|Bt4|2B|C",
@@ -32,25 +31,21 @@ h <- horizons(loafercreek)
 # Examine the matching of pairing of the genhz label to the hznames
 table(h$genhz, h$hzname)
 
-## ---- eval=FALSE---------------------------------------------------------
 ## 
 ## View(h)
 ## 
 
-## ------------------------------------------------------------------------
 
 vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effclass")
 summary(h[vars])
 
 
-## ------------------------------------------------------------------------
 # just for factors
 levels(h$genhz)
 
 # for characters and factors
 sort(unique(h$hzname)) 
 
-## ---- eval=FALSE---------------------------------------------------------
 ## h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 ## 
 ## # or
@@ -61,12 +56,10 @@ sort(unique(h$hzname))
 ## 
 ## edit(h)
 
-## ------------------------------------------------------------------------
 # gopheridge rules
 n <- c('A', 'Bt1', 'Bt2', 'Bt3','Cr','R')
 p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
 
-## ---- echo = FALSE-------------------------------------------------------
 desc <- data.frame(
   Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
   NASIS = c(rep("RV", 3), rep("L & H", 2)),
@@ -80,7 +73,6 @@ desc <- data.frame(
   )
 knitr::kable(desc, caption = "Short Description of Descriptive Statistics and R Functions")
 
-## ------------------------------------------------------------------------
 clay <- na.exclude(h$clay) # first remove missing values and create a new vector
 
 mean(clay)
@@ -89,23 +81,18 @@ mean(clay)
 
 mean(h$clay, na.rm = TRUE)
 
-## ------------------------------------------------------------------------
 median(clay)
 
-## ------------------------------------------------------------------------
 sort(table(round(h$clay)), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
 
-## ------------------------------------------------------------------------
 table(h$genhz)
 
 # or
 
 # summary(h$genhz)
 
-## ------------------------------------------------------------------------
 table(h$genhz, h$texcl)
 
-## ------------------------------------------------------------------------
 # append the table with row and column sums
 
 addmargins(table(h$genhz, h$texcl))
@@ -114,62 +101,51 @@ addmargins(table(h$genhz, h$texcl))
 
 round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) 
 
-## ------------------------------------------------------------------------
 aggregate(clay ~ genhz, data = h, mean)
 
-## ------------------------------------------------------------------------
 aggregate(clay ~ genhz, data = h, median)
 
 # or we could use the summary() function to get both the mean and median
 
 aggregate(clay ~ genhz, data = h, summary)
 
-## ------------------------------------------------------------------------
 var(h$clay)
 
-## ------------------------------------------------------------------------
 sd(clay)
 
 # or
 
 # sqrt(var(clay))
 
-## ------------------------------------------------------------------------
 cv <- sd(clay) / mean(clay) * 100
 cv
 
-## ------------------------------------------------------------------------
 quantile(clay)
 
 # or
 
 quantile(clay, c(0.05, 0.5, 0.95))
 
-## ------------------------------------------------------------------------
 range(clay)
 
-## ------------------------------------------------------------------------
 diff(range(clay))
 
 # or
 
 # max(clay) - min(clay)
 
-## ------------------------------------------------------------------------
 IQR(clay)
 
 # or
 
 # diff(quantile(clay, c(0.25, 0.75)))
 
-## ------------------------------------------------------------------------
 h$hzdepm <- (h$hzdepb + h$hzdept) / 2 # Compute the middle horizon depth
 
 vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
 
 round(cor(h[vars], use = "complete.obs"), 2)
 
-## ----graphical descriptions, echo = FALSE--------------------------------
 figs <- data.frame(
   'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
    Description = c("a plot where each bar represents the frequency of observations for a 'group'",
@@ -184,7 +160,6 @@ figs <- data.frame(
 
 knitr::kable(figs, caption = "Short Description of Graphical Methods")
 
-## ----graphical functions, echo = FALSE-----------------------------------
 figs <- data.frame(
   'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
   # Description = c("a bar plot where each bar represents the frequency of observations for a given range of values",
@@ -202,7 +177,6 @@ figs <- data.frame(
 
 knitr::kable(figs, caption = "Comparison of R's 3 Graphing Systems and their Equivalent Functions for Plotting")
 
-## ----distribution comparison, echo=FALSE, fig.dim = c(8, 4)--------------
 data(metadata)
 
 # Generalized the horizon designations
@@ -261,35 +235,27 @@ p_d <- p +
 gridExtra::grid.arrange(p_b, p_h, p_d, ncol = 3)
 
 
-## ----barplot-------------------------------------------------------------
 library(ggplot2)
 
-# find missing textures
-idx <- is.na(h$texture_class)
-
 # bar plot
-ggplot(h[!idx, ], aes(x = texcl)) +
+ggplot(h, aes(x = texcl)) +
   geom_bar()
 
-## ----histogram-----------------------------------------------------------
 
 ggplot(h, aes(x = clay)) +
   geom_histogram(bins = nclass.Sturges(h$clay))
 
 
-## ----densityplot---------------------------------------------------------
 
 ggplot(h, aes(x = clay)) +
   geom_density()
 
 
-## ----boxplots------------------------------------------------------------
 
 ggplot(h, (aes(x = genhz, y = clay))) +
   geom_boxplot()
 
 
-## ------------------------------------------------------------------------
 
 # QQ Plot for Clay
 ggplot(h, aes(sample = clay)) + 
@@ -302,7 +268,6 @@ ggplot(h, aes(sample = total_frags_pct)) +
   geom_qq_line()
 
 
-## ---- echo=FALSE, fig.align="center"-------------------------------------
 
 library(ggplot2)
 
@@ -327,7 +292,6 @@ ggplot(df, aes(x = x)) +
   annotate("text", x = -1.5, y = 0.03, label = "2 sd = 95%")
 
 
-## ---- echo = FALSE, warning=FALSE----------------------------------------
 
 r <- data.frame(y = dunif(seq(-1, 2, 0.1)), x = 1:31)
 
@@ -337,7 +301,6 @@ ggplot(r, aes(x = x, y = y)) +
   ggtitle("Uniform Distribution: Minimum = 0, Maximum = 1")
 
 
-## ----clay vs frags, echo=FALSE, fig.dim = c(8, 4)------------------------
 
 p   <- c(0.025, 0.25, 0.5, 0.75, 0.975)
 
@@ -392,7 +355,6 @@ p2 <- ggplot(h, aes(x = total_frags_pct)) +
 gridExtra::grid.arrange(p1, p2, ncol = 2)
 
 
-## ---- echo=FALSE, fig.dim = c(8, 4)--------------------------------------
 
 # scatter plot
 p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
@@ -404,9 +366,12 @@ p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
 
 # line graph
 
+# h2 <- slice(loafercreek, 0:100 ~ clay)@horizons
+
 p_l <- ggplot(h) +
-  geom_smooth(aes(y = clay, x = hzdepm), se = FALSE) +
+  # geom_line(aes(y = clay, x = hzdept, group = peiid)) +
   geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
+  geom_smooth(aes(y = clay, x = (hzdept + hzdepb) / 2), se = FALSE) +
   xlim(100, 0) +
   xlab("depth (cm)") + ylab("clay (%)") +
   coord_flip() +
@@ -416,7 +381,6 @@ p_l <- ggplot(h) +
 gridExtra::grid.arrange(p_s, p_l, ncol = 2)
 
 
-## ------------------------------------------------------------------------
 # scatter plot
 ggplot(h, aes(x = clay, y = hzdepm)) +
   geom_point() +
@@ -429,7 +393,6 @@ ggplot(h, aes(y = clay, x = hzdepm, group = peiid)) +
   xlim(100, 0)
 
 
-## ------------------------------------------------------------------------
 # Load the GGally package
 library(GGally)
 
@@ -439,7 +402,6 @@ vars <- c("hzdepm", "clay", "phfield", "total_frags_pct")
 ggpairs(h[vars])
 
 
-## ---- echo=FALSE, fig.dim = c(8, 4)--------------------------------------
 h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
 
 ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
@@ -450,17 +412,14 @@ ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
   coord_flip() +
   theme(aspect.ratio = 1)
 
-## ----color, fig.dim = c(8, 4)--------------------------------------------
-
-idx <- h$genhz %in% c("Cr", "R", "not-used")
 
 # scatter plot
-ggplot(h[!idx, ], aes(x = clay, y = hzdepm, color = genhz)) +
+ggplot(h, aes(x = clay, y = hzdepm, color = genhz)) +
   geom_point(size = 3) +
   ylim(100, 0)
 
 # density plot
-ggplot(h[!idx, ], aes(x = clay, color = genhz)) +
+ggplot(h, aes(x = clay, color = genhz)) +
   geom_density(size = 2)
 
 # bar plot
@@ -468,7 +427,7 @@ ggplot(h, aes(x = genhz, fill = texture_class)) +
   geom_bar()
 
 # box plot
-ggplot(h[!idx, ], aes(x = genhz, y = clay)) + 
+ggplot(h, aes(x = genhz, y = clay)) + 
   geom_boxplot()
 
 # heat map (pseudo bar plot)
@@ -478,7 +437,6 @@ ggplot(s, aes(x = landform_string, y = pmkind)) +
   geom_tile(alpha = 0.2) 
   
 
-## ----facets, fig.dim = c(8, 4)-------------------------------------------
 
 # convert to long format
 df <- reshape2::melt(h, 
@@ -486,19 +444,15 @@ df <- reshape2::melt(h,
                      measure.vars = c("clay", "phfield", "total_frags_pct")
                      )
 
-idx <- df$genhz %in% c("Cr", "R", "not-used")
-
-ggplot(df[!idx, ], aes(x = genhz, y = value)) +
+ggplot(df, aes(x = genhz, y = value)) +
   geom_boxplot() +
   xlab("genhz") +
   facet_wrap(~ variable, scales = "free_y")
 
 
-## ---- fig.dim=c(8, 4)----------------------------------------------------
-
 library(aqp)
 
-s <- slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
+s <- slice(loafercreek, 0:100 ~ clay + phfield + total_frags_pct)
 s <- slab(s, fm = ~ clay + phfield + total_frags_pct, 
           slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE)
           )
@@ -511,33 +465,148 @@ ggplot(s, aes(x = top, y = X50.)) +
   facet_wrap(~ variable, scales = "free_x")
 
 
-## ------------------------------------------------------------------------
-# arithematic mean
+# arithmetic mean
 log10(mean(1/10^-h$phfield, na.rm = TRUE)) 
 
 # geometric mean
 mean(h$phfield, na.rm = TRUE) 
 
-## ---- warning=FALSE, message=FALSE---------------------------------------
+library(circular)
 
 # Extract the site table
 s <- site(loafercreek) 
-
-library(circular)
 
 aspect <- s$aspect_field
 aspect <- circular(aspect, template="geographic", units="degrees", modulo="2pi")
 
 summary(aspect)
 
-## ------------------------------------------------------------------------
 rose.diag(aspect, bins = 8, col="grey")
 
-## ---- eval=FALSE---------------------------------------------------------
+## # store path as a variable, in case you want to keep it somewhere else
+## ch2b.data.path <- 'C:/workspace/chapter-2b'
+## 
+## # make a place to store chapter 2b example data
+## dir.create(ch2b.data.path, recursive = TRUE)
+## 
+## # download example data from github
+## # polygons
+## download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-mu-polygons.zip', paste0(ch2b.data.path, '/chapter-2b-mu-polygons.zip'))
+## 
+## # raster data
+## download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-PRISM.zip', paste0(ch2b.data.path, '/chapter-2b-PRISM.zip'))
+## 
+## # unzip
+## unzip(paste0(ch2b.data.path, '/chapter-2b-mu-polygons.zip'), exdir = ch2b.data.path, overwrite = TRUE)
+## unzip(paste0(ch2b.data.path, '/chapter-2b-PRISM.zip'), exdir = ch2b.data.path, overwrite = TRUE)
+
+library(aqp)
+library(sp)
+library(raster)
+library(rgdal)
+library(soilDB)
+
+# establish path to example data
+ch2b.data.path <- 'C:/workspace/chapter-2b'
+
+# load MLRA polygons
+mlra <- readOGR(dsn=ch2b.data.path, layer='mlra-18-15-AEA')
+
+# mean annual air temperature, Deg C
+maat <- raster(paste0(ch2b.data.path, '/MAAT.tif'))
+# mean annual precipitation, mm
+map <- raster(paste0(ch2b.data.path, '/MAP.tif'))
+# frost-free days
+ffd <- raster(paste0(ch2b.data.path, '/FFD.tif'))
+# growing degree days
+gdd <- raster(paste0(ch2b.data.path, '/GDD.tif'))
+# percent of annual PPT as rain
+rain_fraction <- raster(paste0(ch2b.data.path, '/rain_fraction.tif'))
+# annual sum of monthly PPT - ET_p
+ppt_eff <- raster(paste0(ch2b.data.path, '/effective_preciptitation.tif'))
+
+rs <- stack(maat, map, ffd, gdd, rain_fraction, ppt_eff)
+# reset layer names
+names(rs) <- c('MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT')
+
+amador <- seriesExtent(s = 'amador')
+class(amador)
+
+s <- spsample(amador, n = 100, type = 'hexagonal')
+
+par(mar=c(1,1,3,1))
+plot(maat, ext=extent(s), main='MAAT and Amador Extent\n100 Sampling Points', axes=FALSE)
+plot(amador, add=TRUE)
+points(s, cex=0.25)
+
+# return the result as a data.frame object
+e <- extract(rs, s, df=TRUE)
+# check out the extracted data
+summary(e[, -1])
+
+table(mlra$MLRARSYM)
+
+poly.area <- round(sapply(mlra@polygons, slot, 'area') * 0.000247105)
+summary(poly.area)
+sum(poly.area)
+
+library(sharpshootR)
+
+# the next function requires a polygon ID: each polygon gets a unique number 1--number of polygons
+mlra$pID <- 1:nrow(mlra)
+s <- constantDensitySampling(mlra, n.pts.per.ac=0.001)
+
+# spatial overlay: sampling points and MLRA polygons
+res <- over(s, mlra)
+
+# row / feature order is preserved, so we can directly copy
+s$mlra <- res$MLRARSYM
+
+# tabulate number of samples per MLRA
+table(s$mlra)
+
+# raster stack extraction at sampling points
+e <- extract(rs, s, df=TRUE)
+
+# convert sampling points from SpatialPointsDataFrame to data.frame
+s.df <- as(s, 'data.frame')
+
+# join columns from extracted values and sampling points
+s.df <- cbind(s.df, e)
+
+# check results
+head(s.df)
+
+library(lattice)
+library(reshape2)
+
+# reshape from wide to long format
+m <- melt(s.df, id.vars = c('mlra'), measure.vars = c('MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT'))
+
+# check "wide" format
+head(m)
+
+# tabular summary of mean values
+tapply(m$value, list(m$mlra, m$variable), mean)
+
+tps <- list(box.rectangle=list(col='black'), box.umbrella=list(col='black', lty=1), box.dot=list(cex=0.75), plot.symbol=list(col=rgb(0.1, 0.1, 0.1, alpha = 0.25, maxColorValue = 1), cex=0.25))
+
+
+bwplot(mlra ~ value | variable, data=m,                 # setup plot and data source
+       as.table=TRUE,                                   # start panels in top/left corner
+       varwidth=TRUE,                                   # scale width of box by number of obs
+       scales=list(alternating=3, relation='free'),     # setup scales
+       strip=strip.custom(bg=grey(0.9)),                # styling for strips
+       par.settings=tps,                                # apply box/line/point styling
+       panel=function(...) {                            # within in panel, do the following
+          panel.grid(-1, -1)                            # make grid lines at all tick marks
+          panel.bwplot(...)                             # make box-whisker plot
+      }
+)
+
 ## # Install the soilReports package from GitHub
 ## devtools::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade_dependencies=FALSE)
 
-## ---- eval=FALSE---------------------------------------------------------
 ## # Load the soilReports and rmarkdown package
 ## library(soilReports)
 ## library(rmarkdown)
@@ -545,11 +614,9 @@ rose.diag(aspect, bins = 8, col="grey")
 ## # List reports
 ## listReports()
 
-## ---- eval=FALSE---------------------------------------------------------
 ## # Copy report to your directory
 ## copyReport(reportName = "region11/lab_summary_by_taxonname", outputDir = "C:/workspace2/lab_sum")
 
-## ---- eval=FALSE---------------------------------------------------------
 ## # Set report parameters
 ## series <- "Miami"
 ## genhz_rules <- "C:/workspace2/lab_sum/Miami_rules.R"
@@ -568,109 +635,22 @@ rose.diag(aspect, bins = 8, col="grey")
 ##        )
 ## 
 
-## ----r_poly_extract, eval = FALSE----------------------------------------
-## # load rgdal package
-## library(rgdal)
+## # set up ch4 path and path for report
+## ch4.data.path <- "C:/workspace2/chapter4"
+## ch4.mucomp.path <- paste0(ch4.data.path,"/mucomp")
 ## 
-## # import CA794 map unit polygons
-## ca794 <- readOGR(dsn = "E:/geodata/project_data/8VIC/ca794", layer = "ca794")
+## # create any directories that may be missing
+## if(!dir.exists(ch4.mucomp.path))
+##   dir.create(ch4.mucomp.path, recursive = TRUE)
 ## 
-## # reproject
-## ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+## # download raster data, SSURGO clip from CA630, and sample script for clipping your own raster data
+## download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_4-mucomp-data/ch4_mucomp-data.zip', paste0(ch4.mucomp.path, '/chapter_4-mucomp-data.zip'))
 ## 
-## # convert MUKEY to  an integer
-## ca794$mukey2 <- as.integer(as.character(ca794$MUKEY))
-## 
-## # export shapefile
-## writeOGR(ca794,
-##          dsn = "C:/workspace",
-##          layer = "ca794",
-##          driver = "ESRI Shapefile",
-##          overwrite_layer = TRUE
-##          )
-## 
-## # load RSAGA package
-## library(RSAGA)
-## 
-## # set rsaga path
-## myenv <- rsaga.env(path = "C:/Program Files/QGIS Essen/apps/saga")
-## 
-## # load DEM
-## ned <- raster("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sdat")
-## 
-## # create a blank raster that matches the DEM
-## test <- raster(extent(ca794), ext = extent(ned), crs = crs(ned), res = res(ned))
-## 
-## # export the raster
-## writeRaster(test,
-##             file = "E:/geodata/project_data/8VIC/sdat/ca794.sdat",
-##             format = "SAGA",
-##             progress = "text",
-##             overwrite = TRUE
-##             )
-## 
-## # Convert the CA794 shapefile to a rsaga raster
-## rsaga.geoprocessor("grid_gridding", 0, env = myenv, list(
-##   INPUT = "C:/workspace/ca794.shp",
-##   FIELD = "mukey2",
-##   OUTPUT = "2",
-##   TARGET = "0",
-##   GRID_TYPE = "2",
-##   USER_GRID = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-##   USER_XMIN = extent(test)[1] + 15,
-##   USER_XMAX = extent(test)[2] - 15,
-##   USER_YMIN = extent(test)[3] + 15,
-##   USER_YMAX = extent(test)[4] - 15,
-##   USER_SIZE = res(test)[1]
-##   ))
-## 
-## # Extract the zonal statistics for 2 rasters
-## rsaga.geoprocessor("statistics_grid", 5, env = myenv, list(
-##   ZONES = "E:/geodata/project_data/8VIC/sdat/ca794.sgrd",
-##   STATLIST = paste(c("E:/geodata/project_data/8VIC/sdat/ned30m_8VIC.sgrd", "E:/geodata/project_data/8VIC/sdat/ned30m_8VIC_slope5.sgrd"), collapse = ";"),
-##   OUTTAB = "C:/workspace/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv"
-##   ))
+## unzip(paste0(ch4.mucomp.path, '/chapter_4-mucomp-data.zip'), exdir = ch4.mucomp.path, overwrite = TRUE)
 
-## ----poly extract2-------------------------------------------------------
-# import the results
-test <- read.csv("C:/workspace2/github/stats_for_soil_survey/trunk/data/ca794_zonal.csv") 
+## # create new instance of reports
+## library(soilReports)
+## copyReport('region2/mu-comparison', outputDir = ch4.mucomp.path, overwrite = TRUE)
 
-# rename the mukey column
-names(test)[1] <- "mukey" 
-
-# examine mukey 2480977
-subset(test, mukey == 2480977) 
-
-## ---- eval = FALSE-------------------------------------------------------
-## # Take a stratified random sample
-## s <- spsample(ca794, n = 1000, type = "stratified")
-## 
-## setwd("E:/geodata/project_data/8VIC/ca794")
-## 
-## # Create a raster stack
-## rs <- stack(c(
-##   elev = "ned30m_8VIC.tif",
-##   slope = "ned30m_8VIC_slope5.tif")
-##   )
-## # Set the spatial projection
-## proj4string(rs) <- CRS("+init=epsg:5070")
-## 
-## # Extract the map unit polygon value
-## test1 <- over(s, ca794)
-## 
-## # Extract the raster values
-## test2 <- data.frame(extract(rs, s))
-## 
-## # Combine the two datasets
-## test2 <- cbind(test1, test2)
-## 
-## # Cache/save the results
-## save(test2, file = "C:/workspace/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
-
-## ------------------------------------------------------------------------
-# Load the cache/saved results
-load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch2_sample.Rdata")
-
-# Examine summary for mukey 2480977
-summary(subset(test2, MUKEY == 2480977)) 
-
+## # copy config file containing relative paths to rasters downloaded above
+## file.copy(paste0(ch4.mucomp.path, "/new_config.R"), paste0(ch4.mucomp.path,"/config.R"), overwrite = TRUE)

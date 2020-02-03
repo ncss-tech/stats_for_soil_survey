@@ -1,7 +1,76 @@
 library(knitr, quietly=TRUE)
-library(ggplot2)
 
-## ----datatype2, eval=TRUE------------------------------------------------
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
+
+# options for R functions
+options(width=100, stringsAsFactors=FALSE)
+
+library(ggplot2)
+library(dplyr)
+
+data("us_ss_timeline", package = "soilDB")
+
+test <- as.data.frame(table(us_ss_timeline$year), stringsAsFactors = FALSE)
+
+names(test)[names(test) %in% c("Var1", "Freq")] <- c("year", "Count")
+test <- mutate(test, 
+               year = as.numeric(year)
+               )
+
+
+
+g1 <- ggplot(test, aes(x = year, y = Count)) +
+  geom_area(alpha = 0.7) + 
+  ylim(0, max(test$Count, na.rm = TRUE) * 1.5) +
+  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
+  # theme(aspect.ratio = 1) + 
+  xlab("Year") +
+  ggtitle("Number of Published US Soil Survey Manuscripts by Year")
+
+g2  <- ggplot(test, aes(x = year, y = cumsum(Count))) +
+  geom_area(alpha = 0.7) + 
+  ylim(0, max(cumsum(test$Count), na.rm = TRUE) * 1.5) +
+  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
+  # theme(aspect.ratio = 1) +
+  xlab("Year") + ylab("Count") +
+  ggtitle("Cumulative Number of Published US Soil Survey Manuscripts by Year")
+
+# gridExtra::grid.arrange(g1, g2, ncol = 1)
+
+
+pedons <- read.csv("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/pedons.csv", stringsAsFactors = FALSE)
+pedons <- filter(pedons, obs_year %in% 1950:2018) %>%
+  mutate(year = obs_year,
+         lab = FALSE,
+         Count = n_peiid
+         )
+
+labpedons <- read.csv("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/labpedons.csv", stringsAsFactors = FALSE)
+labpedons <- filter(labpedons, obs_year %in% 1950:2018) %>%
+  mutate(year = obs_year,
+         lab = TRUE,
+         Count = n_peiid
+         )
+
+
+g3 <- ggplot(pedons, aes(x = year, y = Count)) + 
+  geom_area(aes(fill = lab), stat = "identity") + 
+  geom_area(data = labpedons, aes(x = year, y = Count, fill = lab), stat = "identity") +
+  ylim(0, max(pedons$Count, na.rm = TRUE) * 1.2) +
+  ylab("Count") + xlab("Observation Year") +
+  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
+  ggtitle("Number of Pedons per Year") 
+
+g4 <- ggplot(pedons, aes(x = year, y = cumsum(Count))) + 
+  geom_area(aes(fill = lab), stat = "identity") +
+  ylim(0, max(cumsum(pedons$Count), na.rm = TRUE) * 1.2) +
+  ylab("Count") + xlab("Observation Year") +
+  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
+  ggtitle("Cumulative Number of Pedons per Year")
+
+gridExtra::grid.arrange(g1, g3, ncol = 1)
+
+
   # Using the concatenate function we can create the following character and logical vectors
   # character vector: taxonomic subgroup
   subgroup <- c("typic haplocryepts","andic haplocryepts","typic dystrocryepts")  
@@ -15,14 +84,12 @@ library(ggplot2)
   d <- data.frame(subgroup, andic)
   d
 
-## ----datatype2.1, eval=TRUE----------------------------------------------
   # get the column names of a dataframe
   names(d)
   # we can use 'names()' and 'c()' to rename the columns in a dataframe
   names(d) <- c('tax_subgroup', 'andic.soil.properties')
   d
 
-## ----datatype2a, eval=TRUE-----------------------------------------------
   # format: dataframe_name[rows, columns]
   d[1, ] # first row of dataframe
   d[, 1] # first column of dataframe
@@ -48,7 +115,6 @@ library(ggplot2)
   # another way we could do this is to use the column indexes within the concatenate function
   d <- d[ , c(2,1)]
 
-## ----structure_diagram_a, echo=FALSE, results='hide', warning=FALSE------
 library(diagram, quietly=TRUE)
 # reset figure margins
 par(mar = c(1, 1, 1, 1))
@@ -73,14 +139,12 @@ arrows(0.42, 0.35, x1=0.65, y1=0.54, length = 0.25, code=2, lwd=2, angle = 15)
 arrows(0.42, 0.61, x1=0.65, y1=0.61, length = 0.25, code=2, lwd=2, angle = 15)
 arrows(0.42, 0.87, x1=0.65, y1=0.68, length = 0.25, code=2, lwd=2, angle = 15)
 
-## ----example_a, echo=FALSE, results='show', warning=FALSE----------------
 top <- c(0,38,56,121,135)
 bot <- c(30,56,121,135,'')
 hzname <- c('A', 'Bt1', 'Bt2', 'Bk', 'R')
 d <- data.frame(hzname, top, bot)
 d
 
-## ---- eval=FALSE---------------------------------------------------------
 ## # not run
 ## library(soilDB)
 ## help(soilDB)
@@ -89,7 +153,6 @@ d
 ## library(aqp)
 ## help(aqp)
 
-## ----gopheridge_a--------------------------------------------------------
 options(width=95, stringsAsFactors=FALSE)
 library(soilDB)
 library(aqp)
@@ -107,13 +170,11 @@ str(gopheridge, 2)
 siteNames(gopheridge)
 horizonNames(gopheridge)
 
-## ---- fig.width=10, fig.height=4-----------------------------------------
 par(mar=c(1,1,1,1))
 # ommiting pedon IDs and horizon designations
 plot(gopheridge, print.id=FALSE, name='')
 title('Pedons from the `gopheridge` sample dataset', line=-0.5)
 
-## ----gopheridge_a1, eval=TRUE, echo=FALSE, results='show', warning=FALSE, collapse=TRUE----
 s <- site(gopheridge)
 # show table of site data
 knitr::kable(s[1:2, 1:10])
@@ -124,7 +185,6 @@ knitr::kable(s[1:2, 28:36])
 # use the following to show the data in the R console
 #head(site(gopheridge), 2) # show the first 2 lines of the site data
 
-## ----gopheridge_a2, eval=TRUE, echo=FALSE, results='show', warning=FALSE, collapse=TRUE----
 h <- horizons(gopheridge)
 # show table of site data
 knitr::kable(h[1:8, 1:10])
@@ -135,7 +195,6 @@ knitr::kable(h[1:8, 11:19])
 # use the following to show the data in the R console
 #head(horizons(gopheridge), 5) # show the first 5 rows of the horizon data
 
-## ----owndata_a, results='hide'-------------------------------------------
 # load required libraries
 library(soilDB)
 library(aqp)
@@ -157,7 +216,6 @@ horizonNames(f)
 head(site(f), 2)
 head(horizons(f), 2)
 
-## ----gopheridge_b--------------------------------------------------------
 # plot the locations of the gopheridge pedons within R
 # Steps:
 # 1) subset to a new data frame
@@ -166,7 +224,7 @@ head(horizons(f), 2)
 
 # load libraries
 library(sp)
-library(maps)
+library(mapview)
 
 # subset standard WGS84 decimal degree coordinates from the gopheridge SPC by specifying column names
 gopher.locations <- site(gopheridge)[, c('site_id', 'x_std', 'y_std')]
@@ -176,26 +234,13 @@ coordinates(gopher.locations) <- ~ x_std + y_std
 # define coordinate system
 proj4string(gopher.locations) <- '+proj=longlat +datum=WGS84'
 
-# set plot margins
-par(mar=c(0,0,0,0))
+# creat interactive map
+mapview(gopher.locations)
 
-# plot county boundaries for all of CA
-map('county', 'california')
-# add pedon data locations, note symbol styling
-points(gopher.locations, cex=0.5, pch=3, col='red')
-box()
-
-# plot again but zoom in by setting xlim, ylim extents
-map('county', 'California', xlim=c(-122.25, -119.75), ylim=c(37, 38.5))
-# add pedon data locations, note symbol styling
-points(gopher.locations, cex=1, pch=3, col='red')
-box()
-
-## ----r_plot_pedons, eval=FALSE, echo=TRUE, results='show', warning=FALSE----
 ## # load libraries
 ## library(soilDB)
 ## library(sp)
-## library(maps)
+## library(mapvew)
 ## 
 ## # get pedons from the selected set
 ## f <- fetchNASIS(from = 'pedons')
@@ -214,23 +259,9 @@ box()
 ## # define coordinate system
 ## proj4string(f.locations) <- '+proj=longlat +datum=WGS84'
 ## 
-## # set plot margins
-## par(mar=c(0,0,0,0))
-## 
-## # plot pedon locations
-## plot(f.locations)
-## 
-## # plot in CONUS: good way to check for typos
-## map('state')
-## points(f.locations, cex=0.5, pch=3, col='red')
-## 
-## # plot again this time with county boundaries for your state
-## # ENTER your state!!!
-## map('county', 'Montana')
-## # add plot of pedon locations
-## points(f.locations, cex=0.5, pch=3, col='red')
+## # plot
+## mapview(f.locations)
 
-## ----owndata_b, results='hide'-------------------------------------------
 # summarize which soil taxa we have loaded
 table(f$taxonname)
 # sort results in descending order
@@ -247,7 +278,6 @@ table(!is.na(f$taxsubgrp))
 # it can also be applied to horizon level columns in the SPC
 sort(table(f$texture), decreasing=TRUE)
 
-## ----owndata_d, results='hide'-------------------------------------------
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # use of grep() to filter and create an index, then apply that index to the SPC 
 # and create a new SPC called 'f1' using the square bracket notation
@@ -257,7 +287,6 @@ f1 <- f[idx, ]
 # or use the index directly to summarize a field
 sort(table(f$taxpartsize[idx]), decreasing=TRUE)
 
-## ----owndata_e, results='show', fig.width=8, fig.height=4----------------
 # adjust margins
 par(mar=c(1,0,0,1))
 # plot the first 10 profiles of the 'f1' subset
@@ -265,10 +294,9 @@ par(mar=c(1,0,0,1))
 plot(f1[1:10, ], label='site_id', max.depth=60)
 title('Pedons with the word "lithic" at subgroup-level of Soil Taxonomy', line=-2)
 
-## ----owndata_f, results='show', fig.width=8, fig.height=4----------------
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # first: use grep to pattern match the tax_subgroup field for the string 'aqu'
-idx <- grep('aqu', f$taxsubgrp)
+idx <- grep('lithic', f$taxsubgrp)
 # save this subset
 f1 <- f[idx, ]
 # check taxonomic range of particle size classes in the data
@@ -286,7 +314,6 @@ par(mar=c(0,0,2,1))
 plot(f2[1:10, ], label='site_id')
 title('Sandy-skeletal particle size control section class')
 
-## ----owndata_g, results='show'-------------------------------------------
 # extract site data from SPC into dataframe 's'
 s <- site(f)
 names(s)
@@ -294,7 +321,6 @@ names(s)
 h <- horizons(f)
 names(h)
 
-## ----owndata_a1, eval=FALSE, results='hide'------------------------------
 ## # use each one of these to return a vector of the pedons where errors were detected
 ## #get('sites.missing.pedons', envir=soilDB.env)
 ## #get('dup.pedon.ids', envir=soilDB.env)
@@ -309,7 +335,6 @@ names(h)
 ## idx <- which(horizons(f)$pedon_id != get('bad.pedon.ids', envir=soilDB.env))
 ## f <- f[idx, ]
 
-## ------------------------------------------------------------------------
 # make a new object with a sequence of values from 1 to 10
 a <- seq(from=1, to=10, by=1)
 # result
@@ -327,7 +352,6 @@ aFunction <- function(i) {
 # apply our new function to object "a"
 aFunction(a)
 
-## ----owndata_i_gopher, echo=TRUE, results='show', warning=FALSE----------
 # load required libraries
 library(aqp)
 library(soilDB)
@@ -356,13 +380,11 @@ findBtHorizons <- function(i) {
 # apply function to a single profile as a demonstration
 findBtHorizons(f[1, ])
 
-## ------------------------------------------------------------------------
 l <- profileApply(f, FUN=findBtHorizons, simplify=FALSE)
 
 # convert list into a dataframe, dropping all pedons with no 't' horizons 
 Bt.horizons <- ldply(l)
 
-## ----fig.width=4.5, fig.height=3.5---------------------------------------
 # standard ddply syntax is as follows (type '?ddply' into the R console):
 # ddply(.data, .variables, .fun)
 Bt.horizons.top <- ddply(Bt.horizons, 'peiid', summarise, depth_to_Bt_cm=min(hzdept))
@@ -376,7 +398,6 @@ site(f) <- Bt.horizons.top
 par(mar=c(4.5,4.5,1,1))
 hist(f$depth_to_Bt_cm, xlab='Depth to Bt Horizon (cm)', main='')
 
-## ----fig.width=10, fig.height=5------------------------------------------
 # index to the first 15 profiles
 idx <- 1:15
 
@@ -393,7 +414,6 @@ points(x=1:15, y=f$depth_to_Bt_cm[idx], pch=21, bg='black', col='white')
 title(main = "Select pedons from the 'gopheridge' sample dataset", line=-0.5)
 title(sub= "Depth to first 'Bt' horizon identified", line=-2)
 
-## ----owndata_i1_gopher, eval=FALSE, echo=TRUE, results='show', warning=FALSE----
 ## # This time we'll go after the thickness of the organic horizons where present.
 ## 
 ## # load library
@@ -431,7 +451,6 @@ title(sub= "Depth to first 'Bt' horizon identified", line=-2)
 ## par(mar=c(4.5,4.5,1,1))
 ## hist(f$organic_thickness_cm, xlab='Thickness of Organic horizons (cm)', main='')
 
-## ----owndata_i, eval=FALSE, echo=TRUE, results='show', warning=FALSE-----
 ## # load required libraries
 ## library(plyr)
 ## 
@@ -474,7 +493,6 @@ title(sub= "Depth to first 'Bt' horizon identified", line=-2)
 ## par(mar=c(4.5,4.5,1,1))
 ## hist(f$depth_to_carbonates_cm, xlab='Depth to Calcium Carbonates (cm)', main='')
 
-## ----owndata_j1, eval=TRUE, echo=TRUE, results='show', warning=FALSE, collapse=TRUE----
 # fetch extended site and horizon data
 e <- get_extended_data_from_NASIS_db()
 
@@ -510,7 +528,6 @@ colnames(e$texmodifier)
 # soil structure data
 colnames(e$struct) 
 
-## ----owndata_c, results='show'-------------------------------------------
 # graphically tabulate the occurrence of landforms
 # load required libraries
 library(soilDB)
@@ -526,7 +543,6 @@ lf <- sort(table(f$landform_string), decreasing = TRUE)
 # plot top 10
 dotchart2(lf[1:10], col='black', xlim = c(0, max(lf)), cex.labels = 0.75)
 
-## ----owndata_j3, results='show', warning=FALSE, fig.width=6, fig.height=4----
 # rename gopheridge data
 f <- gopheridge
 
@@ -538,7 +554,7 @@ unique(d$featkind)
 sort(table(droplevels(factor(d$featkind))), decreasing = TRUE)
 
 # subset argillic horizons
-d <- d[which(d$featkind == 'argillic horizon'), ]
+d <- d[d$featkind == 'argillic horizon', ]
 
 # create a new column and subtract the upper from the lower depth
 d$argillic_thickness_cm <- d$featdepb - d$featdept
@@ -558,11 +574,10 @@ site(f) <- d
 
 # plot as histogram
 # reset figure margins
-par(mar=c(4.5,4.5,1,1))
-hist(f$argillic_thickness_cm, xlab='Thickness of argillic diagnostic (cm)', main='')
-hist(f$depth_to_argillic_cm, xlab='Depth to argillic diagnostic (cm)', main='')
+par(mar = c(4.5,4.5,1,1))
+hist(f$argillic_thickness_cm, xlab = 'Thickness of argillic diagnostic (cm)', main='')
+hist(f$depth_to_argillic_cm, xlab = 'Depth to argillic diagnostic (cm)', main = '')
 
-## ----owndata_j4, eval=TRUE, echo=TRUE, results='show', warning=FALSE-----
 # start fresh with your own data
 f <- fetchNASIS(from = 'pedons')
 # get diagnostic features associated with pedons loaded from selected set
@@ -579,7 +594,6 @@ sort(table(d$featkind), decreasing = TRUE)[1:5]
 # how would you do the rest.....see if you can work it out!
 
 
-## ----owndata_k, eval=TRUE, echo=TRUE, results='show', warning=FALSE, fig.height=9, fig.width=7----
 ## work up diagnostic plot based on gopheridge dataset
 library(aqp)
 library(soilDB)
@@ -597,7 +611,6 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 # plot again, this time with diagnostic features ordered according to co-occurrence
 diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 'taxonname', sort.vars = TRUE)
 
-## ----owndata_l, eval=FALSE, echo=TRUE, results='hide', warning=FALSE, fig.height=9, fig.width=7----
 ## library(soilDB)
 ## library(sharpshootR)
 ## 
@@ -618,7 +631,6 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 ## # generate diagnostic property diagram
 ## diagnosticPropertyPlot(f, v, k=5, grid.label='site_id', dend.label = 'taxonname')
 
-## ---- fig.width=7, fig.height=4------------------------------------------
 library(RODBC)
 
 # write query as a long text object
@@ -634,7 +646,7 @@ INNER JOIN siteobs_View_1 ON site_View_1.siteiid = siteobs_View_1.siteiidref
 LEFT OUTER JOIN sitesoiltemp_View_1 ON siteobs_View_1.siteobsiid = sitesoiltemp_View_1.siteobsiidref
 LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref
 -- ordering of rows
-order by obs_date, siteiid;"
+ORDER BY obs_date, siteiid;"
 
 # setup connection local NASIS
 channel <- odbcDriverConnect(connection = getOption("soilDB.NASIS.credentials"))
@@ -662,4 +674,3 @@ hist(d$doy, xlim=c(1,366), breaks=30, las=1, main='Soil Temperature Measurements
 
 # soil temperature by day of year
 plot(soitemp ~ doy, data=d, type='p', xlim=c(1, 366), ylim=c(-1, 25), xlab='Day of Year', ylab='Soil Temperature at 50cm (deg C)', las=1)
-

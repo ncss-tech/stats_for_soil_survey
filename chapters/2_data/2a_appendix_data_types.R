@@ -1,4 +1,3 @@
-## ----datatype1, eval=TRUE, collapse=FALSE--------------------------------
 # implicit vector creation from a sequence from 1:10
 1:10
 
@@ -19,7 +18,6 @@ subgroup
 andic <- c(FALSE,TRUE,FALSE) 
 andic
 
-## ----datatype1.1, eval=TRUE----------------------------------------------
 # 2nd and 4th elements of vector 'clay' from above
 clay[c(2, 4)] 
 
@@ -32,7 +30,6 @@ andic[-1]
 # re-order clay values using a sequence from 5 to 1
 clay[5:1]
 
-## ----datatype1.2, eval=TRUE----------------------------------------------
 # clay values from above
 # divide by 100, notice that iteration is over all the elements of 'clay' in the result
 clay / 100
@@ -52,20 +49,17 @@ c(1, 10, 100) + c(1, 2)
 # taking the following elements from above, first+first, second+second, third+first
 # 1+1=2, 10+2=12, 100+1=101
 
-## ----datatype2, eval=TRUE------------------------------------------------
 # Take our two character and logical vectors we created above and convert them into a more useful dataframe.
 # we'll use the data.frame() function to glue these two vectors together into object 'd'
 d <- data.frame(subgroup, andic)
 d
 
-## ----datatype2.1, eval=TRUE----------------------------------------------
 # get the column names of a dataframe
 names(d)
 # we can use 'names()' and 'c()' to rename the columns in a dataframe
 names(d) <- c('tax_subgroup', 'andic.soil.properties')
 d
 
-## ----datatype2a, eval=TRUE-----------------------------------------------
 # format: dataframe_name[rows, columns]
 d[1, ] # first row of dataframe
 d[, 1] # first column of dataframe
@@ -94,7 +88,6 @@ d
 # although the column indexes are not visible each column has an index number assigned to it
 d <- d[ , c(2,1)]
 
-## ----factors, eval=TRUE--------------------------------------------------
 # generate a factor representation of the characters contained in the word 'pedology'
 # also setting the range of possibilities to the letters of the alphabet
 x <- factor(substring("pedology", 1:8, 1:8), levels = letters)
@@ -107,7 +100,6 @@ x
 factor(substring("mississippi", 1:11, 1:11))
 # the string collapses to repeating levels only
 
-## ----datatype3, eval=TRUE------------------------------------------------
 # make a list with named elements
 l <- list('favorite shovels'=c('sharpshooter', 'gibbs digger', 'auger', 'rock bar', 'backhoe!'),
           'food'=c('apples', 'bread', 'cheese', 'vienna sausages', 'lutefisk'),
@@ -136,7 +128,6 @@ list.of.lists
 # convert list of elements with equal length into a data.frame
 as.data.frame(list.of.lists)
 
-## ----datatype4, eval=TRUE------------------------------------------------
 # make a 5x5 matrix of 0's
 m <- matrix(0, nrow=5, ncol=5)
 m
@@ -162,4 +153,3 @@ m
 # many functions return matrix objects
 # create a matrix of the sequences 1:10 and 1:10, then multiply every combination by applying a function
 outer(1:10, 1:10, FUN='*')
-
