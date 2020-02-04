@@ -37,6 +37,7 @@ soil <- 'DRUMMER'
 # standard request for OSD data
 osd <- fetchOSD(soils = soil)
 str(osd, 1)
+str(osd, 2)
 
 # extended request
 osd <- fetchOSD(soils = soil, extended = TRUE)
@@ -47,10 +48,12 @@ plotSPC(osd$SPC)
 
 # better
 par(mar=c(0, 1, 0, 1))
-plotSPC(osd$SPC, cex.names=1, axis.line.offset = -5, width=0.1, x.idx.offset = 0.1, name='hzname')
+plotSPC(osd$SPC, cex.names=0.85, axis.line.offset = -5, width=0.1, x.idx.offset = 0.1, name='hzname')
 
 # horizon thickness stats
-hz.thick <- with(horizons(osd$SPC), bottom - top)
+h <- horizons(osd$SPC)
+
+hz.thick <- h$bottom - h$top
 summary(hz.thick)
 sd(hz.thick)
 
@@ -89,6 +92,8 @@ y <- fetchOSD('musick', colorState = 'moist')
 # these are SoilProfileCollection objects
 # e.g.
 x$hue
+
+h <- horizons(x)
 
 # combine Munsell notation back into 
 m1 <- sprintf("%s %s/%s", x$hue, x$value, x$chroma)
@@ -348,6 +353,37 @@ get('top.bottom.equal', envir=soilDB.env)
 
 # .. maybe fix, or at least be aware of
 
+
+s <- site(pedons)
+h <- horizons(pedons)
+
+h[1, ]
+h[1, 1]
+
+length(1:10)
+length(pedons)
+plot(pedons)
+
+plot(pedons[5:10, ])
+
+table(pedons$drainagecl)
+table(pedons$hillslopeprof)
+
+table(pedons$hillslopeprof, pedons$drainagecl)
+
+idx <- which(pedons$drainagecl == 'somewhat poorly')
+x <- pedons[idx, ]
+
+x <- subsetProfiles(pedons, s="drainagecl == 'somewhat poorly'")
+
+x <- subsetProfiles(pedons, h="hzname == 'H1'")
+table(x$hzname)
+
+paste(x$pedon_id, collapse = ',')
+
+par(mar=c(0,0,0,1))
+plot(x)
+
 # this is a SoilProfileCollection object
 str(pedons, 2)
 
@@ -364,7 +400,7 @@ dx <- sort(dx)
 dy <- cumsum(dy)
 
 # plot it using "base graphics"
-plot(x=dx, y=dy, type='S', las=1, cex=1, cex.axis=0.8, 
+plot(x=dx, y=dy, type='l', las=1, cex.axis=1, 
      ylab='Cumulative Pedons',
      xlab='', main='NASIS Pedons Correlated to DRUMMER')
 grid()
