@@ -1058,19 +1058,21 @@ bwplot(mlra ~ value | variable, data=m,                 # setup plot and data so
 )
 ```
 
-
-
-
-
 # Soil Reports
 
-One of the strengths of NASIS is that it that has a wealth of existing queries and reports. This makes it easy for the average user to load their data and run numerous reports. In R the soilDB similarly has many fetch functions to load data. Recently the soilReports package was developed to replicate NASIS's report repository. Currently soilReports contains a small collection of reports designed to summarize field and laboratory pedons, and map unit polygons. This collection of reports automates many of methods reviewed thus far, but are no substitute for interacting with your data and asking questions. Examples can be found at the following link, [https://github.com/ncss-tech/soilReports#example-output](https://github.com/ncss-tech/soilReports#example-output). 
+One of the strengths of NASIS is that it that has a wealth of existing queries and reports to access the complex data gathered and created during the Soil Survey effort. This makes it easy for the average user to load their data and run numerous reports. 
 
-The soilReports R package is largely just a collection of R Markdown (.Rmd) reports. R Markdown is a document format that makes it easy to create reports and other dynamic documents. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to NASIS.
+The NCSS-tech R package `soilDB` similarly has many functions to load data from a variety of sources, NASIS included. Recently, the `soilReports` package was developed to replicate and expand on NASIS's report repository. 
 
-Lets get busy and demonstrate how to run an existing .Rmd to summarize a series of pedons for a given soil series.
+`soilReports` contains a small collection of reports mostly designed to summarize field and laboratory pedon data, as well as map unit / LRU / MLRA polygons. This collection of reports automates many methods we have reviewed so far, but are no substitute for interacting with your data and asking questions. 
 
+Example report output can be found at the following link: [https://github.com/ncss-tech/soilReports#example-output](https://github.com/ncss-tech/soilReports#example-output). 
 
+You can convert any of your R-based analyses to the `soilReports` format. The `soilReports` R package is essentially just a collection of R Markdown (_.Rmd_) reports, each with a "manifest" that describes any required dependencies, configuration files or inputs. 
+
+R Markdown is a markup format for creating reproducible, dynamic reports with R. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to, and even more powerful than, NASIS.
+
+Let's demonstrate how to run an existing _.Rmd_ to summarize laboratory data for a soil series.
 
 ## Requirements
 
@@ -1080,16 +1082,15 @@ Lets get busy and demonstrate how to run an existing .Rmd to summarize a series 
 -	ODBC connection to NASIS is setup
 - Beware each report has a unique configuration file that may need to be edited. 
 
-
 ## Instructions
 
 1. **Load** your NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by upedonid and Taxon Name" from the Region 11 report folder to load your selected set. Be sure to target both the site, pedon and lab layer tables. **Remove** from your selected set the pedons and sites you wish to exclude from the report.
 
-2.	**Install/rei-install** the soilReports package. This package is updated regularly (e.g. weekly), and should be re-installed from GitHub regularly.
+2.	**Install/re-install** the `soilReports` package. This package is updated regularly (e.g. weekly), and should be installed from GitHub regularly.
 
 ```{r, eval=FALSE}
 # Install the soilReports package from GitHub
-devtools::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade_dependencies=FALSE)
+remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, build=FALSE)
 ```
 
 3. **View** the list of available reports.
@@ -1110,19 +1111,25 @@ listReports()
 copyReport(reportName = "region11/lab_summary_by_taxonname", outputDir = "C:/workspace2/lab_sum")
 ```
 
-5. **Examine** the report folders contents. The reported is titled report.Rmd. Notice their are several other support files. The parameters for the report are contained in the config.R file.
+5. **Examine** the report folder contents. The reported is titled `report.Rmd`. Notice there are several other support files. The parameters for the report are contained in the `config.R` file.
 
 ![](figure/report_folder.png)
 
-6. **Check** or **create** a genhz\_rules file for a soil series. In order to aggregate the pedons by horizon designation, a genhz\_rules file (e.g., Miamian_rules.R) is needed. See above.
+6. **Check** or **create** a genhz\_rules file for a soil series. In order to aggregate the pedons by horizon designation, a genhz\_rules file (e.g., Miami_rules.R) is needed. See above.
 
 If none exists see the following job aid on how to create one, [Assigning Generalized Horizon Labels](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html).
 
 ![](figure/miamian_rules.png)
 
-Pay special attention to how carrot "^" and dollar "\$" symbols are used. They function as anti-wildcards. For example, a "^" placed before an A horizon, "^A", will match any horizon designation that follows A, such as Ap, Ap1, etc. Also, placing a "\$" after a Bt horizon, "Bt\$", will match any horizon designation that precedes Bt, such as 2Bt or 3Bt. Encapsulating a horizon with both "^" and "\$" symbols will result only in exact matches. For example ^A$, will only match A, not Ap or A1.
+Pay special attention to how caret `^` and dollar `$` symbols are used in REGEX. They function as _anchors_ for the beginning and end of the string, respectively. 
 
-6. **Excute** the report.
+ * A `^` placed before an A horizon, `^A`, will match any horizon designation that starts with A, such as Ap, Ap1, but _not_ something merely containing A, such as BA. 
+
+ * Placing a `$` after a Bt horizon, `Bt$`, will match any horizon designation that ends with Bt, such as 2Bt or 3Bt, but _not_ something with a vertical subdivision, such as Bt2. 
+ 
+ * Wrapping pattern with both `^` and `$` symbols will result only in exact matches -- i.e. that start and end with the contents between `^` and `$`. For example `^[AC]$`, will only match A or C, _not_ Ap, Ap2, or Cg.
+
+6. **Execute** the report.
 
 **Command-line approach**
 
@@ -1152,26 +1159,27 @@ render(input = report_path,
 
 ![](figure/knit_button.png)
 
-7.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e., C:/workspace/lab\_sum/report.html), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing, or convert it to a pdf. Also beware when reopening the .html with Internet Explorer, click on "Allow blocked content" if prompted. Otherwise Internet Explorer may alter the formatting within the document.
+7.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e., "C:/workspace/lab\_sum/report.html"), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing and/or convert it to a PDF. 
+
+Also, beware when opening the .html file with Internet Explorer -- be sure to click on "Allow blocked content" if prompted. Otherwise, Internet Explorer will alter the formatting of tables etc. within the document.
 
 **Sample pedon report**
  
 ![](figure/rmd_sample.png)
 
-
-
-## Exercise 2: run the lab\_summary\_by\_taxonname.Rmd
+## Exercise 2: run the region11/lab\_summary\_by\_taxonname
 
 - Load your selected set with the pedon and site table for an existing GHL file, or make your own (highly encouraged)
-- Run the lab_summary_by_taxonname.Rmd report on a soil series of your choice.
+- Run the `lab_summary_by_taxonname.Rmd` report on a soil series of your choice.
 - Show your work and submit the results to your mentor.
 
+## Exercise 3: Run Mapunit Comparison
 
-## Exercise 3: run the mapunit comparison report
+Another popular report in `soilReports` is the `region2/mu-comparison` report. 
 
-You can create any R-based analysis in `soilReports` format. Another popular report is the `region2/mu-comparison` report. This report uses constant density sampling to extract numeric and categorical values from multiple raster data sources that overlap a set of polygons. In this example, we clip a small portion of SSURGO polygons from the CA630 soil survey area extent. 
+This report uses constant density sampling (`sharpshootR::constantDensitySampling()`) to extract numeric and categorical values from multiple raster data sources that overlap a set of user-supplied polygons. 
 
-We select a small set of mapunit symbols (5012, 3046, 7083, 7085, 7088) (`mu.set` variable in `config.R`) that occur within the clipping extent, and that have soil forming factors we expect to contrast with one another. You can inspect some of the other mapunit symbols by changing this in the `config.R`.
+In this example, we clip a small portion of SSURGO polygons from the CA630 soil survey area extent. We then select a small set of mapunit symbols (5012, 3046, 7083, 7085, 7088) that occur within the clipping extent. These mapunits have soil forming factors we expect to contrast with one another in several ways. You can inspect other mapunit symbols by changing `mu.set` in `config.R`.
 
 1. **Download** the demo data:
 
@@ -1208,6 +1216,55 @@ file.copy(paste0(ch4.mucomp.path, "/new_config.R"), paste0(ch4.mucomp.path,"/con
 ```
 
 4. **Open** `report.Rmd` in the `C:/workspace2/chapter4/mucomp` folder and click the "Knit" button at the top of the RStudio source pane to run the report.
+
+5. Inspect the report output HTML file, as well as the spatial and tabular data output in the `output` folder. 
+
+_Question: What are the major differences that you can see, based on the report, between the five different mapunit symbols that were analysed?_
+
+## Exercise 4: Run Shiny Pedon Summary
+
+The `region2/shiny-pedon-summary` report is an interactive Shiny-based report that uses `flexdashboard` to help the user subset and summarize NASIS pedons from a graphical interface. This allows one to rapidly generate reports from a large set of pedons in their NASIS selected set. 
+
+The left INPUT sidebar has numerous options for subsetting pedon data. Specifically, you can change REGEX patterns for _mapunit symbol_, _taxon name_, _local phase_, and _User Pedon ID_. Also, you can use the drop down boxes to filter on _taxon kind_ or compare different "modal"/RV pedons.
+
+![Example: Analyzing the Loafercreek Taxadjuncts](https://ncss-tech.github.io/soilReports/docs/shiny-pedon-summary/shiny-pedon_loafercreek-taxadjuncts.PNG)
+
+1. **Create an instance** of the `region2/shiny-pedon-summary` report with `soilReports`:
+
+```{r eval=FALSE}
+# create new instance of reports 
+library(soilReports)
+
+# set path for shiny-pedon-summary report instance
+ch4.shinyped.path <- "C:/workspace2/chapter4/shiny-pedon"
+
+# create directories (if needed)
+if(!dir.exists(ch4.shinyped.path))
+  dir.create(ch4.shinyped.path, recursive = TRUE)
+
+# copy report contents to target path
+copyReport('region2/shiny-pedon-summary', outputDir = ch4.shinyped.path, overwrite = TRUE)
+```
+
+2. Update the `config.R` file
+
+You can update the `config.R` file in "C:/workspace2/chapter4/shiny-pedon" (or wherever you installed the report) to use the `soilDB` datasets `loafercreek` and `gopheridge` by setting `demo_mode <- TRUE`. This is the _simplest_ way to demonstrate how this report works. Alternately, when `demo_mode <- FALSE`, pedons will be loaded from your NASIS selected set.
+
+`config.R` also allows you to specify a shapefile for overlaying the points on -- to determine mapunit symbol -- as well as several raster data sources whose values will be extracted at point locations and summarized. The demo dataset does not use either of these by default, due to large file sizes. 
+
+Furthermore, a default (very general) set of REGEX generalized horizon patterns is provided to assign generalized horizon labels for provisional grouping. These provided patterns are unlikely to cover ALL cases, and essentially _always_ need to be modified for final correlation. That said, they do a decent job of making a first-pass correlation for diverse types of soils. 
+
+The default `config.R` settings use the general patterns: `use_regex_ghz <- TRUE`. You are welcome to modify the defaults. If you want to use the values you have populated in NASIS _Pedon Horizon Component Layer ID_, set `use_regex_ghz <- FALSE`.
+
+3. Run the report via `shiny.Rmd`
+
+This report uses the Shiny `flexdashboard` interface. Open up `shiny.Rmd` and click the "Run Document" button to start the report. This will load the pedon and spatial data specified in `config.R`.
+
+**NOTE:** _If a Viewer Window does not pop-up right away, click the gear icon to the right of the "Run Document" button. Be sure the option "Preview in Window" is checked, then click "Run Document" again._
+
+4. All of the subsetting parameters are in the left-hand sidebar. Play around with all of these options -- the graphs and plots in the tabs to the right will automatically update as you make changes.
+
+5. When you like what you have, you can export a non-interactive HTML file for your records. To do this, first, set the "Report name:" box to something informative -- this will be your report output file name. Then, scroll down to the bottom of the INPUT sidebar and click "Export Report" button. Check the "output" folder (subdirectory of where you installed the report) for your results.
 
 # References  
 
