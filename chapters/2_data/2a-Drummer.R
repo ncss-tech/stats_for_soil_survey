@@ -8,6 +8,17 @@
 ## When in doubt, documentation is here:
 # http://ncss-tech.github.io/AQP/
 
+## Suggested self-study:
+# http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html
+# http://ncss-tech.github.io/AQP/demos/profileApply/loafercreek.html
+# http://ncss-tech.github.io/AQP/demos/glom/glacierpoint.html
+
+## More about SoilProfileCollection objects
+# http://ncss-tech.github.io/AQP/aqp/aqp-intro.html
+
+## Homework: 
+# http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/genhz_homework.html
+
 
 # packages
 library(aqp)
@@ -59,7 +70,7 @@ title('OSD + 8 Realizations')
 # ok that is neat, what about the rest?
 str(osd, 1)
 
-# !!!
+# there is a lot in there
 osd$climate.annual
 osd$climate.monthly
 osd$mlra
@@ -69,6 +80,33 @@ osd$pmkind
 
 # these are all snapshots
 osd$soilweb.metadata
+
+## soil colors -> computer colors, how?
+# example data
+x <- fetchOSD('musick', colorState = 'dry')
+y <- fetchOSD('musick', colorState = 'moist')
+
+# these are SoilProfileCollection objects
+# e.g.
+x$hue
+
+# combine Munsell notation back into 
+m1 <- sprintf("%s %s/%s", x$hue, x$value, x$chroma)
+m2 <- sprintf("%s %s/%s", y$hue, y$value, y$chroma)
+
+m1
+
+# convert Munsell notation into hex-encoded sRGB (e.g. computer screen ready)
+parseMunsell(m1)
+
+# compute color contrast metrics
+# 
+cc <- colorContrast(m1, m2)
+cc
+
+# graphical explanation
+colorContrastPlot(m1, m2, labels=c('Dry', 'Moist'), d.cex = 0.9)
+
 
 
 ## STOP! 
@@ -207,6 +245,11 @@ xyplot(top ~ p.q50 | variable, groups=group, data=g, ylab='Depth', main=fm.name,
 ## Break ##
 
 
+## More KSSL?
+
+
+
+
 ## siblings?
 # https://ncss-tech.github.io/AQP/soilDB/siblings.html
 
@@ -231,7 +274,7 @@ vizGeomorphicComponent(sib.data$geomcomp)
 # do something with the annual climate data
 vizAnnualClimate(sib.data$climate.annual, s = soil)
 
-# you try it!
+# you try it, or check-out:
 # https://ncss-tech.github.io/AQP/soilDB/siblings.html
 
 
@@ -391,54 +434,7 @@ lapply(rmf, head)
 
 
 
+## I'm feeling lucky: experiment with Equal Area Splines
+# https://raw.githubusercontent.com/ncss-tech/aqp/master/misc/sandbox/mps2-eval.R
 
-
-## .. and then?
-
-
-
-
-##############################
-
-# advanced, annotate top/bottom depths of horizon with minimum Munsell Chroma
-
-# going to need a function
-maxChroma <- function(i) {
-  # extract horizons
-  h <- horizons(i)
-  # index the highest Munsell chroma
-  idx <- which.max(h$chroma)
-  
-  # horizon depth names
-  hd <- horizonDepths(i)
-  # profile ID name
-  id <- idname(i)
-  
-  # compile into data.frame:
-  # current profile ID, top/bottom depths
-  # horizon with lowest chroma
-  res <- h[idx, c(id, hd)]
-  
-  # re-name top/bottom so as not to conflict with existing attributes
-  names(res) <- c(id, 'max_chroma_top', 'max_chroma_bottom')
-  
-  # send back
-  return(res)
-}
-
-maxChroma(s[1, ])
-
-# apply to all profiles
-mc <- profileApply(s, maxChroma, frameify = TRUE)
-
-# merge back into source data
-site(s) <- mc
-# its in there
-str(site(s))
-
-par(mar=c(1,0,2,1), mfrow=c(1,1))
-plotSPC(s, name='hzname', cex.names = 0.8)
-
-lines(x=1:length(s), y=s$max_chroma_top, lty=3)
-lines(x=1:length(s), y=s$max_chroma_bottom, lty=3)
 
