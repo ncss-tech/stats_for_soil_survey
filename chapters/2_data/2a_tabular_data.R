@@ -71,54 +71,6 @@ g4 <- ggplot(pedons, aes(x = year, y = cumsum(Count))) +
 gridExtra::grid.arrange(g1, g3, ncol = 1)
 
 
-  # Using the concatenate function we can create the following character and logical vectors
-  # character vector: taxonomic subgroup
-  subgroup <- c("typic haplocryepts","andic haplocryepts","typic dystrocryepts")  
-  subgroup
-  
-  # logical vector: boolean field for presence or absence of andic soil properties diagnostic feature
-  andic <- c(FALSE, TRUE, FALSE) 
-  andic
-  
-  # Take our two character and logical vectors and convert them into a more useful dataframe.
-  # we'll use the data.frame() function to glue these two vectors together into object 'd'
-  d <- data.frame(subgroup, andic)
-  
-  # note that characters are converted to factors
-  # what is a factor?
-  str(d)
-
-  # get the column names of a dataframe
-  names(d)
-  # we can use 'names()' and 'c()' to rename the columns in a dataframe
-  names(d) <- c('tax_subgroup', 'andic.soil.properties')
-  d
-
-  # format: dataframe_name[rows, columns]
-  d[1, ] # first row of dataframe
-  d[, 1] # first column of dataframe
-  d[2, 2] # second row, second column
-  
-  # In dataframes we can also use the '$' symbol to reference vector columns within a specific dataframe object
-  d$tax_subgroup
-  
-  # Other useful functions for checking objects and working with dataframes
-  # the structure 'str()' function will show you the structure of an object and the data types of the vectors within it
-  str(d)
-  # 'class()' will tell you the object type or data type
-  class(d)
-  # use 'colnames()' to get a vector of column names from a dataframe
-  colnames(d)
-  # ncol and nrow give dimensions
-  ncol(d)
-  nrow(d)
-  
-  # building on what we've learned above, we can use the square bracket notation on a dataframe to re-order columns
-  d <- d[ ,c('andic.soil.properties', 'tax_subgroup')]
-  d
-  # another way we could do this is to use the column indexes within the concatenate function
-  d <- d[ , c(2,1)]
-
 library(diagram, quietly=TRUE)
 # reset figure margins
 par(mar = c(1, 1, 1, 1))
@@ -178,26 +130,6 @@ par(mar=c(1,1,1,1))
 # ommiting pedon IDs and horizon designations
 plot(gopheridge, print.id=FALSE, name='', width=0.3)
 title('Pedons from the `gopheridge` sample dataset', line=-0.5)
-
-s <- site(gopheridge)
-# show table of site data
-knitr::kable(s[1:2, 1:10])
-knitr::kable(s[1:2, 11:20])
-knitr::kable(s[1:2, 21:28])
-knitr::kable(s[1:2, 28:36])
-
-# use the following to show the data in the R console
-#head(site(gopheridge), 2) # show the first 2 lines of the site data
-
-h <- horizons(gopheridge)
-# show table of site data
-knitr::kable(h[1:8, 1:10])
-knitr::kable(h[1:8, 11:19])
-#knitr::kable(h[1:2, 21:28])
-#knitr::kable(h[1:2, 28:36])
-
-# use the following to show the data in the R console
-#head(horizons(gopheridge), 5) # show the first 5 rows of the horizon data
 
 # load required libraries
 library(soilDB)
@@ -632,6 +564,7 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 ## # generate diagnostic property diagram
 ## diagnosticPropertyPlot(f, v, k=5, grid.label='site_id', dend.label = 'taxonname')
 
+library(soilDB)
 library(RODBC)
 
 # write query as a long text object

@@ -605,7 +605,7 @@ bwplot(mlra ~ value | variable, data=m,                 # setup plot and data so
 )
 
 ## # Install the soilReports package from GitHub
-## devtools::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade_dependencies=FALSE)
+## remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, build=FALSE)
 
 ## # Load the soilReports and rmarkdown package
 ## library(soilReports)
@@ -654,3 +654,16 @@ bwplot(mlra ~ value | variable, data=m,                 # setup plot and data so
 
 ## # copy config file containing relative paths to rasters downloaded above
 ## file.copy(paste0(ch4.mucomp.path, "/new_config.R"), paste0(ch4.mucomp.path,"/config.R"), overwrite = TRUE)
+
+## # create new instance of reports
+## library(soilReports)
+## 
+## # set path for shiny-pedon-summary report instance
+## ch4.shinyped.path <- "C:/workspace2/chapter4/shiny-pedon"
+## 
+## # create directories (if needed)
+## if(!dir.exists(ch4.shinyped.path))
+##   dir.create(ch4.shinyped.path, recursive = TRUE)
+## 
+## # copy report contents to target path
+## copyReport('region2/shiny-pedon-summary', outputDir = ch4.shinyped.path, overwrite = TRUE)

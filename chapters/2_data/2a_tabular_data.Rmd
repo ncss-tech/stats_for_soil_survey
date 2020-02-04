@@ -59,6 +59,8 @@ What if you could extract, organize, and visualize data from NASIS and many othe
         + [Water Retention Curve Development from KSSL Data](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
 - **fetchOSD()**
     - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
+- **OSDquery()**
+    - Full-text searching of OSD sections.
 - **fetchRaCA()**
     - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
         + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)
@@ -170,98 +172,36 @@ gridExtra::grid.arrange(g1, g3, ncol = 1)
   - If we acknowledge this, which we must, then how do we deal with it in pedon data?
       - Use a cutoff depth, for example 100 cm, can be used to truncate observations to a zone of greater confidence.
       - Show the relative confidence of the data with depth.
+
+
+
+## Common Challenges in Working with Pedon Data
+
+ - Consistency
+    - Missing data
+ - Confidence in the observations
+    - Uncertainty with depth
+ - Description style differences
+    - Depth described, horizonation usage styles
+ - Legacy data vintage
+    - Decadal span of data
+    - Taxonomy updates, horizon nomenclature
+ - Location confidence
+    - Origin of the location information
+    - Datum used for data collection
+    - Accuracy for GPS values at the time of data collection
     
-
-<!-- insert section labels for references via URL -->
-<a id="data-types-and-classes"></a>
-
-# R Basics - Data Types and Classes
-
-The following examples are meant to be copied from this document and pasted into the **R** console, where they can be run interactively. Comments are specified with a '#' prefix and briefly describe the purpose of any following code. Further documentation on objects and functions discussed in this chapter can be accessed by typing `help(soilDB)` or `help(aqp)` at the **R** console. The general form for a help request is `?function_name`. 
-
-
-
-## Learning the R Language
-
-This chapter relies heavily on a basic understanding of the **R** language and syntax. There are many excellent manuals, tutorials, and example-based learning tools available. We recommend some of the following.
-
- * [**R Spatial, Chapter 1: Introduction**](http://www.rspatial.org/intr/index.html)
- * [**Quick R website**](http://www.statmethods.net/)
- * [**Advanced R**](http://adv-r.had.co.nz/)
-
-
-## Classes of Objects Used in R
- 
-One of the most versatile things about R is that it can manipulate and work with data in many ways.  Below are examples of ways to create and reference information in a common data type called a dataframe. Within the R session, *objects* contain information that is loaded from files, extracted from NASIS, created on the fly, or calculated by some function. If none of the base classes are sufficient for a task, it is possible to define custom classes. The `SoilProfileCollection` is an example of a custom class which is tailored to the structure and organization of soil pedon and horizon data.
-
-For a more in-depth review of data types in R, please review the [**Chapter 2a Appendix - Data Types**](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_appendix_data_types.html), or one of the websites suggested above.
-
-
-### Dataframes
-
-Dataframes are central to most work in R. They describe rectangular data, which can be thought of as a spreadsheet with rows and columns. Each column in the dataframe is constrained to a single data type: numeric, date-time, character, Boolean, and so on. Note that each column of a dataframe is a vector, and all column vectors must be the same length (hence the adjective "rectangular").
-
-```{r datatype2, eval=TRUE}
-  # Using the concatenate function we can create the following character and logical vectors
-  # character vector: taxonomic subgroup
-  subgroup <- c("typic haplocryepts","andic haplocryepts","typic dystrocryepts")  
-  subgroup
+### Meeting the Challenges
   
-  # logical vector: boolean field for presence or absence of andic soil properties diagnostic feature
-  andic <- c(FALSE, TRUE, FALSE) 
-  andic
-  
-  # Take our two character and logical vectors and convert them into a more useful dataframe.
-  # we'll use the data.frame() function to glue these two vectors together into object 'd'
-  d <- data.frame(subgroup, andic)
-  
-  # note that characters are converted to factors
-  # what is a factor?
-  str(d)
-``` 
-You can see that the dataframe was created and it worked, but the vector names are not very informative. A couple of useful functions for working with column names are `names()`, which renames columns in a dataframe and `colnames()`, which creates a vector of column names.
+  - Graphical display of the data and summary outputs ([**slice-wise aggregation**](http://ncss-tech.github.io/AQP/aqp/profile-summary.html))
+  - Generalized Horizon Labels (GHL). Derive an aggregate soil profile and summarize soil properties for groups of similar soils. 
+      - More on that process can be seen in the following tutorial:
+      [**GHL Aggregation Presentation**](http://ncss-tech.github.io/AQP/presentations/ghl-aggregation.html) and [**GHL Aggregation Tutorial**](http://ncss-tech.github.io/AQP/aqp/gen-hz-application.html).
 
-```{r datatype2.1, eval=TRUE}  
-  # get the column names of a dataframe
-  names(d)
-  # we can use 'names()' and 'c()' to rename the columns in a dataframe
-  names(d) <- c('tax_subgroup', 'andic.soil.properties')
-  d
-```
+For more information regarding difficult pedon data, see the following tutorial in the "aqp" package:  
+[**Dealing with Troublesome data**](http://ncss-tech.github.io/AQP/aqp/dealing-with-bad-data.html).
 
-#### Referencing within dataframes
-Note in dataframe `d` that each row has an index number in front of it.  Using the square brackets notation, you can reference any part of a dataframe: rows or columns or specific row- and column-selections.  Here are some examples:
-  
-```{r datatype2a, eval=TRUE}
-  # format: dataframe_name[rows, columns]
-  d[1, ] # first row of dataframe
-  d[, 1] # first column of dataframe
-  d[2, 2] # second row, second column
-  
-  # In dataframes we can also use the '$' symbol to reference vector columns within a specific dataframe object
-  d$tax_subgroup
-  
-  # Other useful functions for checking objects and working with dataframes
-  # the structure 'str()' function will show you the structure of an object and the data types of the vectors within it
-  str(d)
-  # 'class()' will tell you the object type or data type
-  class(d)
-  # use 'colnames()' to get a vector of column names from a dataframe
-  colnames(d)
-  # ncol and nrow give dimensions
-  ncol(d)
-  nrow(d)
-  
-  # building on what we've learned above, we can use the square bracket notation on a dataframe to re-order columns
-  d <- d[ ,c('andic.soil.properties', 'tax_subgroup')]
-  d
-  # another way we could do this is to use the column indexes within the concatenate function
-  d <- d[ , c(2,1)]
-``` 
 
-How would you remove a vector or column from a dataframe?
-
-`d$tax_subgroup <- NULL` will remove this column from the dataframe.
 
 
 
@@ -385,7 +325,7 @@ For more information on the design of soilDB functions, see the following docume
     - Setting this value to **TRUE** (the default) converts null entries for rock fragment volumes to 0. This is typically the right assumption because rock fragment data are typically populated only when observed. If you know that your data contain a combination of omitted information (e.g. no rock fragment volumes are populated) then consider setting this argument to **FALSE.**
     
 - **soilColorState = 'moist' or 'dry'** 
-    - This option allows you to select whether to treat strings as factors or not.  The default is set to **FALSE**, which will not treat strings as factors.
+    - Select dry or moist colors to be converted and placed into a horizon-level attribute called `soil_color`. Moist and dry colors are also stored in `moist_soil_color` and `dry_soil_color`.
     
 - **lab = TRUE/FALSE** 
     - This option allows for loading the data associated with horizons that may be in the phlabresults table.  The default is set to **FALSE**, which will not load records from the phlabresults table.
@@ -453,33 +393,7 @@ Additional documentation and examples can be found in:
    * [http://ncss-tech.github.io/AQP/aqp/SPC-plotting-ideas.html](http://ncss-tech.github.io/AQP/aqp/SPC-plotting-ideas.html)
 
 
-#### Subset example of the data in the site-level portion of the SPC
 
-```{r gopheridge_a1, eval=TRUE, echo=FALSE, results='show', warning=FALSE, collapse=TRUE}
-s <- site(gopheridge)
-# show table of site data
-knitr::kable(s[1:2, 1:10])
-knitr::kable(s[1:2, 11:20])
-knitr::kable(s[1:2, 21:28])
-knitr::kable(s[1:2, 28:36])
-
-# use the following to show the data in the R console
-#head(site(gopheridge), 2) # show the first 2 lines of the site data
-```
-
-#### Subset example of the data in the horizon-level portion of the SPC
-
-```{r gopheridge_a2, eval=TRUE, echo=FALSE, results='show', warning=FALSE, collapse=TRUE}
-h <- horizons(gopheridge)
-# show table of site data
-knitr::kable(h[1:8, 1:10])
-knitr::kable(h[1:8, 11:19])
-#knitr::kable(h[1:2, 21:28])
-#knitr::kable(h[1:2, 28:36])
-
-# use the following to show the data in the R console
-#head(horizons(gopheridge), 5) # show the first 5 rows of the horizon data
-```
 
 <!-- insert section labels for references via URL -->
 <a id="spc-object-your-turn"></a>
@@ -488,7 +402,7 @@ knitr::kable(h[1:8, 11:19])
 
 Explore the site- and horizon-level data in your own SPC using the following code. Note: You must have pedons in your local NASIS selected set.
 
-```{r owndata_a, results='hide'}
+```{r owndata_a, eval=FALSE}
 # load required libraries
 library(soilDB)
 library(aqp)
@@ -534,6 +448,8 @@ Plotting the data directly as an R graphic can give you some idea of how the dat
 # load libraries
 library(sp)
 library(mapview)
+
+data("gopheridge")
 
 # subset standard WGS84 decimal degree coordinates from the gopheridge SPC by specifying column names
 gopher.locations <- site(gopheridge)
@@ -600,7 +516,7 @@ mapview(pedons.sp, legend=FALSE, map.types='OpenStreetMap', label=pedons.sp$site
 Now that you've loaded some data, you can look at additional ways to summarize data elements and filter the SPC to specific sites of interest. The `table()` function is very useful for quick summary operations.  This function can be combined with other functions, such as `sort()` and `is.na()` or `!is.na()` (is not NA). Follow along with your own data.
 
 
-```{r owndata_b, results='hide'}
+```{r owndata_b, results='hide', eval=FALSE}
 # summarize which soil taxa we have loaded
 table(pedons$taxonname)
 # sort results in descending order
@@ -640,7 +556,7 @@ This process can be applied to many different columns in the SPC based on how yo
 
 Note that the `grep()` below also has an ***invert option***, which is specified as either true or false (the default is false).  When set to true, this option is very useful for excluding the results of the pattern matching process by inverting the selection.
 
-```{r owndata_d, results='hide'}
+```{r owndata_d, results='hide', eval=FALSE}
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # use of grep() to filter and create an index, then apply that index to the SPC 
 # and create a new SPC called 'f1' using the square bracket notation
@@ -653,7 +569,7 @@ sort(table(pedons$taxpartsize[idx]), decreasing=TRUE)
 
 Do a quick graphical check to ensure that the "lithic" profiles are selected. Plot them in R using the `SoilProfileCollection` "plot" method (e.g., specialized version of the generic `plot()` function).
 
-```{r owndata_e, results='show', fig.width=8, fig.height=4}
+```{r owndata_e, eval=FALSE, results='show', fig.width=8, fig.height=4}
 # adjust margins
 par(mar=c(1,0,0,1))
 # plot the first 10 profiles of subset1
@@ -678,7 +594,7 @@ For more information on using regular expressions in `grep()` for pattern matchi
 
 Another method of subsetting a collection of soil profiles is to specify a criteria using the `which()` function. The following examples use the `which()` and `grep()` functions to reference the indexing of the SPC to create subsets and to filter for specific sites or their corresponding profiles.
 
-```{r owndata_f, results='show', fig.width=8, fig.height=4}
+```{r owndata_f, eval=FALSE, results='show', fig.width=8, fig.height=4}
 # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 # first: use grep to pattern match the tax_subgroup field for the string 'aqu'
 idx <- grep('lithic', pedons$taxsubgrp)
@@ -706,7 +622,7 @@ title('Loamy particle size control section class')
 
 Soil Profile Collections are designed to be dismantled so they can work more easily with either site or horizon data. The SPC has a slot for site-level data and a slot for horizon-level data. You can reference these slots using the `site()` and `horizons()` functions within the AQP package. These "get" functions extract all the site or horizon variables as a dataframe for further use.  
 
-```{r owndata_g, results='show'}
+```{r owndata_g, eval=FALSE, results='show'}
 # extract site data from SPC into dataframe 's'
 s <- site(pedons)
 names(s)
@@ -750,251 +666,6 @@ c("2011MT0810001", "2011MT0810009", "2011MT0810015", "2011MT0810027", "2011MT081
 Such a string can be copied and then pasted back as a concatenated string or could even be used as string for NASIS list queries. The `dput()` function is also helpful when sending questions or examples to colleagues via email.
 
 
-<!-- insert section labels for references via URL -->
-<a id="writing-functions"></a>
-
-## Functions
-If objects are analogous to nouns in a spoken language, then functions are analogous to verbs. A function defines an action that (typically) results in the creation of an object. An object that a function "acts on" is referred to as an "argument" of that function. Follow this terminology with a very basic example:
-
-```{r }
-# make a new object with a sequence of values from 1 to 10
-a <- seq(from=1, to=10, by=1)
-# result
-#[1]  1  2  3  4  5  6  7  8  9 10
-
-# define a function that performs a simple action on a vector of numbers
-# "i" is a temporary object created inside of the context of this function based on the argument supplied
-aFunction <- function(i) {
-  # do something
-  res <- i * 10
-  # send the results back to the calling context
-  return(res)
-}
-
-# apply our new function to object "a"
-aFunction(a)
-```
-
-
-### Defining a Function
-
-Functions bundle operations and can come in the form of small helper functions or involve larger multi-step processes that can be re-used.  This section focuses on functions that work with the horizon data in the SPC.  The general workflow typically goes like this:
-
-- The need for a function is realized,
-
-- steps for a function are defined,
-
-- the function is applied iteratively to each soil profile,
-
-- results are returned, and
-
-- results may, in many cases, need to be further summarized before joining back to the original SPC.
-
-
-### Function Examples
-
-Functions can bundle a series of operations and then be applied to each profile within a collection (SPC) using `profileApply()`.  Consider, for example, if you wanted to use some pedon data to model  depth to the top of an argillic horizon.  Ideally, this task would be performed using data from the pedon diagnostic features table. However, these records are not always consistently populated. So, how else might you accomplish this task?  One way to try would be using horizon designations to derive a depth to the "t" suffix horizon designation.
-
-What steps would return an upper depth to an argillic horizon for each site?
-
- - *extract* the horizon data for each profile,
- - *iterate* through the horizon designations (hzname) and search for the pattern "t",
- - *apply* the function to each profile via `profileApply()`,
- - *summarize* the data returned by the function to one value per profile, and
- - *join* the summarized depth value back to the site data.
- 
- 
-#### Finding the top of the first "Bt" horizon
-
-```{r owndata_i_gopher, echo=TRUE, results='show', warning=FALSE}
-# load required libraries
-library(aqp)
-library(soilDB)
-
-# load example dataset
-data(gopheridge)
-
-# the argument 'i' is a single soil profile
-findBtHorizons <- function(i) {
-  # extract horizons for current profile
-  h <- horizons(i) 
-  # search for pattern 't' in horizon designations
-  idx <- grep('t', h$hzname)
-  # subset these horizons
-  h2 <- h[idx, ] 
-  # subset columns in resulting dataframe
-  res <- h2[, c('peiid', 'hzname', 'hzdept', 'hzdepb', 'clay', 'phfield')]
-  # return data
-  return(res)
-}
-
-# apply function to a single profile as a demonstration
-findBtHorizons(gopheridge[1, ])
-```
-
-You still need to summarize to get the upper depth from multiple "Bt" horizons per profile. Also, note that additional variables were returned by the function.
-
-Next, apply the function to all profiles in your collection. The results are a list of dataframes.
-```{r}
-Bt.horizons <- profileApply(gopheridge, FUN=findBtHorizons, frameify = TRUE)
-```
-
-
-You still need to reduce this to one depth value per profile. The `ddply()` function conveniently iterates over groups of rows in a dataframe and computes summaries (similar to `GROUP BY` in SQL). The group-wise summaries are re-combined into a new dataframe along with ID's for each group.
-```{r fig.width=4.5, fig.height=3.5}
-# apply a function by group
-Bt.horizons.top <- aggregate(hzdept ~ peiid, data = Bt.horizons, FUN = min, na.rm=TRUE)
-
-head(Bt.horizons.top)
-names(Bt.horizons.top)[2] <- 'depth_to_Bt_cm'
-
-# since we have peiid in the 'Bt.horizons.top' dataframe we can easy join it back to site data in the SPC
-# NOTE: when used in conjunction with site(), the assignment operator will perform a left-join
-site(gopheridge) <- Bt.horizons.top
-
-# summary of depth to argillic in the data using a histogram
-# reset figure margins
-par(mar=c(4.5,4.5,1,1))
-hist(gopheridge$depth_to_Bt_cm, xlab='Depth to Bt Horizon (cm)', main='')
-```
-
-
-Generate sketches for the first 15 profiles and annotate with the results of our analysis.
-```{r fig.width=10, fig.height=5}
-# index to the first 15 profiles
-idx <- 1:15
-
-# reset figure margins
-par(mar=c(0,0.5,3,1))
-
-# plot indexed profiles, omitting IDs
-plot(gopheridge[idx, ], print.id=FALSE)
-
-# add the top depth of the first "Bt" horizon
-points(x=1:15, y=gopheridge$depth_to_Bt_cm[idx], pch=21, bg='black', col='white')
-
-# title / subtitle
-title(main = "Select pedons from the 'gopheridge' sample dataset", line=-0.5)
-title(sub= "Depth to first 'Bt' horizon identified", line=-2)
-```
- 
-
-*What is a potential problem with this operation, and what was not accounted for?*
-
-
-#### Thickness of organic horizons 
-
-```{r owndata_i1_gopher, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
-# This time we'll go after the thickness of the organic horizons where present.
-
-# load library
-library(plyr)
-
-f.organic <- function(i) {
-  # extract horizons
-  h <- horizons(i)
-  # pattern match for 'O' horizon designations in horizon data
-  idx <- grep('O', h$hzname)
-  h2 <- h[idx, ] 
-  # subset results
-  res <- h2[, c('peiid', 'phiid', 'hzname', 'hzdept', 'hzdepb')]
-  # return data
-  return(res)
-}
-
-# apply function to each profile, results are a list of data.frames
-l <- profileApply(f, FUN=f.organic, simplify=FALSE)
-
-# convert list into a dataframe
-organic <- ldply(l)
-
-# show contents of the 'organic' dataframe
-head(organic)
-
-# summarize this dataframe down to one max bottom depth value for each profile
-organic1 <- ddply(organic, 'peiid', summarise, organic_thickness_cm=max(hzdepb))
-
-# since we have peiid in the 'organic1' dataframe we can join back to site data in the SPC
-site(f) <- organic1
-
-# summary of organic thickness in the data
-# reset figure margins
-par(mar=c(4.5,4.5,1,1))
-hist(pedons$organic_thickness_cm, xlab='Thickness of Organic horizons (cm)', main='')
-```
-
-How would you subtract the `organic_thickness_cm values` from `depth_to_Bt_cm` values to get a more realistic upper depth to Bt (e.g. possibly argillic) horizons?
-
-
-#### Follow along with your own data
-
-The following example uses pedon data to extract the depth to calcium carbonate.  
-
-What steps would be needed to return an upper depth to carbonates for each site?
-
- - *Extract* the horizon data for each profile,
- - *iterate* through the horizon designations (hzname) pattern matching for "k",
- - *apply* the function to each profile via `profileApply()`,
- - *summarize* the data returned by the function to one value per profile, and
- - *join* the summarized depth value back to the site data.
-
-Note: This example may need modification to evaluate different horizon designations than the ones used here as these may not be present in your currently loaded data.
- 
-```{r owndata_i, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
-# load required libraries
-library(plyr)
-
-# the argument 'i' is a single soil profile
-f.limy <- function(i) {
-  # extract horizons for current profile
-  h <- horizons(i) 
-  # search for pattern 'k' in horizon designations
-  idx <- grep('k', h$hzname)
-  # subset these horizons
-  h2 <- h[idx, ] 
-  # subset columns in resulting dataframe
-  res <- h2[, c('peiid', 'phiid', 'hzname', 'hzdept', 'hzdepb', 'phfield', 'effclass')]
-  # return data
-  return(res)
-}
-
-# apply function to each profile, results are a list of dataframes
-l <- profileApply(f, FUN=f.limy, simplify=FALSE)
-
-# convert list into a dataframe, dropping all pedons with no 'k' horizons 
-limy <- ldply(l)
-
-# view the top 6 rows
-head(limy)
-
-# still need to reduce this down to one depth value for each profile
-## ddply() will apply a function (summarise the min(hzdept)) then combine the results into a data frame.
-## standard ddply syntax is as follows (type '??ddply' into the R console):
-## ddply(.data, .variables, .fun = NULL....)
-
-limy1 <- ddply(limy, 'peiid', summarise, depth_to_carbonates_cm=min(hzdept))
-
-# since we have peiid in the 'limy1' dataframe we can easy join it back to site data in the SPC
-# this won't work if there were no horizons with 'k' suffice
-site(f) <- limy1
-
-# summary of depth to carbonates in the data using a histogram
-# reset figure margins
-par(mar=c(4.5,4.5,1,1))
-hist(pedons$depth_to_carbonates_cm, xlab='Depth to Calcium Carbonates (cm)', main='')
-```
-
-If your data contains organic horizons, use the `f.organic` function outlined above to derive values for `organic_thickness_cm`.
-
-You can then subtract the `organic_thickness_cm` values from `depth_to_carbonates_cm` values to get a more realistic upper depth to calcium carbonates.
-
-Consider examples where you truncate the thickness or are interested in summarizing the data for a depth zone, for example, 25 to 100 cm.  What is the weighted average of clay for the 25 to 100 cm thickness?
-
-Simple example: `slab(f, fm= peiid ~ clay, slab.structure=c(25,100), slab.fun=mean, na.rm=TRUE)`.
-
-Excellent examples using the `slice()` and `slab()` functions in the AQP package can be seen at:
-[**Introduction to SoilProfileCollection**](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
-
 
 <!-- insert section labels for references via URL -->
 <a id="nasis-pedon-extended-data"></a>
@@ -1003,7 +674,7 @@ Excellent examples using the `slice()` and `slab()` functions in the AQP package
 
 Additional data related to both site and horizon information can be fetched using the `get_extended_data_from_NASIS()` function. This data is not automatically brought into R because these data elements are typically related to the site or horizon data in one-to-many relationships. For example, multiple diagnostic features could exist within one pedon. Below is a summary of additional information that can be readily brought into R from your NASIS selected set via the `get_extended_data_from_NASIS()` function.
 
-```{r owndata_j1, eval=TRUE, echo=TRUE, results='show', warning=FALSE, collapse=TRUE}
+```{r owndata_j1, eval=FALSE, echo=TRUE, results='show', warning=FALSE, collapse=TRUE}
 # fetch extended site and horizon data
 e <- get_extended_data_from_NASIS_db()
 
@@ -1040,9 +711,10 @@ colnames(e$texmodifier)
 colnames(e$struct) 
 ```
 
+
 The "Geomorphic description" and "parent materials" attributes are important soil data. They can be useful handles for exploring other data. The soilDB package flattens the nested table structure of parent material and geomorphic description within NASIS into single strings for each site-level record. The pattern matching concepts demonstrated above select profiles based on parts of these strings. The following code generates a simple graphical summary of the 10 most commonly occurring landforms in `fetchNASIS()` data so you can see their frequency of occurrence. 
 
-```{r owndata_c, results='show'} 
+```{r owndata_c, eval=FALSE, results='show'} 
 # graphically tabulate the occurrence of landforms
 # load required libraries
 library(soilDB)
@@ -1071,6 +743,7 @@ The following is an example of how you could use the diagnostic features (if pop
 
 ```{r owndata_j3, results='show', warning=FALSE, fig.width=6, fig.height=4}
 # rename gopheridge data
+data("gopheridge")
 f <- gopheridge
 
 # get diagnostic features associated with pedons loaded from selected set
@@ -1102,15 +775,15 @@ site(f) <- d
 # plot as histogram
 # reset figure margins
 par(mar = c(4.5,4.5,1,1))
-hist(pedons$argillic_thickness_cm, xlab = 'Thickness of argillic diagnostic (cm)', main='')
-hist(pedons$depth_to_argillic_cm, xlab = 'Depth to argillic diagnostic (cm)', main = '')
+hist(f$argillic_thickness_cm, xlab = 'Thickness of argillic diagnostic (cm)', main='')
+hist(f$depth_to_argillic_cm, xlab = 'Depth to argillic diagnostic (cm)', main = '')
 ```
 
 
 
 #### Follow along with your own data
 
-```{r owndata_j4, eval=TRUE, echo=TRUE, results='show', warning=FALSE}
+```{r owndata_j4, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
 # start fresh with your own data
 f <- fetchNASIS(from = 'pedons')
 # get diagnostic features associated with pedons loaded from selected set
@@ -1187,7 +860,8 @@ There are times when it is necessary to send customized queries to the local NAS
 
 The following example will return all records from the `sitesoiltemp` table, along with a couple of fields from the `site`, `siteobs`, and `pedon` tables. This is a convenient way to collect all of the field-based soil temperature data associated with the pedons in your selected set for further analysis.
 
-```{r, fig.width=7, fig.height=4}
+```{r, fig.width=7, fig.height=4, eval=FALSE}
+library(soilDB)
 library(RODBC)
 
 # write query as a long text object
@@ -1235,36 +909,7 @@ plot(soitemp ~ doy, data=d, type='p', xlim=c(1, 366), ylim=c(-1, 25), xlab='Day 
 
 
 
-## Common Challenges in Working with Pedon Data
-
- - Consistency
-    - Missing data
- - Confidence in the observations
-    - Uncertainty with depth
- - Description style differences
-    - Depth described, horizonation usage styles
- - Legacy data vintage
-    - Decadal span of data
-    - Taxonomy updates, horizon nomenclature
- - Location confidence
-    - Origin of the location information
-    - Datum used for data collection
-    - Accuracy for GPS values at the time of data collection
-    
-### Meeting the Challenges
-  
-  - Graphical display of the data and summary outputs ([**slice-wise aggregation**](http://ncss-tech.github.io/AQP/aqp/profile-summary.html))
-  - Generalized Horizon Labels (GHL). Derive an aggregate soil profile and summarize soil properties for groups of similar soils. 
-      - More on that process can be seen in the following tutorial:
-      [**GHL Aggregation Presentation**](http://ncss-tech.github.io/AQP/presentations/ghl-aggregation.html) and [**GHL Aggregation Tutorial**](http://ncss-tech.github.io/AQP/aqp/gen-hz-application.html).
-
-For more information regarding difficult pedon data, see the following tutorial in the "aqp" package:  
-[**Dealing with Troublesome data**](http://ncss-tech.github.io/AQP/aqp/dealing-with-bad-data.html).
-
-
-
 ----------------------------
 This document is based on `aqp` version `r utils::packageDescription("aqp", field="Version")`, `soilDB` version `r utils::packageDescription("soilDB", field="Version")`, and `sharpshootR` version `r utils::packageDescription("sharpshootR", field="Version")`.
 
-This document can be regenerated by loading sites and pedon from the *MT647* soil survey area.
 

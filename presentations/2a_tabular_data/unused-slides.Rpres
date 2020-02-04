@@ -1,0 +1,231 @@
+
+========================================================
+
+<br><br>
+
+- [AQP project homepage](http://ncss-tech.github.io/AQP/)
+
+- [2017 presentation on USDA-NCSS data and AQP suite of packages](http://ncss-tech.github.io/AQP/presentations/2017-CZO-UCR-data-sources-aqp/presentation.html)
+
+- [soilReports setup, documentation, and examples](https://github.com/ncss-tech/soilReports/)
+
+- [PDF poster with an aqp, soilDB, and sharpshootR montage](https://github.com/dylanbeaudette/2017Pedometrics/raw/master/AQP-poster/2017-AQP-poster.pdf)
+
+<br>
+
+- [aqp package reference](http://ncss-tech.github.io/aqp/docs/reference/index.html)
+- [soilDB package reference](http://ncss-tech.github.io/soilDB/docs/reference/index.html)
+- [sharpshootR package reference](http://ncss-tech.github.io/sharpshootR/docs/reference/index.html)
+
+
+Getting Data with soilDB "fetch" Functions
+========================================================
+
+- **fetchNASIS(from='pedons')**
+    - Gets [NASIS pedon/horizon data from a local NASIS database](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
+    
+    
+- **fetchNASIS(from='components')**
+    - Gets [NASIS map unit and component daa from a local NASIS database](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html).
+    
+
+- **fetchNASISLabData()**
+    - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
+
+
+Convenient 'fetch' Functions in the SoilDB Package
+========================================================
+
+
+- **fetchKSSL()**
+    - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
+        + [KSSL Data Demo](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html)
+        + [Water Retention Curve Development from KSSL Data](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
+- **fetchRaCA()**
+    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
+        + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)  
+        
+ 
+Fetch other soil data sources
+========================================================       
+- **SDA_query()**
+    - Submits queries to the Soil Data Access system.
+        + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
+        + [SDA Queries for Spatial Data](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html)
+        
+- **fetchOSD()**
+    - [Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system](http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html).
+    
+    
+- **fetchPedonPC()**
+    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
+
+
+Fetch soil climate-related sources
+======================================================== 
+
+- **fetchSCAN()**
+    - Queries soil and climate data from USDA-NRCS SCAN / SNOTEL Stations.
+      + [A Unified Interface to SCAN/SNOTEL Data](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
+      
+- **fetchHenry()**
+    - Downloads data from the Henry Mount Soil Climate Database.
+        + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
+
+
+fetchNASIS() - How does it work and what does it do?
+========================================================
+- Extracts data from the local NASIS database via Structured Query Language (SQL). The selected set or entire local database can be queried.
+- Runs basic data checks as the data are loaded.
+- data are assembled into a custom site-level and horizon-level data structure object within R called a `SoilProfileCollection`.
+- The [`SoilProfileCollection`](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) class simplifies the process of working with collections of data associated with soil profiles, e.g., site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc. 
+
+
+
+Limitations
+========================================================
+- `fetchNASIS()` is not comprehensive!
+- The SPC does not contain all of the data for every table related to site/pedon data in NASIS.
+- Queries the most commonly used pedon and horizon data.  
+- The nested complexity of the NASIS data structure is simplified and flattened in the resulting SPC object.  
+    + Higher level functions like `fetchNASIS()` bundle a series of lower level functions that get specific parts of the data structure. 
+
+- Data that is not automatically brought into the SPC can often be loaded using the 'get_extended_data from_NASIS_db' function and then joined back to the SPC data.
+
+
+Data Checks Run by fetchNASIS()
+========================================================
+
+- **Inconsistent horizon boundaries**. Pedons with inconsistent horizon boundaries are not loaded.  
+    + the commonly occurs when a bottom depth of a horizon does not match the next upper depth of the horizon below it.
+
+```{r example_a, echo=FALSE, results='show', warning=FALSE}
+top <- c(0,38,56,121,135)
+bot <- c(30,56,121,135,'')
+hzname <- c('A', 'Bt1', 'Bt2', 'Bk', 'R')
+d <- data.frame(hzname, top, bot)
+d
+```
+Note the issue above. The bottom depth of the A horizon and the upper depth of the Bt1 horizon should be the same: either 30 or 38 cm.
+
+========================================================
+
+- **Missing lower horizon depths.** Offending horizons are fixed by replacing the missing bottom depth with the top depth plus 2 cm. In the case of the profile shown above, a bottom depth of 137 cm would be inserted where the depth is missing.
+
+```{r example_a1, echo=FALSE, results='show', warning=FALSE}
+top <- c(0,38,56,121,135)
+bot <- c(30,56,121,135,137)
+hzname <- c('A', 'Bt1', 'Bt2', 'Bk', 'R')
+d <- data.frame(hzname, top, bot)
+d
+```
+
+- **Presence of multiple map datums**. Results reported to the user and the data are not modified.
+
+- **Sites missing pedon records**. Data without corresponding horizons are not loaded.
+
+
+Flattening of NASIS Objects into a SoilProfileCollection
+========================================================
+
+```{r structure_diagram_a, echo=FALSE, results='hide', fig.height=7, fig.width=9, dpi=120}
+library(diagram, quietly=TRUE)
+# reset figure margins
+par(mar = c(1, 1, 1, 1))
+
+# simple diagram of the pedon data structure
+names <- c("Site", "Siteobs", "Pedon", "Horizon")
+M <- matrix(nrow = 4, ncol = 4, byrow = TRUE, data = 0)
+M[4, 3] <- M[3, 2] <- M[2, 1] <- ""
+pos <- cbind (c(1, 1, 1, 1))
+plotmat(M, pos = pos, name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.1, box.type = "square", box.prop = 0.4, mx=-0.2)
+
+# parallel simplified SPC structure
+names <- c("Site-level", "Horizon-level")
+M <- matrix(nrow = 2, ncol = 2, byrow = TRUE, data = 0)
+ M[2, 1] <- ""
+#pos <- cbind (c(2, 2))
+plotmat(M, pos = c(1, 1), name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.14, box.type = "square", box.prop = 0.75, mx=0.3, my=-0.1, add=TRUE)
+
+# add arrows to the diagram
+arrows(0.42, 0.1, x1=0.65, y1=0.1, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.35, x1=0.65, y1=0.54, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.61, x1=0.65, y1=0.61, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.87, x1=0.65, y1=0.68, length = 0.25, code=2, lwd=2, angle = 15)
+```
+
+
+
+
+
+
+
+<!-- 
+linking to sections of and Rmd / HTML:
+# linking to section names, see last comment
+https://stackoverflow.com/questions/33913780/internal-links-in-rmarkdown-dont-work
+# hard-coded links, LATEX style
+https://github.com/STAT545-UBC/Discussion/issues/138
+-->
+
+Your Objectives...for this afternoon!
+========================================================
+
+- [Learn how to inspect objects and understand data types in R types](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_appendix_data_types.html#data-types-and-classes)
+- [Use the soilDB package to load NASIS pedon data into R (section 4.3.1.4)](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html#spc-object-your-turn)
+- [Determine if your data passes the checks run by `fetchNASIS()` (section 4.2.1)](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html#fetchNASIS-pedon-data-checks)
+- [Identify pedon data with potential errors (section 5.1.4)](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html#fetchNASIS-data-checks-your-turn) 
+- [Understand the structure of data stored in a `SoilProfileCollection` (section 4.3)](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html#spc-object-structure)
+- [Plot your pedon locations (section 4.4)](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html#pedon-locations)
+- [Review additional data that is accessible via extended data functions (section 5.3)](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html#nasis-pedon-extended-data)
+- Use the examples in the chapter material to develop a plot or figure from your data
+
+
+Your Objectives...for tomorrow!
+========================================================
+- [Test out ways to filter and subset SPC data in R](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html#NASIS-spc-object-examples)
+- [Learn how functions can be used to bundle operations](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_tabular_data.html#writing-functions)
+- Try the [`SoilProfileCollection` Object Tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html)
+- Try plotting [groups of related pedon data](http://ncss-tech.github.io/AQP/aqp/merged-legend-plot.html)
+- Try more examples with your own data
+
+
+
+SoilProfileCollection Objects
+========================================================
+class: small-code
+
+- <span style="font-size: 80%;">object inspection</span>
+```{r SPC-functions-1, eval=FALSE, tidy=FALSE}
+idname(sp4) # pedon ID name
+horizonDepths(sp4) # colum names containing top and bottom depths
+depth_units(sp4) # defaults to 'cm'
+metadata(sp4) # data.frame with 1 row
+profile_id(sp4) # vector of profile IDs
+```
+
+- <span style="font-size: 80%;">overloads to common functions</span>
+```{r SPC-functions-2, eval=FALSE, tidy=FALSE}
+length(sp4) # number of profiles in the collection
+nrow(sp4) # number of horizons in the collection
+names(sp4) # column names from site and horizon data
+min(sp4) # shallowest profile depth in collection
+max(sp4) # deepest profile depth in collection
+sp4[i, j] # get profile "i", horizon "j"
+```
+
+- <span style="font-size: 80%;">getting / setting of components</span>
+```{r SPC-functions-3, eval=FALSE, tidy=FALSE}
+horizons(sp4) # get / set horizon data
+site(sp4)  # get / set site data
+diagnostic_hz(sp4) # get / set diagnostic horizons
+proj4string(sp4) # get / set CRS
+coordinates(sp4) # get / set coordinates
+```
+
+- <span style="font-size: 80%;">coercion to `SpatialPointsDataFrame` or `data.frame`</span>
+```{r SPC-functions-4, eval=FALSE, tidy=FALSE}
+as(sp4, 'SpatialPointsDataFrame')
+as(sp4, 'data.frame')
+```
+
