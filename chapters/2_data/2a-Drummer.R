@@ -77,6 +77,10 @@ osd$soilweb.metadata
 # * http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html
 
 
+
+## Break ##
+
+
 # competing series
 # https://ncss-tech.github.io/AQP/soilDB/competing-series.html
 head(osd$competing)
@@ -198,7 +202,9 @@ xyplot(top ~ p.q50 | variable, groups=group, data=g, ylab='Depth', main=fm.name,
 # * repeat some of the above, or try:
 # * http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html
 # * http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html
+# * https://ncss-tech.github.io/AQP/soilDB/competing-series.html
 
+## Break ##
 
 
 ## siblings?
@@ -226,7 +232,10 @@ vizGeomorphicComponent(sib.data$geomcomp)
 vizAnnualClimate(sib.data$climate.annual, s = soil)
 
 # you try it!
+# https://ncss-tech.github.io/AQP/soilDB/siblings.html
 
+
+## Break ##
 
 
 ## SDA
@@ -275,7 +284,7 @@ site(x)[, c('nationalmusym', 'cokey', 'compname', 'comppct_r', 'majcompflag')]
 
 
 
-
+## Break ##
 
 
 
@@ -288,22 +297,82 @@ site(x)[, c('nationalmusym', 'cokey', 'compname', 'comppct_r', 'majcompflag')]
 # get all NASIS pedons correlated to DRUMMER
 pedons <- fetchNASIS(from='pedons', nullFragsAreZero=TRUE)
 
+# lots of feedback!
+get('sites.missing.pedons', envir=soilDB.env)
+get('bad.pedon.ids', envir=soilDB.env)
+get('missing.bottom.depths', envir=soilDB.env)
+get('top.bottom.equal', envir=soilDB.env)
+
+# .. maybe fix, or at least be aware of
+
+# this is a SoilProfileCollection object
 str(pedons, 2)
 
-
+## track progress of pedons collected and correlated to DRUMMER 
+# make two sequences: x-axis is the date
 dx <- pedons$obs_date
+class(dx)
+# y-axis: sequence of 1, repeated as many times as there are pedons
 dy <- rep(1, times=length(pedons))
 
+# sort the dates
 dx <- sort(dx)
+# accumulate each pedon in sequence, what?
 dy <- cumsum(dy)
 
-plot(dx, dy, type='S', las=1, cex=1, cex.axis=0.8)
+# plot it using "base graphics"
+plot(x=dx, y=dy, type='S', las=1, cex=1, cex.axis=0.8, 
+     ylab='Cumulative Pedons',
+     xlab='', main='NASIS Pedons Correlated to DRUMMER')
 grid()
 
+
+
+## what else is in there?
+horizonNames(pedons)
+siteNames(pedons)
+
+
+
+# hz frequency
+sort(table(pedons$hzname), decreasing=TRUE)
+
+# geomorphic data
+table(pedons$hillslopeprof)
+table(pedons$hillslopeprof, pedons$slope_shape)
+
+# graphically
+dotchart(sort(table(pedons$pmkind)))
+dotchart(sort(table(pedons$hillslopeprof)))
+
+table(pedons$texture_class)
+
+
+n <- c('Ap','BA', 'Btg', '2tBg','2Cg')
+# REGEX rules
+pat <- c('A|p',
+         'BA|AB',
+         '^Bt[g0-9].*(?!A)|B2|B(?!t)g|B1',
+         '2B|IIB',
+         '2C|IIC|C'
+)
+
+
+
+pedons$genhz <- generalize.hz(pedons$hzname, new = n, pat = pat, perl=TRUE)
+table(pedons$genhz)
+
+
+table(pedons$genhz, pedons$texture_class)
+
+
+
+
+# special function for pulling RMF child tables
 rmf <- get_RMF_from_NASIS_db()
 lapply(rmf, head)
 
-# integrate some drummer OSD stuff here
+
 
 
 
@@ -311,6 +380,13 @@ lapply(rmf, head)
 ## Lets play with color
 # http://ncss-tech.github.io/AQP/aqp/investigating-soil-color.html
 # http://ncss-tech.github.io/AQP/aqp/color-contrast.html
+
+
+
+
+## another set of pedons
+# setup SS via user site ID ~ %CA792%
+
 
 
 
