@@ -37,7 +37,7 @@ table(h$genhz, h$hzname)
 
 
 vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effclass")
-summary(h[vars])
+summary(h[, vars])
 
 
 # just for factors
@@ -62,7 +62,7 @@ p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
 
 desc <- data.frame(
   Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
-  NASIS = c(rep("RV", 3), rep("L & H", 2)),
+  NASIS = c("RV ?", "RV", "RV", "L & H ?", "L & H"),
   Description = c("arithmetic average", 
                   "middle value, 50% quantile", 
                   "most frequent value", "variation around mean", 
@@ -73,12 +73,11 @@ desc <- data.frame(
   )
 knitr::kable(desc, caption = "Short Description of Descriptive Statistics and R Functions")
 
-clay <- na.exclude(h$clay) # first remove missing values and create a new vector
-
+# first remove missing values and create a new vector
+clay <- na.exclude(h$clay)
 mean(clay)
 
 # or use the additional na.rm argument
-
 mean(h$clay, na.rm = TRUE)
 
 median(clay)
@@ -91,27 +90,29 @@ table(h$genhz)
 
 # summary(h$genhz)
 
-table(h$genhz, h$texcl)
+## table(h$genhz, h$texcl)
 
-# append the table with row and column sums
+knitr::kable(table(h$genhz, h$texcl))
 
-addmargins(table(h$genhz, h$texcl))
+## # append the table with row and column sums
+## addmargins(table(h$genhz, h$texcl))
+## 
+## # calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
+## round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100)
 
-# calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
-
-round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) 
+knitr::kable(addmargins(table(h$genhz, h$texcl)))
+knitr::kable(round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100))
 
 aggregate(clay ~ genhz, data = h, mean)
 
 aggregate(clay ~ genhz, data = h, median)
 
 # or we could use the summary() function to get both the mean and median
-
 aggregate(clay ~ genhz, data = h, summary)
 
-var(h$clay)
+var(h$clay, na.rm=TRUE)
 
-sd(clay)
+sd(h$clay, na.rm = TRUE)
 
 # or
 
@@ -144,7 +145,7 @@ h$hzdepm <- (h$hzdepb + h$hzdept) / 2 # Compute the middle horizon depth
 
 vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
 
-round(cor(h[vars], use = "complete.obs"), 2)
+round(cor(h[, vars], use = "complete.obs"), 2)
 
 figs <- data.frame(
   'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
