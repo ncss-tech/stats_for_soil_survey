@@ -1,14 +1,28 @@
+## Tasks: 
+# * explore the various interfaces to NCSS/NRCS soil survey databases
+# * tinker with R objects
+# * learn about SoilProfileCollection objects
+# * learn about the AQP suite of R packages
+# * adapt to your own tasks
+
+## When in doubt, documentation is here:
+# http://ncss-tech.github.io/AQP/
+
+
+# packages
 library(aqp)
 library(soilDB)
 library(sharpshootR)
 library(latticeExtra)
 
 
-### Working on Drummer
 
+## We will start with the soil series and OSD
+
+# how about this one
+# https://casoilresource.lawr.ucdavis.edu/sde/?series=drummer
 soil <- 'DRUMMER'
 
-## think about OSD
 # standard request for OSD data
 osd <- fetchOSD(soils = soil)
 str(osd, 1)
@@ -37,19 +51,36 @@ str(s, 2)
 # original OSD + simulated
 s <- aqp::union(list(osd$SPC, s))
 
-# leave room for a summary of the simulated thickness
+# sketches
 par(mar=c(0, 0, 3, 1))
 plotSPC(s, name='hzname', cex.names=0.8, n.depth.ticks = 8)
 title('OSD + 8 Realizations')
 
-
 # ok that is neat, what about the rest?
 str(osd, 1)
+
+# !!!
+osd$climate.annual
+osd$climate.monthly
+osd$mlra
+osd$hillpos
+osd$geomcomp
+osd$pmkind
+
+# these are all snapshots
+osd$soilweb.metadata
+
+
+## STOP! 
+# Take 10 minutes and tinker with another soil series, or collection of soil series
+# or, try some of the following:
+# * http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html
+
 
 # competing series
 # https://ncss-tech.github.io/AQP/soilDB/competing-series.html
 head(osd$competing)
-
+osd$competing$competing
 
 # get competing series OSD data
 spc <- fetchOSD(c(soil, osd$competing$competing))
@@ -69,16 +100,137 @@ mtext(fm.name, side = 3, at = 0.5, adj = 0, line = -1, font=4)
 mtext('source: Official Series Descriptions', side = 1, at = 0.5, adj = 0, line = -1, font=3, cex=1)
 
 
-# now compare
+# now compare lab data
 
+# wait, how?
+kssl.data <- fetchKSSL(series = 'Drummer')
+str(kssl.data, 2)
+str(horizons(kssl.data))
+str(site(kssl.data))
+
+# sketches
+par(mar=c(0,0,3,1))
+plot(kssl.data, color='clay')
+
+# paired morphologic data
+kssl.data <- fetchKSSL(series = 'Drummer', simplifyColors = TRUE, returnMorphologicData = TRUE)
+str(kssl.data, 2)
+
+# moist colors
+plot(kssl.data$SPC, color='moist_soil_color')
+
+# pretty, we will do more with color later
+previewColors(kssl.data$SPC$moist_soil_color)
+
+
+# back to the competing series...
+kssl.data <- lapply(s.names, fetchKSSL)
+
+str(kssl.data, 1)
+
+# some may not have any data, filter those out
+not.null <- which(! sapply(kssl.data, is.null))
+# combine into single SPC
+kssl.data <- union(kssl.data[not.null])
+
+# normalize soil series names
+table(kssl.data$taxonname)
+for(i in s.names)
+  kssl.data$taxonname[grep(i, kssl.data$taxonname, ignore.case = TRUE)] <- toupper(i)
+
+table(kssl.data$taxonname)
+
+
+# aggregate over entire collection, marginal quantiles of select properties
+agg <- slab(kssl.data, ~ clay + sand + estimated_ph_h2o + cec7 + bs82)
+levels(agg$variable) <- c('Clay (%)', 'Sand (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
+
+# define plotting style
+tps <- list(superpose.line=list(col=c('RoyalBlue', 'DarkRed', 'DarkGreen'), lwd=2))
+
+xyplot(top ~ p.q50 | variable, data=agg, ylab='Depth', main=fm.name, sub='source: KSSL',
+       xlab='median bounded by 25th and 75th percentiles',
+       lower=agg$p.q25, upper=agg$p.q75, ylim=c(205,-5),
+       panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
+       prepanel=prepanel.depth_function,
+       cf=agg$contributing_fraction,
+       par.strip.text=list(cex=0.8),
+       strip=strip.custom(bg=grey(0.85)),
+       layout=c(5,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       par.settings=tps,
+       auto.key=list(columns=3, lines=TRUE, points=FALSE)
+)
+
+
+# compare a single profile to the group-level aggregate values
+idx <- which(kssl.data$taxonname == soil)
+drummer.agg <- slab(kssl.data[idx, ], ~ clay + sand + estimated_ph_h2o + cec7 + bs82)
+
+# fix variable names, order same as specified above
+levels(drummer.agg$variable) <- c('Clay (%)', 'Sand (%)', 'pH 1:1 H2O', 'CEC at pH 7 (cmol[+]/kg)' ,'Base Saturation at pH 8.2 (%)')
+
+
+# manually update the group column
+drummer.agg$group <- soil
+# a$p.q25 <- NA
+# a$p.q75 <- NA
+agg$group <- 'ALL'
+
+# combine into a single data.frame:
+g <- rbind(agg, drummer.agg)
+g$group <- factor(g$group)
+
+xyplot(top ~ p.q50 | variable, groups=group, data=g, ylab='Depth', main=fm.name,
+       xlab='median bounded by 25th and 75th percentiles', sub='source: KSSL' ,
+       lower=g$p.q25, upper=g$p.q75, ylim=c(205,-5),
+       panel=panel.depth_function, alpha=0.25, sync.colors=TRUE,
+       prepanel=prepanel.depth_function,
+       # cf=g$contributing_fraction,
+       par.strip.text=list(cex=0.8),
+       strip=strip.custom(bg=grey(0.85)),
+       layout=c(5,1), scales=list(x=list(alternating=1, relation='free'), y=list(alternating=3)),
+       par.settings=tps,
+       auto.key=list(columns=2, lines=TRUE, points=FALSE)
+)
+
+
+## STOP: try getting / comparing some KSSL data
+# * repeat some of the above, or try:
+# * http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html
+# * http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html
 
 
 
 ## siblings?
 # https://ncss-tech.github.io/AQP/soilDB/siblings.html
 
+# tinker with this!
+siblings(soil, only.major = TRUE)
+sibs <- siblings(soil, only.major = FALSE)
+
+# get the data and make a quick visualization
+sib.data <- fetchOSD(sibs$sib$sibling)
+SoilTaxonomyDendrogram(sib.data, width=0.2)
+
+# wait, missing DRUMMER: add it to the list
+sib.data <- fetchOSD(c(soil, sibs$sib$sibling), extended = TRUE)
+
+# recall there is a lot packed into the result
+SoilTaxonomyDendrogram(sib.data$SPC, width=0.2)
+
+# do something with the hillslope and geomcomp proportions
+vizHillslopePosition(sib.data$hillpos)
+vizGeomorphicComponent(sib.data$geomcomp)
+
+# do something with the annual climate data
+vizAnnualClimate(sib.data$climate.annual, s = soil)
+
+# you try it!
+
+
 
 ## SDA
+# http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html
 
 # one-off, what hydrologic groups is Drummer usually associated with?
 SDA_query("SELECT hydgrp, COUNT(hydgrp) AS n from component where compname = 'Drummer' AND hydgrp IS NOT NULL GROUP BY hydgrp ;")
@@ -123,44 +275,54 @@ site(x)[, c('nationalmusym', 'cokey', 'compname', 'comppct_r', 'majcompflag')]
 
 
 
-q <- "SELECT component.cokey, compname, mrulename, interplr, interplrc
-FROM legend
-INNER JOIN mapunit ON mapunit.lkey = legend.lkey
-INNER JOIN component ON component.mukey = mapunit.mukey
-INNER JOIN cointerp ON component.cokey = cointerp.cokey
-WHERE
--- exclude STATSGO
-areasymbol != 'US'
-AND compname = 'Drummer'
-AND seqnum = 0
-AND mrulename IN ('ENG - Construction Materials; Topsoil', 
-'ENG - Sewage Lagoons', 'ENG - Septic Tank Absorption Fields', 
-'ENG - Unpaved Local Roads and Streets')
-AND interplr IS NOT NULL;"
-
-x <- SDA_query(q)
-bwplot(mrulename ~ interplr, data=x)
 
 
-## color stuff
+
+
+## NASIS
+# http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html
+# http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html
+
+# setup your selected set!
+
+# get all NASIS pedons correlated to DRUMMER
+pedons <- fetchNASIS(from='pedons', nullFragsAreZero=TRUE)
+
+str(pedons, 2)
+
+
+dx <- pedons$obs_date
+dy <- rep(1, times=length(pedons))
+
+dx <- sort(dx)
+dy <- cumsum(dy)
+
+plot(dx, dy, type='S', las=1, cex=1, cex.axis=0.8)
+grid()
+
+rmf <- get_RMF_from_NASIS_db()
+lapply(rmf, head)
+
+# integrate some drummer OSD stuff here
+
+
+
+
+## Lets play with color
 # http://ncss-tech.github.io/AQP/aqp/investigating-soil-color.html
 # http://ncss-tech.github.io/AQP/aqp/color-contrast.html
 
 
-# a vector of named soil series
-# the search is case insensitive
-soils <- c('amador', 'pentz', 'pardee', 'auburn', 'loafercreek', 'millvilla')
 
-# moist colors are converted from Munsell -> sRGB by default
-s <- fetchOSD(soils)
-# also convert dry colors
-s.dry <- fetchOSD(soils, colorState = 'dry')
 
-# quickly compare moist to dry colors
-par(mar=c(1,0,2,1), mfrow=c(2,1))
-plot(s) ; title('Moist Colors')
-plot(s.dry) ; title('Dry Colors')
 
+
+## .. and then?
+
+
+
+
+##############################
 
 # advanced, annotate top/bottom depths of horizon with minimum Munsell Chroma
 
@@ -203,35 +365,4 @@ plotSPC(s, name='hzname', cex.names = 0.8)
 
 lines(x=1:length(s), y=s$max_chroma_top, lty=3)
 lines(x=1:length(s), y=s$max_chroma_bottom, lty=3)
-
-
-
-
-
-
-# get all NASIS pedons correlated to DRUMMER
-pedons <- fetchNASIS(from='pedons', nullFragsAreZero=TRUE)
-
-str(pedons, 2)
-
-
-dx <- pedons$obs_date
-dy <- rep(1, times=length(pedons))
-
-dx <- sort(dx)
-dy <- cumsum(dy)
-
-plot(dx, dy, type='S', las=1, cex=1, cex.axis=0.8)
-grid()
-
-rmf <- get_RMF_from_NASIS_db()
-lapply(rmf, head)
-
-
-
-## KSSL
-# http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html
-
-
-
 
