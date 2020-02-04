@@ -4,16 +4,16 @@ library(sharpshootR)
 library(latticeExtra)
 
 
-library(sp)
-library(raster)
-library(mapview)
-library(leafem)
-
 ### Working on Drummer
 
 soil <- 'DRUMMER'
 
 ## think about OSD
+# standard request for OSD data
+osd <- fetchOSD(soils = soil)
+str(osd, 1)
+
+# extended request
 osd <- fetchOSD(soils = soil, extended = TRUE)
 str(osd, 1)
 
@@ -42,6 +42,7 @@ par(mar=c(0, 0, 3, 1))
 plotSPC(s, name='hzname', cex.names=0.8, n.depth.ticks = 8)
 title('OSD + 8 Realizations')
 
+
 # ok that is neat, what about the rest?
 str(osd, 1)
 
@@ -68,12 +69,77 @@ mtext(fm.name, side = 3, at = 0.5, adj = 0, line = -1, font=4)
 mtext('source: Official Series Descriptions', side = 1, at = 0.5, adj = 0, line = -1, font=3, cex=1)
 
 
+# now compare
+
+
+
+
 ## siblings?
 # https://ncss-tech.github.io/AQP/soilDB/siblings.html
 
 
+## SDA
+
+# one-off, what hydrologic groups is Drummer usually associated with?
+SDA_query("SELECT hydgrp, COUNT(hydgrp) AS n from component where compname = 'Drummer' AND hydgrp IS NOT NULL GROUP BY hydgrp ;")
+
+# does the variation follow the local phase?
+# no
+x <- SDA_query("SELECT localphase, hydgrp from component where compname = 'Drummer' AND hydgrp IS NOT NULL;")
+table(x$localphase, x$hydgrp)
+
+# drainage class?
+# no
+x <- SDA_query("SELECT drainagecl, hydgrp from component where compname = 'Drummer' AND hydgrp IS NOT NULL;")
+table(x$drainagecl, x$hydgrp)
 
 
+# whats up with the hydgroup B components?
+x <- fetchSDA(WHERE="compname = 'Drummer' AND hydgrp = 'B'")
+str(x, 2)
+
+# are these really all the "same"?
+# extract all horizon level attributes
+nm <- horizonNames(x)
+
+# generate an index to non-ID columns
+# cokey and chkey are SSURGO IDs
+# hzID is part of the SoilProfileCollection
+idx <- grep(pattern='cokey|chkey|hzID', x = nm, invert = TRUE)
+
+# check names
+nm[idx]
+
+# check data using column-indexing
+head(horizons(x)[, nm[idx]])
+
+# result is an index to unique profiles, using the named
+# all the same
+aqp::unique(x, vars=nm[idx])
+
+# hmm... worth looking into, later
+site(x)[, c('nationalmusym', 'cokey', 'compname', 'comppct_r', 'majcompflag')]
+
+
+
+
+q <- "SELECT component.cokey, compname, mrulename, interplr, interplrc
+FROM legend
+INNER JOIN mapunit ON mapunit.lkey = legend.lkey
+INNER JOIN component ON component.mukey = mapunit.mukey
+INNER JOIN cointerp ON component.cokey = cointerp.cokey
+WHERE
+-- exclude STATSGO
+areasymbol != 'US'
+AND compname = 'Drummer'
+AND seqnum = 0
+AND mrulename IN ('ENG - Construction Materials; Topsoil', 
+'ENG - Sewage Lagoons', 'ENG - Septic Tank Absorption Fields', 
+'ENG - Unpaved Local Roads and Streets')
+AND interplr IS NOT NULL;"
+
+x <- SDA_query(q)
+bwplot(mrulename ~ interplr, data=x)
 
 
 ## color stuff
@@ -94,6 +160,50 @@ s.dry <- fetchOSD(soils, colorState = 'dry')
 par(mar=c(1,0,2,1), mfrow=c(2,1))
 plot(s) ; title('Moist Colors')
 plot(s.dry) ; title('Dry Colors')
+
+
+# advanced, annotate top/bottom depths of horizon with minimum Munsell Chroma
+
+# going to need a function
+maxChroma <- function(i) {
+  # extract horizons
+  h <- horizons(i)
+  # index the highest Munsell chroma
+  idx <- which.max(h$chroma)
+  
+  # horizon depth names
+  hd <- horizonDepths(i)
+  # profile ID name
+  id <- idname(i)
+  
+  # compile into data.frame:
+  # current profile ID, top/bottom depths
+  # horizon with lowest chroma
+  res <- h[idx, c(id, hd)]
+  
+  # re-name top/bottom so as not to conflict with existing attributes
+  names(res) <- c(id, 'max_chroma_top', 'max_chroma_bottom')
+  
+  # send back
+  return(res)
+}
+
+maxChroma(s[1, ])
+
+# apply to all profiles
+mc <- profileApply(s, maxChroma, frameify = TRUE)
+
+# merge back into source data
+site(s) <- mc
+# its in there
+str(site(s))
+
+par(mar=c(1,0,2,1), mfrow=c(1,1))
+plotSPC(s, name='hzname', cex.names = 0.8)
+
+lines(x=1:length(s), y=s$max_chroma_top, lty=3)
+lines(x=1:length(s), y=s$max_chroma_bottom, lty=3)
+
 
 
 
@@ -124,88 +234,4 @@ lapply(rmf, head)
 
 
 
-
-
-# ## takes too long, likely time-out
-# hz <- SDA_query("SELECT hzname
-#           FROM
-#           component JOIN chorizon ON component.cokey = chorizon.cokey
-#           WHERE compname = 'Drummer' ;")
-
-# tab <- table(hz)
-# ptab <- prop.table(tab)
-# sort(ptab)
-
-
-# let SDA do all of the work
-hz <- SDA_query("SELECT hzname, COUNT(hzname) AS n
-          FROM
-          component JOIN chorizon ON component.cokey = chorizon.cokey
-          WHERE compname = 'Drummer' 
-          GROUP BY hzname ;")
-
-hz
-idx <- order(hz$n, decreasing = TRUE)
-hz[idx, ]
-
-idx <- grep(hz$hzname, pattern = 'H')
-hz[idx, ]
-
-
-
-
-# let SDA find the unique mukey
-query <- "SELECT DISTINCT mapunit.mukey
-FROM 
-mapunit JOIN component ON mapunit.mukey = component.mukey
-JOIN chorizon ON component.cokey = chorizon.cokey 
-WHERE
-compname = 'drummer'
-AND hzname LIKE 'H%' ;"
-
-drummer.problem.hz <- SDA_query(query)
-
-head(drummer.problem.hz)
-
-query <- sprintf("SELECT mukey, chorizon.cokey, compname, comppct_r, hzname, hzdept_r, hzdepb_r 
-          FROM 
-          component JOIN chorizon ON component.cokey = chorizon.cokey
-          WHERE mukey = '%s' 
-          ORDER BY cokey, hzdept_r ASC;", drummer.problem.hz$mukey[1])
-
-SDA_query(query)
-
-# number mukey ...
-nrow(drummer.problem.hz)
-
-
-drummer.mu.bbox <- fetchSDA_spatial(x=drummer.problem.hz$mukey[1], by.col = 'mukey', method = 'bbox')
-(mv <- mapview(drummer.mu.bbox, legend=FALSE, map.types='OpenStreetMap', alpha.regions=0.25))
-
-
-
-e <- extent(drummer.mu.bbox)
-e <- e + 0.1
-
-(mv <- leafem::addFeatures(map=mv, data=as(e , 'SpatialPolygons'), color='black', fill=FALSE, weight=2))
-
-as.vector(e)
-
-x <- fetchKSSL(bbox=c(e[2], e[3], e[1], e[4]), returnMorphologicData = TRUE, simplifyColors = TRUE)
-x <- x$SPC
-
-coordinates(x) <- ~ x + y
-proj4string(x) <- '+proj=longlat +datum=WGS84'
-
-plotSPC(x, name='hzn_desgn', color='moist_soil_color', width = 0.2, label='taxonname')
-
-idx <- grep(pattern = 'drummer', x$taxonname, ignore.case = TRUE)
-x.sub <- x[idx, ]
-
-horizons(x.sub)[, 1:10]
-
-
-mv <- leafem::addFeatures(map=mv, data=as(x, 'SpatialPointsDataFrame'), color='darkgreen', fill=TRUE, weight=2, label=x$taxonname, radius=2)
-
-leafem::addFeatures(map=mv, data=as(x.sub, 'SpatialPointsDataFrame'), color='firebrick', fill=FALSE, weight=2, label=x$taxonname, radius=10)
 
