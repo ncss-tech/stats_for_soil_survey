@@ -49,6 +49,8 @@ patterns.to.match <- c('^A',
 # this aqp function applies prototype labels to horizons matching `pat`
 pedons$newgenhz <- generalize.hz(x=pedons$hzname, new=prototype.labels, pat=patterns.to.match)
 
+## STEP 6
+# cross-tabulate results
 oldvsnew <- addmargins(table(pedons$newgenhz, pedons$hzname))
 oldvsnew
 
