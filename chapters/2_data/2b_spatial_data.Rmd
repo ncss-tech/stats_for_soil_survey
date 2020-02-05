@@ -122,15 +122,16 @@ The [sf package](https://r-spatial.github.io/sf/) represents the latest and grea
 These packages make it possible to display interactive maps of spatial objects in RStudio, or within an HTML document generated via R Markdown (e.g. this document).
 
 ```{r}
-# you may have to install this
+# load required packages
 library(mapview)
+library(leafem)
 
 # get series extents from SoilWeb
 pentz <- seriesExtent('pentz')
 redding <- seriesExtent('redding')
 
 # make a simple map
-m <- mapview(pentz)
+m <- mapView(pentz)
 # add more data to the map and display
 addFeatures(m, redding, color='black', fillColor='red', weight=1)
 ```
@@ -152,9 +153,9 @@ library(velox)
 s <- seriesExtent('san joaquin')
 
 # load pointer to PRISM data, note that this file is stored on my local machine:
-r <- raster('C:/workspace/chapter-2b/ffd_50_pct_800m.tif')
+r <- raster('C:/workspace/chapter-2b/FFD.tif')
 
-# 2.5 seconds sampling
+# 0.8 seconds for sampling
 vx <- velox(r)
 system.time(e <- vx$extract(s))
 
@@ -452,7 +453,17 @@ unzip(paste0(ch2b.data.path, '/chapter-2b-PRISM.zip'), exdir = ch2b.data.path, o
 
 
 
-## Load Example Data
+## Example Data
+
+Just in case, load required packages into the current R Session.
+```{r results="hide"}
+library(aqp)
+library(sp)
+library(raster)
+library(rgdal)
+library(soilDB)
+```
+
 
 We will be using polygons associated with MLRAs 15 and 18 as part of this demonstration. Import these data now with `readOGR()`; recall the somewhat strange syntax.
 ```{r results='hide'}
@@ -635,8 +646,11 @@ summary(e[, -1])
 
 Join the extracted PRISM data with the original `SoilProfileCollection` object. More information on [`SoilProfileCollection objects here`](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
 ```{r}
+# don't convert character data into factors
+options(stringsAsFactors = FALSE)
+
 # combine site data with extracted raster values, row-order is identical
-res <- cbind(as.data.frame(s), e)
+res <- cbind(as(s, 'data.frame'), e)
 
 # extract unique IDs and PRISM data
 res <- res[, c('pedon_key', 'MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT')]
@@ -653,7 +667,7 @@ new.order <- order(auburn$eff.PPT)
 # setup figure margins
 par(mar=c(5,2,4,2))
 # plot profile sketches
-plot(auburn, name='hzn_desgn', print.id=FALSE, color='clay', plot.order=new.order)
+plot(auburn, name='hzn_desgn', print.id=FALSE, color='clay', plot.order=new.order, cex.names=0.85)
 
 # add an axis with extracted raster values
 axis(side=1, at = 1:length(auburn), labels = round(auburn$eff.PPT[new.order]), cex.axis=0.75)
