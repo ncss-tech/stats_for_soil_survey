@@ -611,12 +611,23 @@ Note that the mean can be efficiently estimated, even with a relatively small nu
 # this will be very slow for large grids
 mean(values(maat), na.rm=TRUE)
 
-# generally much faster and just as good, given reasonable sampling strategy and sample size
+# generally much faster and just as good, 
+# given reasonable sampling strategy and sample size
 mean(x.regular$MAAT, na.rm=TRUE)
+
+# this value will be different than what you get
+# it is after all, random sampling
 mean(x.random$MAAT, na.rm=TRUE)
 ```
 
+Just how much variation can we expect when collecting 100, randomly-located samples over such a large area? This is better covered in chapter 4 (Sampling), but a quick experiment might be fun. Do this 100 times: compute the mean MAAT from 100 randomly-located samples.
+```{r}
+# takes a couple of seconds
+z <- replicate(100, mean(sampleRandom(maat, size = 100, na.rm=TRUE), na.rm = TRUE))
 
+# 90% of the time the mean MAAT values were within:
+quantile(z, probs=c(0.05, 0.95))
+```
 
 
 # Extracting Raster Data at KSSL Pedon Locations
