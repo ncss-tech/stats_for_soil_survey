@@ -392,13 +392,31 @@ class(amador)
 
 s <- spsample(amador, n = 100, type = 'hexagonal')
 
-par(mar=c(1,1,3,1))
-plot(maat, ext=extent(s), main='MAAT and Amador Extent\n100 Sampling Points', axes=FALSE)
+# result is a data.frame
+mukeys <- SDA_query("
+                    SELECT DISTINCT mukey 
+                    FROM component 
+                    WHERE compname = 'Amador' 
+                    AND majcompflag = 'Yes' ;"
+)
+
+# result is a SpatialPointsDataFrame
+amador.pts <- fetchSDA_spatial(mukeys$mukey, by.col = 'mukey', method = 'point', chunk.size = 2)
+
+# adjust margins and setup plot device for two columns
+par(mar=c(1,1,3,1), mfcol=c(1,2))
+# first figure
+plot(maat, ext=extent(s), main='PRISM MAAT\n100 Sampling Points from Extent', axes=FALSE)
 plot(amador, add=TRUE)
 points(s, cex=0.25)
 
+plot(maat, ext=extent(s), main='PRISM MAAT\nPolygon Centroids', axes=FALSE)
+points(amador.pts, cex=0.25, pch='.')
+
 # return the result as a data.frame object
 e <- extract(rs, s, df=TRUE)
+e.pts <- extract(rs, amador.pts, df=TRUE)
+
 # check out the extracted data
 summary(e[, -1])
 
@@ -508,6 +526,11 @@ bwplot(mlra ~ value | variable, data=m,                 # setup plot and data so
 
 ## # create new instance of reports
 ## library(soilReports)
+## 
+## # get report dependencies
+## reportSetup('region2/mu-comparison')
+## 
+## # create report instance
 ## copyReport('region2/mu-comparison', outputDir = ch4.mucomp.path, overwrite = TRUE)
 
 ## # copy config file containing relative paths to rasters downloaded above
@@ -522,6 +545,9 @@ bwplot(mlra ~ value | variable, data=m,                 # setup plot and data so
 ## # create directories (if needed)
 ## if(!dir.exists(ch4.shinyped.path))
 ##   dir.create(ch4.shinyped.path, recursive = TRUE)
+## 
+## # get report dependencies
+## reportSetup('region2/shiny-pedon-summary')
 ## 
 ## # copy report contents to target path
 ## copyReport('region2/shiny-pedon-summary', outputDir = ch4.shinyped.path, overwrite = TRUE)
