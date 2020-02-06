@@ -312,7 +312,7 @@ quantile(clay)
 quantile(clay, c(0.05, 0.5, 0.95))
 ```
 
-Thus, for the five number summary 25% of the observations fall between each of the intervals. Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpretation.
+Thus, for the five number summary 25% of the observations fall between each of the intervals. [Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpretation](https://ncss-tech.github.io/soil-range-in-characteristics/why-percentiles.html). 
 
 
 **Range**  is the difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
@@ -939,18 +939,42 @@ Generate 100 sampling points within the extent, using a hexagonal grid. These wi
 s <- spsample(amador, n = 100, type = 'hexagonal')
 ```
 
-Graphically check sampling points.
-```{r fig.width=4, fig.height=5}
-par(mar=c(1,1,3,1))
-plot(maat, ext=extent(s), main='MAAT and Amador Extent\n100 Sampling Points', axes=FALSE)
-plot(amador, add=TRUE)
-points(s, cex=0.25)
+
+For comparison, extract a single point from each SSURGO map unit delineation that contains *Amador* as a major component. This will require a query to SDA for the set of matching map unit keys (`mukey`), followed by a second request to SDA for the geometry. The `SDA_query` function is used to send arbitrary queries written in SQL to SDA, the results may be a `data.frame` or `list`, depending on the complexity of the query. The `fetchSDA_spatial` function returns map unit geometry as either polygons, polygon envelopes, or a single point per polygon and selected by `mukey` or `nationalmusym`.
+
+```{r}
+# result is a data.frame
+mukeys <- SDA_query("
+                    SELECT DISTINCT mukey 
+                    FROM component 
+                    WHERE compname = 'Amador' 
+                    AND majcompflag = 'Yes' ;"
+)
+
+# result is a SpatialPointsDataFrame
+amador.pts <- fetchSDA_spatial(mukeys$mukey, by.col = 'mukey', method = 'point', chunk.size = 2)
 ```
 
-Extract PRISM data (the `RasterStack` object we made earlier) at the sampling locations and summarize. Note that CRS transformations are automatic (when possible).
+
+Graphically check both methods
+```{r fig.width=4, fig.height=5}
+# adjust margins and setup plot device for two columns
+par(mar=c(1,1,3,1), mfcol=c(1,2))
+# first figure
+plot(maat, ext=extent(s), main='PRISM MAAT\n100 Sampling Points from Extent', axes=FALSE)
+plot(amador, add=TRUE)
+points(s, cex=0.25)
+
+plot(maat, ext=extent(s), main='PRISM MAAT\nPolygon Centroids', axes=FALSE)
+points(amador.pts, cex=0.25, pch='.')
+```
+
+Extract PRISM data (the `RasterStack` object we made earlier) at the sampling locations (100 regularly-spaced and from MU polygon centroids) and summarize. Note that CRS transformations are automatic (when possible).
 ```{r}
 # return the result as a data.frame object
 e <- extract(rs, s, df=TRUE)
+e.pts <- extract(rs, amador.pts, df=TRUE)
+
 # check out the extracted data
 summary(e[, -1])
 ```
