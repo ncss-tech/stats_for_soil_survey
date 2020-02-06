@@ -10,6 +10,8 @@ ch2b.data.path <- 'C:/workspace/chapter-2b'
 # load MLRA polygons
 mlra <- readOGR(dsn=ch2b.data.path, layer='mlra-18-15-AEA')
 
+
+
 # mean annual air temperature, Deg C
 maat <- raster(paste0(ch2b.data.path, '/MAAT.tif'))
 # mean annual precipitation, mm
@@ -76,7 +78,53 @@ lapply(maat.comparison, summary)
 par(mar=c(4.5, 8, 3, 1))
 boxplot(maat.comparison, horizontal=TRUE, las=1, xlab='MAAT (deg C)', varwidth=TRUE, boxwex=0.5)
 
+b <- boxplot(maat.comparison, horizontal=TRUE, las=1, xlab='MAAT (deg C)', 
+        varwidth=TRUE, boxwex=0.5,
+        main='MAAT Comparison')
 
+
+library(sharpshootR)
+
+# the next function requires a polygon ID: each polygon gets a unique number 1--number of polygons
+mlra$pID <- 1:nrow(mlra)
+s <- constantDensitySampling(mlra, n.pts.per.ac=0.001)
+
+# spatial overlay: sampling points and MLRA polygons
+res <- over(s, mlra)
+
+# row / feature order is preserved, so we can directly copy
+s$mlra <- res$MLRARSYM
+
+# tabulate number of samples per MLRA
+table(s$mlra)
+
+# raster stack extraction at sampling points
+e <- extract(rs, s, df=TRUE)
+
+# convert sampling points from SpatialPointsDataFrame to data.frame
+s.df <- as(s, 'data.frame')
+
+# join columns from extracted values and sampling points
+s.df <- cbind(s.df, e)
+
+# check results
+head(s.df)
+
+library(lattice)
+library(reshape2)
+
+# reshape from wide to long format
+m <- melt(s.df, id.vars = c('mlra'), measure.vars = c('MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT'))
+
+# check "wide" format
+head(m)
+
+
+# interactive plots!
+
+library(Hmisc)
+
+histboxp(x=s.df$MAAT, group=s.df$mlra, sd=TRUE, bins=100)
 
 
 
