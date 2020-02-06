@@ -126,6 +126,8 @@ library(Hmisc)
 
 histboxp(x=s.df$MAAT, group=s.df$mlra, sd=TRUE, bins=100)
 
+tapply(m$value, list(m$variable, m$mlra), GiniMd, na.rm=TRUE)
+
 
 
 
