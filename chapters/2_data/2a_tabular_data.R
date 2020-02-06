@@ -1,128 +1,6 @@
-## ----echo=FALSE, results='hide', warning=FALSE, message=FALSE------------------------------------------------------------------------
-library(knitr, quietly=TRUE)
-
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
-
-# options for R functions
-options(width=100, stringsAsFactors=FALSE)
-
-
-## ----pedons_a, echo=FALSE, results='hide', warning=FALSE-----------------------------------------------------------------------------
-library(ggplot2)
-library(dplyr)
-
-data("us_ss_timeline", package = "soilDB")
-
-test <- as.data.frame(table(us_ss_timeline$year), stringsAsFactors = FALSE)
-
-names(test)[names(test) %in% c("Var1", "Freq")] <- c("year", "Count")
-test <- mutate(test, 
-               year = as.numeric(year)
-               )
-
-
-
-g1 <- ggplot(test, aes(x = year, y = Count)) +
-  geom_area(alpha = 0.7) + 
-  ylim(0, max(test$Count, na.rm = TRUE) * 1.5) +
-  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
-  # theme(aspect.ratio = 1) + 
-  xlab("Year") +
-  ggtitle("Number of Published US Soil Survey Manuscripts by Year")
-
-g2  <- ggplot(test, aes(x = year, y = cumsum(Count))) +
-  geom_area(alpha = 0.7) + 
-  ylim(0, max(cumsum(test$Count), na.rm = TRUE) * 1.5) +
-  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
-  # theme(aspect.ratio = 1) +
-  xlab("Year") + ylab("Count") +
-  ggtitle("Cumulative Number of Published US Soil Survey Manuscripts by Year")
-
-# gridExtra::grid.arrange(g1, g2, ncol = 1)
-
-
-pedons <- read.csv("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/pedons.csv", stringsAsFactors = FALSE)
-pedons <- filter(pedons, obs_year %in% 1950:2018) %>%
-  mutate(year = obs_year,
-         lab = FALSE,
-         Count = n_peiid
-         )
-
-labpedons <- read.csv("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/labpedons.csv", stringsAsFactors = FALSE)
-labpedons <- filter(labpedons, obs_year %in% 1950:2018) %>%
-  mutate(year = obs_year,
-         lab = TRUE,
-         Count = n_peiid
-         )
-
-
-g3 <- ggplot(pedons, aes(x = year, y = Count)) + 
-  geom_area(aes(fill = lab), stat = "identity") + 
-  geom_area(data = labpedons, aes(x = year, y = Count, fill = lab), stat = "identity") +
-  ylim(0, max(pedons$Count, na.rm = TRUE) * 1.2) +
-  ylab("Count") + xlab("Observation Year") +
-  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
-  ggtitle("Number of Pedons per Year") 
-
-g4 <- ggplot(pedons, aes(x = year, y = cumsum(Count))) + 
-  geom_area(aes(fill = lab), stat = "identity") +
-  ylim(0, max(cumsum(pedons$Count), na.rm = TRUE) * 1.2) +
-  ylab("Count") + xlab("Observation Year") +
-  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
-  ggtitle("Cumulative Number of Pedons per Year")
-
-gridExtra::grid.arrange(g1, g3, ncol = 1)
-
-
-
-## ----structure_diagram_a, echo=FALSE, results='hide', warning=FALSE------------------------------------------------------------------
-library(diagram, quietly=TRUE)
-# reset figure margins
-par(mar = c(1, 1, 1, 1))
-
-# simple diagram of the pedon data structure
-names <- c("Site", "Siteobs", "Pedon", "Horizon")
-M <- matrix(nrow = 4, ncol = 4, byrow = TRUE, data = 0)
-M[4, 3] <- M[3, 2] <- M[2, 1] <- ""
-pos <- cbind (c(1, 1, 1, 1))
-plotmat(M, pos = pos, name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.1, box.type = "square", box.prop = 0.4, mx=-0.2)
-
-# parallel simplified SPC structure
-names <- c("Site-level", "Horizon-level")
-M <- matrix(nrow = 2, ncol = 2, byrow = TRUE, data = 0)
- M[2, 1] <- ""
-#pos <- cbind (c(2, 2))
-plotmat(M, pos = c(1, 1), name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.14, box.type = "square", box.prop = 0.75, mx=0.3, my=-0.1, add=TRUE)
-
-# add arrows to the diagram
-arrows(0.42, 0.1, x1=0.65, y1=0.1, length = 0.25, code=2, lwd=2, angle = 15)
-arrows(0.42, 0.35, x1=0.65, y1=0.54, length = 0.25, code=2, lwd=2, angle = 15)
-arrows(0.42, 0.61, x1=0.65, y1=0.61, length = 0.25, code=2, lwd=2, angle = 15)
-arrows(0.42, 0.87, x1=0.65, y1=0.68, length = 0.25, code=2, lwd=2, angle = 15)
-
-
-## ----example_a, echo=FALSE, results='show', warning=FALSE----------------------------------------------------------------------------
-top <- c(0,38,56,121,135)
-bot <- c(30,56,121,135,'')
-hzname <- c('A', 'Bt1', 'Bt2', 'Bk', 'R')
-d <- data.frame(hzname, top, bot)
-d
-
-
-## ---- eval=FALSE---------------------------------------------------------------------------------------------------------------------
-## # not run
-## library(soilDB)
-## help(soilDB)
-## 
-## # for links to lots of great examples look here!
-## library(aqp)
-## help(aqp)
-
-
-## ----gopheridge_a--------------------------------------------------------------------------------------------------------------------
 options(width=95, stringsAsFactors=FALSE)
-library(soilDB)
 library(aqp)
+library(soilDB)
 
 # load example dataset
 data(gopheridge)
@@ -137,18 +15,14 @@ str(gopheridge, 2)
 siteNames(gopheridge)
 horizonNames(gopheridge)
 
-
-## ---- fig.width=10, fig.height=4-----------------------------------------------------------------------------------------------------
 par(mar=c(1,1,1,1))
 # ommiting pedon IDs and horizon designations
 plot(gopheridge, print.id=FALSE, name='', width=0.3)
 title('Pedons from the `gopheridge` sample dataset', line=-0.5)
 
-
-## ----owndata_a, eval=FALSE-----------------------------------------------------------------------------------------------------------
 ## # load required libraries
-## library(soilDB)
 ## library(aqp)
+## library(soilDB)
 ## 
 ## # load data from a NASIS selected set
 ## pedons <- fetchNASIS(from = 'pedons')
@@ -167,8 +41,6 @@ title('Pedons from the `gopheridge` sample dataset', line=-0.5)
 ## head(site(pedons), 2)
 ## head(horizons(pedons), 2)
 
-
-## ----gopheridge_b--------------------------------------------------------------------------------------------------------------------
 # plot the locations of the gopheridge pedons within R
 # Steps:
 # 1) subset to a new data frame
@@ -192,8 +64,6 @@ proj4string(gopher.locations) <- '+proj=longlat +datum=WGS84'
 # creat interactive map
 mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.locations$site_id)
 
-
-## ----r_plot_pedons, eval=FALSE, echo=TRUE, results='show', warning=FALSE-------------------------------------------------------------
 ## # load libraries
 ## library(aqp)
 ## library(soilDB)
@@ -221,8 +91,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## # plot
 ## mapview(pedons.sp, legend=FALSE, map.types='OpenStreetMap', label=pedons.sp$site_id)
 
-
-## ----owndata_b, results='hide', eval=FALSE-------------------------------------------------------------------------------------------
 ## # summarize which soil taxa we have loaded
 ## table(pedons$taxonname)
 ## # sort results in descending order
@@ -239,8 +107,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## # it can also be applied to horizon level columns in the SPC
 ## sort(table(pedons$texture), decreasing=TRUE)
 
-
-## ----owndata_d, results='hide', eval=FALSE-------------------------------------------------------------------------------------------
 ## # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 ## # use of grep() to filter and create an index, then apply that index to the SPC
 ## # and create a new SPC called 'f1' using the square bracket notation
@@ -250,8 +116,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## # or use the index directly to summarize a field
 ## sort(table(pedons$taxpartsize[idx]), decreasing=TRUE)
 
-
-## ----owndata_e, eval=FALSE, results='show', fig.width=8, fig.height=4----------------------------------------------------------------
 ## # adjust margins
 ## par(mar=c(1,0,0,1))
 ## # plot the first 10 profiles of subset1
@@ -259,8 +123,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## plot(subset1[1:10, ], label='site_id', max.depth=60)
 ## title('Pedons with the word "lithic" at subgroup-level of Soil Taxonomy', line=-2)
 
-
-## ----owndata_f, eval=FALSE, results='show', fig.width=8, fig.height=4----------------------------------------------------------------
 ## # say we wanted to look at what the variation of particle size classes are within a specific subgroup?
 ## # first: use grep to pattern match the tax_subgroup field for the string 'aqu'
 ## idx <- grep('lithic', pedons$taxsubgrp)
@@ -281,8 +143,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## plot(subset2, label='site_id')
 ## title('Loamy particle size control section class')
 
-
-## ----owndata_g, eval=FALSE, results='show'-------------------------------------------------------------------------------------------
 ## # extract site data from SPC into dataframe 's'
 ## s <- site(pedons)
 ## names(s)
@@ -290,8 +150,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## h <- horizons(pedons)
 ## names(h)
 
-
-## ----owndata_a1, eval=FALSE, results='hide'------------------------------------------------------------------------------------------
 ## # use each one of these to return a vector of the pedons where errors were detected
 ## #get('sites.missing.pedons', envir=soilDB.env)
 ## #get('dup.pedon.ids', envir=soilDB.env)
@@ -306,8 +164,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## idx <- which(! pedons$pedon_id %in% get('bad.pedon.ids', envir=soilDB.env))
 ## pedons <- pedons[idx, ]
 
-
-## ----owndata_j1, eval=FALSE, echo=TRUE, results='show', warning=FALSE, collapse=TRUE-------------------------------------------------
 ## # fetch extended site and horizon data
 ## e <- get_extended_data_from_NASIS_db()
 ## 
@@ -334,8 +190,8 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## colnames(e$pm)
 ## 
 ## ### horizon related extended data
-## # rock fragments
-## colnames(e$frag_summary)
+# # rock fragments
+# colnames(e$frag_summary)
 ## 
 ## # soil texture modifers
 ## colnames(e$texmodifier)
@@ -343,8 +199,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## # soil structure data
 ## colnames(e$struct)
 
-
-## ----owndata_c, eval=FALSE, results='show'-------------------------------------------------------------------------------------------
 ## # graphically tabulate the occurrence of landforms
 ## # load required libraries
 ## library(soilDB)
@@ -360,8 +214,6 @@ mapview(gopher.locations, legend=FALSE, map.types='OpenStreetMap', label=gopher.
 ## # plot top 10 or length, whichever is shorter
 ## dotchart2(lf[1:pmin(10, length(lf))], col='black', xlim = c(0, max(lf)), cex.labels = 0.75)
 
-
-## ----owndata_j3, results='show', warning=FALSE, fig.width=6, fig.height=4------------------------------------------------------------
 # rename gopheridge data
 data("gopheridge")
 f <- gopheridge
@@ -398,8 +250,6 @@ par(mar = c(4.5,4.5,1,1))
 hist(f$argillic_thickness_cm, xlab = 'Thickness of argillic diagnostic (cm)', main='')
 hist(f$depth_to_argillic_cm, xlab = 'Depth to argillic diagnostic (cm)', main = '')
 
-
-## ----owndata_j4, eval=FALSE, echo=TRUE, results='show', warning=FALSE----------------------------------------------------------------
 ## # start fresh with your own data
 ## f <- fetchNASIS(from = 'pedons')
 ## # get diagnostic features associated with pedons loaded from selected set
@@ -416,8 +266,6 @@ hist(f$depth_to_argillic_cm, xlab = 'Depth to argillic diagnostic (cm)', main = 
 ## # how would you do the rest.....see if you can work it out!
 ## 
 
-
-## ----owndata_k, eval=TRUE, echo=TRUE, results='show', warning=FALSE, fig.height=9, fig.width=7---------------------------------------
 ## work up diagnostic plot based on gopheridge dataset
 library(aqp)
 library(soilDB)
@@ -435,8 +283,6 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 # plot again, this time with diagnostic features ordered according to co-occurrence
 diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 'taxonname', sort.vars = TRUE)
 
-
-## ----owndata_l, eval=FALSE, echo=TRUE, results='hide', warning=FALSE, fig.height=9, fig.width=7--------------------------------------
 ## library(soilDB)
 ## library(sharpshootR)
 ## 
@@ -457,8 +303,6 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 ## # generate diagnostic property diagram
 ## diagnosticPropertyPlot(f, v, k=5, grid.label='site_id', dend.label = 'taxonname')
 
-
-## ---- fig.width=7, fig.height=4, eval=FALSE------------------------------------------------------------------------------------------
 ## library(soilDB)
 ## library(RODBC)
 ## 
@@ -503,4 +347,3 @@ diagnosticPropertyPlot(gopheridge, v, k=5, grid.label='site_id', dend.label = 't
 ## 
 ## # soil temperature by day of year
 ## plot(soitemp ~ doy, data=d, type='p', xlim=c(1, 366), ylim=c(-1, 25), xlab='Day of Year', ylab='Soil Temperature at 50cm (deg C)', las=1)
-

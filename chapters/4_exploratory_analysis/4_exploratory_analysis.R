@@ -1,6 +1,3 @@
-# setup
-knitr::opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
-
 library(aqp)
 library(soilDB)
 
@@ -147,36 +144,9 @@ vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
 
 round(cor(h[, vars], use = "complete.obs"), 2)
 
-figs <- data.frame(
-  'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
-   Description = c("a plot where each bar represents the frequency of observations for a 'group'",
-                   "a plot where each bar represents the frequency of observations for a 'given range of values'",
-                  "an estimation of the frequency distribution based on the sample data",
-                  "a plot of the actual data values against a normal distribution",
-                  "a visual representation of median, quartiles, symmetry, skewness, and outliers",
-                   "a graphical display of one variable plotted on the x axis and another on the y axis"
-                  ),
-  check.names = FALSE
-  )
 
-knitr::kable(figs, caption = "Short Description of Graphical Methods")
 
-figs <- data.frame(
-  'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
-  # Description = c("a bar plot where each bar represents the frequency of observations for a given range of values",
-  #                "an estimation of the frequency distribution based on the sample data",
-  #                "a plot of the actual data values against a normal distribution",
-  #                "a visual representation of median, quartiles, symmetry, skewness, and outliers",
-  #                 "a graphical display of one variable plotted on the x axis and another on the y axis",
-  #                "plots formatted for the representation of circular data"
-  #                ),
-  'Base R' = c("barplot()", "hist()", "plot(density())", "qqnorm()", "boxplot()", "plot()"),
-  'lattice' = c("barchart()", "histogram()", "densityplot()", "qq()", "bwplot()", "xyplot"),
-  'ggplot geoms' = c("geom_bar()", "geom_histogram()", "geom_density()", "geom_qq()", "geom_boxplot()", "geom_point()"),
-  check.names = FALSE
-  )
 
-knitr::kable(figs, caption = "Comparison of R's 3 Graphing Systems and their Equivalent Functions for Plotting")
 
 data(metadata)
 
@@ -270,116 +240,11 @@ ggplot(h, aes(sample = total_frags_pct)) +
 
 
 
-library(ggplot2)
-
-dnorm_limit_1 <- function(x) {
-  y <- dnorm(x)
-  y[-1 > x | x > 1] <- NA
-  return(y)
-  }
-dnorm_limit_2 <- function(x) {
-  y <- dnorm(x)
-  y[-2 > x | x > 2] <- NA
-  return(y)
-  }
-
-df <-data.frame(x = c(-3, 3))
-
-ggplot(df, aes(x = x)) + 
-  stat_function(fun=dnorm) +
-  stat_function(fun=dnorm_limit_1, geom="area", fill="blue", alpha=0.2) +
-  stat_function(fun=dnorm_limit_2, geom="area", fill="orange", alpha=0.2) +
-  annotate("text", x = 0, y = 0.2, label = "1 sd = 68%") +
-  annotate("text", x = -1.5, y = 0.03, label = "2 sd = 95%")
 
 
 
-r <- data.frame(y = dunif(seq(-1, 2, 0.1)), x = 1:31)
-
-ggplot(r, aes(x = x, y = y)) +
-  geom_line() +
-  geom_polygon(fill = "grey", alpha = 0.5) +
-  ggtitle("Uniform Distribution: Minimum = 0, Maximum = 1")
 
 
-
-p   <- c(0.025, 0.25, 0.5, 0.75, 0.975)
-
-avg <- mean(h$clay, na.rm = TRUE)
-std <- sd(h$clay,   na.rm = TRUE)
-
-clay <- rbind(
-  data.frame(
-    value = c(avg - 2 * std, avg, avg + 2 * std),
-    variable = "mean & sd",
-    stringsAsFactors = TRUE
-    ),
-  data.frame(
-    value    = quantile(h$clay, p, na.rm = TRUE),
-    variable = "median & pct",
-    stringsAsFactors = TRUE
-    )
-  )
-
-avg <- mean(h$total_frags_pct, na.rm = TRUE)
-std <- sd(h$total_frags_pct,   na.rm = TRUE)
-
-frags <- rbind(
-  data.frame(
-    variable = "mean & sd",
-    value = c(avg - 2 * std, avg, avg + 2 * std),
-    stringsAsFactors = TRUE
-    ),
-  data.frame(
-    variable = "median & pct", 
-    value    = quantile(h$total_frags_pct, p, na.rm = TRUE),
-    stringsAsFactors = TRUE
-    )
-  )
-
-p1 <- ggplot(h, aes(x = clay)) +
-  geom_density(fill = "grey", alpha = 0.5) +
-  geom_vline(data = clay, aes(xintercept = value, lty = variable)) +
-  xlab("clay (%)") +
-  #xlim(-5, max(h$total_frags_pct)) +
-  theme(aspect.ratio = 1) +
-  ggtitle("Clay")
-
-p2 <- ggplot(h, aes(x = total_frags_pct)) +
-  geom_density(fill = "grey", alpha = 0.5) +
-  geom_vline(data = frags, aes(xintercept = value, lty = variable)) +
-  xlab("rock fragments (%)") +
-  #xlim(-5, max(h$total_frags_pct)) +
-  theme(aspect.ratio = 1) +
-  ggtitle("Rock Fragments")
-
-gridExtra::grid.arrange(p1, p2, ncol = 2)
-
-
-
-# scatter plot
-p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
-  geom_point() +
-  ylim(100, 0) +
-  ylab("depth (cm)") + xlab("clay (%)") +
-  theme(aspect.ratio = 1) +
-  ggtitle("Scatter Plot")
-
-# line graph
-
-# h2 <- slice(loafercreek, 0:100 ~ clay)@horizons
-
-p_l <- ggplot(h) +
-  # geom_line(aes(y = clay, x = hzdept, group = peiid)) +
-  geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
-  geom_smooth(aes(y = clay, x = (hzdept + hzdepb) / 2), se = FALSE) +
-  xlim(100, 0) +
-  xlab("depth (cm)") + ylab("clay (%)") +
-  coord_flip() +
-  theme(aspect.ratio = 1) +
-  ggtitle("Line Plot")
-
-gridExtra::grid.arrange(p_s, p_l, ncol = 2)
 
 
 # scatter plot
@@ -403,15 +268,7 @@ vars <- c("hzdepm", "clay", "phfield", "total_frags_pct")
 ggpairs(h[vars])
 
 
-h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
 
-ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, col = "black") +
-  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
-  xlab("depth (cm)") + ylab("clay (%)") +
-  coord_flip() +
-  theme(aspect.ratio = 1)
 
 
 # scatter plot

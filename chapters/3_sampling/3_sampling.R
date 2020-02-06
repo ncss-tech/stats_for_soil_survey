@@ -1,8 +1,3 @@
-# setup
-library(knitr, quietly=TRUE)
-
-opts_chunk$set(message=FALSE, warning=FALSE, background="#F7F7F7", fig.retina=1, dev="png", tidy=FALSE, verbose=FALSE)
-
 # Clay example. Test to see the number of samples necessary to detect a 3 percent difference in clay between two horizons.
 power.t.test(power = 0.95, sd = 2, delta = 16 - 19) # delta = the difference between the two means
 power.t.test(power = 0.95, sd = 3, delta = 16 - 19)

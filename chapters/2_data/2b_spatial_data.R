@@ -1,32 +1,19 @@
-# setup
-library(knitr, quietly=TRUE)
-opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE)
-
-# options for R functions
-options(width=100, stringsAsFactors=FALSE)
-
-# captions added to figures
-knit_hooks$set(htmlcap = function(before, options, envir) {
-  if(!before) {
-    paste('<p class="caption" style="font-size:85%; font-style: italic; font-weight: bold;">',options$htmlcap,"</p><hr>",sep="")
-    }
-    })
-
 library(aqp)
 library(sp)
 library(raster)
 library(rgdal)
 library(soilDB)
 
-# you may have to install this
+# load required packages
 library(mapview)
+library(leafem)
 
 # get series extents from SoilWeb
 pentz <- seriesExtent('pentz')
 redding <- seriesExtent('redding')
 
 # make a simple map
-m <- mapview(pentz)
+m <- mapView(pentz)
 # add more data to the map and display
 addFeatures(m, redding, color='black', fillColor='red', weight=1)
 
@@ -41,14 +28,14 @@ library(velox)
 s <- seriesExtent('san joaquin')
 
 # load pointer to PRISM data, note that this file is stored on my local machine:
-r <- raster('C:/workspace/chapter-2b/ffd_50_pct_800m.tif')
+r <- raster('C:/workspace/chapter-2b/FFD.tif')
 
-# 2.5 seconds sampling
+# 0.8 seconds for sampling
 vx <- velox(r)
 system.time(e <- vx$extract(s))
 
 # simple summary
-densityplot(e$`SAN JOAQUIN`, plot.points=FALSE, bw=2, lwd=2, col='RoyalBlue', xlab='Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', ylab='Density', main='FFD Estimate for Extent of Cecil Series')
+densityplot(e$`SAN JOAQUIN`, plot.points=FALSE, bw=2, lwd=2, col='RoyalBlue', xlab='Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', ylab='Density', main='FFD Estimate for Extent of San Joaquin Series')
 
 # create point geometry from coordinates
 p <- SpatialPoints(coords = cbind(-97.721210, 40.446068))
@@ -132,6 +119,12 @@ inMemory(r)
 ## # unzip
 ## unzip(paste0(ch2b.data.path, '/chapter-2b-mu-polygons.zip'), exdir = ch2b.data.path, overwrite = TRUE)
 ## unzip(paste0(ch2b.data.path, '/chapter-2b-PRISM.zip'), exdir = ch2b.data.path, overwrite = TRUE)
+
+library(aqp)
+library(sp)
+library(raster)
+library(rgdal)
+library(soilDB)
 
 # establish path to example data
 ch2b.data.path <- 'C:/workspace/chapter-2b'
@@ -224,9 +217,19 @@ points(x.random)
 # this will be very slow for large grids
 mean(values(maat), na.rm=TRUE)
 
-# generally much faster and just as good, given reasonable sampling strategy and sample size
+# generally much faster and just as good, 
+# given reasonable sampling strategy and sample size
 mean(x.regular$MAAT, na.rm=TRUE)
+
+# this value will be different than what you get
+# it is after all, random sampling
 mean(x.random$MAAT, na.rm=TRUE)
+
+# takes a couple of seconds
+z <- replicate(100, mean(sampleRandom(maat, size = 100, na.rm=TRUE), na.rm = TRUE))
+
+# 90% of the time the mean MAAT values were within:
+quantile(z, probs=c(0.05, 0.95))
 
 # result is a SoilProfileCollection object
 auburn <- fetchKSSL(series = 'auburn')
@@ -245,8 +248,11 @@ e <- extract(rs, s, df=TRUE)
 # note that we are "leaving out" the first column which contains an ID
 summary(e[, -1])
 
+# don't convert character data into factors
+options(stringsAsFactors = FALSE)
+
 # combine site data with extracted raster values, row-order is identical
-res <- cbind(as.data.frame(s), e)
+res <- cbind(as(s, 'data.frame'), e)
 
 # extract unique IDs and PRISM data
 res <- res[, c('pedon_key', 'MAAT', 'MAP', 'FFD', 'GDD', 'rain.fraction', 'eff.PPT')]
@@ -258,9 +264,10 @@ site(auburn) <- res
 new.order <- order(auburn$eff.PPT)
 
 # setup figure margins
-par(mar=c(5,2,4,2))
+# set to single figure output, just in case you are working from the top of the examples
+par(mar=c(5,2,4,2), mfcol=c(1,1))
 # plot profile sketches
-plot(auburn, name='hzn_desgn', print.id=FALSE, color='clay', plot.order=new.order)
+plot(auburn, name='hzn_desgn', print.id=FALSE, color='clay', plot.order=new.order, cex.names=0.85)
 
 # add an axis with extracted raster values
 axis(side=1, at = 1:length(auburn), labels = round(auburn$eff.PPT[new.order]), cex.axis=0.75)

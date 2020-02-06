@@ -1,5 +1,3 @@
-knitr::opts_chunk$set(echo = TRUE)
-
 library(aqp)
 library(soilDB)
 
