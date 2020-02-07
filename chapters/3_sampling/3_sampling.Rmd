@@ -1,5 +1,5 @@
 ---
-title: Chapter 3 - Sampling Design
+title: Sampling Design
 author: Skye Wills, Stephen Roecker, Tom D'Avello
 date: "`r Sys.Date()`"
 output:
@@ -92,14 +92,11 @@ In simple random sampling, all samples within the region have an equal chance of
  - Samples may not be representative of the feature attribute(s)  
 
 ```{r simple, fig.width=4, fig.height=4}
-# load dataset from Soil Data Access
-library(soilDB)
-library(raster)
+library(sp)
 
-b <- c(-86.35,39.82,-86.34,39.83)
-x <- mapunit_geom_by_ll_bbox(b)
-polys <- crop(x, extent(b[c(1, 3, 2, 4)]))
-
+# Create a sixteen square polygon
+grd <- GridTopology(c(1, 1), c(1, 1), c(4, 4))
+polys <- as.SpatialPolygons.GridTopology(grd)
 plot(polys)
 
 # Generate simple random sample
@@ -263,6 +260,7 @@ To gauge the representativeness of a sampling strategy, you can compare the resu
 The simple example below demonstrates how to compare several sampling strategies by evaluating how well they replicate the distribution of elevation. 
 
 ```{r seval}
+
 # create a polygon from the spatial extent of the volcano dataset
 test <- as(extent(volcano_r), "SpatialPolygons")
 

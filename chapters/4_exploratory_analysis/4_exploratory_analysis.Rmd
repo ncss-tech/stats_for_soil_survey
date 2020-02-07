@@ -957,7 +957,7 @@ amador.pts <- fetchSDA_spatial(mukeys$mukey, by.col = 'mukey', method = 'point',
 
 
 Graphically check both methods
-```{r fig.width=4, fig.height=5}
+```{r fig.width=10, fig.height=7}
 # adjust margins and setup plot device for two columns
 par(mar=c(1,1,3,1), mfcol=c(1,2))
 # first figure
@@ -966,7 +966,7 @@ plot(amador, add=TRUE)
 points(s, cex=0.25)
 
 plot(maat, ext=extent(s), main='PRISM MAAT\nPolygon Centroids', axes=FALSE)
-points(amador.pts, cex=0.25, pch='.')
+points(amador.pts, cex=0.25)
 ```
 
 Extract PRISM data (the `RasterStack` object we made earlier) at the sampling locations (100 regularly-spaced and from MU polygon centroids) and summarize. Note that CRS transformations are automatic (when possible).
@@ -977,7 +977,34 @@ e.pts <- extract(rs, amador.pts, df=TRUE)
 
 # check out the extracted data
 summary(e[, -1])
+
+# all pair-wise correlations
+knitr::kable(cor(e[, -1]), digits = 2)
 ```
+
+
+Quickly compare the two sets of samples. More on this in the Sampling module.
+```{r fig.width=6, fig.height=4}
+# compile results into a list
+maat.comparison <- list(
+  'regular samples'=e$MAAT, 
+  'polygon centroids'=e.pts$MAAT
+  )
+
+# number of samples per method
+lapply(maat.comparison, length)
+# summary() applied by group
+lapply(maat.comparison, summary)
+
+# box-whisker plot
+par(mar=c(4.5, 8, 3, 1), mfcol=c(1,1))
+boxplot(maat.comparison, horizontal=TRUE, las=1, xlab='MAAT (deg C)', 
+        varwidth=TRUE, boxwex=0.5,
+        main='MAAT Comparison')
+
+```
+
+
 
 Basic climate summaries from a standardized source (e.g. PRISM) might be a useful addition to an OSD. Think about how you could adapt this example to compare climate summaries derived from NASIS pedons to similar summaries derived from map unit polygons and generalized soil series extents.
 
@@ -1086,6 +1113,22 @@ bwplot(mlra ~ value | variable, data=m,                 # setup plot and data so
 )
 ```
 
+
+### Interactive Summaries
+Static figures are a good start, but sometimes an interactive summary is more appropriate for EDA. The `histboxp` function from the `Hmisc` package creates interactive (HTML) chunks that can be used in RStudio, or embedded in RMarkdown documents (e.g. these notes or `soilReports`). Use the mouse to hover over, click, drag, etc. to interact with the data. Double-click to reset the plot.
+
+```{r fig.width=8, fig.height=7}
+library(Hmisc)
+
+# interactive exploration of the MAAT distributions by MLRA
+histboxp(x=s.df$MAAT, group=s.df$mlra, bins=100, xlab='Mean Annual Air Temperature (deg C)')
+
+# interactive exploration of the Effective PPT distributions by MLRA
+histboxp(x=s.df$eff.PPT, group=s.df$mlra, bins=100, xlab='Annual Sum of Monthly PPT - PET (mm)')
+```
+
+
+
 # Soil Reports
 
 One of the strengths of NASIS is that it that has a wealth of existing queries and reports to access the complex data gathered and created during the Soil Survey effort. This makes it easy for the average user to load their data and run numerous reports. 
@@ -1094,7 +1137,11 @@ The NCSS-tech R package `soilDB` similarly has many functions to load data from 
 
 `soilReports` contains a small collection of reports mostly designed to summarize field and laboratory pedon data, as well as map unit / LRU / MLRA polygons. This collection of reports automates many methods we have reviewed so far, but are no substitute for interacting with your data and asking questions. 
 
-Example report output can be found at the following link: [https://github.com/ncss-tech/soilReports#example-output](https://github.com/ncss-tech/soilReports#example-output). 
+Example report output can be found at the following link: [https://github.com/ncss-tech/soilReports#example-output](https://github.com/ncss-tech/soilReports#example-output).
+
+Detailed instructions are provided for each report: [https://github.com/ncss-tech/soilReports#choose-an-available-report](https://github.com/ncss-tech/soilReports#choose-an-available-report)
+
+Running and interpreting one of these reports would be a fine class project.
 
 You can convert any of your R-based analyses to the `soilReports` format. The `soilReports` R package is essentially just a collection of R Markdown (_.Rmd_) reports, each with a "manifest" that describes any required dependencies, configuration files or inputs. 
 
@@ -1217,8 +1264,9 @@ ch4.data.path <- "C:/workspace2/chapter4"
 ch4.mucomp.path <- paste0(ch4.data.path,"/mucomp")
 
 # create any directories that may be missing
-if(!dir.exists(ch4.mucomp.path))
+if(!dir.exists(ch4.mucomp.path)) {
   dir.create(ch4.mucomp.path, recursive = TRUE)
+}
 
 # download raster data, SSURGO clip from CA630, and sample script for clipping your own raster data 
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_4-mucomp-data/ch4_mucomp-data.zip', paste0(ch4.mucomp.path, '/chapter_4-mucomp-data.zip'))

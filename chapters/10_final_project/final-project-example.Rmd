@@ -8,25 +8,67 @@ output: html_document
 ```{r setup, include=FALSE}
 # notes on chunk options:
 # https://yihui.name/knitr/options/
-knitr::opts_chunk$set(echo = TRUE)
+# suppress messages / warnings in output
+# use 2x resolution for nicer graphics
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.retina = 2)
 ```
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+An investigation of a classic catena from the Southeast. See the [source .Rmd](https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/chapters/10_final_project/final-project-example.Rmd) for ideas on how to mix narrative, code, and output into a stand-along HTML document. Note that "chunk options" are used in the .Rmd to control the size of figures and text formatting. Images can be included from local sources or via URL. Further background on RMarkdown documents can be found [here](https://rmarkdown.rstudio.com/html_document_format.html).
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
+## A Classic Catena of Soils
+
+![](https://casoilresource.lawr.ucdavis.edu/ncss_block_diagrams/GA-2011-05-31-02.png)
+Diagram showing relationship of dominant soils in Lloyd-Davidson association (Soil Survey of Morgan County, Georgia; 1965).
+
+Get basic morphology and series-level summaries.
+```{r fig.width=10, fig.height=6}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+library(latticeExtra)
+
+
+soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'congaree')
+
+# get morphology + extended summaries
+s <- fetchOSD(soils, extended = TRUE)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+### Hillslope Position
+```{r fig.width=12, fig.height=5}
+res <- vizHillslopePosition(s$hillpos)
+print(res$fig)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r fig.width=10, fig.height=6}
+par(mar=c(0,0,2,1))
+plot(s$SPC, plot.order=res$order)
+title('Hydrologic Ordering via Hillslope Position Proportions')
+```
+
+
+### Geomorphic Component
+```{r fig.width=12, fig.height=5}
+res <- vizGeomorphicComponent(s$geomcomp)
+print(res$fig)
+```
+
+```{r fig.width=10, fig.height=6}
+par(mar=c(0,0,2,1))
+plot(s$SPC, plot.order=res$order)
+title('Hydrologic Ordering via Geomorphic Component Proportions')
+```
+
+
+### Taxonomic Relationships 
+```{r fig.width=10, fig.height=6, echo=FALSE}
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s$SPC, scaling.factor = 0.02)
+```
+
+
+## Conclusions
+You will have to fill this in.
