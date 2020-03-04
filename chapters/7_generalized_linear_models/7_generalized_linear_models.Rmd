@@ -54,6 +54,7 @@ plot(logp, p, type = "l", ylab = "proportion (p)", xlab = "logit transform (log(
 When comparing a simple linear model vs a simple logistic model we can see the effect of the logit transform on the relationship between the response and predictor variable. As before it follows a sigmoidal curve and prevents predictions from exceeding 0 and 1.
 
 ```{r, echo=FALSE, fig.width=8, fig.height=4}
+
 library(sp)
 
 data(meuse)
@@ -95,7 +96,8 @@ To start, as always we need to load some extra packages. This will become a fami
 library(aqp)     # specialized soil classes and functions
 library(soilDB)  # NASIS and SDA import functions
 library(raster)  # guess
-library(rgdal)   # spatial import
+library(sf)      # vector data functions
+library(mapview) # interactive mapping
 library(ggplot2) # graphing
 library(tidyr)   # data manipulation
 library(caret)   # classification and regression training
@@ -138,7 +140,7 @@ table(s$argillic.horizon, useNA = "ifany")
 # summary(s$argillic.horizon) 
 
 # Extract argillic presence from the taxonomic subgroup
-s$argillic <- grepl("arg", s$tax_subgroup)
+s$argillic <- grepl("arg", s$taxsubgrp)
 
 table(s$argillic, useNA = "ifany")
 
@@ -150,11 +152,14 @@ Ideally, if the diagnostic horizon table had been populated consistently we coul
 ```{r diagnostic}
 
 d <- diagnostic_hz(pedons)
-peiid <- subset(d, diag_kind == "argillic horizon" & featdept < 50, select = peiid)
-test <- s$peiid %in% unique(peiid)
-summary(test)
+d_sub <- subset(d, featkind == "argillic horizon" & featdept < 50)
 
+s$argillic.horizon50 <- ifelse(s$peiid %in% d_sub$peiid, TRUE, FALSE)
+
+table(s$argillic.horizon50, useNA = "ifany")
+  
 ```
+
 
 ## Geomorphic data
 
@@ -170,13 +175,13 @@ s_sub <- subset(s, argillic == TRUE)
 
 # Cross tabulate landform vs argillic horizon presence
 test <- with(s_sub, 
-             table(landform.string, argillic, useNA = "ifany")
+             table(landform, argillic, useNA = "ifany")
              )
 # Subset and print landform.string with > 3 observations
 test[test > 3,]
 
 # generalize the landform.string
-s$landform <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform.string), "fan", "hill") 
+s$landform_generic <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform), "fan", "hill") 
 
 ```
 
@@ -188,11 +193,11 @@ Examining the above frequency table we can see that argillic horizons occur pred
 # Hillslope position
 
 # Subset fan landforms
-s_sub <- subset(s, landform == "fan") 
+s_sub <- subset(s, landform_generic == "fan") 
 
 # Cross tabulate and calculate proportions, the "2" calculates the proportions relative to the column totals
 with(s_sub, round(
-  prop.table(table(hillslope_pos, argillic, useNA = "ifany"), 2)
+  prop.table(table(hillslopeprof, argillic, useNA = "ifany"), 2)
   * 100)
   ) 
 
@@ -208,17 +213,8 @@ Looking at the hillslope position of fan landforms we can see a slightly higher 
 
 ```{r surface}
 
-# Surface morphometry, depth and surface rock fragments
-
-# Recalculate gravel
-s$surface_gravel <- with(s, 
-                         surface_gravel - surface_fgravel
-                         )
-# Calculate the total surface rock fragments
-s$frags <- apply(s[grepl("surface", names(s))], 1, sum) 
-
 # Subset to just look and fans, and select numeric columns
-s_sub <- subset(s, landform == "fan", select = c(argillic, bedrckdepth, slope_field, elev_field, frags)) 
+s_sub <- subset(s, landform_generic == "fan", select = c(argillic, bedrckdepth, slope, elev, surface_total_frags_pct)) 
 
 # convert s_sub to wide data format
 s_w <- gather(s_sub, key = key, value = value, - argillic) 
@@ -241,25 +237,25 @@ Next we'll look at soil scientist bias. The question being: Are some soil scient
 
 # Custom function to filter out the top 3 soil scientists
 s <- within(s, {
-  old = describer
-  describer2 = NA
-  describer2[grepl("Stephen", old)] = "Stephen" # least senior
-  describer2[grepl("Paul",    old)] = "Paul"
-  describer2[grepl("Peter",   old)] = "Peter"   # most senior
+  old = descname
+  descname2 = NA
+  descname2[grepl("Stephen", old)] = "Stephen" # least senior
+  descname2[grepl("Paul",    old)] = "Paul"
+  descname2[grepl("Peter",   old)] = "Peter"   # most senior
   })
 
 ```
 
 ```{r bias2}
 
-s_sub <- subset(s, landform == "fan")
+s_sub <- subset(s, landform_generic == "fan")
 
 # By frequency
-with(s_sub, table(describer2, argillic, useNA = "ifany"))
+with(s_sub, table(descname2, argillic, useNA = "ifany"))
 
 # By proportion
 with(s_sub, round(
-  prop.table(table(describer2, argillic), margin = 1)
+  prop.table(table(descname2, argillic), margin = 1)
   * 100)
   )
 
@@ -274,27 +270,26 @@ Where do our points plot? We can plot the general location in R, but for this ta
 
 ```{r plot}
 
-# Convert soil profile collection to a spatial object
-pedons2 <- pedons
-slot(pedons2, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
-idx <- complete.cases(site(pedons2)[c("x", "y")]) # create an index to filter out pedons with missing coordinates
-pedons2 <- pedons2[idx]
-coordinates(pedons2) <- ~ x + y # set the coordinates
-proj4string(pedons2) <- CRS("+init=epsg:4326") # set the projection
-pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to spatial object
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # reproject
+idx <- complete.cases(s$x_sdt, s$y_std) # create an index to filter out pedons with missing coordinates# Convert soil profile collection to a spatial object
+s_sub <- s[idx, ]
+s_sf <- st_as_sf(s_sub,
+                 coords = c("x_std", "y_std"),
+                 crs = 4326
+                 )
+# reproject
+s_sf <- st_transform(s_sf, crs = 5070) # reproject
 
 # Read in soil survey area boundaries
-# ssa <- readOGR(dsn = "F:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
-# ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
-# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+ssa <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+ca794 <- st_transform(ca794, crs = 5070)
 
 # Plot
-plot(ca794, axes = TRUE)
-plot(pedons_sp, add = TRUE) # notice the points outside the boundary
+mapview(ca794, fill = NA) +
+  mapview(s_sf)
 
 # Write shapefile of pedons
-writeOGR(pedons_sp, dsn = "C:/workspace2", "pedons_sp", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+write_sf(s_sf, dsn = "C:/workspace2", "ca794_pedons", driver = "ESRI Shapefile", delete_dsn =  TRUE)
 
 ```
 
@@ -317,9 +312,9 @@ folder <- "D:/geodata/project_data/R8-VIC/ca794/"
 
 # list of file names
 files <- c(
-  elev   = "ned30m_8VIC.tif", # elevation
-  slope  = "ned30m_8VIC_slope5.tif", # slope gradient
-  aspect = "ned30m_8VIC_aspect5.tif", # slope aspect
+  z      = "ned30m_8VIC.tif", # elevation
+  slp    = "ned30m_8VIC_slope5.tif", # slope gradient
+  asp    = "ned30m_8VIC_aspect5.tif", # slope aspect
   twi    = "ned30m_8VIC_wetness.tif", # topographic wetness index
   twi_sc = "ned30m_8VIC_wetness_sc.tif", # transformed twi
   ch     = "ned30m_8VIC_cheight.tif", # catchment height
@@ -330,6 +325,7 @@ files <- c(
   precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif", # annual precipitation
   precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif", # summer precipitation
   temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif", # annual temperature
+  mast   = "mast30m_ca794_2013.tif", # mean annual soil temperature
   ls     = "landsat30m_8VIC_b123457.tif", # landsat bands
   pc     = "landsat30m_8VIC_pc123456.tif", # principal components of landsat
   tc     = "landsat30m_8VIC_tc123.tif", # tasseled cap components of landsat
@@ -347,7 +343,7 @@ names(geodata_f) <- names(files)
 geodata_r <- stack(geodata_f)
 
 # Extract the geodata and add to a data frame
-data <- raster::extract(geodata_r, pedons_sp, sp = TRUE)@data
+data <- raster::extract(geodata_r, as(s_sf, "Spatial"), sp = TRUE)@data
 
 # Modify some of the geodata variables
 idx <- aggregate(mast ~ cluster, data = data, mean, na.rm = TRUE)
@@ -366,12 +362,6 @@ data <- within(data, {
 
 # save(data, ca794, pedons, file = "C:/workspace2/ch7_data.Rdata")
 
-# Strip out location and personal information before uploading to the internet
-# s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
-# slot(pedons, "site") <- s
-# data[c("describer2", "x_std", "y_std")] <- NA
-# save(data, ca794, pedons, file = "C:/workspace2/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
-
 ```
 
 
@@ -382,19 +372,21 @@ With our spatial data in hand, we can now see whether any of the variables will 
 ```{r spatial, fig.width=8, fig.height=10}
 
 # Load data
-load(file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata"
+load(url(githubURL))
 train <- data
 
 # Select argillic horizons with "arg" in the subgroup name and on fans
 # Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.train$argillic 
-train$argillic <- ifelse(grepl("arg", train$tax_subgroup) & 
+train$argillic <- ifelse(grepl("arg", train$taxsubgrp) & 
                            train$mrvbf > 0.15,
                          TRUE, FALSE
                          )
-train <- subset(train, !is.na(argillic), select = - c(pedon_id, taxonname, x_std, y_std, landform.string, cluster, cluster_mast, argillic.horizon, tax_subgroup, frags)) 
+idx <- which(names(train) == "z")
+train <- train[idx:ncol(train)]
 
-train2 <- subset(train, select = - c(describer2, landform, cluster2))
-data_m <- gather(train2, key = key, value = value, - argillic)
+data_m <- gather(train[-37], key = key, value = value, - argillic)
+data_m <- subset(data_m, !is.na(value))
 
 ggplot(data_m, aes(x = argillic, y = value)) +
   geom_boxplot() +
@@ -442,7 +434,7 @@ If we keep iterating we might select a model similar to the one below.
 
 
 ```{r final}
-argi.glm <- glm(argillic ~ twi_sc + slope + ls_1 + ch + z2str + mrvbf, data = train, family = binomial)
+argi.glm <- glm(argillic ~ twi_sc + slp + ls_1 + ch + z2str + mrvbf, data = train, family = binomial)
 ```
 
 However, in addition to adding variables via 'forward selection', we can also test the effect of dropping variables via 'backward selection' with the `drop1()' function, and examine their significance. 
