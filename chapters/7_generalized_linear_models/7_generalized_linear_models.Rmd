@@ -406,7 +406,7 @@ The example below is known as a 'forward selection' procedure, where a full mode
 ```{r fitting}
 
 # Fit full model
-full <- glm(argillic ~ ., data = train, family = binomial) # "~ ." includes all columns in the data set
+full <- glm(argillic ~ z + log(slp) + sw + twi + twi_sc + log(ch + 1) + log(z2str + 1) + mrrtf + log(mrvbf + 1) + solar + precip + precipsum + temp + mast + ls_1 + ls_2 + ls_3 + ls_4 + ls_5 + ls_6 + pc_1 + pc_2 + pc_3 + pc_4 + pc_6 + tc_1 + tc_2 + tc_3 + gsi + ndvi + k + th + u, data = train[complete.cases(train), idx], family = binomial) # "~ ." includes all columns in the data set
 
 # Fit null model, 
 null <- glm(argillic ~ 1, data = train, family = binomial) # "~ 1" just includes an intercept
@@ -434,7 +434,7 @@ If we keep iterating we might select a model similar to the one below.
 
 
 ```{r final}
-argi.glm <- glm(argillic ~ twi_sc + slp + ls_1 + ch + z2str + mrvbf, data = train, family = binomial)
+argi.glm <- glm(argillic ~ twi_sc + log(slp) + tc_1 + tc_2 + cluster2, data = train, family = binomial)
 ```
 
 However, in addition to adding variables via 'forward selection', we can also test the effect of dropping variables via 'backward selection' with the `drop1()' function, and examine their significance. 
@@ -508,7 +508,7 @@ ggplot(train, aes(x = predict, fill = argillic)) +
   xlab("probability") +
   scale_x_continuous(breaks = seq(0, 1, 0.2))
 
-train$predict <- train$predict > 0.35
+train$predict <- train$predict > 0.2
 
 # Confusion Matrix
 cm <- table(predicted = train$predict, observed = train$argillic)
@@ -516,6 +516,7 @@ confusionMatrix(cm, positive = "TRUE")
 
 # Deviance squared
 library(modEvA)
+
 Dsquared(argi.glm)
 
 # Adjusted deviance squared
@@ -541,17 +542,17 @@ ggplot(temp, aes(x = cluster2, y = sensitivity)) +
   geom_point()
 
 # Remove outlier clusters         
-train_sub <- subset(train, ! cluster2 %in% c(12, 7))
+train_sub <- subset(train, ! cluster2 %in% c(12, 13, 2, 6, 7))
 
 # full <- glm(argillic ~ ., data = train_sub, family = binomial)
 # null <- glm(argillic ~ 1, data = train_sub, family = binomial)
 # add1(null, full, train = "Chisq")
 
-sub.glm <- glm(argillic ~ slope + twi_sc + ls_1 + mrvbf + z2str + ch, data = train_sub, family = binomial)
+sub.glm <- glm(argillic ~ log(slp) + twi_sc + tc_1 + tc_2, data = train_sub, family = binomial)
 
 # summary(sub.glm)
 
-train_sub$predict <- predict(sub.glm, train_sub, type = "response") > 0.35
+train_sub$predict <- predict(sub.glm, train_sub, type = "response") > 0.2
 cm <- table(predicted = train_sub$predict, observed = train_sub$argillic)
 confusionMatrix(cm, positive = "TRUE")
 

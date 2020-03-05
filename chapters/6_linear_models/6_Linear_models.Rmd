@@ -86,7 +86,7 @@ Hopefully like all good soil scientists and ecological site specialists you ente
 githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata"
 load(url(githubURL))
 
-str(pedons, max.level = 2) # Examine the makeup of the data we imported from NASIS.
+View(pedons) # Examine the makeup of the data we imported from NASIS.
 
 ```
 
@@ -99,12 +99,10 @@ Generally before we begin modeling it is good to explore the data. By examining 
 ```{r consistency}
 
 s <- site(pedons) # extract the site data frame from the pedons soil profile collection object
-
-s$surface_gravel <- with(s, surface_gravel - surface_fgravel) # recalculate gravel to exclude fine gravel
-s$frags <- apply(s[grepl("surface", names(s))], 1, sum) # calculate total surface rock fragments
+s$frags <- s$surface_total_frags_pct_nopf
 
 # density plot
-select(s, surface_cobbles, surface_gravel, surface_fgravel, frags) %>%
+select(s, surface_cobbles, surface_gravel, surface_fine_gravel, frags) %>%
   gather() %>%
   ggplot(aes(x = value, color = key)) +
   geom_density(size = 1.5)
@@ -114,10 +112,10 @@ ggplot(s, aes(x = frags)) +
   geom_histogram()
 
 # summarize all columns that pattern match either "surface" or "frags"
-apply(s[grepl("surface|frags", names(s))], 2, function(x) round(summary(x))) 
+sapply(s[grepl("surface|frags", names(s))], function(x) round(summary(x))) 
 
 # number of samples greater than 100
-sum(s$frags > 100) 
+sum(s$surface_total_frags_pct > 100) 
 
 # number of samples less than  1
 sum(s$frags < 1)
@@ -135,13 +133,20 @@ Another obvious place to look is at the geomorphic data in the site table. This 
 
 ```{r landform}
 
-test <- aggregate(frags ~ landform.string, data = s, quantile, probs = c(0.05, 0.5, 0.95))
+test <- s %>%
+  group_by(landform) %>%
+  summarize(p10 = round(quantile(frags, probs = 0.1, na.rm = TRUE)),
+            p50 = round(quantile(frags, probs = 0.5,  na.rm = TRUE)),
+            p90 = round(quantile(frags, probs = 0.9, na.rm = TRUE)),
+            n   = length(frags)
+  ) %>%
+  as.data.frame()
 
 # subset the data frame to only include landforms with greater than 3 observations
-test <- subset(test, frags[, 2] > 3) 
+test <- subset(test, n > 10) 
 
 # sort the data frame by the frags matrix column
-test[order(- test$frags[, 2]), ]
+arrange(test, - p50)
 
 ```
 
@@ -150,18 +155,26 @@ There are obviously a wide variety of landforms. However generally it appears th
 ```{r}
 
 # generalize the landform.string
-s$landform <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform.string), "fan", "hill") 
+s$landform_generic <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform), "fan", "hill") 
 
-test <- aggregate(frags ~ landform, data = s, quantile, probs = c(0.05, 0.5, 0.95))
+test <- s %>%
+  group_by(landform_generic) %>%
+  summarize(p10 = round(quantile(frags, probs = 0.1, na.rm = TRUE)),
+            p50 = round(quantile(frags, probs = 0.5,  na.rm = TRUE)),
+            p90 = round(quantile(frags, probs = 0.9, na.rm = TRUE)),
+            n   = length(frags)
+  ) %>%
+  as.data.frame()
 
-test[order(test$frags[, 2]), ]
+# sort the data frame by the frags matrix column
+arrange(test, - p50)
 
 # density plot
-select(s, frags, surface_cobbles, surface_gravel, landform) %>%
-  gather(key = "rocks", value = "percent", - landform) %>%
+select(s, frags, surface_cobbles, surface_gravel, landform_generic) %>%
+  gather(key = "rocks", value = "percent", - landform_generic) %>%
   ggplot(aes(x = percent, color = rocks)) +
   geom_density(size = 1.5) +
-  facet_wrap(~ landform)
+  facet_wrap(~ landform_generic)
 
 ```
 
@@ -172,9 +185,16 @@ So it does appear that erosional landforms generally do have more surface rock f
 
 ```{r}
 
-test <- aggregate(frags ~ landform + hillslope_pos, data = s, quantile, probs = c(0.05, 0.5, 0.95))
+test <- s %>%
+  group_by(landform_generic, hillslopeprof) %>%
+  summarize(p10 = round(quantile(frags, probs = 0.1, na.rm = TRUE)),
+            p50 = round(quantile(frags, probs = 0.5,  na.rm = TRUE)),
+            p90 = round(quantile(frags, probs = 0.9, na.rm = TRUE)),
+            n   = length(frags)
+  ) %>%
+  as.data.frame()
 
-test[order(- test$frags[, 2]), ]
+arrange(test, - p50)
 
 ```
 
@@ -185,9 +205,16 @@ If we examine the different hillslope positions for each generic landform we can
 
 ```{r}
 
-test <- aggregate(frags ~ landform + paste(shapedown, shapeacross), data = s, quantile, probs = c(0.05, 0.5, 0.95))
+test <- s %>%
+  group_by(landform_generic, paste(shapedown, shapeacross)) %>%
+  summarize(p10 = round(quantile(frags, probs = 0.1, na.rm = TRUE)),
+            p50 = round(quantile(frags, probs = 0.5,  na.rm = TRUE)),
+            p90 = round(quantile(frags, probs = 0.9, na.rm = TRUE)),
+            n   = length(frags)
+  ) %>%
+  as.data.frame()
 
-test[order(- test$frags[, 2]), ]
+arrange(test, - p50)
 
 ```
 
@@ -199,8 +226,8 @@ When examining slope shape on hills it appears that concave positions have great
 ```{r}
 
 # Subset Generic landforms and Select Numeric Columns
-s_fan <- subset(s, landform == "fan", select = c(frags, surface_gravel, bedrckdepth, slope_field, elev_field))
-s_hill <- subset(s, landform == "hill", select = c(frags, surface_gravel, bedrckdepth, slope_field, elev_field))
+s_fan <- subset(s, landform_generic == "fan", select = c(frags, surface_gravel, bedrckdepth, slope, elev))
+s_hill <- subset(s, landform_generic == "hill", select = c(frags, surface_gravel, bedrckdepth, slope, elev))
 
 # Correlation Matrices
 round(cor(s_fan, use = "pairwise"), 2)
@@ -224,16 +251,23 @@ Next we'll look at soil scientist bias. The question being: Do some soil scienti
 
 # Custom function to filter out the data for the 3 soil scientists with the most data
 s <- within(s, {
-  old = describer
-  describer2 = NA
-  describer2[grepl("Stephen", old)] = "Stephen" # least senior
-  describer2[grepl("Paul", old)]    = "Paul"
-  describer2[grepl("Peter", old)]   = "Peter"   # most senior
+  old = descname
+  descname2 = NA
+  descname2[grepl("Stephen", old)] = "Stephen" # least senior
+  descname2[grepl("Paul", old)]    = "Paul"
+  descname2[grepl("Peter", old)]   = "Peter"   # most senior
   })
 
-test <- aggregate(frags ~ landform + describer2, data = s, quantile, probs = c(0.05, 0.5, 0.95), na.rm = TRUE)
+test <- s %>%
+  group_by(landform_generic, descname2) %>%
+  summarize(p10 = round(quantile(frags, probs = 0.1, na.rm = TRUE)),
+            p50 = round(quantile(frags, probs = 0.5,  na.rm = TRUE)),
+            p90 = round(quantile(frags, probs = 0.9, na.rm = TRUE)),
+            n   = length(frags)
+  ) %>%
+  as.data.frame()
 
-test[order(- test$frags[, 2]), ]
+arrange(test, landform_generic, - p50)
 
 ```
 
@@ -246,27 +280,27 @@ Where do our points plot? We can plot the general location in R, but for a close
 
 ```{r plot}
 
-# Convert soil profile collection to a spatial object
-pedons2 <- pedons
-slot(pedons2, "site") <- s # this is dangerous, but something needs to be fixed in the site() setter function
-idx <- complete.cases(site(pedons2)[c("x", "y")]) # create an index to filter out pedons with missing coordinates
-pedons2 <- pedons2[idx]
-coordinates(pedons2) <- ~ x + y # set the coordinates
-proj4string(pedons2) <- CRS("+init=epsg:4326") # set the projection
-pedons_sp <- as(pedons2, "SpatialPointsDataFrame") # coerce to spatial object
-pedons_sp <- spTransform(pedons_sp, CRS("+init=epsg:5070")) # reproject
+idx <- complete.cases(s$x_sdt, s$y_std) # create an index to filter out pedons with missing coordinates# Convert soil profile collection to a spatial object
+s_sub <- s[idx, ]
+s_sf <- st_as_sf(s_sub,
+                 coords = c("x_std", "y_std"),
+                 crs = 4326
+                 )
+# reproject
+s_sf <- st_transform(s_sf, crs = 5070) # reproject
 
 # Read in soil survey area boundaries
-# ssa <- readOGR(dsn = "I:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
-# ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
-# ca794 <- spTransform(ca794, CRS("+init=epsg:5070"))
+ssa   <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
+ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
+ca794 <- st_transform(ca794, crs = 5070)
 
 # Plot
-plot(ca794, axes = TRUE)
-plot(pedons_sp, col='red', add = TRUE) # notice the points outside the boundary
+mapview(ca794, fill = NA) +
+  mapview(s_sf)
 
 # Write shapefile of pedons
-# writeOGR(pedons_sp, dsn = "F:/geodata/project_data/8VIC", "pedon_locations", driver = "ESRI Shapefile") 
+write_sf(s_sf, dsn = "C:/workspace2", "ca794_pedons", driver = "ESRI Shapefile", delete_dsn =  TRUE)
+
 
 ```
 
@@ -286,30 +320,31 @@ As you can see below their is an almost limitless number of variables we could i
 ```{r extract, eval=FALSE}
 
 # set file path
-folder <- "I:/geodata/project_data/R8-VIC/ca794/"
+folder <- "D:/geodata/project_data/R8-VIC/ca794/"
 
 # list of file names
 files <- c(
-  elev   = "ned30m_8VIC.tif", # elevation
-  slope  = "ned30m_8VIC_slope5.tif", # slope gradient
-  aspect = "ned30m_8VIC_aspect5.tif", # slope aspect
-  twi    = "ned30m_8VIC_wetness.tif", # topographic wetness index
-  twi_sc = "ned30m_8VIC_wetness_sc.tif", # transformed twi
-  ch     = "ned30m_8VIC_cheight.tif", # catchment height
-  z2str  = "ned30m_8VIC_z2stream.tif", # height above streams
-  mrrtf  = "ned30m_8VIC_mrrtf.tif", # multiresolution ridgetop flatness index
-  mrvbf  = "ned30m_8VIC_mrvbf.tif", # multiresolution valley bottom flatness index
-  solar  = "ned30m_8VIC_solar.tif", # solar radiation
-  precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif", # annual precipitation
+  z      = "ned30m_8VIC.tif",              # elevation
+  slp    = "ned30m_8VIC_slope5.tif",       # slope gradient
+  asp    = "ned30m_8VIC_aspect5.tif",      # slope aspect
+  twi    = "ned30m_8VIC_wetness.tif",      # topographic wetness index
+  twi_sc = "ned30m_8VIC_wetness_sc.tif",   # transformed twi
+  ch     = "ned30m_8VIC_cheight.tif",      # catchment height
+  z2str  = "ned30m_8VIC_z2stream.tif",     # height above streams
+  mrrtf  = "ned30m_8VIC_mrrtf.tif",        # multiresolution ridgetop flatness index
+  mrvbf  = "ned30m_8VIC_mrvbf.tif",        # multiresolution valley bottom flatness index
+  solar  = "ned30m_8VIC_solar.tif",        # solar radiation
+  precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif",    # annual precipitation
   precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif", # summer precipitation
-  temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif", # annual temperature
-  ls     = "landsat30m_8VIC_b123457.tif", # landsat bands
+  temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif",   # annual temperature
+  mast   = "mast30m_ca794_2013.tif",       # mean annual soil temperature
+  ls     = "landsat30m_8VIC_b123457.tif",  # landsat bands
   pc     = "landsat30m_8VIC_pc123456.tif", # principal components of landsat
-  tc     = "landsat30m_8VIC_tc123.tif", # tasseled cap components of landsat
-  k      = "gamma30m_8VIC_namrad_k.tif", # gamma radiometrics signatures
+  tc     = "landsat30m_8VIC_tc123.tif",    # tasseled cap components of landsat
+  k      = "gamma30m_8VIC_namrad_k.tif",   # gamma radiometrics signatures
   th     = "gamma30m_8VIC_namrad_th.tif",
   u      = "gamma30m_8VIC_namrad_u.tif",
-  cluster = "cluster152.tif" # unsupervised classification
+  cluster = "cluster152.tif"               # unsupervised classification
   )
 
 # combine the folder directory and file names
@@ -320,7 +355,7 @@ names(geodata_f) <- names(files)
 geodata_r <- stack(geodata_f)
 
 # Extract the geodata and add to a data frame
-data <- raster::extract(geodata_r, pedons_sp, sp = TRUE)@data
+data <- raster::extract(geodata_r, as(s_sf, "Spatial"), sp = TRUE)@data
 
 # Modify some of the geodata variables
 idx <- aggregate(mast ~ cluster, data = data, mean, na.rm = TRUE)
@@ -334,15 +369,10 @@ data <- within(data, {
   gsi      = (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1)
   ndvi     = (ls_4 - ls_3) / (ls_4 + ls_3)
   sw       = cos(aspect - 255)
+  twi_sc   = abs(twi - 13.8) # 13.8 = twi median
   })
 
-# save(data, ca794, pedons, file = "C:/workspace/ch7_data.Rdata")
-
-# # Strip out location and personal information before uploading to the internet
-# s[c("describer", "describer2", "x", "y", "x_std", "y_std", "utmnorthing", "utmeasting", "classifier")] <- NA
-# slot(pedons, "site") <- s
-# data[c("describer2", "x_std", "y_std")] <- NA
-# save(data, ca794, pedons, file = "C:/workspace2/github/stats_for_soil_survey/trunk/data/ch7_data.Rdata")
+# save(data, ca794, pedons, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data.Rdata")
 
 ```
 
@@ -356,7 +386,8 @@ At the beginning of our analysis we noticed some issues with our data. Particula
 ```{r spatial}
 
 train <- data
-train <- subset(train, frags > 0 & frags < 100, select = - c(pedon_id, taxonname, landform.string, x_std, y_std, argillic.horizon, describer2)) # exclude frags greater than 100 and less than 1, and exclude some of the extra columns
+train$frags <- train$surface_total_frags_pct_nopf
+train <- subset(train, frags > 0 & frags < 100, select = - c(peiid, taxonname, landform, x, y, argillic.horizon)) # exclude frags greater than 100 and less than 1, and exclude some of the extra columns
 
 # Create custom transform functions
 logit <- function(x) log(x / (1 - x)) # logit transform
@@ -366,7 +397,7 @@ ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit transform
 train$fragst <- logit(train$frags / 100)
 
 # Create list of predictor names
-terrain1 <- c("slope", "solar", "mrrtf", "mrvbf")
+terrain1 <- c("slp", "solar", "mrrtf", "mrvbf")
 terrain2 <- c("twi", "z2str", "ch")
 climate <- c("elev", "precip", "precipsum", "temp")
 ls <- paste0("ls_", 1:6)
@@ -396,7 +427,6 @@ ggpairs(train[c("fragst", pc)])
 
 # Create boxplots
 ggplot(train, aes(x = cluster, y = frags)) + geom_boxplot()
-ggplot(train, aes(x = cluster2, y = frags)) + geom_boxplot()
 
 ```
 
@@ -421,13 +451,14 @@ The example below is known as a 'forward selection' procedure, where a full mode
 
 ```{r}
 # Subset training dataset
-train <- train[c("fragst", "frags", "cluster2", terrain1, terrain2, climate, pc, tc, rad)]
+train2 <- train[c("fragst", terrain1, terrain2, climate, pc, tc, rad)]
+train2 <- train2[complete.cases(train2), ] 
 
 # Fit full model
-full <- lm(fragst ~ . - frags, data = train) # "~ ." includes all columns in the data set, "-" removes variables
+full <- lm(fragst ~ ., data = train2) # "~ ." includes all columns in the data set, "-" removes variables
 
 # Fit null model
-null <- lm(fragst ~ 1, data = train) # "~ 1" just includes an intercept
+null <- lm(fragst ~ 1, data = train2) # "~ 1" just includes an intercept
 
 # Compute AIC
 add1(null, full)
@@ -446,6 +477,19 @@ fragst_lm <- lm(fragst ~ pc_2, data = train)
 
 # iterate until the model is saturated
 add1(fragst_lm, full, test = "F") 
+
+test <- regsubsets(fragst ~., data = train2, nvmax = 10, method = "forward")
+adjR2 <- data.frame(
+  adjR2 = test_sum$adjr2, 
+  n = 1:length(test_sum$adjr2)
+  )
+ggplot(adjR2, aes(x = n, y = adjR2)) +
+  geom_point() +
+  geom_line() +
+  ggtitle("")
+
+coef(test, 6)
+
 ```
 
 
