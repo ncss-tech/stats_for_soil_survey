@@ -68,11 +68,9 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, background="#F7
 
 library(aqp)     # specialized soil classes and functions
 library(soilDB)  # NASIS and SDA import functions
-library(raster)  # guess
-library(rgdal)   # spatial import
-library(ggplot2) # graphing
-library(tidyr)   # data manipulation
 library(dplyr)   # data manipulation
+library(tidyr)   # data manipulation
+library(ggplot2) # graphing
 
 ```
 
@@ -86,7 +84,7 @@ Hopefully like all good soil scientists and ecological site specialists you ente
 githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata"
 load(url(githubURL))
 
-View(pedons) # Examine the makeup of the data we imported from NASIS.
+str(pedons, 2) # Examine the makeup of the data we imported from NASIS.
 
 ```
 
@@ -99,6 +97,7 @@ Generally before we begin modeling it is good to explore the data. By examining 
 ```{r consistency}
 
 s <- site(pedons) # extract the site data frame from the pedons soil profile collection object
+
 s$frags <- s$surface_total_frags_pct_nopf
 
 # density plot
@@ -112,10 +111,10 @@ ggplot(s, aes(x = frags)) +
   geom_histogram()
 
 # summarize all columns that pattern match either "surface" or "frags"
-sapply(s[grepl("surface|frags", names(s))], function(x) round(summary(x))) 
+t(sapply(s[grepl("surface|frags", names(s))], function(x) round(summary(x))))
 
 # number of samples greater than 100
-sum(s$surface_total_frags_pct > 100) 
+sum(s$frags > 100) 
 
 # number of samples less than  1
 sum(s$frags < 1)
@@ -150,7 +149,7 @@ arrange(test, - p50)
 
 ```
 
-There are obviously a wide variety of landforms. However generally it appears that erosional landforms have the most surface rock fragments. Let's generalize the `landform.string` and have a closer look.
+There are obviously a wide variety of landforms. However generally it appears that erosional landforms have the most surface rock fragments. Let's generalize the `landform` and have a closer look.
 
 ```{r}
 
@@ -226,17 +225,11 @@ When examining slope shape on hills it appears that concave positions have great
 ```{r}
 
 # Subset Generic landforms and Select Numeric Columns
-s_fan <- subset(s, landform_generic == "fan", select = c(frags, surface_gravel, bedrckdepth, slope, elev))
-s_hill <- subset(s, landform_generic == "hill", select = c(frags, surface_gravel, bedrckdepth, slope, elev))
-
-# Correlation Matrices
-round(cor(s_fan, use = "pairwise"), 2)
-round(cor(s_hill, use = "pairwise"), 2)
+s_sub <- select(s, landform_generic, frags, surface_gravel, bedrckdepth, slope, elev)
 
 # Scatterplot Matrices
 library(GGally)
-ggpairs(s_fan)
-ggpairs(s_hill)
+ggpairs(s_sub, aes(color = landform_generic, alpha = 0.5))
 
 ```
 
@@ -280,6 +273,8 @@ Where do our points plot? We can plot the general location in R, but for a close
 
 ```{r plot}
 
+library(sf)
+
 idx <- complete.cases(s$x_sdt, s$y_std) # create an index to filter out pedons with missing coordinates# Convert soil profile collection to a spatial object
 s_sub <- s[idx, ]
 s_sf <- st_as_sf(s_sub,
@@ -295,6 +290,7 @@ ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Pa
 ca794 <- st_transform(ca794, crs = 5070)
 
 # Plot
+library(mapview)
 mapview(ca794, fill = NA) +
   mapview(s_sf)
 
@@ -318,6 +314,8 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 As you can see below their is an almost limitless number of variables we could inspect.
 
 ```{r extract, eval=FALSE}
+
+library(raster)
 
 # set file path
 folder <- "D:/geodata/project_data/R8-VIC/ca794/"
@@ -387,40 +385,51 @@ At the beginning of our analysis we noticed some issues with our data. Particula
 
 train <- data
 train$frags <- train$surface_total_frags_pct_nopf
-train <- subset(train, frags > 0 & frags < 100, select = - c(peiid, taxonname, landform, x, y, argillic.horizon)) # exclude frags greater than 100 and less than 1, and exclude some of the extra columns
+train$frags <- ifelse(train$frags > 100, 99, train$frags)
+train <- subset(train, frags > 0 & frags < 100, select = - c(peiid, taxonname, landform, x, y, argillic.horizon, descname)) # exclude frags greater than 100 and less than 1, and exclude some of the extra columns
 
 # Create custom transform functions
 logit <- function(x) log(x / (1 - x)) # logit transform
 ilogit <- function(x) exp(x) / (1 + exp(x)) # inverse logit transform
 
 # Transform
-train$fragst <- logit(train$frags / 100)
+train <- transform(train,
+  fragst     = logit(train$frags / 100),
+  slp_log    = log(slp),
+  ch_sqrt    = sqrt(ch + 1),
+  z2str0     = ifelse(z2str < 1, TRUE, FALSE),
+  z2str_log  = log(z2str + 1),
+  mrrtf_sqrt = sqrt(mrrtf + 0.1),
+  mrvbf_sqrt = sqrt(mrvbf + 0.1),
+  hills      = mrvbf < 0.15
+)
+
 
 # Create list of predictor names
-terrain1 <- c("slp", "solar", "mrrtf", "mrvbf")
-terrain2 <- c("twi", "z2str", "ch")
-climate <- c("elev", "precip", "precipsum", "temp")
+terrain1 <- c("slp_log", "solar", "mrrtf_sqrt", "mrvbf_sqrt")
+terrain2 <- c("twi", "z2str0", "z2str_log", "ch_sqrt")
+climate <- c("z", "precip", "precipsum", "temp")
 ls <- paste0("ls_", 1:6)
 pc <- paste0("pc_", 1:6)
 tc <- paste0("tc_", 1:3)
 rad <- c("k", "th", "u")
 
 # Compute correlation matrices
-round(cor(train[c("fragst", terrain1)], use = "pairwise"), 2)
-round(cor(train[c("fragst", terrain2)], use = "pairwise"), 2)
-round(cor(train[c("fragst", climate)], use = "pairwise"), 2)
-round(cor(train[c("fragst", ls)], use = "pairwise"), 2)
-round(cor(train[c("fragst", pc)], use = "pairwise"), 2)
-round(cor(train[c("fragst", tc)], use = "pairwise"), 2)
-round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
+# round(cor(train[c("fragst", terrain1)], use = "pairwise"), 2)
+# round(cor(train[c("fragst", terrain2)], use = "pairwise"), 2)
+# round(cor(train[c("fragst", climate)], use = "pairwise"), 2)
+# round(cor(train[c("fragst", ls)], use = "pairwise"), 2)
+# round(cor(train[c("fragst", pc)], use = "pairwise"), 2)
+# round(cor(train[c("fragst", tc)], use = "pairwise"), 2)
+# round(cor(train[c("fragst", rad)], use = "pairwise"), 2)
 
 # Create scatterplots
 # ggpairs(train[c("fragst", terrain1)])
 ggpairs(train[c("fragst", terrain2)])
 ggpairs(train[c("fragst", climate)])
 
-ggpairs(train[c("fragst", ls)])
-ggpairs(train[c("fragst", pc)])
+# ggpairs(train[c("fragst", ls)])
+ggpairs(train[c("fragst", tc)])
 # ggpairs(train[c("fragst", tc)])
 # ggpairs(train[c("fragst", rad)])
 
@@ -434,78 +443,80 @@ The correlation matrices and scatter plots above show that that surface rock fra
 
 By examining the correlations between some of the predictors we can also see that some are *collinear* (e.g. > 0.6), such as the landsat bands. Therefore these variables are redundant as they describe almost the same thing. This collinearity will also make it difficult to estimate our regression coefficients. Considering that we already have other derivatives of landsat in our dataset, which are intentionally designed to reduce their collinearity, we may as well exclude the landsat bands from our dataset all together.
 
-Examining the density plots on the diagonal axis of the scatterplots we can see that some variables are skewed while others are bimodal. Lastly the boxplot show a trend amongst the clusters when sorted according to annual temperature.
+Examining the density plots on the diagonal axis of the scatterplots we can see that some variables are skewed while others are bimodal. Lastly the boxplot show that the range of surface fragments varies by cluster.
 
 
 # Modeling
 
 # Model Training
 
-Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more input from the user. Automated model selection procedures are available, but are discouraged because they generally result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. For this reason, it is best to begin with a selection of predictors that are known to be useful, and grow the model incrementally. 
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models require more scrunity from the user. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
 
 
 ## Variable Selection
 
-The example below is known as a 'forward selection' procedure, where a full model is fit and compared against a null model, to assess the effect of the different predictors. For testing alternative models, the Akaike's Information Criterion (AIC) is used. When using AIC to assess predictor significance, a smaller number is better.
-
+The example below is known as a 'exhaustive selection' procedure using the `regsubsets()` function from the leaps R package (Lumley, 2020). The `regsubsets()` function constructs a model for every possible combination of variables and determines which combination results in the most accurate model. For an example of alternative variable selection approaches, see James et al. (2014).
 
 ```{r}
+
+library(leaps)
+
 # Subset training dataset
-train2 <- train[c("fragst", terrain1, terrain2, climate, pc, tc, rad)]
+train2 <- train[c("fragst", "hills", terrain1, terrain2, climate, pc, tc, rad)]
 train2 <- train2[complete.cases(train2), ] 
+
+# Find best model
+test <- regsubsets(fragst ~ ., data = train2, nvmax = 10)
+
+# Summarize the best model and plot
+test_sum <- summary(test)
+
+adjR2 <- data.frame(
+  adjR2 = test_sum$adjr2, 
+  n = 1:length(test_sum$adjr2)
+  )
+
+ggplot(adjR2, aes(x = n, y = adjR2)) +
+  geom_point() +
+  geom_line()
+
+coef(test, 5)
+
+# Fit best model
+fragst_lm <- lm(fragst ~ twi + z + precipsum + tc_2 + tc_3, data = train)
+
+```
+
+The results from above show how the 'best' model's accuracy increases with the addition of each variable. This increase however diminishing with each additional variable. After 5 variables the point of diminishing returns has been reached. The coefficients for the best model with 5 variables can be extracted with by using the `coef()` function as show above and fit using the `lm()` function. 
+
+Even though the 'best' model is the most accurate model that can be achieved given our current list of predictors. It is important to scrutinize the combinations of variables selected using your knowledge of soil-landcape relationships. Suspicous variables should be questioned. The addition or removal of more variables can be tested using the `add1()` or `drop1()` functions. Both functions give a ranges of metrics. Typically, however the AIC or Akaike information criteria is typically preferred because it pensionlized the model for each additional variable, similarly as the adjusted R2. Ultimately we want a model or variable that gives us the 'smallest' AIC.
+
+```{r, eval = FALSE}
 
 # Fit full model
 full <- lm(fragst ~ ., data = train2) # "~ ." includes all columns in the data set, "-" removes variables
 
 # Fit null model
-null <- lm(fragst ~ 1, data = train2) # "~ 1" just includes an intercept
+null <- lm(fragst ~ 1, data = train) # "~ 1" just includes an intercept
 
-# Compute AIC
-add1(null, full)
-```
+# test adding variables
+add1(fragst_lm, scope = formula(full), test = "F")
 
-We can see as the correlation matrices showed earlier that the pc predictors have some of the smallest AIC and reduce the sum of squares the most. So let's add pc\_2 to the `null` model using the `update()` function. Then continue using the `add1()` or `drop1()` functions, until the model is saturated.
-
-We can continue adding predictors to the model until we no longer see an increase in the adjusted R^2^. At some point the adjusted R^2^ will level off, versus the R^2^ which will continue to incrementally increase. The difference between the adjusted R^2^ vs the R^2^, is that the adjusted R^2^ is penalizes model for each additional predictor added to model, similarly to the AIC.
-
-```{r iterate, eval=FALSE}
-# add one or several variables to the model 
-fragst_lm <- update(null, . ~ . + pc_2) 
-
-# or refit
-fragst_lm <- lm(fragst ~ pc_2, data = train)
-
-# iterate until the model is saturated
-add1(fragst_lm, full, test = "F") 
-
-test <- regsubsets(fragst ~., data = train2, nvmax = 10, method = "forward")
-adjR2 <- data.frame(
-  adjR2 = test_sum$adjr2, 
-  n = 1:length(test_sum$adjr2)
-  )
-ggplot(adjR2, aes(x = n, y = adjR2)) +
-  geom_point() +
-  geom_line() +
-  ggtitle("")
-
-coef(test, 6)
-
-```
-
-
-```{r drop}
-# Fit final model
-fragst_lm <- lm(fragst ~ pc_2 + pc_1 + temp + twi + precipsum, data = train)
-
-# Compute AIC
+# test dropping variables
 drop1(fragst_lm, test = "F")
+
 ```
 
 
 ## Examine the Model
 
 ```{r summary}
+
 summary(fragst_lm)
+
+library(effects)
+plot(allEffects(fragst_lm))
+
 ```
 
 
@@ -514,27 +525,30 @@ summary(fragst_lm)
 After we're satisfied no additional variables will improve the fit, we need to evaluate its residuals, collinearity, accuracy, and model coefficients.
 
 ```{r diagnostics}
+
 # Standard diagnostic plots for lm() objects
 par(mfrow = c(2, 2))
 plot(fragst_lm)
 
-# Term and partial residual plots
 termplot(fragst_lm, partial.resid = TRUE)
+
 ```
 
 
 ## Multicolinearity
 
-The **variance inflation factor** (VIF) is used to assess collinearity amongst the predictors. Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 2 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
+The **variance inflation factor** (VIF) is used to assess collinearity amongst the predictors. Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
 
 ```{r}
 
+library(car)
+
 # vif() function from the car or rms packages
-sqrt(car::vif(fragst_lm))
+sqrt(vif(fragst_lm))
 
 # or 
 
-sqrt(car::vif(fragst_lm)) > 2
+sqrt(vif(fragst_lm)) > 3
 
 ```
 
@@ -570,13 +584,13 @@ sum(train$frags < 15)
 sum(train$frags > 80)
 
 # Examine the RMSE for each cluster
-temp <- group_by(train, cluster2) %>%
+temp <- group_by(train, cluster) %>%
   summarize(
     rmse = round(sqrt(mean((frags - predict)^2, na.rm = T))), 
     n = length(frags)
   )
 
-ggplot(temp, aes(x = cluster2, y = rmse)) + 
+ggplot(temp, aes(x = cluster, y = rmse)) + 
   geom_point()
 
 # fragst_lm <- update(null, . ~ . + pc_2 + pc_1 + temp + twi + precipsum + cluster) # add one or several variables to the model
@@ -607,12 +621,22 @@ predfun <- function(model, data) {
 # writeRaster(r$layer.1, filename = "C:/workspace2/frags.tif", overwrite = TRUE, progress = "text")
 # writeRaster(r$layer.2, filename = "C:/workspace2/frags_se.tif", overwrite = TRUE, progress = "text")
 
-plot(raster("C:/workspace2/frags.tif"))
-plot(ca794, add = TRUE)
+library(raster)
+library(tmap)
 
-plot(raster("C:/workspace2/frags_se.tif"))
-plot(ca794, add = TRUE)
+r <- raster("C:/workspace2/frags.tif")
+tm_shape(r) + tm_raster() + 
+  tm_shape(ca794) + tm_borders(col = "black") +
+  tm_legend(legend.position = c("left", "bottom"),
+            legend.bg.color = "white"
+            )
 
+r <- raster("C:/workspace2/frags_se.tif")
+tm_shape(r) + tm_raster() + 
+  tm_shape(ca794) + tm_borders(col = "black") +
+  tm_legend(legend.position = c("left", "bottom"),
+            legend.bg.color = "white"
+            )
 ```
 
 ```{r, eval=FALSE}
