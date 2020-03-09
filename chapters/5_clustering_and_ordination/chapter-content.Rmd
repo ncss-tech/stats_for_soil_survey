@@ -8,11 +8,13 @@ output:
     smart: no
     keep_md: no
     number_sections: yes
-    toc: no
+    toc: yes
     toc_depth: 3
     toc_float:
       collapsed: true
       smooth_scroll: false
+editor_options: 
+  chunk_output_type: console
 bibliography: bibliography.bib
 ---
 
@@ -35,46 +37,6 @@ knit_hooks$set(htmlcap = function(before, options, envir) {
     }
     })
 
-# compaire pair-wise distances between 3 individuals
-distPlot <- function(ex, vars, individuals, id, scale.data=FALSE, show.distances=TRUE, ...) {
-  par(mar=c(5,5,1,1))
-  # optionally scale
-  if(scale.data) {
-    ex.scaled <- scale(ex[, vars], center = TRUE, scale = TRUE)
-    ex[[vars[1]]] <- ex.scaled[, 1]
-    ex[[vars[2]]] <- ex.scaled[, 2]
-  }
-    
-  
-  x.data <- ex[[vars[1]]]
-  y.data <- ex[[vars[2]]]
-  
-  d <- dist(ex[, vars])
-  m <- round(as.matrix(d), 1)
-  dimnames(m) <- list(ex[[id]], ex[[id]])
-  
-  plot(ex[[vars[1]]], ex[[vars[2]]], las=1, type='n', ...)
-  # plot(x.data, y.data, las=1, type='n')
-  grid()
-  
-  if(show.distances) {
-    arrows(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col='RoyalBlue', length = 0.1, code = 3)
-    arrows(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col='Orange', length = 0.1, code = 3)
-    
-    segments(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[3]], y.data[individuals[2]], lwd=1, lty=2, col='Orange')
-    segments(x.data[individuals[3]], y.data[individuals[2]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col='Orange')
-    segments(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[1]], lwd=1, lty=2, col='RoyalBlue')
-    segments(x.data[individuals[2]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col='RoyalBlue')
-    
-    legend('topright', legend=c(m[individuals[1], individuals[2]], m[individuals[3], individuals[2]]), col=c('RoyalBlue', 'Orange'), lty=1, lwd=2, bty='n', title = 'Distance', cex=1.5)
-  }
-  
-  text(x.data, y.data, ex[[id]], col='black', cex=1.5, font=1, pos = 4)
-  points(x.data, y.data, pch=16, col='black', cex=0.75)
-  
-  return(m)
-}
-
 # load libs for examples
 library(aqp)
 library(cluster)
@@ -83,6 +45,9 @@ library(RColorBrewer)
 library(MASS)
 library(lattice)
 library(viridis)
+
+# custom functions
+source('local-functions.R')
 ```
 
 <hr>
@@ -1164,6 +1129,15 @@ box()
 ```
 
 
+### Rotations
+procrustes, etc.
+```{r}
+# https://ncss-tech.github.io/AQP/aqp/color-contrast.html
+
+```
+
+
+
 # Practical Applications
 
 Before you work through the following examples, you should review the [SoilProfileCollection object tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
@@ -1264,26 +1238,27 @@ h <- horizons(s)
 # convert Munsell color notation to sRGB
 # these are moist colors
 rgb.data <- munsell2rgb(h$hue, h$value, h$chroma, return_triplets = TRUE)
+lab.data <- munsell2rgb(h$hue, h$value, h$chroma, returnLAB = TRUE)
 
 # check
 head(rgb.data)
+head(lab.data)
 
 # remove NA
 rgb.data <- na.omit(rgb.data)
+lab.data <- na.omit(lab.data)
 
 # retain unique colors
 rgb.data <- unique(rgb.data)
-
-# convert sRGB colors to CIE LAB color system
-lab.data <- as(with(rgb.data, sRGB(r, g, b)), 'LAB')
+lab.data <- unique(lab.data)
 
 # visualize colors in LAB coordinates
-pairs(lab.data@coords, col='white', bg=rgb(rgb.data), pch=21, cex=2)
+pairs(lab.data, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
 ```{r, fig.width=12, fig.height=6, results='hide'}
 # create distance matrix from LAB coordinates
-d <- daisy(lab.data@coords, stand = TRUE)
+d <- daisy(lab.data, stand=FALSE)
 
 # divisive heirarcical clustering
 d.hclust <- as.hclust(diana(d))
@@ -1360,7 +1335,7 @@ clust <- diana(d)
 
 ```{r, fig.width=10, fig.height=6}
 par(mar=c(2,0,2,0))
-plotProfileDendrogram(s, clust, dend.y.scale = 1.5, scaling.factor = 0.004, y.offset = 0.1, width=0.15, cex.names=0.45)
+plotProfileDendrogram(s, clust, dend.y.scale = 1.5, scaling.factor = 0.004, y.offset = 0.1, width=0.25, cex.names=0.45)
 title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
