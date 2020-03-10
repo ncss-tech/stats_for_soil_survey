@@ -45,6 +45,7 @@ library(RColorBrewer)
 library(MASS)
 library(lattice)
 library(viridis)
+library(vegan)
 
 # custom functions
 source('local-functions.R')
@@ -416,7 +417,7 @@ The following example is based on a **data matrix** containing lab measurements 
 | <b>...</b>  |  <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>| <b>...</b>|
 
 
-Note that distances between individuals, within clusters, and between clusters is more apparent the nMDS representation of the distance matrix. Similar information is embedded in the dendrogram but it is not as intuitive.
+Note that distances between individuals, within clusters, and between clusters **is more apparent in the nMDS** representation of the distance matrix. Similar information is embedded in the dendrogram but it is not as intuitive.
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=5}
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
@@ -436,33 +437,80 @@ p <- as.phylo(h)
 # define colors based on natural groupings
 cols <- brewer.pal(9, 'Set1')[cutree(h, 4)]
 
-# Sammon's non-linear mapping
-s <- MASS::sammon(d)
+# nMDS
+m <- metaMDS(d, distance = 'gower')
 
+# multi-figure output
 par(mar=c(3,0,0,3), mfcol=c(1,2))
 plot(p, label.offset=0.125, direction='right', font=1, cex=0.85)
 tiplabels(pch=15, col=cols)
 abline(v=2.3, col='orange', lty=2, lwd=2)
 mtext('Dendrogram Representation of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
 
-plot(s$points, asp=1, type='n', axes=FALSE, xlab='', ylab='')
-# abline(v=0, h=0, col='black')
+# setup plot
+o <- ordiplot(m, type='n', axes=FALSE)
+# grid and nMDS origin
 grid()
-text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
-axis(1, cex.axis=0.95, line=-2)
-axis(4, cex.axis=0.95, line=0.5, las=1)
-mtext('Ordination of Distance Matrix\n(all characteristics, standardized)', side=1, line=1)
+# abline(v=0, h=0, col='black', lty=3)
+# add points, colored accoring to cluster from previous example
+points(o, 'sites', cex=1, col=cols, pch=16)
+# text(o, 'sites', labels=sp4$name, cex=0.75, col=cols, font=2)
+
+# annotate
+mtext('Ordination of Distance Matrix (nMDS)\n(all characteristics, standardized)', side=1, line=1)
 ```
 
+
+#### Interpreting the Results
+We can conveniently annotate the results of an ordination with contextual information, such as the approximate trends in clay content or CEC. Note that ordination methods represent a *flattening* of multi-dimensional data space, and in the case of nMDS, preserve proportional (vs. exact) pair-wise distances. Therefore, it is quite common for surfaces (the contours below) fit to the 2D ordination to have complex patterns.
+```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
+# figure margins
+par(mar=c(1,1,3,1), mfcol=c(1,2))
+
+# setup plot
+o <- ordiplot(m, type='n', axes=FALSE)
+# add points, colored accoring to cluster from previous example
+points(o, 'sites', cex=1, col=cols, pch=16)
+
+# overlay smooth surface of variable used in ordination
+ordisurf(m, sp4$clay, add=TRUE, col='black', labcex=0.65)
+
+# finish plot
+title('Influence of Clay Content (%)')
+box()
+
+# setup plot
+o <- ordiplot(m, type='n', axes=FALSE)
+# add points, colored accoring to cluster from previous example
+points(o, 'sites', cex=1, col=cols, pch=16)
+
+# overlay smooth surface of variable used in ordination
+ordisurf(m, sp4$CEC_7, add=TRUE, col='black', labcex=0.65)
+
+# finish plot
+title('Influence of CEC by NH4-Ac (cmol [+]/kg)')
+box()
+```
+
+Putting the clustering results into context is important: recall that we are working with *individuals* that represent genetic horizons that have been clustered according to 5 physical / chemical properties (*characteristics*). Differences in CEC by NH4-Ac are one of the strongest contributors to the pair-wise distances and overall clustering structure.
 ```{r, echo=FALSE, results='hide', fig.width=10, fig.height=4}
 # re-init sp4, copy clustering colors to hz attribute
 data('sp4', package = 'aqp')
 sp4$cl <- cols
 depths(sp4) <- id ~ top + bottom
 
-par(mar=c(0,0,0,0))
-plot(sp4, color='cl', cex.names=0.75)
-title('Clustering Results in Context', line=-1)
+# arrange from 
+max.CEC7 <- profileApply(sp4, function(i) {
+  max(i$CEC_7, na.rm = TRUE)
+})
+
+# low -> high CEC7
+new.order <- order(max.CEC7)
+
+par(mar=c(1,0,0,0))
+plotSPC(sp4, color='cl', cex.names=0.75, plot.order = new.order)
+# title('Clustering Results in Context', line=-1)
+mtext('profiles arranged from low \u2192 high, profile maximum CEC by NH4-Ac', side = 1, line = -1, font=3, at = c(0.5, 50), adj = 0)
 ```
 
 
