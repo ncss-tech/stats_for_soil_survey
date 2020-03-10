@@ -119,6 +119,16 @@ Note that this is the full form of the [**distance matrix**](https://en.wikipedi
 Interpretation of the matrix is simple: Individual "A" is more like "ABt" than like "Bt1." It is important to note that quantification of dissimilarity (distance) among individuals is always relative: "X is more like Y, as compared to Z."
 
 
+### Distances You Can See: Perceptual Color Difference
+
+Simulated redoximorphic feature colors, constrast classes and CIE $\Delta{E_{00}}$. Details [here](https://ncss-tech.github.io/AQP/aqp/color-contrast.html).
+```{r fig.width=8, fig.height=3.5, echo=FALSE}
+m1 <- paste0('7.5YR 4/', 2:8)
+m2 <- rep('10YR 5/2', times=length(m1))
+colorContrastPlot(m1, m2, labels = c('F3M', 'MAT'), d.cex = 0.8, col.cex = 0.8)
+```
+
+
 ## Standardization of Characteristics
 
 Euclidean distance doesn't make much sense if the characteristics do not share a common unit of measure or range of values. Nor is it relevant when some characteristics are categorical and some are continuous. For example, distances are distorted if you compare clay (%) and exchangeable Ca (cmol/kg).
@@ -189,24 +199,23 @@ You can now begin to describe dissimilarity between individuals using an arbitra
 
 ### Review and Discuss
 
-  * What are the "data matrix" and "distance matrix"?
-  * What is standardization, and why is it important?
-  * What is the largest impediment to creating a distance matrix from NASIS and KSSL data?
-  * **Key point:** Each characteristic is its own dimension in property-space.
-    + Sand, clay, and CEC = 3 dimensions.
-    + Sand, clay, CEC, OC, and horizon depth = 5 dimensions.
-    + Multiple dimensions are simple to define in code but [are hard to visualize](https://youtu.be/N0WjV6MmCyM).
-    + The [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality).
+ * What are the "data matrix" and "distance matrix"?
+ * What is standardization, and why is it important?
+ * What is the largest impediment to creating a distance matrix from NASIS and KSSL data?
+ * **Key point:** Each characteristic is its own dimension in property-space.
+  + Sand, clay, and CEC = 3 dimensions.
+  + Sand, clay, CEC, OC, and horizon depth = 5 dimensions.
+  + Multiple dimensions are simple to define in code but [are hard to visualize](https://youtu.be/N0WjV6MmCyM).
+  + The [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality).
    
 
-## Quick Detour: Missing Data
+## Missing Data
 
 Missing data are a fact of life. Soil scientists are quite familiar with missing lab data (*"Why didn't we request optical grain counts?"*) or missing essential NASIS pedon data elements, such as horizon bottom depth, estimated clay fraction, or pH. Nearly all of the methods described in this document are very sensitive to missing data. In other words, they won't work! Following are a couple of possible solutions:
  
-  * Fix the missing data if at all possible,
-  * Estimate the missing data values from know relationships to other properties or a group-wise mean or median, or
-  * Remove records containing any missing data.
-
+ * Fix the missing data if at all possible,
+ * Estimate the missing data values from know relationships to other properties or a group-wise mean or median, or
+ * Remove records containing any missing data.
 
 
 ## Visualizing Pair-Wise Distances: The Dendrogram
@@ -237,8 +246,8 @@ The branches of a dendrogram can be rotated like a mobile, so that the final ord
 
 
 ### Review and Discuss
-  * Do you have any questions about dendrogram interpretation?  Dendrograms are used extensively in the rest of this chapter.
-  * If you were explaining how to interpret a dendrogram to someone, would you start at the roots or leaves? Why?
+ * Do you have any questions about dendrogram interpretation?  Dendrograms are used extensively in the rest of this chapter.
+ * If you were explaining how to interpret a dendrogram to someone, would you start at the roots or leaves? Why?
 
 
 ## Cluster Analysis: Finding Groups in Data
@@ -293,8 +302,8 @@ tiplabels(pch=15, col=cols)
 
 There are two main types of [hierarchical clustering](https://en.wikipedia.org/wiki/Hierarchical_clustering).
 
-  * **Agglomerative:** Start with individuals and iteratively combine into larger and larger groups.
-  * **Divisive:** Start with all individuals and iteratively split into smaller and smaller groups.
+ 1. **Agglomerative:** Start with individuals and iteratively combine into larger and larger groups.
+ 2. **Divisive:** Start with all individuals and iteratively split into smaller and smaller groups.
 
 Both methods are strongly influenced by the choice of **standardization** method and **distance metric**. Both methods require a full, pair-wise distance matrix as input. This requirement can limit the use of hierarchical clustering to datasets that can be fit into memory.
 
@@ -311,14 +320,14 @@ The agglomerative methods also depend on the choice of [linkage criterion](https
   7. "Flexible strategy": adjustable linkage based on parameter $\alpha$.  
   8. "Flexible UPGMA" [@belbin1992]: adjustable linkage based on parameter $\beta$.  
 
-See [@Kaufman2005], [@Arkley1976], [@Legendre1998], and [`agnes()` manual page](https://www.rdocumentation.org/packages/cluster/versions/2.0.7-1/topics/agnes) for a detailed description of these linkage criteria. Selection of linkage criteria can be quantitatively evaluated using the [cophenetic correlation](https://en.wikipedia.org/wiki/Cophenetic_correlation); and index of how well a dendrogram preserves the original pair-wise distances. [This thread](https://stats.stackexchange.com/questions/195446/choosing-the-right-linkage-method-for-hierarchical-clustering) on StackExchange has a nice summary of various linkage criteria. More on this later.
+See [@Kaufman2005], [@Arkley1976], [@Legendre1998], and [`agnes()` manual page](https://www.rdocumentation.org/packages/cluster/versions/2.0.7-1/topics/agnes) for a detailed description of these linkage criteria. Selection of linkage criteria can be quantitatively evaluated using the [cophenetic correlation](https://en.wikipedia.org/wiki/Cophenetic_correlation); and index of how well a dendrogram preserves the original pair-wise distances. [This thread](https://stats.stackexchange.com/questions/195446/choosing-the-right-linkage-method-for-hierarchical-clustering) on StackExchange has a nice summary of various linkage criteria. I really like [these slides by Brian Tibshirani](https://www.stat.cmu.edu/~ryantibs/datamining/lectures/05-clus2.pdf) on the topic of agglomerative method selection. More on this later.
 
 ##### Review and Discuss
-  * The simplicity and lack of decisions make the divisive method convenient for most work. 
-  * The top-down approach is similar to the way in which we describe soil morphology and taxonomy.
-  * Linkage criteria should be selected based on the hypothesized shape of clusters or prior subject knowledge.
-  * When selecting a method, read/think about it; don't just go "fishing."
-  * *Personal opinion:* I usually select divisive hierarchical clustering over the other methods: structures *seem* to be generally more interpretable.
+ * The simplicity and lack of decisions make the divisive method convenient for most work. 
+ * The top-down approach is similar to the way in which we describe soil morphology and taxonomy.
+ * Linkage criteria should be selected based on the hypothesized shape of clusters or prior subject knowledge.
+ * When selecting a method, read/think about it; don't just go "fishing."
+ * *Personal opinion:* I usually select divisive hierarchical clustering over the other methods: structures *seem* to be generally more interpretable.
 
 
 ### Centroid and Medoid (Partitioning) Clustering
@@ -363,19 +372,19 @@ legend('topright', legend=c('Observation', 'Medoid', 'Centroid'), pch=c(21, 0, 8
 
 This section describes three (out of many) of the most important partitioning-type algorithms.
  
-  * [K-means](https://en.wikipedia.org/wiki/K-means_clustering): Groups of individuals are partitioned around newly created "[centroids](https://en.wikipedia.org/wiki/Centroid)". Resulting clusters approximately spherical and contain an approximately equal number of individuals.
-  * [K-medoids](https://en.wikipedia.org/wiki/K-medoids): Groups of individuals are partitioned around selected "[medoids](https://en.wikipedia.org/wiki/Medoid)".
-  * [Fuzzy clustering](https://en.wikipedia.org/wiki/Fuzzy_clustering): Individuals are assigned a "fuzzy membership" value for each partition of property-space.
+ * [K-means](https://en.wikipedia.org/wiki/K-means_clustering): Groups of individuals are partitioned around newly created "[centroids](https://en.wikipedia.org/wiki/Centroid)". Resulting clusters approximately spherical and contain an approximately equal number of individuals.
+ * [K-medoids](https://en.wikipedia.org/wiki/K-medoids): Groups of individuals are partitioned around selected "[medoids](https://en.wikipedia.org/wiki/Medoid)".
+ * [Fuzzy clustering](https://en.wikipedia.org/wiki/Fuzzy_clustering): Individuals are assigned a "fuzzy membership" value for each partition of property-space.
 
 All of these methods are sensitive to the type of **standardization** applied to the characteristics. These methods rely on iterative minimization of one or more criteria; therefore, each clustering "run" may generate slightly different output. Most implementations re-run the algorithm until it stabilizes.
 
 
 ##### Review and Discuss
 
-  * What is the difference between a "medoid" and a "centroid"? Can you think of a way in which both concepts could be applied to the grouping of soils data?
-    + medoids are tied to individuals, centroids are hypothetical (calculated)
-  * Fuzzy clustering is also referred to as "soft clustering," while the other two methods are referred to as "hard clustering." Sometimes, using both can be helpful, especially if individuals straddle the line between groups.
-  * Each method has its own strength and weakness, for example [here is a nice summary of the limitations of k-means](http://varianceexplained.org/r/kmeans-free-lunch/).
+ * What is the difference between a "medoid" and a "centroid"? Can you think of a way in which both concepts could be applied to the grouping of soils data?
+  + medoids are tied to individuals, centroids are hypothetical (calculated)
+ * Fuzzy clustering is also referred to as "soft clustering," while the other two methods are referred to as "hard clustering." Sometimes, using both can be helpful, especially if individuals straddle the line between groups.
+ * Each method has its own strength and weakness, for example [here is a nice summary of the limitations of k-means](http://varianceexplained.org/r/kmeans-free-lunch/).
 
 
 
@@ -459,9 +468,9 @@ title('Clustering Results in Context', line=-1)
 
 ## Review and Discuss
 
-  * Which visualization of the distance matrix was simpler to interpret: Dendrogram or ordination by nMDS?
-  * Do you have any questions about the figures?
-  * Do you have any guesses on what the clusters represent?
+ * Which visualization of the distance matrix was simpler to interpret: Dendrogram or ordination by nMDS?
+ * Do you have any questions about the figures?
+ * Do you have any guesses on what the clusters represent?
 
 
 ## Pair-Wise Distances Between Soil Profiles
@@ -495,13 +504,13 @@ If you want for more detailed information, see this [relevant paper](http://dx.d
 
 
 ## Final Discussion
-  * Missing data strategy
-  * Meaningful characteristics
-  * Standardization of characteristics
-  * Distance metric
-  * Clustering algorithm
-  * Number of clusters
-  * Application to soil survey and ESD
+ * Missing data strategy
+ * Meaningful characteristics
+ * Standardization of characteristics
+ * Distance metric
+ * Clustering algorithm
+ * Number of clusters
+ * Application to soil survey and ESD
  
 
 # Excercises
@@ -541,10 +550,10 @@ In most cases, you can edit the examples and swap-in just about any data that ar
 #### Try it!
 Tinker with some `SoilProfileCollection` objects.
 
-  * Get some data using one of the methods listed above. If you need help, see the manual pages for examples (`?fetchKSSL`) or the [SoilProfileCollection tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
-  * Determine the number of profiles and horizons within the collection.
-  * View and extract some site and horizon attributes.
-  * Generate some soil profile sketches.
+ * Get some data using one of the methods listed above. If you need help, see the manual pages for examples (`?fetchKSSL`) or the [SoilProfileCollection tutorial](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
+ * Determine the number of profiles and horizons within the collection.
+ * View and extract some site and horizon attributes.
+ * Generate some soil profile sketches.
 
 
 ## Evaluating Missing Data
@@ -664,9 +673,9 @@ If you are wondering what is in the object `x`, the `str()` function or manual p
  
 The go-to functions for hierarchical clustering are as follows:
  
-  * `hclust()`: This function is agglomerative, is in base R, requires a distance matrix, and implements most of the commonly used linkage criteria.
-  * `agnes()`: This function is agglomerative, is in `cluster` package, can perform standardization and distance calculations, and implements more linkage criteria.
-  * `diana()`: This function is divisive, is in `cluster` package, can perform standardization and distance calculations.
+ * `hclust()`: This function is agglomerative, is in base R, requires a distance matrix, and implements most of the commonly used linkage criteria.
+ * `agnes()`: This function is agglomerative, is in `cluster` package, can perform standardization and distance calculations, and implements more linkage criteria.
+ * `diana()`: This function is divisive, is in `cluster` package, can perform standardization and distance calculations.
 
 
 ### Basic Agglomerative Hierarchical Clustering with `hclust`
@@ -792,30 +801,30 @@ res <- res[order(res$cophenetic.correlation, decreasing = TRUE), ]
 kable_styling(kable(res, row.names = FALSE, format = 'html', digits = 3), full_width = FALSE)
 ```
 
-Investigate differences graphically.
+Investigate differences graphically: I've ranked according to the frequency withwhich I use the various methods.
 ```{r fig.width=8, fig.height=5}
 par(mar=c(0,0.25,1.5,0.25), mfrow=c(2,3))
 
-plot(as.phylo(as.hclust(h.avg)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Average')
-tiplabels(pch=15, col=col.set[cutree(h.avg, 4)])
+plot(as.phylo(as.hclust(h.div)), label.offset=0.125, direction='right', font=1, cex=0.65, main='1. Divisive')
+tiplabels(pch=15, col=col.set[cutree(h.div, 4)])
 
-plot(as.phylo(as.hclust(h.single)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Single')
-tiplabels(pch=15, col=col.set[cutree(h.single, 4)])
-
-plot(as.phylo(as.hclust(h.complete)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Complete')
-tiplabels(pch=15, col=col.set[cutree(h.complete, 4)])
-
-plot(as.phylo(as.hclust(h.ward)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Ward')
+plot(as.phylo(as.hclust(h.ward)), label.offset=0.125, direction='right', font=1, cex=0.65, main='2. Ward')
 tiplabels(pch=15, col=col.set[cutree(h.ward, 4)])
 
-plot(as.phylo(as.hclust(h.flexible)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Flexible (0.01)')
+plot(as.phylo(as.hclust(h.flexible)), label.offset=0.125, direction='right', font=1, cex=0.65, main='3. Flexible (0.01)')
 tiplabels(pch=15, col=col.set[cutree(h.flexible, 4)])
 
-plot(as.phylo(as.hclust(h.div)), label.offset=0.125, direction='right', font=1, cex=0.65, main='Divisive')
-tiplabels(pch=15, col=col.set[cutree(h.div, 4)])
+plot(as.phylo(as.hclust(h.avg)), label.offset=0.125, direction='right', font=1, cex=0.65, main='4. Average')
+tiplabels(pch=15, col=col.set[cutree(h.avg, 4)])
+
+plot(as.phylo(as.hclust(h.single)), label.offset=0.125, direction='right', font=1, cex=0.65, main='(never) Single')
+tiplabels(pch=15, col=col.set[cutree(h.single, 4)])
+
+plot(as.phylo(as.hclust(h.complete)), label.offset=0.125, direction='right', font=1, cex=0.65, main='(never) Complete')
+tiplabels(pch=15, col=col.set[cutree(h.complete, 4)])
 ```
 
-TODO: interpret main differences in shape
+
 
 
 #### More on the Flexible UPGMA method
@@ -869,7 +878,8 @@ as.phylo(as.hclust(agnes(d.1, method='average'))), lab.1='divisive', lab.2='aggl
 
 ## Centroid and Medoid (Partitioning) Clustering
 
-The following creates simulated data for demonstration purposes, representing two populations: 
+The following creates simulated data for demonstration purposes, representing two populations:
+
   1. mean = 0, sd = 0.3
   2. mean = 1, sd = 0.3
   
@@ -878,8 +888,10 @@ The following creates simulated data for demonstration purposes, representing tw
 col.set <- brewer.pal(9, 'Set1')
 
 # 2D example
-x <- rbind(matrix(rnorm(100, mean = 0, sd = 0.3), ncol = 2),
-           matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2))
+x <- rbind(
+  matrix(rnorm(100, mean = 0, sd = 0.3), ncol = 2),
+  matrix(rnorm(100, mean = 1, sd = 0.3), ncol = 2)
+)
 colnames(x) <- c("x", "y")
 ```
 
@@ -916,8 +928,8 @@ for(i in 1:9) {
 #### K-Medoids
 The `cluster` package provides two interfaces to the k-medoids algorithm:
 
-  * `pam()`: small to medium sized data sets
-  * `clara()`: optmized for larger data sets
+   * `pam()`: small to medium sized data sets
+   * `clara()`: optmized for larger data sets
 
 A quick example of using `pam()` to identify an increasing number of clusters.
 ```{r}
@@ -977,9 +989,6 @@ From the source:
 
 ### How Many Clusters?
 There is no simple answer to the question "How many clusters are in my data?" Some metrics, however, can be used to help estimate a "reasonable" number of clusters. The mean [silhouette width](https://en.wikipedia.org/wiki/Silhouette_(clustering)) is a useful index of "cluster compactness" relative to neighbor clusters [@Rousseeuw1987]. Larger silhouette widths suggest tighter grouping.
-
-
-**TODO: integrate the [clustree package](https://lazappi.github.io/clustree/articles/clustree.html)**
 
 
 ```{r, fig.width=8, fig.height=4}
@@ -1165,11 +1174,56 @@ clust <- diana(d)
 
 ```{r, fig.width=8, fig.height=4}
 # vizualize dissimilarity matrix via hierarchical clustering
-par(mar=c(0,0,3,0))
-plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
+par(mar=c(0,0,3,1))
+plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2.25, width=0.25, cex.names=0.6, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
+```
+
+## Pair-Wise Distances Between Soil Series
+
+The following figures are a preview of some new [functionality planned for SoilWeb/SDE](http://soilmap2-1.lawr.ucdavis.edu/mike/soilweb/sde/?series=drummer). These related tutorials cover similar material in greater detail:
+
+ * [Competing Soil Series](https://ncss-tech.github.io/AQP/soilDB/competing-series.html)
+ * [Querying Soil Series Data](https://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html)
+
+The `fetchOSD` function can return [additional summaries](https://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html) tabulated from climate data, MLRA boundaries, SSURGO, and much more with the `extended=TRUE` argument. Lets experiment with distances computed from annual climate data and hillslope position.
+```{r}
+# soil series from around CONUS
+soils <- c('redding', 'pentz', 'willows', 'yolo', 'hanford', 'cecil', 'sycamore', 'KLAMATH', 'drummer', 'musick', 'zook')
+s <- fetchOSD(soils, extended = TRUE)
+
+# note additional data, packed into a list
+str(s, 1)
+```
+
+### Annual Climate Data
+The [`vizAnnualClimate` function (sharpshootR package)](http://ncss-tech.github.io/sharpshootR/docs/reference/vizAnnualClimate.html) arranges percentiles of annual climate summaries according to divisive hierarchical clustering applied to median values. Climate summaries were derived from 800m, daily PRISM data spanning 1981-2010.
+```{r fig.width=10, fig.height=6}
+# control color like this
+trellis.par.set(plot.line=list(col='RoyalBlue'))
+
+# control centers symbol and size here
+res <- vizAnnualClimate(s$climate.annual, IQR.cex = 1.25, cex=1.1, pch=18)
+
+# plot figure, this is Lattice graphics
+print(res$fig)
+```
+
+```{r fig.width=10, fig.height=5.5}
+# do something with clustering
+par(mar=c(0,0,1,1))
+# usually requires tinkering...
+plotProfileDendrogram(s$SPC, clust = res$clust, scaling.factor = 0.05, width = 0.2, y.offset = 1.3)
+mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font=3)
 ```
 
 
+### Hillslope Position
+The [`vizHillslopePosition` function (sharpshootR package)](http://ncss-tech.github.io/sharpshootR/docs/reference/vizHillslopePosition.html) arranges hillslope position proportions (SSURGO) according to divisive hierarchical clustering. Proportions are used as characteristics for each soil series. The branches of the dendrogram are rotated so that ordering within the figure approximates the hydrologic gradient as closely as possible. Rotation is performed by the `dendextend::rotate` function.
+```{r fig.width=8, fig.height=5}
+# result is a lattice graphics object
+res <- vizHillslopePosition(s$hillpos)
+print(res$fig)
+```
 
 ## Pair-Wise Distances Between Subgroup-Level Taxa
 
@@ -1187,13 +1241,17 @@ par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 
 # check structure of some site-level attributes
-head(site(s))[, c('id', 'soilorder', 'suborder', 'greatgroup', 'subgroup')]
+# head(site(s))[, c('id', 'soilorder', 'suborder', 'greatgroup', 'subgroup')])
+```
+
+```{r echo=FALSE}
+kable_styling(kable(head(site(s))[, c('id', 'soilorder', 'suborder', 'greatgroup', 'subgroup')], format = 'html'))
 ```
 
 ```{r, fig.width=12, fig.height=5}
 par(mar=c(0,1,1,1))
 # plot dendrogram + profiles
-d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01)
+d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01, width=0.2, cex.names=0.5)
 ```
 
 Check the resulting distance matrix.
@@ -1203,8 +1261,9 @@ print(d)
 
 
 ## Soil Color Signatures
-Integrate [related tutorial](http://ncss-tech.github.io/AQP/aqp/soil-color-signatures.html)
-Explain.
+
+
+See this [related tutorial](http://ncss-tech.github.io/AQP/aqp/soil-color-signatures.html) for additional examples.
 ```{r fig.width=12, fig.height=5}
 # manually convert Munsell -> sRGB
 rgb.data <- munsell2rgb(s$hue, s$value, s$chroma, return_triplets = TRUE)
@@ -1216,7 +1275,7 @@ s$b <- rgb.data$b
 pig <- soilColorSignature(s, RescaleLightnessBy = 5, method='depthSlices')
 
 # display results as table
-knitr::kable(head(pig), digits = 3, row.names = FALSE)
+kable_styling(knitr::kable(head(pig), digits = 3, row.names = FALSE))
 
 # move row names over for distance matrix
 row.names(pig) <- pig[, 1]
@@ -1225,7 +1284,7 @@ dd <- diana(d)
 
 # plot
 par(mar=c(0,0,0.25,1))
-plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 6, width=0.2, cex.names=0.45)
+plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 6, width=0.2, cex.names=0.5)
 ```
 
 ## Clustering of Soil Colors
@@ -1345,13 +1404,18 @@ mtext('Profile Sketches are from OSDs', 1)
 
 
 
-## GIS Data
+## MLRA Concepts via Climate and Elevation Samples
 
+Get and process example data, originally sampled from PRISM raster and DEM within MLRA 15, 18, 22A, and 22B. Variables include:
 
-### MLRA Summaries: PRISM and Elevation
-
-This example generates an ordination of environmental variables (PRSIM and elevation) associated with MLRAs 15, 18, 22A, and 22B. The contours contain 75% (dotted line), 50% (dashed line), and 25% (solid line) of the points. See comments in the code for details. Note that this example was [extracted from the Region 2 Map Unit Comparison Report](https://github.com/ncss-tech/soilReports).
-
+ * elevation
+ * mean annual air temperature
+ * mean annuap precipitation
+ * fraction of annual precipitation as rain
+ * effective precipitation
+ * frost-free days
+ * growing degree days
+   
 ```{r, fig.width=8, fig.height=8, results='hide'}
 library(MASS)
 library(vegan)
@@ -1378,133 +1442,67 @@ d.sub$.id <- factor(d.sub$.id, levels = mu.set)
 cols <- brewer.pal(9, 'Set1') 
 # remove light colors
 cols <- cols[c(1:5,7,9)]
+```
 
-# http://stackoverflow.com/questions/16225530/contours-of-percentiles-on-level-plot
-kdeContours <- function(i, prob, cols, m, ...) {
-  
-  # need more than 2 rows of data
-  if(nrow(i) < 2) {
-    return(NULL)
-  }
-  
-  # keep track of colors
-  this.id <- unique(i$.id)
-  this.col <- cols[match(this.id, m)]
-  
-  # estimate density
-  dens <- kde2d(i$x, i$y, n=200)
-  
-  # differentiate to estimate quantiles
-  dx <- diff(dens$x[1:2])
-  dy <- diff(dens$y[1:2])
-  sz <- sort(dens$z)
-  c1 <- cumsum(sz) * dx * dy
-  levels <- sapply(prob, function(x) {
-    approx(c1, sz, xout = 1 - x)$y
-  })
-  
-  # add contours if possible
-  if(!is.na(levels))
-    contour(dens, levels=levels, drawlabels=FALSE, add=TRUE, col=this.col, ...)
-}
+### Nonmetric Multidimensional Scaling
 
-## NOTE: data with very low variability will cause warnings
-# eval numerical distance, removing first 3 columns of IDs
-d.dist <- daisy(d.sub[, -c(1:3)], stand=TRUE)
+A smooh surface fit to mean annual air temperature highlights structure within a nMDS ordination.
+```{r results='hide', fig.width=8}
+m <- metaMDS(d.sub[, -c(1:3)], distance = 'gower')
 
-## map distance matrix to 2D space via principal coordinates
-d.betadisper <- betadisper(d.dist, group=d.sub$.id, bias.adjust = TRUE, sqrt.dist = TRUE, type='median')
-d.scores <- scores(d.betadisper)
-
-# split data into a list by ID
-s <- data.frame(x=d.scores$sites[, 1], y=d.scores$sites[, 2], .id=d.sub$.id)
-s <- split(s, s$.id)
-
-# plot
+# margins
 par(mar=c(1,1,3,1))
-plot(d.scores$sites, type='n', axes=FALSE)
-abline(h=0, v=0, lty=2, col='grey')
 
-# add contours of prob density
-# NOTE: lines are not added if data are too densely spaced for evaluation of requested prob. level 
-res <- lapply(s, kdeContours, prob=c(0.75), cols=cols, m=levels(d.sub$.id), lwd=1, lty=3)
-res <- lapply(s, kdeContours, prob=c(0.5), cols=cols, m=levels(d.sub$.id), lwd=1, lty=2)
-res <- lapply(s, kdeContours, prob=c(0.25), cols=cols, m=levels(d.sub$.id), lwd=2, lty=1)
+# setup plot
+o <- ordiplot(m, type='n', axes=FALSE)
+# add points, colored accoring to MLRA
+points(o, 'sites', cex=1, col=cols[as.numeric(d.sub$.id)], pch=16)
 
-# add sample points
-points(d.scores$sites, cex=0.45, col=cols[as.numeric(d.sub$.id)], pch=16)
+# overlay smooth surface of variable used in ordination
+ordisurf(m, d.sub$Mean.Annual.Air.Temperature..degrees.C., add=TRUE, col='black', labcex=1)
+legend('topleft', legend=mu.set, pch=16, col=cols, bty='n', cex=1.25)
 
-# note special indexing for cases when low-var MU have been removed
-ordilabel(d.betadisper, display='centroids', col=cols[match(mu.set, levels(d.sub$.id))])
-title('Ordination of Raster Samples (cLHS Subset) with 25%, 50%, 75% Density Contours')
+title('nMDS with mean annual air temperature (deg C) surface')
+
 box()
 ```
 
+
+### Principle Coordinates
+
+This example generates an ordination (via principal coordinates) of environmental variables (PRSIM and elevation) associated with MLRAs 15, 18, 22A, and 22B. Ellipses represent 50% probability contours via *multivariate homogeneity of group dispersions*. See comments in the code for details. Note that this example was [extracted from the Region 2 Map Unit Comparison Report](https://github.com/ncss-tech/soilReports/tree/master/inst/reports/region2/mu-comparison).
+
 **Thoughts on interpretation:**
 
- * The relative position of points and contours are meaningful; absolute position will vary each time the figure is generated.
+ * The relative position of points and ellipses are meaningful; absolute position will vary each time the figure is generated.
  * Look for "diffuse" vs. "concentrated" clusters: these suggest relatively broadly vs. narrowly defined concepts.
  * Nesting of clusters (e.g. smaller cluster contained by larger cluster) suggests super-set/subset relationships.
  * Overlap is proportional to similarity.
  
 
-
-### Topographic Signatures
-
-The following is an investigation of topographic "signatures" from the initial soil mapping project of Sequoia and Kings Canyon National Park, CA.
-
 ```{r, fig.width=8, fig.height=8, results='hide'}
-library(plyr)
-library(reshape2)
-library(vegan)
-library(cluster)
+## NOTE: data with very low variability will cause warnings
+# eval numerical distance, removing first 3 columns of IDs
+d.dist <- daisy(d.sub[, -c(1:3)], stand=TRUE)
 
-# init a temp file
-tf <- tempfile()
+## map distance matrix to 2D space via principal coordinates
+d.betadisper <- betadisper(d.dist, group=d.sub$.id, bias.adjust = TRUE, sqrt.dist = FALSE, type='median')
 
-# download compressed CSV to temp file
-download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/clustering_and_ordination/seki-mu-gis-samples.csv.gz', destfile = tf, quiet = TRUE)
-# read-in from compressed CSV to data.frame object
-x <- read.csv(gzfile(tf), stringsAsFactors = FALSE)
-
-# check
-head(x)
-
-# get terrain variable names
-vars <- c('elev', 'solar', 'slope', 'tci', 'ppt', 'maat', 'tpi', 'tri', 'pi')
-
-# covnvert wide to long format for summary by MY symbol
-x.long <- melt(x, id.vars = 'MUSYM', measure.vars = vars)
-x.summary <- ddply(x.long, c('MUSYM', 'variable'), .fun=plyr::summarize, m=median(value, na.rm = TRUE))
-head(x.summary)
-
-# retain median values, convert back to wide format
-x.wide <- dcast(x.summary, MUSYM ~ variable, value.var = 'm')
-row.names(x.wide) <- x.wide$MUSYM
-head(x.wide, 2)
-
-# generate lookup table of MUSYM - MU groups
-lut <- unique(x[, c('MUSYM', 'gensym')])
-
-# join data matrix with lut
-x.wide <- join(x.wide, lut, by='MUSYM', type='left', match='first')
-x.wide$gensym <- factor(x.wide$gensym, levels = c("riparian", "xx10", "xx20", "xx30", "xx40", "xx50"), labels = c("riparian", "basins and cirques", "glacial valleys", "bedrock controlled mountain slopes and valley walls", "non bedrock controlled slopes", "plateaus, till plains, outwash plains"))
-
-# perform non-metric MDS
-nmds <- metaMDS(x.wide[, vars], distance = 'gower', autotransform = FALSE, wascores=FALSE)
-
-# setup colors
-cols <- c('RoyalBlue', 'black', 'DarkGreen', 'orange3', 'red', 'brown')
-site.colors <- cols[as.numeric(x.wide$gensym)]
-
-# plot ordination
-par(mar=c(1,1,1,1))
-fig <- ordiplot(nmds, type='none', cex.axis=0.75, axes=FALSE)
-abline(h=0, v=0, lty=2, col='grey')
-text(fig, "sites", cex=0.65, font=2, col=site.colors)
-legend('bottomleft', legend=levels(x.wide$gensym), col=cols, pch=15, pt.cex=2, bty='n', cex=1)
-title('Map Unit Terrain Signatures')
+## fancy plot
+plot(
+  d.betadisper, hull=FALSE, ellipse=TRUE, conf=0.5,
+  col=cols, main='Ordination of Raster Samples\n50% Probability Ellipse', sub='MLRA 15, 18, 22A, 22B'
+)
 ```
+
+Pair-wise comparisons at the 90% level of confidence. 
+```{r fig.width=7, fig.height=5}
+## pair-wise comparisons of variance
+par(mar=c(4.5, 5.5, 4.5, 1))
+plot(TukeyHSD(d.betadisper, conf.level = 0.9), las=1)
+```
+
+
 
 
 
