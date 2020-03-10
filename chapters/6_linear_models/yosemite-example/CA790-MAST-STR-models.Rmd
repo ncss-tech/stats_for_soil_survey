@@ -152,6 +152,39 @@ options(datadist="dd")
 plot(Predict(l), as.table=TRUE, layout=c(4,1))
 ```
 
+## Examination of Residuals and Influential Observations
+From the `residuals.ols` manual page:
+
+   type of residual desired. "ordinary" refers to the usual residual. "score" is the matrix of score residuals (contributions to first derivative of log 
+   likelihood). dfbeta and dfbetas mean respectively the raw and normalized matrix of changes in regression coefficients after deleting in turn each 
+   observation. The coefficients are normalized by their standard errors. hat contains the leverages — diagonals of the “hat” matrix. dffit and dffits 
+   contain respectively the difference and normalized difference in predicted values when each observation is omitted. The S lm.influence function is used.
+   When type="hscore", the ordinary residuals are divided by one minus the corresponding hat matrix diagonal element to make residuals have equal variance.
+  
+```{r}
+# cutoff: change of x-fraction standard errors after removal of an observation
+show.influence(which.influence(l, cutoff = 0.5), m.sub)
+
+# how can I interpret these?
+dffits <- residuals(l, type = 'dffit')
+hist(dffits)
+
+# dfbetas: then what?
+dfb <- residuals(l, type = 'dfbetas')
+head(dfb)
+
+# from section 7.4 Checking Distributional Assumptions (Harrell, 2001)
+# whats up with the axis labels?
+r <- resid(l)
+xYplot(r ~ fitted(l), method='quantile')
+
+# QQ plots stratified...
+qqmath(~ r | m.sub$o.hz)
+
+```
+
+
+
 ## Visual Evaluation of Model Fit
 ```{r vis-eval-model, fig.height=8, fig.width=8}
 # view slices of elevation partial effect at several O horizon thickness
