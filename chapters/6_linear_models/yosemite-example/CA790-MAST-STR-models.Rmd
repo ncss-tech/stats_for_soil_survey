@@ -49,6 +49,7 @@ library(latticeExtra)
 library(stringr)
 library(sp)
 library(corrplot)
+library(visreg)
 
 # default colors
 cols <- brewer.pal(n=8, name='Set1')
@@ -108,7 +109,8 @@ bwplot(o.hz ~ tci, data=m, par.settings=tactile::tactile.theme())
 ```{r find-outliers, fig.height=8, fig.width=8}
 
 # build prelim model, plot diagnostics
-l <- lm(MAST ~ rcs(elev, 3) + solar + tci + o.hz, data=m)
+l <- lm(MAST ~ elev + solar + tci + o.hz, data=m)
+summary(l)
 
 leveragePlots(l, las=1)
 
@@ -150,18 +152,33 @@ options(datadist="dd")
 
 # visual check: partial effects make sense
 plot(Predict(l), as.table=TRUE, layout=c(4,1))
+
+# better visualization of partial effects + residuals
+par(mfcol=c(1, 4))
+visreg(l)
+
+## see 
+# Hmisc:::Function(l.ols)
 ```
 
 ## Examination of Residuals and Influential Observations
 From the `residuals.ols` manual page:
 
-   type of residual desired. "ordinary" refers to the usual residual. "score" is the matrix of score residuals (contributions to first derivative of log 
-   likelihood). dfbeta and dfbetas mean respectively the raw and normalized matrix of changes in regression coefficients after deleting in turn each 
-   observation. The coefficients are normalized by their standard errors. hat contains the leverages — diagonals of the “hat” matrix. dffit and dffits 
-   contain respectively the difference and normalized difference in predicted values when each observation is omitted. The S lm.influence function is used.
-   When type="hscore", the ordinary residuals are divided by one minus the corresponding hat matrix diagonal element to make residuals have equal variance.
+ * "ordinary" refers to the usual residual
+ * "score" is the matrix of score residuals (contributions to first derivative of log likelihood). 
+ * "dfbeta" and "dfbetas" mean respectively the raw and normalized matrix of changes in regression coefficients after deleting in turn each observation. The coefficients are normalized by their standard errors. 
+ * "hat" contains the leverages, diagonals of the "hat" matrix. 
+ * dffit and dffits contain respectively the difference and normalized difference in predicted values when each observation is omitted. The S lm.influence function is used. 
+ * "hscore": the ordinary residuals are divided by one minus the corresponding hat matrix diagonal element to make residuals have equal variance.
   
 ```{r}
+
+# assumption of homogenaity: constant variance
+r <- residuals(l, type = 'ordinary')
+plot(r ~ fitted(l), las=1)
+abline(h=0, lty=2, col='red')
+
+
 # cutoff: change of x-fraction standard errors after removal of an observation
 show.influence(which.influence(l, cutoff = 0.5), m.sub)
 
