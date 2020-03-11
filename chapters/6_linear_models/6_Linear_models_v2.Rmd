@@ -202,12 +202,15 @@ library(sf)
 library(mapview)
 library(dplyr)
 
+githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data_v2.Rdata"
+load(url(githubURL))
+
+
 # convert to sites to a spatial object
 mast_sf <- st_as_sf(mast_df,
                     coords = c("utmeasting", "utmnorthing"),
                     crs = 26911
                     ) %>%
-
 # reproject
 st_transform(crs = 4326)
 
@@ -239,7 +242,7 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 
 As you can see below their are numerous variables we could inspect.
 
-```{r}
+```{r, eval = FALSE}
 
 library(raster)
 
@@ -270,7 +273,13 @@ data <- raster::extract(geodata_r, as(mast_sf, "Spatial"), sp = TRUE)@data
 # convert aspect
 data$northness <- abs(180 - data$aspect)
 
-save(data, mast_df, mast_sf2, mlra, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data_v2.Rdata")
+# random sample
+vars <- c("elev", "temp", "precip", "solar", "tc_1", "twi")
+idx <- which(names(geodata_r) %in% vars)
+geodata_s <- sampleRegular(geodata_r[[idx]], size = 5000)
+geodata_df <- as.data.frame(geodata_s)
+
+save(data, mast_df, mast_sf2, mlra, geodata_s, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data_v2.Rdata")
 
 ```
 
@@ -283,7 +292,6 @@ Generally before we begin modeling it is good to explore the data. By examining 
 
 githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data_v2.Rdata"
 load(url(githubURL))
-
 
 summary(data)
 
@@ -328,9 +336,6 @@ Since our data was not randomly sampled, we had better check the distribution of
 
 vars <- c("elev", "temp", "precip", "solar", "tc_1", "twi")
 idx <- which(names(geodata_r) %in% vars)
-
-geodata_s <- sampleRegular(geodata_r[[idx]], size = 5000)
-geodata_df <- as.data.frame(geodata_s)
 
 geodata_df <- rbind(
   data.frame(source = "sample",     data[names(geodata_r)[idx]]),
@@ -553,6 +558,30 @@ writeRaster(mast_r[[2]], filename = "C:/workspace2/mast_se.tif", format = "GTiff
 
 ```
 
+
+# Create Map
+
+```{r}
+
+library(tmap)
+
+
+# mast
+r <- raster("C:/workspace2/mast.tif")
+tm_shape(r) + tm_raster() + 
+  tm_shape(mlra) + tm_borders(col = "black") +
+  tm_legend(legend.position = c("left", "bottom"),
+            legend.bg.color = "white"
+            )
+
+# mast standard error
+r <- raster("C:/workspace2/mast_se.tif")
+tm_shape(r) + tm_raster() + 
+  tm_shape(mlra) + tm_borders(col = "black") +
+  tm_legend(legend.position = c("left", "bottom"),
+            legend.bg.color = "white"
+            )
+```
 
 # Literature
 Bai, Y., T.A. Scott, W. Chen, R.C. Graham, L. Wu, A.C. Chang, and L.J. Lund, 2010. Soil Temperature Regimes in the Mojave Desert. Soil Science, 175(8):398-404. 
