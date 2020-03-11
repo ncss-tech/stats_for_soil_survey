@@ -79,7 +79,7 @@ In addition to the 11-IND MAST modeling efforts there has also been two publishe
 
 Typically the data for MAST and other monitoring projets is downloaded annually. However, some sites now are online and can be accessed remotely. Eitherway prior to loading the information into a proper database it is best to store the data in txt files (Excel files are discouraged). If the data is organized and the filenames encode the metadata, an example such as the one below can be used to efficiently import them into R and combine them into a data frame.
 
-```{r eval=FALSE}
+```{r txt-files, eval=FALSE}
 
 p <- "D:/projects/soilTemperatureMonitoring/data/rawTxtFilesClean"
 setwd(p)
@@ -124,7 +124,7 @@ length(unique(mastSeries_df$siteid))
 
 The Henry Mount Database already has 59 of the sites from the Mojave. The full dataset however has 68 sites.
 
-```{r, eval = FALSE}
+```{r henry, eval = FALSE}
 
 library(soilDB)
 
@@ -136,7 +136,7 @@ length(unique(f$sensors$user_site_id))
 
 ## Aggregate Time Series
 
-```{r, eval=FALSE}
+```{r aggregate, eval=FALSE}
 
 # load cached versions
 load(file = "D:/projects/soilTemperatureMonitoring/data/R/mastSeries.Rdata")
@@ -174,7 +174,7 @@ write.csv(mastSites.df, "mastSites.csv")
 
 Since the Henry Mount database is incomplete we will procede with the aggregation from the txt files.
 
-```{r}
+```{r dataset}
 
 # Read tempC data
 setwd("D:/projects/soilTemperatureMonitoring/data/R")
@@ -196,7 +196,7 @@ mast_df$tempC <- (mast_df$tempF - 32) * (5 / 9)
 
 Where do our points plot? To start we need to convert them to a spatial object first. Then we can create an interactive we map using `mapview`. Also, if we wish we can also export the locations as a Shapefile.
 
-```{r}
+```{r mapview}
 
 library(sf)
 library(mapview)
@@ -242,7 +242,7 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 
 As you can see below their are numerous variables we could inspect.
 
-```{r, eval = FALSE}
+```{r extract, eval = FALSE}
 
 library(raster)
 
@@ -277,8 +277,8 @@ data$northness <- abs(180 - data$aspect)
 vars <- c("elev", "temp", "precip", "solar", "tc_1", "twi")
 idx <- which(names(geodata_r) %in% vars)
 geodata_s <- sampleRegular(geodata_r[[idx]], size = 5000)
-geodata_df <- as.data.frame(geodata_s)
 
+# cache files
 save(data, mast_df, mast_sf2, mlra, geodata_s, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data_v2.Rdata")
 
 ```
@@ -334,11 +334,10 @@ Since our data was not randomly sampled, we had better check the distribution of
 
 ```{r}
 
-vars <- c("elev", "temp", "precip", "solar", "tc_1", "twi")
-idx <- which(names(geodata_r) %in% vars)
+geodata_df <- as.data.frame(geodata_s)
 
 geodata_df <- rbind(
-  data.frame(source = "sample",     data[names(geodata_r)[idx]]),
+  data.frame(source = "sample",     data[names(geodata_df)]),
   data.frame(source = "population", geodata_df)
 )
 
@@ -386,7 +385,7 @@ fit_ols <- ols(tempC ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_
 
 Once we have a model we need to assess residuals for linearity, normality, and homoscedastivity (or constant variance). Oddly this is one area were the rms R package does not offer convient functions for plotting residuals, therefore we'll simply access the results of `lm()`.
 
-```{r}
+```{r residuals}
 
 par(mfcol = c(2, 2))
 
@@ -480,7 +479,7 @@ summary(step_caret$finalModel)
 ## Final model & accuracy assessment
 
 
-```{r}
+```{r final-model}
 
 # rms
 final_ols <- ols(tempC ~ elev + solarcv + tc_1 + tc_2, data = data, weights = data$numDays, x = TRUE, y = TRUE)
@@ -505,7 +504,7 @@ final_lm <- final_caret$finalModel
 
 ## Model Effects
 
-```{r}
+```{r effects}
 
 summary(final_lm)
 
@@ -543,7 +542,7 @@ visreg(final_lm, xvar = "elev", by = "solarcv", breaks = c(23, 33, 51), overlay 
 
 # Generate spatial predictions
 
-```{r, eval=FALSE}
+```{r predict-raster, eval=FALSE}
 
 # Predict tempC model
 predfun <- function(model, data) {
@@ -561,27 +560,29 @@ writeRaster(mast_r[[2]], filename = "C:/workspace2/mast_se.tif", format = "GTiff
 
 # Create Map
 
-```{r}
+```{r tmap}
 
-library(tmap)
+library(raster)
 
+mlra <- st_transform(mlra, 5070)
 
 # mast
-r <- raster("C:/workspace2/mast.tif")
-tm_shape(r) + tm_raster() + 
-  tm_shape(mlra) + tm_borders(col = "black") +
-  tm_legend(legend.position = c("left", "bottom"),
-            legend.bg.color = "white"
-            )
+mast <- raster("C:/workspace2/mast.tif")
+crs(mast) <- "+init=epsg:5070"
+
+plot(mast)
+plot(mlra[1], col = NA, add = TRUE)
+
 
 # mast standard error
-r <- raster("C:/workspace2/mast_se.tif")
-tm_shape(r) + tm_raster() + 
-  tm_shape(mlra) + tm_borders(col = "black") +
-  tm_legend(legend.position = c("left", "bottom"),
-            legend.bg.color = "white"
-            )
+mast_se <- raster("C:/workspace2/mast_se.tif")
+crs(mast_se) <- "+init=epsg:5070"
+
+plot(mast_se)
+plot(mlra[1], col = NA, add = TRUE)
+
 ```
+
 
 # Literature
 Bai, Y., T.A. Scott, W. Chen, R.C. Graham, L. Wu, A.C. Chang, and L.J. Lund, 2010. Soil Temperature Regimes in the Mojave Desert. Soil Science, 175(8):398-404. 
