@@ -1,0 +1,578 @@
+---
+title: 6 - Linear Regression
+author: Stephen Roecker, Dylan Beaudeet &  Katey Yoast
+date: "Tuesday, March 7, 2016"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE)
+
+```
+
+
+![Statistics for pedologists course banner image](figure/logo.jpg)
+
+# Introduction
+
+Linear regression models the linear relationship between a response variable (y) and an predictor variable (x). 
+
+y = a + Bx + e
+
+Where:
+
+y = the dependent variable
+
+a = the intercet of the fitted line
+
+B = the Regression coefficient, i.e. slope of the fitted line. Strong relationships will have high values.
+
+x = the independent variable (aka explanatory or predictor variable(s) )
+
+e = the error term
+
+[//]: # (- \beta_{0} = intercept of the fitted line)
+[//]: # (- \beta_{1}x = slope of the fitted line)
+[//]: # (- \varepsilon = the error term)
+
+Linear regression has been used for soil survey applications since the early 1900s when Briggs and McLane (1907) developed a pedotransfer function to estimate the wilting coefficient as a function of soil particle size. 
+
+Wilting coefficient = 0.01(sand) + 0.12(silt) + 0.57(clay)
+
+When more than one independent variable is used in the regression, it is referred to as multiple linear regression. In regression models, the response (or dependent) variable must always be continuous. The predictor (or independent) variable(s) can be continuous or categorical. In order to use linear regression or any linear model, the errors (i.e. residuals) must be normally distributed. Most environmental data are skewed and require transformations to the response variable (such as square root or log) for use in linear models. Normality can be assessed using a QQ plot or histogram of the residuals.
+
+
+# Linear Regression Example
+
+Now that we've got some of the basic theory out of the way we'll move on to a real example, and address any additional theory where it relates to specific steps in the modeling process. The example selected for this chapter comes from the Mojave desert. The landscape is composed primarily of closed basins ringed by granitic hills and mountains (Peterson, 1981). The problem tackled here is modeling mean annual air temperature as a function of PRISM, digital elevation model (DEM) and Landsat derivatives.
+
+This climate study began in 1998 as part of a national study run by the National Lab and led by Henry Mount (Mount and Paetzold, 2002). The objective was to determine if the hyperthermic line was consistent across the southern US, which at the time was thought to be ~3000 in elevation. Up until 2015 their were 77 active MAST sites, and 12 SCAN sites throughout MLRA 30 and 31.
+
+For more details see the "MLRA 30 - Soil Climate Study - Soil Temperature" project in NASIS, on [GitHub](https://github.com/smroecker/mast-mojave), or by [Roecker et al., 2012](https://www.researchgate.net/publication/331977150_Modeling_and_Application_of_Soil_Temperature_in_the_Mojave_and_Lower_Colorado_Deserts_of_California/citations).
+
+```{r nasis-project}
+
+library(soilDB)
+
+prj <- get_project_from_NASISWebReport(mlrassoarea = "8-VIC", fiscalyear = 2015)
+subset(prj, projectname == "MLRA 30 - Soil Climate Study - Soil Temperature")
+
+```
+
+In addition to the 11-IND MAST modeling efforts there has also been two published studies on the Mojave. The first was by Schmidlin et al. (1983) who examined both the Great Basin and Mojave Deserts in Nevada. The second was by Bai et al. (2010) who examined the Mojave Desert in California. Both studies developed regression models using elevation, but Schmidlin et al. (1983) also incorporated latitude. The results from Bai et al. (2010) displayed considerably larger areas of hyperthermic soils than Schmidlin et al. (1983). This made be due to the unconventional method used by Bai et al. (2010) to measure MAST.
+
+
+# Data
+
+## Tidy Raw Files
+
+Typically the data for MAST and other monitoring projets is downloaded annually. However, some sites now are online and can be accessed remotely. Eitherway prior to loading the information into a proper database it is best to store the data in txt files (Excel files are discouraged). If the data is organized and the filenames encode the metadata, an example such as the one below can be used to efficiently import them into R and combine them into a data frame.
+
+```{r eval=FALSE}
+
+p <- "D:/projects/soilTemperatureMonitoring/data/rawTxtFilesClean"
+setwd(p)
+
+# get file names of HOBO temp data
+files <- list.files()
+
+# read files
+l <- lapply(files, function(x) {
+
+  # extract the file name
+  fileName = strsplit(x, '[.]')[[1]][1]
+  # parse the siteid from the file name
+  siteid   = strsplit(x, '_')[[1]][1]
+
+  cat(paste("working on", fileName, "\n"))
+  f = paste0(p, "/", x)
+  # read the files
+  f = read.table(file = f, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  f$siteid <- siteid
+  names(f)[1:3] <- c("date","tempF","tempC")
+
+  f$tempF <-as.numeric(f$tempF)
+  f$tempC <-as.numeric(f$tempC)
+
+  vars = c("date", "siteid", "tempF", "tempC")
+  f    = f[vars]
+  })
+
+mastSeries_df <- do.call("rbind", l)
+
+
+# save cached copy
+save(mastSeries_df, file = "D:/projects/soilTemperatureMonitoring/data/R/mastSeries.Rdata")
+
+length(unique(mastSeries_df$siteid))
+
+```
+
+
+## Henry Mount Database
+
+The Henry Mount Database already has 59 of the sites from the Mojave. The full dataset however has 68 sites.
+
+```{r, eval = FALSE}
+
+library(soilDB)
+
+f <- fetchHenry(sso = "8-VIC")
+length(unique(f$sensors$user_site_id))
+
+```
+
+
+## Aggregate Time Series
+
+```{r, eval=FALSE}
+
+# load cached versions
+load(file = "D:/projects/soilTemperatureMonitoring/data/R/mastSeries.Rdata")
+
+
+# Plot sites visually inspect for flat lines and spikes
+test <- subset(mastSeries_df, site == "JTNP08")
+test.zoo <- read.zoo(test[,c(1,3)],format = "%m/%d/%y %H:%M:%S", tz = "GMT")
+plot(test.zoo, ylab = "tempF")
+
+
+# Aggregate by Year, Month, and Julian day (i.e. 1-365, 366 for leap years)
+ms.df <- mastSeries_df
+ms.df$date <- as.POSIXlt(ms.df$date, format="%m/%d/%y %H:%M:%S")
+ms.df$day  <- as.character(format(ms.df$date, "%m/%d/%y"))
+ms.df$Jday <- as.integer(format(ms.df$date, "%j"))
+
+# compute number of days per site
+ms.D.df <- aggregate(tempF ~ site + day, data = ms.df, FUN = mean, na.action = na.exclude)
+ms.D.df <- aggregate(day ~ site, data = ms.D.df, function(x) sum(!is.na(x)))
+names(ms.D.df) <- c("siteid","numDays")
+
+# compute mast per year
+ms.Jd.df <- aggregate(tempF ~ siteid + Jday, data = ms.df, mean)
+mastSites.df <- aggregate(tempF ~ siteid, data = ms.Jd.df, mean)
+
+# merge mast & numDays
+mastSites.df <- merge(mastSites.df, ms.D.df, by = "siteid")
+write.csv(mastSites.df, "mastSites.csv")
+
+```
+
+
+## Final Dataset
+
+Since the Henry Mount database is incomplete we will procede with the aggregation from the txt files.
+
+```{r}
+
+# Read tempC data
+setwd("D:/projects/soilTemperatureMonitoring/data/R")
+
+sites_df <- read.csv("HOBO_List_2013_0923_master.csv")
+mast_df  <- read.csv("mastSites.csv")
+
+mast_df <- merge(mast_df, sites_df, by = "siteid")
+vars <- c("siteid", "tempF", "numDays", "utmeasting", "utmnorthing")
+mast_df <- mast_df[vars]
+mast_df$tempC <- (mast_df$tempF - 32) * (5 / 9)
+
+```
+
+
+# Spatial data
+
+## Plot Coordinates
+
+Where do our points plot? To start we need to convert them to a spatial object first. Then we can create an interactive we map using `mapview`. Also, if we wish we can also export the locations as a Shapefile.
+
+```{r}
+
+library(sf)
+library(mapview)
+library(dplyr)
+
+# convert to sites to a spatial object
+mast_sf <- st_as_sf(mast_df,
+                    coords = c("utmeasting", "utmnorthing"),
+                    crs = 26911
+                    ) %>%
+
+# reproject
+st_transform(crs = 4326)
+
+# reduce precision
+mast_sf2 <- st_as_sf(as.data.frame(round(st_coordinates(mast_sf), 1)),
+                     coords = c("X", "Y"),
+                     crs = 4326
+                     )
+
+# reproject
+mast_sf <- st_transform(mast_sf, 5070)
+
+
+# MLRAs
+mlra <- read_sf(dsn = "D:/geodata/soils/mlra_a_mbr.shp", layer = "mlra_a_mbr") %>% 
+  st_transform(crs = 4326) %>%
+  filter(MLRARSYM %in% 30:31)
+
+# plot
+mapview(mlra, fill = NA) +
+  mapview(mast_sf2)
+
+```
+
+
+## Extracting Spatial Data
+
+Prior to any spatial analysis or modeling, you will need to develop a suite of geodata files that can be intersected with your field data locations. This is, in and of itself a difficult task and should be facilitated by your Regional GIS Specialist. The geodata files typically used would consist of derivatives from a DEM or satellite imagery, and a 'good' geology map. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R, and then extract the geodata values where they intersect with field data.
+
+As you can see below their are numerous variables we could inspect.
+
+```{r}
+
+library(raster)
+
+# set file path
+folder <- "D:/geodata/project_data/R8-VIC/"
+
+files <- c(elev    = "ned30m_8VIC_elev5.tif",
+           slope   = "ned30m_8VIC_slope5.tif",
+           aspect  = "ned30m_8VIC_aspect5.tif",
+           twi     = "ned30m_8VIC_wetness.tif",
+           solar   = "ned30m_8VIC_solar.tif",
+           solarcv = "ned30m_8VIC_solarcv.tif",
+           tc      = "landsat30m_8VIC_tc123.tif",
+           precip  = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif",
+           temp    = "prism30m_8VIC_tmean_1981_2010_annual_C.tif"
+           )
+
+# combine the folder directory and file names
+geodata_f <- paste0(folder, files) 
+names(geodata_f) <- names(files)
+
+# Create a raster stack
+geodata_r <- stack(geodata_f)
+
+# Extract the geodata and add to a data frame
+data <- raster::extract(geodata_r, as(mast_sf, "Spatial"), sp = TRUE)@data
+
+# convert aspect
+data$northness <- abs(180 - data$aspect)
+
+save(data, mast_df, mast_sf2, mlra, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data_v2.Rdata")
+
+```
+
+
+# Exploratory Data Analysis (EDA)
+
+Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify pecularities in the data is to plot it.
+
+```{r load-data}
+
+githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data_v2.Rdata"
+load(url(githubURL))
+
+
+summary(data)
+
+```
+
+You may recall from discussion of EDA that QQ plots are a visual way to inspect the normality of a variable. If the variable is normally distributed, the points (e.g. soil observations) should line up along the straight line.
+
+```{r qq-plot}
+
+# QQ plot
+
+library(ggplot2)
+
+ggplot(data, aes(sample = tempC)) +
+  geom_qq() +
+  geom_qq_line()
+
+```
+
+By examining the correlations between some of the predictors we can also determine wheter they are *collinear* (e.g. > 0.6). This is common for similar variables such as landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In additino, collinearity will make it difficult to estimate our regression coefficients. 
+
+```{r}
+
+vars <- c("tempC", "elev", "temp", "precip", "tc_2", "tc_1", "tc_3")
+GGally::ggpairs(data[, vars])
+
+vars <- c("tempC", "slope", "twi", "northness", "solar", "solarcv")
+GGally::ggpairs(data[, vars])
+
+```
+
+The correlation matrices and scatter plots above show that that MAST has moderate correlations with some of the variables, particularly the elevation and the climatic variables. 
+
+Examining the density plots on the diagonal axis of the scatterplots we can also see that some variables are skewed.
+
+
+## Compare Samples vs Population 
+
+Since our data was not randomly sampled, we had better check the distribution of our samples vs the population. We can accomplish this by overlaying the sample distribution of predictor variables vs a large random sample.
+
+```{r}
+
+vars <- c("elev", "temp", "precip", "solar", "tc_1", "twi")
+idx <- which(names(geodata_r) %in% vars)
+
+geodata_s <- sampleRegular(geodata_r[[idx]], size = 5000)
+geodata_df <- as.data.frame(geodata_s)
+
+geodata_df <- rbind(
+  data.frame(source = "sample",     data[names(geodata_r)[idx]]),
+  data.frame(source = "population", geodata_df)
+)
+
+geodata_w <- reshape::melt(
+  geodata_df,
+  id.vars = "source",
+  measures.vars = vars
+  )
+
+ggplot(geodata_w, aes(x = value, fill = source)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(~ variable, scales = "free") +
+  ggtitle("Evaluation of Sample Representativeness")
+
+```
+
+The overlap between our sample and the population appear satistifactory.
+
+
+# Linear modeling
+
+R has several functions for fitting linear models. The most common is arguably the `lm()` function from the stats R package, which is loaded by default. The `lm()` function is also extended thru the use of several additional packages such as the car and caret R packages. Another noteworthy R package for linear modeling is rms, which offers the `ols()` function for linear modeling. The rms R package (Harrell et al., 2015) offers an 'almost' comprehesive alternative to `lm()' and it's accessory function. It is difficult to objectively functions say which approach is better. Therefore methods both methods will be demonstrated. Look for comments (i.e. #) below referring to rms, stats, caret or visreg. 
+
+```{r lm-ols}
+
+# stats
+fit_lm <- lm(tempC ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, weights = data$numDays)
+
+
+# rms
+
+library(rms)
+
+dd <- datadist(data)
+options(datadist = "dd")
+
+fit_ols <- ols(tempC ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, x = TRUE, y = TRUE, weights = data$numDays)
+
+```
+
+
+## Diagnostics
+
+### Residual plots
+
+Once we have a model we need to assess residuals for linearity, normality, and homoscedastivity (or constant variance). Oddly this is one area were the rms R package does not offer convient functions for plotting residuals, therefore we'll simply access the results of `lm()`.
+
+```{r}
+
+par(mfcol = c(2, 2))
+
+plot(fit_lm)
+
+termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
+
+```
+
+
+### Multicolinearity
+
+As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the **variance inflation factor** (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
+
+```{r vif}
+
+# vif() function from the rms or car packages
+sqrt(vif(fit_lm))
+
+# or 
+
+sqrt(vif(fit_ols)) > 3
+
+```
+
+The values above indicate we have several colinear variables in the model, which you might have noticed already from the scatter plot matrix.
+
+
+## Variable selection & model validation
+
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically require more scrunity from the user. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
+
+Both the rms and caret packages offer methods for variable selection and cross-validation. In this instance the rms approach is a bit more convinent, with the one line call to `validate()`.
+
+```{r rms-step1}
+
+# Set seed for reproducibility
+set.seed(42)
+
+
+# rms
+## stepwise selection and validation
+step_rms <- validate(fit_ols, method = "crossvalidation", B = 10, bw = TRUE)
+
+```
+
+The results for `validate()` above and below show which variables were retained and deleted. Below we can see a dot matrix of which variables were retained in during the 10 iterations of the cross validation. In addition, below we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
+
+```{r rms-step2}
+
+## test accuracy and error
+step_rms
+
+```
+
+The caret package option for variable selection and validation is a bit more verbose than the  rms package. However, the caret package is a more versatile package, with options for over 50 different models, such as other tree-based models.
+
+```{r caret-step1}
+
+# caret
+library(caret)
+
+## cross validation parameters
+train.control <- trainControl(method = "cv", number = 10, savePredictions = TRUE, returnData = TRUE)
+
+## stepwise selection and validation
+step_caret <- train(tempC ~ elev + solar + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + log(precip) + temp^2, 
+                    data = data,
+                    weights = data$numDays,
+                    method = "lmStepAIC",
+                    trace = FALSE,
+                    trControl = train.control,
+                    na.action = na.exclude
+                    )
+
+## test accuracy and error
+summary(step_caret$resample)
+
+```
+
+The output from caret is somewhat different. Notice it selected a slightly different combination of variables and more optimistic test accuracy and error.
+
+```{r caret-step2}
+
+# summary
+summary(step_caret$finalModel)
+
+```
+
+
+## Final model & accuracy assessment
+
+
+```{r}
+
+# rms
+final_ols <- ols(tempC ~ elev + solarcv + tc_1 + tc_2, data = data, weights = data$numDays, x = TRUE, y = TRUE)
+
+validate(final_ols, method = "crossvalidation", B = 10)
+
+
+# caret
+final_caret <- train(tempC ~ elev + solarcv + tc_1 + tc_2, 
+                     data = data,
+                     weights = data$numDays,
+                     method = "lm",
+                     trControl = train.control,
+                     na.action = na.exclude
+                     )
+final_caret$results
+final_lm <- final_caret$finalModel
+
+```
+
+
+
+## Model Effects
+
+```{r}
+
+summary(final_lm)
+
+
+# analyis of variance
+
+dd <- datadist(data)
+options(datadist = "dd")
+
+anova(final_ols)
+
+anova(final_lm)
+
+
+# rms
+
+plot(Predict(final_ols))
+
+plot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51)))
+
+
+# visreg
+
+library(visreg)
+
+par(mfrow = c(2, 2))
+visreg(final_lm)
+par(mfrow = c(1, 1))
+
+visreg(final_lm, xvar = "elev", by = "solarcv", breaks = c(23, 33, 51), overlay = TRUE)
+
+```
+
+
+
+# Generate spatial predictions
+
+```{r, eval=FALSE}
+
+# Predict tempC model
+predfun <- function(model, data) {
+  v <- predict(model, data, se.fit=TRUE)
+  }
+
+mast_r <- predict(geodata_r, final_lm, fun = predfun, index = 1:2, progress = 'text')
+
+writeRaster(mast_r[[1]], filename = "C:/workspace2/mast.tif", format = "GTiff", progress = "text")
+
+writeRaster(mast_r[[2]], filename = "C:/workspace2/mast_se.tif", format = "GTiff", progress = "text")
+
+```
+
+
+# Literature
+Bai, Y., T.A. Scott, W. Chen, R.C. Graham, L. Wu, A.C. Chang, and L.J. Lund, 2010. Soil Temperature Regimes in the Mojave Desert. Soil Science, 175(8):398-404. 
+
+Harrell, F.E., 2015. Regression Modeling Strategies: With Applications to Linear Models, Logisitc and Ordinal Regression, and Survival Analysis. Springer, New York. [https://link.springer.com/book/10.1007%2F978-3-319-19425-7](https://link.springer.com/book/10.1007%2F978-3-319-19425-7)
+
+Mount, H.R., and R.F. Paetzold, 2002. The temperature regime for selected soils in the United States. United States Department of Agriculture, Natural Resources Con-servation Service, National Soil Survey Center, Lincoln, Nebraska, Soil Survey Investi-gation Report No. 48.
+
+Peterson, F.F., 1992. Status of Soil Climate Studies in Nevada. pp1-11.  
+
+[Roecker, S.M. and C.A. Haydu-Houdeshell, 2012. Modeling and Application of Soil Temperature in the Mojave and Lower Colorado Deserts of California. 2012 Western Regional Cooperative Soil Survey Conference.](https://www.researchgate.net/publication/331977150_Modeling_and_Application_of_Soil_Temperature_in_the_Mojave_and_Lower_Colorado_Deserts_of_California/citations)
+
+Schmidlin, T.W., F.F. Peterson, and R.O. Gifford, 1983. Soil Temperature Regimes of Nevada. Soil So. Sci. Am. J., 47:977-982. 
+
+# Additional reading
+
+Faraway, J.J., 2002. Practical Regression and Anova using R. CRC Press, New York. [https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf](https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf)
+
+James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+
+Hengl, T. 2009. A Practical Guide to Geostatistical Mapping, 2nd Edt. University of Amsterdam, www.lulu.com, 291 p. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf)
+
+Webster, R. 1997. Regression and functional relations. European Journal of Soil Science, 48, 557-566. [http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract)
