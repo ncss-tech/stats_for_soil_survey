@@ -21,13 +21,13 @@ row.names(m) <- 1:nrow(m)
 
 # http://pbreheny.github.io/visreg/basic.html
 
-l <- lm(MAST ~ elev + solar + tci + o.hz, data=m)
+l <- lm(MAST ~ elev + solar + tci + o.hz, data=m, weights = m$complete.yrs)
 
-l.ols <- ols(MAST ~ rcs(elev, 3) + solar + tci + o.hz, data=m)
+l.ols <- ols(MAST ~ rcs(elev, 3) + solar + tci + o.hz, data=m, weights = m$complete.yrs)
 
 rf <- randomForest(MAST ~ elev + solar + tci + o.hz, data=m)
 
-rp <- rpart(MAST ~ elev + solar + tci + o.hz, data=m, method='anova')
+rp <- rpart(MAST ~ elev + solar + tci + o.hz, data=m, method='anova', weights = m$complete.yrs)
 
 
 png(file='modeling-frameworks-visreg.png', width=900, height=800, res=96, antialias = 'cleartype')
