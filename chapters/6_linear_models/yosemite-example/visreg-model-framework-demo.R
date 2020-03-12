@@ -30,20 +30,20 @@ rf <- randomForest(MAST ~ elev + solar + tci + o.hz, data=m)
 rp <- rpart(MAST ~ elev + solar + tci + o.hz, data=m, method='anova', weights = m$complete.yrs)
 
 
-png(file='modeling-frameworks-visreg.png', width=900, height=800, res=96, antialias = 'cleartype')
+png(file='modeling-frameworks-visreg.png', width=900, height=800, res=96)
 
 par(mar=c(4.5, 4.5, 2, 2), mfrow=c(4, 4))
 
-visreg(l, main='lm')
+visreg(l, main='lm', ylim=c(0, 20))
 
 # trick for setting plot arguments
 p <- visreg(l.ols, plot=FALSE)
-plot(p, ylab='MAST', main='rms::ols')
+plot(p, ylab='MAST', main='rms::ols', ylim=c(0, 20))
 
 p <- visreg(rp, plot=FALSE)
-plot(p, ylab='MAST', main='rpart')
+plot(p, ylab='MAST', main='rpart', ylim=c(0, 20))
 
-visreg(rf, main='randomForest')
+visreg(rf, main='randomForest', ylim=c(0, 20))
 
 dev.off()
 
