@@ -107,9 +107,10 @@ library(caret)   # classification and regression training
 library(car)     # additional regression tools
 ```
 
+
 ## Read in data
 
-Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you! Once data are captured in NASIS it is much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS, it may as well not exist.
+Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you! Once data are captured in NASIS it is much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS, it may as well not exist. For this exercise we'll load a cached dataset on GitHub.
 
 ```{r import data}
 
@@ -122,7 +123,8 @@ str(pedons, max.level = 2)
 
 ```
 
-# Exploratory analysis
+
+# Exploratory analysis (EDA)
 
 ## Data wrangling
 
@@ -181,7 +183,7 @@ test <- with(s_sub,
              table(landform, argillic, useNA = "ifany")
              )
 # Subset and print landform.string with > 3 observations
-test[test > 3,]
+test[test > 3, ]
 
 # generalize the landform.string
 s$landform_generic <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform), "fan", "hill") 
@@ -220,18 +222,18 @@ Looking at the hillslope position of fan landforms we can see a slightly higher 
 s_sub <- subset(s, landform_generic == "fan", select = c(argillic, bedrckdepth, slope, elev, surface_total_frags_pct)) 
 
 # convert s_sub to wide data format
-s_w <- tidyr::gather(s_sub, key = key, value = value, - argillic) 
+s_w <- reshape2::melt(s_sub, id.vars = "argillic", measure.vars = c("bedrckdepth", "slope", "elev", "surface_total_frags_pct"))
 head(s_w, 2)
 
 library(ggplot2)
 
 ggplot(s_w, aes(x = argillic, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ key, scale = "free")
+  facet_wrap(~ variable, scale = "free")
 
 ```
 
-Looking at our numeric variables only depth to bedrock seems to show much separation between the presence/absence of argillic horizons.
+Looking at boxplots of our numeric variables we can see none of them show much separation between the presense/absense of argillic horizons.
 
 
 ## Soil Scientist Bias
@@ -266,46 +268,56 @@ with(s_sub, round(
 
 ```
 
-For fan landforms, none of the soil scientists seem more likely than the others to describe argillic horizons. However while this information is suggestive, it is far from definitive in showing a potential bias because it doesn't take into account other factors. We'll examine this more closely later.
+For fan landforms, one of the soil scientists seems more likely than the others to describe argillic horizons. However while this information is suggestive, it is far from definitive in showing a potential bias because it doesn't take into account other factors. We'll examine this more closely later.
 
 
 ## Plot coordinates
 
-Where do our points plot? We can plot the general location in R, but for this task we will export them to a Shapefile, so we can view them in a proper GIS, and really inspect them. Notice in the figure below the number of points that fall outside the survey boundary. What it doesn't show is the points that may plot in the Ocean or Mexico!
+Where do our points plot? To start we need to convert them to a spatial object first. Then we can create an interactive we map using `mapview`. Also, if we wish we can also export the locations as a Shapefile.
 
 ```{r plot}
 
 library(sf)
+library(dplyr)
 
-idx <- complete.cases(s$x_sdt, s$y_std) # create an index to filter out pedons with missing coordinates# Convert soil profile collection to a spatial object
+# create an index to remove sites without coordinates
+idx <- complete.cases(s$x_sdt, s$y_std)
 s_sub <- s[idx, ]
+
+# convert to sites to a spatial object
 s_sf <- st_as_sf(s_sub,
                  coords = c("x_std", "y_std"),
                  crs = 4326
-                 )
-# reproject
-s_sf <- st_transform(s_sf, crs = 5070) # reproject
+                 ) %>%
+  # reproject
+  st_transform(crs = 5070)
+
 
 # Read in soil survey area boundaries
-ssa   <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs")
-ca794 <- subset(ssa, areasymbol == "CA794") # subset out Joshua Tree National Park
-ca794 <- st_transform(ca794, crs = 5070)
+ca794 <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") %>%
+  # subset out Joshua Tree National Park
+  filter(areasymbol == "CA794") %>%
+  # reproject
+  st_transform(crs = 5070)
+
 
 # Plot
 library(mapview)
 
 mapview(ca794, fill = NA) +
-  mapview(s_sf)
+  mapview(s_sf, zcol = "argillic")
+
 
 # Write shapefile of pedons
 write_sf(s_sf, dsn = "C:/workspace2", "ca794_pedons", driver = "ESRI Shapefile", delete_dsn =  TRUE)
 
 ```
 
+
 ### Exercise 1: View the data in ArcGIS
 
-- Examine the shapefile in ArcGIS along with our potential predictive variables (hint classify the Shapefile symbology using the argillic horizon column)
-- Discuss with your group, and report your observations or hypotheses
+- Examine the interactive map or shapefile in ArcGIS along with our potential predictive variables.
+- Discuss with your group, and report your observations or hypotheses.
 
 
 ## Extracting spatial data
@@ -335,6 +347,7 @@ files <- c(
   precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif", # summer precipitation
   temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif", # annual temperature
   mast   = "mast30m_ca794_2013.tif", # mean annual soil temperature
+  ls     = "landsat30m_8VIC_b123457.tif", # landsat bands
   pc     = "landsat30m_8VIC_pc123456.tif", # principal components of landsat
   tc     = "landsat30m_8VIC_tc123.tif", # tasseled cap components of landsat
   k      = "gamma30m_8VIC_namrad_k.tif", # gamma radiometrics signatures
@@ -359,6 +372,8 @@ data <- within(data, {
   cluster  = factor(cluster)
   geo      = factor(geo)
   twi_sc   = abs(twi - 13.8) # 13.8 = twi median
+  gsi      = (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1)
+  ndvi     = (ls_4 - ls_3) / (ls_4 + ls_3)
   })
 
 # save(data, ca794, pedons, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data.Rdata")
@@ -391,7 +406,7 @@ train <- transform(
 idx <- which(names(train) == "z")
 train <- train[idx:ncol(train)]
 
-data_m <- tidyr::gather(train[- c(25:26)], key = key, value = value, - argillic)
+data_m <- tidyr::gather(train[- c(31:32)], key = key, value = value, - argillic)
 data_m <- subset(data_m, !is.na(value))
 
 ggplot(data_m, aes(x = argillic, y = value)) +
@@ -402,6 +417,8 @@ ggplot(data_m, aes(x = argillic, y = value)) +
 
 
 # Constructing the model
+
+R has several functions for fitting linear models. The most common is arguably the `glm()` function from the stats R package, which is loaded by default. The `glm()` function is also extended thru the use of several additional packages such as the car and caret R packages. Another noteworthy R package for logistic regrssion is rms, which offers the `lrm()` function. The rms R package (Harrell et al., 2015) offers an ‘almost’ comprehesive alternative to `glm()` and it’s accessory function. It is difficult to objectively functions say which approach is better. Therefore methods both methods will be demonstrated. Look for comments (i.e. #) below referring to rms, stats, caret or visreg.
 
 ```{r glm}
 
@@ -425,16 +442,23 @@ fit_lrm <- lrm(argillic ~ z + slp + twi_sc + ch_log + z2str_log + mrrtf + solar 
 
 ### Residual plots
 
+One unfortunate side effect of side effect of logitistic regression is that the default residual plots are not interpretable. However the partial residual plots can be useful for identifying outliers and nonlinear trends.
+
 ```{r diag}
 
 par(mfcol = c(2, 2))
 plot(fit_glm)
 par(mfcol = c(1, 1))
 
+
+car::residualPlots(fit_glm, fit = FALSE, tests = FALSE)
+
 ```
 
 
 ### Multicolinearity
+
+As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the variance inflation factor (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
 
 ```{r}
 
@@ -445,7 +469,11 @@ sqrt(vif(fit_glm))
 
 ## Variable Selection & model validation
 
-```{r step}
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically require more scrunity from the user. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
+
+Both the rms and caret packages offer methods for variable selection and cross-validation. In this instance the rms approach is a bit more convinent and faster, with the one line call to validate().
+
+```{r rms-step1}
 
 set.seed(42)
 
@@ -453,9 +481,19 @@ set.seed(42)
 ## stepwise selection and validation
 step_rms <- validate(fit_lrm, method = "crossvalidation", B = 10, bw = TRUE)
 
+```
+
+The results for validate() above and below show which variables were retained and deleted. Below we can see a dot matrix of which variables were retained in during the 10 iterations of the cross validation. In addition, below we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
+
+```{r rms-step2}
 ## test accuracy and error
 step_rms
 
+```
+
+The caret package option for variable selection and validation is a bit more verbose than the rms package. However, the caret package is a more versatile package, with options for over 50 different models, such as other tree-based models.
+
+```{r caret-step}
 
 # caret
 library(caret)
@@ -519,11 +557,9 @@ Dsquared(step_glm, adjust = TRUE)
 
 
 # Spatially variable accuracy
-library(dplyr)
-
 temp <- train %>%
   group_by(cluster) %>%
-  summarize(
+  dplyr::summarize(
     TP       = sum(predict == "yes" & argillic == "yes", na.rm = TRUE),
     FN       = sum(predict == "no"  & argillic == "yes", na.rm = TRUE),
     sensitivity = TP / (TP + FN)
@@ -559,7 +595,7 @@ anova(step_glm)
 library(visreg)
 
 par(mfrow = c(2, 2))
-visreg(step_glm, scale = "response")
+visreg(step_glm, scale = "response", ylab = "argillic probability")
 
 ```
 
@@ -606,11 +642,16 @@ plot(ca794[1], col = NA, add = TRUE)
 
 ```
 
+
 ```{r, eval=FALSE}
+
 # Download clipped example from Pinto Basin Joshua Tree
 githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/argi_pb.zip"
+
 download.file(githubURL, destfile = "C:/workspace2/argi_pb.zip")
+
 unzip(zipfile="C:/workspace2/argi_pb.zip", exdir="C:/workspace2")
+
 ```
 
 ### Exercise 2: View the prediction in ArcGIS
@@ -628,6 +669,8 @@ Gessler, P. E., Moore, I. D., McKenzie, N. J., & Ryan, P. J, 1995. Soil-landscap
 Gorsevski, P. V., Gessler, P. E., Foltz, R. B., & Elliot, W. J, 2006. Spatial prediction of landslide hazard using logistic regression and ROC analysis. Transactions in GIS, 10:395-415
 
 Evans, D.M. and Hartemink, A.E., 2014. Digital soil mapping of a red clay subsoil covered by loess. Geoderma, 230:296-304.
+
+Harrell, F.E., 2015. Regression Modeling Strategies: With Applications to Linear Models, Logisitc and Ordinal Regression, and Survival Analysis. Springer, New York. [https://link.springer.com/book/10.1007%2F978-3-319-19425-7](https://link.springer.com/book/10.1007%2F978-3-319-19425-7)
 
 Hosmer Jr, D.W., Lemeshow, S. and Sturdivant, R.X., 2013. Applied logistic regression (Vol. 398). John Wiley & Sons
 
