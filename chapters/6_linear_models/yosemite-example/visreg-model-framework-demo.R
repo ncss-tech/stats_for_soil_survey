@@ -29,7 +29,7 @@ rp <- rpart(MAST ~ elev + solar + tci + o.hz, data=m, method='anova', weights = 
 
 rf <- randomForest(MAST ~ elev + solar + tci + o.hz, data=m, mtry=3, trees=1000)
 
-png(file='modeling-frameworks-visreg.png', width=900, height=800, res=96)
+png(file='modeling-frameworks-visreg.png', width=1000, height=900, res=120)
 
 par(mar=c(4.5, 4.5, 2, 2), mfrow=c(4, 4))
 
