@@ -25,10 +25,9 @@ l <- lm(MAST ~ elev + solar + tci + o.hz, data=m, weights = m$complete.yrs)
 
 l.ols <- ols(MAST ~ rcs(elev, 3) + solar + tci + o.hz, data=m, weights = m$complete.yrs)
 
-rf <- randomForest(MAST ~ elev + solar + tci + o.hz, data=m)
-
 rp <- rpart(MAST ~ elev + solar + tci + o.hz, data=m, method='anova', weights = m$complete.yrs)
 
+rf <- randomForest(MAST ~ elev + solar + tci + o.hz, data=m, mtry=3, trees=1000)
 
 png(file='modeling-frameworks-visreg.png', width=900, height=800, res=96)
 
