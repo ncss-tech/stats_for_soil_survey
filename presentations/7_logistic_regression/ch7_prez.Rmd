@@ -4,7 +4,6 @@ author: Stephen Roecker and Tom D'Avello
 date: "`r Sys.Date()`"
 output:
   slidy_presentation:
-    css: hpstr.css
     fig_caption: yes
 editor_options: 
   chunk_output_type: console
@@ -79,16 +78,16 @@ knitr::kable(glm)
 
 ## Example 1: Probability of Mollisols
 
-![Beaudette &  O'Geen, 2009](C:/workspace2/github/stats_for_soil_survey/trunk/chapters/7_generalized_linear_models/figure/mollisol.png)
+![Beaudette &  O'Geen, 2009](C:/workspace2/github/ncss-tech/stats_for_soil_survey/chapters/7_generalized_linear_models/figure/mollisol.png)
 
 
 ## Example 2: Probability of Red Clay
 
-![Evans & Hartemink, 2014](C:/workspace2/github/stats_for_soil_survey/trunk/chapters/7_generalized_linear_models/figure/redclay.png) 
+![Evans & Hartemink, 2014](C:/workspace2/github/ncss-tech/stats_for_soil_survey/chapters/7_generalized_linear_models/figure/redclay.png) 
 
 ## Example 3: Probability of Ponding
 
-![NRCS Unpublished](C:/workspace2/github/stats_for_soil_survey/trunk/chapters/7_generalized_linear_models/figure/ponded.png) 
+![NRCS Unpublished](C:/workspace2/github/ncss-tech/stats_for_soil_survey/chapters/7_generalized_linear_models/figure/ponded.png) 
 
 ## Example 4: Aggregate representation of genetic soil horizons
 
@@ -144,7 +143,7 @@ par(mfrow = c(1, 3))
 ## Fitting
 
 ```{r wv}
-githubURL <- "C:/workspace2/github/stats_for_soil_survey/trunk/data/logistic/wv_transect_editedforR.csv"
+githubURL <- "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/logistic/wv_transect_editedforR.csv"
 wv <- read.csv(githubURL)
 
 wv$spod <- ifelse(wv$spodint <= 1, FALSE, TRUE)
@@ -229,8 +228,8 @@ exp(coef(spod.glm))
 ## Interpreting the Coefficients - Partial Effect Plots
 
 ```{r coef2, echo=TRUE}
-library(effects)
-plot(allEffects(spod.glm), rug = FALSE)
+library(visreg); par(mfcol = c(2, 2))
+visreg(spod.glm, scale = "response", ylab = "spodic probability")
 ```
 
 
@@ -285,15 +284,15 @@ residualPlots(spod.glm, fit = FALSE, tests = FALSE)
 
 ```{r vs1, echo=TRUE}
 spod.glm2 <- glm(spod ~., data = wv)
-spod.step <- step(spod.glm2, trace = 0)
+spod.step <- step(spod.glm2, trace = FALSE)
 
 summary(spod.step)
 ```
 
 ## Variable Selection
 
-* AIC = Akaike Information Criterion
-* drop smallest AIC
+* AIC (Akaike Information Criterion) - smaller is better
+* `drop1()` reports the size of the model without the variable, thus drop smaller AIC values
 
 ```{r vs2, echo=TRUE}
 drop1(spod.step, test = "Chisq")
@@ -318,7 +317,7 @@ mutate(an,
 
 ```{r plot}
 library(raster)
-glm_r <- load("C:/workspace2/github/stats_for_soil_survey/trunk/data/logistic/wv_raster.RData")
+glm_r <- load("C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/logistic/wv_raster.RData")
 glm_r <- predict(rasters, spod.glm, filename = "C:/workspace2/spod.tif", type = "response", overwrite = TRUE)
 plot(glm_r)
 ```
