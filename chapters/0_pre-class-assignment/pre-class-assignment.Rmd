@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: "Pre-course Assignment"
 date: "`r Sys.Date()`"
@@ -163,3 +164,175 @@ sessionInfo()
   * [Stats for Soil Survey Webinar](https://www.youtube.com/watch?v=G5mFt9k37a4)
   * [Soil Data Aggregation using R Webinar](https://www.youtube.com/watch?v=wD9Y0Qpv5Tw)
   
+=======
+---
+title: "Pre-course Assignment"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    keep_md: no
+    number_sections: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+---
+
+
+
+# Create Workspace
+Make a folder on your machine to be used as the working directory for this course at `C:\workspace2`. Use all lower case letters please.
+
+
+# Configure RStudio
+Open **RStudio**, and edit some of the "Global Options" (Tools &rarr; Global Options):
+
+  - **Change** the default working directory to `C:\workspace2` (R General Tab)
+  - **Uncheck** "Restore .Rdata into workspace at startup" (R General Tab)
+  - **Uncheck** "Always save history (even when not saving .RData)" (R General Tab)
+
+  ![Figure 1: Example of RStudio General options settings.](figure/rstudio_options_general.png) 
+
+  - Check "Soft-wrap R source files" (Code/Editing Tab)
+
+  ![Figure 2: Example of RStudio Code options settings.](figure/rstudio_options_code.png) 
+
+
+# Install .RProfile
+Establish a *safe* location for the R package library. This should ideally be on a local disk with about 1-2GB of free space. This step will prevent R from installing packages to your `$HOME` directory which is typically on a network share (H:). **Copy** the following code in the box below and **paste** into the R console panel after the command prompt (>) and hit **enter**. *Hint: the R console is the lower left or left window in RStudio with a tab labeled "Console".*
+
+```{r, eval=FALSE}
+source('https://raw.githubusercontent.com/ncss-tech/soilReports/master/R/installRprofile.R')
+installRprofile(overwrite=TRUE)
+```
+
+An updated set of library paths will be printed. Close RStudio and re-open before continuing to the next step.
+
+![Figure 3: Example of RStudio Console.](figure/rconsole.png)  
+
+
+# Install Required Packages
+Install the necessary R packages by **copying and pasting** the following code from box below into the R console window after the command prompt (>) and hit **enter**. Depending on your network connection this could take a while. If this is the first time you've installed a package, R will ask you if you want to create a local repository in your My Documents folder. Click **Yes**.
+
+```{r, eval=FALSE}
+# helper fuction for installing required packages from CRAN
+# a simple check is done to see if each is already installed
+# p: vector of package names
+# up: logical- upgrade installed packages?
+ipkCRAN <- function(p, up){
+  if (up) {
+    install.packages(p, dependencies = TRUE)
+  } else {
+    new.pkg <- p[! (p %in% installed.packages()[, "Package"])]
+    if (length(new.pkg) > 0) {
+      message('installing packages from CRAN...')
+      install.packages(new.pkg, dependencies = TRUE)
+    }
+  }
+}
+
+
+## list of packages
+packages <- c(
+  # soil
+  "aqp", "soilDB", "sharpshootR", "soiltexture",
+  # gis
+  "sp", "sf", "raster", "rgdal", "gdalUtils", "RSAGA", "rgrass7", "velox",
+  # data management
+  "tidyverse", "devtools", "roxygen2", "Hmisc", "RODBC", "circular", "DT", "remotes",
+  # graphics
+  "latticeExtra", "maps", "spData", "mapview", "plotrix", "rpart.plot",
+  # modeling
+  "car", "rms", "randomForest", "party", "caret", "vegan", "ape", "shape",
+  # sampling
+  "clhs"
+  # graphical user interface: not available to R 3.4.0
+  # "Rcmdr"
+  )
+
+## install packages, upgrading as needed
+ipkCRAN(packages, up=TRUE)
+```
+
+## Additional Packages not Available on CRAN
+
+These packages aren't available to our machines as we are stuck at an older version of R, or not currently on CRAN. The following code blocks should be run depending on the version of R you have installed.
+
+The technique we use to fill in gaps in binary package availability is to use the [Microsoft R Archive Network Time Machine](https://mran.microsoft.com/timemachine).
+
+### R 3.6.3
+
+```{r, eval=FALSE}
+# for R 3.6.3 ONLY
+install.packages('https://cran.microsoft.com/snapshot/2019-04-15/bin/windows/contrib/3.6/caTools_1.17.1.2.zip', repos = NULL)
+
+install.packages('https://cran.r-project.org/bin/windows/contrib/3.6/RODBC_1.3-16.zip', repos = NULL)
+```
+
+### R 4.0.0
+
+```{r, eval=FALSE}
+# for R 4.0.0 ONLY
+install.packages("https://cran.microsoft.com/snapshot/2019-04-15/bin/windows/contrib/3.5/Rcpp_1.0.1.zip", repos = NULL)
+```
+
+Next, install the latest version of packages from the AQP suite. Windows 10 users will need the latest version of soilDB in order to connect to the local NASIS database.
+
+```{r, eval=FALSE}
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+```
+
+# Connect Local NASIS
+Establish an ODBC connection to NASIS by following the directions at the following hyperlink ([ODBC Connection to NASIS](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html)).
+
+Once you've successfully established a ODBC connection, prove it by loading your NASIS selected set with the site and pedon tables for any pedons from your local area. You only need a few pedons at a minimum for this demo -- too many (say, >20) will make the example profile plot cluttered.
+
+ * Paste the below code into the Console directly and hit _Enter_ key to run it. 
+ 
+ * Or create a new R script (Main menu: _File >> New File >> R Script_) and paste code into the "Source" pane (script editor window). Then, click the _Run_ button in the top-right corner of the Script Editor or use _Ctrl+Enter_ to run code at the cursor location / any selected code. This will execute the code in the Console.
+
+Submit the resulting plot to your mentor (from Plot pane: _Export >> Save as PDF..._)
+
+```{r eval=FALSE}
+# load packages into the current session
+library(aqp) # provides "SoilProfileCollection" object & more
+library(soilDB) # provides database access methods
+
+# get pedons from NASIS selected set
+test <- fetchNASIS(from = 'pedons')
+
+# inspect the result
+str(test, max.level = 2)
+
+# make a profile plot
+
+# set margins smaller than default
+par(mar=c(1,1,1,1))
+
+# make profile plot of selected set, with userpedonid as label
+plot(test, label='pedon_id')
+```
+
+
+# Proof
+Follow the one line example below, copy the output, and submit the results to your mentor. This will help us to verify that all of the required packages have been installed.
+
+```{r, eval=FALSE}
+# dump list of packages that are loaded into the current session
+sessionInfo()
+```
+
+7. Additional Support/Optional Readings
+  
+  * Paul Finnel's [webinar](https://youtu.be/VcdowqknChQ)
+  * [Spatial Data Analysis and Modeling with R](http://rspatial.org/) (highly recommended)
+  * [R-Intro](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
+  * [R for Beginners](ftp://cran.r-project.org/pub/R/doc/contrib/Paradis-rdebuts_en.pdf)
+  * [The R Inferno](http://www.burns-stat.com/documents/books/the-r-inferno/)
+  * [AQP Website and Tutorials](http://ncss-tech.github.io/AQP/)
+  * [Stats for Soil Survey Webinar](https://www.youtube.com/watch?v=G5mFt9k37a4)
+  * [Soil Data Aggregation using R Webinar](https://www.youtube.com/watch?v=wD9Y0Qpv5Tw)
+  
+>>>>>>> origin/master
