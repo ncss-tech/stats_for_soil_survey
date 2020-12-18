@@ -5,87 +5,168 @@ output:
   html_document:
     keep_md: no
     number_sections: yes
-    toc_float:
-      collapsed: yes
-      smooth_scroll: no
+    toc: true
+    toc_depth: 2
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
 ---
 
-
-
 # Create Workspace
-Make a folder on your machine to be used as the working directory for this course at `C:\workspace2`. Use all lower case letters please.
+
+Make a local folder `C:\workspace2` to use as a working directory for this course. Use all lower case letters please.
 
 
 # Configure RStudio
-Open **RStudio**, and edit some of the "Global Options" (Tools &rarr; Global Options):
 
-  - **Change** the default working directory to `C:\workspace2` (R General Tab)
-  - **Uncheck** "Restore .Rdata into workspace at startup" (R General Tab)
-  - **Uncheck** "Always save history (even when not saving .RData)" (R General Tab)
+Open **RStudio**, and edit the "Global Options" (Main menu: **Tools &rarr; Global Options**). 
 
-  ![Figure 1: Example of RStudio General options settings.](figure/rstudio_options_general.png) 
+## Essentials
 
-  - Check "Soft-wrap R source files" (Code/Editing Tab)
+These options are important for pleasant, reproducible and efficient use of the **RStudio** environment:
 
-  ![Figure 2: Example of RStudio Code options settings.](figure/rstudio_options_code.png) 
+  1. **Change** the default working directory to `C:\workspace2` (**R** General Tab)
+
+  2. <font style="color:red">**Uncheck**</font> "Restore .Rdata into workspace at startup" (**R** General Tab) <font style="color:red">**VERY IMPORTANT**</font>
+  
+  ![Figure 1: Example of RStudio General settings.](figure/rstudio_options_general.png) 
+  
+**RStudio** detects the available **R** installations on your computer. 
+
+Individual versions are certified for the Software Center as they become available, and sometimes there is a more recent version available for download. It is worth taking the time _before installing packages_ to get the latest version of **R** available to you. This is to minimize compatibility issues which arise over time.
+  
+## Personalization
+
+  ![Figure 2: Example of RStudio Code/Editing settings.](figure/rstudio_options_code.png) 
+
+  - Optional: Check "Soft-wrap **R** source files" (Code/Editing Tab)
+  
+  - Optional: Show help tooltips, control auto-completion and diagnostics (Code/Completion and Diagnostics Tabs)
+
+  - Optional: Update code font size, colors and theme (Appearance)
+  
+  - Optional: Use **RStudio** Projects (top-right corner) to manage working directories 
 
 
 # Install .RProfile
-Establish a *safe* location for the R package library. This should ideally be on a local disk with about 1-2GB of free space. This step will prevent R from installing packages to your `$HOME` directory which is typically on a network share (H:). **Copy** the following code in the box below and **paste** into the R console panel after the command prompt (>) and hit **enter**. *Hint: the R console is the lower left or left window in RStudio with a tab labeled "Console".*
+
+The code you run next will establish a *safe* location for your **R** package library. Your package library should ideally be on a local disk with about 1 - 2 GB of free space. We want to prevent installs to `~` (your `$HOME` directory) which is typically on a network share (such as `H:/`), not a local disk. 
+
+**Copy** the following code in the box below and **paste** into the **R** console panel after the command prompt (`>`) and press **enter**. 
+
+_Hint: the **R** console is the lower left or left window in RStudio with a tab labeled "Console"._
 
 ```{r, eval=FALSE}
 source('https://raw.githubusercontent.com/ncss-tech/soilReports/master/R/installRprofile.R')
 installRprofile(overwrite=TRUE)
 ```
 
-An updated set of library paths will be printed. Close RStudio and re-open before continuing to the next step.
+An updated set of library paths will be printed. Close and re-open **RStudio**, or Restart **R** (Main menu: **Session &rarr; Restart R**; or **Ctrl+Shift+F10**), before continuing to the next steps.
 
-![Figure 3: Example of RStudio Console.](figure/rconsole.png)  
+![Figure 3: Example of RStudio Console - the R library paths are on a local drive "C:/"](figure/rconsole.png)  
 
+When your `.Rprofile` is set up correctly you will see output in a new **R** console/session confirming your _library paths_ are:
 
+ 1) on a local drive (such as `C:/`)
+ 
+ 2) specific to the version number of **R** installed (such as `4.0`)
+ 
+ 
 # Install Required Packages
-Install the necessary R packages by **copying and pasting** the following code from box below into the R console window after the command prompt (>) and hit **enter**. Depending on your network connection this could take a while. If this is the first time you've installed a package, R will ask you if you want to create a local repository in your My Documents folder. Click **Yes**.
 
+Packages can be installed by name from the Comprehensive **R** Archive Network (CRAN) using the base **R** function `install.packages`
+
+For example, download and install the {remotes} package from CRAN:
+ 
 ```{r, eval=FALSE}
-# helper fuction for installing required packages from CRAN
-# a simple check is done to see if each is already installed
-# p: vector of package names
-# up: logical- upgrade installed packages?
-ipkCRAN <- function(p, up){
+install.packages("remotes")
+```
+
+There are a lot of packages out there -- many more than you will download here, and many of which are useful for Soil Survey work. 
+
+To install the **R** packages used in this class copy all of the code from the box below and paste into the **R** console window. 
+
+  1. Paste after the command prompt (`>`) and press **enter**. 
+  
+  2. If this is the first time you've installed any packages, **R** will ask you if you want to create a local repository in your User `Documents` folder. Click **Yes**.
+
+Downloading and configuring the packages will take a while if you are installing or upgrading all of the packages in the list below. 
+
+```{r, eval = FALSE}
+# ipkCRAN: a helper fuction for installing required packages from CRAN
+# - a simple check is done to see if each is already installed
+# - p: vector of package names
+# - up: logical - upgrade installed packages? Default: true
+ipkCRAN <- function(p, up = TRUE){
+  
   if (up) {
+    # default is to upgrade everything
     install.packages(p, dependencies = TRUE)
   } else {
+    # but if up != TRUE install just what is needed
     new.pkg <- p[! (p %in% installed.packages()[, "Package"])]
     if (length(new.pkg) > 0) {
       message('installing packages from CRAN...')
-      install.packages(new.pkg, dependencies = TRUE)
+      try(install.packages(new.pkg, dependencies = TRUE))
     }
+  }
+  
+  # check and see if any failed
+  missing.pkg <- p[! (p %in% installed.packages()[, "Package"])]
+  if (length(missing.pkg) > 0) { 
+     warning(sprintf('\033[31mOne or more packages failed to install!\033[39m\n%s',
+             sprintf("Restart R then try `\033[35minstall.packages(c(%s))\033[39m`",
+             paste0(sprintf('"%s"', missing.pkg), collapse = ","))), call. = FALSE)
   }
 }
 
-
-## list of packages
+## character vector of packages
 packages <- c(
-  # soil
-  "aqp", "soilDB", "sharpshootR", "soiltexture",
-  # gis
-  "rgdal", "raster", "sp", "sf", "terra", "gdalUtils", "rgrass7", "RSAGA",  "velox",
-  # data management
-  "dplyr", "tidyr", "devtools", "roxygen2", "Hmisc", "RODBC", "circular", "DT", "remotes",
-  # graphics
-  "ggplot2", "latticeExtra", "maps", "spData", "tmap", "mapview", "plotrix", "rpart.plot", "visreg",
-  # modeling
-  "car", "rms", "randomForest", "ranger", "party", "caret", "vegan", "ape", "shape",
-  # sampling
-  "clhs"
+    # soil
+    "aqp", "soilDB", "sharpshootR", "soiltexture",
+    # gis
+    "rgdal", "raster", "sp", "sf", "terra", "gdalUtils", "rgrass7", "RSAGA", "exactextractr", "fasterize",
+    # data management
+    "dplyr", "tidyr", "devtools", "roxygen2", "Hmisc", "RODBC", "circular", "DT", "remotes",
+    # graphics
+    "ggplot2", "latticeExtra", "maps", "spData", "tmap", "mapview", "plotrix", "rpart.plot", "visreg",
+    # modeling
+    "car", "rms", "randomForest", "ranger", "party", "caret", "vegan", "ape", "shape",
+    # sampling
+    "clhs"
   )
 
-## install packages, upgrading as needed
-ipkCRAN(packages, up=TRUE)
+## install vector of CRAN packages "safely"
+##  up = TRUE to download all packages 
+##  up = FALSE to download only packages you don't already have installed
+ipkCRAN(packages, up = TRUE)
 ```
 
-## Additional Packages not Available on CRAN
-<!-- These packages aren't available to our machines as we are stuck at an older version of R, or not currently on CRAN. The `soilDB` and `sharpshootR` packages should be back on CRAN by early February. 
+The `ipkCRAN` function will let you know if any of the above packages fail to install.
+
+Any time you run code, _always_ check the console output for warnings and errors before continuing. If a lot of output is produced by a command you should scroll up and sift through. It may be best early on to send commands _individually_ to learn about and inspect their output. 
+
+## Common Errors
+
+### No output is produced after pasting into console
+
+ If you do not have a new command prompt (`>`) and a blinking cursor on the left hand side of your console after you run a command, **R** may think you are still in the middle of submitting multiline input to the "read-eval-print-loop" (REPL). If this is not expected you are possibly missing closing quotes, braces, brackets or parentheses. **R** needs to know you were done with your expression, so you may need to supply some input to get the command to be complete, or at least "error out" so you can try again. 
+ 
+You can manually paste code line-by-line -- which is useful but prone to above mentioned input errors for multiline expressions. Alternately, you can run commands or an entire file using the GUI or keyboard shortcuts such as **Ctrl+Enter**. You have a chance to try this in the example at the end.
+
+### `‘SOMEPACKAGE’ is not available (for R version X.Y.Z)`
+
+This means _either_:
+
+  1. A package named 'SOMEPACKAGE' exists but it is not available for your version of **R**
+  
+  2. CRAN does not have a package with that name
+  
+You can try again, but first check for spelling and case-sensitivity. When in doubt search the package name on Google or CRAN to make sure you have it right. Note that not all **R** packages are available on CRAN: there are many other ways that you can deliver packages (including GitHub described below).
+
+##  Packages not on CRAN
+
+<!-- These packages aren't available to our computers as we are stuck at an older version of R, or not currently on CRAN. The `soilDB` and `sharpshootR` packages should be back on CRAN by early February. 
 
 ```{r, eval=FALSE}
 # temporary CRAN fix - get previous version for R 4.0
@@ -102,25 +183,29 @@ install.packages('https://cran.r-project.org/bin/windows/contrib/3.6/RODBC_1.3-1
 ```
 -->
 
-Install the latest version of packages from the AQP suite off GitHub using the `remotes` package. These packages tend to be updated more frequently on GitHub than they are on CRAN.
+To install the latest version of packages from the Algorithms for Quantitative Pedology (AQP) suite off GitHub using the `remotes` package. These packages tend to be updated more frequently on GitHub than they are on CRAN.
+
+Generally, the CRAN versions (installed above) are the "stable" releases whereas the GitHub repositories have new features and bug fixes.
 
 ```{r, eval=FALSE}
-remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
-remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
-remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade=FALSE, build=FALSE)
-remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/aqp", dependencies = FALSE, upgrade = FALSE, build = FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
+remotes::install_github("ncss-tech/soilReports", dependencies = FALSE, upgrade = FALSE, build = FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies = FALSE, upgrade = FALSE, build = FALSE)
 ```
 
+
 # Connect Local NASIS
+
 Establish an ODBC connection to NASIS by following the directions at the following hyperlink ([ODBC Connection to NASIS](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html)).
 
 Once you've successfully established a ODBC connection, prove it by loading your NASIS selected set with the site and pedon tables for any pedons from your local area. You only need a few pedons at a minimum for this demo -- too many (say, >20) will make the example profile plot cluttered.
 
- * Paste the below code into the Console directly and hit _Enter_ key to run it. 
+ * Paste the below code at the command prompt (`>`) and press **enter**, as you did above. 
  
- * Or create a new R script (Main menu: _File >> New File >> R Script_) and paste code into the "Source" pane (script editor window). Then, click the _Run_ button in the top-right corner of the Script Editor or use _Ctrl+Enter_ to run code at the cursor location / any selected code. This will execute the code in the Console.
+ * Or create a new **R** script (Main menu: **File &rarr; New File &rarr; R Script**) and paste code into the "Source" pane (script editor window). Then, click the **Run** button in the top-right corner of the Script Editor or use **Ctrl+Enter** to run code at the cursor location / any selected code. This will execute the code in the Console.
 
-Submit the resulting plot to your mentor (from Plot pane: _Export >> Save as PDF..._)
+Submit the resulting plot to your mentor (from "Plot" pane (bottom-right): **Export &rarr; Save as PDF...**)
 
 ```{r eval=FALSE}
 # load packages into the current session
@@ -144,6 +229,7 @@ plot(test, label='pedon_id')
 
 
 # Proof
+
 Follow the one line example below, copy the output, and submit the results to your mentor. This will help us to verify that all of the required packages have been installed.
 
 ```{r, eval=FALSE}
