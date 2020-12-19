@@ -75,43 +75,38 @@ When your `.Rprofile` is set up correctly you will see output in a new **R** con
 # Install Required Packages
 
 Packages can be installed by name from the Comprehensive **R** Archive Network (CRAN) using the base **R** function `install.packages`
+There are a lot of packages out there -- many more than you will download here, and many of which are useful for Soil Survey work. 
 
-For example, download and install the {remotes} package from CRAN:
+The first time you install packages, **R** will ask you if you want to create a local repository in your User `Documents` folder. 
+Click **Yes**.
+
+For example, to download and install the `remotes` package from CRAN:
  
 ```{r, eval=FALSE}
 install.packages("remotes")
 ```
 
-There are a lot of packages out there -- many more than you will download here, and many of which are useful for Soil Survey work. 
-
-To install the **R** packages used in this class copy all of the code from the box below and paste into the **R** console window. 
-
-  1. Paste after the command prompt (`>`) and press **enter**. 
+To install the **R** packages used in this class copy all of the code from the box below and paste into the **R** console window. Paste after the command prompt (`>`) and press **enter**. 
   
-  2. If this is the first time you've installed any packages, **R** will ask you if you want to create a local repository in your User `Documents` folder. Click **Yes**.
-
 Downloading and configuring the packages will take a while if you are installing or upgrading all of the packages in the list below. 
 
 ```{r, eval = FALSE}
 # ipkCRAN: a helper fuction for installing required packages from CRAN
-# - a simple check is done to see if each is already installed
 # - p: vector of package names
-# - up: logical - upgrade installed packages? Default: true
+# - up: logical - upgrade installed packages? Default: TRUE
 ipkCRAN <- function(p, up = TRUE){
-  
+  message('installing packages from CRAN...')
   if (up) {
-    # default is to upgrade everything
+    # default is to re-install everything
     install.packages(p, dependencies = TRUE)
   } else {
     # but if up != TRUE install just what is needed
     new.pkg <- p[! (p %in% installed.packages()[, "Package"])]
     if (length(new.pkg) > 0) {
-      message('installing packages from CRAN...')
-      try(install.packages(new.pkg, dependencies = TRUE))
+      install.packages(new.pkg, dependencies = TRUE)
     }
   }
-  
-  # check and see if any failed
+  # finally, check and see if any failed
   missing.pkg <- p[! (p %in% installed.packages()[, "Package"])]
   if (length(missing.pkg) > 0) { 
      warning(sprintf('\033[31mOne or more packages failed to install!\033[39m\n%s',
@@ -125,11 +120,13 @@ packages <- c(
     # soil
     "aqp", "soilDB", "sharpshootR", "soiltexture",
     # gis
-    "rgdal", "raster", "sp", "sf", "terra", "gdalUtils", "rgrass7", "RSAGA", "exactextractr", "fasterize",
+    "rgdal", "raster", "sp", "sf", "terra", "gdalUtils", 
+    "rgrass7", "RSAGA", "exactextractr", "fasterize",
     # data management
     "dplyr", "tidyr", "devtools", "roxygen2", "Hmisc", "RODBC", "circular", "DT", "remotes",
     # graphics
-    "ggplot2", "latticeExtra", "maps", "spData", "tmap", "mapview", "plotrix", "rpart.plot", "visreg",
+    "ggplot2", "latticeExtra", "maps", "spData", "tmap", 
+    "mapview", "plotrix", "rpart.plot", "visreg",
     # modeling
     "car", "rms", "randomForest", "ranger", "party", "caret", "vegan", "ape", "shape",
     # sampling
@@ -150,9 +147,9 @@ Any time you run code, _always_ check the console output for warnings and errors
 
 ### No output is produced after pasting into console
 
- If you do not have a new command prompt (`>`) and a blinking cursor on the left hand side of your console after you run a command, **R** may think you are still in the middle of submitting multiline input to the "read-eval-print-loop" (REPL). If this is not expected you are possibly missing closing quotes, braces, brackets or parentheses. **R** needs to know you were done with your expression, so you may need to supply some input to get the command to be complete, or at least "error out" so you can try again. 
+If you do not have a new command prompt (`>`) and a blinking cursor on the left hand side of your console, but instead see a `+` after you run a command, **R** may think you are still in the middle of submitting input to the "read-eval-print-loop" (REPL). If this is not expected you are possibly missing closing quotes, braces, brackets or parentheses. **R** needs to know you were done with your expression, so you may need to supply some input to get the command to be complete. You can use the shortcut **Ctrl+C** to get out of a partially-complete command. 
  
-You can manually paste code line-by-line -- which is useful but prone to above mentioned input errors for multiline expressions. Alternately, you can run commands or an entire file using the GUI or keyboard shortcuts such as **Ctrl+Enter**. You have a chance to try this in the example at the end.
+Pasting code line-by-line is useful but prone to input errors with multi-line expressions. Alternately, you can run commands or an entire file using the GUI or keyboard shortcuts such as **Ctrl+Enter**. You have a chance to try this in the example at the end.
 
 ### `‘SOMEPACKAGE’ is not available (for R version X.Y.Z)`
 
@@ -183,15 +180,17 @@ install.packages('https://cran.r-project.org/bin/windows/contrib/3.6/RODBC_1.3-1
 ```
 -->
 
-To install the latest version of packages from the Algorithms for Quantitative Pedology (AQP) suite off GitHub using the `remotes` package. These packages tend to be updated more frequently on GitHub than they are on CRAN.
+To install the latest version of packages from the Algorithms for Quantitative Pedology (AQP) suite off GitHub we use the `remotes` package. 
+
+The AQP packages are updated much more frequently on GitHub than they are on CRAN.
 
 Generally, the CRAN versions (installed above) are the "stable" releases whereas the GitHub repositories have new features and bug fixes.
 
 ```{r, eval=FALSE}
-remotes::install_github("ncss-tech/aqp", dependencies = FALSE, upgrade = FALSE, build = FALSE)
-remotes::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade = FALSE, build = FALSE)
-remotes::install_github("ncss-tech/soilReports", dependencies = FALSE, upgrade = FALSE, build = FALSE)
-remotes::install_github("ncss-tech/sharpshootR", dependencies = FALSE, upgrade = FALSE, build = FALSE)
+remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade=FALSE, build=FALSE)
+remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 ```
 
 
