@@ -1,0 +1,1641 @@
+--- 
+title: "Statistics for Soil Survey - Part 1"
+author: "Soil Survey Staff"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+description: "Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::gitbook."
+---
+
+# Prerequisites
+
+Placeholder
+
+
+
+<!--chapter:end:index.Rmd-->
+
+
+# Pre-course Assignment
+
+Placeholder
+
+
+## Create Workspace
+## Configure RStudio
+## Essentials
+## Personalization
+## Install .RProfile
+## Install Required Packages
+## character vector of packages
+## install vector of CRAN packages "safely"
+##  up = TRUE to download all packages 
+##  up = FALSE to download only packages you don't already have installed
+## Common Errors
+### No output is produced after pasting into console
+### `‘SOMEPACKAGE’ is not available (for R version X.Y.Z)`
+##  Packages not on CRAN
+## Connect Local NASIS
+## Proof
+
+<!--chapter:end:00-precourse.Rmd-->
+
+
+# Introduction to R and RStudio {#intro}
+
+Placeholder
+
+
+## Outline
+## Course Overview
+### Course Objectives
+### Why is this training needed?
+### Why is course organized this way?
+## What is R?
+### Why Should I Learn R?
+### What can R do?
+### Packages
+#### Soil Science Applications
+##### Create Maps
+##### Draw Soil Profiles
+##### Draw Depth Plots
+##### Estimate the Range in Characteristics (RIC)
+## RStudio: An Integrated Development Environment (IDE) for R
+### USDA Computer Setup
+### Basic Tips for using R  
+#### Brief Example
+### Working Directories
+#### Setting the Working Directory
+#### RStudio Projects (.Rproj files)
+### More RStudio Project Features
+### Data Management in RStudio  
+#### Importing Data
+##### Note on Microsoft Excel files
+#### Exporting Data
+#### Viewing and Removing Data
+### Getting Help 
+#### Exercise: Examine the `read.csv()` function
+### Packages
+#### Installing Packages
+#### Loading Packages
+### Writing Scripts  
+#### Basic Tips for Scripting
+### Saving R Files  
+#### R script (.R)
+#### Microsoft Word Files
+#### R Markdown (.Rmd)
+## This is not something we should encourage people to do. Not reproducible. We tell them to turn off this "feature" in the pre-course and I sure hope they do because it is a monstrous waste of their and our debugging time. 
+## History is the only thing they should save, unless they explicitly are selecting the objects to save and using e.g. save(), saveRDS() / load() etc. -AGB
+#### Workspace (.Rdata)  
+#### R history (.Rhistory) 
+#### R Graphics   
+## Rcmdr (R Commander): A Graphical User Interface for R
+## Review
+## Additional Readings
+## References
+
+<!--chapter:end:01-intro.Rmd-->
+
+# The Data We Use
+
+```{r purl=FALSE, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(knitr, quietly=TRUE)
+
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png') #, tidy=FALSE, verbose=FALSE, antialias='cleartype', cache=FALSE
+```
+
+## Objectives
+
+- Learn more about R and how to inspect objects and data types
+- Use the soilDB package to load NASIS pedon data into R
+- Learn about the checks run on data loaded by the `fetchNASIS()` function
+- Understand the structure of data stored in a `SoilProfileCollection` (SPC)
+- Learn ways to logically filter and subset data in R
+- Learn how functions can be used to bundle operations
+- Review additional data that is accessible via extended data functions
+- Introduce `soilReports` R package
+
+## The Structure of Our Data
+
+What if you could extract, organize, and visualize data from NASIS and many other commonly used soil database sources with a couple of lines of code? 
+
+![](static-figures/soilDB_figure.png)
+
+We have created the soilDB package just for this! soilDB returns tabular data, spatial data objects and SoilProfileCollection objects! SoilProfileCollection objects are defined in the aqp (Algorithms for Quantitative Pedology) package as a handy abstraction for commonly used data and "bookkeeping" of said data.
+
+### Package References
+
+ - [**SoilProfileCollection Object Introduction**](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html)
+
+ * [**Tutorials on the AQP website**](http://ncss-tech.github.io/AQP/)
+ * [**Package 'aqp' manual**](http://ncss-tech.github.io/aqp/docs/)
+ * [**Package 'soilDB' manual**](http://ncss-tech.github.io/soilDB/docs/)
+ * [**Package 'sharpshootR' manual**](http://ncss-tech.github.io/sharpshootR/docs/)
+
+The manual pages for `soilDB` and `aqp` are accessible (click **index** at the bottom of the **Help** tab in RStudio) by entering the following into the R console: 
+
+```{r, purl=FALSE, eval=FALSE}
+# not run
+library(soilDB)
+help(soilDB)
+
+# for links to lots of great examples look here!
+library(aqp)
+help(aqp)
+```
+
+### soilDB Functions
+
+soilDB functions are the quickest way to get up and running:
+
+- **fetchNASIS()**
+    - Gets and re-packages data from a local NASIS database.
+        + [NASIS pedon/horizon data](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html)
+        + [NASIS DMU/MU/component data](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html)
+        
+- **fetchNASISLabData()**
+    - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
+    
+- **fetchKSSL()**
+    - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
+        + [KSSL Data Demo](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html)
+        + [Water Retention Curve Development from KSSL Data](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
+        
+- **fetchOSD()**
+    - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
+    
+- **OSDquery()**
+    - Full-text searching of OSD sections.
+    
+- **fetchRaCA()**
+    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
+        + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)
+        
+- **fetchSCAN()**
+    - Queries soil and climate data from USDA-NRCS SCAN Stations.
+      + [A Unified Interface to SCAN/SNOTEL Data](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
+      
+- **fetchHenry()**
+    - Downloads data from the Henry Mount Soil Climate Database.
+        + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
+        
+- **fetchPedonPC()**
+    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
+    
+- **fetchSDA()**
+    - Fetches component data from Soil Data Access.
+    
+- **fetchSDA_spatial()**
+    - Fetches polygon, bounding box and centroid data from SSURGO, STATSGO and the `sapolygon` (Soil Survey Area Polygon) from Soil Data Access
+    
+- **SDA_query()**
+    - Submits queries to the Soil Data Access system.
+        + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
+        + [SDA and Spatial Data](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html)
+        + [SDA and Interpretations](http://ncss-tech.github.io/AQP/soilDB/SDA-cointerp-tutorial.html)
+
+### Importance of Pedon Data
+
+The importance of pedon data for present and future work cannot be overstated.  These data represent decades of on-the-ground observations of the soil resource for a given area.  As difficult as it may be to take the time to enter legacy pedon data, it is vitally important that we capture this resource and get these data into NASIS as an archive of point observations.  
+
+```{r pedons_a, purl=FALSE, echo=FALSE, results='hide', warning=FALSE}
+
+# options for R functions
+options(width = 100, stringsAsFactors = FALSE)
+
+library(ggplot2)
+library(dplyr)
+
+data("us_ss_timeline", package = "soilDB")
+
+test <-
+  as.data.frame(table(us_ss_timeline$year), stringsAsFactors = FALSE)
+
+names(test)[names(test) %in% c("Var1", "Freq")] <-
+  c("year", "Count")
+test <- mutate(test,
+               year = as.numeric(year))
+
+g1 <- ggplot(test, aes(x = year, y = Count)) +
+  geom_area(alpha = 0.7) +
+  ylim(0, max(test$Count, na.rm = TRUE) * 1.5) +
+  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
+  # theme(aspect.ratio = 1) +
+  xlab("Year") +
+  ggtitle("Number of Published US Soil Survey Manuscripts by Year")
+
+g2  <- ggplot(test, aes(x = year, y = cumsum(Count))) +
+  geom_area(alpha = 0.7) +
+  ylim(0, max(cumsum(test$Count), na.rm = TRUE) * 1.5) +
+  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
+  # theme(aspect.ratio = 1) +
+  xlab("Year") + ylab("Count") +
+  ggtitle("Cumulative Number of Published US Soil Survey Manuscripts by Year")
+
+# gridExtra::grid.arrange(g1, g2, ncol = 1)
+
+
+pedons <-
+  read.csv(
+    "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/pedons.csv",
+    stringsAsFactors = FALSE
+  )
+pedons <- filter(pedons, obs_year %in% 1950:2018) %>%
+  mutate(year = obs_year,
+         lab = FALSE,
+         Count = n_peiid)
+
+labpedons <-
+  read.csv(
+    "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/labpedons.csv",
+    stringsAsFactors = FALSE
+  )
+labpedons <- filter(labpedons, obs_year %in% 1950:2018) %>%
+  mutate(year = obs_year,
+         lab = TRUE,
+         Count = n_peiid)
+
+
+g3 <- ggplot(pedons, aes(x = year, y = Count)) +
+  geom_area(aes(fill = lab), stat = "identity") +
+  geom_area(data = labpedons,
+            aes(x = year, y = Count, fill = lab),
+            stat = "identity") +
+  ylim(0, max(pedons$Count, na.rm = TRUE) * 1.2) +
+  ylab("Count") + xlab("Observation Year") +
+  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
+  ggtitle("Number of Pedons per Year")
+
+g4 <- ggplot(pedons, aes(x = year, y = cumsum(Count))) +
+  geom_area(aes(fill = lab), stat = "identity") +
+  ylim(0, max(cumsum(pedons$Count), na.rm = TRUE) * 1.2) +
+  ylab("Count") + xlab("Observation Year") +
+  scale_x_continuous(breaks = seq(1880, 2030, 8)) +
+  ggtitle("Cumulative Number of Pedons per Year")
+
+gridExtra::grid.arrange(g1, g3, ncol = 1)
+``` 
+
+![](static-figures/sites_nat.png)
+
+### Some Issues With Pedon Data
+
+- Making and documenting observations of soil requires hard work. Digging is difficult, and writing soil descriptions is time consuming!
+
+- Our confidence in observations commonly weakens with the depth of the material described.
+    
+  - If we acknowledge this, which we must, then how do we deal with it in pedon data?
+      - Use a cutoff depth, for example 100 cm, can be used to truncate observations to a zone of greater confidence.
+      - Show the relative confidence of the data with depth.
+
+##  Challenges with Pedon Data
+
+ - Consistency
+    - Missing data
+ - Confidence in the observations
+    - Uncertainty with depth
+ - Description style differences
+    - Depth described, horizonation usage styles
+ - Legacy data vintage
+    - Decadal span of data
+    - Taxonomy updates, horizon nomenclature
+ - Location confidence
+    - Origin of the location information
+    - Datum used for data collection
+    - Accuracy for GPS values at the time of data collection
+    
+### Meeting the Challenges
+  
+  - Graphical display of the data and summary outputs ([**slice-wise aggregation**](http://ncss-tech.github.io/AQP/aqp/profile-summary.html))
+  - Generalized Horizon Labels (GHL). Derive an aggregate soil profile and summarize soil properties for groups of similar soils. 
+      - More on that process can be seen in the following tutorial:
+      [**GHL Aggregation Presentation**](http://ncss-tech.github.io/AQP/presentations/ghl-aggregation.html) and [**GHL Aggregation Tutorial**](http://ncss-tech.github.io/AQP/aqp/gen-hz-application.html).
+
+For more information regarding difficult pedon data, see the following tutorial in the "aqp" package:  
+[**Dealing with Troublesome data**](http://ncss-tech.github.io/AQP/aqp/dealing-with-bad-data.html).
+
+## The `aqp` `SoilProfileCollection`
+
+The [`SoilProfileCollection`](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) class (SPC) provided by the `aqp` package is a soil-specific tool. 
+
+It is a type of object that simplifies the process of working with collections of data associated with soil profiles, e.g., site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc. 
+
+A `SoilProfileCollection` is like the NASIS Pedon "object" in that it provides generalizations, specific routines and rules about the fundamental tables and their relationships that are relevant to soil observations.
+
+In many ways the SPC is more adaptable than the NASIS Pedon concept, strictly speaking. It can "contain" aggregations of any relevant parts of essentially any soil data schemas (table and column structure). Through this mechanism, it can be a _mediator_ between formats and algorithms.
+
+### SoilProfileCollection methods
+
+Many "familiar" methods are defined for the `SoilProfileCollection` object. Some are unique, and others operate like more common functions of vector and `data.frame` objects, such as `nrow()` (*"how many horizons?"*) or `length()` (*"how many sites/pedons?"*). 
+
+Perhaps most importantly, when you access the `site()` data or the `horizons()` data of a `SoilProfileCollection`, you get a `data.frame` object that you can use like any other you might use or make in R.
+
+#### Promoting `data.frame` to `SoilProfileCollection`
+
+The `SoilProfileCollection` object is a collection of 1-D profile descriptions, of the type conventionally described on a Form 232, or on tabular data returned from laboratory. The object is "horizon data forward" in that you start with that, and can create site-level attributes by normalization, joins, calculations and more.
+
+Most of the time if you are using your NASIS data, or an official database, there are defined ways of getting the data out. In the pre-course, we had you set up a process so you could connect to your local NASIS instance to "fetch" data and have methods like `fetchNASIS` put things together for you.
+
+This input to make a `SoilProfileCollection` can be represented most simply as a `data.frame` with unique site or profile ID and depth combinations for each horizon or layer. Essentially just a portion of the `phorizon` or `chorizon` table in NASIS.
+
+A simple example of this type oftabular horizon data is the `sp4` data set: some serpentine soil profiles stored in a `data.frame` in the `aqp` package (after McGahan et al., 2009).
+
+```{r, eval=TRUE}
+library(aqp)
+
+# Load sample serpentine soil data (McGahan et al., 2009)
+data(sp4, package = "aqp")
+
+head(sp4)
+
+class(sp4)
+```
+
+To convert this horizon data into a `SoilProfileCollection`, we need to identify three parameters: `idname`, `top`, and `bottom`. These parameters refer to the columns of unique profile IDs, top depths and bottom depths, respectively.
+
+These three define the "logical consistency" of 1-D descriptions within the collection. We specify this for your input `data.frame` using the `depths<-` function.
+
+Use a formula to specify column names in the `data.frame`, in this case `"id"`, `"top"` and `"bottom"`. 
+
+```{r, eval=TRUE}
+#
+#      profile ID ~ top depth + bottom depth
+#              
+depths(sp4) <- id ~ top + bottom
+
+class(sp4)
+```
+
+##### Syntax Explanation
+
+The formula expresses the idea that a profile 1-dimensional description `id` has a vertical extent (Z, in profile) defined by set of `top` and `bottom` depths described for that profile. 
+
+In this simplified 1-dimensional model we are concerned about keeping track of things like thickness, order, overlaps, gaps, or duplication in the data. From this, we can do a lot of "logic" checks -- strictly from a perspective of basic physical representation of the horizon data.
+
+<!--
+NOTE: A character vector with same names has the same effect, and can be easier to "program" with than the formula-based syntax.
+
+```{r}
+depths(sp4) <- c("id","top","bottom")
+```
+### Extending the `SoilProfileCollection` Spatial Model 
+
+The "spatial" definition that comes with defining the horizon depths at object creation can be further extended to real space using the `coordinates<-` method to define "X" and "Y" and `proj4string<-` to define the Coordinate Reference System (more on that later). Elevation ("Z", landscape) is generally recorded as a site attribute.
+-->
+
+#### Extracting Site and Horizon Data
+
+The `SoilProfileCollection` is an S4 R object. S4 objects have slots. Of primary importance, it has slots for site-level data and horizon-level data. 
+
+You can extract values from these slots using the `site()` and `horizons()` functions. These create `data.frame` objects that are separate from the `SoilProfileCollection`.
+
+```{r, eval=TRUE}
+# extract site data from SPC into new data.frame 's'
+s <- site(sp4)
+str(s)
+
+# extract horizon data from SPC into new data.frame 'h'
+h <- horizons(sp4)
+str(h)
+```
+
+#### Methods like `data.frame` 
+
+The base R functions for accessing and setting `data.frame` columns by name such as `$` and `[[` work for `SoilProfileCollection` objects, too. 
+
+##### `$` and `[[`
+
+```{r, eval=TRUE}
+# SoilProfileCollection
+sp4$clay
+sp4[['clay']]
+
+# horizon data.frame
+h$clay
+h[['clay']]
+
+# use $<- / [[<- to set proportional clay content
+sp4$clay <- sp4[['clay']] / 100
+
+# undo what we did above; back to percentage
+sp4[['clay']] <- sp4$clay * 100
+
+# create new site variable (recycled for all sites)
+site(sp4)$newvar1 <- "numberone"
+
+# create new horizon variable (recycled for all horizons)
+horizons(sp4)$newvar2 <- "numbertwo"
+```
+
+##### `[`
+
+The `SoilProfileCollection` also has `[` -- but a different interpretation from the `[i, j]` indexing in `data.frame`. 
+
+ - In a `data.frame` you have `object[row, column, drop=TRUE]`; the result is a `data.frame` (or a vector with default `drop`). 
+
+ - In a `SoilProfileCollection` you have `object[site, horizon]`; the result is a `SoilProfileCollection`.
+
+```{r, eval=TRUE} 
+# object[i, j]
+
+# i-index: 2 profiles, 6 horizons
+sp4[1:2, ] # first two profiles, all horizons
+
+# j-index: 10 profiles; 20 horizons
+sp4[, 1:2] # first two horizons of each profile 
+```
+
+Everything has gets subset simultaneously -- sites, horizons, spatial data, diagnostics, etc. in one command.
+
+```{r, eval=TRUE}
+# First profile, first two horizons
+horizons(sp4[1, 1:2])
+```
+
+<!--
+##### Optional: `tibble` and `data.table` `SoilProfileCollection` objects
+
+Since the CRAN release of `aqp` 1.25 there has been support for `tibble` and `data.table` `data.frame` subclasses in the slots of the `SoilProfileCollection`. 
+
+Most methods that make `SoilProfileCollections` for you (e.g. `fetchNASIS`) only use `data.frame` objects, so this is, at this point, a completely optional feature.
+
+```{r, eval=FALSE}
+data("gopheridge", package="soilDB")
+pedons <- gopheridge
+
+# before: data.frame
+class(horizons(pedons))
+
+# set a new data.frame class with aqp_df_class<- then rebuild the SPC
+aqp_df_class(pedons) <- "tibble" # or "tbl_df", "data.table", "data.frame"
+pedons <- rebuildSPC(pedons)
+
+# after: tbl_df, a subclass of data.frame
+class(horizons(pedons))
+```
+
+This is an nice feature if you are a user of the `tidyverse` metapackage -- or scripts that use it -- as these use `tibble` as the "central" `data.frame`-class object -- and you may be frustrated by the old behavior of SPCs behaving erratically when given `tibble`, or turning your `tibble` into `data.frame`.
+
+If you want to take advantage of high performance code for manipulating tabular data in the `data.table` package, you can also use that as the internal data.frame subclass. 
+
+`data.table` is now _silently_ used in `aqp` for several operations to increase efficiency. If you prefer to use `data.table` in your scripts, integration with the `SoilProfileCollection` is now easier than ever.
+
+### Why bother with a `SoilProfileCollection`?
+
+As discussed at the beginning of the chapter, typical soil data sets have several tables with complex relationships between them. Manually keeping data sets in sync can range somewhere between a "chore" and a "Real Big Problem&trade;". We could manually do almost anything with or without a `SoilProfileCollection`... So _why bother_ with another data type?
+
+Well, there are _lots_ of things we could do from scratch -- most of us do not do those things. If we did we _might_ mess something up if we weren't doing it all the time. 
+
+We don't go and re-write the NASIS queries we use for each new project... We re-use the same tools in new project areas. In the same way, logic in the `SoilProfileCollection` is "off-loaded" onto special procedures. In the case of `aqp` and the SPC, these have been around for years and are rigorously unit-tested. 
+
+This is why we use the `SoilProfileCollection`. We can "trust" it to take care of certain things -- reducing the amount of indexing and other book keeping needed in our own analysis code. 
+
+The thinking has been put into the "schema" of the object and its methods up front, which makes it so that the user can focus on her or his analysis. This goal, in principle, is why NASIS, and all of the other soil databases and data models, exist. 
+
+There are of course a variety of other tools available for managing spatial and relational data in and out of R -- this course does not seek to be comprehensive in covering those tools. Many tools can be used in tandem with `SoilProfileCollection` objects or the outputs they create.
+
+If you understand the basic object types involved, you will see that the `SoilProfileCollection` is not the answer to every problem, but rather a convenient, efficient abstraction tailored for soil data work, and harmonious with a variety of R objects and data structures.
+
+All of the above together means that more time and energy can be put towards to solving _soil_ problems, rather than computer problems. 
+-->
+
+## Using the soilDB Package
+
+The `soilDB` package for R works with a variety of soil and plant resource related data sources.  
+
+It provides functions for accessing data stored in in NASIS, KSSL, SDA, SoilWeb, SoilGrids and other sources. These are wrappers around an internal database interface to NASIS; the one that you set up during the pre-course.
+
+Basic data checks are run within `fetch` functions. `get` functions are a usually a step lower in terms of abstraction -- and generally return single `data.frame` or `list` of `data.frame`. 
+
+You can set up scripts to make custom queries against these or other sources on your own -- there is an example at the end of this section.
+
+For now, we will start with the `fetch` functions and others that will get you a large variety of data you can use for soil and ecological site analyses.
+
+### `fetchNASIS()`
+
+The `fetchNASIS` convenience function extracts data from a NASIS selected set via Structured Query Language (SQL).   
+
+Note that the import process in `fetchNASIS()`, and the other methods, is not comprehensive. It does not pull every column for every table related to pedon data out of NASIS. 
+
+Instead, it pulls essential / commonly used pedon and horizon data. Higher level functions like `fetchNASIS()` bundle a series of lower-level queries to get specific parts of the Pedon or Component data structures. Much of the nested complexity of NASIS is simplified in the resulting object. You may need to make more detailed queries and joins to resolve specific questions.
+
+```{r structure_diagram_a, purl=FALSE, echo=FALSE, results='hide', warning=FALSE}
+library(diagram, quietly=TRUE)
+# reset figure margins
+par(mar = c(1, 1, 1, 1))
+
+# simple diagram of the pedon data structure
+names <- c("Site", "Siteobs", "Pedon", "Horizon")
+M <- matrix(nrow = 4, ncol = 4, byrow = TRUE, data = 0)
+M[4, 3] <- M[3, 2] <- M[2, 1] <- ""
+pos <- cbind (c(1, 1, 1, 1))
+plotmat(M, pos = pos, name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.1, box.type = "square", box.prop = 0.4, mx=-0.2)
+
+# parallel simplified SPC structure
+names <- c("Site-level", "Horizon-level")
+M <- matrix(nrow = 2, ncol = 2, byrow = TRUE, data = 0)
+ M[2, 1] <- ""
+#pos <- cbind (c(2, 2))
+plotmat(M, pos = c(1, 1), name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.14, box.type = "square", box.prop = 0.75, mx=0.3, my=-0.1, add=TRUE)
+
+# add arrows to the diagram
+arrows(0.42, 0.1, x1=0.65, y1=0.1, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.35, x1=0.65, y1=0.54, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.61, x1=0.65, y1=0.61, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.87, x1=0.65, y1=0.68, length = 0.25, code=2, lwd=2, angle = 15)
+```
+
+Many-to-one relationships are "flattened" where possible by `fetchNASIS()`. This aggregates the data from various tables into one "site" record with related horizon records, per profile. 
+
+You can see the child tables that are aggregated using the `get_extended_data_from_NASIS()` method, which returns a named list of child table sources that are joined to the `SoilProfileCollection` made with `fetchNASIS()` using the internal record IDs in the respective tables.
+
+#### fetchNASIS arguments
+
+`fetchNASIS()` has many arguments:
+
+- **from = 'pedons' or 'components' or 'pedon_report'** 
+    - This option allows you to select which data you want to load from NASIS. Choosing either 'pedons' or 'components' will load data from your local database. If 'pedon_report' is specified then it will load data from the text file generated by the NASIS report 'fetchNASIS'.
+    
+- **url =** 'https://nasis.sc.egov.usda.gov/OfflineReports/fetchNASIS_04e6ec7d-fab5-4a90-bb88-9b9dc56dfdd8.txt'
+    - If from = 'pedon_report' this option will load data from the URL that is generated when the NASIS report 'fetchNASIS' is run offline against the national database. This is useful for loading more than 20,000 pedons at one time, such for an entire Soil Survey Region.
+    
+- **SS = `TRUE`/`FALSE`** 
+    - The Selected Set (SS) option allows you to choose whether you want the data to load from your current selected set in NASIS or from the local database tables.  The default is set to `TRUE` so if unspecified `fetchNASIS()` will always load from the data in the selected set. 
+    
+- **stringAsFactors = `TRUE`/`FALSE`** 
+    - This option allows you to select whether to convert strings into factors or not.  The default is set to **FALSE**, which will handle strings as character formats. Manually set this option to `TRUE` if you wish to handle character strings as factors.   
+
+- **rmHzErrors = `TRUE`/`FALSE`** 
+    - Setting this value to `TRUE` (the default) enables checks for horizon depth consistency. Consider setting this argument to `FALSE` if you aren't concerned about horizon-depth errors or if you know that your selected set contains many combination horizons (e.g., consisting of E/Bt horizons or similar two-part horizons described individually for the same depth range). Note that any pedons flagged as having horizon-depth errors (rmHzErrors = `TRUE`) are omitted from the data returned by `fetchNASIS()`.
+    
+- **nullFragsAreZero = `TRUE`/`FALSE`**
+    - Setting this value to `TRUE` (the default) converts null entries for rock fragment volumes to 0. This is typically the right assumption because rock fragment data are typically populated only when observed. If you know that your data contain a combination of omitted information (e.g. no rock fragment volumes are populated) then consider setting this argument to `FALSE`.
+    
+- **soilColorState = 'moist' or 'dry'** 
+    - Select dry or moist colors to be converted and placed into a horizon-level attribute called `soil_color`. Moist and dry colors are also stored in `moist_soil_color` and `dry_soil_color`.
+    
+- **lab = `TRUE`/`FALSE`** 
+    - This option allows for loading the data associated with horizons that may be in the `phlabresults` table.  The default is set to `FALSE`, which will not load records from the `phlabresults` table.
+  
+For more information on the data checks and adjusting the default options to `fetchNASIS()` function, see the following resource: [**Tips on Getting Data from NASIS into R**](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html).
+
+### Open Database Connectivity (ODBC) Connection to NASIS
+
+After setting up an ODBC connection, you can use R to access data from a selected set defined in your local NASIS database. 
+
+[**How to Create an ODBC Connection to local NASIS database for R**](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html).
+ 
+_Does NASIS need to be open and running to query data using soilDB?_
+
+No, `fetchNASIS()` works whether the NASIS application is running or not. You just need to make sure that the data you want has been loaded into your selected set.
+
+### The `gopheridge` `soilDB` Dataset
+
+The `gopheridge` sample data set is a sample R object returned from `fetchNASIS()` in a self-contained `.rda` file stored in `soilDB`.
+
+Open RStudio, and set up the environment by loading packages and the `gopheridge` sample dataset.
+
+```{r gopheridge_a}
+library(aqp)
+library(soilDB)
+
+# load example dataset
+data(gopheridge, package = "soilDB")
+
+# what kind of object is this?
+class(gopheridge)
+
+# what does the internal structure look like?
+str(gopheridge, 2)
+
+# the fields at the site and horizon levels within the SPC
+siteNames(gopheridge)
+horizonNames(gopheridge)
+```
+
+#### Make profile sketches 
+
+The `plot()` function applied to a `SoilProfileCollection` object generates sketches based on horizon depths, designations, and colors. 
+
+The `fetchNASIS()` function automatically converts moist Munsell colors into R-style colors. 
+
+Multiple colors per horizon are mixed to make the ones that are shown by default in the calculated `soil_color` fields. See `?plotSPC` for a detailed list of arguments and examples.
+
+```{r, fig.width=10, fig.height=4}
+par(mar = c(1, 1, 1, 1))
+
+# omitting pedon IDs and horizon designations
+plot(gopheridge,
+     print.id = FALSE,
+     name = '',
+     width = 0.3)s
+title('Pedons from the `gopheridge` sample dataset', line = -0.5)
+```
+
+### Prepare Example Data
+
+Take a moment to open the NASIS client, create a selected set with some site/pedon objects that will be used in the following sections.
+
+Using a query that includes both Site and Pedon tables, download to your local database. Get sites with *MT647* in the user site ID. 
+
+_NOTE: Depending on the query, you may need to include wild card characters such as: `%MT647%`._
+
+#### Data Checks Run by `fetchNASIS()`
+
+When you load pedons using the `fetchNASIS()` function, the following data checks are performed:
+
+- **Presence of multiple map datums**. Results reported to the user and the data are not modified.
+
+- **Inconsistent horizon boundaries**. Pedons with inconsistent horizon boundaries are not loaded.  In most cases, this occurs when the bottom depth of a horizon is not the same as the upper depth of the next lower horizon.
+
+```{r example_a, purl=FALSE, echo=FALSE, results='show', warning=FALSE}
+top <- c(0, 38, 56, 121, 135)
+bot <- c(30, 56, 121, 135, NA)
+
+hzname <- c('A', 'Bt1', 'Bt2', 'Bk', 'R')
+d <- data.frame(hzname, top, bot)
+
+d
+```
+
+Note the issue above. The bottom depth of the A horizon and the upper depth of the Bt1 horizon should be the same: either 30 or 38 cm. The correct depth needs to be determined and fixed in the database
+
+- **Missing lower horizon depths.** Offending horizons are fixed by replacing the missing bottom depth with the top depth plus 2 cm. In the case of the profile shown above, a bottom depth of 137 cm would be inserted where the depth is missing.
+
+- **Sites missing pedon records**. Data without corresponding horizons are not loaded.
+
+#### Example: Find sites where errors occur to fix in NASIS
+
+If errors in the pedon data are detected when loading data using `fetchNASIS()`, the following "get" commands can trace them back to the corresponding records in NASIS. These access an option that is stored in the package enviroment that contains a vector of IDs.
+
+- **get('sites.missing.pedons', envir = soilDB.env)**
+    - Returns user site ID for sites missing pedons.
+  
+- **get('dup.pedon.ids', envir = soilDB.env)**
+    - Returns user pedon ID for sites with duplicate pedon ID
+  
+- **get('bad.pedon.ids', envir = soilDB.env)**
+    - Returns user pedon ID for pedons with inconsistent horizon depths.
+    
+- **get('bad.horizons', envir = soilDB.env)**
+    - Returns a data.frame of horizon-level information for pedons with inconsistent horizon depths.
+
+For more information on the design of soilDB functions, see the following documentation: [**Introduction to soilDB**](http://ncss-tech.github.io/AQP/soilDB/soilDB-Intro.html).
+
+Additional documentation and examples can be found in:
+   
+   * [http://ncss-tech.github.io/AQP/aqp/aqp-intro.html](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html)
+   * [http://ncss-tech.github.io/AQP/aqp/merged-legend-plot.html](http://ncss-tech.github.io/AQP/aqp/merged-legend-plot.html)
+   * [http://ncss-tech.github.io/AQP/aqp/profile-summary.html](http://ncss-tech.github.io/AQP/aqp/profile-summary.html)
+   * [http://ncss-tech.github.io/AQP/aqp/SPC-plotting-ideas.html](http://ncss-tech.github.io/AQP/aqp/SPC-plotting-ideas.html)
+
+#### Follow along with your own data
+
+Explore the site- and horizon-level data in your own SPC using the following code. 
+
+NOTE: You must have pedons in your local NASIS selected set.
+
+```{r owndata_a, eval=FALSE}
+# load required libraries
+library(aqp)
+library(soilDB)
+
+# load data from a NASIS selected set
+pedons <- fetchNASIS(from = 'pedons')
+
+# what kind of object is this?
+class(pedons)
+
+# how many pedons?
+length(pedons)
+
+# look at variables in site and horizon tables within the SPC
+siteNames(pedons)
+horizonNames(pedons)
+
+# look at the first 2 rows of site and horizon data
+head(site(pedons), 2)
+head(horizons(pedons), 2)
+```
+
+How can you find out how many site and horizon records are in the data you just loaded?
+
+## Viewing Pedon Locations
+
+### Plotting Geographic Data 
+
+Plotting the data as an R graphic can give you some idea of how data look spatially and whether their distribution is what you expect.
+
+Typos are relatively common when coordinates are manually entered. Viewing the data spatially is a quick way to see if any points plot far outside of the geographic area of interest and therefore clearly have an error.
+
+```{r gopheridge_b, eval = FALSE}
+# plot the locations of the gopheridge pedons within R
+# Steps:
+# 1) create and inspect an sf data.frame object
+# 2) plot the data with mapview
+
+# load libraries
+library(aqp)
+library(soilDB)
+library(sf)
+library(mapview)
+
+# this creates sample gopheridge object in your environment
+data("gopheridge", package = "soilDB")
+
+# replace gopheridge object with fetchNASIS() (your data)
+#gopheridge <- NULL
+#gopheridge <- fetchNASIS()
+
+# create simple features POINT geometry data.frame
+# st_as_sf(): convert data.frame to spatial simple features collection in $geometry 
+# st_crs(): set EPSG:4326 Coordinate Reference System (CRS) as Well-Known Text (WKT)
+gopher.locations <- st_as_sf(site(gopheridge), 
+                             coords = c('x_std','y_std'),
+                             crs = st_crs(4326))
+
+# inspect first 6 points
+head(gopher.locations)
+
+# inspect CRS
+st_crs(gopher.locations)
+
+# create interactive map with sfc_POINT object
+#  use site_id in sf data.frame as labels
+mapview(gopher.locations, 
+        legend = FALSE, 
+        map.types = 'OpenStreetMap', 
+        label = gopher.locations$site_id)
+```
+
+### Displaying Pedon Data in Google Earth
+
+Google Earth is a powerful viewer for point data.  Geographic data is displayed in Google Earth using the Keyhole Markup Language (KML) format.  
+
+Using the [plotKML](https://cran.r-project.org/web/packages/plotKML/plotKML.pdf) package, you can easily create a KML file to inspect and view in Google Earth.  
+
+See the related material in this tutorial: [**Export Pedons to Google Earth**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html). 
+
+### Exporting Pedon Data to an ESRI Shapefile
+
+Another way you can view the data is to export a shapefile from R.  For further information, see this tutorial: [**Export Pedons to Shapefile**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html).
+
+### Follow along with your own data
+
+Use the script below to make an R plot of pedon data loaded from your NASIS selected set.
+
+The following script plots the standard WGS84 longitude/latitude decimal degrees fields from Site table of NASIS. In some cases, these fields might be incomplete due to insufficient data or to not having been calculated from UTM coordinates in NASIS. 
+
+Run the following script on the data loaded from your local NASIS selected set. Note that you need to filter out any pedons that are missing their standard WGS84 longitude/latitude coordinates.
+
+```{r r_plot_pedons, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
+library(aqp)
+library(soilDB)
+library(sf)
+library(mapview)
+
+# get pedons from the selected set
+pedons <- fetchNASIS(from = 'pedons')
+
+# missing values in coordinates not allowed
+pedons.sp <- subset(pedons, !is.na(x_std) & !is.na(y_std))
+
+# create sf object
+pedon.locations <- st_as_sf(site(pedons.sp), 
+                            coords = c('x_std','y_std'),
+                            crs = st_crs(4326))
+
+# interactive map
+mapview(pedon.locations, 
+        legend = FALSE, 
+        map.types = 'OpenStreetMap', 
+        label = pedon.locations$site_id)
+```
+
+## Working with Data in R
+
+### Summaries
+
+Now that you've loaded some data, you can look at additional ways to summarize and interact with data elements.
+
+#### `table()`
+
+The base R `table()` function is very useful for quick summary operations. It returns a named vector with the amount of each unique level of the a given vector.
+
+The numeric vector of "counts" is commonly combined with other functions such as `sort()`, `order()`, `prop.table()`, `is.na()` or `!is.na()` (is not NA) to identify abundance, proportions, or missing data (`NA`).
+
+```{r}
+# load required packages
+library(aqp)
+library(soilDB)
+
+data("gopheridge", package = "soilDB")
+
+# for these examples, we use the gopheridge dataset as our "selected set"
+pedons <- gopheridge # fetchNASIS() # you can use fetchNASIS
+
+# summarize which soil taxa we have loaded
+table(pedons$taxonname)
+
+# sort results in descending order
+sort(table(pedons$taxonname), decreasing = TRUE)
+
+# could do the same thing for taxonomic subgroups or any column of the SPC at the site or horizon levels
+table(pedons$taxsubgrp)
+sort(table(pedons$taxsubgrp), decreasing = TRUE)
+```
+
+#### `dput()`
+
+Another very useful function is `dput()`, which prints a string-representation of the output of an R expression as code that generates that output so that you can re-use it. 
+
+It is also good short-hand for concatenating a comma-delimited list. 
+
+Here, we select the first four `pedon_id` values in `pedons` site table, and print out a comma-separated `c()` expression showing those values as a static R expression.
+
+```{r, eval=TRUE}
+data("gopheridge", package = "soilDB")
+pedons <- gopheridge
+
+dput(site(pedons)$pedon_id[1:4])
+```
+
+This result string can be copy-pasted as a comma-delimited string, used as string for NASIS list queries or other things.
+
+The `dput()` function is helpful when sending questions or example data to colleagues. Here, we see that the results of `dput()` are equivalent to the input after evaluation by R.
+
+```{r}
+all(c("08DWB028", "07RJV098", "07RJV099", "S2007CA009002") == site(pedons)$pedon_id[1:4])
+```
+
+#### The `dplyr` package
+
+This is a stub to talk about `dplyr` some links to tidyverse-centric examples of working with `data.frame`/`tibble` and summarizing them. 
+
+Talk about cool things like `rowwise()`, `across()` and translation to high-performance code (`dtplyr`) and SQL (`dbplyr`).
+
+<!--
+Brief point on why students learning R probably should use it for certain things at least. 
+
+ - Abundant resources available
+ 
+ - Now mature
+
+ - Many options for inputs, ways to do things
+ 
+ - Possibly more expressive code, in a consistent style (easier to share with others?)
+ 
+But also that they should have a basic understanding how could be done in base R -- if nothing else to be better-informed of their (probably easier `dplyr`) choices. 
+
+Anecdote about using `dplyr` for very simple base R things, and deprecation/package stability in general. `dplyr` is stable now, but it wasn't. Be aware of that kind of thing when you use a new package.
+-->
+
+<!--
+##### `dplyr` and `aqp`
+
+This is a stub to talk about making dplyr and aqp play nice in the NAMESPACE.
+-->
+
+### Missing Values
+
+```{r, eval=TRUE}
+table(pedons$taxsubgrp, useNA = "ifany")
+
+#  is.na(...) 
+table(is.na(pedons$taxsubgrp))
+
+#  is NOT NA !is.na(...)
+table(!is.na(pedons$taxsubgrp))
+
+# it can also be applied to horizon level columns in the SPC
+sort(table(pedons$texture), decreasing=TRUE)
+```
+
+### Logical Operators
+  - Less than `<`, greater than `>`, less than or equal to `<=`, and greater than or equal to `>=`.
+  - `%in%` Equivalent to `IN ()` in SQL; same logic as `match()`
+    - Example: `pedons$taxpartsize %in% c('loamy-skeletal', 'sandy-skeletal')`
+    - Returns a vector of `TRUE`/`FALSE` equal in length to left-hand side.
+  - `!=` Not-equal-to character "string."
+  - `==` Note in the example above that R uses a double equal sign as "equal to."
+  
+### Pattern Matching
+
+The following examples use the `grep()` function to pattern match within the data, create an index of the `SoilProfileCollection` for records that match the specified pattern within that column, and then use that index to filter to specific sites and their corresponding profiles. 
+Patterns are specified using [regular expression](http://regexr.com/) (REGEX) syntax.
+
+This process can be applied to many different columns in the SPC based on how you need to filter the data.  This example pattern matches on the `tax_subgroup` column, but another useful application might be to pattern match on geomorphology or parent material.
+
+Say we want to see what the variation of particle size classes are within a specific subgroup? We can use `grep()` to create a row index, then apply that index to the `SoilProfileCollection`. 
+
+```{r, eval=TRUE}
+# create a numeric index for pedons with taxsubgroup containing 'typic'
+idx <- grep('typic', pedons$taxsubgrp)
+idx
+
+# use square bracket notation to subset 'typic' soils in `subset1` object
+subset1 <- pedons[idx,]
+subset1
+
+# or use the index directly to summarize taxpartsize for 'typic' soils
+sort(table(pedons$taxpartsize[idx]), decreasing = TRUE)
+```
+
+Note: `grep()` below  has an `invert` argument (default `FALSE`). This option is very useful for excluding the results of the pattern matching process by inverting whatever the result is. `grepl()` is the _logical_ version of `grep()`, so you can invert it using the logical NOT operator: `!`.
+
+Another method is to create an index using `which()` function. `which()` takes any logical vector (or expression), and it returns the indices (positions) where that expression returns `TRUE`.
+
+_Do a graphical check to see the "typic" profiles are selected._
+
+Plot them in R using the `SoilProfileCollection` "plot" method (e.g., specialized version of the generic `plot()` function).
+
+```{r, eval=TRUE, fig.width=8, fig.height=4}
+# adjust margins
+par(mar=c(1,0,0,1))
+
+# plot the first 10 profiles of subset1
+plot(subset1[1:10, ], label = 'taxsubgrp', max.depth = 60)
+title('Pedons with the word "typic" at subgroup-level of Soil Taxonomy', line=-2)
+```
+
+For more information on using regular expressions in `grep()` for pattern matching operations, see: [Regular-expression-syntax](https://www.gnu.org/software/findutils/manual/html_node/find_html/grep-regular-expression-syntax.html).
+
+Quick check: _Compare or run these commands with some code, and review the documentation, to answer the questions._
+
+ - _True or False_: `grepl()` returns a _numeric_ vector 
+ - _True or False_: `which(grepl('typic', pedons$taxsubgrp))` is the same as `grep('typic', pedons$taxsubgrp)`.
+
+#### Important syntax options for REGEX pattern matching
+
+  - `|` `OR` operator for multiple expressions: 
+    - Example:  `grep('loamy|sandy', c("loamy-skeletal","sandy","sandy-skeletal"))` ==> "loamy _OR_ sandy"
+    
+  - `^` Anchor to beginning of string / line: 
+    - Example:  `grep('^sandy', c("loamy-skeletal","sandy","sandy-skeletal"))` ==> "_STARTS WITH_ sandy"
+    
+  - `$` Anchor to end of string / line: 
+    - Example:  `grep('skeletal$', c("loamy-skeletal","sandy","sandy-skeletal"))` ==> "_ENDS WITH_ skeletal"
+  
+  - `\\b` Anchor to word boundary: 
+    - Example:  `grep('\\bmesic', c("mesic","thermic","isomesic"))` ==> "_WORD STARTS WITH_ mesic" (e.g. not "isomesic")
+
+#### Resources for learning about regular expressions
+
+  - https://regex101.com/ & https://regexr.com/ - Online regular expression testers
+  - http://www.regular-expressions.info/quickstart.html - One-page regular expression quick start guide
+  
+### Filtering
+
+A variety of methods are available to subset or "filter" R data objects, from `data.frame` or vector, to something more complex like a `Spatial` object or a `SoilProfileCollection`.
+
+You can index many R objects using numeric or logical expressions as above. There are also methods that make this process a little easier. 
+
+The base R method for this is `subset()` and it works on `data.frame` objects. It is nice because you can specify column names without explicitly referencing the data set, since subset uses non-standard evaluation of expressions passed as arguments.
+
+### Filtering Data by Logical Criteria with `aqp::subset`
+
+We use the `SoilProfileCollection` `subset` method, where we first specify a data (`pedons`) object then we can write expressions for the columns that exist in that object.
+
+Here, we combine two logical expressions to find `taxsubgrp` containing `"alfs"` (Alfisols) with `obsdate` before January 1st, 2010. 
+
+```{r, eval=TRUE,  fig.width=8, fig.height=4}
+subset2 <- subset(pedons, grepl("alfs", taxsubgrp) & obs_date < as.POSIXlt("2010-01-01"))
+
+# check taxonomic range of particle size classes in the data
+# overwhelmingly these are described as loamy-skeletal ultic haploxeralfs
+sort(table(subset2$taxsubgrp), decreasing=TRUE)
+sort(table(subset2$taxpartsize), decreasing=TRUE)
+
+# a double equal sign '==' is used for exact character or numeric criteria
+subset3 <- subset(subset2, taxpartsize == 'loamy-skeletal')
+
+table(subset3$taxpartsize)
+
+par(mar=c(0,0,2,1))
+
+plotSPC(subset3[1:12,], print.id = FALSE)
+
+title('Loamy-skeletal Ultic Haploxeralfs')
+```
+
+### Dates and Times
+
+Unix time is a system for describing a point in time. It is the number of seconds that have elapsed since the Unix epoch, minus leap seconds; the Unix epoch is 00:00:00 UTC on 1 January 1970.
+
+Above, we use the fact that you can logically compare dates and times if their string representation is converted to a common base R UNIX time representation known as `POSIXlt`. This conversion accounts for important things like timezone, using your current locale -- which is important to keep in mind.
+
+### Review of Data Checks Run by `fetchNASIS()`
+
+Now that you've loaded some data and learned a little about how to filter data in the SPC, you can quickly review some of the `get()` functions used to track data issues detected in the process of loading data back to the NASIS records in your selected set.
+
+```{r}
+get('sites.missing.pedons', envir = soilDB.env)
+get('dup.pedon.ids', envir = soilDB.env)
+get('bad.pedon.ids', envir = soilDB.env)
+get('bad.horizons', envir = soilDB.env)
+```
+
+```{r, eval=FALSE}
+idx <- pedons$pedon_id %in% get('bad.pedon.ids', envir = soilDB.env)
+
+good.pedons <- pedons[which(idx),]
+bad.pedons <-  pedons[which(!idx),]
+```
+
+## Extended Data Functions
+
+Additional data related to both site and horizon information can be fetched using the `get_extended_data_from_NASIS()` function.
+
+This data is not automatically brought into a `SoilProfileCollection` because these data elements are typically related to the site or horizon data in one-to-many relationships. 
+
+<!-- For example, multiple diagnostic features could exist within one pedon. Below is a summary of additional information that can be readily brought into R from your NASIS selected set via the `get_extended_data_from_NASIS()` function.
+
+```{r owndata_j1, eval=FALSE, echo=TRUE, results='show', warning=FALSE, collapse=TRUE}
+# fetch extended site and horizon data
+e <- get_extended_data_from_NASIS_db()
+
+### site and pedon related extended data
+# vegetation data summary
+colnames(e$ecositehistory) 
+
+# diagnostic features
+colnames(e$diagnostic) 
+
+# surface rock fragments
+colnames(e$surf_frag_summary)
+
+# geomorphic description
+colnames(e$geomorph)
+
+# taxonomic history data
+colnames(e$taxhistory)
+
+# linked photo stored in site textnotes
+colnames(e$photo) 
+
+# site parent materials
+colnames(e$pm)
+
+### horizon related extended data
+# rock fragments 
+colnames(e$frag_summary) 
+
+# soil texture modifers
+colnames(e$texmodifier)
+
+# soil structure data
+colnames(e$struct) 
+```
+
+The "Geomorphic description" and "parent materials" attributes are important soil data. 
+
+They can be useful handles for exploring other data. The soilDB package flattens the nested table structure of parent material and geomorphic description within NASIS into single strings for each site-level record. The pattern matching concepts demonstrated above select profiles based on parts of these strings. 
+-->
+<!--
+The following code generates a simple graphical summary of the 10 most commonly occurring landforms in `fetchNASIS()` data so you can see their frequency of occurrence. 
+
+```{r owndata_c, eval=FALSE, results='show'} 
+# graphically tabulate the occurrence of landforms
+# load required libraries
+library(soilDB)
+
+# required for dotchart2()
+library(Hmisc)
+
+# load data from a NASIS selected set
+pedons <- gopheridge #fetchNASIS(from = 'pedons')
+
+# create 'lf' object of landform factors sorted in descending order
+lf <- sort(table(pedons$landform_string), decreasing = TRUE)
+
+# plot top 10 or length, whichever is shorter
+dotchart2(lf[1:pmin(10, length(lf))], col='black', xlim = c(0, max(lf)), cex.labels = 0.75)
+```
+-->
+
+### Thicknesses of Diagnostic Features
+
+#### `fetchNASIS`: Boolean Diagnostic Feature Columns
+
+If diagnostic features are populated in the pedon diagnostic features table in NASIS, then Boolean (`TRUE` or `FALSE`) fields are created for each diagnostic feature in the data brought in by soilDB. 
+
+These fields can be readily used to model the presence or absence of a diagnostic soil feature by extracting the site data from the SoilProfileCollection with `site()`.
+
+The following is an example of how you could use the diagnostic features (if populated!) from the extended data to determine the thickness of a diagnostic feature of interest.
+
+```{r, eval=TRUE, warning=FALSE, fig.width=6, fig.height=4}
+# rename gopheridge data
+data("gopheridge")
+f <- gopheridge
+
+# get diagnostic features associated with pedons loaded from selected set
+d <- diagnostic_hz(f)
+
+# summary of the diagnostic features in your data!
+unique(d$featkind)
+sort(table(droplevels(factor(d$featkind))), decreasing = TRUE)
+
+# subset argillic horizons
+d <- d[d$featkind == 'argillic horizon', ]
+
+# create a new column and subtract the upper from the lower depth
+d$argillic_thickness_cm <- d$featdepb - d$featdept
+
+# create another new column with the upper depth to the diagnostic feature
+d$depth_to_argillic_cm <- d$featdept
+
+# omit NA values
+d <- na.omit(d)
+
+# subset to pedon records IDs and calculated thickness
+d <- d[, c('peiid', 'argillic_thickness_cm', 'depth_to_argillic_cm')]
+head(d)
+
+# left-join with existing site data
+site(f) <- d
+
+# plot as histogram
+par(mar = c(4.5, 4.5, 1, 1))
+
+hist(f$argillic_thickness_cm, xlab = 'Thickness of argillic (cm)', main = '')
+hist(f$depth_to_argillic_cm, xlab = 'Depth to argillic top depth (cm)', main = '')
+```
+
+Quick check: _What can you do with the boolean diagnostic feature data stored in the site table of a `fetchNASIS` `SoilProfileCollection`?_
+s
+### Diagnostic Feature Diagrams
+
+```{r, eval=TRUE, warning=FALSE, fig.height=9, fig.width=7}
+## work up diagnostic plot based on gopheridge dataset
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+
+# load data
+data(gopheridge)
+
+# can limit which diagnostic features to show by setting 'v' manually
+v <- c('ochric.epipedon', 'cambic.horizon', 
+       'argillic.horizon', 'paralithic.contact', 
+       'lithic.contact')
+
+# generate diagnostic property diagram
+diagnosticPropertyPlot(gopheridge, v, k = 5, 
+                       grid.label = 'site_id', 
+                       dend.label = 'taxonname', 
+                       sort.vars = FALSE)
+
+# plot with diagnostic features ordered according to co-occurrence
+diagnosticPropertyPlot(gopheridge, v, k = 5, 
+                       grid.label = 'site_id', 
+                       dend.label = 'taxonname', 
+                       sort.vars = TRUE)
+```
+
+#### Follow along with your own data
+
+Use the following script to generate a diagnostic-feature diagram for the pedon data you've loaded from your NASIS selected set.
+
+Note: If the data includes more than about 20 pedons, the script might generate figures that are very hard to read. You also need to be certain that pedon diagnostic feature were populated in your data.
+
+Select a series of diagnostic properties or automatically pull diagnostic feature columns.
+
+```{r owndata_l, eval=FALSE, fig.height=9, fig.width=7}
+library(aqp)
+library(soilDB)
+library(sharpshootR)
+
+# Load data
+f <- fetchNASIS(from = 'pedons')
+
+# May need to subset to a particular series or taxon here...
+#  to reduce the number of pedons!
+
+# get all diagnostic feature columns from site data by pattern matching on '[.]' in the colnames
+idx <- grep('[.]', colnames(site(f)))
+v <- colnames(site(f))[idx]
+v
+
+# or insert diagnostics of interest 
+# from the list of possible diagnostics in 'v'
+v <- c('ochric.epipedon', 'cambic.horizon', 
+       'argillic.horizon', 'paralithic.contact',
+       'lithic.contact')
+
+# generate diagnostic property diagram
+diagnosticPropertyPlot(f, v, k = 5, 
+                       grid.label = 'site_id', 
+                       dend.label = 'taxonname')
+```
+
+For more information on generating diagnostic feature diagrams, see the following tutorial:
+[**Diagnostic Feature Property Plots**](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html).
+
+## Soil Reports
+
+One of the strengths of NASIS is that it that has many queries and reports to access the complex data. This makes it easy for the average user to load their data, process it and run numerous reports. 
+
+`soilReports` contains a small collection of reports mostly designed to summarize data into consistent report formats. This collection of reports automates many methods we have reviewed so far, but are no substitute for interacting with your data and asking questions. 
+
+Example report output can be found at the following link: [https://github.com/ncss-tech/soilReports#example-output](https://github.com/ncss-tech/soilReports#example-output).
+
+Detailed instructions are provided for each report: [https://github.com/ncss-tech/soilReports#choose-an-available-report](https://github.com/ncss-tech/soilReports#choose-an-available-report)
+
+Running and interpreting one of these reports would be a fine class project.
+
+You can convert any of your R-based analyses to the `soilReports` format. The `soilReports` R package is essentially just a collection of R Markdown (_.Rmd_) reports, each with a "manifest" that describes any required dependencies, configuration files or inputs. 
+
+R Markdown is a markup format for creating reproducible, dynamic reports with R. It allows R code and text to be mingled in the same document and executed like an R script. This allows R to generate reports similar to, and even more powerful than, NASIS.
+
+Let's demonstrate how to run an existing _.Rmd_ to summarize laboratory data for a soil series.
+
+### Requirements
+
+-	Data are properly populated, otherwise the report may fail. Common examples include:
+    -	Horizon depths don't lineup
+    -	Either the Pedon or Site tables isn't loaded
+-	ODBC connection to NASIS is setup
+- Beware each report has a unique configuration file that may need to be edited. 
+
+### Instructions
+
+1. **Load** your NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by upedonid and Taxon Name" from the Region 11 report folder to load your selected set. Be sure to target both the site, pedon and lab layer tables. **Remove** from your selected set the pedons and sites you wish to exclude from the report.
+
+2.	**Install/re-install** the `soilReports` package. This package is updated regularly (e.g. weekly), and should be installed from GitHub regularly.
+
+```{r, eval=FALSE}
+# Install the soilReports package from GitHub
+remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, build=FALSE)
+```
+
+3. **View** the list of available reports.
+
+```{r, eval=TRUE}
+# Load the soilReports 
+library(soilReports)
+
+# List reports
+listReports()
+```
+
+4. **Copy** the lab summary to your working directory.
+
+```{r, eval=FALSE}
+copyReport(reportName = "region11/lab_summary_by_taxonname", outputDir = "C:/workspace2/lab_sum")
+```
+
+5. **Examine** the report folder contents. 
+
+The report is titled `report.Rmd`. Notice there are several other support files. The parameters for the report are contained in the `config.R` file.
+
+![](static-figures/report_folder.png)
+
+6. **Check** or **create** a genhz\_rules file for a soil series. In order to aggregate the pedons by horizon designation, a genhz\_rules file (e.g., Miami_rules.R) is needed. See above.
+
+If none exists see the following job aid on how to create one, [Assigning Generalized Horizon Labels](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html).
+
+![](static-figures/miamian_rules.png)
+
+Pay special attention to how caret `^` and dollar `$` symbols are used in REGEX. They function as _anchors_ for the beginning and end of the string, respectively. 
+
+ * A `^` placed before an A horizon, `^A`, will match any horizon designation that starts with A, such as Ap, Ap1, but _not_ something merely containing A, such as BA. 
+
+ * Placing a `$` after a Bt horizon, `Bt$`, will match any horizon designation that ends with Bt, such as 2Bt or 3Bt, but _not_ something with a vertical subdivision, such as Bt2. 
+ 
+ * Wrapping pattern with both `^` and `$` symbols will result only in exact matches -- i.e. that start and end with the contents between `^` and `$`. For example `^[AC]$`, will only match A or C, _not_ Ap, Ap2, or Cg.
+
+6. **Execute** the report.
+
+**Command-line approach**
+
+```{r, eval=FALSE}
+# Set report parameters
+series <- "Miami"
+genhz_rules <- "C:/workspace2/lab_sum/Miami_rules.R"
+
+# report file path
+report_path <- "C:/workspace2/lab_sum/report.Rmd"
+
+# Run the report
+render(input = report_path, 
+       output_dir = "C:/workspace2", 
+       output_file = "C:/workspace2/lab_sum.html", 
+       envir = new.env(), 
+       params = list(series = series,
+                     genhz_rules = genhz_rules
+                     )
+       )
+
+```
+
+**Manual approach**
+
+**Open** the report.Rmd, **hit** the Knit drop down arrow, and select **Knit with Parameters**. 
+
+![](static-figures/knit_button.png)
+
+7.	**Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e., "C:/workspace/lab\_sum/report.html"), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing and/or convert it to a PDF. 
+
+Also, beware when opening the .html file with Internet Explorer -- be sure to click on "Allow blocked content" if prompted. Otherwise, Internet Explorer will alter the formatting of tables etc. within the document.
+
+**Sample pedon report**
+ 
+![](static-figures/rmd_sample.png)
+
+### Exercise: run the region11/lab\_summary\_by\_taxonname
+
+- Load your selected set with the pedon and site table for an existing GHL file, or make your own (highly encouraged)
+- Run the `lab_summary_by_taxonname.Rmd` report on a soil series of your choice.
+- Show your work and submit the results to your mentor.
+
+### Exercise: Run Mapunit Comparison
+
+Another popular report in `soilReports` is the `region2/mu-comparison` report. 
+
+This report uses constant density sampling (`sharpshootR::constantDensitySampling()`) to extract numeric and categorical values from multiple raster data sources that overlap a set of user-supplied polygons. 
+
+In this example, we clip a small portion of SSURGO polygons from the CA630 soil survey area extent. We then select a small set of mapunit symbols (5012, 3046, 7083, 7085, 7088) that occur within the clipping extent. These mapunits have soil forming factors we expect to contrast with one another in several ways. You can inspect other mapunit symbols by changing `mu.set` in `config.R`.
+
+1. **Download** the demo data:
+
+```{r eval=FALSE}
+# set up ch4 path and path for report
+ch4.data.path <- "C:/workspace2/chapter4"
+ch4.mucomp.path <- paste0(ch4.data.path,"/mucomp")
+
+# create any directories that may be missing
+if(!dir.exists(ch4.mucomp.path)) {
+  dir.create(ch4.mucomp.path, recursive = TRUE)
+}
+
+# download raster data, SSURGO clip from CA630, and sample script for clipping your own raster data 
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_4-mucomp-data/ch4_mucomp-data.zip', paste0(ch4.mucomp.path, '/chapter_4-mucomp-data.zip'))
+
+unzip(paste0(ch4.mucomp.path, '/chapter_4-mucomp-data.zip'), exdir = ch4.mucomp.path, overwrite = TRUE)
+```
+
+2. **Create an instance** of the `region2/mu-comparison` report with `soilReports`:
+
+```{r eval=FALSE}
+# create new instance of reports 
+library(soilReports)
+
+# get report dependencies
+reportSetup('region2/mu-comparison')
+
+# create report instance
+copyReport('region2/mu-comparison', outputDir = ch4.mucomp.path, overwrite = TRUE)
+```
+
+If you want, you can now set up the default `config.R` that is created by `copyReport()` to work with your own data. OR you can use the "sample" `config.R` file (called `new_config.R`) in the ZIP file downloaded above. 
+
+3. Run the code below to **replace the default** `config.R` with the sample `config.R`:
+
+```{r eval=FALSE}
+# copy config file containing relative paths to rasters downloaded above
+file.copy(paste0(ch4.mucomp.path, "/new_config.R"), paste0(ch4.mucomp.path,"/config.R"), overwrite = TRUE)
+```
+
+4. **Open** `report.Rmd` in the `C:/workspace2/chapter4/mucomp` folder and click the "Knit" button at the top of the RStudio source pane to run the report.
+
+5. Inspect the report output HTML file, as well as the spatial and tabular data output in the `output` folder. 
+
+_Question: What are the major differences that you can see, based on the report, between the five different mapunit symbols that were analysed?_
+
+### Exercise: Run Shiny Pedon Summary
+
+The `region2/shiny-pedon-summary` report is an interactive Shiny-based report that uses `flexdashboard` to help the user subset and summarize NASIS pedons from a graphical interface. This allows one to rapidly generate reports from a large set of pedons in their NASIS selected set. 
+
+The left INPUT sidebar has numerous options for subsetting pedon data. Specifically, you can change REGEX patterns for _mapunit symbol_, _taxon name_, _local phase_, and _User Pedon ID_. Also, you can use the drop down boxes to filter on _taxon kind_ or compare different "modal"/RV pedons.
+
+![Example: Analyzing the Loafercreek Taxadjuncts](https://ncss-tech.github.io/soilReports/docs/shiny-pedon-summary/shiny-pedon_loafercreek-taxadjuncts.PNG)
+
+1. **Create an instance** of the `region2/shiny-pedon-summary` report with `soilReports`:
+
+```{r eval=FALSE}
+# create new instance of reports 
+library(soilReports)
+
+# set path for shiny-pedon-summary report instance
+ch4.shinyped.path <- "C:/workspace2/chapter4/shiny-pedon"
+
+# create directories (if needed)
+if(!dir.exists(ch4.shinyped.path))
+  dir.create(ch4.shinyped.path, recursive = TRUE)
+
+# get report dependencies
+reportSetup('region2/shiny-pedon-summary')
+
+# copy report contents to target path
+copyReport('region2/shiny-pedon-summary', outputDir = ch4.shinyped.path, overwrite = TRUE)
+```
+
+2. Update the `config.R` file
+
+You can update the `config.R` file in "C:/workspace2/chapter4/shiny-pedon" (or wherever you installed the report) to use the `soilDB` datasets `loafercreek` and `gopheridge` by setting `demo_mode <- TRUE`. This is the _simplest_ way to demonstrate how this report works. Alternately, when `demo_mode <- FALSE`, pedons will be loaded from your NASIS selected set.
+
+`config.R` also allows you to specify a shapefile for overlaying the points on -- to determine mapunit symbol -- as well as several raster data sources whose values will be extracted at point locations and summarized. The demo dataset does not use either of these by default, due to large file sizes. 
+
+Furthermore, a default (very general) set of REGEX generalized horizon patterns is provided to assign generalized horizon labels for provisional grouping. These provided patterns are unlikely to cover ALL cases, and essentially _always_ need to be modified for final correlation. That said, they do a decent job of making a first-pass correlation for diverse types of soils. 
+
+The default `config.R` settings use the general patterns: `use_regex_ghz <- TRUE`. You are welcome to modify the defaults. If you want to use the values you have populated in NASIS _Pedon Horizon Component Layer ID_, set `use_regex_ghz <- FALSE`.
+
+3. Run the report via `shiny.Rmd`
+
+This report uses the Shiny `flexdashboard` interface. Open up `shiny.Rmd` and click the "Run Document" button to start the report. This will load the pedon and spatial data specified in `config.R`.
+
+**NOTE:** _If a Viewer Window does not pop-up right away, click the gear icon to the right of the "Run Document" button. Be sure the option "Preview in Window" is checked, then click "Run Document" again._
+
+4. All of the subsetting parameters are in the left-hand sidebar. Play around with all of these options -- the graphs and plots in the tabs to the right will automatically update as you make changes.
+
+5. When you like what you have, you can export a non-interactive HTML file for your records. To do this, first, set the "Report name:" box to something informative -- this will be your report output file name. Then, scroll down to the bottom of the INPUT sidebar and click "Export Report" button. Check the "output" folder (subdirectory of where you installed the report) for your results.
+
+
+## Customized Queries to Local NASIS Database
+
+Queries against the NASIS local database can be written in [T-SQL](https://en.wikipedia.org/wiki/Transact-SQL) which is the dialect of [SQL](https://en.wikipedia.org/wiki/SQL) used to communicate with Microsoft SQL Server that you set up a connection to for the pre-course. 
+
+The `fetchNASIS` and related convenience functions are essentially wrappers around commonly used chunks of SQL.
+
+The following example will return all records from the `sitesoiltemp` table, along with a couple of fields from the `site`, `siteobs`, and `pedon` tables. This is a convenient way to collect all of the field-based soil temperature data associated with the pedons in your selected set for further analysis.
+
+### `RODBC` package
+
+This example uses `RODBC`. 
+
+```{r, fig.width=7, fig.height=4, eval=FALSE}
+library(soilDB)
+library(RODBC) 
+
+# write query as a character string
+q <- "SELECT siteiid as siteiid, peiid, usiteid as site_id, 
+             upedonid as pedon_id, obsdate as obs_date,
+             soitemp, soitempdep FROM site_View_1
+       INNER JOIN siteobs_View_1 ON site_View_1.siteiid = siteobs_View_1.siteiidref
+       LEFT OUTER JOIN sitesoiltemp_View_1 ON siteobs_View_1.siteobsiid = sitesoiltemp_View_1.siteobsiidref
+       LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref
+      ORDER BY obs_date, siteiid;"
+
+# setup connection local NASIS
+channel <- odbcDriverConnect(connection = getOption("soilDB.NASIS.credentials"))
+
+# exec query
+d <- sqlQuery(channel, q, stringsAsFactors = FALSE)
+
+# close connection
+odbcClose(channel)
+
+# check results
+str(d)
+
+# remove records missing values
+d <- na.omit(d)
+
+# tabulate unique soil depths
+table(d$soitempdep)
+
+# extract doy of year
+d$doy <- as.integer(format(d$obs_date, "%j"))
+
+# when where measurements collected?
+hist(
+  d$doy,
+  xlim = c(1, 366),
+  breaks = 30,
+  las = 1,
+  main = 'Soil Temperature Measurements',
+  xlab = 'Day of Year'
+)
+
+# soil temperature by day of year
+plot(
+  soitemp ~ doy,
+  data = d,
+  type = 'p',
+  xlim = c(1, 366),
+  ylim = c(-1, 25),
+  xlab = 'Day of Year',
+  ylab = 'Soil Temperature at 50cm (deg C)',
+  las = 1
+)
+```
+
+### `DBI`
+
+You should know that the `DBI` and `odbc` packages provide same functions as `RODBC` via a more generic interface. 
+
+There are many other drivers available for `DBI`, for example `RSQLite` for SQLite databases. This will soon be the database framework used in `soilDB` for NASIS access.
+
+<!--chapter:end:02-data.Rmd-->
+
+
+# Exploratory Data Analysis 
+
+Placeholder
+
+
+## Objectives
+## Statistics
+##  Data Inspection
+###  Exercise: fetch and inspect
+## Descriptive Statistics
+### Measures of Central Tendency  
+### Measures of Dispersion  
+### Correlation
+## Graphical Methods
+### Distributions
+### Bar Plot
+### Histogram
+### Density Curve
+### Box plots  
+### Quantile comparison plots (QQplot)  
+### The 'Normal' distribution
+### Scatterplots and Line Plots
+### 3rd Dimension - Color, Shape, Size, Layers, etc...
+#### Color and Groups
+#### Facets - box plots
+#### Facets - depth plots
+## Transformations
+### pH
+### Circular data
+## References  
+## Additional Reading
+
+<!--chapter:end:03-eda-application.Rmd-->
+
+
+# Spatial Data in R
+
+Placeholder
+
+
+## Objectives
+## Spatial Data Sources
+## Many Packages, Many Spatial Representations
+### The `sf` package
+#### `sf` vignettes
+### The `sp` Package 
+### Converting `sp` and `sf`
+### Importing / Exporting Vector Data
+#### `sf` 
+#### `sp` / `rgdal` 
+### Interactive mapping with `mapview` and `leaflet`
+### The `raster` Package
+##### `terra`
+##### `stars`
+#### Importing / Exporting Rasters
+#### Object Properties
+#### Fast Raster Sampling and Aggregation with `exactextractr`
+## Coordinate Reference Systems
+### Assigning and Transforming Coordinate Systems
+#### `sf`
+#### `sp` / `rgdal`
+#### `raster`
+#### Related Links
+#### Interacting with `sp` Objects
+#### Coordinate Reference Systems and `proj4` Syntax
+### Accessing Spatial Data Sources via GDAL/OGR
+##### Data Types
+##### Notes on Compression
+### Spatial Overlay Operations
+### Raster Data Sampling
+## Exercises
+### Example Data
+#### Download Example Data
+### Load the data
+### Basic sampling and extraction
+#### Extracting Raster Data at KSSL Pedon Locations
+#### Summarizing PRISM Data by Series Extent
+#### Summarizing PRISM Data by MLRA Polygon
+### Interactive Summaries
+## Additional Reading
+
+<!--chapter:end:04-spatial.Rmd-->
+
+
+# Sampling
+
+Placeholder
+
+
+## Introduction   
+## Sampling Strategies
+### Simple Random 
+### Stratified Random
+### Multistage Stratified Random
+### Systematic
+### Cluster
+### Conditioned Latin Hypercube (cLHS)
+## Evaluating a Sampling Strategy
+### Exercise: Design a Sampling Strategy
+## Other Tools for Selecting Random Features  
+### cLHS Using TEUI  
+### Two-Stage Stratified Random Sample Design Using ArcGIS
+## References
+## Additional Reading
+
+<!--chapter:end:05-sampling.Rmd-->
+
