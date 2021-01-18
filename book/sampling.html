@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 5 Sampling | Statistics for Soil Survey - Part 1</title>
+  <meta name="description" content="Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::gitbook." />
+  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 5 Sampling | Statistics for Soil Survey - Part 1" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::gitbook." />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 5 Sampling | Statistics for Soil Survey - Part 1" />
+  
+  <meta name="twitter:description" content="Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::gitbook." />
+  
+
+<meta name="author" content="Soil Survey Staff" />
+
+
+<meta name="date" content="2021-01-18" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="spatial-data-in-r.html"/>
+
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+<script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+<link href="libs/leaflet-1.3.1/leaflet.css" rel="stylesheet" />
+<script src="libs/leaflet-1.3.1/leaflet.js"></script>
+<link href="libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet" />
+<script src="libs/proj4-2.6.2/proj4.min.js"></script>
+<script src="libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
+<link href="libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet" />
+<script src="libs/leaflet-binding-2.0.4.1/leaflet.js"></script>
+<script src="libs/leaflet-providers-1.9.0/leaflet-providers_1.9.0.js"></script>
+<script src="libs/leaflet-providers-plugin-2.0.4.1/leaflet-providers-plugin.js"></script>
+<link href="libs/HomeButton-0.0.1/home-button.css" rel="stylesheet" />
+<script src="libs/HomeButton-0.0.1/home-button.js"></script>
+<script src="libs/HomeButton-0.0.1/easy-button-src.min.js"></script>
+<script src="libs/clipboard-0.0.1/setClipboardText.js"></script>
+<link href="libs/mapviewCSS-0.0.1/mapview-popup.css" rel="stylesheet" />
+<link href="libs/mapviewCSS-0.0.1/mapview.css" rel="stylesheet" />
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Statistics for Soil Survey - Part 1</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Pre-course Assignment</a><ul>
+<li class="chapter" data-level="0.1" data-path="index.html"><a href="index.html#create-workspace"><i class="fa fa-check"></i><b>0.1</b> Create Workspace</a></li>
+<li class="chapter" data-level="0.2" data-path="index.html"><a href="index.html#configure-rstudio"><i class="fa fa-check"></i><b>0.2</b> Configure RStudio</a></li>
+<li class="chapter" data-level="0.3" data-path="index.html"><a href="index.html#essentials"><i class="fa fa-check"></i><b>0.3</b> Essentials</a></li>
+<li class="chapter" data-level="0.4" data-path="index.html"><a href="index.html#personalization"><i class="fa fa-check"></i><b>0.4</b> Personalization</a></li>
+<li class="chapter" data-level="0.5" data-path="index.html"><a href="index.html#install-.rprofile"><i class="fa fa-check"></i><b>0.5</b> Install .RProfile</a></li>
+<li class="chapter" data-level="0.6" data-path="index.html"><a href="index.html#install-required-packages"><i class="fa fa-check"></i><b>0.6</b> Install Required Packages</a></li>
+<li class="chapter" data-level="0.7" data-path="index.html"><a href="index.html#common-errors"><i class="fa fa-check"></i><b>0.7</b> Common Errors</a><ul>
+<li class="chapter" data-level="0.7.1" data-path="index.html"><a href="index.html#no-output-is-produced-after-pasting-into-console"><i class="fa fa-check"></i><b>0.7.1</b> No output is produced after pasting into console</a></li>
+<li class="chapter" data-level="0.7.2" data-path="index.html"><a href="index.html#somepackage-is-not-available-for-r-version-x.y.z"><i class="fa fa-check"></i><b>0.7.2</b> <code>‘SOMEPACKAGE’ is not available (for R version X.Y.Z)</code></a></li>
+</ul></li>
+<li class="chapter" data-level="0.8" data-path="index.html"><a href="index.html#packages-not-on-cran"><i class="fa fa-check"></i><b>0.8</b> Packages not on CRAN</a></li>
+<li class="chapter" data-level="0.9" data-path="index.html"><a href="index.html#connect-local-nasis"><i class="fa fa-check"></i><b>0.9</b> Connect Local NASIS</a></li>
+<li class="chapter" data-level="0.10" data-path="index.html"><a href="index.html#proof"><i class="fa fa-check"></i><b>0.10</b> Proof</a></li>
+</ul></li>
+<li class="chapter" data-level="1" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>1</b> Introduction to R and RStudio</a><ul>
+<li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#outline"><i class="fa fa-check"></i><b>1.1</b> Outline</a></li>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#course-overview"><i class="fa fa-check"></i><b>1.2</b> Course Overview</a><ul>
+<li class="chapter" data-level="1.2.1" data-path="intro.html"><a href="intro.html#course-objectives"><i class="fa fa-check"></i><b>1.2.1</b> Course Objectives</a></li>
+<li class="chapter" data-level="1.2.2" data-path="intro.html"><a href="intro.html#why-is-this-training-needed"><i class="fa fa-check"></i><b>1.2.2</b> Why is this training needed?</a></li>
+<li class="chapter" data-level="1.2.3" data-path="intro.html"><a href="intro.html#why-is-course-organized-this-way"><i class="fa fa-check"></i><b>1.2.3</b> Why is course organized this way?</a></li>
+</ul></li>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a href="intro.html#what-is-r"><i class="fa fa-check"></i><b>1.3</b> What is R?</a><ul>
+<li class="chapter" data-level="1.3.1" data-path="intro.html"><a href="intro.html#why-should-i-learn-r"><i class="fa fa-check"></i><b>1.3.1</b> Why Should I Learn R?</a></li>
+<li class="chapter" data-level="1.3.2" data-path="intro.html"><a href="intro.html#what-can-r-do"><i class="fa fa-check"></i><b>1.3.2</b> What can R do?</a></li>
+<li class="chapter" data-level="1.3.3" data-path="intro.html"><a href="intro.html#packages"><i class="fa fa-check"></i><b>1.3.3</b> Packages</a></li>
+</ul></li>
+<li class="chapter" data-level="1.4" data-path="intro.html"><a href="intro.html#rstudio-an-integrated-development-environment-ide-for-r"><i class="fa fa-check"></i><b>1.4</b> RStudio: An Integrated Development Environment (IDE) for R</a><ul>
+<li class="chapter" data-level="1.4.1" data-path="intro.html"><a href="intro.html#usda-computer-setup"><i class="fa fa-check"></i><b>1.4.1</b> USDA Computer Setup</a></li>
+<li class="chapter" data-level="1.4.2" data-path="intro.html"><a href="intro.html#basic-tips-for-using-r"><i class="fa fa-check"></i><b>1.4.2</b> Basic Tips for using R</a></li>
+<li class="chapter" data-level="1.4.3" data-path="intro.html"><a href="intro.html#working-directories"><i class="fa fa-check"></i><b>1.4.3</b> Working Directories</a></li>
+<li class="chapter" data-level="1.4.4" data-path="intro.html"><a href="intro.html#data-management-in-rstudio"><i class="fa fa-check"></i><b>1.4.4</b> Data Management in RStudio</a></li>
+<li class="chapter" data-level="1.4.5" data-path="intro.html"><a href="intro.html#getting-help"><i class="fa fa-check"></i><b>1.4.5</b> Getting Help</a></li>
+<li class="chapter" data-level="1.4.6" data-path="intro.html"><a href="intro.html#packages-1"><i class="fa fa-check"></i><b>1.4.6</b> Packages</a></li>
+<li class="chapter" data-level="1.4.7" data-path="intro.html"><a href="intro.html#writing-scripts"><i class="fa fa-check"></i><b>1.4.7</b> Writing Scripts</a></li>
+<li class="chapter" data-level="1.4.8" data-path="intro.html"><a href="intro.html#saving-r-files"><i class="fa fa-check"></i><b>1.4.8</b> Saving R Files</a></li>
+</ul></li>
+<li class="chapter" data-level="1.5" data-path="intro.html"><a href="intro.html#review"><i class="fa fa-check"></i><b>1.5</b> Review</a></li>
+<li class="chapter" data-level="1.6" data-path="intro.html"><a href="intro.html#additional-reading-introduction"><i class="fa fa-check"></i><b>1.6</b> Additional Reading (Introduction)</a></li>
+<li class="chapter" data-level="1.7" data-path="intro.html"><a href="intro.html#references-introduction"><i class="fa fa-check"></i><b>1.7</b> References (Introduction)</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="the-data-we-use.html"><a href="the-data-we-use.html"><i class="fa fa-check"></i><b>2</b> The Data We Use</a><ul>
+<li class="chapter" data-level="2.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#objectives-data"><i class="fa fa-check"></i><b>2.1</b> Objectives (Data)</a></li>
+<li class="chapter" data-level="2.2" data-path="the-data-we-use.html"><a href="the-data-we-use.html#the-structure-of-our-data"><i class="fa fa-check"></i><b>2.2</b> The Structure of Our Data</a><ul>
+<li class="chapter" data-level="2.2.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#package-references"><i class="fa fa-check"></i><b>2.2.1</b> Package References</a></li>
+<li class="chapter" data-level="2.2.2" data-path="the-data-we-use.html"><a href="the-data-we-use.html#soildb-functions"><i class="fa fa-check"></i><b>2.2.2</b> soilDB Functions</a></li>
+<li class="chapter" data-level="2.2.3" data-path="the-data-we-use.html"><a href="the-data-we-use.html#importance-of-pedon-data"><i class="fa fa-check"></i><b>2.2.3</b> Importance of Pedon Data</a></li>
+<li class="chapter" data-level="2.2.4" data-path="the-data-we-use.html"><a href="the-data-we-use.html#some-issues-with-pedon-data"><i class="fa fa-check"></i><b>2.2.4</b> Some Issues With Pedon Data</a></li>
+</ul></li>
+<li class="chapter" data-level="2.3" data-path="the-data-we-use.html"><a href="the-data-we-use.html#challenges-with-pedon-data"><i class="fa fa-check"></i><b>2.3</b> Challenges with Pedon Data</a><ul>
+<li class="chapter" data-level="2.3.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#meeting-the-challenges"><i class="fa fa-check"></i><b>2.3.1</b> Meeting the Challenges</a></li>
+</ul></li>
+<li class="chapter" data-level="2.4" data-path="the-data-we-use.html"><a href="the-data-we-use.html#the-aqp-soilprofilecollection"><i class="fa fa-check"></i><b>2.4</b> The <code>aqp</code> <code>SoilProfileCollection</code></a><ul>
+<li class="chapter" data-level="2.4.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#soilprofilecollection-methods"><i class="fa fa-check"></i><b>2.4.1</b> SoilProfileCollection methods</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="the-data-we-use.html"><a href="the-data-we-use.html#using-the-soildb-package"><i class="fa fa-check"></i><b>2.5</b> Using the soilDB Package</a><ul>
+<li class="chapter" data-level="2.5.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#fetchnasis"><i class="fa fa-check"></i><b>2.5.1</b> <code>fetchNASIS()</code></a></li>
+<li class="chapter" data-level="2.5.2" data-path="the-data-we-use.html"><a href="the-data-we-use.html#open-database-connectivity-odbc-connection-to-nasis"><i class="fa fa-check"></i><b>2.5.2</b> Open Database Connectivity (ODBC) Connection to NASIS</a></li>
+<li class="chapter" data-level="2.5.3" data-path="the-data-we-use.html"><a href="the-data-we-use.html#the-gopheridge-soildb-dataset"><i class="fa fa-check"></i><b>2.5.3</b> The <code>gopheridge</code> <code>soilDB</code> Dataset</a></li>
+<li class="chapter" data-level="2.5.4" data-path="the-data-we-use.html"><a href="the-data-we-use.html#prepare-example-data"><i class="fa fa-check"></i><b>2.5.4</b> Prepare Example Data</a></li>
+</ul></li>
+<li class="chapter" data-level="2.6" data-path="the-data-we-use.html"><a href="the-data-we-use.html#viewing-pedon-locations"><i class="fa fa-check"></i><b>2.6</b> Viewing Pedon Locations</a><ul>
+<li class="chapter" data-level="2.6.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#plotting-geographic-data"><i class="fa fa-check"></i><b>2.6.1</b> Plotting Geographic Data</a></li>
+<li class="chapter" data-level="2.6.2" data-path="the-data-we-use.html"><a href="the-data-we-use.html#displaying-pedon-data-in-google-earth"><i class="fa fa-check"></i><b>2.6.2</b> Displaying Pedon Data in Google Earth</a></li>
+<li class="chapter" data-level="2.6.3" data-path="the-data-we-use.html"><a href="the-data-we-use.html#exporting-pedon-data-to-an-esri-shapefile"><i class="fa fa-check"></i><b>2.6.3</b> Exporting Pedon Data to an ESRI Shapefile</a></li>
+<li class="chapter" data-level="2.6.4" data-path="the-data-we-use.html"><a href="the-data-we-use.html#follow-along-with-your-own-data-1"><i class="fa fa-check"></i><b>2.6.4</b> Follow along with your own data</a></li>
+</ul></li>
+<li class="chapter" data-level="2.7" data-path="the-data-we-use.html"><a href="the-data-we-use.html#working-with-data-in-r"><i class="fa fa-check"></i><b>2.7</b> Working with Data in R</a><ul>
+<li class="chapter" data-level="2.7.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#summaries"><i class="fa fa-check"></i><b>2.7.1</b> Summaries</a></li>
+<li class="chapter" data-level="2.7.2" data-path="the-data-we-use.html"><a href="the-data-we-use.html#missing-values"><i class="fa fa-check"></i><b>2.7.2</b> Missing Values</a></li>
+<li class="chapter" data-level="2.7.3" data-path="the-data-we-use.html"><a href="the-data-we-use.html#logical-operators"><i class="fa fa-check"></i><b>2.7.3</b> Logical Operators</a></li>
+<li class="chapter" data-level="2.7.4" data-path="the-data-we-use.html"><a href="the-data-we-use.html#pattern-matching"><i class="fa fa-check"></i><b>2.7.4</b> Pattern Matching</a></li>
+<li class="chapter" data-level="2.7.5" data-path="the-data-we-use.html"><a href="the-data-we-use.html#filtering"><i class="fa fa-check"></i><b>2.7.5</b> Filtering</a></li>
+<li class="chapter" data-level="2.7.6" data-path="the-data-we-use.html"><a href="the-data-we-use.html#filtering-data-by-logical-criteria-with-aqpsubset"><i class="fa fa-check"></i><b>2.7.6</b> Filtering Data by Logical Criteria with <code>aqp::subset</code></a></li>
+<li class="chapter" data-level="2.7.7" data-path="the-data-we-use.html"><a href="the-data-we-use.html#dates-and-times"><i class="fa fa-check"></i><b>2.7.7</b> Dates and Times</a></li>
+<li class="chapter" data-level="2.7.8" data-path="the-data-we-use.html"><a href="the-data-we-use.html#review-of-data-checks-run-by-fetchnasis"><i class="fa fa-check"></i><b>2.7.8</b> Review of Data Checks Run by <code>fetchNASIS()</code></a></li>
+</ul></li>
+<li class="chapter" data-level="2.8" data-path="the-data-we-use.html"><a href="the-data-we-use.html#extended-data-functions"><i class="fa fa-check"></i><b>2.8</b> Extended Data Functions</a><ul>
+<li class="chapter" data-level="2.8.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#thicknesses-of-diagnostic-features"><i class="fa fa-check"></i><b>2.8.1</b> Thicknesses of Diagnostic Features</a></li>
+</ul></li>
+<li class="chapter" data-level="2.9" data-path="the-data-we-use.html"><a href="the-data-we-use.html#soil-reports"><i class="fa fa-check"></i><b>2.9</b> Soil Reports</a><ul>
+<li class="chapter" data-level="2.9.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#requirements"><i class="fa fa-check"></i><b>2.9.1</b> Requirements</a></li>
+<li class="chapter" data-level="2.9.2" data-path="the-data-we-use.html"><a href="the-data-we-use.html#instructions"><i class="fa fa-check"></i><b>2.9.2</b> Instructions</a></li>
+<li class="chapter" data-level="2.9.3" data-path="the-data-we-use.html"><a href="the-data-we-use.html#exercise-run-the-region11lab_summary_by_taxonname"><i class="fa fa-check"></i><b>2.9.3</b> Exercise: run the region11/lab_summary_by_taxonname</a></li>
+<li class="chapter" data-level="2.9.4" data-path="the-data-we-use.html"><a href="the-data-we-use.html#exercise-run-mapunit-comparison"><i class="fa fa-check"></i><b>2.9.4</b> Exercise: Run Mapunit Comparison</a></li>
+<li class="chapter" data-level="2.9.5" data-path="the-data-we-use.html"><a href="the-data-we-use.html#exercise-run-shiny-pedon-summary"><i class="fa fa-check"></i><b>2.9.5</b> Exercise: Run Shiny Pedon Summary</a></li>
+</ul></li>
+<li class="chapter" data-level="2.10" data-path="the-data-we-use.html"><a href="the-data-we-use.html#customized-queries-to-local-nasis-database"><i class="fa fa-check"></i><b>2.10</b> Customized Queries to Local NASIS Database</a><ul>
+<li class="chapter" data-level="2.10.1" data-path="the-data-we-use.html"><a href="the-data-we-use.html#rodbc-package"><i class="fa fa-check"></i><b>2.10.1</b> <code>RODBC</code> package</a></li>
+<li class="chapter" data-level="2.10.2" data-path="the-data-we-use.html"><a href="the-data-we-use.html#dbi"><i class="fa fa-check"></i><b>2.10.2</b> <code>DBI</code></a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html"><i class="fa fa-check"></i><b>3</b> Exploratory Data Analysis</a><ul>
+<li class="chapter" data-level="3.1" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#objectives-exploratory-data-analysis"><i class="fa fa-check"></i><b>3.1</b> Objectives (Exploratory Data Analysis)</a></li>
+<li class="chapter" data-level="3.2" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#statistics"><i class="fa fa-check"></i><b>3.2</b> Statistics</a></li>
+<li class="chapter" data-level="3.3" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#data-inspection"><i class="fa fa-check"></i><b>3.3</b> Data Inspection</a><ul>
+<li class="chapter" data-level="3.3.1" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#exercise-fetch-and-inspect"><i class="fa fa-check"></i><b>3.3.1</b> Exercise: fetch and inspect</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#descriptive-statistics"><i class="fa fa-check"></i><b>3.4</b> Descriptive Statistics</a><ul>
+<li class="chapter" data-level="3.4.1" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#measures-of-central-tendency"><i class="fa fa-check"></i><b>3.4.1</b> Measures of Central Tendency</a></li>
+<li class="chapter" data-level="3.4.2" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#measures-of-dispersion"><i class="fa fa-check"></i><b>3.4.2</b> Measures of Dispersion</a></li>
+<li class="chapter" data-level="3.4.3" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#correlation"><i class="fa fa-check"></i><b>3.4.3</b> Correlation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#graphical-methods"><i class="fa fa-check"></i><b>3.5</b> Graphical Methods</a><ul>
+<li class="chapter" data-level="3.5.1" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#distributions"><i class="fa fa-check"></i><b>3.5.1</b> Distributions</a></li>
+<li class="chapter" data-level="3.5.2" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#bar-plot"><i class="fa fa-check"></i><b>3.5.2</b> Bar Plot</a></li>
+<li class="chapter" data-level="3.5.3" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#histogram"><i class="fa fa-check"></i><b>3.5.3</b> Histogram</a></li>
+<li class="chapter" data-level="3.5.4" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#density-curve"><i class="fa fa-check"></i><b>3.5.4</b> Density Curve</a></li>
+<li class="chapter" data-level="3.5.5" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#box-plots"><i class="fa fa-check"></i><b>3.5.5</b> Box plots</a></li>
+<li class="chapter" data-level="3.5.6" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#quantile-comparison-plots-qqplot"><i class="fa fa-check"></i><b>3.5.6</b> Quantile comparison plots (QQplot)</a></li>
+<li class="chapter" data-level="3.5.7" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#the-normal-distribution"><i class="fa fa-check"></i><b>3.5.7</b> The ‘Normal’ distribution</a></li>
+<li class="chapter" data-level="3.5.8" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#scatterplots-and-line-plots"><i class="fa fa-check"></i><b>3.5.8</b> Scatterplots and Line Plots</a></li>
+<li class="chapter" data-level="3.5.9" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#rd-dimension---color-shape-size-layers-etc"><i class="fa fa-check"></i><b>3.5.9</b> 3rd Dimension - Color, Shape, Size, Layers, etc…</a></li>
+</ul></li>
+<li class="chapter" data-level="3.6" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#transformations"><i class="fa fa-check"></i><b>3.6</b> Transformations</a><ul>
+<li class="chapter" data-level="3.6.1" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#ph"><i class="fa fa-check"></i><b>3.6.1</b> pH</a></li>
+<li class="chapter" data-level="3.6.2" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#circular-data"><i class="fa fa-check"></i><b>3.6.2</b> Circular data</a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#references-exploratory-data-analysis"><i class="fa fa-check"></i><b>3.7</b> References (Exploratory Data Analysis)</a></li>
+<li class="chapter" data-level="3.8" data-path="exploratory-data-analysis.html"><a href="exploratory-data-analysis.html#additional-reading-exploratory-data-analysis"><i class="fa fa-check"></i><b>3.8</b> Additional Reading (Exploratory Data Analysis)</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html"><i class="fa fa-check"></i><b>4</b> Spatial Data in R</a><ul>
+<li class="chapter" data-level="4.1" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#objectives-spatial-data-structures"><i class="fa fa-check"></i><b>4.1</b> Objectives (Spatial Data Structures)</a></li>
+<li class="chapter" data-level="4.2" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#making-maps-with-r"><i class="fa fa-check"></i><b>4.2</b> Making Maps with R</a></li>
+<li class="chapter" data-level="4.3" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#spatial-data-sources"><i class="fa fa-check"></i><b>4.3</b> Spatial Data Sources</a></li>
+<li class="chapter" data-level="4.4" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#many-packages-many-spatial-representations"><i class="fa fa-check"></i><b>4.4</b> Many Packages, Many Spatial Representations</a><ul>
+<li class="chapter" data-level="4.4.1" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#the-sf-package"><i class="fa fa-check"></i><b>4.4.1</b> The <code>sf</code> package</a></li>
+<li class="chapter" data-level="4.4.2" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#the-sp-package"><i class="fa fa-check"></i><b>4.4.2</b> The <code>sp</code> Package</a></li>
+<li class="chapter" data-level="4.4.3" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#converting-sp-and-sf"><i class="fa fa-check"></i><b>4.4.3</b> Converting <code>sp</code> and <code>sf</code></a></li>
+<li class="chapter" data-level="4.4.4" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#importing-exporting-vector-data"><i class="fa fa-check"></i><b>4.4.4</b> Importing / Exporting Vector Data</a></li>
+<li class="chapter" data-level="4.4.5" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#interactive-mapping-with-mapview-and-leaflet"><i class="fa fa-check"></i><b>4.4.5</b> Interactive mapping with <code>mapview</code> and <code>leaflet</code></a></li>
+<li class="chapter" data-level="4.4.6" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#the-raster-package"><i class="fa fa-check"></i><b>4.4.6</b> The <code>raster</code> Package</a></li>
+<li class="chapter" data-level="4.4.7" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#converting-vector-to-raster"><i class="fa fa-check"></i><b>4.4.7</b> Converting Vector to Raster</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#coordinate-reference-systems"><i class="fa fa-check"></i><b>4.5</b> Coordinate Reference Systems</a><ul>
+<li class="chapter" data-level="4.5.1" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#assigning-and-transforming-coordinate-systems"><i class="fa fa-check"></i><b>4.5.1</b> Assigning and Transforming Coordinate Systems</a></li>
+</ul></li>
+<li class="chapter" data-level="4.6" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#operations-on-example-data"><i class="fa fa-check"></i><b>4.6</b> Operations on Example Data</a><ul>
+<li class="chapter" data-level="4.6.1" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#load-required-packages"><i class="fa fa-check"></i><b>4.6.1</b> Load Required Packages</a></li>
+<li class="chapter" data-level="4.6.2" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#download-example-data"><i class="fa fa-check"></i><b>4.6.2</b> Download Example Data</a></li>
+<li class="chapter" data-level="4.6.3" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#load-the-data"><i class="fa fa-check"></i><b>4.6.3</b> Load the Data</a></li>
+<li class="chapter" data-level="4.6.4" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#spatial-overlay-operations"><i class="fa fa-check"></i><b>4.6.4</b> Spatial Overlay Operations</a></li>
+<li class="chapter" data-level="4.6.5" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#sampling-and-extraction"><i class="fa fa-check"></i><b>4.6.5</b> Sampling and Extraction</a></li>
+</ul></li>
+<li class="chapter" data-level="4.7" data-path="spatial-data-in-r.html"><a href="spatial-data-in-r.html#additional-reading-spatial"><i class="fa fa-check"></i><b>4.7</b> Additional Reading (Spatial)</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="sampling.html"><a href="sampling.html"><i class="fa fa-check"></i><b>5</b> Sampling</a><ul>
+<li class="chapter" data-level="5.1" data-path="sampling.html"><a href="sampling.html#introduction"><i class="fa fa-check"></i><b>5.1</b> Introduction</a></li>
+<li class="chapter" data-level="5.2" data-path="sampling.html"><a href="sampling.html#sampling-strategies"><i class="fa fa-check"></i><b>5.2</b> Sampling Strategies</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="sampling.html"><a href="sampling.html#simple-random"><i class="fa fa-check"></i><b>5.2.1</b> Simple Random</a></li>
+<li class="chapter" data-level="5.2.2" data-path="sampling.html"><a href="sampling.html#stratified-random"><i class="fa fa-check"></i><b>5.2.2</b> Stratified Random</a></li>
+<li class="chapter" data-level="5.2.3" data-path="sampling.html"><a href="sampling.html#multistage-stratified-random"><i class="fa fa-check"></i><b>5.2.3</b> Multistage Stratified Random</a></li>
+<li class="chapter" data-level="5.2.4" data-path="sampling.html"><a href="sampling.html#systematic"><i class="fa fa-check"></i><b>5.2.4</b> Systematic</a></li>
+<li class="chapter" data-level="5.2.5" data-path="sampling.html"><a href="sampling.html#cluster"><i class="fa fa-check"></i><b>5.2.5</b> Cluster</a></li>
+<li class="chapter" data-level="5.2.6" data-path="sampling.html"><a href="sampling.html#conditioned-latin-hypercube-clhs"><i class="fa fa-check"></i><b>5.2.6</b> Conditioned Latin Hypercube (cLHS)</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="sampling.html"><a href="sampling.html#evaluating-a-sampling-strategy"><i class="fa fa-check"></i><b>5.3</b> Evaluating a Sampling Strategy</a><ul>
+<li class="chapter" data-level="5.3.1" data-path="sampling.html"><a href="sampling.html#exercise-design-a-sampling-strategy"><i class="fa fa-check"></i><b>5.3.1</b> Exercise: Design a Sampling Strategy</a></li>
+</ul></li>
+<li class="chapter" data-level="5.4" data-path="sampling.html"><a href="sampling.html#other-tools-for-selecting-random-features"><i class="fa fa-check"></i><b>5.4</b> Other Tools for Selecting Random Features</a><ul>
+<li class="chapter" data-level="5.4.1" data-path="sampling.html"><a href="sampling.html#clhs-using-teui"><i class="fa fa-check"></i><b>5.4.1</b> cLHS Using TEUI</a></li>
+<li class="chapter" data-level="5.4.2" data-path="sampling.html"><a href="sampling.html#two-stage-stratified-random-sample-design-using-arcgis"><i class="fa fa-check"></i><b>5.4.2</b> Two-Stage Stratified Random Sample Design Using ArcGIS</a></li>
+</ul></li>
+<li class="chapter" data-level="5.5" data-path="sampling.html"><a href="sampling.html#references-sampling"><i class="fa fa-check"></i><b>5.5</b> References (Sampling)</a></li>
+<li class="chapter" data-level="5.6" data-path="sampling.html"><a href="sampling.html#additional-reading-sampling"><i class="fa fa-check"></i><b>5.6</b> Additional Reading (Sampling)</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Statistics for Soil Survey - Part 1</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="sampling" class="section level1">
+<h1><span class="header-section-number">Chapter 5</span> Sampling</h1>
+<p><img src="static-figures/logo.jpg" /></p>
+<div id="introduction" class="section level2">
+<h2><span class="header-section-number">5.1</span> Introduction</h2>
+<p>Sampling is a fundamental part of statistics. Samples are collected to achieve an understanding of a population because it is typically not feasible to observe all members of the population. The goal is to collect samples that provide an accurate representation of the population. Constraints on time and money dictate that the sampling effort must be efficient. More samples are needed to characterize the nature of highly variable populations than less variable populations.</p>
+<p><strong>Define your purpose:</strong> What are you investigating? Examples include soil properties, soil classes, and plant productivity.</p>
+<p><strong>How many samples are needed?</strong></p>
+<p>Because you are typically interested in using field point data to derive inferences, you need enough samples to be confident that they approximate the target population. In the case of calibrating a laboratory device, you might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that sample size is closely related to the inherent variability in the data. The number of samples required increases with increasing variability. Also, the more samples you have, the greater the confidence level you can achieve. For example, sampling at an 85 percent confidence level is less intensive than sampling at a 95 percent confidence level.</p>
+<p>If you have prior knowledge about the soil attribute being sampled, you can use a t-test to estimate the number (n) of samples needed to detect a significant difference. You can use either the <code>power.t.test()</code> or <code>power.prop.tes()</code> functions. See the following example of differences in clay content.</p>
+<div class="sourceCode" id="cb293"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb293-1"><a href="sampling.html#cb293-1"></a><span class="co"># Clay example. Test to see the number of samples necessary to detect a 3 percent difference in clay between two horizons.</span></span>
+<span id="cb293-2"><a href="sampling.html#cb293-2"></a><span class="kw">power.t.test</span>(<span class="dt">power =</span> <span class="fl">0.95</span>, <span class="dt">sd =</span> <span class="dv">2</span>, <span class="dt">delta =</span> <span class="dv">16</span> <span class="op">-</span><span class="st"> </span><span class="dv">19</span>) <span class="co"># delta = the difference between the two means</span></span></code></pre></div>
+<pre><code>## 
+##      Two-sample t test power calculation 
+## 
+##               n = 12.59872
+##           delta = 3
+##              sd = 2
+##       sig.level = 0.05
+##           power = 0.95
+##     alternative = two.sided
+## 
+## NOTE: n is number in *each* group</code></pre>
+<div class="sourceCode" id="cb295"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb295-1"><a href="sampling.html#cb295-1"></a><span class="kw">power.t.test</span>(<span class="dt">power =</span> <span class="fl">0.95</span>, <span class="dt">sd =</span> <span class="dv">3</span>, <span class="dt">delta =</span> <span class="dv">16</span> <span class="op">-</span><span class="st"> </span><span class="dv">19</span>)</span></code></pre></div>
+<pre><code>## 
+##      Two-sample t test power calculation 
+## 
+##               n = 26.98922
+##           delta = 3
+##              sd = 3
+##       sig.level = 0.05
+##           power = 0.95
+##     alternative = two.sided
+## 
+## NOTE: n is number in *each* group</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    12.0    15.5    17.5    17.5    19.5    23.0</code></pre>
+<p><img src="s4ssbook_files/figure-html/unnamed-chunk-166-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>From the figure above, you can see how difficult it is to separate two overlapping populations (e.g., horizons). Also, a 1-unit increase in the standard deviation doubles the number of samples required. This simplistic example, although enlightening, is hard to implement in practice and serves only as a theoretical exercise.</p>
+<p>Some rules of thumb for regression models are as follows:</p>
+<ul>
+<li>Use &gt; 10 observations (n) per predictor (m) (Kutner et al., 2005).</li>
+<li>Use &gt; 20 n per m and n &gt; 104 + m to test regression coefficients (Rossiter, 2015; Franklin and Miller, 2009).</li>
+<li>Never use n &lt; 5*m (Rossiter, 2015).</li>
+</ul>
+<p><strong>Soil Survey Applications:</strong></p>
+<ol style="list-style-type: decimal">
+<li>Capture range of soil-forming factors</li>
+<li>Determine map unit composition</li>
+</ol>
+</div>
+<div id="sampling-strategies" class="section level2">
+<h2><span class="header-section-number">5.2</span> Sampling Strategies</h2>
+<div id="simple-random" class="section level3">
+<h3><span class="header-section-number">5.2.1</span> Simple Random</h3>
+<p>In simple random sampling, all samples within the region have an equal chance of being selected. A simple random selection of points can be made using either the <code>spsample()</code> function within the sp R package or the Create Random Points tool in ArcGIS.</p>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Simplicity<br />
+</li>
+<li>Requires little prior knowledge of the population</li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>Lower accuracy<br />
+</li>
+<li>Higher cost</li>
+<li>Lower efficiency</li>
+<li>Samples may be clustered spatially</li>
+<li>Samples may not be representative of the feature attribute(s)</li>
+</ul>
+<div class="sourceCode" id="cb298"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb298-1"><a href="sampling.html#cb298-1"></a><span class="kw">library</span>(sp)</span>
+<span id="cb298-2"><a href="sampling.html#cb298-2"></a></span>
+<span id="cb298-3"><a href="sampling.html#cb298-3"></a><span class="co"># Create a sixteen square polygon</span></span>
+<span id="cb298-4"><a href="sampling.html#cb298-4"></a>grd &lt;-<span class="st"> </span><span class="kw">GridTopology</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="kw">c</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb298-5"><a href="sampling.html#cb298-5"></a>polys &lt;-<span class="st"> </span><span class="kw">as.SpatialPolygons.GridTopology</span>(grd)</span>
+<span id="cb298-6"><a href="sampling.html#cb298-6"></a><span class="kw">plot</span>(polys)</span>
+<span id="cb298-7"><a href="sampling.html#cb298-7"></a></span>
+<span id="cb298-8"><a href="sampling.html#cb298-8"></a><span class="co"># Generate simple random sample</span></span>
+<span id="cb298-9"><a href="sampling.html#cb298-9"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb298-10"><a href="sampling.html#cb298-10"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
+<p><img src="s4ssbook_files/figure-html/simple-1.png" width="384" style="display: block; margin: auto;" /></p>
+</div>
+<div id="stratified-random" class="section level3">
+<h3><span class="header-section-number">5.2.2</span> Stratified Random</h3>
+<p>In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area, it can be used to develop the strata. Strata may be sampled equally or in proportion to area; however, if the target of interest is rare in the population, it may be preferable to sample the strata equally (Franklin and Miller, 2009).</p>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Higher accuracy</li>
+<li>Lower cost</li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>The existing knowledge used to construct strata may be flawed.</li>
+</ul>
+<div class="sourceCode" id="cb299"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb299-1"><a href="sampling.html#cb299-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Stratified random sample&quot;</span>)</span>
+<span id="cb299-2"><a href="sampling.html#cb299-2"></a></span>
+<span id="cb299-3"><a href="sampling.html#cb299-3"></a><span class="co"># Generate a spatially stratified random sample</span></span>
+<span id="cb299-4"><a href="sampling.html#cb299-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;stratified&quot;</span>)</span>
+<span id="cb299-5"><a href="sampling.html#cb299-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
+<p><img src="s4ssbook_files/figure-html/stratified-1.png" width="384" style="display: block; margin: auto;" /></p>
+<p>Note that the <code>spsample()</code> function only stratifies the points spatially. Other more sophisticated designs can be implemented using the <a href="https://cran.r-project.org/package=spsurvey">spsurvey</a>, <a href="https://cran.r-project.org/package=spcosa">spcosa</a>, <a href="http://ncss-tech.github.io/sharpshootR/docs/reference/constantDensitySampling.html">sharpshootR</a>, or <a href="https://cran.r-project.org/package=clhs">clhs</a> packages.</p>
+</div>
+<div id="multistage-stratified-random" class="section level3">
+<h3><span class="header-section-number">5.2.3</span> Multistage Stratified Random</h3>
+<p>In multistage random sampling, the region is separated into different subsets that are randomly selected (i.e., first stage), and then the selected subsets are randomly sampled (i.e., second stage). This is similar to stratified random sampling, except that with stratified random sampling each strata is sampled.</p>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Greater efficiency</li>
+<li>Lower cost</li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>Lower precision</li>
+<li>Stronger clustering than simple random sampling</li>
+</ul>
+<div class="sourceCode" id="cb300"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb300-1"><a href="sampling.html#cb300-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Two-stage random&quot;</span>)</span>
+<span id="cb300-2"><a href="sampling.html#cb300-2"></a></span>
+<span id="cb300-3"><a href="sampling.html#cb300-3"></a><span class="co"># Select 8 samples from each square</span></span>
+<span id="cb300-4"><a href="sampling.html#cb300-4"></a>s &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="kw">slot</span>(polys, <span class="st">&quot;polygons&quot;</span>), <span class="cf">function</span>(x) <span class="kw">spsample</span>(x, <span class="dt">n =</span> <span class="dv">5</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>))</span>
+<span id="cb300-5"><a href="sampling.html#cb300-5"></a><span class="kw">points</span>(<span class="kw">sample</span>(s, <span class="dv">1</span>)[[<span class="dv">1</span>]], <span class="dt">pch =</span> <span class="dv">19</span>) <span class="co"># randomly select 1 square and plot</span></span>
+<span id="cb300-6"><a href="sampling.html#cb300-6"></a><span class="kw">points</span>(<span class="kw">sample</span>(s, <span class="dv">1</span>)[[<span class="dv">1</span>]], <span class="dt">pch =</span> <span class="dv">19</span>) <span class="co"># randomly select 1 square and plot</span></span></code></pre></div>
+<p><img src="s4ssbook_files/figure-html/two_stage-1.png" width="384" style="display: block; margin: auto;" /></p>
+</div>
+<div id="systematic" class="section level3">
+<h3><span class="header-section-number">5.2.4</span> Systematic</h3>
+<p>In systematic sampling, a sample is taken according to a regularized pattern. This approach ensures even spatial coverage. Patterns may be rectilinear, triangular, or hexagonal. This sampling strategy can be inaccurate if the variation in the population doesn’t coincide with the regular pattern (e.g., if the population exhibits periodicity).</p>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Greater efficiency</li>
+<li>Lower cost</li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>Lower precision</li>
+</ul>
+<div class="sourceCode" id="cb301"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb301-1"><a href="sampling.html#cb301-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Systematic sample&quot;</span>)</span>
+<span id="cb301-2"><a href="sampling.html#cb301-2"></a></span>
+<span id="cb301-3"><a href="sampling.html#cb301-3"></a><span class="co"># Generate systematic random sample</span></span>
+<span id="cb301-4"><a href="sampling.html#cb301-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;regular&quot;</span>)</span>
+<span id="cb301-5"><a href="sampling.html#cb301-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
+<p><img src="s4ssbook_files/figure-html/systematic-1.png" width="384" style="display: block; margin: auto;" /></p>
+</div>
+<div id="cluster" class="section level3">
+<h3><span class="header-section-number">5.2.5</span> Cluster</h3>
+<p>In cluster sampling, a cluster or group of points is selected at one or more sites. The transect is an example of this strategy, although other shapes are possible (e.g., square, triangle, or cross shapes). It is common to orient the transect in the direction of greatest variability.</p>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Greater efficiency</li>
+<li>Lower cost</li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>Lower precision</li>
+</ul>
+<div class="sourceCode" id="cb302"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb302-1"><a href="sampling.html#cb302-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Clustered (n = 3) random sample&quot;</span>)</span>
+<span id="cb302-2"><a href="sampling.html#cb302-2"></a></span>
+<span id="cb302-3"><a href="sampling.html#cb302-3"></a><span class="co"># Generate cluster random sample</span></span>
+<span id="cb302-4"><a href="sampling.html#cb302-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;clustered&quot;</span>, <span class="dt">nclusters =</span> <span class="dv">3</span>, <span class="dt">iter =</span> <span class="dv">10</span>)</span>
+<span id="cb302-5"><a href="sampling.html#cb302-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
+<p><img src="s4ssbook_files/figure-html/clustered-1.png" width="384" style="display: block; margin: auto;" /></p>
+</div>
+<div id="conditioned-latin-hypercube-clhs" class="section level3">
+<h3><span class="header-section-number">5.2.6</span> Conditioned Latin Hypercube (cLHS)</h3>
+<p>Conditioned Latin hypercube sampling is a stratified random sampling technique to obtain representative samples from feature (attribute) space (Minasny and McBratney, 2006). For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:</p>
+<ul>
+<li>Normalized Difference Vegetation Index (NDVI),<br />
+</li>
+<li>Topographic Wetness Index (a.k.a. Wetness Index, compound topographic index),<br />
+</li>
+<li>Solar insolation (potential incoming solar radiation), and</li>
+<li>Relative elevation (a.k.a. relative position, normalized slope height).</li>
+</ul>
+<p>The cLHS procedure iteratively selects samples from the strata variables such that they replicate the range of values from each stratum. Without a technique such as cLHS, obtaining a sample that is representative of the feature space becomes increasingly difficult as the number of variables (strata) increases.</p>
+<p>To perform cLHS using R, you can use the clhs package (Roudier, 2011).</p>
+<div class="sourceCode" id="cb303"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb303-1"><a href="sampling.html#cb303-1"></a><span class="kw">library</span>(clhs)</span>
+<span id="cb303-2"><a href="sampling.html#cb303-2"></a><span class="kw">library</span>(raster)</span>
+<span id="cb303-3"><a href="sampling.html#cb303-3"></a></span>
+<span id="cb303-4"><a href="sampling.html#cb303-4"></a><span class="co"># import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau</span></span>
+<span id="cb303-5"><a href="sampling.html#cb303-5"></a><span class="kw">data</span>(volcano)</span>
+<span id="cb303-6"><a href="sampling.html#cb303-6"></a>volcano_r &lt;-<span class="st"> </span><span class="kw">raster</span>(<span class="kw">as.matrix</span>(volcano[<span class="dv">87</span><span class="op">:</span><span class="dv">1</span>, <span class="dv">61</span><span class="op">:</span><span class="dv">1</span>]), </span>
+<span id="cb303-7"><a href="sampling.html#cb303-7"></a>                    <span class="dt">crs =</span> <span class="kw">CRS</span>(<span class="st">&quot;+init=epsg:27200&quot;</span>), </span>
+<span id="cb303-8"><a href="sampling.html#cb303-8"></a>                    <span class="dt">xmn =</span> <span class="dv">2667405</span>, <span class="dt">xmx =</span> <span class="dv">2667405</span> <span class="op">+</span><span class="st"> </span><span class="dv">61</span> <span class="op">*</span><span class="st"> </span><span class="dv">10</span>, </span>
+<span id="cb303-9"><a href="sampling.html#cb303-9"></a>                    <span class="dt">ymn =</span> <span class="dv">6478705</span>, <span class="dt">ymx =</span> <span class="dv">6478705</span> <span class="op">+</span><span class="st"> </span><span class="dv">87</span> <span class="op">*</span><span class="st"> </span><span class="dv">10</span>)</span>
+<span id="cb303-10"><a href="sampling.html#cb303-10"></a><span class="kw">names</span>(volcano_r) &lt;-<span class="st"> &quot;elev&quot;</span></span>
+<span id="cb303-11"><a href="sampling.html#cb303-11"></a></span>
+<span id="cb303-12"><a href="sampling.html#cb303-12"></a><span class="co"># calculate slope from the DEM</span></span>
+<span id="cb303-13"><a href="sampling.html#cb303-13"></a>slope_r &lt;-<span class="st"> </span><span class="kw">terrain</span>(volcano_r, <span class="dt">opt =</span> <span class="st">&quot;slope&quot;</span>, <span class="dt">unit =</span> <span class="st">&quot;degrees&quot;</span>)</span>
+<span id="cb303-14"><a href="sampling.html#cb303-14"></a></span>
+<span id="cb303-15"><a href="sampling.html#cb303-15"></a><span class="co"># Stack Elevation and Slope</span></span>
+<span id="cb303-16"><a href="sampling.html#cb303-16"></a>rs &lt;-<span class="st"> </span><span class="kw">stack</span>(volcano_r, slope_r)</span>
+<span id="cb303-17"><a href="sampling.html#cb303-17"></a></span>
+<span id="cb303-18"><a href="sampling.html#cb303-18"></a><span class="co"># generate cLHS design</span></span>
+<span id="cb303-19"><a href="sampling.html#cb303-19"></a>cs &lt;-<span class="st"> </span><span class="kw">clhs</span>(rs, <span class="dt">size =</span> <span class="dv">20</span>, <span class="dt">progress =</span> <span class="ot">FALSE</span>, <span class="dt">simple =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb303-20"><a href="sampling.html#cb303-20"></a></span>
+<span id="cb303-21"><a href="sampling.html#cb303-21"></a><span class="co"># Plot cLHS Samples</span></span>
+<span id="cb303-22"><a href="sampling.html#cb303-22"></a><span class="kw">par</span>(<span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">4</span>))</span>
+<span id="cb303-23"><a href="sampling.html#cb303-23"></a><span class="kw">plot</span>(volcano_r, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
+<span id="cb303-24"><a href="sampling.html#cb303-24"></a><span class="kw">points</span>(cs<span class="op">$</span>sampled_data)</span></code></pre></div>
+<p><img src="s4ssbook_files/figure-html/clhs-1.png" width="384" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb304"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb304-1"><a href="sampling.html#cb304-1"></a><span class="co"># Summary of clhs object</span></span>
+<span id="cb304-2"><a href="sampling.html#cb304-2"></a><span class="kw">summary</span>(cs<span class="op">$</span>sampled_data)<span class="op">$</span>data</span></code></pre></div>
+<pre><code>##       elev           slope      
+##  Min.   : 95.0   Min.   : 0.00  
+##  1st Qu.:108.8   1st Qu.: 7.43  
+##  Median :125.5   Median :14.75  
+##  Mean   :130.3   Mean   :14.74  
+##  3rd Qu.:148.2   3rd Qu.:21.40  
+##  Max.   :179.0   Max.   :32.36</code></pre>
+<div class="sourceCode" id="cb306"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb306-1"><a href="sampling.html#cb306-1"></a><span class="co"># Summary of raster objects</span></span>
+<span id="cb306-2"><a href="sampling.html#cb306-2"></a><span class="kw">cbind</span>(<span class="kw">summary</span>(volcano_r), <span class="kw">summary</span>(slope_r))</span></code></pre></div>
+<pre><code>##         elev      slope
+## Min.      94   0.000000
+## 1st Qu.  108   7.054131
+## Median   124  14.103463
+## 3rd Qu.  150  21.665758
+## Max.     195  43.032469
+## NA&#39;s       0 292.000000</code></pre>
+<p>Although the above example works well on our small volcano dataset, the clhs package is inefficient if you are working with large raster datasets. To overcome this limitation, you can first take a large random sample and then subsample it using cLHS.</p>
+<div class="sourceCode" id="cb308"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb308-1"><a href="sampling.html#cb308-1"></a>sub_s &lt;-<span class="st"> </span><span class="kw">sampleRandom</span>(volcano_r, <span class="dt">size =</span> <span class="dv">200</span>, <span class="dt">sp =</span> <span class="ot">TRUE</span>) <span class="co"># random sample function from the raster package</span></span>
+<span id="cb308-2"><a href="sampling.html#cb308-2"></a></span>
+<span id="cb308-3"><a href="sampling.html#cb308-3"></a><span class="co"># s &lt;- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)</span></span></code></pre></div>
+</div>
+</div>
+<div id="evaluating-a-sampling-strategy" class="section level2">
+<h2><span class="header-section-number">5.3</span> Evaluating a Sampling Strategy</h2>
+<p>To gauge the representativeness of a sampling strategy, you can compare the results it produces to the results for other variables you think might coincide with the soil properties or classes of interest (Hengl, 2009). Examples include slope gradient, slope aspect, and vegetative cover. These other variables may be used to stratify the sampling design or to assess the representativeness of our existing samples (e.g., NASIS pedons).</p>
+<p>The simple example below demonstrates how to compare several sampling strategies by evaluating how well they replicate the distribution of elevation.</p>
+<div class="sourceCode" id="cb309"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb309-1"><a href="sampling.html#cb309-1"></a><span class="co"># create a polygon from the spatial extent of the volcano dataset</span></span>
+<span id="cb309-2"><a href="sampling.html#cb309-2"></a>test &lt;-<span class="st"> </span><span class="kw">as</span>(<span class="kw">extent</span>(volcano_r), <span class="st">&quot;SpatialPolygons&quot;</span>)</span>
+<span id="cb309-3"><a href="sampling.html#cb309-3"></a></span>
+<span id="cb309-4"><a href="sampling.html#cb309-4"></a><span class="co"># take a large random sample</span></span>
+<span id="cb309-5"><a href="sampling.html#cb309-5"></a>sr400 &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">400</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb309-6"><a href="sampling.html#cb309-6"></a></span>
+<span id="cb309-7"><a href="sampling.html#cb309-7"></a><span class="co"># take a small random sample</span></span>
+<span id="cb309-8"><a href="sampling.html#cb309-8"></a>sr &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">20</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb309-9"><a href="sampling.html#cb309-9"></a></span>
+<span id="cb309-10"><a href="sampling.html#cb309-10"></a><span class="co"># take a small stratified random sample</span></span>
+<span id="cb309-11"><a href="sampling.html#cb309-11"></a>str &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">23</span>, <span class="dt">type =</span> <span class="st">&quot;stratified&quot;</span>, <span class="dt">iter =</span> <span class="dv">1000</span>)[<span class="dv">1</span><span class="op">:</span><span class="dv">20</span>]</span>
+<span id="cb309-12"><a href="sampling.html#cb309-12"></a></span>
+<span id="cb309-13"><a href="sampling.html#cb309-13"></a><span class="co"># take a cLHS sample</span></span>
+<span id="cb309-14"><a href="sampling.html#cb309-14"></a><span class="co"># cs &lt;- clhs(rs, size = 20, progress = FALSE, simple = FALSE)</span></span>
+<span id="cb309-15"><a href="sampling.html#cb309-15"></a></span>
+<span id="cb309-16"><a href="sampling.html#cb309-16"></a><span class="co"># Combind and Extract Samples</span></span>
+<span id="cb309-17"><a href="sampling.html#cb309-17"></a>s &lt;-<span class="st"> </span><span class="kw">rbind</span>(<span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Simple Random 400&quot;</span>, <span class="kw">extract</span>(rs, sr400)),</span>
+<span id="cb309-18"><a href="sampling.html#cb309-18"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Simple Random&quot;</span>, <span class="kw">extract</span>(rs, sr)),</span>
+<span id="cb309-19"><a href="sampling.html#cb309-19"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Stratified Random&quot;</span>, <span class="kw">extract</span>(rs, str)),</span>
+<span id="cb309-20"><a href="sampling.html#cb309-20"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;cLHS&quot;</span>, cs<span class="op">$</span>sampled_data<span class="op">@</span>data))</span>
+<span id="cb309-21"><a href="sampling.html#cb309-21"></a></span>
+<span id="cb309-22"><a href="sampling.html#cb309-22"></a><span class="co"># Summarize the sample values</span></span>
+<span id="cb309-23"><a href="sampling.html#cb309-23"></a><span class="kw">aggregate</span>(slope <span class="op">~</span><span class="st"> </span>method, <span class="dt">data =</span> s, <span class="cf">function</span>(x) <span class="kw">round</span>(<span class="kw">summary</span>(x)))</span></code></pre></div>
+<pre><code>##              method slope.Min. slope.1st Qu. slope.Median slope.Mean slope.3rd Qu. slope.Max.
+## 1              cLHS          0             7           15         15            21         32
+## 2     Simple Random          1            10           15         16            20         37
+## 3 Simple Random 400          0             6           14         15            22         40
+## 4 Stratified Random          0             7           15         15            21         33</code></pre>
+<div class="sourceCode" id="cb311"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb311-1"><a href="sampling.html#cb311-1"></a><span class="co"># Plot overlapping density plots to compare the distributions between the large and small samples</span></span>
+<span id="cb311-2"><a href="sampling.html#cb311-2"></a><span class="kw">library</span>(ggplot2)</span>
+<span id="cb311-3"><a href="sampling.html#cb311-3"></a><span class="kw">ggplot</span>(s, <span class="kw">aes</span>(<span class="dt">x =</span> slope, <span class="dt">col =</span> method)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_density</span>(<span class="dt">cex =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p><img src="s4ssbook_files/figure-html/seval-1.png" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb312"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb312-1"><a href="sampling.html#cb312-1"></a><span class="co"># plot the spatial locations            </span></span>
+<span id="cb312-2"><a href="sampling.html#cb312-2"></a><span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>), <span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">5</span>))</span>
+<span id="cb312-3"><a href="sampling.html#cb312-3"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;Simple random&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
+<span id="cb312-4"><a href="sampling.html#cb312-4"></a><span class="kw">points</span>(sr, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span>
+<span id="cb312-5"><a href="sampling.html#cb312-5"></a></span>
+<span id="cb312-6"><a href="sampling.html#cb312-6"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;Stratified random&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
+<span id="cb312-7"><a href="sampling.html#cb312-7"></a><span class="kw">points</span>(str, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span>
+<span id="cb312-8"><a href="sampling.html#cb312-8"></a></span>
+<span id="cb312-9"><a href="sampling.html#cb312-9"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;cLHS&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
+<span id="cb312-10"><a href="sampling.html#cb312-10"></a><span class="kw">points</span>(cs<span class="op">$</span>sampled_data, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span></code></pre></div>
+<p><img src="s4ssbook_files/figure-html/unnamed-chunk-167-1.png" width="792" style="display: block; margin: auto;" /></p>
+<p>The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs.</p>
+<p>The cLHS approach best duplicates the distribution of elevation (because elevation is explicitly used in the stratification process). The contrast is less severe in the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible using the approaches in the following chapters.</p>
+<div id="exercise-design-a-sampling-strategy" class="section level3">
+<h3><span class="header-section-number">5.3.1</span> Exercise: Design a Sampling Strategy</h3>
+<ul>
+<li><p>Using the “tahoe_lidar_highesthit.tif” dataset in the <code>gdalUtils</code> package or using your own data set (highly encouraged), compare two or more sampling approaches.</p></li>
+<li><p>Show your work and submit the results to your coach.</p></li>
+</ul>
+</div>
+</div>
+<div id="other-tools-for-selecting-random-features" class="section level2">
+<h2><span class="header-section-number">5.4</span> Other Tools for Selecting Random Features</h2>
+<p>An ArcGIS tool for selecting random features is available from the <a href="http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&amp;ext=pdf">Job Aids page</a>. This tool randomly selects the specified number of features from a dataset or set of selected features in ArcGIS. It is an ideal tool for the first stage of a two-stage random sample.</p>
+<div id="clhs-using-teui" class="section level3">
+<h3><span class="header-section-number">5.4.1</span> cLHS Using TEUI</h3>
+<p>The TEUI toolkit includes a tool for generating cLHS samples on large raster datasets. The tool is based on the clhs R package (Roudier, 2011).</p>
+<ul>
+<li>Relative Elevation (a.k.a. relative position)<br />
+</li>
+<li>Northwestness<br />
+</li>
+<li>Normalized Difference Vegetation Difference (a.k.a. NDVI)</li>
+</ul>
+<div class="figure">
+<img src="static-figures/ch3_fig17.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>Open ArcGIS. Add the TEUI Toolkit Toolbar by clicking the <strong>Customize</strong> tab, pointing to <strong>Toolbars</strong>, and checking <strong>TEUI</strong>.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig18.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The TEUI Toolbar looks like the following.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig19.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>Click the <strong>Cube icon</strong> to open the Latin Hyper Cube Generator Tool.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig20.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<div class="figure">
+<img src="static-figures/ch3_fig21.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The Tool requires that all raster data be in Imagine format (i.e., have the “img” extension) and share a common projection and resolution.</p>
+<p>The tool adds all raster layers in the Table of Contents to the Layers section. The layers to be used are checked.</p>
+<p>An exclusion layer is used in this example. An exclusion layer is a binary raster with values of 0 and 1. Using an exclusion layer confines the selection of points to those areas with a raster value of 1.</p>
+<p>The output file is a shapefile named “samples.shp.” The Number of Points is 30. The Number of Iterations is increased from the default of 100 to 300. Increasing the number of iterations increases the processing time, but it also increases the likelihood that the samples selected are representative of the selected strata.</p>
+<p>Click <strong>Generate</strong> and let the routine process. This can take from several minutes to several hours, depending on how large the area is in terms of columns and rows and how many layers are used.</p>
+<p>The resulting output shows 30 points confined to the watershed of interest.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig22.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>Comparing the frequency distribution of the samples to the population shows a reasonable representation, especially considering the small sample size.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig23.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+</div>
+<div id="two-stage-stratified-random-sample-design-using-arcgis" class="section level3">
+<h3><span class="header-section-number">5.4.2</span> Two-Stage Stratified Random Sample Design Using ArcGIS</h3>
+<p>The following example examines a sampling design executed by Wendy Noll, USDA-NRCS, Morgantown, WV and used by NRCS and USFS investigators in the Monongahela National Forest. They were interested in quantifying the depth of organic surface horizons in soils that correlated to the Mandy soil series and formed under red spruce canopy on backslopes in the Upper Greenbrier Watershed (HUC 8 -05050003). This project ultimately led to the development of new soil series and the update of thousands of acres of forest soils in West Virginia.</p>
+<p>Stage 1: Sub-watersheds in the study area were randomly selected.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig7.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>Strata: Sampling was based on three stratum.</p>
+<ul>
+<li>Mandy soil map units (MfE, MfF, MfG, and other)</li>
+<li>Red spruce canopy cover (&gt;30% canopy, other)</li>
+<li>Slope (&lt;= 35%, &gt;= 35%)</li>
+</ul>
+<p>Data layers: Input layers included coregistered raster data of each stratum, reclassed as follows.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig8.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The Raster Calculator was used to add data layers together.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig9.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The resulting raster file had the following combinations.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig10.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The following guide was used to verify the selection of sample numbers allocated according to the proportionate extent of the strata.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig11.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The Create Random Points tool was used within each sub-watershed. The tool is in <strong>Data Management Tools</strong> &gt; <strong>Feature Class toolbox</strong>.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig12.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The sub-watershed layer was specified as the Constraining Feature Class. The number of points selected was 50.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig13.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The resulting point file had 50 points per polygon.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig14.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The following image was used to check if the sample points adequately represented the proportionate extent of the data made by summarizing the GRIDCODE of the points.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig15.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+<p>The results compared well to the extent of the population.</p>
+<div class="figure">
+<img src="static-figures/ch3_fig16.jpg" alt="" />
+<p class="caption">R GUI image</p>
+</div>
+</div>
+</div>
+<div id="references-sampling" class="section level2">
+<h2><span class="header-section-number">5.5</span> References (Sampling)</h2>
+<p>Franklin, J., and J.A. Miller. 2009. Mapping species distributions: Spatial inference and prediction. Cambridge: Cambridge University Press. <a href="http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction">http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction</a>.</p>
+<p>Hengl, T. 2009. A practical guide to geostatistical mapping, 2nd Ed. University of Amsterdam. ISBN 978-90-9024981-0. <a href="http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf">http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf</a>.</p>
+<p>Kutner, M.H., C.J. Nachtsheim, J. Neter, and W. Li (Eds.). 2005. Applied linear statistical models, 5th edition. McGraw-Hill.</p>
+<p>Roudier, P. 2011. cLHS: A R package for conditioned Latin hypercube sampling. <a href="https://cran.r-project.org/web/packages/clhs/index.html">https://cran.r-project.org/web/packages/clhs/index.html</a>.</p>
+<p>Rossiter, D. 2015. Spatial modelling and analysis applied to agronomic and environmental systems [Lecture notes]. <a href="http://www.css.cornell.edu/faculty/dgr2/teach/CSS6200.html">http://www.css.cornell.edu/faculty/dgr2/teach/CSS6200.html</a>.</p>
+<p>Minasny, B., and A.B. McBratney. 2006. A conditioned Latin hypercube method for sampling in the presence of ancillary information. Computers &amp; Geosciences. 32(9):1378-1388. <a href="http://www.sciencedirect.com/science/article/pii/S009830040500292X">http://www.sciencedirect.com/science/article/pii/S009830040500292X</a>.</p>
+<p>Vaughan, R., and K. Megown. 2015. The Terrestrial Ecological Unit Inventory (TEUI) Geospatial Toolkit: User guide v5.2. RSAC-10117-MAN1. Salt Lake City, UT: U.S. Department of Agriculture, Forest Service, Remote Sensing Applications Center. <a href="http://www.fs.fed.us/eng/rsac/programs/teui/about.html">http://www.fs.fed.us/eng/rsac/programs/teui/about.html</a>.</p>
+</div>
+<div id="additional-reading-sampling" class="section level2">
+<h2><span class="header-section-number">5.6</span> Additional Reading (Sampling)</h2>
+<p>Brungard, C., &amp; Johanson, J. (2015). The gate’s locked! I can’t get to the exact sampling spot … can I sample nearby? Pedometron(37), 8-9. <a href="http://www.pedometrics.org/Pedometron/Pedometron37.pdf">http://www.pedometrics.org/Pedometron/Pedometron37.pdf</a></p>
+<p>Brus, D.J. and J.J. de Gruijter. “Random sampling or geostatistical modelling? Choosing between design-based and model-based sampling strategies for soil (with discussion).” Geoderma. Vol. 80. 1. Elsevier, 1997. 1-44. <a href="https://www.sciencedirect.com/science/article/pii/S0016706197000724">https://www.sciencedirect.com/science/article/pii/S0016706197000724</a></p>
+<p>de Gruijter, J., D.J. Brus, M.F.P. Bierkens, and M. Knotters. 2006. Sampling for natural resource monitoring: Springer. <a href="http://www.springer.com/us/book/9783540224860">http://www.springer.com/us/book/9783540224860</a>.</p>
+<p>Schreuder, H.T., R. Ernst, and H. Ramirez-Maldonado. 2004. Statistical techniques for sampling and monitoring natural resources. Gen. Tech. Rep. RMRS-GTR-126. Fort Collins, CO: U.S. Department of Agriculture, Forest Service, Rocky Mountain Research Station. <a href="http://www.fs.fed.us/rm/pubs/rmrs_gtr126.html">http://www.fs.fed.us/rm/pubs/rmrs_gtr126.html</a>.</p>
+<p>U.S. Environmental Protection Agency. 2002. Guidance for choosing a sampling design for environmental data collection. Washington, DC: US EPA. <a href="http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality">http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality</a>.</p>
+<p>Viscarra Rossel, R.A., et al. “Baseline estimates of soil organic carbon by proximal sensing: Comparing design-based, model-assisted and model-based inference.” Geoderma 265 (2016): 152-163. <a href="https://www.sciencedirect.com/science/article/pii/S0016706115301312">https://www.sciencedirect.com/science/article/pii/S0016706115301312</a></p>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="spatial-data-in-r.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["s4ssbook.pdf", "s4ssbook.epub"],
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
