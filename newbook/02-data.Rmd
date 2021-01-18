@@ -497,7 +497,7 @@ The `gopheridge` sample data set is a sample R object returned from `fetchNASIS(
 
 Open RStudio, and set up the environment by loading packages and the `gopheridge` sample dataset.
 
-```{r gopheridge_a}
+```{r gopheridge_a, eval=TRUE}
 library(aqp)
 library(soilDB)
 
@@ -523,14 +523,14 @@ The `fetchNASIS()` function automatically converts moist Munsell colors into R-s
 
 Multiple colors per horizon are mixed to make the ones that are shown by default in the calculated `soil_color` fields. See `?plotSPC` for a detailed list of arguments and examples.
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.width=10, fig.height=4, eval=TRUE}
 par(mar = c(1, 1, 1, 1))
 
 # omitting pedon IDs and horizon designations
 plot(gopheridge,
      print.id = FALSE,
      name = '',
-     width = 0.3)s
+     width = 0.3)
 title('Pedons from the `gopheridge` sample dataset', line = -0.5)
 ```
 
@@ -550,7 +550,7 @@ When you load pedons using the `fetchNASIS()` function, the following data check
 
 - **Inconsistent horizon boundaries**. Pedons with inconsistent horizon boundaries are not loaded.  In most cases, this occurs when the bottom depth of a horizon is not the same as the upper depth of the next lower horizon.
 
-```{r example_a, purl=FALSE, echo=FALSE, results='show', warning=FALSE}
+```{r example_a, purl=FALSE, eval=TRUE, echo=FALSE, results='show', warning=FALSE}
 top <- c(0, 38, 56, 121, 135)
 bot <- c(30, 56, 121, 135, NA)
 
@@ -630,8 +630,9 @@ Plotting the data as an R graphic can give you some idea of how data look spatia
 
 Typos are relatively common when coordinates are manually entered. Viewing the data spatially is a quick way to see if any points plot far outside of the geographic area of interest and therefore clearly have an error.
 
-```{r gopheridge_b, eval = FALSE}
-# plot the locations of the gopheridge pedons within R
+```{r gopheridge_b, eval = TRUE}
+# plot the locations of the gopheridge pedons with R
+# 
 # Steps:
 # 1) create and inspect an sf data.frame object
 # 2) plot the data with mapview
@@ -650,7 +651,7 @@ data("gopheridge", package = "soilDB")
 #gopheridge <- fetchNASIS()
 
 # create simple features POINT geometry data.frame
-# st_as_sf(): convert data.frame to spatial simple features collection in $geometry 
+# st_as_sf(): convert data.frame to spatial simple features, with points in $geometry 
 # st_crs(): set EPSG:4326 Coordinate Reference System (CRS) as Well-Known Text (WKT)
 gopher.locations <- st_as_sf(site(gopheridge), 
                              coords = c('x_std','y_std'),
@@ -664,10 +665,7 @@ st_crs(gopher.locations)
 
 # create interactive map with sfc_POINT object
 #  use site_id in sf data.frame as labels
-mapview(gopher.locations, 
-        legend = FALSE, 
-        map.types = 'OpenStreetMap', 
-        label = gopher.locations$site_id)
+mapview(gopher.locations, label = gopher.locations$site_id)
 ```
 
 ### Displaying Pedon Data in Google Earth
@@ -726,7 +724,7 @@ The base R `table()` function is very useful for quick summary operations. It re
 
 The numeric vector of "counts" is commonly combined with other functions such as `sort()`, `order()`, `prop.table()`, `is.na()` or `!is.na()` (is not NA) to identify abundance, proportions, or missing data (`NA`).
 
-```{r}
+```{r, eval=TRUE}
 # load required packages
 library(aqp)
 library(soilDB)
@@ -756,9 +754,6 @@ It is also good short-hand for concatenating a comma-delimited list.
 Here, we select the first four `pedon_id` values in `pedons` site table, and print out a comma-separated `c()` expression showing those values as a static R expression.
 
 ```{r, eval=TRUE}
-data("gopheridge", package = "soilDB")
-pedons <- gopheridge
-
 dput(site(pedons)$pedon_id[1:4])
 ```
 
@@ -766,11 +761,13 @@ This result string can be copy-pasted as a comma-delimited string, used as strin
 
 The `dput()` function is helpful when sending questions or example data to colleagues. Here, we see that the results of `dput()` are equivalent to the input after evaluation by R.
 
-```{r}
+```{r, eval=TRUE}
 all(c("08DWB028", "07RJV098", "07RJV099", "S2007CA009002") == site(pedons)$pedon_id[1:4])
 ```
 
-#### The `dplyr` package
+#### The `dplyr` package and "tidy" data principles
+
+**[Tidy Data Principles](https://tidyr.tidyverse.org/articles/tidy-data.html)**
 
 This is a stub to talk about `dplyr` some links to tidyverse-centric examples of working with `data.frame`/`tibble` and summarizing them. 
 
@@ -926,11 +923,23 @@ Unix time is a system for describing a point in time. It is the number of second
 
 Above, we use the fact that you can logically compare dates and times if their string representation is converted to a common base R UNIX time representation known as `POSIXlt`. This conversion accounts for important things like timezone, using your current locale -- which is important to keep in mind.
 
+#### `zoo` package
+
+Tools for totally ordered indexed observations -- especially irregular time series. 
+
+[zoo Quick Reference](https://cran.r-project.org/web/packages/zoo/vignettes/zoo-quickref.pdf)
+
+#### `tidyverts` and the `tsibble` package
+
+[`tidyerts`](https://tidyverts.org/) is all about _time-series_ in the [tidyverse](https://tidyverse.org/). 
+
+The [`tsibble`](https://github.com/tidyverts/tsibble) package provides a data structure for tidy temporal data and models.
+
 ### Review of Data Checks Run by `fetchNASIS()`
 
 Now that you've loaded some data and learned a little about how to filter data in the SPC, you can quickly review some of the `get()` functions used to track data issues detected in the process of loading data back to the NASIS records in your selected set.
 
-```{r}
+```{r, eval=FALSE}
 get('sites.missing.pedons', envir = soilDB.env)
 get('dup.pedon.ids', envir = soilDB.env)
 get('bad.pedon.ids', envir = soilDB.env)

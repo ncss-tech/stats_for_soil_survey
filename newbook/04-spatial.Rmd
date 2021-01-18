@@ -1,6 +1,8 @@
 
 # Spatial Data in R
 
+![](static-figures/logo.jpg)  
+
 Most of us are familiar with spatial data types, sources, and the jargon used to describe interaction with these data. 
 
 GIS software provides a convenient framework for most of the spatial analysis that we do, however, the combination of statistical routines, advanced graphics, and data access functionality make *R* an ideal environment for soil science.
@@ -275,9 +277,9 @@ The `writeRaster()` function interprets the given (and missing) arguments as:
 
 ### Converting Vector to Raster
 
-#### `raster::rasterize`
+#### `raster::rasterize()`
 
-#### `fasterize::fasterize`
+#### `fasterize::fasterize()`
 
 ## Coordinate Reference Systems
 
@@ -526,63 +528,11 @@ writeRaster(r, filename='r.tif', options=c("COMPRESS=LZW"))
 writeRaster(r, filename='r.tif', options=c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9"))
 ```
 -->
-### Spatial Overlay Operations
-
-Spatial data are lot more useful when "combined" (overlay, intersect, spatial query, etc.) to generate something new. For simplicity, we will refer to this kind of operation as an "extraction". The CRS of the two objects being overlaid must match.
-
-#### Vector data
-
-In `sf` the functions used to do this are `st_intersects()` or `st_intersection()`.
-
-In `sp` objects, you do these operations with the `sp::over()` function. Access the associated vignette by pasting `vignette("over")` in the console.
-
-```{r}
-# hand make a SpatialPoints object
-# note that this is GCS
-p <- SpatialPoints(coords = cbind(-120, 37.5), proj4string = CRS('+proj=longlat +datum=WGS84'))
-
-# spatial extraction of MLRA data requires a CRS transformation
-p.aea <- spTransform(p, proj4string(mlra))
-over(p.aea, mlra)
-```
-
-#### Raster Data
-
-The values stored in a `RasterLayer` or `RasterStack` object can be extracted using the `extract()` function. 
-
-As long a the "query" feature has a valid CRS defined, the `raster::extract()` function will automatically perform any required CRS transformation.
-
-```{r}
-# extract from a single RasterLayer
-extract(maat, p)
-
-# extract from a RasterStack
-extract(rs, p)
-```
 
 
-The `extract()` function can perform several operations in one pass, such as buffering (in projected units) then extracting. See the manual page for an extensive listing of optional arguments and what they do.
+## Operations on Example Data
 
-```{r}
-# extract using a buffer with radius specified in meters (1000m)
-extract(rs, p, buffer = 1000)
-```
-
-### Raster Data Sampling
-
-Typically, spatial queries of raster data by polygon features are performed in two ways:
-  
- 1. for each polygon, collect all pixels that overlap (`exactextractr` approach)
- 
- 2. for each polygon, collect a sample of pixels defined by [sampling points](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html)
-
-The first method ensures that all data are included in the analysis, however, processing can be slow for multiple/detailed rasters, and the results may not fit into memory. 
-
-The second method is more efficient (10-100x faster), requires less memory, and can remain statistically sound--as long as a reasonable sampling strategy is applied. Sampling may also help you avoid low-acreage "anomalies" in the raster product. More on sampling methods in the next chapter. 
-
-## Exercises
-
-### Example Data
+### Load Required Packages
 
 Load required packages into the current R Session.
 
@@ -596,10 +546,9 @@ library(rgdal)
 library(raster)
 ```
 
+### Download Example Data
 
-#### Download Example Data
-
-If you haven't yet done so, please setup the sample data sets for this module. It will not take too long to download.
+This code will create a path for this example data in the `workspace2` folder you created. It will download a set of polygons and rasters.
 
 ```{r, eval=FALSE}
 # store path as a variable, in case you want to keep it somewhere else
@@ -620,16 +569,21 @@ unzip(file.path(ch2b.data.path, 'chapter-2b-mu-polygons.zip'), exdir = ch2b.data
 unzip(file.path(ch2b.data.path, 'chapter-2b-PRISM.zip'), exdir = ch2b.data.path, overwrite = TRUE)
 ```
 
-### Load the data
+### Load the Data
 
 We will be using polygons associated with MLRAs 15 and 18 as part of this demonstration. 
 
-Next, load in the example raster data with the `raster()` function. These are 800m PRISM data that have been cropped to the extent of the MLRA 15 and 18 polygons.
+Import these data now with `readOGR()`; recall the somewhat strange syntax. You will need the data and `RasterStack` object `rs` we created in the examples above.
 
-```{r, eval=TRUE}
+```{r results='hide', eval=TRUE}
 # set path to example data
 ch2b.data.path <- 'C:/workspace2/chapter-2b'
 
+# load MLRA polygons
+mlra <- readOGR(dsn = ch2b.data.path, layer = 'mlra-18-15-AEA')
+```
+
+```{r, eval=TRUE}
 # mean annual air temperature, Deg C
 maat <- raster(file.path(ch2b.data.path, 'MAAT.tif'))
 
@@ -695,9 +649,63 @@ plot(maat, main = 'PRISM Mean Annual Air Temperature (deg C)')
 plot(mlra.gcs, main = 'MLRA 15 and 18', add = TRUE)
 ```
 
-### Basic sampling and extraction
+### Spatial Overlay Operations
 
-Sampling and extraction, result is a `matrix` object.
+Spatial data are lot more useful when "combined" (overlay, intersect, spatial query, etc.) to generate something new. For simplicity, we will refer to this kind of operation as an "extraction". The CRS of the two objects being overlaid must match.
+
+#### Vector data
+
+In `sf` the functions used to do this are `st_intersects()` or `st_intersection()`.
+
+In `sp` objects, you do these operations with the `sp::over()` function. Access the associated vignette by pasting `vignette("over")` in the console.
+
+```{r}
+# hand make a SpatialPoints object
+# note that this is GCS
+p <- SpatialPoints(coords = cbind(-120, 37.5), 
+                   proj4string = CRS('+proj=longlat +datum=WGS84'))
+
+# spatial extraction of MLRA data requires a CRS transformation
+p.aea <- spTransform(p, proj4string(mlra))
+over(p.aea, mlra)
+```
+
+#### Raster Data
+
+The values stored in a `RasterLayer` or `RasterStack` object can be extracted using the `extract()` function. 
+
+As long a the "query" feature has a valid CRS defined, the `raster::extract()` function will automatically perform any required CRS transformation.
+
+```{r}
+# extract from a single RasterLayer
+extract(maat, p)
+
+# extract from a RasterStack
+extract(rs, p)
+```
+
+### Sampling and Extraction
+
+#### Raster Data Sampling
+
+Typically, spatial queries of raster data by polygon features are performed in two ways:
+  
+ 1. for each polygon, collect all pixels that overlap (`exactextractr` approach)
+ 
+ 2. for each polygon, collect a sample of pixels defined by [sampling points](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html)
+
+The first method ensures that all data are included in the analysis, however, processing can be slow for multiple/detailed rasters, and the results may not fit into memory. 
+
+The second method is more efficient (10-100x faster), requires less memory, and can remain statistically sound--as long as a reasonable sampling strategy is applied. Sampling may also help you avoid low-acreage "anomalies" in the raster product. More on sampling methods in the next chapter. 
+
+The `extract()` function can perform several operations in one pass, such as buffering (in projected units) then extracting. See the manual page for an extensive listing of optional arguments and what they do.
+
+```{r}
+# extract using a buffer with radius specified in meters (1000m)
+extract(rs, p, buffer = 1000)
+```
+
+Sampling and extraction with `raster` methods results in a `matrix` object.
 
 ```{r, eval=FALSE}
 # sampling single RasterLayer
@@ -752,60 +760,13 @@ Just how much variation can we expect when collecting 100, randomly-located samp
 
 ```{r}
 # takes a couple of seconds
-z <- replicate(100, mean(sampleRandom(maat, size = 100, na.rm = TRUE), na.rm = TRUE))
+z <- replicate(30, mean(sampleRandom(maat, size = 100, na.rm = TRUE), na.rm = TRUE))
 
 # 90% of the time the mean MAAT values were within:
 quantile(z, probs = c(0.05, 0.95))
 ```
 
-#### Fast Raster Sampling and Aggregation with `exactextractr`
-
-This example shows how to determine the distribution of Frost-Free Days across a soil series extent. 
-
-The data are extracted from the raster data source very rapidly using the `exactextractr` package.
-
-```{r fig.width=6, fig.height=5, results='hide', eval=TRUE}
-library(sf)
-library(soilDB)
-library(raster)
-library(lattice)
-library(exactextractr)
-
-# 5-10 seconds to download Series Extent Explorer data 
-s <- seriesExtent('san joaquin')
-
-# load pointer to PRISM data
-r <- raster('C:/workspace2/chapter-2b/FFD.tif')
-
-# transform extent to CRS of raster
-s <- st_transform(st_as_sf(s), crs = st_crs(r))
-
-# inspect
-s
-
-# use `st_union(s)` to create a MULTI- POINT/LINE/POLYGON from single
-# use `sf::st_cast(s, 'POLYGON')` to create other types
-
-# <0.4 seconds for sampling, including coverage fractions!
-system.time({ ex <- exact_extract(r, s) })
-
-# ex is a list(), with data.frame [value, coverage_fraction]
-# for each polygon in s, we only have one, so we don't need this
-
-# combine all list elements into single data.frame (row-wise)
-# ex.all <- do.call('rbind', ex)
-
-# or, just take the first with MULTIPOLYGON
-ex.all <- ex[[1]]
-
-# simple summary
-densityplot(ex.all$value, plot.points=FALSE, bw = 2, lwd = 2,
-            col = 'RoyalBlue', ylab = 'Density', from = 0, to = 400,
-            xlab = 'Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', 
-            main = 'FFD Estimate for Extent of San Joaquin Series')
-```
-
-#### Extracting Raster Data at KSSL Pedon Locations
+#### Extracting Raster Data: KSSL Pedon Locations
 
 Extract PRISM data at the coordinates associated with KSSL pedons that have been correlated to the [AUBURN](https://casoilresource.lawr.ucdavis.edu/sde/?series=auburn) series. 
 
@@ -885,7 +846,7 @@ mtext('Annual Sum of Monthly (PPT - ET_p) (mm)',
 
 Note that negative values are associated with a net deficit in monthly precipitation vs. estimated ET.
 
-#### Summarizing PRISM Data by Series Extent
+#### Raster Summary By Polygon: Series Extent
 
 The [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) function from the `soilDB` package provides a simple interface to [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/) data files. 
 
@@ -943,7 +904,7 @@ points(amador.pts, cex = 0.25)
 
 Extract PRISM data (the `RasterStack` object we made earlier) at the sampling locations (100 regularly-spaced and from MU polygon centroids) and summarize. Note that CRS transformations are automatic (when possible).
 
-```{r}
+```{r, eval=TRUE}
 # return the result as a data.frame object
 e <- extract(rs, s, df = TRUE)
 e.pts <- extract(rs, amador.pts, df = TRUE)
@@ -985,16 +946,7 @@ Basic climate summaries from a standardized source (e.g. PRISM) might be a usefu
 
 Think about how you could adapt this example to compare climate summaries derived from NASIS pedons to similar summaries derived from map unit polygons and generalized soil series extents.
 
-#### Summarizing PRISM Data by MLRA Polygon
-
-We will be using polygons associated with MLRAs 15 and 18 as part of this demonstration. 
-
-Import these data now with `readOGR()`; recall the somewhat strange syntax. You will need the data and `RasterStack` object `rs` we created in the examples above.
-
-```{r results='hide', eval=TRUE}
-# load MLRA polygons
-mlra <- readOGR(dsn = ch2b.data.path, layer = 'mlra-18-15-AEA')
-```
+#### Raster Summary By Polygon: MLRA 
 
 The following example is a simplified version of what is available in the [`soilReports`](https://github.com/ncss-tech/soilReports) package, reports on the [ncss-tech](https://github.com/ncss-tech/soil-pit/tree/master/reports) GitHub repository, or in the [TEUI suite of map unit summary tools](https://www.fs.fed.us/eng/rsac/programs/teui/about.html). The [*Computing GIS Summaries from Map Unit Polygons*](http://ncss-tech.github.io/AQP/sharpshootR/GIS-summary-by-MU.html) tutorial is an expanded version of this example.
 
@@ -1010,14 +962,13 @@ Efficient summary of large raster data sources can be accomplished using:
   * [fixed-density sampling](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html) of polygons
   * estimation of quantiles from collected raster samples
 
-
 Back to our example data. The first step is to check the MLRA polygons (`mlra`); how many features per MLRA symbol? Note that some MLRA have more than one polygon.
 
 ```{r}
 table(mlra$MLRARSYM)
 ```
 
-Convert polygon area from square meters to acres and summarize. Note that this will only make sense when using a projected CRS with units of meters!
+Convert polygon area from square meters to acres and summarize. Note that this will only make sense when using a projected CRS with units of meters (equal area)!
 
 ```{r}
 poly.area <- round(sapply(mlra@polygons, slot, 'area') * 0.000247105)
@@ -1025,22 +976,22 @@ summary(poly.area)
 sum(poly.area)
 ```
 
-
 Sample each polygon at a constant sampling density of `0.001` samples per acre (1 sample for every 1,000 ac.). At this sampling density we should expect approximately 16,700 samples--more than enough for our simple example.
 
 ```{r, warning=TRUE}
 library(sharpshootR)
 
-# the next function requires a polygon ID: each polygon gets a unique number 1--number of polygons
+# the next function requires a polygon ID: 
+#  each polygon gets a unique number 1--number of polygons
 mlra$pID <- 1:nrow(mlra)
 s <- constantDensitySampling(mlra, n.pts.per.ac = 0.001)
 ```
 
 Extract MLRA symbol at sample points using the `over()` function. The result will be a `data.frame` object with all attributes from our MLRA polygons that intersect sampling points `s`.
 
-```{r}
+```{r, eval=TRUE}
 # spatial overlay: sampling points and MLRA polygons
-res <- over(s, mlra)
+res <- over(spTransform(s, proj4string(mlra)), mlra)
 
 # row / feature order is preserved, so we can directly copy
 s$mlra <- res$MLRARSYM
@@ -1051,7 +1002,7 @@ table(s$mlra)
 
 Extract values from the `RasterStack` of PRISM data as a `data.frame`.
 
-```{r}
+```{r, eval=TRUE}
 # raster stack extraction at sampling points
 e <- extract(rs, s, df=TRUE)
 
@@ -1067,8 +1018,7 @@ head(s.df)
 
 Summarizing multivariate data by group (MLRA) is usually much simpler after reshaping data from "wide" to "long" format.
 
-```{r}
-library(lattice)
+```{r, eval=TRUE}
 library(reshape2)
 
 # reshape from wide to long format
@@ -1082,14 +1032,79 @@ head(m)
 
 A simple tabular summary of means by MLRA and PRISM variable using `tapply()`.
 
-```{r}
+```{r, eval=TRUE}
 # tabular summary of mean values
 tapply(m$value, list(m$mlra, m$variable), mean)
 ```
 
-Lattice graphics are useful for summarizing grouped comparisons. The syntax is a little rough, but there is a lot of [documentation online](http://www.statmethods.net/advgraphs/trellis.html). [Box and whisker plots](https://en.wikipedia.org/wiki/Box_plot) are usually the first step in a graphical comparison of samples. We will go over the interpretation of these kind of figures in [chapter 4](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/4_exploratory_analysis.html).
+#### Faster with `exactextractr`
 
-```{r, fig.width=8, fig.height=4}
+This example shows how to determine the distribution of Frost-Free Days across a soil series extent. 
+
+The data are extracted from the raster data source very rapidly using the `exactextractr` package.
+
+```{r fig.width=6, fig.height=5, results='hide', eval=TRUE}
+library(sf)
+library(soilDB)
+library(raster)
+library(lattice)
+library(exactextractr)
+
+# 5-10 seconds to download Series Extent Explorer data 
+series <- c('holland','san joaquin')
+
+# make SpatialPolygonsDataFrame
+s <- do.call('rbind', lapply(series, seriesExtent))
+
+# load pointer to PRISM data
+r <- raster('C:/workspace2/chapter-2b/FFD.tif')
+
+# transform extent to CRS of raster with sf
+s <- st_transform(st_as_sf(s), crs = st_crs(r))
+
+# inspect
+s
+
+# use `st_union(s)` to create a MULTI- POINT/LINE/POLYGON from single
+# use `sf::st_cast(s, 'POLYGON')` to create other types
+
+# <0.4 seconds for sampling, including coverage fractions!
+system.time({ ex <- exactextractr::exact_extract(r, s) })
+
+# ex is a list(), with data.frame [value, coverage_fraction]
+#  for each polygon in s (we have one MULTIPOLYGON per series)
+
+# combine all list elements `ex` into single data.frame `ex.all`
+#  - use do.call('rbind', ...) to stack data.frames row-wise
+#  - an anonymous function that iterates along length of `ex`
+#  - adding the series name to as a new variable, calculated using `i`
+ex.all <- do.call('rbind', lapply(seq_along(ex), function(i) {
+  cbind(data.frame(group = series[i]), ex[[i]])
+}))
+
+# simple summary
+densityplot(~ value | group, data = ex.all, 
+            plot.points=FALSE, bw = 2, lwd = 2,
+            col = c('RoyalBlue'), layout = c(1, 2),
+            ylab = 'Density', from = 0, to = 400,
+            xlab = 'Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', 
+            main = 'FFD Estimate for Extent of San Joaquin and Holland Series')
+```
+<!--
+
+I tried to give these examples a second chance but they are not that useful in current form.
+
+### More Spatial Exploratory Data Analysis
+
+##### `lattice` graphics
+
+Lattice graphics are useful for summarizing grouped comparisons. 
+
+The syntax is difficult to learn and remember, but there is a lot of [documentation online](http://www.statmethods.net/advgraphs/trellis.html). 
+
+```{r, fig.width=8, fig.height=4, eval=TRUE}
+library(lattice)
+
 tps <- list(
     box.rectangle = list(col = 'black'),
     box.umbrella = list(col = 'black', lty = 1),
@@ -1113,11 +1128,7 @@ bwplot(mlra ~ value | variable, data=m,                 # setup plot and data so
 )
 ```
 
-<!--
-
-Consider something more modern than Hmisc. There are so many more generalizable options. -AGB
-
-### Interactive Summaries
+##### Interactive Summaries
 
 Static figures are a good start, but sometimes an interactive summary is more appropriate for EDA.
 
@@ -1127,10 +1138,20 @@ The `histboxp` function from the `Hmisc` package creates interactive (HTML) chun
 library(Hmisc)
 
 # interactive exploration of the MAAT distributions by MLRA
-histboxp(x=s.df$MAAT, group=s.df$mlra, bins=100, xlab='Mean Annual Air Temperature (deg C)')
+histboxp(
+  x = s.df$MAAT,
+  group = s.df$mlra,
+  bins = 100,
+  xlab = 'Mean Annual Air Temperature (deg C)'
+)
 
 # interactive exploration of the Effective PPT distributions by MLRA
-histboxp(x=s.df$eff.PPT, group=s.df$mlra, bins=100, xlab='Annual Sum of Monthly PPT - PET (mm)')
+histboxp(
+  x = s.df$eff.PPT,
+  group = s.df$mlra,
+  bins = 100,
+  xlab = 'Annual Sum of Monthly PPT - PET (mm)'
+)
 ```
 -->
 

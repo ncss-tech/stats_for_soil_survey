@@ -40,7 +40,7 @@ Graphical methods include:
 
 Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine appropriate statistical analyses. For this chapter we'll use the loafercreek dataset from the CA630 Soil Survey Area.
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, eval=TRUE}
 library(aqp)
 library(soilDB)
 
@@ -75,14 +75,12 @@ table(h$genhz, h$hzname)
 As noted in Chapter 1, a visual examination of the raw data is possible by clicking on the dataset in the environment tab, or via commandline:  
 
 ```{r, eval=FALSE}
-
 View(h) 
-
 ```
  
 This view is fine for a small dataset, but can be cumbersome for larger ones. The `summary()` function can be used to quickly summarize a dataset however, even for our small example dataset, the output can be voluminous. Therefore in the interest of saving space we'll only look at a sample of columns.  
 
-```{r}
+```{r, eval=TRUE}
 vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effclass")
 summary(h[, vars])
 ```
@@ -99,7 +97,7 @@ When you do have missing data and the function you want to run will not run with
 
 A quick check for typos would be to examine the list of levels for a factor or character, such as:  
 
-```{r}
+```{r, eval=TRUE}
 # just for factors
 levels(h$genhz)
 
@@ -109,16 +107,12 @@ sort(unique(h$hzname))
 
 If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make an adjustment in R, such as:
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 
 # or
 
 h$hzname[h$hzname == "BT"] <- "Bt"
-
-# or as a last resort we could manually edit the spreadsheet in R
-
-edit(h)
 ```
 
 Typo errors such as these are a common problem with old pedon data in NASIS.
@@ -131,7 +125,7 @@ Typo errors such as these are a common problem with old pedon data in NASIS.
 - Show your work and submit the results to your mentor.
 
 
-```{r}
+```{r, eval=TRUE}
 # gopheridge rules
 n <- c('A', 'Bt1', 'Bt2', 'Bt3','Cr','R')
 p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
@@ -139,7 +133,7 @@ p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
 
 ## Descriptive Statistics
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, eval=TRUE}
 desc <- data.frame(
   Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
   NASIS = c("RV ?", "RV", "RV", "L & H ?", "L & H"),
@@ -162,7 +156,7 @@ These measures are used to determine the mid-point of the range of observed valu
 
 The mean clay content from the loafercreek dataset may be determined:  
 
-```{r}
+```{r, eval=TRUE}
 # first remove missing values and create a new vector
 clay <- na.exclude(h$clay)
 mean(clay)
@@ -175,21 +169,22 @@ mean(h$clay, na.rm = TRUE)
 
 The median from the sample dataset may be determined:  
 
-```{r}
+```{r, eval=TRUE}
 median(clay)
 ```
 
 **Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. R does not include a function for calculating the mode, but we can calculate it using the following example.
 
-```{r}
-sort(table(round(h$clay)), decreasing = TRUE)[1] # sort and select the 1st value, which will be the mode
+```{r, eval=TRUE}
+# sort and select the 1st value, which will be the mode
+sort(table(round(h$clay)), decreasing = TRUE)[1] 
 ```
 
 **Frequencies**
 
 To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using the `table()` or `summary()` functions.
 
-```{r}
+```{r, eval=TRUE}
 table(h$genhz)
 
 # or
@@ -199,17 +194,17 @@ summary(h$genhz)
 
 This gives us a count of the number of observations for each horizon. If we want to see the comparison between two different factors or characters, we can include two variables.
 
-```{r eval=FALSE}
+```{r eval=TRUE}
 table(h$genhz, h$texcl)
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=TRUE}
 knitr::kable(table(h$genhz, h$texcl))
 ```
 
 We can also add margin totals to the table or convert the table frequencies to proportions.
 
-```{r eval=FALSE}
+```{r eval=TRUE}
 # append the table with row and column sums
 addmargins(table(h$genhz, h$texcl))
 
@@ -217,20 +212,20 @@ addmargins(table(h$genhz, h$texcl))
 round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) 
 ```
 
-```{r}
+```{r, eval=TRUE}
 knitr::kable(addmargins(table(h$genhz, h$texcl)))
 knitr::kable(round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100))
 ```
 
 To determine the mean by a group or category, use the `aggregate` function:
 
-```{r}
+```{r, eval=TRUE}
 aggregate(clay ~ genhz, data = h, mean)
 ```
 
 To determine the median by group or category, use the aggregate command again:  
 
-```{r}
+```{r, eval=TRUE}
 aggregate(clay ~ genhz, data = h, median)
 
 # or we could use the summary() function to get both the mean and median
@@ -247,7 +242,7 @@ $s^2 = \frac{\sum_{i=1}^{n}(x_i - \bar{x})^2} {n - 1}$
 
 This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the *standard deviation*. Variance for the sample dataset is:  
 
-```{r}
+```{r, eval=TRUE}
 var(h$clay, na.rm=TRUE)
 ```
 
@@ -257,7 +252,7 @@ $s = \sqrt\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2} {n - 1}$
 
 The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:  
 
-```{r}
+```{r, eval=TRUE}
 sd(h$clay, na.rm = TRUE)
 
 # or
@@ -271,7 +266,7 @@ $CV = \frac{s}{\bar{x}} \times 100$
 
 CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:  
 
-```{r}
+```{r, eval=TRUE}
 cv <- sd(clay) / mean(clay) * 100
 cv
 ```
@@ -281,7 +276,7 @@ cv
 
 The default for the `quantile()` function returns the  min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
 
-```{r}
+```{r, eval=TRUE}
 quantile(clay)
 
 # or
@@ -294,13 +289,13 @@ Thus, for the five number summary 25% of the observations fall between each of t
 
 **Range**  is the difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:  
 
-```{r}
+```{r, eval=TRUE}
 range(clay)
 ```
 
 which returns the minimum and maximum values observed, or:  
 
-```{r}
+```{r, eval=TRUE}
 diff(range(clay))
 
 # or
@@ -310,7 +305,7 @@ max(clay) - min(clay)
 
 **Interquartile Range** (IQR)  is the range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:  
 
-```{r}
+```{r, eval=TRUE}
 IQR(clay)
 
 # or
@@ -322,7 +317,7 @@ IQR(clay)
 
 A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:  
 
-```{r}
+```{r, eval=TRUE}
 h$hzdepm <- (h$hzdepb + h$hzdept) / 2 # Compute the middle horizon depth
 
 vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
@@ -336,7 +331,7 @@ As seen in the output, variables are perfectly correlated with themselves and ha
 
 Now that we've checked for missing values and typos and made corrections, we can graphically examine the sample data distribution of our data. Frequency distributions are useful because they can help us visualize the center (e.g., RV) and spread or dispersion (e.g., low and high) of our data. Typically in introductory statistics the normal (i.e., Gaussian) distribution is emphasized.
 
-```{r graphical descriptions, purl=FALSE, echo = FALSE}
+```{r graphical descriptions, purl=FALSE, echo = FALSE, eval=TRUE}
 figs <- data.frame(
   'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
    Description = c("a plot where each bar represents the frequency of observations for a 'group'",
@@ -352,7 +347,7 @@ figs <- data.frame(
 knitr::kable(figs, caption = "Short Description of Graphical Methods")
 ```
 
-```{r graphical functions, purl=FALSE, echo = FALSE}
+```{r graphical functions, purl=FALSE, echo = FALSE, eval=TRUE}
 figs <- data.frame(
   'Plot Types' = c("Bar", "Histogram", "Density", "Quantile-Quantile", "Box-Whisker", "Scatter & Line"),
   # Description = c("a bar plot where each bar represents the frequency of observations for a given range of values",
@@ -374,7 +369,7 @@ knitr::kable(figs, caption = "Comparison of R's 3 Graphing Systems and their Equ
 
 ### Distributions
 
-```{r distribution comparison, echo=FALSE, fig.dim = c(8, 4)}
+```{r distribution comparison, echo=FALSE, fig.dim = c(8, 4), eval=TRUE}
 data(metadata)
 
 # Generalized the horizon designations
@@ -437,7 +432,7 @@ gridExtra::grid.arrange(p_b, p_h, p_d, ncol = 3)
 
 A bar plot is a graphical display of the frequency (i.e. number of observations (count or n)), such as soil texture, that fall within a given class. It is a graphical alternative to to the `table()` function.
 
-```{r barplot}
+```{r barplot, eval=TRUE}
 library(ggplot2)
 
 # bar plot
@@ -449,7 +444,7 @@ ggplot(h, aes(x = texcl)) +
 
 A histogram is similar to a bar plot, except that instead of summarizing categorical data, it categorizes a continuous variable like clay content into non-overlappying intervals for the sake of display. The number of intervals can be specified by the user, or can be automatically determined using an algorithm, such as `nclass.Sturges()`. Since histograms are dependent on the number of bins, for small datasets they're not the best method of determining the shape of a distribution. 
 
-```{r histogram}
+```{r histogram, eval=TRUE}
 
 ggplot(h, aes(x = clay)) +
   geom_histogram(bins = nclass.Sturges(h$clay))
@@ -460,7 +455,7 @@ ggplot(h, aes(x = clay)) +
 
 A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram. Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. One curious feature of the density curve is the hint of a two peaks (i.e. bimodal distribution?). Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
-```{r densityplot}
+```{r densityplot, eval=TRUE}
 
 ggplot(h, aes(x = clay)) +
   geom_density()
@@ -477,7 +472,7 @@ That is not to say the outlier points are in error, just that they are extreme c
 
 ![Boxplot description (Seltman, 2009)](static-figures/ch4_fig28.jpg)
 
-```{r boxplots}
+```{r boxplots, eval=TRUE}
 ggplot(h, (aes(x = genhz, y = clay))) +
   geom_boxplot()
 ```
@@ -488,7 +483,7 @@ The above box plot shows a steady increase in clay content with depth. Notice th
 
 A QQ plot is a plot of the actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).  
 
-```{r}
+```{r, eval=TRUE}
 
 # QQ Plot for Clay
 ggplot(h, aes(sample = clay)) + 
@@ -521,7 +516,7 @@ A Gaussian distribution is often referred to as "Bell Curve", and has the follow
  6.	**68%** of the area under the curve is within one standard deviation of the mean
  7. Approximately **95%** of the area of a Gaussian distribution is within two standard deviations of the mean
 
-```{r, purl=FALSE, echo=FALSE, fig.align="center"}
+```{r, purl=FALSE, echo=FALSE, fig.align="center", eval=TRUE}
 library(ggplot2)
 
 dnorm_limit_1 <- function(x) {
@@ -568,7 +563,7 @@ Viewing a histogram or density plot of your data provides a quick visual referen
 
 Occasionally distributions are Uniform, or nearly so:
 
-```{r, purl=FALSE, echo = FALSE, warning=FALSE}
+```{r, purl=FALSE, echo = FALSE, warning=FALSE, eval=TRUE}
 
 r <- data.frame(y = dunif(seq(-1, 2, 0.1)), x = 1:31)
 
@@ -581,7 +576,7 @@ ggplot(r, aes(x = x, y = y)) +
 
 With the loafercreek dataset the mean and median for clay were only slightly different, so we can safely assume that we have a normal distribution. However many soil variables often have a non-normal distribution. For example, let's look at graphical examination of the mean vs. median for clay and rock fragments:  
 
-```{r clay vs frags, purl=FALSE, echo=FALSE, fig.dim = c(8, 4)}
+```{r clay vs frags, purl=FALSE, echo=FALSE, fig.dim = c(8, 4), eval=TRUE}
 
 p   <- c(0.025, 0.25, 0.5, 0.75, 0.975)
 
@@ -645,7 +640,7 @@ However for rock fragments, we commonly see a long tailed distribution (e.g., sk
 
 ### Scatterplots and Line Plots
 
-```{r, echo=FALSE, purl=FALSE, fig.dim = c(8, 4)}
+```{r, echo=FALSE, purl=FALSE, fig.dim = c(8, 4), eval=TRUE}
 # scatter plot
 p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
   geom_point() +
@@ -678,7 +673,7 @@ The purpose of a scatterplot is to see how one variable relates to another. With
 
 Create a basic scatter plot using the loafercreek dataset.
 
-```{r}
+```{r, eval=TRUE}
 # scatter plot
 ggplot(h, aes(x = clay, y = hzdepm)) +
   geom_point() +
@@ -696,21 +691,23 @@ This plots clay on the X axis and depth on the X axis. As shown in the scatterpl
 
 The function below produces a scatterplot matrix for all the numeric variables in the dataset. This is a good command to use for determining rough linear correlations for continuous variables.  
 
-```{r}
-# Load the GGally package
-library(GGally)
-
-# Create a scatter plot matrix
-vars <- c("hzdepm", "clay", "phfield", "total_frags_pct")
-
-ggpairs(h[vars])
-
+```{r, eval=TRUE}
+# Load the GGally package (install if needed)
+# install.packages("GGally")
+if (requireNamespace("GGally")) {
+  library(GGally)
+  
+  # Create a scatter plot matrix
+  vars <- c("hzdepm", "clay", "phfield", "total_frags_pct")
+  
+  ggpairs(h[vars])
+}
 ```
 
 
 ### 3rd Dimension - Color, Shape, Size, Layers, etc...
 
-```{r, purl=FALSE, echo=FALSE, fig.dim = c(8, 4)}
+```{r, purl=FALSE, echo=FALSE, fig.dim = c(8, 4), eval=TRUE}
 h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
 
 ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
@@ -725,7 +722,7 @@ ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
 
 #### Color and Groups
 
-```{r color, fig.dim = c(8, 4)}
+```{r color, fig.dim = c(8, 4), eval=TRUE}
 
 # scatter plot
 ggplot(h, aes(x = clay, y = hzdepm, color = genhz)) +
@@ -754,7 +751,7 @@ ggplot(s, aes(x = landform_string, y = pmkind)) +
 
 #### Facets - box plots
 
-```{r facets, fig.dim = c(8, 4)}
+```{r facets, fig.dim = c(8, 4), eval=TRUE}
 
 # convert to long format
 df <- reshape2::melt(h, 
@@ -772,7 +769,7 @@ ggplot(df, aes(x = genhz, y = value)) +
 
 #### Facets - depth plots
 
-```{r, fig.dim=c(8, 4)}
+```{r, fig.dim=c(8, 4), eval=TRUE}
 library(aqp)
 
 s <- slice(loafercreek, 0:100 ~ clay + phfield + total_frags_pct)
@@ -800,7 +797,7 @@ Since **pH** has a logarithmic distribution, the use of median and quantile rang
 
 If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:
 
-```{r}
+```{r, eval=TRUE}
 # arithmetic mean
 log10(mean(1/10^-h$phfield, na.rm = TRUE)) 
 
@@ -815,7 +812,7 @@ mean(h$phfield, na.rm = TRUE)
 
 The most intuitive means available for evaluating and describing slope aspect are circular plots available with the circular package in R and the radial plot option in the [TEUI](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html) Toolkit. The circular package in R will also calculate circular statistics like mean, median, quartiles etc.
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, eval=TRUE}
 library(circular)
 
 # Extract the site table
@@ -829,7 +826,7 @@ summary(aspect)
 
 The numeric output is fine, but a following graphic is more revealing, which shows the dominant Southwest slope aspect.  
 
-```{r}
+```{r, eval=TRUE}
 rose.diag(aspect, bins = 8, col="grey")
 ```
 

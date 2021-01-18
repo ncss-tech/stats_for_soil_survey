@@ -16,13 +16,13 @@ Because you are typically interested in using field point data to derive inferen
 
 If you have prior knowledge about the soil attribute being sampled, you can use a t-test to estimate the number (n) of samples needed to detect a significant difference. You can use either the `power.t.test()` or `power.prop.tes()` functions. See the following example of differences in clay content.
 
-```{r}
+```{r, eval=TRUE}
 # Clay example. Test to see the number of samples necessary to detect a 3 percent difference in clay between two horizons.
 power.t.test(power = 0.95, sd = 2, delta = 16 - 19) # delta = the difference between the two means
 power.t.test(power = 0.95, sd = 3, delta = 16 - 19)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE,, eval=TRUE}
 # Generate a graphical comparison of a fictitious clay example with 2 standard deviations
 x1 <- seq(12, 20, 0.1)
 y1 <- dnorm(x1, mean = 16, sd = 2)
@@ -73,7 +73,7 @@ In simple random sampling, all samples within the region have an equal chance of
  - Samples may be clustered spatially
  - Samples may not be representative of the feature attribute(s)  
 
-```{r simple, fig.width=4, fig.height=4}
+```{r simple, fig.width=4, fig.height=4, eval=TRUE}
 library(sp)
 
 # Create a sixteen square polygon
@@ -100,7 +100,7 @@ In stratified random sampling, the sampling region is spatially subset into diff
 
  - The existing knowledge used to construct strata may be flawed.
 
-```{r stratified, fig.width=4, fig.height=4}
+```{r stratified, fig.width=4, fig.height=4, eval=TRUE}
 plot(polys, main = "Stratified random sample")
 
 # Generate a spatially stratified random sample
@@ -125,7 +125,7 @@ In multistage random sampling, the region is separated into different subsets th
  - Lower precision
  - Stronger clustering than simple random sampling
 
-```{r two_stage, fig.width=4, fig.height=4}
+```{r two_stage, fig.width=4, fig.height=4, eval=TRUE}
 plot(polys, main = "Two-stage random")
 
 # Select 8 samples from each square
@@ -148,7 +148,7 @@ In systematic sampling, a sample is taken according to a regularized pattern. Th
 
  - Lower precision
 
-```{r systematic, fig.width=4, fig.height=4}
+```{r systematic, fig.width=4, fig.height=4, eval=TRUE}
 plot(polys, main = "Systematic sample")
 
 # Generate systematic random sample
@@ -170,7 +170,7 @@ In cluster sampling, a cluster or group of points is selected at one or more sit
 
  - Lower precision  
 
-```{r clustered, fig.width=4, fig.height=4} 
+```{r clustered, fig.width=4, fig.height=4, eval=TRUE} 
 plot(polys, main = "Clustered (n = 3) random sample")
 
 # Generate cluster random sample
@@ -192,7 +192,7 @@ The cLHS procedure iteratively selects samples from the strata variables such th
 
 To perform cLHS using R, you can use the clhs package (Roudier, 2011).
 
-```{r clhs, fig.width=4, fig.height=4}
+```{r clhs, fig.width=4, fig.height=4, eval=TRUE}
 library(clhs)
 library(raster)
 
@@ -227,7 +227,7 @@ cbind(summary(volcano_r), summary(slope_r))
 
 Although the above example works well on our small volcano dataset, the clhs package is inefficient if you are working with large raster datasets. To overcome this limitation, you can first take a large random sample and then subsample it using cLHS.
 
-```{r clhs_sub}
+```{r clhs_sub, eval=TRUE}
 sub_s <- sampleRandom(volcano_r, size = 200, sp = TRUE) # random sample function from the raster package
 
 # s <- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)
@@ -240,7 +240,7 @@ To gauge the representativeness of a sampling strategy, you can compare the resu
 
 The simple example below demonstrates how to compare several sampling strategies by evaluating how well they replicate the distribution of elevation. 
 
-```{r seval}
+```{r seval, eval=TRUE}
 
 # create a polygon from the spatial extent of the volcano dataset
 test <- as(extent(volcano_r), "SpatialPolygons")
@@ -271,7 +271,7 @@ library(ggplot2)
 ggplot(s, aes(x = slope, col = method)) + geom_density(cex = 2)
 ```
 
-```{r fig.width=8.25, fig.height=3.5}
+```{r fig.width=8.25, fig.height=3.5, eval=TRUE}
 # plot the spatial locations            
 par(mfrow = c(1, 3), mar=c(1,2,4,5))
 plot(volcano_r, main = "Simple random", cex.main = 2, axes=FALSE)
@@ -284,20 +284,19 @@ plot(volcano_r, main = "cLHS", cex.main = 2, axes=FALSE)
 points(cs$sampled_data, pch = 3, cex = 1.2)
 ```
 
-The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs. Clearly the cLHS approach best duplicates the distribution of elevation (because elevation is explicitly used in the stratification process). The contrast is less severe in the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible using the approaches in the following chapters.
+The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs. 
 
+The cLHS approach best duplicates the distribution of elevation (because elevation is explicitly used in the stratification process). The contrast is less severe in the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible using the approaches in the following chapters.
 
 ### Exercise: Design a Sampling Strategy
 
-- Using the "tahoe\_lidar\_highesthit.tif" dataset in the gdalUtils package or using your own dataset (highly encouraged), compare two or more sampling approaches.
+- Using the "tahoe\_lidar\_highesthit.tif" dataset in the `gdalUtils` package or using your own data set (highly encouraged), compare two or more sampling approaches.
+
 - Show your work and submit the results to your coach.
-
-
 
 ## Other Tools for Selecting Random Features  
 
 An ArcGIS tool for selecting random features is available from the [Job Aids page](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&ext=pdf). This tool randomly selects the specified number of features from a dataset or set of selected features in ArcGIS. It is an ideal tool for the first stage of a two-stage random sample.  
-
 
 ### cLHS Using TEUI  
 
@@ -340,7 +339,6 @@ The resulting output shows 30 points confined to the watershed of interest.
 Comparing the frequency distribution of the samples to the population shows a reasonable representation, especially considering the small sample size.  
 
 ![R GUI image](static-figures/ch3_fig23.jpg) 
-
 
 ### Two-Stage Stratified Random Sample Design Using ArcGIS
 
