@@ -44,49 +44,51 @@ help(aqp)
 
 ### soilDB Functions
 
-soilDB functions are the quickest way to get up and running:
+`soilDB` functions are the quickest way to get up and running:
 
-- **fetchNASIS()**
+- **[fetchNASIS()](http://ncss-tech.github.io/soilDB/docs/reference/fetchNASIS.html)**
     - Gets and re-packages data from a local NASIS database.
         + [NASIS pedon/horizon data](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html)
         + [NASIS DMU/MU/component data](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html)
         
-- **fetchNASISLabData()**
+- **[fetchNASISLabData()](http://ncss-tech.github.io/soilDB/docs/reference/fetchNASISLabData.html)**
     - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
     
-- **fetchKSSL()**
+- **[fetchNASISWebReport()](http://ncss-tech.github.io/soilDB/docs/reference/fetchNASISWebReport.html)**
+    
+- **[fetchKSSL()](http://ncss-tech.github.io/soilDB/docs/reference/fetchKSSL.html)**
     - Gets KSSL data from the SoilWeb system via BBOX, MLRA, or series name query.
         + [KSSL Data Demo](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html)
         + [Water Retention Curve Development from KSSL Data](http://ncss-tech.github.io/AQP/soilDB/fetchKSSL-VG-demo.html)
         
-- **fetchOSD()**
+- **[fetchOSD()](http://ncss-tech.github.io/soilDB/docs/reference/fetchOSD.html)**
     - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
     
-- **OSDquery()**
+- **[OSDquery()](http://ncss-tech.github.io/soilDB/docs/reference/OSDquery.html)**
     - Full-text searching of OSD sections.
     
-- **fetchRaCA()**
+- **[fetchRaCA()](http://ncss-tech.github.io/soilDB/docs/reference/fetchRaCA.html)**
     - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
         + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)
         
-- **fetchSCAN()**
+- **[fetchSCAN()](http://ncss-tech.github.io/soilDB/docs/reference/fetchSCAN.html)**
     - Queries soil and climate data from USDA-NRCS SCAN Stations.
       + [A Unified Interface to SCAN/SNOTEL Data](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
       
-- **fetchHenry()**
+- **[fetchHenry()](http://ncss-tech.github.io/soilDB/docs/reference/fetchHenry.html)**
     - Downloads data from the Henry Mount Soil Climate Database.
         + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
         
-- **fetchPedonPC()**
+- **[fetchPedonPC()](http://ncss-tech.github.io/soilDB/docs/reference/fetchPedonPC.html)**
     - Fetches commonly used site and horizon data from a PedonPC v.5 database.
     
-- **fetchSDA()**
+- **[fetchSDA()](http://ncss-tech.github.io/soilDB/docs/reference/fetchSDA_component.html)**
     - Fetches component data from Soil Data Access.
     
-- **fetchSDA_spatial()**
+- **[fetchSDA_spatial()](http://ncss-tech.github.io/soilDB/docs/reference/fetchSDA_spatial.html)**
     - Fetches polygon, bounding box and centroid data from SSURGO, STATSGO and the `sapolygon` (Soil Survey Area Polygon) from Soil Data Access
     
-- **SDA_query()**
+- **[SDA_query()](http://ncss-tech.github.io/soilDB/docs/reference/SDA_query.html)**
     - Submits queries to the Soil Data Access system.
         + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
         + [SDA and Spatial Data](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html)
@@ -94,7 +96,9 @@ soilDB functions are the quickest way to get up and running:
 
 ### Importance of Pedon Data
 
-The importance of pedon data for present and future work cannot be overstated.  These data represent decades of on-the-ground observations of the soil resource for a given area.  As difficult as it may be to take the time to enter legacy pedon data, it is vitally important that we capture this resource and get these data into NASIS as an archive of point observations.  
+The importance of pedon data for present and future work cannot be overstated.  These data represent decades of on-the-ground observations of the soil resource for a given area.  
+
+As difficult as it may be to take the time to enter legacy pedon data, it is vitally important that we capture this resource and get these data into NASIS as an archive of point observations.  
 
 ```{r pedons_a, purl=FALSE, echo=FALSE, results='hide', warning=FALSE}
 
@@ -131,8 +135,6 @@ g2  <- ggplot(test, aes(x = year, y = cumsum(Count))) +
   ggtitle("Cumulative Number of Published US Soil Survey Manuscripts by Year")
 
 # gridExtra::grid.arrange(g1, g2, ncol = 1)
-
-
 pedons <-
   read.csv(
     "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/pedons.csv",
@@ -152,7 +154,6 @@ labpedons <- filter(labpedons, obs_year %in% 1950:2018) %>%
   mutate(year = obs_year,
          lab = TRUE,
          Count = n_peiid)
-
 
 g3 <- ggplot(pedons, aes(x = year, y = Count)) +
   geom_area(aes(fill = lab), stat = "identity") +
@@ -220,7 +221,7 @@ It is a type of object that simplifies the process of working with collections o
 
 A `SoilProfileCollection` is like the NASIS Pedon "object" in that it provides generalizations, specific routines and rules about the fundamental tables and their relationships that are relevant to soil observations.
 
-In many ways the SPC is more adaptable than the NASIS Pedon concept, strictly speaking. It can "contain" aggregations of any relevant parts of essentially any soil data schemas (table and column structure). Through this mechanism, it can be a _mediator_ between formats and algorithms.
+In many ways the SPC is more adaptable than the NASIS Pedon concept, strictly speaking. It can "contain" aggregations of any relevant parts of any soil data schema (table and column structure). Through this mechanism, it can be a _mediator_ between formats and algorithms.
 
 ### SoilProfileCollection methods
 
@@ -230,11 +231,15 @@ Perhaps most importantly, when you access the `site()` data or the `horizons()` 
 
 #### Promoting `data.frame` to `SoilProfileCollection`
 
-The `SoilProfileCollection` object is a collection of 1-D profile descriptions, of the type conventionally described on a Form 232, or on tabular data returned from laboratory. The object is "horizon data forward" in that you start with that, and can create site-level attributes by normalization, joins, calculations and more.
+The `SoilProfileCollection` object is a collection of 1-D profile descriptions, of the type conventionally described on a Form 232, or on tabular data returned from laboratory. 
 
-Most of the time if you are using your NASIS data, or an official database, there are defined ways of getting the data out. In the pre-course, we had you set up a process so you could connect to your local NASIS instance to "fetch" data and have methods like `fetchNASIS` put things together for you.
+The object is "horizon data forward" in that you start with that, and can create site-level attributes by normalization, joins, calculations and more.
 
-This input to make a `SoilProfileCollection` can be represented most simply as a `data.frame` with unique site or profile ID and depth combinations for each horizon or layer. Essentially just a portion of the `phorizon` or `chorizon` table in NASIS.
+Most of the time if you are using your NASIS data, or an official database, there are defined ways of getting the data out. 
+
+In the pre-course, we had you set up a process so you could connect to your local NASIS instance to "fetch" data and have methods like `fetchNASIS` put things together for you.
+
+This input to make a `SoilProfileCollection` can be represented most simply as a `data.frame` with unique site or profile ID and depth combinations for each horizon or layer -- for example, a subset of the `phorizon` or `chorizon` table in NASIS.
 
 A simple example of this type oftabular horizon data is the `sp4` data set: some serpentine soil profiles stored in a `data.frame` in the `aqp` package (after McGahan et al., 2009).
 
@@ -411,7 +416,7 @@ For now, we will start with the `fetch` functions and others that will get you a
 
 ### `fetchNASIS()`
 
-The `fetchNASIS` convenience function extracts data from a NASIS selected set via Structured Query Language (SQL).   
+The `[fetchNASIS()](http://ncss-tech.github.io/soilDB/docs/reference/fetchNASIS.html)` convenience function extracts data from a NASIS selected set via Structured Query Language (SQL).   
 
 Note that the import process in `fetchNASIS()`, and the other methods, is not comprehensive. It does not pull every column for every table related to pedon data out of NASIS. 
 
@@ -863,16 +868,20 @@ Quick check: _Compare or run these commands with some code, and review the docum
 #### Important syntax options for REGEX pattern matching
 
   - `|` `OR` operator for multiple expressions: 
-    - Example:  `grep('loamy|sandy', c("loamy-skeletal","sandy","sandy-skeletal"))` ==> "loamy _OR_ sandy"
+    - Example:  `grep('loamy|sandy', c("loamy-skeletal","sandy","sandy-skeletal"))`
+      - "loamy _OR_ sandy"
     
   - `^` Anchor to beginning of string / line: 
-    - Example:  `grep('^sandy', c("loamy-skeletal","sandy","sandy-skeletal"))` ==> "_STARTS WITH_ sandy"
+    - Example:  `grep('^sandy', c("loamy-skeletal","sandy","sandy-skeletal"))`
+      - "_STARTS WITH_ sandy"
     
   - `$` Anchor to end of string / line: 
-    - Example:  `grep('skeletal$', c("loamy-skeletal","sandy","sandy-skeletal"))` ==> "_ENDS WITH_ skeletal"
+    - Example:  `grep('skeletal$', c("loamy-skeletal","sandy","sandy-skeletal"))`
+      - "_ENDS WITH_ skeletal"
   
   - `\\b` Anchor to word boundary: 
-    - Example:  `grep('\\bmesic', c("mesic","thermic","isomesic"))` ==> "_WORD STARTS WITH_ mesic" (e.g. not "isomesic")
+    - Example:  `grep('\\bmesic', c("mesic","thermic","isomesic"))`
+      - "_WORD STARTS WITH_ mesic" (e.g. not "isomesic")
 
 #### Resources for learning about regular expressions
 
