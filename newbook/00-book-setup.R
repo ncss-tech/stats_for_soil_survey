@@ -8,8 +8,8 @@
 
 options(bookdown.clean_book = TRUE)
 
-# remove _book
+# remove ../book
 bookdown::clean_book()
 
-# create _book
+# create ../book
 bookdown::render_book(".")

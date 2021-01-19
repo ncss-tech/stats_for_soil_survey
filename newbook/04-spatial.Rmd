@@ -173,7 +173,7 @@ These packages make it possible to display interactive maps of `sf` objects in R
 
 The `seriesExtent` method in soilDB returns results as an `sp` object showing generalized extent polygons for a soil series. 
 
-```{r, results='asis', eval=FALSE}
+```{r, results='asis', eval=TRUE}
 # load required packages
 library(sf)
 library(mapview)
@@ -290,10 +290,11 @@ The "old" way (PROJ.4) of specifying coordinate reference systems is using chara
 
 Some common examples of coordinate system EPSG codes and their legacy PROJ.4 strings:
 
+ * _EPSG_: `4326` / _PROJ.4_:`+proj=longlat +datum=WGS84` - geographic, WGS84 datum (NASIS Standard)
  * _EPSG_: `4269` / _PROJ.4_:`+proj=longlat +datum=NAD83` - geographic, NAD83 datum
  * _EPSG_: `4267` / _PROJ.4_:`+proj=longlat +datum=NAD27` - geographic, NAD27 datum
  * _EPSG_: `26910` / _PROJ.4_:`+proj=utm +zone=10 +datum=NAD83` - projected (UTM zone 10), NAD83 datum
- * _EPSG_: `6350` / _PROJ.4_: `+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23.0 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs` - Albers Equal Area CONUS (Used for gSSURGO)
+ * _EPSG_: `6350` / _PROJ.4_: `+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23.0 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs` - Albers Equal Area CONUS (gSSURGO)
  
 While you may encounter PROJ.4 strings, these are no longer considered the preferred method of referencing Coordinate Reference Systems -- and, in general, newer methods are "easier."
 
@@ -327,7 +328,11 @@ Use `st_crs<-`/`st_crs` to set or get CRS of `sf` objects. Supply the target EPS
 # s is an sp object, we convert it to sf with st_as_sf
 s <- st_as_sf(s) 
 
-st_crs(s) <- sf::st_crs(4326)
+# the CRS of s is EPSG:4326
+st_crs(s) == st_crs(4326)
+
+# set CRS using st_crs<- (replace with identical value)
+st_crs(s) <- st_crs(4326)
 ```
 
 Transformation of points, lines, and polygons with `sf` requires an "origin" CRS be defined in the object that is the argument `x`, and "target" CRS defined in `crs` argument as an integer, or output of `st_crs()`.
