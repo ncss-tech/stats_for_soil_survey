@@ -1,3 +1,5 @@
+<!-- this document was built from README.Rmd; make changes there then Knit to .md -->
+
 <img src="book/static-figures/logo.jpg" width="100%">
 
 ### Tom D’Avello, Stephen Roecker, Dylan Beaudette, Skye Wills, Katy Yoast, Jay Skovlin, Phil Roberts, John Hammerly, and Andrew Brown
