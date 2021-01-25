@@ -4,7 +4,7 @@
 
 ### Tom D’Avello, Stephen Roecker, Dylan Beaudette, Skye Wills, Katy Yoast, Jay Skovlin, Phil Roberts, John Hammerly, and Andrew Brown
 
-#### 2021-01-22
+#### 2021-01-25
 
 ### **[Precourse Assignment](http://ncss-tech.github.io/stats_for_soil_survey/chapters/0_pre-class-assignment/pre-class-assignment.html)**
 
@@ -44,7 +44,7 @@ Part 1
 
 #### [Creating Maps with R Exercise](https://smroecker.github.io/soil-pit/2019_creating_maps_with_R.html)
 
-### [**Chapter 5:** *Sampling*](hhttp://ncss-tech.github.io/stats_for_soil_survey/book/sampling.html)
+### [**Chapter 5:** *Sampling*](http://ncss-tech.github.io/stats_for_soil_survey/book/sampling.html)
 
 #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/3_sampling/3.%20Sampling.pptx)
 
