@@ -1,0 +1,261 @@
+---
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r, include=FALSE}
+par(mar=c(0,0,2,1))
+knitr::opts_chunk$set(fig.width = 9)
+```
+
+# Applying Regular Expressions, Generalized Horizons and Quantiles
+
+## `generalize.hz()`
+
+[`aqp::generalize.hz()`](http://ncss-tech.github.io/aqp/docs/reference/generalize.hz.html) is a tool in the `aqp` **R** package that simplifies grouping horizon data when you have a `character` attribute that can be "matched" partially or completely to assign groups. This tends to have the effect of "generalizing" the number of groups relative to the input.
+The function takes a character vector of inputs, a character vector of patterns, and a character vector of replacement names as arguments. See [`?aqp::generalize.hz`](http://ncss-tech.github.io/aqp/docs/reference/generalize.hz.html) for details.
+
+`generalize.hz()` uses a special text-matching string type called "[regular expressions](http://regular-expressions.info/)" or REGEX for the pattern argument. Regular expressions are found commonly in the **R** ecosystem and in computer science in general for automating and generalizing text-processing tasks. In the following example we will build very simple REGEX patterns based on some soil profile data.
+
+## `jacobs2000`
+
+```{r, eval=TRUE, echo=TRUE}
+library(aqp, warn.conflicts = FALSE)
+
+data("jacobs2000", package="aqp")
+jacobs2000 <- jacobs2000 # use your own data here, replace jacobs2000 with your object
+```
+
+`jacobs2000` is a data set in `aqp` that is stored as a `SoilProfileColelction`. It contains select soil morphologic data from "Redoximorphic Features as Indicators of Seasonal Saturation, Lowndes County, Georgia". The examples in this document depend on one another sequentially, so run them in order.
+
+**Reference**
+Jacobs, P. M., L. T. West, and J. N. Shaw. 2002. Redoximorphic Features as Indicators of Seasonal Saturation, Lowndes County, Georgia. Soil Sci. Soc. Am. J. 66:315-323. [doi:10.2136/sssaj2002.3150](https://acsess.onlinelibrary.wiley.com/doi/abs/10.2136/sssaj2002.3150)
+
+```{r, eval=TRUE, echo=TRUE}
+# all horizon designations
+sort(table(jacobs2000$name))
+```
+
+## Master Horizon Designations 
+
+ - Using REGEX [capture groups](https://www.regular-expressions.info/refcapture.html)
+ 
+### All
+
+```{r, eval=TRUE, echo=TRUE}
+# copy next line to re-use in your code
+getMasterHorizonDesignations <- function(name) gsub("[2-9]*([A-Z\\/]+).*", "\\1", name)
+```
+
+**Example:** 
+
+```{r, eval=TRUE, echo=TRUE}
+jacobs2000$g1 <- getMasterHorizonDesignations(jacobs2000$name)
+
+sort(table(jacobs2000$g1))
+```
+
+### _Primary_ Horizon Designation 
+
+ - Get the first capital letter -- for combination (`B/C` = `B`) or transition horizons (`AE` = `A`)
+
+```{r, eval=TRUE, echo=TRUE}
+# copy next line to re-use in your code
+getPrimaryMasterHorizonDesignation <- function(name) gsub("[2-9]*([A-Z]).*", "\\1", name)
+```
+
+**Example:** 
+
+```{r, eval=TRUE, echo=TRUE}
+jacobs2000$g2 <- getPrimaryMasterHorizonDesignation(jacobs2000$name)
+
+# save the names
+g2_names <- names(table(jacobs2000$g2))
+
+sort(table(jacobs2000$g2))
+```
+
+## Horizon _suffixes_ 
+
+ - Using replacement of _non_-target characters.
+
+```{r, eval=TRUE, echo=TRUE}
+# copy next line to re-use in your code
+getHorizonSuffixes <- function(name) gsub("[1-9A-Z\\/']+", "", name)
+```
+
+**Example:** 
+
+```{r, eval=TRUE, echo=TRUE}
+jacobs2000$g3 <- getHorizonSuffixes(jacobs2000$name)
+sort(table(jacobs2000$g3))
+```
+
+## Calculate Generalized Horizon 
+
+ - Using master horizon designations as search terms and patterns 
+ 
+ - `aqp::generalize.hz()` with the  _primary_ designation in `g2_names` (calculated above)
+
+**Example:** 
+
+```{r, eval=TRUE, echo=TRUE}
+jacobs2000$genhz <- generalize.hz(jacobs2000$name, new = g2_names, pat = g2_names)
+
+plot(jacobs2000, color="genhz")
+aggregate(jacobs2000[['clay']], by = list(genhz = jacobs2000$genhz), quantile, na.rm = TRUE)
+```
+
+## Follow along with your own data
+
+If you are following with your own data, not `jacobs2000`, you may need to adjust the following patterns for horizons that occur in your data set.
+
+### Get more detailed (1)
+
+Add `Bh` group to names and patterns.
+
+```{r, eval=TRUE, echo=TRUE}
+# add Bh group
+g2_names_2 <- c(g2_names, "Bh")
+g2_pat_2 <- c(g2_names, "B[h']+")
+```
+
+Calculate a more specific `genhz` group (call it `genhz2`)
+
+```{r, eval=TRUE, echo=TRUE}
+jacobs2000$genhz2 <- generalize.hz(jacobs2000$name, new = g2_names_2, pat = g2_pat_2)
+```
+
+Inspect.
+
+```{r, eval=TRUE, echo=TRUE}
+plot(jacobs2000, color="genhz2")
+
+aggregate(jacobs2000[['clay']], by = list(genhz2 = jacobs2000$genhz2), quantile, na.rm = TRUE)
+```
+
+### Get more detailed (2)
+
+Add `g` group to names and patterns.
+
+```{r, eval=TRUE, echo=TRUE}
+g2_names_3 <- c(g2_names_2, "g")
+g2_pat_3 <- c(g2_pat_2, "g")
+```
+
+Calculate a _more_ specific `genhz` group (call it `genhz3`)
+
+```{r, eval=TRUE, echo=TRUE}
+jacobs2000$genhz3 <- generalize.hz(jacobs2000$name, new = g2_names_3, pat = g2_pat_3)
+
+plot(jacobs2000, color="genhz3")
+
+aggregate(jacobs2000[['clay']], by = list(genhz3 = jacobs2000$genhz3), quantile, na.rm = TRUE)
+```
+
+### Get more detailed (3)
+
+Add `v` group to names and patterns.
+
+```{r, eval=TRUE, echo=TRUE}
+# add v group
+g2_names_4 <- c(g2_names_3, "v")
+g2_pat_4 <- c(g2_pat_3, "v")
+
+# calculate a _more_ specific genhz group
+jacobs2000$genhz4 <- generalize.hz(jacobs2000$name, new = g2_names_4, pat = g2_pat_4)
+
+plot(jacobs2000, color = "genhz4")
+```
+
+# Calculate Thickness 
+
+For sub-horizons in each class.
+
+```{r, eval=TRUE, echo=TRUE}
+jacobs2000$thickness <-  jacobs2000$bottom - jacobs2000$top
+
+# thickness of individual horizons, by group
+hbygrp <- aggregate(jacobs2000$thickness, by = list(genhz4 = jacobs2000$genhz4), quantile)
+hbygrp
+```
+
+# Total Thickness by Profile
+
+Total thickness of each class (may not be contiguous) per profile.
+
+```{r, eval=TRUE, echo=TRUE}
+thbyprof <- profileApply(jacobs2000, function(p) {
+    data.frame(id = profile_id(p), aggregate(p$thickness, by = list(genhz4 = p$genhz4), sum))
+  }, simplify = FALSE) 
+
+# inspect "unsimplified" result
+thbyprof
+```
+
+We can then summarize the profile-level thicknesses -- to get something like a 'typical range in thickness of `B` horizons in _..._'.
+
+```{r, eval=TRUE, echo=TRUE}
+# combine
+thbyprof <- do.call('rbind', thbyprof) # see also: profileApply(..., frameify = TRUE)
+
+# aggregate by genhz4 (summed within profiles)
+aggregate(thbyprof$x, by = list(genhz4 = thbyprof$genhz4), FUN = quantile)
+```
+ 
+# Number of observations 
+
+## Inspect clay contents
+
+```{r, eval=TRUE, echo=TRUE}
+plot(jacobs2000, color = "clay")
+```
+
+Many soil properties may contain missing values, so we need `na.rm = TRUE`. We built that into `my.quantile` as the default.
+
+> aggregate(jacobs2000[['clay']], by = list(genhz3 = jacobs2000$genhz4), quantile)
+> Error in quantile.default(X[[i]], ...) :
+>  missing values and NaN's not allowed if 'na.rm' is FALSE
+
+```{r, eval=TRUE, echo=TRUE}
+aggregate(jacobs2000[['clay']], by = list(genhz4 = jacobs2000$genhz4), quantile, na.rm = TRUE)
+```
+
+Seems like range on the `C` group is wide. The horizon designation does not capture all properties, so we may be reaching the limits of what we can do with REGEX in this small data set.
+
+We want to consider quantiles carefully along side the number and _quality_ of observations. Especially with very small data sets.
+
+Define a "helper" function `my.quantile()` that gives us more than the default `base::quantile()` method.
+
+```{r, eval=TRUE, echo=TRUE}
+#' My Special Quantile Function
+#'
+#' @description Calculates the `quantile()` values at `prob` and concatenates number of observations `"n"`
+#'
+#' @param x a numeric vector
+#' @param na.rm remove `NA`? default `TRUE` (opposite of `quantile()`)
+#' @param prob probability levels; default: `c(0,0.05,0.1,0.25,0.5,0.75,0.9,0.95,1)`
+#' @param colnames column names for result; default e.g. `Q50` for `0.5` level.
+#' @param ... additional arguments to `quantile()`
+#'
+#' @return A named numeric vector of the specified quantiles, plus the length of the vector `x` (named `"n"`)
+my.quantile <- function(x,
+                        na.rm = TRUE,
+                        prob = c(0, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 1),
+                        colnames = paste0("Q", prob * 100),
+                        ...) {
+  res <- round(c(t(quantile(x, prob = prob, na.rm = na.rm, ...)), n = length(x)))
+  names(res) <- c(colnames, "n")
+  return(res)
+}
+```
+
+Try aggregating total generalized horizon `thickness` again with `my.quantile()`
+
+```{r, eval=TRUE, echo=TRUE}
+aggregate(thbyprof$x, by = list(genhz4 = thbyprof$genhz4), FUN = my.quantile)
+```
+
+These quantiles are comparable to thickness ranges reported across multiple sub-horizons in an Official Series Description Typical Pedon, or clay content for horizons reported in the Range in Characteristics section.
