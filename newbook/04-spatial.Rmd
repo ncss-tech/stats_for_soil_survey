@@ -55,7 +55,7 @@ _Making Maps with R_ shows similar processes using 5 different packages that hav
 
 ## Spatial Data Sources
 
-Conventional spatial data sources:
+Spatial data sources: "raster" and "vector"
   
   * raster data sources (elevation, PRISM, etc.): GeoTIFF, ERDAS, BIL, ASCII grid, WMS, ...
   * vector data sources (points/lines/polygons): Shape File, "file" geodatabase, KML, GeoJSON, GML, WFS, ...
@@ -67,9 +67,9 @@ Conventional data sources that can be *upgraded* to spatial data:
   * Excel file: typically point coordinates
   * CSV files: typically point coordinates
 
-R-based interfaces to NCSS data sources via [`soilDB`](https://cran.r-project.org/web/packages/soilDB/index.html) package:
+Here are some R-based interfaces to NCSS data sources via [`soilDB`](https://cran.r-project.org/web/packages/soilDB/index.html) package.
   
-* functions that return tabular data which can be *upgraded* to spatial data:
+* Functions that return _tabular data_ which can be *upgraded* to spatial data:
 
   + [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html): KSSL "site" data contain x,y coordinates
 
@@ -77,15 +77,117 @@ R-based interfaces to NCSS data sources via [`soilDB`](https://cran.r-project.or
 
   + [`fetchRaCA()`](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html): RaCA central pedon x,y coordinates
 
-* functions that return spatial data:
+* Functions that _return_ spatial data:
+
+  + - [fetchSDA_spatial()](http://ncss-tech.github.io/soilDB/docs/reference/fetchSDA_spatial.html): polygon, bounding box and centroid data from SSURGO, STATSGO and the `sapolygon` (Soil Survey Area Polygon) from Soil Data Access (SDA)
+
   + [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html): simplified series extent as polygons
+  
   + [`fetchHenry()`](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html): sensor / weather station locations as points
+  
   + [`SDA_query()`](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html): SSURGO data as points, lines, polygons (via SDA)
-  + `mapunit_geom_by_ll_bbox()`: SSURGO data as polygons (via WFS)
+  
+  + [`SDA_spatialQuery()`](http://ncss-tech.github.io/soilDB/docs/reference/SDA_spatialQuery.html): use points or polygons as a "query" to SDA
+  
+  + [`seriesExtent()`]() and [`taxaExtent()`]() -- extent of series and taxonomic classes derived from SSURGO (SoilWeb) in vector and raster format at 800m resolution
+  
+  + [`mukey.wcs()`](http://ncss-tech.github.io/soilDB/docs/reference/mukey.wcs.html) and [`ISSR800.wcs()`](http://ncss-tech.github.io/soilDB/docs/reference/ISSR800.wcs.html)
   
 <!--
 **NOTE:** <strike>currently, there is no way to read raster data from ESRI "file" geodatabases.</strike> except for this: https://github.com/r-barnes/ArcRasterRescue, which requires ability to compile C code with `CMAKE` (non-government computer). Vector data (and associated attribute tables) can be accessed.
 -->
+
+## Viewing Pedon Locations
+
+( _Introducing the_ `sf` _package_ )
+
+### Plotting Geographic Data 
+
+Plotting the data as an R graphic can give you some idea of how data look spatially and whether their distribution is what you expect.
+
+Typos are relatively common when coordinates are manually entered. Viewing the data spatially is a quick way to see if any points plot far outside of the geographic area of interest and therefore clearly have an error.
+
+```{r gopheridge_b, eval = TRUE}
+# plot the locations of the gopheridge pedons with R
+# 
+# Steps:
+# 1) create and inspect an sf data.frame object
+# 2) plot the data with mapview
+
+# load libraries
+library(aqp)
+library(soilDB)
+library(sf)
+library(mapview)
+
+# this creates sample gopheridge object in your environment
+data("gopheridge", package = "soilDB")
+
+# replace gopheridge object with fetchNASIS() (your data)
+#gopheridge <- NULL
+#gopheridge <- fetchNASIS()
+
+# create simple features POINT geometry data.frame
+# st_as_sf(): convert data.frame to spatial simple features, with points in $geometry 
+# st_crs(): set EPSG:4326 Coordinate Reference System (CRS) as Well-Known Text (WKT)
+gopher.locations <- st_as_sf(site(gopheridge), 
+                             coords = c('x_std','y_std'),
+                             crs = st_crs(4326))
+
+# inspect first 6 points
+head(gopher.locations)
+
+# inspect CRS
+st_crs(gopher.locations)
+
+# create interactive map with sfc_POINT object
+#  use site_id in sf data.frame as labels
+mapview(gopher.locations, label = gopher.locations$site_id)
+```
+
+### Displaying Pedon Data in Google Earth
+
+Google Earth is a powerful viewer for point data.  Geographic data is displayed in Google Earth using the Keyhole Markup Language (KML) format.  
+
+Using the [plotKML](https://cran.r-project.org/web/packages/plotKML/plotKML.pdf) package, you can easily create a KML file to inspect and view in Google Earth.  
+
+See the related material in this tutorial: [**Export Pedons to Google Earth**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html). 
+
+### Exporting Pedon Data to an ESRI Shapefile
+
+Another way you can view the data is to export a shapefile from R.  For further information, see this tutorial: [**Export Pedons to Shapefile**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html).
+
+### Follow along with your own data
+
+Use the script below to make an R plot of pedon data loaded from your NASIS selected set.
+
+The following script plots the standard WGS84 longitude/latitude decimal degrees fields from Site table of NASIS. In some cases, these fields might be incomplete due to insufficient data or to not having been calculated from UTM coordinates in NASIS. 
+
+Run the following script on the data loaded from your local NASIS selected set. Note that you need to filter out any pedons that are missing their standard WGS84 longitude/latitude coordinates.
+
+```{r r_plot_pedons, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
+library(aqp)
+library(soilDB)
+library(sf)
+library(mapview)
+
+# get pedons from the selected set
+pedons <- fetchNASIS(from = 'pedons')
+
+# missing values in coordinates not allowed
+pedons.sp <- subset(pedons, !is.na(x_std) & !is.na(y_std))
+
+# create sf object
+pedon.locations <- st_as_sf(site(pedons.sp), 
+                            coords = c('x_std','y_std'),
+                            crs = st_crs(4326))
+
+# interactive map
+mapview(pedon.locations, 
+        legend = FALSE, 
+        map.types = 'OpenStreetMap', 
+        label = pedon.locations$site_id)
+```
 
 ## Many Packages, Many Spatial Representations
 
