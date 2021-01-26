@@ -28,7 +28,7 @@ data("jacobs2000", package="aqp")
 jacobs2000 <- jacobs2000 # use your own data here, replace jacobs2000 with your object
 ```
 
-`jacobs2000` is a data set in `aqp` that is stored as a `SoilProfileColelction`. It contains select soil morphologic data from "Redoximorphic Features as Indicators of Seasonal Saturation, Lowndes County, Georgia". The examples in this document depend on one another sequentially, so run them in order.
+`jacobs2000` is a data set in `aqp` that is stored as a `SoilProfileCollection`. It contains select soil morphologic data from "Redoximorphic Features as Indicators of Seasonal Saturation, Lowndes County, Georgia". The examples in this document depend on one another sequentially, so run them in order.
 
 **Reference**
 Jacobs, P. M., L. T. West, and J. N. Shaw. 2002. Redoximorphic Features as Indicators of Seasonal Saturation, Lowndes County, Georgia. Soil Sci. Soc. Am. J. 66:315-323. [doi:10.2136/sssaj2002.3150](https://acsess.onlinelibrary.wiley.com/doi/abs/10.2136/sssaj2002.3150)
@@ -46,7 +46,7 @@ sort(table(jacobs2000$name))
 
 ```{r, eval=TRUE, echo=TRUE}
 # copy next line to re-use in your code
-getMasterHorizonDesignations <- function(name) gsub("[2-9]*([A-Z\\/]+).*", "\\1", name)
+getMasterHorizonDesignations <- function(name) gsub("[\\^2-9]*([A-Z\\/]+).*", "\\1", name)
 ```
 
 **Example:** 
@@ -63,7 +63,7 @@ sort(table(jacobs2000$g1))
 
 ```{r, eval=TRUE, echo=TRUE}
 # copy next line to re-use in your code
-getPrimaryMasterHorizonDesignation <- function(name) gsub("[2-9]*([A-Z]).*", "\\1", name)
+getPrimaryMasterHorizonDesignation <- function(name) gsub("[\\^2-9]*([A-Z]).*", "\\1", name)
 ```
 
 **Example:** 
@@ -83,7 +83,7 @@ sort(table(jacobs2000$g2))
 
 ```{r, eval=TRUE, echo=TRUE}
 # copy next line to re-use in your code
-getHorizonSuffixes <- function(name) gsub("[1-9A-Z\\/']+", "", name)
+getHorizonSuffixes <- function(name) gsub("[\\^1-9A-Z\\/']+", "", name)
 ```
 
 **Example:** 
@@ -213,7 +213,7 @@ aggregate(thbyprof$x, by = list(genhz4 = thbyprof$genhz4), FUN = quantile)
 plot(jacobs2000, color = "clay")
 ```
 
-Many soil properties may contain missing values, so we need `na.rm = TRUE`. We built that into `my.quantile` as the default.
+Many soil properties may contain missing values, so we need `na.rm = TRUE`. 
 
 > aggregate(jacobs2000[['clay']], by = list(genhz3 = jacobs2000$genhz4), quantile)
 > Error in quantile.default(X[[i]], ...) :
@@ -225,9 +225,11 @@ aggregate(jacobs2000[['clay']], by = list(genhz4 = jacobs2000$genhz4), quantile,
 
 Seems like range on the `C` group is wide. The horizon designation does not capture all properties, so we may be reaching the limits of what we can do with REGEX in this small data set.
 
+### Beyond `quantile()`
+
 We want to consider quantiles carefully along side the number and _quality_ of observations. Especially with very small data sets.
 
-Define a "helper" function `my.quantile()` that gives us more than the default `base::quantile()` method.
+Define a "helper" function `my.quantile()` that gives us more than the default `stats::quantile()` method.
 
 ```{r, eval=TRUE, echo=TRUE}
 #' My Special Quantile Function
@@ -256,6 +258,12 @@ Try aggregating total generalized horizon `thickness` again with `my.quantile()`
 
 ```{r, eval=TRUE, echo=TRUE}
 aggregate(thbyprof$x, by = list(genhz4 = thbyprof$genhz4), FUN = my.quantile)
+```
+
+And clay contents again
+
+```{r, eval=TRUE, echo=TRUE}
+aggregate(jacobs2000[['clay']], by = list(genhz4 = jacobs2000$genhz4), my.quantile)
 ```
 
 These quantiles are comparable to thickness ranges reported across multiple sub-horizons in an Official Series Description Typical Pedon, or clay content for horizons reported in the Range in Characteristics section.
