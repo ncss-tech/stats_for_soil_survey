@@ -4,6 +4,8 @@
 # need this because utils::zip() doesn't reliably work on Gov Windows 10 machines
 library(zip)
 
+
+## TODO: point to newbook content
 # manual selection of files to purl()
 Rmd.files <- c("chapters/0_pre-class-assignment/pre-class-assignment.Rmd", 
   "chapters/1_introduction/1_introduction.Rmd", 
