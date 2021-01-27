@@ -1059,7 +1059,7 @@ Quick check: _What can you do with the boolean diagnostic feature data stored in
 
 #### Diagnostic Feature Diagrams
 
-```{r, eval=TRUE, warning=FALSE, fig.height=9, fig.width=7}
+```{r, eval=TRUE, warning=FALSE, fig.height=12, fig.width=9}
 ## work up diagnostic plot based on gopheridge dataset
 library(aqp)
 library(soilDB)
@@ -1070,16 +1070,17 @@ v <- c('ochric.epipedon', 'cambic.horizon',
        'argillic.horizon', 'paralithic.contact', 
        'lithic.contact')
 
-# generate diagnostic property diagram
-diagnosticPropertyPlot(mt663err[1:30,], v, k = 5, 
-                       grid.label = 'site_id', 
-                       dend.label = 'landform_string', 
-                       sort.vars = FALSE)
+# the default concatenated landform_string may have multiple levels
+#  depending on how the geomorphic tables were populated
+#  these are concatenated using the ampersand (&) character
+#  so take the first string split using ampersand as a delimiter
+mt663err$first_landform <- sapply(strsplit(mt663err$landform_string, "&"), 
+                                  function(x) x[[1]])
 
 # plot with diagnostic features ordered according to co-occurrence
-diagnosticPropertyPlot(mt663err[1:30,], v, k = 5, 
+diagnosticPropertyPlot(mt663err[1:30,], v, k = 5,
                        grid.label = 'site_id', 
-                       dend.label = 'landform_string', 
+                       dend.label = 'first_landform', 
                        sort.vars = TRUE)
 ```
 

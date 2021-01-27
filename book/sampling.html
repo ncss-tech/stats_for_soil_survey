@@ -24,7 +24,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2021-01-26" />
+<meta name="date" content="2021-01-27" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -350,8 +350,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p><strong>How many samples are needed?</strong></p>
 <p>Because you are typically interested in using field point data to derive inferences, you need enough samples to be confident that they approximate the target population. In the case of calibrating a laboratory device, you might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that sample size is closely related to the inherent variability in the data. The number of samples required increases with increasing variability. Also, the more samples you have, the greater the confidence level you can achieve. For example, sampling at an 85 percent confidence level is less intensive than sampling at a 95 percent confidence level.</p>
 <p>If you have prior knowledge about the soil attribute being sampled, you can use a t-test to estimate the number (n) of samples needed to detect a significant difference. You can use either the <code>power.t.test()</code> or <code>power.prop.tes()</code> functions. See the following example of differences in clay content.</p>
-<div class="sourceCode" id="cb342"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb342-1"><a href="sampling.html#cb342-1"></a><span class="co"># Clay example. Test to see the number of samples necessary to detect a 3 percent difference in clay between two horizons.</span></span>
-<span id="cb342-2"><a href="sampling.html#cb342-2"></a><span class="kw">power.t.test</span>(<span class="dt">power =</span> <span class="fl">0.95</span>, <span class="dt">sd =</span> <span class="dv">2</span>, <span class="dt">delta =</span> <span class="dv">16</span> <span class="op">-</span><span class="st"> </span><span class="dv">19</span>) <span class="co"># delta = the difference between the two means</span></span></code></pre></div>
+<div class="sourceCode" id="cb341"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb341-1"><a href="sampling.html#cb341-1"></a><span class="co"># Clay example. Test to see the number of samples necessary to detect a 3 percent difference in clay between two horizons.</span></span>
+<span id="cb341-2"><a href="sampling.html#cb341-2"></a><span class="kw">power.t.test</span>(<span class="dt">power =</span> <span class="fl">0.95</span>, <span class="dt">sd =</span> <span class="dv">2</span>, <span class="dt">delta =</span> <span class="dv">16</span> <span class="op">-</span><span class="st"> </span><span class="dv">19</span>) <span class="co"># delta = the difference between the two means</span></span></code></pre></div>
 <pre><code>## 
 ##      Two-sample t test power calculation 
 ## 
@@ -363,7 +363,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ##     alternative = two.sided
 ## 
 ## NOTE: n is number in *each* group</code></pre>
-<div class="sourceCode" id="cb344"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb344-1"><a href="sampling.html#cb344-1"></a><span class="kw">power.t.test</span>(<span class="dt">power =</span> <span class="fl">0.95</span>, <span class="dt">sd =</span> <span class="dv">3</span>, <span class="dt">delta =</span> <span class="dv">16</span> <span class="op">-</span><span class="st"> </span><span class="dv">19</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb343"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb343-1"><a href="sampling.html#cb343-1"></a><span class="kw">power.t.test</span>(<span class="dt">power =</span> <span class="fl">0.95</span>, <span class="dt">sd =</span> <span class="dv">3</span>, <span class="dt">delta =</span> <span class="dv">16</span> <span class="op">-</span><span class="st"> </span><span class="dv">19</span>)</span></code></pre></div>
 <pre><code>## 
 ##      Two-sample t test power calculation 
 ## 
@@ -411,16 +411,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>Samples may be clustered spatially</li>
 <li>Samples may not be representative of the feature attribute(s)</li>
 </ul>
-<div class="sourceCode" id="cb347"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb347-1"><a href="sampling.html#cb347-1"></a><span class="kw">library</span>(sp)</span>
-<span id="cb347-2"><a href="sampling.html#cb347-2"></a></span>
-<span id="cb347-3"><a href="sampling.html#cb347-3"></a><span class="co"># Create a sixteen square polygon</span></span>
-<span id="cb347-4"><a href="sampling.html#cb347-4"></a>grd &lt;-<span class="st"> </span><span class="kw">GridTopology</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="kw">c</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb347-5"><a href="sampling.html#cb347-5"></a>polys &lt;-<span class="st"> </span><span class="kw">as.SpatialPolygons.GridTopology</span>(grd)</span>
-<span id="cb347-6"><a href="sampling.html#cb347-6"></a><span class="kw">plot</span>(polys)</span>
-<span id="cb347-7"><a href="sampling.html#cb347-7"></a></span>
-<span id="cb347-8"><a href="sampling.html#cb347-8"></a><span class="co"># Generate simple random sample</span></span>
-<span id="cb347-9"><a href="sampling.html#cb347-9"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
-<span id="cb347-10"><a href="sampling.html#cb347-10"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb346"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb346-1"><a href="sampling.html#cb346-1"></a><span class="kw">library</span>(sp)</span>
+<span id="cb346-2"><a href="sampling.html#cb346-2"></a></span>
+<span id="cb346-3"><a href="sampling.html#cb346-3"></a><span class="co"># Create a sixteen square polygon</span></span>
+<span id="cb346-4"><a href="sampling.html#cb346-4"></a>grd &lt;-<span class="st"> </span><span class="kw">GridTopology</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="kw">c</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb346-5"><a href="sampling.html#cb346-5"></a>polys &lt;-<span class="st"> </span><span class="kw">as.SpatialPolygons.GridTopology</span>(grd)</span>
+<span id="cb346-6"><a href="sampling.html#cb346-6"></a><span class="kw">plot</span>(polys)</span>
+<span id="cb346-7"><a href="sampling.html#cb346-7"></a></span>
+<span id="cb346-8"><a href="sampling.html#cb346-8"></a><span class="co"># Generate simple random sample</span></span>
+<span id="cb346-9"><a href="sampling.html#cb346-9"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb346-10"><a href="sampling.html#cb346-10"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/simple-1.png" width="384" style="display: block; margin: auto;" /></p>
 </div>
 <div id="stratified-random" class="section level3">
@@ -435,11 +435,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <ul>
 <li>The existing knowledge used to construct strata may be flawed.</li>
 </ul>
-<div class="sourceCode" id="cb348"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb348-1"><a href="sampling.html#cb348-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Stratified random sample&quot;</span>)</span>
-<span id="cb348-2"><a href="sampling.html#cb348-2"></a></span>
-<span id="cb348-3"><a href="sampling.html#cb348-3"></a><span class="co"># Generate a spatially stratified random sample</span></span>
-<span id="cb348-4"><a href="sampling.html#cb348-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;stratified&quot;</span>)</span>
-<span id="cb348-5"><a href="sampling.html#cb348-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb347"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb347-1"><a href="sampling.html#cb347-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Stratified random sample&quot;</span>)</span>
+<span id="cb347-2"><a href="sampling.html#cb347-2"></a></span>
+<span id="cb347-3"><a href="sampling.html#cb347-3"></a><span class="co"># Generate a spatially stratified random sample</span></span>
+<span id="cb347-4"><a href="sampling.html#cb347-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;stratified&quot;</span>)</span>
+<span id="cb347-5"><a href="sampling.html#cb347-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/stratified-1.png" width="384" style="display: block; margin: auto;" /></p>
 <p>Note that the <code>spsample()</code> function only stratifies the points spatially. Other more sophisticated designs can be implemented using the <a href="https://cran.r-project.org/package=spsurvey">spsurvey</a>, <a href="https://cran.r-project.org/package=spcosa">spcosa</a>, <a href="http://ncss-tech.github.io/sharpshootR/docs/reference/constantDensitySampling.html">sharpshootR</a>, or <a href="https://cran.r-project.org/package=clhs">clhs</a> packages.</p>
 </div>
@@ -456,12 +456,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>Lower precision</li>
 <li>Stronger clustering than simple random sampling</li>
 </ul>
-<div class="sourceCode" id="cb349"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb349-1"><a href="sampling.html#cb349-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Two-stage random&quot;</span>)</span>
-<span id="cb349-2"><a href="sampling.html#cb349-2"></a></span>
-<span id="cb349-3"><a href="sampling.html#cb349-3"></a><span class="co"># Select 8 samples from each square</span></span>
-<span id="cb349-4"><a href="sampling.html#cb349-4"></a>s &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="kw">slot</span>(polys, <span class="st">&quot;polygons&quot;</span>), <span class="cf">function</span>(x) <span class="kw">spsample</span>(x, <span class="dt">n =</span> <span class="dv">5</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>))</span>
-<span id="cb349-5"><a href="sampling.html#cb349-5"></a><span class="kw">points</span>(<span class="kw">sample</span>(s, <span class="dv">1</span>)[[<span class="dv">1</span>]], <span class="dt">pch =</span> <span class="dv">19</span>) <span class="co"># randomly select 1 square and plot</span></span>
-<span id="cb349-6"><a href="sampling.html#cb349-6"></a><span class="kw">points</span>(<span class="kw">sample</span>(s, <span class="dv">1</span>)[[<span class="dv">1</span>]], <span class="dt">pch =</span> <span class="dv">19</span>) <span class="co"># randomly select 1 square and plot</span></span></code></pre></div>
+<div class="sourceCode" id="cb348"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb348-1"><a href="sampling.html#cb348-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Two-stage random&quot;</span>)</span>
+<span id="cb348-2"><a href="sampling.html#cb348-2"></a></span>
+<span id="cb348-3"><a href="sampling.html#cb348-3"></a><span class="co"># Select 8 samples from each square</span></span>
+<span id="cb348-4"><a href="sampling.html#cb348-4"></a>s &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="kw">slot</span>(polys, <span class="st">&quot;polygons&quot;</span>), <span class="cf">function</span>(x) <span class="kw">spsample</span>(x, <span class="dt">n =</span> <span class="dv">5</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>))</span>
+<span id="cb348-5"><a href="sampling.html#cb348-5"></a><span class="kw">points</span>(<span class="kw">sample</span>(s, <span class="dv">1</span>)[[<span class="dv">1</span>]], <span class="dt">pch =</span> <span class="dv">19</span>) <span class="co"># randomly select 1 square and plot</span></span>
+<span id="cb348-6"><a href="sampling.html#cb348-6"></a><span class="kw">points</span>(<span class="kw">sample</span>(s, <span class="dv">1</span>)[[<span class="dv">1</span>]], <span class="dt">pch =</span> <span class="dv">19</span>) <span class="co"># randomly select 1 square and plot</span></span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/two_stage-1.png" width="384" style="display: block; margin: auto;" /></p>
 </div>
 <div id="systematic" class="section level3">
@@ -476,11 +476,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <ul>
 <li>Lower precision</li>
 </ul>
-<div class="sourceCode" id="cb350"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb350-1"><a href="sampling.html#cb350-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Systematic sample&quot;</span>)</span>
-<span id="cb350-2"><a href="sampling.html#cb350-2"></a></span>
-<span id="cb350-3"><a href="sampling.html#cb350-3"></a><span class="co"># Generate systematic random sample</span></span>
-<span id="cb350-4"><a href="sampling.html#cb350-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;regular&quot;</span>)</span>
-<span id="cb350-5"><a href="sampling.html#cb350-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb349"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb349-1"><a href="sampling.html#cb349-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Systematic sample&quot;</span>)</span>
+<span id="cb349-2"><a href="sampling.html#cb349-2"></a></span>
+<span id="cb349-3"><a href="sampling.html#cb349-3"></a><span class="co"># Generate systematic random sample</span></span>
+<span id="cb349-4"><a href="sampling.html#cb349-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;regular&quot;</span>)</span>
+<span id="cb349-5"><a href="sampling.html#cb349-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/systematic-1.png" width="384" style="display: block; margin: auto;" /></p>
 </div>
 <div id="cluster" class="section level3">
@@ -495,11 +495,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <ul>
 <li>Lower precision</li>
 </ul>
-<div class="sourceCode" id="cb351"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb351-1"><a href="sampling.html#cb351-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Clustered (n = 3) random sample&quot;</span>)</span>
-<span id="cb351-2"><a href="sampling.html#cb351-2"></a></span>
-<span id="cb351-3"><a href="sampling.html#cb351-3"></a><span class="co"># Generate cluster random sample</span></span>
-<span id="cb351-4"><a href="sampling.html#cb351-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;clustered&quot;</span>, <span class="dt">nclusters =</span> <span class="dv">3</span>, <span class="dt">iter =</span> <span class="dv">10</span>)</span>
-<span id="cb351-5"><a href="sampling.html#cb351-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb350"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb350-1"><a href="sampling.html#cb350-1"></a><span class="kw">plot</span>(polys, <span class="dt">main =</span> <span class="st">&quot;Clustered (n = 3) random sample&quot;</span>)</span>
+<span id="cb350-2"><a href="sampling.html#cb350-2"></a></span>
+<span id="cb350-3"><a href="sampling.html#cb350-3"></a><span class="co"># Generate cluster random sample</span></span>
+<span id="cb350-4"><a href="sampling.html#cb350-4"></a>test &lt;-<span class="st"> </span><span class="kw">spsample</span>(polys, <span class="dt">n =</span> <span class="dv">15</span>, <span class="dt">type =</span> <span class="st">&quot;clustered&quot;</span>, <span class="dt">nclusters =</span> <span class="dv">3</span>, <span class="dt">iter =</span> <span class="dv">10</span>)</span>
+<span id="cb350-5"><a href="sampling.html#cb350-5"></a><span class="kw">points</span>(test, <span class="dt">pch =</span> <span class="dv">19</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/clustered-1.png" width="384" style="display: block; margin: auto;" /></p>
 </div>
 <div id="conditioned-latin-hypercube-clhs" class="section level3">
@@ -515,43 +515,42 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul>
 <p>The cLHS procedure iteratively selects samples from the strata variables such that they replicate the range of values from each stratum. Without a technique such as cLHS, obtaining a sample that is representative of the feature space becomes increasingly difficult as the number of variables (strata) increases.</p>
 <p>To perform cLHS using R, you can use the clhs package (Roudier, 2011).</p>
-<div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb352-1"><a href="sampling.html#cb352-1"></a><span class="kw">library</span>(clhs)</span>
-<span id="cb352-2"><a href="sampling.html#cb352-2"></a><span class="kw">library</span>(raster)</span>
-<span id="cb352-3"><a href="sampling.html#cb352-3"></a></span>
-<span id="cb352-4"><a href="sampling.html#cb352-4"></a><span class="co"># import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau</span></span>
-<span id="cb352-5"><a href="sampling.html#cb352-5"></a><span class="kw">data</span>(volcano)</span>
-<span id="cb352-6"><a href="sampling.html#cb352-6"></a>volcano_r &lt;-<span class="st"> </span><span class="kw">raster</span>(<span class="kw">as.matrix</span>(volcano[<span class="dv">87</span><span class="op">:</span><span class="dv">1</span>, <span class="dv">61</span><span class="op">:</span><span class="dv">1</span>]), </span>
-<span id="cb352-7"><a href="sampling.html#cb352-7"></a>                    <span class="dt">crs =</span> <span class="kw">CRS</span>(<span class="st">&quot;+init=epsg:27200&quot;</span>), </span>
-<span id="cb352-8"><a href="sampling.html#cb352-8"></a>                    <span class="dt">xmn =</span> <span class="dv">2667405</span>, <span class="dt">xmx =</span> <span class="dv">2667405</span> <span class="op">+</span><span class="st"> </span><span class="dv">61</span> <span class="op">*</span><span class="st"> </span><span class="dv">10</span>, </span>
-<span id="cb352-9"><a href="sampling.html#cb352-9"></a>                    <span class="dt">ymn =</span> <span class="dv">6478705</span>, <span class="dt">ymx =</span> <span class="dv">6478705</span> <span class="op">+</span><span class="st"> </span><span class="dv">87</span> <span class="op">*</span><span class="st"> </span><span class="dv">10</span>)</span>
-<span id="cb352-10"><a href="sampling.html#cb352-10"></a><span class="kw">names</span>(volcano_r) &lt;-<span class="st"> &quot;elev&quot;</span></span>
-<span id="cb352-11"><a href="sampling.html#cb352-11"></a></span>
-<span id="cb352-12"><a href="sampling.html#cb352-12"></a><span class="co"># calculate slope from the DEM</span></span>
-<span id="cb352-13"><a href="sampling.html#cb352-13"></a>slope_r &lt;-<span class="st"> </span><span class="kw">terrain</span>(volcano_r, <span class="dt">opt =</span> <span class="st">&quot;slope&quot;</span>, <span class="dt">unit =</span> <span class="st">&quot;degrees&quot;</span>)</span>
-<span id="cb352-14"><a href="sampling.html#cb352-14"></a></span>
-<span id="cb352-15"><a href="sampling.html#cb352-15"></a><span class="co"># Stack Elevation and Slope</span></span>
-<span id="cb352-16"><a href="sampling.html#cb352-16"></a>rs &lt;-<span class="st"> </span><span class="kw">stack</span>(volcano_r, slope_r)</span>
-<span id="cb352-17"><a href="sampling.html#cb352-17"></a></span>
-<span id="cb352-18"><a href="sampling.html#cb352-18"></a><span class="co"># generate cLHS design</span></span>
-<span id="cb352-19"><a href="sampling.html#cb352-19"></a>cs &lt;-<span class="st"> </span><span class="kw">clhs</span>(rs, <span class="dt">size =</span> <span class="dv">20</span>, <span class="dt">progress =</span> <span class="ot">FALSE</span>, <span class="dt">simple =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb352-20"><a href="sampling.html#cb352-20"></a></span>
-<span id="cb352-21"><a href="sampling.html#cb352-21"></a><span class="co"># Plot cLHS Samples</span></span>
-<span id="cb352-22"><a href="sampling.html#cb352-22"></a><span class="kw">par</span>(<span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">4</span>))</span>
-<span id="cb352-23"><a href="sampling.html#cb352-23"></a><span class="kw">plot</span>(volcano_r, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
-<span id="cb352-24"><a href="sampling.html#cb352-24"></a><span class="kw">points</span>(cs<span class="op">$</span>sampled_data)</span></code></pre></div>
+<div class="sourceCode" id="cb351"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb351-1"><a href="sampling.html#cb351-1"></a><span class="kw">library</span>(clhs)</span>
+<span id="cb351-2"><a href="sampling.html#cb351-2"></a><span class="kw">library</span>(raster)</span>
+<span id="cb351-3"><a href="sampling.html#cb351-3"></a></span>
+<span id="cb351-4"><a href="sampling.html#cb351-4"></a><span class="co"># import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau</span></span>
+<span id="cb351-5"><a href="sampling.html#cb351-5"></a><span class="kw">data</span>(volcano)</span>
+<span id="cb351-6"><a href="sampling.html#cb351-6"></a>volcano_r &lt;-<span class="st"> </span><span class="kw">raster</span>(<span class="kw">as.matrix</span>(volcano[<span class="dv">87</span><span class="op">:</span><span class="dv">1</span>, <span class="dv">61</span><span class="op">:</span><span class="dv">1</span>]), </span>
+<span id="cb351-7"><a href="sampling.html#cb351-7"></a>                    <span class="dt">crs =</span> <span class="kw">CRS</span>(<span class="st">&quot;+init=epsg:27200&quot;</span>), </span>
+<span id="cb351-8"><a href="sampling.html#cb351-8"></a>                    <span class="dt">xmn =</span> <span class="dv">2667405</span>, <span class="dt">xmx =</span> <span class="dv">2667405</span> <span class="op">+</span><span class="st"> </span><span class="dv">61</span> <span class="op">*</span><span class="st"> </span><span class="dv">10</span>, </span>
+<span id="cb351-9"><a href="sampling.html#cb351-9"></a>                    <span class="dt">ymn =</span> <span class="dv">6478705</span>, <span class="dt">ymx =</span> <span class="dv">6478705</span> <span class="op">+</span><span class="st"> </span><span class="dv">87</span> <span class="op">*</span><span class="st"> </span><span class="dv">10</span>)</span>
+<span id="cb351-10"><a href="sampling.html#cb351-10"></a><span class="kw">names</span>(volcano_r) &lt;-<span class="st"> &quot;elev&quot;</span></span>
+<span id="cb351-11"><a href="sampling.html#cb351-11"></a></span>
+<span id="cb351-12"><a href="sampling.html#cb351-12"></a><span class="co"># calculate slope from the DEM</span></span>
+<span id="cb351-13"><a href="sampling.html#cb351-13"></a>slope_r &lt;-<span class="st"> </span><span class="kw">terrain</span>(volcano_r, <span class="dt">opt =</span> <span class="st">&quot;slope&quot;</span>, <span class="dt">unit =</span> <span class="st">&quot;degrees&quot;</span>)</span>
+<span id="cb351-14"><a href="sampling.html#cb351-14"></a></span>
+<span id="cb351-15"><a href="sampling.html#cb351-15"></a><span class="co"># Stack Elevation and Slope</span></span>
+<span id="cb351-16"><a href="sampling.html#cb351-16"></a>rs &lt;-<span class="st"> </span><span class="kw">stack</span>(volcano_r, slope_r)</span>
+<span id="cb351-17"><a href="sampling.html#cb351-17"></a></span>
+<span id="cb351-18"><a href="sampling.html#cb351-18"></a><span class="co"># generate cLHS design</span></span>
+<span id="cb351-19"><a href="sampling.html#cb351-19"></a>cs &lt;-<span class="st"> </span><span class="kw">clhs</span>(rs, <span class="dt">size =</span> <span class="dv">20</span>, <span class="dt">progress =</span> <span class="ot">FALSE</span>, <span class="dt">simple =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb351-20"><a href="sampling.html#cb351-20"></a></span>
+<span id="cb351-21"><a href="sampling.html#cb351-21"></a><span class="co"># Plot cLHS Samples</span></span>
+<span id="cb351-22"><a href="sampling.html#cb351-22"></a><span class="kw">par</span>(<span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">4</span>))</span>
+<span id="cb351-23"><a href="sampling.html#cb351-23"></a><span class="kw">plot</span>(volcano_r, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
+<span id="cb351-24"><a href="sampling.html#cb351-24"></a><span class="kw">points</span>(cs<span class="op">$</span>sampled_data)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/clhs-1.png" width="384" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb353"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb353-1"><a href="sampling.html#cb353-1"></a><span class="co"># Summary of clhs object</span></span>
-<span id="cb353-2"><a href="sampling.html#cb353-2"></a><span class="kw">summary</span>(cs<span class="op">$</span>sampled_data)<span class="op">$</span>data</span></code></pre></div>
+<div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb352-1"><a href="sampling.html#cb352-1"></a><span class="co"># Summary of clhs object</span></span>
+<span id="cb352-2"><a href="sampling.html#cb352-2"></a><span class="kw">summary</span>(cs<span class="op">$</span>sampled_data)<span class="op">$</span>data</span></code></pre></div>
 <pre><code>##       elev           slope       
-##  Min.   : 94.0   Min.   : 0.000  
-##  1st Qu.:108.5   1st Qu.: 6.752  
-##  Median :126.0   Median :13.089  
-##  Mean   :130.8   Mean   :14.464  
-##  3rd Qu.:151.0   3rd Qu.:19.723  
-##  Max.   :187.0   Max.   :32.829  
-##                  NA&#39;s   :1</code></pre>
-<div class="sourceCode" id="cb355"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb355-1"><a href="sampling.html#cb355-1"></a><span class="co"># Summary of raster objects</span></span>
-<span id="cb355-2"><a href="sampling.html#cb355-2"></a><span class="kw">cbind</span>(<span class="kw">summary</span>(volcano_r), <span class="kw">summary</span>(slope_r))</span></code></pre></div>
+##  Min.   : 96.0   Min.   : 1.013  
+##  1st Qu.:108.8   1st Qu.: 7.571  
+##  Median :123.5   Median :14.308  
+##  Mean   :130.7   Mean   :14.950  
+##  3rd Qu.:147.5   3rd Qu.:20.805  
+##  Max.   :184.0   Max.   :31.995</code></pre>
+<div class="sourceCode" id="cb354"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb354-1"><a href="sampling.html#cb354-1"></a><span class="co"># Summary of raster objects</span></span>
+<span id="cb354-2"><a href="sampling.html#cb354-2"></a><span class="kw">cbind</span>(<span class="kw">summary</span>(volcano_r), <span class="kw">summary</span>(slope_r))</span></code></pre></div>
 <pre><code>##         elev      slope
 ## Min.      94   0.000000
 ## 1st Qu.  108   7.054131
@@ -560,57 +559,57 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## Max.     195  43.032469
 ## NA&#39;s       0 292.000000</code></pre>
 <p>Although the above example works well on our small volcano dataset, the clhs package is inefficient if you are working with large raster datasets. To overcome this limitation, you can first take a large random sample and then subsample it using cLHS.</p>
-<div class="sourceCode" id="cb357"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb357-1"><a href="sampling.html#cb357-1"></a>sub_s &lt;-<span class="st"> </span><span class="kw">sampleRandom</span>(volcano_r, <span class="dt">size =</span> <span class="dv">200</span>, <span class="dt">sp =</span> <span class="ot">TRUE</span>) <span class="co"># random sample function from the raster package</span></span>
-<span id="cb357-2"><a href="sampling.html#cb357-2"></a></span>
-<span id="cb357-3"><a href="sampling.html#cb357-3"></a><span class="co"># s &lt;- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)</span></span></code></pre></div>
+<div class="sourceCode" id="cb356"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb356-1"><a href="sampling.html#cb356-1"></a>sub_s &lt;-<span class="st"> </span><span class="kw">sampleRandom</span>(volcano_r, <span class="dt">size =</span> <span class="dv">200</span>, <span class="dt">sp =</span> <span class="ot">TRUE</span>) <span class="co"># random sample function from the raster package</span></span>
+<span id="cb356-2"><a href="sampling.html#cb356-2"></a></span>
+<span id="cb356-3"><a href="sampling.html#cb356-3"></a><span class="co"># s &lt;- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)</span></span></code></pre></div>
 </div>
 </div>
 <div id="evaluating-a-sampling-strategy" class="section level2">
 <h2><span class="header-section-number">5.3</span> Evaluating a Sampling Strategy</h2>
 <p>To gauge the representativeness of a sampling strategy, you can compare the results it produces to the results for other variables you think might coincide with the soil properties or classes of interest (Hengl, 2009). Examples include slope gradient, slope aspect, and vegetative cover. These other variables may be used to stratify the sampling design or to assess the representativeness of our existing samples (e.g., NASIS pedons).</p>
 <p>The simple example below demonstrates how to compare several sampling strategies by evaluating how well they replicate the distribution of elevation.</p>
-<div class="sourceCode" id="cb358"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb358-1"><a href="sampling.html#cb358-1"></a><span class="co"># create a polygon from the spatial extent of the volcano dataset</span></span>
-<span id="cb358-2"><a href="sampling.html#cb358-2"></a>test &lt;-<span class="st"> </span><span class="kw">as</span>(<span class="kw">extent</span>(volcano_r), <span class="st">&quot;SpatialPolygons&quot;</span>)</span>
-<span id="cb358-3"><a href="sampling.html#cb358-3"></a></span>
-<span id="cb358-4"><a href="sampling.html#cb358-4"></a><span class="co"># take a large random sample</span></span>
-<span id="cb358-5"><a href="sampling.html#cb358-5"></a>sr400 &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">400</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
-<span id="cb358-6"><a href="sampling.html#cb358-6"></a></span>
-<span id="cb358-7"><a href="sampling.html#cb358-7"></a><span class="co"># take a small random sample</span></span>
-<span id="cb358-8"><a href="sampling.html#cb358-8"></a>sr &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">20</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
-<span id="cb358-9"><a href="sampling.html#cb358-9"></a></span>
-<span id="cb358-10"><a href="sampling.html#cb358-10"></a><span class="co"># take a small stratified random sample</span></span>
-<span id="cb358-11"><a href="sampling.html#cb358-11"></a>str &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">23</span>, <span class="dt">type =</span> <span class="st">&quot;stratified&quot;</span>, <span class="dt">iter =</span> <span class="dv">1000</span>)[<span class="dv">1</span><span class="op">:</span><span class="dv">20</span>]</span>
-<span id="cb358-12"><a href="sampling.html#cb358-12"></a></span>
-<span id="cb358-13"><a href="sampling.html#cb358-13"></a><span class="co"># take a cLHS sample</span></span>
-<span id="cb358-14"><a href="sampling.html#cb358-14"></a><span class="co"># cs &lt;- clhs(rs, size = 20, progress = FALSE, simple = FALSE)</span></span>
-<span id="cb358-15"><a href="sampling.html#cb358-15"></a></span>
-<span id="cb358-16"><a href="sampling.html#cb358-16"></a><span class="co"># Combind and Extract Samples</span></span>
-<span id="cb358-17"><a href="sampling.html#cb358-17"></a>s &lt;-<span class="st"> </span><span class="kw">rbind</span>(<span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Simple Random 400&quot;</span>, <span class="kw">extract</span>(rs, sr400)),</span>
-<span id="cb358-18"><a href="sampling.html#cb358-18"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Simple Random&quot;</span>, <span class="kw">extract</span>(rs, sr)),</span>
-<span id="cb358-19"><a href="sampling.html#cb358-19"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Stratified Random&quot;</span>, <span class="kw">extract</span>(rs, str)),</span>
-<span id="cb358-20"><a href="sampling.html#cb358-20"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;cLHS&quot;</span>, cs<span class="op">$</span>sampled_data<span class="op">@</span>data))</span>
-<span id="cb358-21"><a href="sampling.html#cb358-21"></a></span>
-<span id="cb358-22"><a href="sampling.html#cb358-22"></a><span class="co"># Summarize the sample values</span></span>
-<span id="cb358-23"><a href="sampling.html#cb358-23"></a><span class="kw">aggregate</span>(slope <span class="op">~</span><span class="st"> </span>method, <span class="dt">data =</span> s, <span class="cf">function</span>(x) <span class="kw">round</span>(<span class="kw">summary</span>(x)))</span></code></pre></div>
+<div class="sourceCode" id="cb357"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb357-1"><a href="sampling.html#cb357-1"></a><span class="co"># create a polygon from the spatial extent of the volcano dataset</span></span>
+<span id="cb357-2"><a href="sampling.html#cb357-2"></a>test &lt;-<span class="st"> </span><span class="kw">as</span>(<span class="kw">extent</span>(volcano_r), <span class="st">&quot;SpatialPolygons&quot;</span>)</span>
+<span id="cb357-3"><a href="sampling.html#cb357-3"></a></span>
+<span id="cb357-4"><a href="sampling.html#cb357-4"></a><span class="co"># take a large random sample</span></span>
+<span id="cb357-5"><a href="sampling.html#cb357-5"></a>sr400 &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">400</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb357-6"><a href="sampling.html#cb357-6"></a></span>
+<span id="cb357-7"><a href="sampling.html#cb357-7"></a><span class="co"># take a small random sample</span></span>
+<span id="cb357-8"><a href="sampling.html#cb357-8"></a>sr &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">20</span>, <span class="dt">type =</span> <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb357-9"><a href="sampling.html#cb357-9"></a></span>
+<span id="cb357-10"><a href="sampling.html#cb357-10"></a><span class="co"># take a small stratified random sample</span></span>
+<span id="cb357-11"><a href="sampling.html#cb357-11"></a>str &lt;-<span class="st"> </span><span class="kw">spsample</span>(test, <span class="dt">n =</span> <span class="dv">23</span>, <span class="dt">type =</span> <span class="st">&quot;stratified&quot;</span>, <span class="dt">iter =</span> <span class="dv">1000</span>)[<span class="dv">1</span><span class="op">:</span><span class="dv">20</span>]</span>
+<span id="cb357-12"><a href="sampling.html#cb357-12"></a></span>
+<span id="cb357-13"><a href="sampling.html#cb357-13"></a><span class="co"># take a cLHS sample</span></span>
+<span id="cb357-14"><a href="sampling.html#cb357-14"></a><span class="co"># cs &lt;- clhs(rs, size = 20, progress = FALSE, simple = FALSE)</span></span>
+<span id="cb357-15"><a href="sampling.html#cb357-15"></a></span>
+<span id="cb357-16"><a href="sampling.html#cb357-16"></a><span class="co"># Combind and Extract Samples</span></span>
+<span id="cb357-17"><a href="sampling.html#cb357-17"></a>s &lt;-<span class="st"> </span><span class="kw">rbind</span>(<span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Simple Random 400&quot;</span>, <span class="kw">extract</span>(rs, sr400)),</span>
+<span id="cb357-18"><a href="sampling.html#cb357-18"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Simple Random&quot;</span>, <span class="kw">extract</span>(rs, sr)),</span>
+<span id="cb357-19"><a href="sampling.html#cb357-19"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;Stratified Random&quot;</span>, <span class="kw">extract</span>(rs, str)),</span>
+<span id="cb357-20"><a href="sampling.html#cb357-20"></a>           <span class="kw">data.frame</span>(<span class="dt">method =</span> <span class="st">&quot;cLHS&quot;</span>, cs<span class="op">$</span>sampled_data<span class="op">@</span>data))</span>
+<span id="cb357-21"><a href="sampling.html#cb357-21"></a></span>
+<span id="cb357-22"><a href="sampling.html#cb357-22"></a><span class="co"># Summarize the sample values</span></span>
+<span id="cb357-23"><a href="sampling.html#cb357-23"></a><span class="kw">aggregate</span>(slope <span class="op">~</span><span class="st"> </span>method, <span class="dt">data =</span> s, <span class="cf">function</span>(x) <span class="kw">round</span>(<span class="kw">summary</span>(x)))</span></code></pre></div>
 <pre><code>##              method slope.Min. slope.1st Qu. slope.Median slope.Mean slope.3rd Qu. slope.Max.
-## 1              cLHS          0             7           13         14            20         33
-## 2     Simple Random          5             8           16         17            26         30
-## 3 Simple Random 400          0             8           15         15            22         41
-## 4 Stratified Random          0            10           17         16            20         33</code></pre>
-<div class="sourceCode" id="cb360"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb360-1"><a href="sampling.html#cb360-1"></a><span class="co"># Plot overlapping density plots to compare the distributions between the large and small samples</span></span>
-<span id="cb360-2"><a href="sampling.html#cb360-2"></a><span class="kw">library</span>(ggplot2)</span>
-<span id="cb360-3"><a href="sampling.html#cb360-3"></a><span class="kw">ggplot</span>(s, <span class="kw">aes</span>(<span class="dt">x =</span> slope, <span class="dt">col =</span> method)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_density</span>(<span class="dt">cex =</span> <span class="dv">2</span>)</span></code></pre></div>
+## 1              cLHS          1             8           14         15            21         32
+## 2     Simple Random          0             9           12         15            18         40
+## 3 Simple Random 400          0             6           14         15            22         41
+## 4 Stratified Random          0             5           16         16            23         36</code></pre>
+<div class="sourceCode" id="cb359"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb359-1"><a href="sampling.html#cb359-1"></a><span class="co"># Plot overlapping density plots to compare the distributions between the large and small samples</span></span>
+<span id="cb359-2"><a href="sampling.html#cb359-2"></a><span class="kw">library</span>(ggplot2)</span>
+<span id="cb359-3"><a href="sampling.html#cb359-3"></a><span class="kw">ggplot</span>(s, <span class="kw">aes</span>(<span class="dt">x =</span> slope, <span class="dt">col =</span> method)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_density</span>(<span class="dt">cex =</span> <span class="dv">2</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/seval-1.png" width="672" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb361"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb361-1"><a href="sampling.html#cb361-1"></a><span class="co"># plot the spatial locations            </span></span>
-<span id="cb361-2"><a href="sampling.html#cb361-2"></a><span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>), <span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">5</span>))</span>
-<span id="cb361-3"><a href="sampling.html#cb361-3"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;Simple random&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
-<span id="cb361-4"><a href="sampling.html#cb361-4"></a><span class="kw">points</span>(sr, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span>
-<span id="cb361-5"><a href="sampling.html#cb361-5"></a></span>
-<span id="cb361-6"><a href="sampling.html#cb361-6"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;Stratified random&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
-<span id="cb361-7"><a href="sampling.html#cb361-7"></a><span class="kw">points</span>(str, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span>
-<span id="cb361-8"><a href="sampling.html#cb361-8"></a></span>
-<span id="cb361-9"><a href="sampling.html#cb361-9"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;cLHS&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
-<span id="cb361-10"><a href="sampling.html#cb361-10"></a><span class="kw">points</span>(cs<span class="op">$</span>sampled_data, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb360"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb360-1"><a href="sampling.html#cb360-1"></a><span class="co"># plot the spatial locations            </span></span>
+<span id="cb360-2"><a href="sampling.html#cb360-2"></a><span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>), <span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">5</span>))</span>
+<span id="cb360-3"><a href="sampling.html#cb360-3"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;Simple random&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
+<span id="cb360-4"><a href="sampling.html#cb360-4"></a><span class="kw">points</span>(sr, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span>
+<span id="cb360-5"><a href="sampling.html#cb360-5"></a></span>
+<span id="cb360-6"><a href="sampling.html#cb360-6"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;Stratified random&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
+<span id="cb360-7"><a href="sampling.html#cb360-7"></a><span class="kw">points</span>(str, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span>
+<span id="cb360-8"><a href="sampling.html#cb360-8"></a></span>
+<span id="cb360-9"><a href="sampling.html#cb360-9"></a><span class="kw">plot</span>(volcano_r, <span class="dt">main =</span> <span class="st">&quot;cLHS&quot;</span>, <span class="dt">cex.main =</span> <span class="dv">2</span>, <span class="dt">axes=</span><span class="ot">FALSE</span>)</span>
+<span id="cb360-10"><a href="sampling.html#cb360-10"></a><span class="kw">points</span>(cs<span class="op">$</span>sampled_data, <span class="dt">pch =</span> <span class="dv">3</span>, <span class="dt">cex =</span> <span class="fl">1.2</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-172-1.png" width="792" style="display: block; margin: auto;" /></p>
 <p>The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs.</p>
 <p>The cLHS approach best duplicates the distribution of elevation (because elevation is explicitly used in the stratification process). The contrast is less severe in the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible using the approaches in the following chapters.</p>
