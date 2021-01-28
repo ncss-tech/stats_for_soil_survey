@@ -15,23 +15,23 @@ Part 1
 
 ### [**Chapter 1:** *Introduction to R and RStudio*](http://ncss-tech.github.io/stats_for_soil_survey/book/intro.html)
 
-#### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/ch1_prez.html)
+ - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/ch1_prez.html)
 
-#### [GitHub](https://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/github.html)
+ - #### [GitHub](https://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/github.html)
 
-#### [R Data Types](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_appendix_data_types.html)
+ - #### [R Data Types](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_appendix_data_types.html)
 
 ### [**Chapter 2:** *The Data We Use*](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html)
 
-#### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/2a_tabular_data/2a_tabular_data.html)
+ - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/2a_tabular_data/2a_tabular_data.html)
 
-#### [Generalized Horizons w/ Loafercreek](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/genhz_homework.html)
+ - #### [Generalized Horizons w/ Loafercreek](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/genhz_homework.html)
 
 ### [**Chapter 3:** *Exploratory Data Analysis*](http://ncss-tech.github.io/stats_for_soil_survey/book/eda.html)
 
-#### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/ch4_prez.html)
+ - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/ch4_prez.html)
 
-#### [Shiny Apps](http://ncss-tech.github.io/stats_for_soil_survey/presentations/4_exploratory_data_analysis/shiny_app_pres.html)
+ - #### [Shiny Apps](http://ncss-tech.github.io/stats_for_soil_survey/presentations/4_exploratory_data_analysis/shiny_app_pres.html)
 
 <!-- 
     - Extras
@@ -42,11 +42,11 @@ Part 1
 
 ### [**Chapter 4:** *Spatial Data in R*](http://ncss-tech.github.io/stats_for_soil_survey/book/spatial.html)
 
-#### [Creating Maps with R](https://smroecker.github.io/soil-pit/2019_creating_maps_with_R.html)
+ - #### [Creating Maps with R](https://smroecker.github.io/soil-pit/2019_creating_maps_with_R.html)
 
 ### [**Chapter 5:** *Sampling*](http://ncss-tech.github.io/stats_for_soil_survey/book/sampling.html)
 
-#### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/3_sampling/3.%20Sampling.pptx)
+ - #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/3_sampling/3.%20Sampling.pptx)
 
 ------------------------------------------------------------------------
 
