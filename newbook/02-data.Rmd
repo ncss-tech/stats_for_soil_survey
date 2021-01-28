@@ -33,12 +33,12 @@ We have created the soilDB package just for this! soilDB returns tabular data, s
 The manual pages for `soilDB` and `aqp` are accessible (click **index** at the bottom of the **Help** tab in RStudio) by entering the following into the R console: 
 
 ```{r, purl=FALSE, eval=FALSE}
-# not run
+# load the libaries
 library(soilDB)
-help(soilDB)
-
-# for links to lots of great examples look here!
 library(aqp)
+
+# links to lots of great examples
+help(soilDB)
 help(aqp)
 ```
 
@@ -63,14 +63,12 @@ help(aqp)
         
 - **[fetchOSD()](http://ncss-tech.github.io/soilDB/docs/reference/fetchOSD.html)**
     - Fetches a limited subset of horizon- and site-level attributes for named soil series from the SoilWeb system.
+        + [Querying Soil Series Data](http://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html)
     
 - **[OSDquery()](http://ncss-tech.github.io/soilDB/docs/reference/OSDquery.html)**
     - Full-text searching of OSD sections.
+        + [Querying Soil Series Data](http://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html#6_OSD_Full_Text_Search)
     
-- **[fetchRaCA()](http://ncss-tech.github.io/soilDB/docs/reference/fetchRaCA.html)**
-    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
-        + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)
-        
 - **[fetchSCAN()](http://ncss-tech.github.io/soilDB/docs/reference/fetchSCAN.html)**
     - Queries soil and climate data from USDA-NRCS SCAN Stations.
       + [A Unified Interface to SCAN/SNOTEL Data](http://ncss-tech.github.io/AQP/soilDB/fetchSCAN-demo.html)
@@ -79,17 +77,27 @@ help(aqp)
     - Downloads data from the Henry Mount Soil Climate Database.
         + [Henry Mount Soil Climate Database Tutorial](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html)
         
-- **[fetchPedonPC()](http://ncss-tech.github.io/soilDB/docs/reference/fetchPedonPC.html)**
-    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
-    
 - **[fetchSDA()](http://ncss-tech.github.io/soilDB/docs/reference/fetchSDA_component.html)**
-    - Fetches component data from Soil Data Access.
+    - Fetches legend/mapunit/component/horizon data from Soil Data Access.
     
 - **[SDA_query()](http://ncss-tech.github.io/soilDB/docs/reference/SDA_query.html)**
+    - Can be used to access SSURGO, STATSGO (spatial and tabular), and Lab DataMart snapshots
     - Submits queries to the Soil Data Access system.
         + [Soil Data Access Tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html)
         + [SDA and Spatial Data](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html)
         + [SDA and Interpretations](http://ncss-tech.github.io/AQP/soilDB/SDA-cointerp-tutorial.html)
+
+
+The following are still functional but not actively maintained:
+
+- **[fetchPedonPC()](http://ncss-tech.github.io/soilDB/docs/reference/fetchPedonPC.html)**
+    - Fetches commonly used site and horizon data from a PedonPC v.5 database.
+
+- **[fetchRaCA()](http://ncss-tech.github.io/soilDB/docs/reference/fetchRaCA.html)**
+    - Gets Rapid Carbon Assessment (RaCA) data by State, geographic bounding-box, RaCA site ID, or series query from the SoilWeb system.
+        + [RaCA Data Demo](http://ncss-tech.github.io/AQP/soilDB/RaCA-demo.html)
+
+
 
 ### Importance of Pedon Data
 
@@ -210,35 +218,35 @@ gridExtra::grid.arrange(g1, g3, ncol = 1)
 For more information regarding difficult pedon data, see the following tutorial in the "aqp" package:  
 [**Dealing with Troublesome data**](http://ncss-tech.github.io/AQP/aqp/dealing-with-bad-data.html).
 
-## The `aqp` `SoilProfileCollection`
+## The `SoilProfileCollection`
 
-The [`SoilProfileCollection`](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) class (SPC) provided by the `aqp` package is a soil-specific tool. 
+The `SoilProfileCollection` class (SPC) provided by the `aqp` package is a specialized data structure designed to support analysis. Before continuing, consider working through the [`SoilProfileCollection` Reference](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html).
 
 It is a type of object that simplifies the process of working with collections of data associated with soil profiles, e.g., site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc. 
 
-A `SoilProfileCollection` is like the NASIS Pedon "object" in that it provides generalizations, specific routines and rules about the fundamental tables and their relationships that are relevant to soil observations.
+A `SoilProfileCollection` is similar to the NASIS Site/Pedon "object" in that it provides generalizations, specific routines and rules about the fundamental tables and their relationships that are relevant to soil observations.
 
-In many ways the SPC is more adaptable than the NASIS Pedon concept, strictly speaking. It can "contain" aggregations of any relevant parts of any soil data schema (table and column structure). Through this mechanism, it can be a _mediator_ between formats and algorithms.
+In many ways the SPC is more adaptable than the NASIS Pedon concept, strictly speaking. It can "contain" aggregations of any relevant parts of any soil data schema (table and column structure). Through this mechanism, it can be a _mediator_ between formats and algorithms. However, the SPC is not as expressive as the complex hierarchy of objects in NASIS, which are more aligned with data archival vs. analysis.
 
-### SoilProfileCollection methods
+### `SoilProfileCollection` methods
 
 Many "familiar" methods are defined for the `SoilProfileCollection` object. Some are unique, and others operate like more common functions of vector and `data.frame` objects, such as `nrow()` (*"how many horizons?"*) or `length()` (*"how many sites/pedons?"*). 
 
 Perhaps most importantly, when you access the `site()` data or the `horizons()` data of a `SoilProfileCollection`, you get a `data.frame` object that you can use like any other you might use or make in R.
 
-#### Promoting `data.frame` to `SoilProfileCollection`
+#### Promoting a `data.frame` to `SoilProfileCollection`
 
 The `SoilProfileCollection` object is a collection of 1-D profile descriptions, of the type conventionally described on a Form 232, or on tabular data returned from laboratory. 
 
 The object is "horizon data forward" in that you start with that, and can create site-level attributes by normalization, joins, calculations and more.
 
-Most of the time if you are using your NASIS data, or an official database, there are defined ways of getting the data out. 
+Most of the time if you are using your NASIS data, or an official database, there are defined ways of getting the data "into" an SPC. For example, `fetchOSD` returns a `SoilProfileCollection` that has been assembled from horizon and site level attributes gleaned from the OSDs text, Soil Classification database, and other sources.
 
 In the pre-course, we had you set up a process so you could connect to your local NASIS instance to "fetch" data and have methods like `fetchNASIS` put things together for you.
 
-This input to make a `SoilProfileCollection` can be represented most simply as a `data.frame` with unique site or profile ID and depth combinations for each horizon or layer -- for example, a subset of the `phorizon` or `chorizon` table in NASIS.
+This input to make a `SoilProfileCollection` can be represented most simply as a `data.frame` with unique site or profile ID and depth combinations for each horizon or layer--for example, a subset of the `phorizon` or `chorizon` table in NASIS.
 
-A simple example of this type oftabular horizon data is the `sp4` data set: some serpentine soil profiles stored in a `data.frame` in the `aqp` package (after McGahan et al., 2009).
+A simple demonstration of "tabular horizon data" is the `sp4` data set bundled with `aqp`: some serpentine soil profiles stored in a `data.frame` in the `aqp` package (after McGahan et al., 2009).
 
 ```{r, eval=TRUE}
 library(aqp)
@@ -246,14 +254,24 @@ library(aqp)
 # Load sample serpentine soil data (McGahan et al., 2009)
 data(sp4, package = "aqp")
 
-head(sp4)
-
+# this is a data.frame
+# same as if loaded from CSV file etc.
 class(sp4)
+
+# inspect the first couple of rows
+head(sp4)
 ```
 
 To convert this horizon data into a `SoilProfileCollection`, we need to identify three parameters: `idname`, `top`, and `bottom`. These parameters refer to the columns of unique profile IDs, top depths and bottom depths, respectively.
 
-These three define the "logical consistency" of 1-D descriptions within the collection. We specify this for your input `data.frame` using the `depths<-` function.
+There are a couple of important constraints and considerations:
+
+   * records (rows) represent horizons
+   * profiles are uniquely identified by a column (user pedon ID, pedon record ID, etc.)
+   * profiles IDs cannot contain missing values (NA)
+   * horizon top and bottom depths are identified by columns
+   * ideally there are no gaps, overlap, or missing top/bottom depths (more on that later)
+   
 
 Use a formula to specify column names in the `data.frame`, in this case `"id"`, `"top"` and `"bottom"`. 
 
@@ -263,14 +281,19 @@ Use a formula to specify column names in the `data.frame`, in this case `"id"`, 
 #              
 depths(sp4) <- id ~ top + bottom
 
+# note new class
 class(sp4)
+
+# compact summary
+sp4
 ```
 
-##### Syntax Explanation
 
-The formula expresses the idea that a profile 1-dimensional description `id` has a vertical extent (Z, in profile) defined by set of `top` and `bottom` depths described for that profile. 
+<!-- I'd like to refine the following before including, currently confusing to me -->
 
-In this simplified 1-dimensional model we are concerned about keeping track of things like thickness, order, overlaps, gaps, or duplication in the data. From this, we can do a lot of "logic" checks -- strictly from a perspective of basic physical representation of the horizon data.
+<!-- The formula expresses the idea that a profile 1-dimensional description `id` has a vertical extent (Z, in profile) defined by set of `top` and `bottom` depths described for that profile.  -->
+
+<!-- In this simplified 1-dimensional model we are concerned about keeping track of things like thickness, order, overlaps, gaps, or duplication in the data. From this, we can do a lot of "logic" checks--strictly from a perspective of basic physical representation of the horizon data. -->
 
 <!--
 NOTE: A character vector with same names has the same effect, and can be easier to "program" with than the formula-based syntax.
@@ -285,12 +308,13 @@ The "spatial" definition that comes with defining the horizon depths at object c
 
 #### Extracting Site and Horizon Data
 
-The `SoilProfileCollection` is an S4 R object. S4 objects have slots. Of primary importance, it has slots for site-level data and horizon-level data. 
+The `SoilProfileCollection` is an S4 R object. S4 objects have slots (strictly defined "containers" within the S4 container). Of primary importance, are the slots for site-level and horizon-level data.
 
 You can extract values from these slots using the `site()` and `horizons()` functions. These create `data.frame` objects that are separate from the `SoilProfileCollection`.
 
 ```{r, eval=TRUE}
 # extract site data from SPC into new data.frame 's'
+# note that it only contains profile IDs
 s <- site(sp4)
 str(s)
 
@@ -301,9 +325,9 @@ str(h)
 
 #### Methods like `data.frame` 
 
-The base R functions for accessing and setting `data.frame` columns by name such as `$` and `[[` work for `SoilProfileCollection` objects, too. 
+The base R functions for accessing and setting `data.frame` columns by name such as `$` and `[[` work for `SoilProfileCollection` objects, too. Note that single columns in `data.frame` objects are accessed with `$` and `[[`, while combinations of rows and columns are accessed with `[`.
 
-##### `$` and `[[`
+##### Column Access by Name: `$` and `[[`
 
 ```{r, eval=TRUE}
 # SoilProfileCollection
@@ -314,22 +338,22 @@ sp4[['clay']]
 h$clay
 h[['clay']]
 
-# use $<- / [[<- to set proportional clay content
+# use $<- or [[<- to set proportional clay content
 sp4$clay <- sp4[['clay']] / 100
 
 # undo what we did above; back to percentage
 sp4[['clay']] <- sp4$clay * 100
 
-# create new site variable (recycled for all sites)
+# create new site variable ("numberone" recycled for all sites)
 site(sp4)$newvar1 <- "numberone"
 
-# create new horizon variable (recycled for all horizons)
+# create new horizon variable ("numbertwo" recycled for all horizons)
 horizons(sp4)$newvar2 <- "numbertwo"
 ```
 
-##### `[`
+##### Analogues and Extention of Row Access: `[`
 
-The `SoilProfileCollection` also has `[` -- but a different interpretation from the `[i, j]` indexing in `data.frame`. 
+The `SoilProfileCollection` also has `[` (i.e. "single bracket method"), but with a different interpretation from the `[i, j]` indexing in `data.frame`. 
 
  - In a `data.frame` you have `object[row, column, drop=TRUE]`; the result is a `data.frame` (or a vector with default `drop`). 
 
