@@ -650,6 +650,8 @@ After your working directory is set and you've loaded the necessary packages, yo
 
 #### Text files
 
+Text files are a preferable format for storing and transferring small datasets.
+
 One basic command for importing text files into R is `read.csv()`. The command is followed by the file name or URL and then some optional instructions for how to read the file.    
 
 ```{r, eval=TRUE}
@@ -657,30 +659,42 @@ sand <- read.csv("https://github.com/ncss-tech/stats_for_soil_survey/blob/master
 ```
 
 
+
+#### NASIS (Web) Reports
+
+NASIS provides a plethora of reports, many of which can be read into R for analysis. The `soilDB` R package provides a series of function to read data from NASIS either using a local database connection or via HTML web reports. Similar functions also exist for accessing tabular data from Soil Data Access. More details on `soilDB` will be provided in the next chapter, but now we'll illustrate how to access some example datasets for manipulating tabular data.
+
+```{r, eval=FALSE}
+library(soilDB)
+
+# get projects
+prj <- get_project_from_NASISWebReport(mlrassoarea = "11-IND", fiscalyear = 2020)
+
+# get legends
+
+leg <- get_legend_from_NASISWebReport(mlraoffice = "Indi%", areasymbol = "%")
+
+# get map units
+mu  <- get_mapunit_from_NASISWebReport(areasymbol = "IN%")
+
+# get components
+
+co  <- get_component_from_NASISWebReport(projectname = "MLRA 111A - Aquolls%") 
+
+```
+
+
 #### Excel files
 
-R can import Excel files, but generally speaking it is a bad idea to use Excel. Excel has a dangerous default which automatically converts data with common notations to their standard format without warning or notice.
-
-For example, the character "11-JUN" entered into a cell automatically becomes the date 6/11/2017, even though the data is still displayed as 11-JUN. The only way to avoid this default behavior is to manually import your data into Excel via the **Data Tab>Get External Data Ribbon**, and manually set the data type of all your columns to text. 
-
-Failure to do so has resulted in numerous retracted research articles ([Washington Post Article](https://www.washingtonpost.com/news/wonk/wp/2016/08/26/an-alarming-number-of-scientific-papers-contain-excel-errors/?utm_term=.9352a35dca6f)). 
+R can import Excel files, but generally speaking it is a bad idea to use Excel. Excel has a dangerous default which automatically converts data with common notations to their standard format without warning or notice. For example, the character "11-JUN" entered into a cell automatically becomes the date 6/11/2017, even though the data is still displayed as 11-JUN. The only way to avoid this default behavior is to manually import your data into Excel via the **Data Tab>Get External Data Ribbon**, and manually set the data type of all your columns to text. Failure to do so has resulted in numerous retracted research articles ([Washington Post Article](https://www.washingtonpost.com/news/wonk/wp/2016/08/26/an-alarming-number-of-scientific-papers-contain-excel-errors/?utm_term=.9352a35dca6f)). Warnings aside, Excel files are a very common and are a format most people are familiar with. Therefore we will illustrate how to bring them into R.
 
 This dataset can either be imported into R using the **Import Dataset** button from the Environment tab, or by typing the following command into the R console:  
 
-
-#### NASIS Web Reports
-
-
-
-### Exporting Data
-
-To export data from R, use the command `write.csv()` function. Since we have already set our working directory, R automatically saves our file into the working directory.  
-
 ```{r}
-write.csv(sand, file = "sand_example2.csv")
 
-# or use the write.table() function to export other text file types
-``` 
+
+
+````
 
 
 ### Viewing and Removing Data
@@ -724,6 +738,16 @@ rm(sand)
 
 ![](static-figures/ch1_clear_workspace.png)
 
+
+### Exporting Data
+
+To export data from R, use the command `write.csv()` function. Since we have already set our working directory, R automatically saves our file into the working directory.  
+
+```{r}
+write.csv(sand, file = "sand_example2.csv")
+
+# or use the write.table() function to export other text file types
+``` 
 
 
 
