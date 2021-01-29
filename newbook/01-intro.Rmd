@@ -277,6 +277,10 @@ log10(100)
 # Print Text
 "Hello World"
 
+# Combine a List of Values
+
+c(1, 2)
+
 # Plot Histogram
 hist(npk$yield)
 
@@ -623,40 +627,63 @@ dev.off()
 The first line of this command creates a blank file named sand with a JPEG extension.  The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the JPEG file we are creating). The third line closes the graphics device.  
 
 
-## Exercise
+## Exercise 1
 
 Using the examples discussed thus far as a guide, demonstrate your mastering of the material by performing the following tasks.
 
- - Create an R script file, demonstrate 3 basic R functions, and comment (`#`) your code. 
- - Install the FedData R package from CRAN and [GitHub](https://github.com/ropensci/FedData). Save the commands in your R script file.
- - Read the help file for the `get_ssurgo` function with the FedData package. What is the 1st input/argument? Save the R command in your R script. 
- - Save your R script, R history, and forward to your instructor.
+1. Create an R script file, demonstrate 3 basic R functions, and comment (`#`) your code. 
+2. Install the FedData R package from CRAN and [GitHub](https://github.com/ropensci/FedData). Save the commands in your R script file.
+3. Read the help file for the `get_ssurgo` function with the FedData package. What is the 1st input/argument? Save the R command in your R script. 
+4. Save your R script, R history, and forward to your instructor.
 
 
 
-## Data manipulation
+## Loading Data
 
-Before we can do any sort of analysis, we often need to manipulate our data somehow. Estimates varying, but an analyst typically spend 80% of their time manipulating data, and only 20% actually analyzing or modeling. Tasks generally involve importing, filtering, transforming, aggregating, and reshaping data. The most common format of data is tabular. Most tabular data is stored in spreadsheets or databases. Within R tabular data is stored as a `data.frame`. 
+R can load a variety of data formats, however tabular data is by far the most common, and what we will spend of the majority of our time working with. Typically tabular data is stored in spreadsheets (e.g. .txt, .csv, .xlsx), databases (e.g. NASIS), or webpages (.html). Within R tabular data is stored as a `data.frame`. 
 
-<!--
-An important principle of tabular data is that it should be ["normalized'](https://en.wikipedia.org/wiki/Database_normalization) or ["tidy"](https://r4ds.had.co.nz/tidy-data.html). This simply means that rows should hold observations, and columns should hold variables for each observation. 
--->
-
-### Importing Data
-
-
-After your working directory is set and you've loaded the necessary packages, you can import data from a .csv, .txt, or .xlsx. 
 
 
 #### Text files
 
-Text files are a preferable format for storing and transferring small datasets.
+Text files are a preferable format for storing and transferring small datasets. One basic command for importing text files into R is `read.csv()`. The command is followed by the file name or URL and then some optional instructions for how to read the file.
 
-One basic command for importing text files into R is `read.csv()`. The command is followed by the file name or URL and then some optional instructions for how to read the file.    
+These files can either be imported into R by clicking the **Import Dataset >> From Text** buttons from the Environment tab, or by typing the following command into the R console:
+
+```{r, eval=FALSE}
+
+# from working directory
+sand <- read.csv("C:/workspace2/sand_example.csv")
+
+```
 
 ```{r, eval=TRUE}
-sand <- read.csv("https://github.com/ncss-tech/stats_for_soil_survey/blob/master/data/sand_example.csv") 
+# from URL
+sand <- read.csv("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/sand_example.csv") 
+
 ```
+
+![](static-figures/sand_readcsv.png) 
+
+
+
+#### Excel files
+
+R can import Excel files, but generally speaking it is a bad idea to use Excel. Excel has a dangerous default which automatically converts data with common notations to their standard format without warning or notice. For example, the character "11-JUN" entered into a cell automatically becomes the date 6/11/2021, even though the data is still displayed as 11-JUN. The only way to avoid this default behavior is to manually import your data into Excel via the **Data Tab>Get External Data Ribbon**, and manually set the data type of all your columns to text. Failure to do so has resulted in numerous retracted research articles ([Washington Post Article](https://www.washingtonpost.com/news/wonk/wp/2016/08/26/an-alarming-number-of-scientific-papers-contain-excel-errors/?utm_term=.9352a35dca6f)). Warnings aside, Excel files are a very common and are a format most people are familiar with. Therefore we will illustrate how to bring them into R.
+
+Download the sand Excel dataset from GitHub at [https://github.com/ncss-tech/stats_for_soil_survey/blob/master/data/Pre-course/R_sand/sand_example.xlsx](https://github.com/ncss-tech/stats_for_soil_survey/blob/master/data/Pre-course/R_sand/sand_example.xlsx)
+
+Excel datasets can either be imported into R by clicking the **Import Dataset >> From Excel** buttons from the Environment tab, or by typing the following command into the R console:  
+
+```{r}
+
+library(readxl)
+
+sand_example <- read_excel("sand_example.xlsx")
+
+````
+
+![](static-figures/sand_readxl.png) 
 
 
 
@@ -665,41 +692,43 @@ sand <- read.csv("https://github.com/ncss-tech/stats_for_soil_survey/blob/master
 NASIS provides a plethora of reports, many of which can be read into R for analysis. The `soilDB` R package provides a series of function to read data from NASIS either using a local database connection or via HTML web reports. Similar functions also exist for accessing tabular data from Soil Data Access. More details on `soilDB` will be provided in the next chapter, but now we'll illustrate how to access some example datasets for manipulating tabular data.
 
 ```{r, eval=FALSE}
+
 library(soilDB)
 
 # get projects
 prj <- get_project_from_NASISWebReport(mlrassoarea = "11-IND", fiscalyear = 2020)
 
 # get legends
-
 leg <- get_legend_from_NASISWebReport(mlraoffice = "Indi%", areasymbol = "%")
 
 # get map units
-mu  <- get_mapunit_from_NASISWebReport(areasymbol = "IN%")
+mu  <- get_mapunit_from_NASISWebReport(areasymbol = c("IN001", "IN11%"))
 
-# get components
-
-co  <- get_component_from_NASISWebReport(projectname = "MLRA 111A - Aquolls%") 
 
 ```
 
 
-#### Excel files
 
-R can import Excel files, but generally speaking it is a bad idea to use Excel. Excel has a dangerous default which automatically converts data with common notations to their standard format without warning or notice. For example, the character "11-JUN" entered into a cell automatically becomes the date 6/11/2017, even though the data is still displayed as 11-JUN. The only way to avoid this default behavior is to manually import your data into Excel via the **Data Tab>Get External Data Ribbon**, and manually set the data type of all your columns to text. Failure to do so has resulted in numerous retracted research articles ([Washington Post Article](https://www.washingtonpost.com/news/wonk/wp/2016/08/26/an-alarming-number-of-scientific-papers-contain-excel-errors/?utm_term=.9352a35dca6f)). Warnings aside, Excel files are a very common and are a format most people are familiar with. Therefore we will illustrate how to bring them into R.
+## Data manipulation
 
-This dataset can either be imported into R using the **Import Dataset** button from the Environment tab, or by typing the following command into the R console:  
+Before we can do any sort of analysis, we often need to manipulate our data somehow. Estimates varying, but an analyst typically spend 80% of their time manipulating data, and only 20% actually analyzing or modeling. Tasks generally involve filtering, transforming, merging, aggregating, and reshaping data. R has many functions and packages for manipulating data frames, but with the past several years a family of packages, known as the `tidyverse`, have been developed to simplify interacting with data frames. Within the `tidyverse` the most commonly packages are `dplyr` and `tidyr`. Many of the tidyverse function names are patterns after SQL syntax. 
 
-```{r}
+<!--
+An important principle of tabular data is that it should be ["normalized'](https://en.wikipedia.org/wiki/Database_normalization) or ["tidy"](https://r4ds.had.co.nz/tidy-data.html). This simply means that rows should hold observations, and columns should hold variables for each observation. 
+-->
+
+```{r tidyverse}
+
+library(dplyr)
+library(tidyr)
 
 
-
-````
+```
 
 
 ### Viewing and Removing Data
 
-Once the file is imported, it is imperative that you check to ensure that R correctly imported your data. Make sure numerical data are correctly imported as numerical, that your column headings are preserved, etc. To view data simply **click** on the sand dataset listed in the Environment tab. This will open up a separate window that displays a spreadsheet like view.
+Once a file is imported, it is imperative that you check to ensure that R correctly imported your data. Make sure numerical data are correctly imported as numerical, that your column headings are preserved, etc. To view data simply **click** on the mu dataset listed in the Environment tab. This will open up a separate window that displays a spreadsheet like view.
 
 ![](static-figures/ch1_view_dataframe.png)
 
@@ -714,7 +743,7 @@ Function  | Description                                         |
 `names()` | lists the column names (i.e., headers) of your data |
 `ls()`    | lists all the R objects in your workspace directory |
 
-Try entering the following commands to view the `sand` dataset in R: 
+Try entering the following commands to view the `mu` dataset in R: 
 
 ```{r}
 str(sand)
@@ -733,10 +762,110 @@ A data object is anything you've created or imported and assigned a name to in R
 rm(list = ls(all = TRUE)) 
 
 # Remove individal objects
-rm(sand)
+rm(mu, leg, sand)
 ```
 
 ![](static-figures/ch1_clear_workspace.png)
+
+
+
+### Filtering or Subsetting Data
+
+Data frames can be filtered by both columns and rows.
+
+
+```{r}
+
+
+
+```
+
+
+### Transforming Data
+
+This allows you to create new columns by convert, compute, or combine data within existing columns.
+
+```{r}
+
+mu <- mutate(mu, 
+             # convert to hectares
+             muhectares = muacres * 0.4047,
+             # convert muname to TRUE or FALSE if Miami is present using pattern matching
+             miami      = grepl("Miami", muname),
+             # compute % minor component
+             n_minor    = n_component - n_majcompflag,
+             # combine columns
+             key        = paste(areasymbol, musym)
+             )
+
+```
+
+
+
+### Pipping Data
+
+Another particularly useful feature of tidyverse is the use of **pipping**, which allows functions to be seamlessly strung together, and thus be read from right to left, rather than from inside out or reassigned.
+
+```{r pipping}
+
+# non-pipping example 1
+
+mu_sub <- filter(mu, areasymbol == "IN001")
+mu_sub <- mutate(mu_sub, pct_100less = pct_component < 100) 
+
+
+# non-pipping example 2
+mu_sub <- mutate(filter(mu, areasymbol == "IN001"), pct_100less = pct_component < 100)
+
+
+# pipping
+mu_sub <- mu %>% 
+  filter(areasymbol == "IN001") %>% 
+  mutate(pct_100less = pct_component < 100)
+
+````
+
+
+
+### Merging or Joining Data
+
+When working with tabular data you often have 2 or more tables you need to join. There several ways to join tables, in particular which direction to join and which columns to join on. 
+
+```{r joining}
+
+# inner join
+
+leg_mu <- inner_join(leg, mu, by = c("liid", "areasymbol"))
+
+# left join
+leg_mu <- left_join(leg, mu, by = c("liid", "areasymbol"))
+
+# right_join
+
+leg_mu <- right_join(leg, mu, by = "liid")
+
+```
+
+
+
+### Aggregating or Grouping Data
+
+Another particularly useful feature of tidyverse is the use of **pipping**, which allows functions to be seamlessly be strung together, and thus be read from right to left, rather than from inside out.
+
+```{r aggregating}
+
+mu_agg <- mu %>% 
+  group_by(grpname, areasymbol) %>%
+  summarize(sum_muacres = sum(muacres),
+            n_musym     = length(musym)
+            )
+
+```
+
+
+
+### Reshaping Data
+
 
 
 ### Exporting Data
@@ -748,6 +877,17 @@ write.csv(sand, file = "sand_example2.csv")
 
 # or use the write.table() function to export other text file types
 ``` 
+
+
+## Exercise 2
+
+1. Create a new R script file.
+2. Load a 2021 project table from `mlrassoarea = "2-SON"` and a mapunit table from `areasymbol = c("CA630", "CA649")`.
+3. Filter your project table for rows where the `projectapprovedflag == TRUE`.
+4. Calculate the acreage of hydric soils for each map unit.
+5. Join your filtered project table to the mapunit table using a left join.
+6. Calculate the total acreage of hydric soils each soil survey area.
+7. Save your R script, R history, and forward to your instructor.
 
 
 
