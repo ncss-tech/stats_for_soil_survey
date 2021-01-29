@@ -362,7 +362,7 @@ site(sp4)$newvar1 <- "numberone"
 horizons(sp4)$newvar2 <- "numbertwo"
 ```
 
-##### Analogue to and Extention of Row Access: `[`
+##### Row Access: `[`
 
 The `SoilProfileCollection` also has `[` (i.e. "single bracket method"), but with a different interpretation from the `[i, j]` indexing in `data.frame`. 
 
@@ -380,12 +380,16 @@ sp4[1:2, ] # first two profiles, all horizons
 sp4[, 1:2] # first two horizons of each profile 
 ```
 
-TODO -- needs clarification -- Everything has gets subset simultaneously -- sites, horizons, spatial data, diagnostics, etc. in one command.
+When you use the `[` function, everything in the SoilProfileCollection is subset simultaneously depending on the constraints specified by the indices.
 
 ```{r, eval=TRUE}
 # First profile, first two horizons
 horizons(sp4[1, 1:2])
 ```
+
+All slots in the collection have a relationship to the "main" profile (_i_) index -- so when you remove profiles, all associated records (e.g. diagnostics, horizons) in the object are removed.
+
+Similarly, when all the horizons in a profile are removed (e.g. you request the 6th _j_-index from a profile that has only 5), the entire corresponding profile (site index) is removed.
 
 <!--
 ##### Optional: `tibble` and `data.table` `SoilProfileCollection` objects
@@ -436,7 +440,9 @@ All of the above together means that more time and energy can be put towards to 
 
 ## Using the `soilDB` Package
 
-The `soilDB` package for R provides functions for accessing data stored in NASIS, KSSL, SDA, SoilWeb, SoilGrids and other sources. These high-level 'fetch' functions bundle or wrap lower-level `get` functions which access internal database interfaces to NASIS and other data sources.  The ODBC connection to NASIS that you set up during the pre-course is an example of this internal database interface.
+The `soilDB` package for R provides functions for accessing data stored in NASIS, KSSL, SDA, SoilWeb, SoilGrids and other sources. 
+
+These high-level 'fetch' functions bundle or wrap lower-level `get` functions which access internal database interfaces to NASIS and other data sources.  The ODBC connection to NASIS that you set up during the pre-course is an example of this internal database interface.
 
 Basic data checks are run within `fetch` functions. These checks ensure the basic integrity of the data as it is queried and moved from its existing structure into an SPC. There are time with it is useful to use the lower-level `get` functions individually.  They generally return single `data.frame` or `list` of `data.frame`. 
 
@@ -759,6 +765,7 @@ sort(table(pedons$texture), decreasing=TRUE)
 ### Pattern Matching
 
 The following examples use the `grep()` function to pattern match within the data, create an index of the `SoilProfileCollection` for records that match the specified pattern within that column, and then use that index to filter to specific sites and their corresponding profiles. 
+
 Patterns are specified using [regular expression](http://regexr.com/) (REGEX) syntax.
 
 This process can be applied to many different columns in the SPC based on how you need to filter the data.  This example pattern matches on the `tax_subgroup` column, but another useful application might be to pattern match on geomorphology or parent material.
@@ -832,7 +839,7 @@ Quick check: _Compare or run these commands with some code, and review the docum
     - Example:  `grep('\\bmesic', c("mesic","thermic","isomesic"))`
       - "_WORD STARTS WITH_ mesic" (e.g. not "isomesic")
 
-#### Resources for learning about regular expressions
+#### Resources for Regular Expressions
 
   - https://regex101.com/ & https://regexr.com/ - Online regular expression testers
   
@@ -928,7 +935,9 @@ Warning messages:
 
 ### Inspecting Results
 
-Here we inspect occurrence of andic soil properties in MT647. We will download this from the course website to save you the effort of crafting your selected set for this example.
+Here we inspect occurrence of andic soil properties in MT647. 
+
+We will download this "selected set" from the course website as an _.rda_ file to save you the effort of crafting your selected set just for this example.
 
 ```{r, eval=TRUE}
 example.data.dir <- "C:/workspace2"
@@ -943,6 +952,8 @@ download.file("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/dat
 unzip(example.data.path, exdir = example.data.dir, overwrite = TRUE)
 ```
 
+#### Load Example Data
+
 To load the sample object data into R, just use `load()` and the path to the _.rda_ file (`example.data.path` or `"C:/workspace2/mt663.rda"`)
 
 ```{r eval=TRUE}
@@ -956,9 +967,15 @@ length(mt647)
 
 table(site(mt647)$andic.soil.properties, useNA = "ifany")
 
-# get just the profiles with ochric.epipedon == TRUE
+# get just the profiles with andic.soil.properties == TRUE
 subset(mt647, andic.soil.properties)
+```
 
+We can compare this to what we see in the NASIS Pedon Diagnostic Features table:
+
+![](static-figures/ch2_mt647_asp_diagnostics.png)
+
+```{r, eval=TRUE}
 # these are the mt663 bad.pedon.ids
 get('bad.pedon.ids', envir = soilDB.env)
 
@@ -966,7 +983,11 @@ get('bad.pedon.ids', envir = soilDB.env)
 mt647$pedon_id %in% get('bad.pedon.ids', envir = soilDB.env)
 ```
 
-The `aqp` package has several functions that do logic checks on `SoilProfileCollection` objects. The main method is `checkHzDepthLogic` which returns a data.frame containing the results of running four logic tests on the horizon data from each profile.
+#### Logic Checks for the `SoilProfileCollection`
+
+The `aqp` package has several functions that do logic checks on `SoilProfileCollection` objects. 
+
+The main method that does this in `aqp` is `checkHzDepthLogic` which returns a data.frame of results of running four logic tests on the horizon data from each profile.
 
 Checks for:
 
@@ -1149,7 +1170,7 @@ If diagnostic features are populated in the Pedon Diagnostic Features table in N
 
 These fields can be used to model presence / absence of a diagnostic soil feature by extracting the site data from the `SoilProfileCollection` with `site()`.
 
-#### Thickness based on Diagnostic Features Table
+#### Thickness from Diagnostic Features Table
 
 The following is an example of how you could use the diagnostic features (if populated!) from the extended data to determine the thickness of a diagnostic feature of interest.
 
@@ -1218,9 +1239,11 @@ diagnosticPropertyPlot(mt663[1:30,], v, k = 5,
                        sort.vars = TRUE)
 ```
 
-### Comparing Horizon Data within Diagnostic Features/Intervals
+### Comparing Horizon Data with Diagnostic "Intervals"
 
-This is a stub -- will drop in code here if all looks good.
+Here is a demo of using Soil Data Access and the `soilDB` function `fetchSDA` to inspect the horizon data / properties in portions of the profile corresponding to diagnostic features:
+
+ -  [Glacierpoint `glom()` demo - finding sandy "cambic" horizons](http://ncss-tech.github.io/AQP/demos/glom/glacierpoint.html)
 
 #### Follow along with your own data
 
