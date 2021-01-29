@@ -890,22 +890,24 @@ Tools for totally ordered indexed observations -- especially irregular time seri
 
 ## `fetchNASIS` data checks
 
-fetchNASIS does a lot of the hard work for you by pulling out a variety of child tables and joining them to site/horizon tables in order build a `SoilProfileCollection` object that has many of the NASIS attributes.
+`fetchNASIS` does a lot of the hard work for you by pulling out a variety of child tables and joining them to site/horizon tables
 
-Analysis of Site Coordinate Data:
+This results in a `SoilProfileCollection` object that has many of the NASIS data columns. In order to do this, a variety of processes are run. Output is generated that you should look at. We will walk through the most common parts.
+
+_Analysis of Site Coordinate Data for pedons from `MT647`_
 
 ```
 multiple horizontal datums present, consider using WGS84 coordinates (x_std, y_std)
 ```
 
-Mixing of multiple colors (for "default" moist and dry colors for many:1 case)
+_Mixing of multiple colors (for "default" moist and dry colors for many:1 case)_
 
 ```
 mixing dry colors ... [33 of 4108 horizons]
 mixing moist colors ... [60 of 4532 horizons]
 ```
 
-Quality control on fragments, horizon data, site data, etc.
+_Quality control on fragments, horizon data, site data, tables_
 
 ```
 -> QC: some fragsize_h values == 76mm, may be mis-classified as cobbles [52 / 10372 records]
@@ -915,7 +917,7 @@ replacing missing lower horizon depths with top depth + 1cm ... [152 horizons]
 -> QC: pedons missing bottom hz depths: use `get('missing.bottom.depths', envir=soilDB.env)` for related pedon IDs
 ```
 
-Warnings about default settings and handling of `NULL` (missing data elements or records)
+_Warnings about default settings and handling of `NULL` (missing data elements or records)_
 
 ```
 Warning messages:
@@ -924,11 +926,10 @@ Warning messages:
 3: all records are missing artifact volume (NULL). buffering result with NA. will be converted to zero if nullFragsAreZero = TRUE.
 ```
 
-### Comparing Results
+### Inspecting Results
 
-Here we compare the number of ochric epipedons that are shown as present in the site table of the `SoilProfileCollection` 
+Here we inspect the number of ochric epipedons in a small subset of 100 pedons (about 10% of the MT647 set). We will download this from the course website to save you the effort of crafting your selected set for this example.
 
-With the default `rmHzErrors = TRUE` most of the profiles with ochric epipedons are _removed_ -- this is something you need to be aware of and inspect! 
 ```{r, eval=TRUE}
 example.data.dir <- "C:/workspace2"
 example.data.path <- file.path(example.data.dir, "mt647.zip")
@@ -936,10 +937,18 @@ example.data.path <- file.path(example.data.dir, "mt647.zip")
 if(!dir.exists(example.data.dir))
   dir.create(example.data.dir, recursive = TRUE)
 
-download.file("http://ncss-tech.github.io/stats_for_soil_survey/data/book/02/mt647.zip", 
+download.file("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt647.zip", 
               destfile = example.data.path)
 
 unzip(example.data.path, exdir = example.data.dir, overwrite = TRUE)
+```
+
+To load the sample object data into R, just use `load()` and the path to the _.rda_ file (`example.data.path` or `"C:/workspace2/mt663.rda"`)
+
+```{r eval=TRUE}
+# load the sample data
+example.data.dir <- "C:/workspace2"
+load(file.path(example.data.dir, "mt647.rda"))
 ```
 
 ```{r, eval=TRUE}
@@ -953,11 +962,11 @@ subset(mt647, ochric.epipedon)
 # these are the mt663 bad.pedon.ids
 get('bad.pedon.ids', envir = soilDB.env)
 
-# the bad pedons are in f with rmHzErrors = FALSE
-f$pedon_id %in% get('bad.pedon.ids', envir = soilDB.env)
+# the bad pedons are in mt647 with rmHzErrors = FALSE
+mt647$pedon_id %in% get('bad.pedon.ids', envir = soilDB.env)
 ```
 
-The `aqp` packages has several functions that do logic checks on SoilProfileCollections. The main method is `checkHzDepthLogic` which returns a data.frame containing the results of running four logic tests on the horizon data from each profile.
+The `aqp` package has several functions that do logic checks on `SoilProfileCollection` objects. The main method is `checkHzDepthLogic` which returns a data.frame containing the results of running four logic tests on the horizon data from each profile.
 
 Checks for:
  - bottom depths less than top depth / bad top depth order (`"depthLogic"`)
@@ -993,11 +1002,9 @@ good.profiles
 
 ## Extended Data Functions
 
-Additional data related to both site and horizon information can be fetched using the [`get_extended_data_from_NASIS()`](http://ncss-tech.github.io/soilDB/docs/reference/get_extended_data_from_NASIS.html) function. This function returns a named `list()` with several tables that fetchNASIS draws from in addition to the typical Site/Pedon/Component/Horizon tables.
+Additional data related to both site and horizon information can be fetched using the [`get_extended_data_from_NASIS()`](http://ncss-tech.github.io/soilDB/docs/reference/get_extended_data_from_NASIS.html) function. This function returns a named `list()` with several tables that `fetchNASIS` draws from--in addition to the typical Site/Pedon/Component/Horizon tables.
 
-All these "extended" data are not brought into a `SoilProfileCollection` _automatically_ because these data elements are related to the site or horizon data in one-to-many relationships.
-
-There are a variety of calculated fields that are included in the default fetchNASIS result, and you can make use of these to simplify queries and aggregations for a variety of analyses.
+There are a variety of calculated fields that are included in the default `fetchNASIS` result based on the extended data--you can make use of these to simplify queries and aggregations for a variety of analyses... And then follow up with more detailed data as needed.
 
 ### Elements of `get_extended_data_from_NASIS()`
 
@@ -1044,7 +1051,7 @@ example.data.path <- file.path(example.data.dir, "mt663.zip")
 if(!dir.exists(example.data.dir))
   dir.create(example.data.dir, recursive = TRUE)
 
-download.file("http://ncss-tech.github.io/stats_for_soil_survey/data/book/02/mt663.zip", 
+download.file("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt663.zip", 
               destfile = example.data.path)
 
 unzip(example.data.path, exdir = example.data.dir, overwrite = TRUE)
@@ -1052,15 +1059,7 @@ unzip(example.data.path, exdir = example.data.dir, overwrite = TRUE)
 
 Before continuing, _imagine_ opening the NASIS client, populating your selected set with `2015MT663%` using a query like "_NSSC Pangaea – POINT-Pedon/Site by User Pedon ID_"
 
-And then using `fetchNASIS()` to get a `SoilProfileCollection` with and without `rmHzErrors` as shown (commented out) below:
-
-```{r eval=FALSE}
-## for this to work in this example, you need 2015MT663% in your NASIS selected set
-# mt663err <- fetchNASIS(rmHzErrors = FALSE)
-# mt663 <- fetchNASIS()
-```
-
-When you ran the sample data download code, that code is essentially what you did. To load that sample object data into R, just use `load()` and the path to the _.rda_ file (`example.data.path` or `"C:/workspace2/mt663.rda"`)
+Load the data like we did above.
 
 ```{r eval=TRUE}
 # load the sample data
@@ -1123,7 +1122,7 @@ The following code generates a simple graphical summary of the 10 most commonly 
 
 ```{r owndata_c, eval=TRUE, results='show'} 
 # load data from a NASIS selected set (or sample object)
-pedons <- mt663err
+pedons <- mt663
 
 # create 'lf' object of landform factors sorted in descending order
 lf <- sort(table(pedons$landform_string), decreasing = TRUE)
@@ -1148,10 +1147,8 @@ These fields can be used to model presence / absence of a diagnostic soil featur
 The following is an example of how you could use the diagnostic features (if populated!) from the extended data to determine the thickness of a diagnostic feature of interest.
 
 ```{r, eval=TRUE, warning=FALSE, fig.width=6, fig.height=4}
-f <- mt663err
-
 # get diagnostic features associated with pedons loaded from selected set
-d <- diagnostic_hz(f)
+d <- diagnostic_hz(mt663)
 
 # summary of the diagnostic features in your data!
 unique(d$featkind)
@@ -1176,13 +1173,13 @@ d <- d[, c('peiid', 'argillic_thickness_cm', 'depth_to_argillic_cm')]
 head(d)
 
 # left-join with existing site data
-site(f) <- d
+site(mt663) <- d
 
 # plot as histogram
 par(mar = c(4.5, 4.5, 1, 1))
 
-hist(f$argillic_thickness_cm, xlab = 'Thickness of argillic (cm)', main = '')
-hist(f$depth_to_argillic_cm, xlab = 'Depth to argillic top depth (cm)', main = '')
+hist(mt663$argillic_thickness_cm, xlab = 'Thickness of argillic (cm)', main = '')
+hist(mt663$depth_to_argillic_cm, xlab = 'Depth to argillic top depth (cm)', main = '')
 ```
 
 Quick check: _What can you do with the boolean diagnostic feature data stored in the site table of a `fetchNASIS` `SoilProfileCollection`?_
@@ -1204,11 +1201,11 @@ v <- c('ochric.epipedon', 'cambic.horizon',
 #  depending on how the geomorphic tables were populated
 #  these are concatenated using the ampersand (&) character
 #  so take the first string split using ampersand as a delimiter
-mt663err$first_landform <- sapply(strsplit(mt663err$landform_string, "&"), 
+mt663$first_landform <- sapply(strsplit(mt663$landform_string, "&"), 
                                   function(x) x[[1]])
 
 # plot with diagnostic features ordered according to co-occurrence
-diagnosticPropertyPlot(mt663err[1:30,], v, k = 5,
+diagnosticPropertyPlot(mt663[1:30,], v, k = 5,
                        grid.label = 'site_id', 
                        dend.label = 'first_landform', 
                        sort.vars = TRUE)
@@ -1276,8 +1273,6 @@ R Markdown is a plain text markup format for creating reproducible, dynamic repo
 It allows R code and text to be mingled in the same document and executed like an R script using special notation. This allows for generating reports similar to and even more powerful than those from NASIS.
 
 Running or expanding on one of these reports would be a fine class project -- as long as you include relevant interpretation.
-
-
 
 ### Exercise: Run the `region11/lab_summary_by_taxonname` Soil Report
 Let's demonstrate how to run an existing _.Rmd_ report to summarize laboratory data for a soil series.
