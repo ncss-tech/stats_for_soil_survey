@@ -928,7 +928,7 @@ Warning messages:
 
 ### Inspecting Results
 
-Here we inspect the number of ochric epipedons in a small subset of 100 pedons (about 10% of the MT647 set). We will download this from the course website to save you the effort of crafting your selected set for this example.
+Here we inspect occurrence of andic soil properties in MT647. We will download this from the course website to save you the effort of crafting your selected set for this example.
 
 ```{r, eval=TRUE}
 example.data.dir <- "C:/workspace2"
@@ -954,10 +954,10 @@ load(file.path(example.data.dir, "mt647.rda"))
 ```{r, eval=TRUE}
 length(mt647)
 
-table(site(mt647)$ochric.epipedon, useNA = "ifany")
+table(site(mt647)$andic.soil.properties, useNA = "ifany")
 
 # get just the profiles with ochric.epipedon == TRUE
-subset(mt647, ochric.epipedon)
+subset(mt647, andic.soil.properties)
 
 # these are the mt663 bad.pedon.ids
 get('bad.pedon.ids', envir = soilDB.env)
@@ -969,16 +969,23 @@ mt647$pedon_id %in% get('bad.pedon.ids', envir = soilDB.env)
 The `aqp` package has several functions that do logic checks on `SoilProfileCollection` objects. The main method is `checkHzDepthLogic` which returns a data.frame containing the results of running four logic tests on the horizon data from each profile.
 
 Checks for:
- - bottom depths less than top depth / bad top depth order (`"depthLogic"`)
- - bottom depths equal to top depth (`"sameDepth"`)
- - overlaps and gaps (`"overlapOrGap"`)
- - missing depths (`"missingDepth"`)
+
+ 1. bottom depths less than top depth / bad top depth order (`"depthLogic"`)
+ 
+ 2. bottom depths equal to top depth (`"sameDepth"`)
+ 
+ 3. overlaps and gaps (`"overlapOrGap"`)
+ 
+ 4. missing depths (`"missingDepth"`)
  
 ```{r, eval=TRUE}
 logic_tests <- checkHzDepthLogic(mt647)
 
-# look at first few (look OK)
+# look at first few (look OK; valid == TRUE)
 head(logic_tests)
+
+# these all have overlapOrGap errors
+head(logic_tests[!logic_tests$valid, ])
 
 # join the logic test data into the site table
 site(mt647) <- logic_tests
