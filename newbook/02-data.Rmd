@@ -730,12 +730,31 @@ sort(table(pedons$texture), decreasing=TRUE)
 ```
 
 ### Logical Operators
-  - Less than `<`, greater than `>`, less than or equal to `<=`, and greater than or equal to `>=`.
-  - `%in%` Equivalent to `IN ()` in SQL; same logic as `match()`
+
+[Logical operators](https://stat.ethz.ch/R-manual/R-devel/library/base/html/Logic.html) act on vectors for the purposes of comparison.
+
+  - `==` "EQUAL TO"
+  
+  - `!=` "NOT EQUAL TO"
+  
+  - `<` LESS than
+  
+    - LESS than or equal to `<=`
+    
+  - `>` GREATER than
+  
+    - GREATER than or equal to `>=`
+  
+  - `%in%` Equivalent to `IN ()` in SQL; same logic as `match()` but returns a boolean, not integer
+  
     - Example: `pedons$taxpartsize %in% c('loamy-skeletal', 'sandy-skeletal')`
-    - Returns a vector of `TRUE`/`FALSE` equal in length to left-hand side.
-  - `!=` Not-equal-to character "string."
-  - `==` Note in the example above that R uses a double equal sign as "equal to."
+    
+    - Returns a vector of `TRUE`/`FALSE` equal in length to left-hand side
+    
+  - `&` and `&&` logical AND 
+  
+  - `|` and `||` logical OR
+  
   
 ### Pattern Matching
 
@@ -783,9 +802,21 @@ Quick check: _Compare or run these commands with some code, and review the docum
  - _True or False_: `grepl()` returns a _numeric_ vector 
  - _True or False_: `which(grepl('typic', pedons$taxsubgrp))` is the same as `grep('typic', pedons$taxsubgrp)`.
 
-#### Important syntax options for REGEX pattern matching
+#### REGEX pattern matching syntax
 
-  - `|` is exquivalent to the `OR` operator for multiple expressions: 
+  - `.` One character, any character
+  
+  - `*` Zero-or-more Quantifier (of previous token)
+  
+  - `+` One-or-more Quantifier (of previous token)
+  
+  - `{n}` quantifier where `n` is the the number of a match "repeats" (of previous token)
+  
+  - `[A-Z!]` ONE capital letter, or an exclamation mark
+
+  - `[0-9]{2}` TWO numbers (using `{` quantifier)
+    
+  - `|` is equivalent to `OR`: 
     - Example:  `grep('loamy|sandy', c("loamy-skeletal","sandy","sandy-skeletal"))`
       - "loamy _OR_ sandy"
     
@@ -804,6 +835,7 @@ Quick check: _Compare or run these commands with some code, and review the docum
 #### Resources for learning about regular expressions
 
   - https://regex101.com/ & https://regexr.com/ - Online regular expression testers
+  
   - http://www.regular-expressions.info/quickstart.html - One-page regular expression quick start guide
   
 ### Filtering
@@ -814,15 +846,14 @@ You can index many R objects using numeric or logical expressions as above. Ther
 
 The base R method for this is `subset()` and it works on `data.frame` objects. It is nice because you can specify column names without explicitly referencing the data set, since subset uses non-standard evaluation of expressions passed as arguments.
 
-### Filtering Data by Logical Criteria with `aqp::subset`
+#### Filtering with `aqp::subset`
 
 We use the `SoilProfileCollection` `subset` method, where we first specify a data (`pedons`) object then we can write expressions for the columns that exist in that object.
 
 Here, we combine two logical expressions to find `taxsubgrp` containing `"alfs"` (Alfisols) with `obsdate` before January 1st, 2010. 
 
 ```{r, eval=TRUE,  fig.width=8, fig.height=4}
-subset2 <-subset(pedons, grepl("alfs", taxsubgrp) & 
-                           obs_date < as.POSIXlt("2010-01-01"))
+subset2 <-subset(pedons, grepl("alfs", taxsubgrp) & obs_date < as.POSIXlt("2010-01-01"))
 
 # check taxonomic range of particle size classes in the data
 # overwhelmingly these are described as loamy-skeletal ultic haploxeralfs
@@ -847,92 +878,117 @@ Above, we use the fact that you can logically compare dates and times if their s
 
 This conversion accounts for important things like timezone, using your current locale -- which is important to keep in mind.
 
-#### `zoo` package
+#### Packages for Time-series Data
 
 Tools for totally ordered indexed observations -- especially irregular time series.
 
-[zoo Quick Reference](https://cran.r-project.org/web/packages/zoo/vignettes/zoo-quickref.pdf)
+ - [zoo Quick Reference](https://cran.r-project.org/web/packages/zoo/vignettes/zoo-quickref.pdf)
 
-#### `tidyverts` and the `tsibble` package
+ - [`tidyverts`](https://tidyverts.org/) is all about _time-series_ in the [tidyverse](https://tidyverse.org/). 
 
-[`tidyerts`](https://tidyverts.org/) is all about _time-series_ in the [tidyverse](https://tidyverse.org/). 
+ - [`tsibble`](https://github.com/tidyverts/tsibble) package provides a data structure for tidy temporal data and models.
 
-The [`tsibble`](https://github.com/tidyverts/tsibble) package provides a data structure for tidy temporal data and models.
+## `fetchNASIS` data checks
 
-### EXERCISE: Prepare Example Data
+fetchNASIS does a lot of the hard work for you by pulling out a variety of child tables and joining them to site/horizon tables in order build a `SoilProfileCollection` object that has many of the NASIS attributes.
 
-This is a sample "selected set" that will be used in the following sections. 
+Analysis of Site Coordinate Data:
 
-For reproducibility and the sake of time, you can download the above two objects (`mt663` and `mt663err`) with the following code -- without loading them into your selected set.
-
-To download the sample `2015MT663%` data from the course page with R:
-
-```{r}
-example.data.dir <- "C:/workspace2"
-example.data.path <- file.path(example.data.dir, "mt663.zip")
-
-if(!dir.exists(example.data.dir))
-  dir.create(example.data.dir, recursive = TRUE)
-
-download.file("http://ncss-tech.github.io/stats_for_soil_survey/data/book/02/mt663.zip", destfile = example.data.path)
-
-unzip(example.data.path, exdir = example.data.dir, overwrite = TRUE)
+```
+multiple horizontal datums present, consider using WGS84 coordinates (x_std, y_std)
 ```
 
-Before continuing, _imagine_ opening the NASIS client, populating your selected set with `2015MT663%` using a query like "_NSSC Pangaea – POINT-Pedon/Site by User Pedon ID_"
+Mixing of multiple colors (for "default" moist and dry colors for many:1 case)
 
-And then using `fetchNASIS()` to get a `SoilProfileCollection` with and without `rmHzErrors` as shown (commented out) below:
-
-```{r eval=FALSE}
-## for this to work in this example, you need 2015MT663% in your NASIS selected set
-# mt663err <- fetchNASIS(rmHzErrors = FALSE)
-# mt663 <- fetchNASIS()
+```
+mixing dry colors ... [33 of 4108 horizons]
+mixing moist colors ... [60 of 4532 horizons]
 ```
 
-When you ran the sample data download code, that code is essentially what you did. To load that sample object data into R, just use `load()` and the path to the _.rda_ file (`example.data.path` or `"C:/workspace2/mt663.rda"`)
+Quality control on fragments, horizon data, site data, etc.
 
-```{r eval=TRUE}
-# load the sample data
-example.data.dir <- "C:/workspace2"
-load(file.path(example.data.dir, "mt663.rda"))
+```
+-> QC: some fragsize_h values == 76mm, may be mis-classified as cobbles [52 / 10372 records]
+replacing missing lower horizon depths with top depth + 1cm ... [152 horizons]
+-> QC: duplicate pedons: use `get('dup.pedon.ids', envir=soilDB.env)` for related peiid values
+-> QC: horizon errors detected, use `get('bad.pedon.ids', envir=soilDB.env)` for related userpedonid values or `get('bad.horizons', envir=soilDB.env)` for related horizon designations
+-> QC: pedons missing bottom hz depths: use `get('missing.bottom.depths', envir=soilDB.env)` for related pedon IDs
 ```
 
-## Comparing Results with `rmHzErrors` 
+Warnings about default settings and handling of `NULL` (missing data elements or records)
+
+```
+Warning messages:
+1: some records are missing rock fragment volume, these have been removed 
+2: some records are missing artifact volume, these have been removed 
+3: all records are missing artifact volume (NULL). buffering result with NA. will be converted to zero if nullFragsAreZero = TRUE.
+```
+
+### Comparing Results
 
 Here we compare the number of ochric epipedons that are shown as present in the site table of the `SoilProfileCollection` 
 
 With the default `rmHzErrors = TRUE` most of the profiles with ochric epipedons are _removed_ -- this is something you need to be aware of and inspect! 
+```{r, eval=TRUE}
+example.data.dir <- "C:/workspace2"
+example.data.path <- file.path(example.data.dir, "mt647.zip")
 
-There are a lot of reasons why this can happen, which we will now investigate.
+if(!dir.exists(example.data.dir))
+  dir.create(example.data.dir, recursive = TRUE)
+
+download.file("http://ncss-tech.github.io/stats_for_soil_survey/data/book/02/mt647.zip", 
+              destfile = example.data.path)
+
+unzip(example.data.path, exdir = example.data.dir, overwrite = TRUE)
+```
 
 ```{r, eval=TRUE}
-## rmHzErrors == TRUE (DEFAULT)
-length(mt663)
+length(mt647)
 
-site(mt663)$ochric.epipedon
-sum(!is.na(site(mt663)$ochric.epipedon))
+table(site(mt647)$ochric.epipedon, useNA = "ifany")
 
-subset(site(mt663), ochric.epipedon)
-
-## rmHzErrors == FALSE
-length(mt663err)
-
-site(mt663err)$ochric.epipedon
-sum(site(mt663err)$ochric.epipedon)
-
-subset(site(mt663err), ochric.epipedon)
+# get just the profiles with ochric.epipedon == TRUE
+subset(mt647, ochric.epipedon)
 
 # these are the mt663 bad.pedon.ids
 get('bad.pedon.ids', envir = soilDB.env)
 
-# none of the bad pedons are in mt663 (rmHzErrors=TRUE)
-get('bad.pedon.ids', envir = soilDB.env) %in% mt663$pedon_id
+# the bad pedons are in f with rmHzErrors = FALSE
+f$pedon_id %in% get('bad.pedon.ids', envir = soilDB.env)
+```
 
-# all of the bad pedons are in mt663err (rmHzErrors=FALSE)
-get('bad.pedon.ids', envir = soilDB.env) %in% mt663err$pedon_id
+The `aqp` packages has several functions that do logic checks on SoilProfileCollections. The main method is `checkHzDepthLogic` which returns a data.frame containing the results of running four logic tests on the horizon data from each profile.
 
-# both good and bad pedons are in mt663err
-mt663err$pedon_id %in% get('bad.pedon.ids', envir = soilDB.env)
+Checks for:
+ - bottom depths less than top depth / bad top depth order (`"depthLogic"`)
+ - bottom depths equal to top depth (`"sameDepth"`)
+ - overlaps and gaps (`"overlapOrGap"`)
+ - missing depths (`"missingDepth"`)
+ 
+```{r, eval=TRUE}
+logic_tests <- checkHzDepthLogic(mt647)
+
+# look at first few (look OK)
+head(logic_tests)
+
+# join the logic test data into the site table
+site(mt647) <- logic_tests
+```
+
+Use the `$valid` vector to subset to find the "bad" (`logic_tests$valid == FALSE`)
+
+```{r, eval=TRUE}
+bad.profiles <- subset(mt647, !valid)
+
+bad.profiles
+```
+
+And the "good." (`logic_tests$valid == TRUE`)
+
+```{r, eval=TRUE}
+good.profiles <- subset(mt647, logic_tests$valid)
+
+good.profiles
 ```
 
 ## Extended Data Functions
@@ -955,13 +1011,13 @@ There are a variety of calculated fields that are included in the default fetchN
 
 - Fragment and Texture Summaries
 
-    - Horizon Fragments (`"frag_summary"`)
+   - Horizon Fragments (`"frag_summary"`)
  
-    - Horizon Artifacts (`"art_summary"`)
+   - Horizon Artifacts (`"art_summary"`)
  
-    - Surface Fragments (`"surf_frag_summary"`)
+   - Surface Fragments (`"surf_frag_summary"`)
  
-    - Texture Class Modifiers (`"texmodifier"`)
+   - Texture Class Modifiers (`"texmodifier"`)
  
 - Geomorphic Table Summaries (`"geomorph"`)
 
@@ -975,7 +1031,42 @@ There are a variety of calculated fields that are included in the default fetchN
 
 - Horizon Designation (`"hzdesgn"`)
 
+### Load Example Data
+
 Below is a summary of additional information that can be readily brought into R from your NASIS selected set via the `get_extended_data_from_NASIS()` function.
+
+To download the sample `2015MT663%` data from the course page with R:
+
+```{r}
+example.data.dir <- "C:/workspace2"
+example.data.path <- file.path(example.data.dir, "mt663.zip")
+
+if(!dir.exists(example.data.dir))
+  dir.create(example.data.dir, recursive = TRUE)
+
+download.file("http://ncss-tech.github.io/stats_for_soil_survey/data/book/02/mt663.zip", 
+              destfile = example.data.path)
+
+unzip(example.data.path, exdir = example.data.dir, overwrite = TRUE)
+```
+
+Before continuing, _imagine_ opening the NASIS client, populating your selected set with `2015MT663%` using a query like "_NSSC Pangaea – POINT-Pedon/Site by User Pedon ID_"
+
+And then using `fetchNASIS()` to get a `SoilProfileCollection` with and without `rmHzErrors` as shown (commented out) below:
+
+```{r eval=FALSE}
+## for this to work in this example, you need 2015MT663% in your NASIS selected set
+# mt663err <- fetchNASIS(rmHzErrors = FALSE)
+# mt663 <- fetchNASIS()
+```
+
+When you ran the sample data download code, that code is essentially what you did. To load that sample object data into R, just use `load()` and the path to the _.rda_ file (`example.data.path` or `"C:/workspace2/mt663.rda"`)
+
+```{r eval=TRUE}
+# load the sample data
+example.data.dir <- "C:/workspace2"
+load(file.path(example.data.dir, "mt663.rda"))
+```
 
 ```{r}
 ## fetch extended site and horizon data from local NASIS
@@ -1186,9 +1277,12 @@ It allows R code and text to be mingled in the same document and executed like a
 
 Running or expanding on one of these reports would be a fine class project -- as long as you include relevant interpretation.
 
+
+
+### Exercise: Run the `region11/lab_summary_by_taxonname` Soil Report
 Let's demonstrate how to run an existing _.Rmd_ report to summarize laboratory data for a soil series.
 
-### Requirements
+#### Requirements
 
 -	Data are properly populated, otherwise the report may fail. Common examples include:
     -	Horizon depths don't lineup
@@ -1196,7 +1290,7 @@ Let's demonstrate how to run an existing _.Rmd_ report to summarize laboratory d
 -	ODBC connection to NASIS is set up
 - Beware each report has a unique configuration file that may need to be edited. 
 
-### Instructions
+#### Instructions
 
 1. **Load** your NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by upedonid and Taxon Name" from the Region 11 report folder to load your selected set. Be sure to target both the site, pedon and lab layer tables. **Remove** from your selected set the pedons and sites you wish to exclude from the report.
 
@@ -1280,7 +1374,7 @@ Also, beware when opening the .html file with Internet Explorer -- be sure to cl
  
 ![](static-figures/rmd_sample.png)
 
-### Exercise: run the region11/lab\_summary\_by\_taxonname
+_Brief summary of steps:_
 
 - Load your selected set with the pedon and site table for an existing GHL file, or make your own (highly encouraged)
 - Run the `lab_summary_by_taxonname.Rmd` report on a soil series of your choice.
