@@ -3,7 +3,7 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
-# Introduction to R and RStudio {#intro}
+# Introduction to R {#intro}
 
 ![](static-figures/logo.jpg)  
 
@@ -18,11 +18,15 @@ editor_options:
     2. What can R do?
 3. How do I get started?
     1. RStudio interface
-    2. How to import, export, and view files
+    2. What are packages?
     3. How to navigate the Help tab
-    4. What are packages?
-    5. How to save files
-
+    4. How to save files
+4. Manipulating data
+    1. Loading & viewing data
+    2. Filtering, transforming, merging, aggregating and reshaping data
+    3. Exporting data
+    
+    
 ## Course Overview
 
 ### Course Objectives
@@ -278,14 +282,24 @@ log10(100)
 "Hello World"
 
 # Combine a List of Values
-
 c(1, 2)
 
-# Plot Histogram
+# Create sequence of values
+1:10
+
+# Loading built-in datasets
+data(npk)
+
+# Plot histogram
 hist(npk$yield)
 
 # Assignment
-test <- 1
+test1 <- 1
+test2 <- "Hello World"
+
+# Print
+print(test1)
+test2
 
 ```
 
@@ -315,7 +329,7 @@ Viewer Tab              | lower-right | advanced tab for local web content      
 
 ## Rcmdr (R Commander): A Graphical User Interface for R
 
-While we recommend the use of RStudio for some of the reasons listed above, many people new to R might benefit from a graphical user interface (GUI) that allows the user to run basic functions using a point and click interface. 
+While we recommend the use of RStudio for some of the reasons listed above, many people new to R (or infrequent users) might benefit from a graphical user interface (GUI) that allows the user to run basic functions using a point and click interface. 
 
 Luckily for beginners R has the R Commander (Rcmdr) GUI, which is similiar to [JMP](https://www.jmp.com/en_us/learning-library/using-jmp.html). Rcmdr was created by [John Fox](http://socserv.socsci.mcmaster.ca/jfox/Misc/Rcmdr/index.html) for his introductory statistics students so they could see how the software worked without learning a large number of function names and arguments. Rcmdr is a great way to begin familiarizing yourself with R and statistics within a GUI environment. 
 
@@ -633,8 +647,8 @@ Using the examples discussed thus far as a guide, demonstrate your mastering of 
 
 1. Create an R script file, demonstrate 3 basic R functions, and comment (`#`) your code. 
 2. Install the FedData R package from CRAN and [GitHub](https://github.com/ropensci/FedData). Save the commands in your R script file.
-3. Read the help file for the `get_ssurgo` function with the FedData package. What is the 1st input/argument? Save the R command in your R script. 
-4. Save your R script, R history, and forward to your instructor.
+3. Load the FedData R package and read the help file for the `get_ssurgo` function within the FedData package. What is the 1st input/argument? Save the R command in your R script. 
+4. Save your R script, and forward to your instructor.
 
 
 
@@ -711,24 +725,20 @@ mu  <- get_mapunit_from_NASISWebReport(areasymbol = c("IN001", "IN11%"))
 
 ## Data manipulation
 
-Before we can do any sort of analysis, we often need to manipulate our data somehow. Estimates varying, but an analyst typically spend 80% of their time manipulating data, and only 20% actually analyzing or modeling. Tasks generally involve filtering, transforming, merging, aggregating, and reshaping data. R has many functions and packages for manipulating data frames, but with the past several years a family of packages, known as the `tidyverse`, have been developed to simplify interacting with data frames. Within the `tidyverse` the most commonly packages are `dplyr` and `tidyr`. Many of the tidyverse function names are patterns after SQL syntax. 
+Before we can do any sort of analysis, we often need to manipulate our data somehow. Estimates varying, but an analyst typically spend 80% of their time manipulating data, and only 20% actually analyzing or modeling. Tasks generally involve filtering, transforming, merging, aggregating, and reshaping data. 
+
+R has many functions and packages for manipulating data frames, but within the past several years a family of packages, known as the `tidyverse`, have been developed to simplify interacting with data frames (or tibbles). Within the `tidyverse` the most commonly used packages are `dplyr` and `tidyr`. Many of the tidyverse function names are patterned after SQL syntax.
 
 <!--
 An important principle of tabular data is that it should be ["normalized'](https://en.wikipedia.org/wiki/Database_normalization) or ["tidy"](https://r4ds.had.co.nz/tidy-data.html). This simply means that rows should hold observations, and columns should hold variables for each observation. 
 -->
 
-```{r tidyverse}
-
-library(dplyr)
-library(tidyr)
-
-
-```
+We will review the most common functions you need to know in order to accomplish the majority of data manipulation tasks.
 
 
 ### Viewing and Removing Data
 
-Once a file is imported, it is imperative that you check to ensure that R correctly imported your data. Make sure numerical data are correctly imported as numerical, that your column headings are preserved, etc. To view data simply **click** on the mu dataset listed in the Environment tab. This will open up a separate window that displays a spreadsheet like view.
+Once a file is imported, it is imperative that you check to ensure that R correctly imported your data. Make sure numerical data are correctly imported as numerical, that your column headings are preserved, etc. To view the data simply **click** on the mu dataset listed in the Environment tab. This will open up a separate window that displays a spreadsheet like view.
 
 ![](static-figures/ch1_view_dataframe.png)
 
@@ -746,11 +756,11 @@ Function  | Description                                         |
 Try entering the following commands to view the `mu` dataset in R: 
 
 ```{r}
-str(sand)
+str(mu)
 
-names(sand)
+names(mu)
 
-head(sand)
+head(mu)
 
 ls()
 ``` 
@@ -761,7 +771,7 @@ A data object is anything you've created or imported and assigned a name to in R
 # Remove all R objects
 rm(list = ls(all = TRUE)) 
 
-# Remove individal objects
+# Remove individual objects
 rm(mu, leg, sand)
 ```
 
@@ -771,14 +781,72 @@ rm(mu, leg, sand)
 
 ### Filtering or Subsetting Data
 
-Data frames can be filtered by both columns and rows.
+When analyzing data in NASIS, filtering is typically accomplished by loading your selected set with only the records you're interested in. However, it is often useful or necessary to subset your data after it's loaded. This can allow you to isolate interesting records within large datasets. For these reasons R has numerous options/functions for filtering data.
 
+Data frames can be filtered by both columns and rows, using either **names**, **position** (e.g. column 1, row 5), or **logical** indices (e.g. `TRUE`/`FALSE`). Another particularly useful feature is the use of **pattern matching** which uses regular expressions to select data, which is similar to the `LIKE` statement from SQL.
+
+**Filtering with names and numerical indices
 
 ```{r}
 
+# Filtering with names
+mu$areasymbol                             # select column names using $
+mu[, c("areasymbol", "musym")]            # select column names using []
+mu[c("1", "2"), ]                         # select row names using []
+mu[c("1", "2"), c("areasymbol", "musym")] # select column and row names using []
+
+
+# Filtering by position
+mu[1, ]          # select first row
+mu[, 1]          # select first column
+mu[2, 2]         # select second row and second column
+mu[c(1, 2, 3), ] # select multiple rows
+mu[c(-1, -2), ]  # drop multiple rows
 
 
 ```
+
+**Logical Operators**
+  - `==` R uses a double equal sign as "equal-to" in SQL
+  - `!=` Not-equal-to
+  - `<, >, <=, >=` Less than, greater than, less than or equal to, and greater than or equal
+  - `&` Equivalent to `AND` in SQL and Soil Taxonomy, must match both conditions
+  - `|` Equivalent to `OR` in SQL and Soil Taxonomy, must match at least one condition
+  - `%in%` Equivalent to `IN ()` in SQL (e.g. `mu$areasymbol %in% c("IN001", "IN111"`)
+  - `grepl()` equivlant to `LIKE` in SQL (e.g. `grepl("IN%", mu$areasymbol)`)
+  
+
+**Filtering with logicals**
+
+```{r, eval=FALSE}
+
+# Standard evaluation with base R []
+
+# Filtering with logicals
+mu[mu$areasymbol == "IN001", ]                # select rows that equal IN001
+mu[mu$areasymbol != "IN001", ]                # select rows that do not equal IN001
+mu[, names(mu) == "areasymbol"]               # select columns that equal areasymbol
+mu[, names(mu) %in% c("areasymbol", "musym")] # select columns that match areasymbol and musym 
+
+
+# Non-standard evaluation with tidyverse
+
+library(dplyr)
+
+# Filtering rows
+filter(mu, areasymbol == "IN001")
+filter(mu, areasymbol != "IN001")
+filter(mu, areasymbol %in% c("IN001", "IN111"))
+filter(mu, muacres > 0)
+
+# Select columns
+select(mu, areasymbol, musym)
+
+# Slice  rows
+slice(mu, 1:5)
+
+```
+
 
 
 ### Transforming Data
@@ -801,24 +869,36 @@ mu <- mutate(mu,
 ```
 
 
+### Sorting Data
 
-### Pipping Data
+Sorting allows you to rearrange your data. Beware R has several similar functions (e.g. `sort` and `order`) for sorting data only work with specific datatypes. The tidyverse function `arrange` is designed to work with data frames.
 
-Another particularly useful feature of tidyverse is the use of **pipping**, which allows functions to be seamlessly strung together, and thus be read from right to left, rather than from inside out or reassigned.
+```{r}
+
+# sort ascending
+arrange(mu, areasymbol, muname)
+
+# sort descending
+arrange(mu, desc(areasymbol), desc(muname))
+
+```
+
+
+
+### Piping Data
+
+Another particularly useful feature of the tidyverse is the use of **piping** (e.g. `%>%`), which allows functions to be seamlessly strung together, and thus be read from right to left, rather than from inside out or reassigned.
 
 ```{r pipping}
 
-# non-pipping example 1
-
+# non-piping example 1
 mu_sub <- filter(mu, areasymbol == "IN001")
 mu_sub <- mutate(mu_sub, pct_100less = pct_component < 100) 
 
-
-# non-pipping example 2
+# non-piping example 2
 mu_sub <- mutate(filter(mu, areasymbol == "IN001"), pct_100less = pct_component < 100)
 
-
-# pipping
+# piping
 mu_sub <- mu %>% 
   filter(areasymbol == "IN001") %>% 
   mutate(pct_100less = pct_component < 100)
@@ -827,30 +907,51 @@ mu_sub <- mu %>%
 
 
 
-### Merging or Joining Data
+### Merging/Joining or Combining Data
+
+** Joining**
 
 When working with tabular data you often have 2 or more tables you need to join. There several ways to join tables, in particular which direction to join and which columns to join on. 
 
 ```{r joining}
 
 # inner join
-
 leg_mu <- inner_join(leg, mu, by = c("liid", "areasymbol"))
 
 # left join
-leg_mu <- left_join(leg, mu, by = c("liid", "areasymbol"))
+leg_mu <- left_join(leg, mu, by = c("liid"))
 
 # right_join
-
 leg_mu <- right_join(leg, mu, by = "liid")
 
 ```
 
 
+** Combining**
+
+If your tables have the same structure (e.g. columns), or length and order you may simply combine them. For example, if you have two different mapunit tables.
+
+```{r, eval=FALSE}
+
+# combine rows
+rbind(mu, mu)
+rbind(mu, leg) # won't work
+
+
+# combine columns
+cbind(mu, mu)  # beware combine tables with duplicate column names
+cbind(mu, areasymbol_2 = mu$areasymbol)
+cbind(mu, leg) # won't work
+
+```
+
 
 ### Aggregating or Grouping Data
 
-Another particularly useful feature of tidyverse is the use of **pipping**, which allows functions to be seamlessly be strung together, and thus be read from right to left, rather than from inside out.
+Because soil data has multiple dimensions (e.g. properties and depths) and levels of organization (e.g. many to one relationships), it is often necessary to aggregate it. For example, when we wish to make a map we often need to aggregate over components and then map units. Depending on the data type this aggregation may involve taking a weighted average or selecting the dominant condition.
+
+The `group_by` function defines the groups over which we wish to `summarize` the data.
+
 
 ```{r aggregating}
 
@@ -866,17 +967,45 @@ mu_agg <- mu %>%
 
 ### Reshaping Data
 
+Typically data is stored in what is known as a **wide** format, where each column contains a different variable (e.g. depth, clay, sand, rocks). However, sometimes it is necessary to reshape or pivot to a **long** format, where each variable/column is compressed into 2 new rows. One new column contains the old column names, while another new column contains the values from the old columns. This is particularly useful when combining multiple variables into a single plot.
+
+```{r}
+
+library(tidyr)
+
+# Simplify mu example dataset
+mu2 <- mu %>%
+  select(grpname, areasymbol, musym, muacres, n_component, pct_hydric) %>%
+  slice(1:5)
+print(mu2)
+
+# Pivot long
+mu2_long <- pivot_longer(mu2, cols = c(muacres, n_component, pct_hydric))
+print(mu2_long)
+
+# Pivot wide
+mu2_wide <- pivot_wider(mu2_long, names_from = name)
+print(mu2_wide)
+
+```
+
 
 
 ### Exporting Data
 
-To export data from R, use the command `write.csv()` function. Since we have already set our working directory, R automatically saves our file into the working directory.  
+To export data from R, use the command `write.csv()` or `write.dbf()` functions. Since we have already set our working directory, R automatically saves our file into the working directory.  
 
 ```{r}
-write.csv(sand, file = "sand_example2.csv")
 
-# or use the write.table() function to export other text file types
+write.csv(mu_agg, file = "mu_agg.csv")
+
+
+library(foreign)
+
+write.dbf(mu_agg, file = "mu_agg.dbf")
+
 ``` 
+
 
 
 ## Exercise 2
@@ -884,10 +1013,10 @@ write.csv(sand, file = "sand_example2.csv")
 1. Create a new R script file.
 2. Load a 2021 project table from `mlrassoarea = "2-SON"` and a mapunit table from `areasymbol = c("CA630", "CA649")`.
 3. Filter your project table for rows where the `projectapprovedflag == TRUE`.
-4. Calculate the acreage of hydric soils for each map unit.
+4. Calculate the acreage of hydric soils for each map unit by multiplying `muacres * pct_hydric`.
 5. Join your filtered project table to the mapunit table using a left join.
 6. Calculate the total acreage of hydric soils each soil survey area.
-7. Save your R script, R history, and forward to your instructor.
+7. Save your R script and forward to your instructor.
 
 
 
@@ -895,7 +1024,7 @@ write.csv(sand, file = "sand_example2.csv")
 
 Given what you now know about R, try to answer the following questions:
 
-1. Can you think of a situation where an existing hypothesis or convientional wisdom was not repeatable?
+1. Can you think of a situation where an existing hypothesis or conventional wisdom was not repeatable?
 
 2. What are packages?
 
@@ -903,22 +1032,21 @@ Given what you now know about R, try to answer the following questions:
 
 4. Where can you get help?
 
-5. What does the file .Rprofile do?
+5. What is a data frame?
 
-6. What do you hope to get out of this class?
+6. What are 3 ways you can manipulate a data frame?
+
 
 
 ## Additional Reading (Introduction)
 
 * Introductory R Books
+    + [R for Data Science](https://r4ds.had.co.nz/index.html)
+    + [RStudio Cheatsheets](https://rstudio.com/resources/cheatsheets/)
     + [Quick-R](https://www.statmethods.net/)
-    + [R Cookbook](http://www.cookbook-r.com/)
-    + [Reproducible Research with R & RStudio (not free)](http://christophergandrud.github.io/RepResR-RStudio/)
-    
 * Advanced DSM R Books
     + [Predictive Soil Mapping with R](https://envirometrix.github.io/PredictiveSoilMapping/)
     + [Using R for Digital Soil Mapping (not free)](http://www.springer.com/us/book/9783319443256)
-
 * Soil Science R Applications
     + [aqp and soilDB tutorials](http://ncss-tech.github.io/AQP/)
     + [ISRIC World Soil Information Example Training Courses](https://www.isric.org/utilise/capacity-building/training-courses#examplecourses)
