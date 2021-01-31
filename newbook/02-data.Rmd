@@ -2,25 +2,25 @@
 
 ![](static-figures/logo.jpg)  
 
-## Objectives (Data)
+## Objectives (Tabular Data Structures)
 
 - Learn more about R and how to inspect objects and data types
 - Use the soilDB package to load NASIS pedon data into R
-- Learn about the checks run on data loaded by the `fetchNASIS()` function
 - Understand the structure of data stored in a `SoilProfileCollection` (SPC)
+- Learn about the checks run on data loaded by the `fetchNASIS()` function
 - Learn ways to logically filter and subset data in R
 - Learn how functions can be used to bundle operations
 - Review additional data that is accessible via extended data functions
 - Introduce `soilReports` R package
 
-## The Structure of Our Data
+## The Structure of Soil Data
 
 What if you could extract, organize, and visualize data from NASIS and many other commonly used soil database sources with a couple of lines of code? 
 
 ![](static-figures/soilDB_figure.png)
 
-The aqp and soilDB packages were created just for this! soilDB returns tabular data, spatial data objects and SoilProfileCollection(SPC) objects! SoilProfileCollection objects are defined in the aqp (Algorithms for Quantitative Pedology) package as a handy abstraction for working with commonly used soils data.
-
+The aqp (Algorithms for Quantitative Pedology) and soilDB packages enable data to be fetched from various sources and cast into a SoilProfileCollection(SPC) object. Tabular and spatial data objects fetched via soilDB and aqp methods can simplify the process of working with commonly used soil data.
+ 
 ### Package References
 
  - [**SoilProfileCollection Object Introduction**](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html)
@@ -186,7 +186,7 @@ gridExtra::grid.arrange(g1, g3, ncol = 1)
 
 - Making and documenting observations of soil requires hard work. Digging is difficult, and writing soil descriptions is time consuming!
 
-- Our confidence in observations commonly weakens with the depth of the material described.
+- Our confidence in observations typically weakens with the depth of the material described.
     
   - If we acknowledge this, which we must, then how do we deal with it in pedon data?
       - Use a cutoff depth, for example 100 cm, can be used to truncate observations to a zone of greater confidence.
@@ -685,7 +685,7 @@ The `dput()` function is helpful when sending questions or example data to colle
 ```{r, eval=TRUE}
 all(c("08DWB028", "07RJV098", "07RJV099", "S2007CA009002") == site(pedons)$pedon_id[1:4])
 ```
-
+<!--Do we want to include here? Perhaps move to the end as more of a footnote for future work and extensibility.
 #### The `dplyr` package and "tidy" data principles
 
 **[Tidy Data Principles](https://tidyr.tidyverse.org/articles/tidy-data.html)**
@@ -865,6 +865,9 @@ subset2 <- subset(
 sort(table(subset2$taxsubgrp), decreasing = TRUE)
 sort(table(subset2$taxpartsize), decreasing = TRUE)
 
+# check year described and taxpartsize
+table(subset2$taxpartsize, substr(subset2$obs_date, 0, 4))
+
 # a double equal sign '==' is used for exact character or numeric criteria
 subset3 <- subset(subset2, taxpartsize == 'loamy-skeletal')
 
@@ -877,12 +880,13 @@ title('Loamy-skeletal Ultic Haploxeralfs')
 
 ### Dates and Times
 
-Unix time is a system for describing a point in time. It is the number of seconds that have elapsed since the Unix epoch, minus leap seconds; the Unix epoch is 00:00:00 UTC on 1 January 1970.
+It is important to recognize that date/time is treated as a special format in R.  The Unix time is a system for describing a point in time. It is the number of seconds that have elapsed since the Unix epoch, minus leap seconds; the Unix epoch is 00:00:00 UTC on 1 January 1970.
 
 Above, we use the fact that you can logically compare dates and times if their string representation is converted to a common base R UNIX time representation known as `POSIXlt`. 
 
 This conversion accounts for important things like timezone, using your current locale -- which is important to keep in mind.
 
+<!-- Thinking this might be too much to cover/include here? Or perhaps expand as example for next time.
 #### Packages for Time-series Data
 
 Tools for totally ordered indexed observations -- especially irregular time series.
@@ -892,6 +896,7 @@ Tools for totally ordered indexed observations -- especially irregular time seri
  - [`tidyverts`](https://tidyverts.org/) is all about _time-series_ in the [tidyverse](https://tidyverse.org/). 
 
  - [`tsibble`](https://github.com/tidyverts/tsibble) package provides a data structure for tidy temporal data and models.
+-->
 
 ## `fetchNASIS` data checks
 
@@ -1106,6 +1111,9 @@ The column names are the names of variables that you could join to your site or 
 ```{r eval=TRUE}
 # site and pedon related extended data
 
+# list all dataframes in the extended data
+str(mt663ext, 1)
+
 # vegetation data summary
 colnames(mt663ext$ecositehistory) 
 
@@ -1299,7 +1307,7 @@ diagnosticPropertyPlot(
 For more information on generating diagnostic feature diagrams, see the following tutorial:
 
  - [**Diagnostic Feature Property Plots**](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html).
-
+ 
 ## Soil Reports
 
 One of the strengths of NASIS is that it that has many queries and reports to access the complex data. This makes it easy for the average user to load their data, process it and run numerous reports. 
