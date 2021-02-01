@@ -464,7 +464,7 @@ Note that the import process in `fetchNASIS()`, and the other methods, is not co
 
 Instead, it pulls essential / commonly used pedon and horizon data. Higher level functions like `fetchNASIS()` bundle a series of lower-level queries to get specific parts of the Pedon or Component data structures. Much of the nested complexity of NASIS is simplified in the resulting object. You may need to make more detailed queries and joins to resolve specific questions.
 
-```{r structure_diagram_a, purl=FALSE, echo=FALSE, warning=FALSE}
+```{r structure_diagram_a, purl=FALSE, eval=TRUE, echo=FALSE, warning=FALSE}
 library(diagram, quietly=TRUE)
 # reset figure margins
 par(mar = c(1, 1, 1, 1))
@@ -481,11 +481,11 @@ names <- c("Site-level", "Horizon-level")
 M <- matrix(nrow = 2, ncol = 2, byrow = TRUE, data = 0)
  M[2, 1] <- ""
 #pos <- cbind (c(2, 2))
-plotmat(M, pos = c(1, 1), name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.14, box.type = "square", box.prop = 0.75, mx=0.3, my=-0.1, add=TRUE)
+plotmat(M, pos = c(1, 1), name = names, lwd = 1, box.lwd = 2, cex.txt = 0.8, box.size = 0.14, box.type = "square", box.prop = 0.75, mx=0.3, my=-0.05, add=TRUE)
 
 # add arrows to the diagram
-arrows(0.42, 0.1, x1=0.65, y1=0.1, length = 0.25, code=2, lwd=2, angle = 15)
-arrows(0.42, 0.35, x1=0.65, y1=0.54, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.12, x1=0.65, y1=0.2, length = 0.25, code=2, lwd=2, angle = 15)
+arrows(0.42, 0.37, x1=0.65, y1=0.54, length = 0.25, code=2, lwd=2, angle = 15)
 arrows(0.42, 0.61, x1=0.65, y1=0.61, length = 0.25, code=2, lwd=2, angle = 15)
 arrows(0.42, 0.87, x1=0.65, y1=0.68, length = 0.25, code=2, lwd=2, angle = 15)
 ```
@@ -516,7 +516,7 @@ You can see the child tables that are aggregated using the `get_extended_data_fr
     - Setting this value to `TRUE` (the default) converts null entries for rock fragment volumes to 0. This is typically the right assumption because rock fragment data are typically populated only when observed. If you know that your data contain a combination of omitted information (e.g. no rock fragment volumes are populated) then consider setting this argument to `FALSE`.
     
 - **soilColorState = 'moist' or 'dry'** 
-    - Select dry or moist colors to be converted and placed into a horizon-level attribute called `soil_color`. Moist and dry colors are also stored in `moist_soil_color` and `dry_soil_color`.
+    - Select dry or moist colors to be converted and placed into a horizon-level attribute called `soil_color`. The default is set to 'moist' unless specified.  Moist and dry colors are also stored in `moist_soil_color` and `dry_soil_color`.
     
 - **lab = `TRUE`/`FALSE`** 
     - This option allows for loading the data associated with horizons that may be in the `phlabresults` table.  The default is set to `FALSE`, which will not load records from the `phlabresults` table.
@@ -1235,14 +1235,14 @@ Quick check: _What can you do with the boolean diagnostic feature data stored in
 #### Diagnostic Feature Diagrams
 
 ```{r, eval=TRUE, warning=FALSE, fig.height=12, fig.width=9}
-# work up diagnostic plot based on gopheridge dataset
+# work up diagnostic plot based on the mt663 dataset loaded above
 library(aqp)
 library(soilDB)
 library(sharpshootR)
 
 # can limit which diagnostic features to show by setting 'v' manually
-v <- c('ochric.epipedon', 'cambic.horizon', 
-       'argillic.horizon', 'paralithic.contact', 
+v <- c('ochric.epipedon', 'mollic.epipedon', 'andic.soil.properties', 
+       'argillic.horizon', 'cambic.horizon', 
        'lithic.contact')
 
 # the default concatenated landform_string may have multiple levels
