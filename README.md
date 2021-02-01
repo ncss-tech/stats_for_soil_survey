@@ -15,6 +15,8 @@ Part 1
 
 ### [**Chapter 1:** *Introduction to R and RStudio*](http://ncss-tech.github.io/stats_for_soil_survey/book/intro.html)
 
+ - #### [Final Project](http://ncss-tech.github.io/stats_for_soil_survey/chapters/10_final_project/10_final_project.html)
+ 
  - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/ch1_prez.html)
 
  - #### [GitHub](https://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/github.html)
@@ -57,4 +59,3 @@ Part 2
 
 ------------------------------------------------------------------------
 
-### **[Final Project (Parts 1 and 2)](http://ncss-tech.github.io/stats_for_soil_survey/chapters/10_final_project/10_final_project.html)**
