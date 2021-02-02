@@ -65,3 +65,17 @@ sum(hydric_by_area_project$project_hydric)
 hydric_by_project
 
 sum(hydric_by_project$project_hydric)
+
+# get supplemental manuscript project
+ca630_supp <- get_projectmapunit_from_NASISWebReport(projectname = "MLRA 18, 22A - CA630 Supplemental Manuscript")
+ca630_a <- fetchSDA_spatial(filter(ca630_supp, dmuiid %in% dmuiid_hydric$dmuiid)$lmapunitiid)
+ssa_b <- fetchSDA_spatial(area_symbols, geom.src = "sapolygon")
+dmuiid_hydric$mukey <- mu$lmapunitiid[mu$dmuiid %in% dmuiid_hydric$dmuiid]
+
+# make a plot
+library(sf)
+
+ca630_am <- merge(st_as_sf(ca630_a), dmuiid_hydric, by="mukey")
+
+par(mar=c(1,1,1,1))
+plot(subset(ca630_am, hydric_acres > 0)$geometry)
