@@ -61,9 +61,11 @@ sd(hz.thick)
 s <- sim(osd$SPC, n = 8, hz.sd=6)
 str(s, 2)
 
+site(s)$id <- NULL
+
 # combine SoilProfileCollection objects
 # original OSD + simulated
-s <- aqp::union(list(osd$SPC, s))
+s <- combine(list(osd$SPC, s))
 
 # sketches
 par(mar=c(0, 0, 3, 1))
@@ -123,6 +125,8 @@ colorContrastPlot(m1, m2, labels=c('Dry', 'Moist'), d.cex = 0.9)
 
 ## Break ##
 
+# geographically assoc
+osd$geog_assoc_soils
 
 # competing series
 # https://ncss-tech.github.io/AQP/soilDB/competing-series.html
@@ -171,14 +175,8 @@ previewColors(kssl.data$SPC$moist_soil_color)
 
 
 # back to the competing series...
-kssl.data <- lapply(s.names, fetchKSSL)
+kssl.data <- fetchKSSL(series = s.names)
 
-str(kssl.data, 1)
-
-# some may not have any data, filter those out
-not.null <- which(! sapply(kssl.data, is.null))
-# combine into single SPC
-kssl.data <- union(kssl.data[not.null])
 
 # normalize soil series names
 table(kssl.data$taxonname)
