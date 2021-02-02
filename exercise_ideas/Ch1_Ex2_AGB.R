@@ -62,5 +62,6 @@ hydric_by_area_project
 sum(hydric_by_area_project$project_hydric)
 
 # inspect hydric soils by project
+hydric_by_project
 
 sum(hydric_by_project$project_hydric)
