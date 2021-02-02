@@ -1,6 +1,18 @@
+## demonstrate how to write a function to do something interesting
+## use simulated data to test all possible inputs to the function
+## graph the results to see what happens
+## 
+## objective classify SOC and clay content values as mineral soil material
+## according to KST
+##
+
+
 library(lattice)
 
-
+## the function
+# soc: soil organic carbon percent
+# clay: clay percent by weight
+# saturation: saturated for 30+ days (cumulative)
 isMineralSoilMaterial <- function(soc, clay, saturation = TRUE) {
   
   # ensure reasonable input
@@ -49,17 +61,27 @@ isMineralSoilMaterial <- function(soc, clay, saturation = TRUE) {
 
 
 
-# check rules
+# simulate data 
 d <- expand.grid(
   soc = seq(4, 26, by = 0.2),
   clay = seq(-5, 71, by = 0.2)
 )
 
-d$mineral <- factor(isMineralSoilMaterial(d$soc, d$clay)$final)
+# check
+head(d)
 
+# assign each a mineral soil material result (TRUE | FALSE)
+d$mineral <- factor(
+  isMineralSoilMaterial(
+    soc = d$soc, 
+    clay = d$clay
+  )$final
+)
+
+# check
 str(d)
 
-
+# graphical explanation
 levelplot(
   mineral ~ clay * soc, 
   data = d, 
