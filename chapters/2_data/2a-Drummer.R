@@ -285,6 +285,7 @@ vizAnnualClimate(sib.data$climate.annual, s = soil)
 
 ## Break ##
 
+## TODO: must filter STATSGO explicitly !
 
 ## SDA
 # http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html
@@ -303,6 +304,7 @@ x <- SDA_query("SELECT drainagecl, hydgrp from component where compname = 'Drumm
 table(x$drainagecl, x$hydgrp)
 
 
+# this automatically filters STATSGO
 # whats up with the hydgroup B components?
 x <- fetchSDA(WHERE="compname = 'Drummer' AND hydgrp = 'B'")
 str(x, 2)
