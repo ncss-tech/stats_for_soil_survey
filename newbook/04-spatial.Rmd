@@ -10,14 +10,6 @@ For example, with a couple of lines of *R* code, it is possible to quickly integ
 
 This chapter is a very brief demonstration of several possible ways to process spatial data in R. 
 
-<!--
-
-These are a bit dated references. Let's not overwhelm too much with redirection at beginning of the chapter.-AGB
-
-A more thorough treatment can be found in [*Applied Spatial Data Analysis with R*](http://www.asdar-book.org/) or [*Spatial Data Analysis and Modeling with R*](http://rspatial.org/spatial/). 
-
-The [*Spatial Cheatsheet*](http://www.maths.lancs.ac.uk/~rowlings/Teaching/UseR2012/cheatsheet.html) is a convenient summary of the most commonly used functions. The [*Drawing beautiful maps programatically*](https://www.r-spatial.org/r/2018/10/25/ggplot2-sf.html) tutorial is an excellent primer on making maps in R.
--->
 
 ## Objectives (Spatial Data Structures)
 
@@ -33,24 +25,30 @@ There are [many packages](https://cran.r-project.org/web/views/Spatial.html) ava
 The next couple of sections will require loading these libraries into the R session.
 
 ```{r eval=TRUE}
+# SPC and soil database interface
 library(aqp)
 library(soilDB)
-
+# modern vector data structures / manipulation
 library(sf)
-
+# old-style vector/raster data structure / manipulation
 library(sp)
+# GDAL library / tools
 library(rgdal)
-
+# gridded data management / analysis
 library(raster)
 ```
 
 ## Making Maps with R
 
-R has become a powerful tool for visualization and interaction with spatial data. There are many tools available for making maps with R! It is not all geostatistics and coordinate reference system transformations ... there are powerful ways to automate your GIS work flow from beginning to end -- from creating terrain derivatives from a source DEM, all the way to high-quality, publication-ready maps and interactive HTML/JavaScript widgets.
+R has become a powerful tool for visualization and interaction with spatial data. There are many tools available for making maps with R! It is not all geostatistics and coordinate reference system transformations. There are powerful ways to automate your GIS work flow from beginning to end--from creating terrain derivatives from a source DEM, all the way to high-quality, publication-ready maps and interactive HTML/JavaScript widgets.
 
 All of the details of this could fill several books! And it does! A great resource that provides some comparisons of the major tools for this purpose is [Making Maps with R](https://bookdown.org/nicohahn/making_maps_with_r5/docs/introduction.html). 
 
 _Making Maps with R_ shows similar processes using 5 different packages that have different focuses and applications: `tmap`, `ggplot2`, `mapview`, `mapdeck` and `leaflet`
+
+
+<!-- insert flashy map here, maybe WSS access stats -->
+
 
 ## Spatial Data Sources
 
@@ -88,17 +86,16 @@ Here are some R-based interfaces to NCSS data sources via [`soilDB`](https://cra
   
   + [`SDA_spatialQuery()`](http://ncss-tech.github.io/soilDB/docs/reference/SDA_spatialQuery.html): use points or polygons as a "query" to SDA
   
-  + [`seriesExtent()`]() and [`taxaExtent()`]() -- extent of series and taxonomic classes derived from SSURGO (SoilWeb) in vector and raster format at 800m resolution
+  + [`seriesExtent()`](http://ncss-tech.github.io/soilDB/docs/reference/seriesExtent.html) and [`taxaExtent()`](http://ncss-tech.github.io/soilDB/docs/reference/taxaExtent.html): extent of series and taxonomic classes derived from SSURGO (SoilWeb) in vector and raster format (800m resolution). The vector output is identical to series extents reported by [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/)
   
-  + [`mukey.wcs()`](http://ncss-tech.github.io/soilDB/docs/reference/mukey.wcs.html) and [`ISSR800.wcs()`](http://ncss-tech.github.io/soilDB/docs/reference/ISSR800.wcs.html)
+  + [`mukey.wcs()`](http://ncss-tech.github.io/soilDB/docs/reference/mukey.wcs.html) and [`ISSR800.wcs()`](http://ncss-tech.github.io/soilDB/docs/reference/ISSR800.wcs.html) provide an interface to gSSURGO (mukey), gNATSGO (mukey), and the ISSR-800 (gridded soil property) data.
   
-<!--
-**NOTE:** <strike>currently, there is no way to read raster data from ESRI "file" geodatabases.</strike> except for this: https://github.com/r-barnes/ArcRasterRescue, which requires ability to compile C code with `CMAKE` (non-government computer). Vector data (and associated attribute tables) can be accessed.
--->
+
 
 ## Viewing Pedon Locations
 
 ( _Introducing the_ `sf` _package_ with `mapview`)
+
 
 ### Plotting Geographic Data 
 
@@ -106,7 +103,7 @@ Plotting the data as an R graphic can give you some idea of how data look spatia
 
 Typos are relatively common when coordinates are manually entered. Viewing the data spatially is a quick way to see if any points plot far outside of the geographic area of interest and therefore clearly have an error.
 
-```{r gopheridge_b, eval = TRUE}
+```{r eval = TRUE}
 # plot the locations of the gopheridge pedons with R
 # 
 # Steps:
@@ -123,28 +120,23 @@ library(mapview)
 data("gopheridge", package = "soilDB")
 
 # replace gopheridge object with fetchNASIS() (your data)
-#gopheridge <- fetchNASIS()
+# gopheridge <- fetchNASIS()
 
 # create simple features POINT geometry data.frame
 # st_as_sf(): convert data.frame to spatial simple features, with points in $geometry 
 # st_crs(): set EPSG:4326 Coordinate Reference System (CRS) as Well-Known Text (WKT)
-gopher.locations <- st_as_sf(site(gopheridge), 
-                             coords = c('x_std','y_std'),
-                             crs = st_crs(4326))
+gopher.locations <- st_as_sf(
+  site(gopheridge), 
+  coords = c('x_std','y_std'),
+  crs = st_crs(4326)
+)
+
 # create interactive map with sfc_POINT object
 #  use site_id in sf data.frame as labels
 mapview(gopher.locations, label = gopher.locations$site_id)
 ```
 
-<!-- note: super verbose output too soon, we cover in detail later
-```{r, eval=FALSE}
-# inspect first 6 points
-head(gopher.locations)
 
-# inspect CRS
-st_crs(gopher.locations)
-```
--->
 
 ### Displaying Pedon Data in Google Earth
 
@@ -157,6 +149,7 @@ See the related material in this tutorial: [**Export Pedons to Google Earth**](h
 ### Exporting Pedon Data to an ESRI Shapefile
 
 Another way you can view the data is to export a shapefile from R.  For further information, see this tutorial: [**Export Pedons to Shapefile**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html).
+
 
 ### EXERCISE 1: `mapview` with your own data
 
@@ -176,12 +169,16 @@ library(mapview)
 pedons <- fetchNASIS(from = 'pedons')
 
 # missing values in coordinates not allowed
+# using logical vectors combined with logical AND
 pedons.sp <- subset(pedons, !is.na(x_std) & !is.na(y_std))
 
 # create sf object
-pedon.locations <- st_as_sf(site(pedons.sp), 
-                            coords = c('x_std','y_std'),
-                            crs = st_crs(4326))
+pedon.locations <- st_as_sf(
+  site(pedons.sp), 
+  coords = c('x_std','y_std'),
+  crs = st_crs(4326)
+)
+
 
 # interactive map
 mapview(pedon.locations, 
@@ -1283,5 +1280,9 @@ histboxp(
 * Pebesma, E., and R.S. Bivand. 2005. Classes and methods for spatial data: The sp package. [https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
 
 * Pebesma, E. and R. Bivand, 2019. Spatial Data Science. [https://keen-swartz-3146c4.netlify.com/](https://keen-swartz-3146c4.netlify.com/)
+
+* [Applied Spatial Data Analysis with R](http://www.asdar-book.org/)
+
+
 
 
