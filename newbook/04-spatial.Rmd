@@ -283,7 +283,7 @@ These packages make it possible to display interactive maps of `sf` objects in R
 The `seriesExtent` function in `soilDB` returns an `sp` object (`SpatialPolygonsDataFrame`) showing generalized extent polygons for a given soil series.
 
 ```{r, results='asis', eval=TRUE, out.width="100%"}
-# load required packages
+# load required packages, just in case
 library(soilDB)
 library(sf)
 library(mapview)
@@ -308,39 +308,40 @@ mapview(s, zcol = 'series', col.regions = cols, legend = TRUE)
 ```
 
 
-#### Exercise: Try your favorite series
+#### EXERCISE 2: Map your favorite soil series extents
+The following code demonstrates how to automatically fetch / convert / map soil series extents, using a vector of soil series names. Results appear in the RStudio "Viewer" pane. Be sure to try the "Export" and "show in window" (next to the broom icon) buttons.
 
 ```{r, results='asis', eval=FALSE, out.width="100%"}
-# load required packages
+# load required packages, just in case
 library(soilDB)
 library(sf)
 library(mapview)
 
-series.names <- c('pierre', 'Samsil')
+# vector of series names, letter case does not matter
+# try several (2-9)!
+series.names <- c('auberry', 'sierra', 'holland', 'cagwin')
 
+# iterate over series names, get extent
+# result is a list
 s <- lapply(series.names, seriesExtent)
 
+# iterate over series extents (sp objects)
+# convert to sf objects
+# result is a list
 s <- lapply(s, st_as_sf)
 
+# flatten list -> single sf object
 s <- do.call('rbind', s)
 
-
 # colors used in the map
-# add more colors as needed
-cols <- c('royalblue', 'firebrick')
+# note trick used to dynamically set the number of colors
+cols <- RColorBrewer::brewer.pal(n = length(series.names), name = 'Set1')
 
 # make a simple map, colors set by 'series' column
+# click on polygons for details
+# try pop-out / export buttons
 mapview(s, zcol = 'series', col.regions = cols, legend = TRUE)
 ```
-
-#### Synchronizing two `mapview` panels
-
-
-```{r out.width="100%"}
-
-
-```
-
 
 ### The `raster` Package
 
@@ -405,7 +406,7 @@ See the manual pages for `writeRaster()`, `writeFormats()`, and `dataType()` for
   
 ```{r eval=FALSE}
 # using previous example data set
-writeRaster(r, filename='r.tif', options = c("COMPRESS=LZW"))
+writeRaster(r, filename = 'r.tif', options = c("COMPRESS=LZW"))
 ```
 
 The `writeRaster()` function interprets the given (and missing) arguments as:
@@ -426,11 +427,78 @@ The `writeRaster()` function interprets the given (and missing) arguments as:
 * `dataType(r)`: get / set the data type
 * ... many more, see the `raster` package manual
 
+
+#### EXERCISE 3: getting and plotting raster data
+
+You will need to install the following packages:
+   * `leafsync`: synchronized mapview panels
+   * `rasterVis`: fancy plotting for `raster` objects
+
+Use the following as a template to tinker with some gridded soil property data (800m grid, derived from SSURGO/STATSGO). See `?ISSR800.wcs` for details.
+
+The [soilDB WCS tutorial](http://ncss-tech.github.io/AQP/soilDB/WCS-demonstration-01.html) contains many more examples from which to draw ideas.
+
+```{r fig.width}
+# WCS interface
+library(soilDB)
+# wrangling polygons
+library(sp)
+# raster data visualization
+library(rasterVis)
+
+# AOI defined "by-hand"
+# could also be an sp or sf object
+a <- list(
+  aoi = c(-121, 37, -120, 38),
+  crs = '+init=EPSG:4326'
+)
+
+# try some others from the complete list of available grids:
+# WCS_details(wcs = 'ISSR800')
+
+# get soil texture class, 0-25cm
+r1 <- ISSR800.wcs(aoi = a, var = 'texture_025cm')
+
+# get pH, 0-25cm
+r2 <- ISSR800.wcs(aoi = a, var = 'ph_025cm')
+
+
+# grid of category IDs + labels stored in a 
+# raster attribute table (RAT)
+r1
+
+# grid of continuous values
+r2
+
+# plot
+levelplot(r1, margin = FALSE)
+levelplot(r2, margin = FALSE)
+```
+
+
+Sync-ed `mapview` panels. This can be an effective way to explore similarities or differences between two spatial datasets. Try adjusting the `alpha.regions` argument (value range: 0-1) to `mapview()` to set transparency (lower values = more transparent).
+```{r out.width="100%"}
+# interactive mapping
+library(mapview)
+# sync-ed panels
+library(leafsync)
+
+# try 
+m1 <- mapview(texture_025cm, map.types = "Esri.WorldImagery", legend = TRUE, na.color = NA,)
+m2 <- mapview(ph_025cm, map.types = "Esri.WorldImagery", legend = TRUE, na.color = NA)
+
+# build synced panels.
+sync(m1, m2)
+```
+
+
+
 ### Converting Vector to Raster
 
 #### [`raster::rasterize()`](https://www.rdocumentation.org/packages/raster/versions/3.4-5/topics/rasterize)
 
 #### [`fasterize::fasterize()`](https://www.rdocumentation.org/packages/fasterize/versions/1.0.3/topics/fasterize)
+
 
 ## Coordinate Reference Systems
 
