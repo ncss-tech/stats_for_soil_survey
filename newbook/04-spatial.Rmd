@@ -767,26 +767,24 @@ This module will not cover importing or exporting raster data via `rgdal` as the
 
 
 
-## Operations on Example Data
+## EXERCISE: Working with real data
 
 ### Load Required Packages
 
-Load required packages into the current R Session.
+Load required packages into a fresh RStudio Session.
 
 ```{r results="hide"}
 library(aqp)
 library(soilDB)
-
 library(sp)
 library(rgdal)
-
 library(raster)
+library(rasterVis)
 ```
 
 ### Download Example Data
 
-This code will create a path for this example data in the `workspace2` folder you created. It will download a set of polygons and rasters.
-
+Run the following to create a path for the example data. Be sure to set a valid path to a local disk.
 ```{r, eval=FALSE}
 # store path as a variable, in case you want to keep it somewhere else
 ch2b.data.path <- 'C:/workspace2/chapter-2b'
@@ -795,15 +793,27 @@ ch2b.data.path <- 'C:/workspace2/chapter-2b'
 dir.create(ch2b.data.path, recursive = TRUE)
 
 # download polygon example data from github
-download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-mu-polygons.zip', file.path(ch2b.data.path, 'chapter-2b-mu-polygons.zip'))
+download.file(
+  'https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-mu-polygons.zip', 
+  file.path(ch2b.data.path, 'chapter-2b-mu-polygons.zip')
+)
 
 # download raster example data from github 
-download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-PRISM.zip', file.path(ch2b.data.path, 'chapter-2b-PRISM.zip'))
+download.file(
+  'https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_2b-spatial-data/chapter-2b-PRISM.zip', 
+  file.path(ch2b.data.path, 'chapter-2b-PRISM.zip')
+)
 
 # unzip
-unzip(file.path(ch2b.data.path, 'chapter-2b-mu-polygons.zip'), exdir = ch2b.data.path, overwrite = TRUE)
+unzip(
+  file.path(ch2b.data.path, 'chapter-2b-mu-polygons.zip'), 
+  exdir = ch2b.data.path, overwrite = TRUE
+)
 
-unzip(file.path(ch2b.data.path, 'chapter-2b-PRISM.zip'), exdir = ch2b.data.path, overwrite = TRUE)
+unzip(
+  file.path(ch2b.data.path, 'chapter-2b-PRISM.zip'), 
+  exdir = ch2b.data.path, overwrite = TRUE
+)
 ```
 
 ### Load the Data
@@ -813,14 +823,9 @@ We will be using polygons associated with MLRAs 15 and 18 as part of this demons
 Import these data now with `readOGR()`; recall the somewhat strange syntax. You will need the data and `RasterStack` object `rs` we created in the examples above.
 
 ```{r results='hide', eval=TRUE}
-# set path to example data
-ch2b.data.path <- 'C:/workspace2/chapter-2b'
-
 # load MLRA polygons
 mlra <- readOGR(dsn = ch2b.data.path, layer = 'mlra-18-15-AEA')
-```
 
-```{r, eval=TRUE}
 # mean annual air temperature, Deg C
 maat <- raster(file.path(ch2b.data.path, 'MAAT.tif'))
 
@@ -885,6 +890,25 @@ mlra.gcs <- spTransform(mlra, CRS(proj4string(maat)))
 plot(maat, main = 'PRISM Mean Annual Air Temperature (deg C)')
 plot(mlra.gcs, main = 'MLRA 15 and 18', add = TRUE)
 ```
+
+Try the `rasterVis` package approach to plotting `raster` and `sp` objects. Syntax is more expressive, figures are more intricate, but there is a learning curve. See the [rasterVis tutorial](https://oscarperpinan.github.io/rastervis/) for a comprehensive set of examples.
+```{r fig.width=5, fig.height=6.75}
+levelplot(
+  # raster object
+  maat, 
+  # suppress marginal plots
+  margin = FALSE,
+  # custom colors
+  par.settings = BuRdTheme,
+  # combine multiple spatial data layer here
+  panel = function(...) {
+    panel.levelplot(...)
+    sp.lines(mlra.gcs, col = 'black')
+  }
+  )
+```
+
+
 
 ### Spatial Overlay Operations
 
