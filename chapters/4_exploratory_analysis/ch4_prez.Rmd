@@ -19,6 +19,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 library(aqp)
 library(soilDB)
 library(ggplot2)
+library(dplyr)
 
 ```
 
@@ -85,9 +86,9 @@ data("loafercreek")
 h <- horizons(loafercreek) 
 h$texture_class <- factor(h$texture_class)
 
-vars <- c("clay", "phfield", "total_frags_pct", "texture_class")
-summary(h[vars])
-
+h %>%
+  select(clay, phfield, total_frags_pct, texture_class) %>%
+  summary()
 ```
 
 
@@ -260,12 +261,12 @@ ggplot(data.frame(x=c(-3, 3)), aes(x=x)) +
 ---
 
 
-## Mean vs Median
+## Mean & SD vs Median & Quantiles
 
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
 
-p   <- c(0.025, 0.25, 0.5, 0.75, 0.975)
+p   <- c(0.025, 0.5, 0.975)
 
 avg <- mean(h$clay, na.rm = TRUE)
 std <- sd(h$clay,   na.rm = TRUE)
@@ -273,12 +274,12 @@ std <- sd(h$clay,   na.rm = TRUE)
 clay <- rbind(
   data.frame(
     value = c(avg - 2 * std, avg, avg + 2 * std),
-    variable = "mean & sd",
+    variable = "mean & 2SD",
     stringsAsFactors = TRUE
     ),
   data.frame(
     value    = quantile(h$clay, p, na.rm = TRUE),
-    variable = "quantiles",
+    variable = "median & quantiles",
     stringsAsFactors = TRUE
     )
   )
@@ -288,12 +289,12 @@ std <- sd(h$total_frags_pct,   na.rm = TRUE)
 
 frags <- rbind(
   data.frame(
-    variable = "mean & sd",
+    variable = "mean & 2SD",
     value = c(avg - 2 * std, avg, avg + 2 * std),
     stringsAsFactors = TRUE
     ),
   data.frame(
-    variable = "quantiles", 
+    variable = "median & quantiles", 
     value    = quantile(h$total_frags_pct, p, na.rm = TRUE),
     stringsAsFactors = TRUE
     )
@@ -372,6 +373,16 @@ l_p <- ggplot(h) +
   theme(aspect.ratio = 1) +
   ggtitle("Line Plot (Soil Profiles)")
 
+p_l <- ggplot(h) +
+  # geom_line(aes(y = clay, x = hzdept, group = peiid)) +
+  geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
+  # geom_smooth(aes(y = clay, x = (hzdept + hzdepb) / 2), se = FALSE) +
+  xlim(100, 0) +
+  xlab("depth (cm)") + ylab("clay (%)") +
+  coord_flip() +
+  theme(aspect.ratio = 1) +
+  ggtitle("Line Plot")
+
 # l_s <- ggplot(h, aes(y = clay, x = hzdepm, group = peiid)) +
 #   geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh") +
 #   xlim(100, 0) +
@@ -393,7 +404,7 @@ l_p <- ggplot(h) +
 #   ggtitle("Line Plot (Soil Profiles)")
 
 
-gridExtra::grid.arrange(p_s, l_p, ncol = 2)
+gridExtra::grid.arrange(p_s, p_l, ncol = 2)
 
 ```
 
@@ -499,15 +510,33 @@ ggplot(df[!idx, ], aes(y = value, x = genhz2)) +
 
 ```{r, echo=FALSE, fig.dim=c(8, 4)}
 
-s <- aqp::slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
-s <- aqp::slab(s, fm = ~ clay + phfield + total_frags_pct, slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE))
+data("loafercreek", package = "soilDB")
+
+s <- slab(loafercreek, 
+          fm = ~ clay + phfield + total_frags_pct, 
+          slab.structure = 0:100,
+          slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE)
+          )
 names(s) <- gsub("\\.", "", names(s))
 names(s) <- gsub("^X", "p", names(s))
 
+s$idx <- s$top %in% seq(0, 100, 10)
+
+cf <- s %>%
+  group_by(variable) %>%
+  summarize(
+    dep = top,
+    max = max(p90, na.rm = TRUE) - (diff(range(p90, na.rm = TRUE)) * 0.05),
+    cf  = paste0(round(contributing_fraction * 100), "%"),
+    idx = idx
+    ) %>%
+  ungroup() %>%
+  filter(idx == TRUE)
 
 ggplot(s, aes(x = top, y = p50)) +
   geom_line() +
   geom_ribbon(aes(ymin = p10, ymax = p90, x = top), alpha = 0.2) +
+  geom_text(data = cf, aes(x = dep, y = max, label = cf)) +
   xlim(c(100, 0)) + xlab("depth (cm)") + ylab("") +
   coord_flip() +
   facet_wrap(~ variable, scales = "free_x") +
@@ -554,21 +583,6 @@ p + geom_point()
 
 ---
 
-## Questions
-
-1. What do the L, RV, and H represent?
-
-2. What would cause the mean and median to be significantly different?
-
-3. What are quantiles?
-
-4. What is the difference between a histogram and bar plot?
-
-5. How can you add a 3rd dimension to plots?
-
-
----
-
 
 ## Summary of Components
 
@@ -576,15 +590,13 @@ p + geom_point()
 
 co <- get_component_from_SDA(WHERE = "compname = 'Miami'")
 co$slope_phase <- cut(co$slope_r, c(0, 2, 4, 8, 15, 30, 50))
-co2 <- subset(co, majcompflag == "Yes")
+co2 <- filter(co, majcompflag == "Yes")
 h  <- get_chorizon_from_SDA(WHERE = "compname = 'Miami'")
 test <- subset(h, cokey %in% co2$cokey)
 test <- merge(test, co[c("cokey", "erocl")], by = "cokey", all.x = TRUE)
 
 test2 <- test
-depths(test2) <- cokey ~ hzdept_r + hzdepb_r
-test3 <- aqp::slice(test2, seq(0, 100, 2) ~ claytotal_r + om_r + caco3_r + erocl)
-test3 <- horizons(test3)
+test3 <- segment(test2, intervals = 0:100, hzdepcols = c("hzdept_r", "hzdepb_r"))
 test3$hzdepm_r <- with(test3, (hzdepb_r + hzdept_r) / 2)
 
 hvars <- c("claytotal_r", "om_r", "caco3_r")
@@ -595,8 +607,6 @@ test4 <- reshape(test3[c("cokey", "hzdept_r", hvars, pvars)],
                 v.names = "value",    varying = hvars
                 )
 test4$variable <- factor(test4$variable, levels = c("claytotal_r", "om_r", "caco3_r"))
-test4$erocl <- factor(test4$erocl, levels = levels(test4$erocl), labels = c("None - deposition", "Slightly", "Moderately", "Severely", "Extremely")[1:length(levels(test4$erocl))])
-
 
 # ordering of groups is handled by ggplot2
 ggplot(test4, aes(x = hzdept_r, y = value)) +
