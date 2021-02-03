@@ -13,7 +13,7 @@
 Part 1
 ------
 
-### [**Chapter 1:** *Introduction to R*](http://ncss-tech.github.io/stats_for_soil_survey/chapter/1_introduction/01-intro.html)
+### [**Chapter 1:** *Introduction to R*](http://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/01-intro.html)
 
  - #### [Final Project](http://ncss-tech.github.io/stats_for_soil_survey/chapters/10_final_project/10_final_project.html)
  
