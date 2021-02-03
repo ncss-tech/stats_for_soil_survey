@@ -23,7 +23,7 @@ Part 1
 
  - #### [R Data Types](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/2a_appendix_data_types.html)
 
-### [**Chapter 2:** *The Data We Use*](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html)
+### [**Chapter 2:** *The Data We Use*](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/02-data.html)
 
  - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/2a_tabular_data/2a_tabular_data.html)
 
