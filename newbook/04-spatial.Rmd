@@ -40,6 +40,8 @@ library(raster)
 
 ## Making Maps with R
 
+![](static-figures/WSS-AOI-density.png)
+
 R has become a powerful tool for visualization and interaction with spatial data. There are many tools available for making maps with R! It is not all geostatistics and coordinate reference system transformations. There are powerful ways to automate your GIS work flow from beginning to end--from creating terrain derivatives from a source DEM, all the way to high-quality, publication-ready maps and interactive HTML/JavaScript widgets.
 
 All of the details of this could fill several books! And it does! A great resource that provides some comparisons of the major tools for this purpose is [Making Maps with R](https://bookdown.org/nicohahn/making_maps_with_r5/docs/introduction.html). 
@@ -47,7 +49,6 @@ All of the details of this could fill several books! And it does! A great resour
 _Making Maps with R_ shows similar processes using 5 different packages that have different focuses and applications: `tmap`, `ggplot2`, `mapview`, `mapdeck` and `leaflet`
 
 
-<!-- insert flashy map here, maybe WSS access stats -->
 
 
 ## Spatial Data Sources
@@ -179,7 +180,6 @@ pedon.locations <- st_as_sf(
   crs = st_crs(4326)
 )
 
-
 # interactive map
 mapview(pedon.locations, 
         legend = FALSE, 
@@ -274,28 +274,73 @@ The `st_read()` / `read_sf()` / `write_sf()` and `readOGR()`, `writeOGR()`, `rea
 These packages make it possible to display interactive maps of `sf` objects in RStudio, or within an HTML document generated via R Markdown (e.g. this document).
 
 * [`mapview` package](https://github.com/r-spatial/mapview)
+   - [Basics](https://r-spatial.github.io/mapview/articles/articles/mapview_01-basics.html)
+   - [Advanced Features](https://r-spatial.github.io/mapview/articles/articles/mapview_02-advanced.html)
+   - See other "Articles" in this series, you can make [incredibly complex, interactive maps](https://r-spatial.github.io/mapview/articles/articles/mapview_05-extras.html) using the `mapview` package.
 * [`leaflet` package](https://rstudio.github.io/leaflet/)
 * [`leafem`: 'leaflet' Extensions for 'mapview'](https://cran.r-project.org/web/packages/leafem/index.html)
 
-The `seriesExtent` method in soilDB returns results as an `sp` object showing generalized extent polygons for a soil series. 
+The `seriesExtent` function in `soilDB` returns an `sp` object (`SpatialPolygonsDataFrame`) showing generalized extent polygons for a given soil series.
 
-```{r, results='asis', eval=TRUE}
+```{r, results='asis', eval=TRUE, out.width="100%"}
 # load required packages
+library(soilDB)
 library(sf)
 library(mapview)
-library(leafem)
-library(leafpop)
 
-# get series extents from SoilWeb
+# series extents from SoilWeb (sp objects)
 pentz <- seriesExtent('pentz')
-redding <- seriesExtent('redding')
+amador <- seriesExtent('amador')
 
-# make a simple map
-m <- mapview(st_as_sf(pentz))
+# convert to sf objects (way of the future)
+pentz <- st_as_sf(pentz)
+amador <- st_as_sf(amador)
 
-# add more data to the map and display
-addFeatures(m, st_as_sf(redding), color='black', fillColor='red', weight=1)
+# combine into a single object
+s <- rbind(pentz, amador)
+
+# colors used in the map
+# add more colors as needed
+cols <- c('royalblue', 'firebrick')
+
+# make a simple map, colors set by 'series' column
+mapview(s, zcol = 'series', col.regions = cols, legend = TRUE)
 ```
+
+
+#### Exercise: Try your favorite series
+
+```{r, results='asis', eval=FALSE, out.width="100%"}
+# load required packages
+library(soilDB)
+library(sf)
+library(mapview)
+
+series.names <- c('pierre', 'Samsil')
+
+s <- lapply(series.names, seriesExtent)
+
+s <- lapply(s, st_as_sf)
+
+s <- do.call('rbind', s)
+
+
+# colors used in the map
+# add more colors as needed
+cols <- c('royalblue', 'firebrick')
+
+# make a simple map, colors set by 'series' column
+mapview(s, zcol = 'series', col.regions = cols, legend = TRUE)
+```
+
+#### Synchronizing two `mapview` panels
+
+
+```{r out.width="100%"}
+
+
+```
+
 
 ### The `raster` Package
 
