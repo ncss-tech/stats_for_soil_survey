@@ -50,6 +50,9 @@ Before you start an EDA, you should inspect your data and correct all typos and 
 # Load from the the loakercreek dataset
 data("loafercreek", package = "soilDB") 
 
+# Extract the horizon table
+h <- aqp::horizons(loafercreek)
+
 # Construct generalized horizon designations
 n <- c("A",
        "BAt",
@@ -66,10 +69,7 @@ p <- c("A",
        "R")
 
 # Compute genhz labels and add to loafercreek dataset
-loafercreek$genhz <- aqp::generalize.hz(loafercreek$hzname, n, p)
-
-# Extract the horizon table
-h <- aqp::horizons(loafercreek)
+h$genhz <- aqp::generalize.hz(h$hzname, n, p)
 
 # Examine the matching of pairing of the genhz label to the hznames
 table(h$genhz, h$hzname)
@@ -84,13 +84,12 @@ View(h)
  
 This view is fine for a small dataset, but can be cumbersome for larger ones. The `summary()` function can be used to quickly summarize a dataset however, even for our small example dataset, the output can be voluminous. Therefore in the interest of saving space we'll only look at a sample of columns.  
 
-```{r, eval=TRUE}
-
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
 
-h_sub <- h %>%
-  select(genhz, clay, total_frags_pct, phfield, effclass)
-summary(h_sub)
+h %>%
+  select(genhz, clay, total_frags_pct, phfield, effclass) %>%
+  summary()
 
 ```
 
@@ -206,9 +205,6 @@ This gives us a count of the number of observations for each horizon. If we want
 table(h$genhz, h$texcl)
 ```
 
-```{r echo=FALSE, eval=TRUE}
-knitr::kable(table(h$genhz, h$texcl))
-```
 
 We can also add margin totals to the table or convert the table frequencies to proportions.
 
@@ -221,20 +217,6 @@ table(h$genhz, h$texcl) %>%
 table(h$genhz, h$texture_class) %>% 
   prop.table(margin = 1) %>% 
   round(2) * 100
-```
-
-```{r, eval=TRUE}
-library(knitr)
-
-table(h$genhz, h$texcl) %>%
-  addmargins() %>%
-  kable()
-
-tex_t <- table(h$genhz, h$texture_class) %>% 
-  prop.table(margin = 1) %>%
-  round(2) * 100
-kable(tex_t)  
-
 ```
 
 To determine the mean by a group or category, use the `group_by` and `summarize` functions:
@@ -397,27 +379,10 @@ knitr::kable(figs, caption = "Comparison of R's 3 Graphing Systems and their Equ
 
 ### Distributions
 
-```{r distribution comparison, echo=FALSE, fig.dim = c(8, 4), eval=TRUE}
+```{r distribution comparison, echo=FALSE, fig.dim = c(8, 4), eval=TRUE, warning=FALSE, message=FALSE}
+
 data(metadata, package = "soilDB")
 
-# Generalized the horizon designations
-n <- c("A",
-       "BAt",
-       "Bt1",
-       "Bt2",
-       "Cr",
-       "R")
-# REGEX rules
-p <- c("A",
-       "BA|AB",
-       "Bt|Bw",
-       "Bt3|Bt4|2B|C",
-       "Cr",
-       "R")
-
-loafercreek$genhz <- aqp::generalize.hz(loafercreek$hzname, n, p)
-
-h <- aqp::horizons(loafercreek)
 h <- mutate(h,
             hzdepm = (hzdepb + hzdept) / 2,
             # convert texture_class to factors and sort
@@ -513,7 +478,7 @@ The above box plot shows a steady increase in clay content with depth. Notice th
 
 A QQ plot is a plot of the actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).  
 
-```{r, eval=TRUE}
+```{r, eval=TRUE, warning=FALSE}
 
 # QQ Plot for Clay
 ggplot(h, aes(sample = clay)) + 
@@ -670,7 +635,7 @@ However for rock fragments, we commonly see a long tailed distribution (e.g., sk
 
 ### Scatterplots and Line Plots
 
-```{r, echo=FALSE, purl=FALSE, fig.dim = c(8, 4), eval=TRUE}
+```{r, echo=FALSE, purl=FALSE, fig.dim = c(8, 4), eval=TRUE, warning=FALSE, message=FALSE}
 # scatter plot
 p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
   geom_point() +
@@ -703,7 +668,7 @@ The purpose of a scatterplot is to see how one variable relates to another. With
 
 Create a basic scatter plot using the loafercreek dataset.
 
-```{r, eval=TRUE}
+```{r, eval=TRUE, warning=FALSE}
 # scatter plot
 ggplot(h, aes(x = clay, y = hzdepm)) +
   geom_point() +
@@ -721,7 +686,7 @@ This plots clay on the X axis and depth on the X axis. As shown in the scatterpl
 
 The function below produces a scatterplot matrix for all the numeric variables in the dataset. This is a good command to use for determining rough linear correlations for continuous variables.  
 
-```{r, eval=TRUE}
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
 
 library(GGally)
   
@@ -734,10 +699,10 @@ h %>%
 
 ### 3rd Dimension - Color, Shape, Size, Layers, etc...
 
-```{r, purl=FALSE, echo=FALSE, fig.dim = c(8, 4), eval=TRUE}
+```{r, purl=FALSE, echo=FALSE, fig.dim = c(8, 4), eval=TRUE, message=FALSE, warning=FALSE}
 h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
 
-ggplot(h[!idx, ], aes(y = clay, x = hzdepm, col = genhz)) +
+ggplot(h, aes(y = clay, x = hzdepm, col = genhz)) +
   geom_point(size = 2) +
   geom_smooth(se = FALSE, col = "black") +
   xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
@@ -877,7 +842,7 @@ rose.diag(aspect, bins = 8, col="grey")
 
 NASIS has an abundance of field data captured within it, dating back in some cases as far as 1975. This legacy data, as it’s often called, captures raw and unfiltered information about our soil series and map unit component concepts. In the future it will undoubtable inform future digital soil mapping products by serving as training data. However, as most soil scientists are aware, legacy data is not a panacea. In many cases, the data is not as detailed as we would like (nor is some newer data). For example, many pedon descriptions include soil texture class and modifiers, but lack continuous estimates such as clay content and rock fragments %. This lack of continuous data makes it difficult to analyze and estimate other properties, such as available water capacity. However, while much continuous soil data is missing, it can still be estimated by the class ranges and averages. NASIS has several such calculations to estimate missing values. To facilitate this process in R, several new functions have recently been added to the aqp package. This package hosts a variety of R functions specifically designed to analyze and plot soil data. It is also taught in conjunction with the NEDC course Statistics for Soil Survey.These new aqp functions are intended to impute missing values or check existing values. The ssc_to_texcl() function uses the same logic as the particle size estimator calculation in NASIS to classify sand and clay into texture class. The results are stored in data(soiltexture) and used by texcl_to_ssc() as a lookup table to convert texture class to sand, silt and clay. The function texcl_to_ssc() replicates the functionality described by Levi (2017). Unlike the other functions, texture_to_taxpartsize() is intended to be computed on weighted averages within the family particle size control section. Below is a demonstration of these new aqp R functions.
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 library(aqp)
 library(soiltexture)
