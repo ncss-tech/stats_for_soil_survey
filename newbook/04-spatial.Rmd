@@ -1042,6 +1042,7 @@ auburn <- fetchKSSL(series = 'auburn')
 # extract site data
 s <- site(auburn)
 
+## TODO: this is an old-fashioned specification of a CRS...
 # these are GCS WGS84 coordinates from NASIS
 coordinates(s) <- ~ x + y
 proj4string(s) <- '+proj=longlat +datum=WGS84'
@@ -1084,15 +1085,22 @@ Does there appear to be a relationship between soil morphology and "effective pr
 new.order <- order(auburn$eff.PPT)
 
 # setup figure margins, 1x1 row*column layout
-par(mar = c(5, 2, 4, 2), mfcol = c(1, 1))
+par(mar = c(4.5, 0, 4, 0), mfcol = c(1, 1))
 
 # plot profile sketches
-plot(auburn,
-     name = 'hzn_desgn',
-     print.id = FALSE,
-     color = 'clay',
-     plot.order = new.order,
-     cex.names = 0.85)
+plotSPC(auburn,
+        name = 'hzn_desgn',
+        print.id = FALSE,
+        color = 'clay',
+        plot.order = new.order,
+        cex.names = 0.75,
+        max.depth = 70,
+        width = 0.3,
+        name.style = 'center-top',
+        scaling.factor = 1,
+        plot.depth.axis = FALSE,
+        hz.depths = TRUE
+)
 
 # add an axis with extracted raster values
 axis(side = 1,
@@ -1113,11 +1121,10 @@ The [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html)
 
 Note that these series extents have been generalized for rapid display at regional to continental scales. A more precise representation of "series extent" can be generated from SSURGO polygons and queried from [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html).
 
-Get an approximate extent for the [Amador](http://casoilresource.lawr.ucdavis.edu/sde/?series=amador) soil series from [SEE](https://casoilresource.lawr.ucdavis.edu/see/#amador). See the manual page for `seriesExtent` for additional options and related functions.
+Get an approximate extent for the [Amador](http://casoilresource.lawr.ucdavis.edu/sde/?series=amador) soil series from [SEE](https://casoilresource.lawr.ucdavis.edu/see/#amador). See the `seriesExtent` [tutorial](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) and [manual page](http://ncss-tech.github.io/soilDB/docs/reference/seriesExtent.html) for additional options and related functions.
 
 ```{r, eval=TRUE}
 amador <- seriesExtent(s = 'amador')
-class(amador)
 ```
 
 Generate 100 sampling points within the extent, using a hexagonal grid. These will be used to extract raster values from our `RasterStack` of PRISM data.
@@ -1128,7 +1135,7 @@ s <- spsample(amador, n = 100, type = 'hexagonal')
 
 For comparison, extract a single point from each SSURGO map unit delineation that contains *Amador* as a major component. This will require a query to SDA for the set of matching map unit keys (`mukey`), followed by a second request to SDA for the geometry.
 
-The `SDA_query` function is used to send arbitrary queries written in SQL to SDA, the results may be a `data.frame` or `list`, depending on the complexity of the query. The `fetchSDA_spatial` function returns map unit geometry as either polygons, polygon envelopes, or a single point per polygon and selected by `mukey` or `nationalmusym`.
+The `SDA_query` function is used to send arbitrary queries written in SQL to SDA, the results may be a `data.frame` or `list`, depending on the complexity of the query. The `fetchSDA_spatial` function returns map unit geometry as either polygons, polygon envelopes, or a single point within each polygon as selected by `mukey` or `nationalmusym`.
 
 ```{r, eval=TRUE}
 # result is a data.frame
@@ -1173,8 +1180,11 @@ e.pts <- extract(rs, amador.pts, df = TRUE)
 # check out the extracted data
 summary(e[,-1])
 
-# all pair-wise correlations
+# all pair-wise correlations, note NAs -> why?
 knitr::kable(cor(e[,-1]), digits = 2)
+
+# only 1 unique value, correlation is impossible to compute
+unique(e$rain.fraction)
 ```
 
 Quickly compare the two sets of samples. More on this in the Sampling module.
@@ -1267,7 +1277,7 @@ Extract values from the `RasterStack` of PRISM data as a `data.frame`.
 
 ```{r, eval=TRUE}
 # raster stack extraction at sampling points
-e <- extract(rs, s, df=TRUE)
+e <- extract(rs, s, df = TRUE)
 
 # convert sampling points from SpatialPointsDataFrame to data.frame
 s.df <- as(s, 'data.frame')
@@ -1297,7 +1307,7 @@ A simple tabular summary of means by MLRA and PRISM variable using `tapply()`.
 
 ```{r, eval=TRUE}
 # tabular summary of mean values
-tapply(m$value, list(m$mlra, m$variable), mean)
+tapply(m$value, list(m$mlra, m$variable), mean, na.rm = TRUE)
 ```
 
 #### Faster with `exactextractr`
@@ -1314,7 +1324,7 @@ library(lattice)
 library(exactextractr)
 
 # 5-10 seconds to download Series Extent Explorer data 
-series <- c('holland','san joaquin')
+series <- c('holland', 'san joaquin')
 
 # make SpatialPolygonsDataFrame
 s <- do.call('rbind', lapply(series, seriesExtent))
@@ -1347,11 +1357,14 @@ ex.all <- do.call('rbind', lapply(seq_along(ex), function(i) {
 
 # simple summary
 densityplot(~ value | group, data = ex.all, 
-            plot.points=FALSE, bw = 2, lwd = 2,
+            plot.points = FALSE, bw = 2, lwd = 2,
+            strip = strip.custom(bg = grey(0.85)),
+            scales = list(alternating = 1),
             col = c('RoyalBlue'), layout = c(1, 2),
             ylab = 'Density', from = 0, to = 400,
             xlab = 'Frost-Free Days (50% chance)\n800m PRISM Data (1981-2010)', 
-            main = 'FFD Estimate for Extent of San Joaquin and Holland Series')
+            main = 'FFD Estimate for Extent of San Joaquin and Holland Series'
+)
 ```
 <!--
 
