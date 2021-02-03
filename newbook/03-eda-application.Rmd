@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Exploratory Data Analysis {#eda}
 
 ![](static-figures/logo.jpg)  
@@ -41,11 +46,9 @@ Graphical methods include:
 Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine appropriate statistical analyses. For this chapter we'll use the loafercreek dataset from the CA630 Soil Survey Area.
 
 ```{r, warning=FALSE, message=FALSE, eval=TRUE}
-library(aqp)
-library(soilDB)
 
 # Load from the the loakercreek dataset
-data("loafercreek") 
+data("loafercreek", package = "soilDB") 
 
 # Construct generalized horizon designations
 n <- c("A",
@@ -63,13 +66,14 @@ p <- c("A",
        "R")
 
 # Compute genhz labels and add to loafercreek dataset
-loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+loafercreek$genhz <- aqp::generalize.hz(loafercreek$hzname, n, p)
 
 # Extract the horizon table
-h <- horizons(loafercreek) 
+h <- aqp::horizons(loafercreek)
 
 # Examine the matching of pairing of the genhz label to the hznames
 table(h$genhz, h$hzname)
+
 ```
 
 As noted in Chapter 1, a visual examination of the raw data is possible by clicking on the dataset in the environment tab, or via commandline:  
@@ -81,8 +85,13 @@ View(h)
 This view is fine for a small dataset, but can be cumbersome for larger ones. The `summary()` function can be used to quickly summarize a dataset however, even for our small example dataset, the output can be voluminous. Therefore in the interest of saving space we'll only look at a sample of columns.  
 
 ```{r, eval=TRUE}
-vars <- c("genhz", "clay", "total_frags_pct", "phfield", "effclass")
-summary(h[, vars])
+
+library(dplyr)
+
+h_sub <- h %>%
+  select(genhz, clay, total_frags_pct, phfield, effclass)
+summary(h_sub)
+
 ```
 
 The `summary()` function is known as a generic R function. It will return a preprogrammed summary for any R object. Because `h` is a data frame, we get a summary of each column. Factors will be summarized by their frequency (i.e., number of observations), while numeric or integer variables will print out a five number summary, and characters simply print their length. The number of missing observations for any variable will also be printed if they are present. If any of these metrics look unfamiliar to you, don't worry we'll cover them shortly.
@@ -108,21 +117,20 @@ sort(unique(h$hzname))
 If the `unique()` function returned typos such as "BT" or "B t", you could either fix your original dataset or you could make an adjustment in R, such as:
 
 ```{r, eval=TRUE}
+
 h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 
-# or
-
-h$hzname[h$hzname == "BT"] <- "Bt"
 ```
 
 Typo errors such as these are a common problem with old pedon data in NASIS.
 
-###  Exercise: fetch and inspect
+## Exercise 1: fetch and inspect
 
-- Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset 
-- Apply the generalized horizon rules below or develop your own, see the following [job-aid](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html)
-- Summarize the depths, genhz, texture class, sand, and fine gravel.
-- Show your work and submit the results to your mentor.
+1. Create a new R script
+2. Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset 
+3. Apply the generalized horizon rules below or develop your own, see the following [job-aid](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html)
+4. Summarize the `hzdept`, `genhz`, `texture_class`, `sand`, and `fine gravel`.
+5. Save your R script, and forward to your instructor.
 
 
 ```{r, eval=TRUE}
@@ -206,31 +214,41 @@ We can also add margin totals to the table or convert the table frequencies to p
 
 ```{r eval=TRUE}
 # append the table with row and column sums
-addmargins(table(h$genhz, h$texcl))
+table(h$genhz, h$texcl) %>% 
+  addmargins()
 
 # calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
-round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100) 
+table(h$genhz, h$texture_class) %>% 
+  prop.table(margin = 1) %>% 
+  round(2) * 100
 ```
 
 ```{r, eval=TRUE}
-knitr::kable(addmargins(table(h$genhz, h$texcl)))
-knitr::kable(round(prop.table(table(h$genhz, h$texture_class), margin = 1) * 100))
+library(knitr)
+
+table(h$genhz, h$texcl) %>%
+  addmargins() %>%
+  kable()
+
+tex_t <- table(h$genhz, h$texture_class) %>% 
+  prop.table(margin = 1) %>%
+  round(2) * 100
+kable(tex_t)  
+
 ```
 
-To determine the mean by a group or category, use the `aggregate` function:
+To determine the mean by a group or category, use the `group_by` and `summarize` functions:
 
 ```{r, eval=TRUE}
-aggregate(clay ~ genhz, data = h, mean)
+
+h %>%
+  group_by(genhz) %>%
+  summarize(clay_avg = mean(clay, na.rm = TRUE),
+            clay_med = median(clay, na.rm = TRUE)
+            )
+
 ```
 
-To determine the median by group or category, use the aggregate command again:  
-
-```{r, eval=TRUE}
-aggregate(clay ~ genhz, data = h, median)
-
-# or we could use the summary() function to get both the mean and median
-aggregate(clay ~ genhz, data = h, summary)
-```
 
 ### Measures of Dispersion  
 
@@ -257,7 +275,7 @@ sd(h$clay, na.rm = TRUE)
 
 # or
 
-# sqrt(var(clay))
+sqrt(var(clay))
 ```
 
 **Coefficient of Variation** (CV)  is a relative (i.e., unitless) measure of standard deviation:
@@ -267,8 +285,7 @@ $CV = \frac{s}{\bar{x}} \times 100$
 CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:  
 
 ```{r, eval=TRUE}
-cv <- sd(clay) / mean(clay) * 100
-cv
+sd(clay) / mean(clay) * 100
 ```
 
 
@@ -310,7 +327,7 @@ IQR(clay)
 
 # or
 
-# diff(quantile(clay, c(0.25, 0.75)))
+diff(quantile(clay, p = c(0.25, 0.75)))
 ```
 
 ### Correlation
@@ -320,12 +337,23 @@ A correlation matrix is a table of the calculated correlation coefficients of al
 ```{r, eval=TRUE}
 h$hzdepm <- (h$hzdepb + h$hzdept) / 2 # Compute the middle horizon depth
 
-vars <- c("hzdepm", "clay", "sand", "total_frags_pct", "phfield")
-
-round(cor(h[, vars], use = "complete.obs"), 2)
+h %>%
+  select(hzdepm, clay, sand, total_frags_pct, phfield) %>%
+  cor(use = "complete.obs") %>%
+  round(2)
 ```
 
 As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0. Negative values indicate a negative relationship between variables. What is considered highly correlated? A good rule of thumb is anything with a value of **0.7** or greater is considered highly correlated. 
+
+
+## Exercise 2: Compute Descriptive Statistics
+
+1. Add to your existing R script from Exercise 1.
+2. Aggregate by `genhz` and calculate several descriptive statistics for `hzdept`, `gravel` and `phfield`.
+3. Cross-tabulate `geomposhill` and `argillic.horizon` from the site table, as a percentage.
+3. Compute a correlation matrix between `hzdept`, `gravel` and `phfield`.
+4. Save your R script, and forward to your instructor.
+
 
 ## Graphical Methods
 
@@ -370,7 +398,7 @@ knitr::kable(figs, caption = "Comparison of R's 3 Graphing Systems and their Equ
 ### Distributions
 
 ```{r distribution comparison, echo=FALSE, fig.dim = c(8, 4), eval=TRUE}
-data(metadata)
+data(metadata, package = "soilDB")
 
 # Generalized the horizon designations
 n <- c("A",
@@ -387,23 +415,25 @@ p <- c("A",
        "Cr",
        "R")
 
-loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
+loafercreek$genhz <- aqp::generalize.hz(loafercreek$hzname, n, p)
 
-h <- horizons(loafercreek)
-data("metadata")
-h <- within(h, {
-  hzdepm = (hzdepb + hzdept) / 2
-  texture_class = factor(texture_class, 
-                         levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
-                         )
-  })
+h <- aqp::horizons(loafercreek)
+h <- mutate(h,
+            hzdepm = (hzdepb + hzdept) / 2,
+            # convert texture_class to factors and sort
+            texture_class = factor(
+              texture_class,
+              levels = metadata[metadata$ColumnPhysicalName == "texcl", "ChoiceName"]
+              )
+            )
 
-idx <- is.na(h$texture_class)
 
 library(ggplot2)
 
+idx <- !is.na(h$texture_class)
+
 # bar plot
-p_b <- ggplot(h[!idx, ], aes(x = texture_class)) +
+p_b <- ggplot(h[idx, ], aes(x = texture_class)) +
   geom_bar() +
   ylab("count (n)") + xlab("texture class") +
   theme(aspect.ratio = 1) +
@@ -473,7 +503,7 @@ That is not to say the outlier points are in error, just that they are extreme c
 ![Boxplot description (Seltman, 2009)](static-figures/ch4_fig28.jpg)
 
 ```{r boxplots, eval=TRUE}
-ggplot(h, (aes(x = genhz, y = clay))) +
+ggplot(h, aes(x = genhz, y = clay)) +
   geom_boxplot()
 ```
 
@@ -692,16 +722,13 @@ This plots clay on the X axis and depth on the X axis. As shown in the scatterpl
 The function below produces a scatterplot matrix for all the numeric variables in the dataset. This is a good command to use for determining rough linear correlations for continuous variables.  
 
 ```{r, eval=TRUE}
-# Load the GGally package (install if needed)
-# install.packages("GGally")
-if (requireNamespace("GGally")) {
-  library(GGally)
+
+library(GGally)
   
-  # Create a scatter plot matrix
-  vars <- c("hzdepm", "clay", "phfield", "total_frags_pct")
-  
-  ggpairs(h[vars])
-}
+h %>%
+  select(hzdepm, clay, phfield, total_frags_pct) %>%
+  ggpairs()
+
 ```
 
 
@@ -742,7 +769,7 @@ ggplot(h, aes(x = genhz, y = clay)) +
   geom_boxplot()
 
 # heat map (pseudo bar plot)
-s <- site(loafercreek)
+s <- aqp::site(loafercreek)
 
 ggplot(s, aes(x = landform_string, y = pmkind)) + 
   geom_tile(alpha = 0.2) 
@@ -753,16 +780,17 @@ ggplot(s, aes(x = landform_string, y = pmkind)) +
 
 ```{r facets, fig.dim = c(8, 4), eval=TRUE}
 
+library(tidyr)
+
 # convert to long format
-df <- reshape2::melt(h, 
-                     id.vars = c("peiid", "genhz", "hzdepm"), 
-                     measure.vars = c("clay", "phfield", "total_frags_pct")
-                     )
+df <- h %>% 
+  select(peiid, genhz, hzdepm, clay, phfield, total_frags_pct) %>% 
+  pivot_longer(cols = c("clay", "phfield", "total_frags_pct"))
 
 ggplot(df, aes(x = genhz, y = value)) +
   geom_boxplot() +
   xlab("genhz") +
-  facet_wrap(~ variable, scales = "free_y")
+  facet_wrap(~ name, scales = "free_y")
 
 ```
 
@@ -770,23 +798,35 @@ ggplot(df, aes(x = genhz, y = value)) +
 #### Facets - depth plots
 
 ```{r, fig.dim=c(8, 4), eval=TRUE}
-library(aqp)
 
-data(loafercreek, package="soilDB")
+data(loafercreek, package = "soilDB")
 
-s <- aqp::slice(loafercreek, 0:100 ~ clay + phfield + total_frags_pct)
-
-s <- aqp::slab(s, fm = ~ clay + phfield + total_frags_pct, 
-          slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE))
+s <- aqp::slab(loafercreek, 
+               fm = ~ clay + phfield + total_frags_pct,
+               slab.structure = 0:100,
+               slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE))
 
 ggplot(s, aes(x = top, y = X50.)) +
+  # plot median
   geom_line() +
+  # plot 10th & 90th quantiles
   geom_ribbon(aes(ymin = X10., ymax = X90., x = top), alpha = 0.2) +
+  # invert depths
   xlim(c(100, 0)) +
+  # flip axis
   coord_flip() +
   facet_wrap(~ variable, scales = "free_x")
 
 ```
+
+
+## Exercise 3: Graphical Methods
+
+1. Add to your existing R script from Exercise 2.
+2. Create a faceted boxplot of `genhz` vs `gravel` and `phfield`.
+3. Create a facted depth plot for `gravel` and `phfield`
+4. Save your R script, and forward to your instructor.
+
 
 
 ## Transformations
@@ -818,7 +858,7 @@ The most intuitive means available for evaluating and describing slope aspect ar
 library(circular)
 
 # Extract the site table
-s <- site(loafercreek) 
+s <- aqp::site(loafercreek) 
 
 aspect <- s$aspect_field
 aspect <- circular(aspect, template="geographic", units="degrees", modulo="2pi")
@@ -831,6 +871,61 @@ The numeric output is fine, but a following graphic is more revealing, which sho
 ```{r, eval=TRUE}
 rose.diag(aspect, bins = 8, col="grey")
 ```
+
+
+### Texture
+
+NASIS has an abundance of field data captured within it, dating back in some cases as far as 1975. This legacy data, as it’s often called, captures raw and unfiltered information about our soil series and map unit component concepts. In the future it will undoubtable inform future digital soil mapping products by serving as training data. However, as most soil scientists are aware, legacy data is not a panacea. In many cases, the data is not as detailed as we would like (nor is some newer data). For example, many pedon descriptions include soil texture class and modifiers, but lack continuous estimates such as clay content and rock fragments %. This lack of continuous data makes it difficult to analyze and estimate other properties, such as available water capacity. However, while much continuous soil data is missing, it can still be estimated by the class ranges and averages. NASIS has several such calculations to estimate missing values. To facilitate this process in R, several new functions have recently been added to the aqp package. This package hosts a variety of R functions specifically designed to analyze and plot soil data. It is also taught in conjunction with the NEDC course Statistics for Soil Survey.These new aqp functions are intended to impute missing values or check existing values. The ssc_to_texcl() function uses the same logic as the particle size estimator calculation in NASIS to classify sand and clay into texture class. The results are stored in data(soiltexture) and used by texcl_to_ssc() as a lookup table to convert texture class to sand, silt and clay. The function texcl_to_ssc() replicates the functionality described by Levi (2017). Unlike the other functions, texture_to_taxpartsize() is intended to be computed on weighted averages within the family particle size control section. Below is a demonstration of these new aqp R functions.
+
+```{r}
+
+library(aqp)
+library(soiltexture)
+
+# example of texcl_to_ssc(texcl)
+texcl <- c("s",  "ls",  "l",  "cl",  "c")   
+test <- texcl_to_ssc(texcl) 
+head(cbind(texcl, test))
+
+# example of ssc_to_texcl()
+ssc <- data.frame(CLAY = c(55, 33, 18, 6, 3),
+                  SAND = c(20, 33, 42, 82, 93),
+                  SILT = c(25, 34, 40, 12,  4)
+                  )  
+texcl <- ssc_to_texcl(sand = ssc$SAND, 
+                      clay = ssc$CLAY
+                      )
+ssc_texcl <- cbind(ssc, texcl)
+head(ssc_texcl)
+
+# plot on a textural triangle
+TT.plot(class.sys = "USDA-NCSS.TT", 
+        tri.data = ssc_texcl,
+        pch = 16, col = "blue"
+        )
+
+
+# example of texmod_to_fragvoltol()
+frags <- c("gr",  "grv",  "grx",  "pgr",  "pgrv",  "pgrx") 
+test <- texmod_to_fragvoltot(frags)[1:4]
+head(test)
+
+# example of texture_to_taxpartsize()
+tex <- data.frame(texcl = c("c",  "cl",  "l",  "ls",  "s"),
+                  clay  = c(55, 33, 18, 6, 3),
+                  sand  = c(20, 33, 42, 82, 93),
+                  fragvoltot = c(35, 15, 34, 60, 91)
+                  )
+tex$fpsc <- texture_to_taxpartsize(
+  texcl = tex$texcl, 
+  clay = tex$clay,
+  sand = tex$sand, 
+  fragvoltot = tex$fragvoltot
+  ) 
+head(tex)
+
+```
+
 
 ## References (Exploratory Data Analysis)
 
