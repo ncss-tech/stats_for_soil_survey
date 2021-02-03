@@ -137,13 +137,15 @@ gopher.locations <- st_as_sf(
 mapview(gopher.locations, label = gopher.locations$site_id)
 ```
 
-### EXERCISE 1: `mapview` with your own data
+### EXERCISE 1
 
-Use the script below to make an R plot of pedon data loaded from your NASIS selected set.
+In this exercise, you will create an interactive map with the pedons in your selected set. Then you will export them to a shapefile.
 
-The following script plots the standard WGS84 longitude/latitude decimal degrees fields from Site table of NASIS. In some cases, these fields might be incomplete due to insufficient data or to not having been calculated from UTM coordinates in NASIS. 
+#### Interactive `mapview` 
 
-Run the following script on the data loaded from your local NASIS selected set. Note that you need to filter out any pedons that are missing their standard WGS84 longitude/latitude coordinates.
+Use the script below to make an R plot and a shapefile of pedon data loaded from your NASIS selected set.
+
+The following script plots the standard WGS84 longitude/latitude decimal degrees fields from Site table of NASIS. In some cases, these data might be incomplete.
 
 ```{r r_plot_pedons, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
 library(aqp)
@@ -153,28 +155,60 @@ library(mapview)
 
 # get pedons from the selected set
 pedons <- fetchNASIS(from = 'pedons')
+```
 
-# missing values in coordinates not allowed
-# using logical vectors combined with logical AND
-pedons.sp <- subset(pedons, !is.na(x_std) & !is.na(y_std))
+#### Create a subset
 
-# create sf object
+Missing values in coordinates are not allowed. Creata a subset SoilProfileCollection for the pedons that are not missing their standard spatial data.
+
+ - Use the base R `subset()` function (or `dplyr::filter()`) 
+ - Create a subset of your pedons using `is.na()`
+  - `x_std` and `y_std` variables  contain WGS84 standard longitude and latitude
+
+```{r, eval=FALSE}
+# modify this code to create a subset
+pedons.sp  <- subset(pedon.locations, ...)
+```
+
+```{r, eval=FALSE, include=FALSE, echo=FALSE}
+# this is complete answer, subset on one usually enough
+subset(pedons, !is.na(x_std) & !is.na(y_std))
+```
+
+```{r}
+# create sf object (more on this in next section)
 pedon.locations <- st_as_sf(
   site(pedons.sp), 
   coords = c('x_std','y_std'),
-  crs = st_crs(4326)
+  crs = st_crs(4326) #WGS84 GCS
 )
 
-# interactive map
+# plot an interactive map
 mapview(pedon.locations, 
         legend = FALSE, 
         map.types = 'OpenStreetMap', 
         label = pedon.locations$site_id)
 ```
 
-### Additional Tutorials
+#### Saving to Shapefile
 
-#### Displaying Pedon Data in Google Earth
+```{r, eval=FALSE}
+pedon.locations <- pedon.locations[, c(
+    "pedlabsampnum", "pedon_id",
+    "taxonname", "hillslopeprof",
+    "elev_field", "slope_field",
+    "aspect_field", "plantassocnm",
+    "bedrckdepth", "bedrckkind",
+    'pmkind', 'pmorigin'
+  )]
+
+# write to SHP; output CRS is CGS WGS84
+st_write(s, "./NASIS-pedons.shp")
+```
+
+For further information on exporting data to shapefile, see this tutorial: [**Export Pedons to Shapefile with `sp`**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html).
+
+#### Export for Google Earth (_.kml_)
 
 Google Earth is a powerful viewer for point data.  Geographic data is displayed in Google Earth using the Keyhole Markup Language (KML) format.  
 
@@ -182,9 +216,6 @@ Using the [plotKML](https://cran.r-project.org/web/packages/plotKML/plotKML.pdf)
 
 See the related material in this tutorial: [**Export Pedons to Google Earth**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html). 
 
-#### Exporting Pedon Data to an ESRI Shapefile
-
-Another way you can view the data is to export a shape file from R.  For further information, see this tutorial: [**Export Pedons to Shapefile**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html).
 
 ## Many Packages, Many Spatial Representations
 
