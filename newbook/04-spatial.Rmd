@@ -78,7 +78,7 @@ Here are some R-based interfaces to NCSS data sources via [`soilDB`](https://cra
 
 * Functions that _return_ spatial data:
 
-  + - [fetchSDA_spatial()](http://ncss-tech.github.io/soilDB/docs/reference/fetchSDA_spatial.html): polygon, bounding box and centroid data from SSURGO, STATSGO and the `sapolygon` (Soil Survey Area Polygon) from Soil Data Access (SDA)
+  + [fetchSDA_spatial()](http://ncss-tech.github.io/soilDB/docs/reference/fetchSDA_spatial.html): polygon, bounding box and centroid data from SSURGO, STATSGO and the `sapolygon` (Soil Survey Area Polygon) from Soil Data Access (SDA)
 
   + [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html): simplified series extent as polygons
   
@@ -123,7 +123,6 @@ library(mapview)
 data("gopheridge", package = "soilDB")
 
 # replace gopheridge object with fetchNASIS() (your data)
-#gopheridge <- NULL
 #gopheridge <- fetchNASIS()
 
 # create simple features POINT geometry data.frame
@@ -132,17 +131,20 @@ data("gopheridge", package = "soilDB")
 gopher.locations <- st_as_sf(site(gopheridge), 
                              coords = c('x_std','y_std'),
                              crs = st_crs(4326))
+# create interactive map with sfc_POINT object
+#  use site_id in sf data.frame as labels
+mapview(gopher.locations, label = gopher.locations$site_id)
+```
 
+<!-- note: super verbose output too soon, we cover in detail later
+```{r, eval=FALSE}
 # inspect first 6 points
 head(gopher.locations)
 
 # inspect CRS
 st_crs(gopher.locations)
-
-# create interactive map with sfc_POINT object
-#  use site_id in sf data.frame as labels
-mapview(gopher.locations, label = gopher.locations$site_id)
 ```
+-->
 
 ### Displaying Pedon Data in Google Earth
 
@@ -156,7 +158,7 @@ See the related material in this tutorial: [**Export Pedons to Google Earth**](h
 
 Another way you can view the data is to export a shapefile from R.  For further information, see this tutorial: [**Export Pedons to Shapefile**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html).
 
-### Follow along with your own data
+### EXERCISE 1: `mapview` with your own data
 
 Use the script below to make an R plot of pedon data loaded from your NASIS selected set.
 
@@ -384,13 +386,14 @@ The `writeRaster()` function interprets the given (and missing) arguments as:
 
 ### Converting Vector to Raster
 
-#### `raster::rasterize()`
+#### [`raster::rasterize()`](https://www.rdocumentation.org/packages/raster/versions/3.4-5/topics/rasterize)
 
-#### `fasterize::fasterize()`
+#### [`fasterize::fasterize()`](https://www.rdocumentation.org/packages/fasterize/versions/1.0.3/topics/fasterize)
 
 ## Coordinate Reference Systems
 
 Spatial data aren't all that useful without an accurate description of the coordinate reference system (CRS). This type of information is typically stored within the ".prj" component of a shapefile, or in the header of a GeoTIFF. 
+
 Without a CRS it is not possible to perform coordinate transformations (e.g. conversion of geographic coordinates to projected coordinates), spatial overlay (e.g. intersection), or geometric calculations (e.g. distance or area).
 
 The "old" way (PROJ.4) of specifying coordinate reference systems is using character strings containing, for example: `+proj` or `+init` arguments. In general, this still "works," so you may encounter it and need to know about it. But you also may encounter cases where CRS are specified using integer EPSG codes, OGC codes or well-known text (WKT).
