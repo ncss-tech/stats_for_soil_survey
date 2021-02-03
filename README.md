@@ -42,7 +42,7 @@ Part 1
       - [Shiny Apps](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/4_shiny_app.html)
 -->
 
-### [**Chapter 4:** *Spatial Data in R*](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/04-spatial.html)
+### [**Chapter 4:** *Spatial Data in R*](http://ncss-tech.github.io/stats_for_soil_survey/book/spatial.html)
 
  - #### [Creating Maps with R](https://smroecker.github.io/soil-pit/2019_creating_maps_with_R.html)
 
