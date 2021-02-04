@@ -87,54 +87,6 @@ points(test, pch = 19)
 ```
 
 
-### Stratified Random
-
-In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area, it can be used to develop the strata. Strata may be sampled equally or in proportion to area; however, if the target of interest is rare in the population, it may be preferable to sample the strata equally (Franklin and Miller, 2009).
-
-**Advantages**
-
- - Higher accuracy
- - Lower cost 
-
-**Disadvantages**
-
- - The existing knowledge used to construct strata may be flawed.
-
-```{r stratified, fig.width=4, fig.height=4, eval=TRUE}
-plot(polys, main = "Stratified random sample")
-
-# Generate a spatially stratified random sample
-test <- spsample(polys, n = 15, type = "stratified")
-points(test, pch = 19)
-```
-
-Note that the `spsample()` function only stratifies the points spatially. Other more sophisticated designs can be implemented using the [spsurvey](https://cran.r-project.org/package=spsurvey), [spcosa](https://cran.r-project.org/package=spcosa), [sharpshootR](http://ncss-tech.github.io/sharpshootR/docs/reference/constantDensitySampling.html), or [clhs](https://cran.r-project.org/package=clhs) packages.
-
-
-### Multistage Stratified Random
-
-In multistage random sampling, the region is separated into different subsets that are randomly selected (i.e., first stage), and then the selected subsets are randomly sampled (i.e., second stage). This is similar to stratified random sampling, except that with stratified random sampling each strata is sampled.
-
-**Advantages**
-
- - Greater efficiency
- - Lower cost  
-
-**Disadvantages**
-
- - Lower precision
- - Stronger clustering than simple random sampling
-
-```{r two_stage, fig.width=4, fig.height=4, eval=TRUE}
-plot(polys, main = "Two-stage random")
-
-# Select 8 samples from each square
-s <- sapply(slot(polys, "polygons"), function(x) spsample(x, n = 5, type = "random"))
-points(sample(s, 1)[[1]], pch = 19) # randomly select 1 square and plot
-points(sample(s, 1)[[1]], pch = 19) # randomly select 1 square and plot
-```
-
-
 ### Systematic
 
 In systematic sampling, a sample is taken according to a regularized pattern. This approach ensures even spatial coverage. Patterns may be rectilinear, triangular, or hexagonal. This sampling strategy can be inaccurate if the variation in the population doesn't coincide with the regular pattern (e.g., if the population exhibits periodicity).
@@ -174,14 +126,64 @@ In cluster sampling, a cluster or group of points is selected at one or more sit
 plot(polys, main = "Clustered (n = 3) random sample")
 
 # Generate cluster random sample
-test <- spsample(polys, n = 15, type = "clustered", nclusters = 3, iter = 10)
+test <- spsample(polys, nclusters = 3, type = "clustered")
 points(test, pch = 19)
 ```
 
 
-### Conditioned Latin Hypercube (cLHS)
 
-Conditioned Latin hypercube sampling is a stratified random sampling technique to obtain representative samples from feature (attribute) space (Minasny and McBratney, 2006). For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
+### Stratified Random
+
+In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area, it can be used to develop the strata. Strata may be sampled equally or in proportion to area; however, if the target of interest is rare in the population, it may be preferable to sample the strata equally (Franklin and Miller, 2009).
+
+**Advantages**
+
+ - Higher accuracy
+ - Lower cost 
+
+**Disadvantages**
+
+ - The existing knowledge used to construct strata may be flawed.
+
+```{r stratified, fig.width=4, fig.height=4, eval=TRUE}
+plot(polys, main = "Stratified random sample")
+
+# Generate a spatially stratified random sample
+test <- sapply(slot(polys, 'polygons'), function(x) spsample(x, n = 1, type = "random"))
+test <- do.call("rbind", test)
+points(test, pch = 19)
+```
+
+Note that the `spsample()` function only stratifies the points spatially. Other more sophisticated designs can be implemented using the [spsurvey](https://cran.r-project.org/package=spsurvey), [spcosa](https://cran.r-project.org/package=spcosa), [sharpshootR](http://ncss-tech.github.io/sharpshootR/docs/reference/constantDensitySampling.html), or [clhs](https://cran.r-project.org/package=clhs) packages.
+
+
+### Multistage Stratified Random
+
+In multistage random sampling, the region is separated into different subsets that are randomly selected (i.e., first stage), and then the selected subsets are randomly sampled (i.e., second stage). This is similar to stratified random sampling, except that with stratified random sampling each strata is sampled.
+
+**Advantages**
+
+ - Greater efficiency
+ - Lower cost  
+
+**Disadvantages**
+
+ - Lower precision
+ - Stronger clustering than simple random sampling
+
+```{r two_stage, fig.width=4, fig.height=4, eval=TRUE}
+plot(polys, main = "Two-stage random")
+
+# Select 8 samples from each square
+s <- sapply(slot(polys, "polygons"), function(x) spsample(x, n = 5, type = "random"))
+points(sample(s, 1)[[1]], pch = 19) # randomly select 1 square and plot
+points(sample(s, 1)[[1]], pch = 19) # randomly select 1 square and plot
+```
+
+
+#### Conditioned Latin Hypercube (cLHS)
+
+Conditioned Latin hypercube sampling is a multi-staged stratified random sampling technique to obtain representative samples from feature (attribute) space (Minasny and McBratney, 2006). For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
 
  - Normalized Difference Vegetation Index (NDVI),  
  - Topographic Wetness Index (a.k.a. Wetness Index, compound topographic index),  
