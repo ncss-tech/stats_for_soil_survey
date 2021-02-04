@@ -1,0 +1,66 @@
+---
+title: "Spatial Introduction Exercise Instructions"
+author: "Andrew G. Brown"
+date: "2/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Spatial Intro Instructions
+
+This exercise will demonstrate how to use R Markdown to make interactive maps inside HTML reports. 
+
+0. Install the development version of `mapview` using `remotes`.
+
+```{r, eval=FALSE}
+remotes::install_github("rspatial/mapview")
+```
+
+1. Open a new R Markdown document: _File >> New File >> R Markdown..._
+
+2. Enter a **Title** and select `HTML` as the output format.
+
+3. _Delete_ all text below the YAML header (lines 7 to 30). The YAML header is denoted by `---` and must begin on the first line. 
+
+4. Enter the following code from Chapter 4, Exercise 1 (4.4.2)
+
+ - http://ncss-tech.github.io/stats_for_soil_survey/book/spatial.html#exercise-1
+ 
+````
+```{r, eval=TRUE}`r ''`
+library(aqp)
+library(soilDB)
+library(sf)
+library(mapview)
+
+# get pedons from the selected set
+pedons <- fetchNASIS(from = 'pedons')
+
+# REMOVE PEDONS WITH NA COORDINATES
+pedons.sp <- subset(pedons, !is.na(x_std) & !is.na(y_std))
+
+# create sf object (more on this in next section)
+pedon.locations <- st_as_sf(
+  site(pedons.sp), 
+  coords = c('x_std','y_std'),
+  crs = st_crs(4326) #WGS84 GCS
+)
+
+# plot an interactive map
+mapview(pedon.locations, 
+        legend = FALSE, 
+        map.types = 'OpenStreetMap', 
+        label = pedon.locations$site_id)
+```
+````
+
+5. Click the Knit button (Yarn icon). You will be prompted to save your file if you have not already. Save it as `my-pedons_YOURNAME.Rmd`. The file name must end in _.Rmd_.
+
+6. Inspect the output. Look at the messages that are produced from loading packages, and the interactive plot should be at the bottom of the page. 
+
+ - What options are available on the map?
+ 
+ - What happens when you click on a point?
