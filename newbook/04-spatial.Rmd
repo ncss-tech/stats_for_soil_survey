@@ -511,24 +511,27 @@ The [soilDB WCS tutorial](http://ncss-tech.github.io/AQP/soilDB/WCS-demonstratio
 library(soilDB)
 # wrangling polygons
 library(sp)
+library(sf)
 # raster data visualization
 library(rasterVis)
 
-# AOI defined "by-hand"
-# could also be an sp or sf object
-a <- list(
-  aoi = c(-121, 37, -120, 38),
-  crs = '+init=EPSG:4326'
+# make a bounding box and assign a CRS (4326: GCS, WGS84)
+bb <- st_bbox(
+  c(xmin = -121, xmax = -120, ymin = 37, ymax = 38), 
+  crs = st_crs(4326)
 )
+
+# convert bbox to sf geometry
+bb <- st_as_sfc(bb)
 
 # try some others from the complete list of available grids:
 # WCS_details(wcs = 'ISSR800')
 
 # get soil texture class, 0-25cm
-r1 <- ISSR800.wcs(aoi = a, var = 'texture_025cm')
+r1 <- ISSR800.wcs(aoi = bb, var = 'texture_025cm')
 
 # get pH, 0-25cm
-r2 <- ISSR800.wcs(aoi = a, var = 'ph_025cm')
+r2 <- ISSR800.wcs(aoi = bb, var = 'ph_025cm')
 
 
 # grid of category IDs + labels stored in a 
@@ -552,12 +555,40 @@ library(mapview)
 library(leafsync)
 
 # try 
-m1 <- mapview(texture_025cm, map.types = "Esri.WorldImagery", legend = TRUE, na.color = NA,)
-m2 <- mapview(ph_025cm, map.types = "Esri.WorldImagery", legend = TRUE, na.color = NA)
+m1 <- mapview(r1, map.types = "Esri.WorldImagery", legend = TRUE, na.color = NA)
+m2 <- mapview(r2, map.types = "Esri.WorldImagery", legend = TRUE, na.color = NA)
 
 # build synced panels.
 sync(m1, m2)
 ```
+
+
+Make another pair of synchronized `mapview` panels, this time using SSURGO and STATSGO map unit delineations via SDA. This example uses the [`SDA_spatialQuery()`](http://ncss-tech.github.io/soilDB/docs/reference/SDA_spatialQuery.html) function to request vector data from SDA using a template `sp` object. The `geomIntersection = TRUE` argument to `SDA_spatialQuery()` causes SDA to compute the spatial intersection between template (bounding box) and map unit delineations. SDA has fairly tight constraints on how much data can be returned per request (32Mb), so you will have to plan carefully when working with large areas of interest.
+
+```{r out.width="100%"}
+# make a smaller bounding box
+bb <- st_bbox(c(xmin = -114.16, xmax = -114.08, ymin = 47.65, ymax = 47.68), crs = st_crs(4326))
+# convert to sf geometry
+bb <- st_as_sfc(bb)
+
+## TODO: SDA_spatialQuery() currently expects an sp object
+# convert to sp object
+bb <- as_Spatial(bb)
+
+# get SSURGO and STATSGO
+# result is a SpatialPolygonsDataFrame
+ssurgo <- SDA_spatialQuery(bb, what = 'geom', geomIntersection = TRUE)
+statsgo <- SDA_spatialQuery(bb, what = 'geom', geomIntersection = TRUE, db = 'STATSGO')
+
+# make mapview panels
+# adjust line styles, disable legends
+m1 <- mapview(ssurgo, map.types = "Esri.WorldImagery", legend = FALSE, na.color = NA, color = 'yellow', fill = NA, lwd = 1)
+m2 <- mapview(statsgo, map.types = "Esri.WorldImagery", legend = FALSE, na.color = NA, color = 'white', fill = NA, lwd = 1)
+
+# sync
+sync(m1, m2)
+```
+
 
 
 <!-- I'd like to add some realistic examples here, but there may not be time enough to cover. Also, the most realistic examples depend on CRS transformations, re-shuffling required. -->
@@ -854,7 +885,7 @@ We will be using polygons associated with MLRAs 15 and 18 as part of this demons
 Import these data now with `readOGR()`; recall the somewhat strange syntax. You will need the data and `RasterStack` object `rs` we created in the examples above.
 
 ```{r results='hide', eval=TRUE}
-# just to be sure, pointer to data path
+# just to be sure, pointer to data path 
 ch2b.data.path <- 'C:/workspace2/chapter-2b'
 
 # load MLRA polygons
