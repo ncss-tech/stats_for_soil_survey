@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Chapter 5 Sampling | Statistics for Soil Survey - Part 1</title>
   <meta name="description" content="Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::gitbook." />
-  <meta name="generator" content="bookdown 0.21 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Chapter 5 Sampling | Statistics for Soil Survey - Part 1" />
   <meta property="og:type" content="book" />
@@ -24,7 +24,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2021-02-10" />
+<meta name="date" content="2021-03-22" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -61,12 +61,17 @@
 <script src="libs/leaflet-binding-2.0.4.1/leaflet.js"></script>
 <script src="libs/leaflet-providers-1.9.0/leaflet-providers_1.9.0.js"></script>
 <script src="libs/leaflet-providers-plugin-2.0.4.1/leaflet-providers-plugin.js"></script>
+<script src="libs/FlatGeoBuf-3.3.3/fgb.js"></script>
+<script src="libs/FlatGeoBuf-3.3.3/flatgeobuf-geojson.min.js"></script>
+<script src="libs/chromajs-2.1.0/chroma.min.js"></script>
+<link id="gopher_locations-1-attachment" rel="attachment" href="libs/gopher_locations-0.0.1/gopher_locations_layer.fgb"/>
 <link href="libs/HomeButton-0.0.1/home-button.css" rel="stylesheet" />
 <script src="libs/HomeButton-0.0.1/home-button.js"></script>
 <script src="libs/HomeButton-0.0.1/easy-button-src.min.js"></script>
 <script src="libs/clipboard-0.0.1/setClipboardText.js"></script>
 <link href="libs/mapviewCSS-0.0.1/mapview-popup.css" rel="stylesheet" />
 <link href="libs/mapviewCSS-0.0.1/mapview.css" rel="stylesheet" />
+<link id="s-series-1-attachment" rel="attachment" href="libs/s-series-0.0.1/s-series_layer.fgb"/>
 
 
 <style type="text/css">
@@ -158,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="0.4" data-path="index.html"><a href="index.html#personalization"><i class="fa fa-check"></i><b>0.4</b> Personalization</a></li>
 <li class="chapter" data-level="0.5" data-path="index.html"><a href="index.html#install-.rprofile"><i class="fa fa-check"></i><b>0.5</b> Install .RProfile</a></li>
 <li class="chapter" data-level="0.6" data-path="index.html"><a href="index.html#install-required-packages"><i class="fa fa-check"></i><b>0.6</b> Install Required Packages</a></li>
-<li class="chapter" data-level="0.7" data-path="index.html"><a href="index.html#common-errors"><i class="fa fa-check"></i><b>0.7</b> Common Errors</a><ul>
+<li class="chapter" data-level="0.7" data-path="index.html"><a href="index.html#dealing-with-errors"><i class="fa fa-check"></i><b>0.7</b> Dealing With Errors</a><ul>
 <li class="chapter" data-level="0.7.1" data-path="index.html"><a href="index.html#no-output-is-produced-after-pasting-into-console"><i class="fa fa-check"></i><b>0.7.1</b> No output is produced after pasting into console</a></li>
 <li class="chapter" data-level="0.7.2" data-path="index.html"><a href="index.html#somepackage-is-not-available-for-r-version-x.y.z"><i class="fa fa-check"></i><b>0.7.2</b> <code>‘SOMEPACKAGE’ is not available (for R version X.Y.Z)</code></a></li>
 </ul></li>
@@ -310,7 +315,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="4.3" data-path="spatial.html"><a href="spatial.html#spatial-data-sources"><i class="fa fa-check"></i><b>4.3</b> Spatial Data Sources</a></li>
 <li class="chapter" data-level="4.4" data-path="spatial.html"><a href="spatial.html#viewing-pedon-locations"><i class="fa fa-check"></i><b>4.4</b> Viewing Pedon Locations</a><ul>
 <li class="chapter" data-level="4.4.1" data-path="spatial.html"><a href="spatial.html#plotting-geographic-data"><i class="fa fa-check"></i><b>4.4.1</b> Plotting Geographic Data</a></li>
-<li class="chapter" data-level="4.4.2" data-path="spatial.html"><a href="spatial.html#exercise-1-1"><i class="fa fa-check"></i><b>4.4.2</b> EXERCISE 1</a></li>
+<li class="chapter" data-level="4.4.2" data-path="spatial.html"><a href="spatial.html#exercise-1-spatial-intro"><i class="fa fa-check"></i><b>4.4.2</b> EXERCISE 1 (Spatial Intro)</a></li>
 </ul></li>
 <li class="chapter" data-level="4.5" data-path="spatial.html"><a href="spatial.html#many-packages-many-spatial-representations"><i class="fa fa-check"></i><b>4.5</b> Many Packages, Many Spatial Representations</a><ul>
 <li class="chapter" data-level="4.5.1" data-path="spatial.html"><a href="spatial.html#the-sf-package"><i class="fa fa-check"></i><b>4.5.1</b> The <code>sf</code> package</a></li>
@@ -575,12 +580,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb378"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb378-1"><a href="sampling.html#cb378-1"></a><span class="co"># Summary of clhs object</span></span>
 <span id="cb378-2"><a href="sampling.html#cb378-2"></a><span class="kw">summary</span>(cs<span class="op">$</span>sampled_data)<span class="op">$</span>data</span></code></pre></div>
 <pre><code>##       elev           slope       
-##  Min.   : 96.0   Min.   : 1.013  
-##  1st Qu.:108.5   1st Qu.: 7.586  
-##  Median :124.0   Median :14.278  
-##  Mean   :131.0   Mean   :14.756  
+##  Min.   : 96.0   Min.   : 0.000  
+##  1st Qu.:108.5   1st Qu.: 7.618  
+##  Median :124.0   Median :13.915  
+##  Mean   :130.8   Mean   :14.565  
 ##  3rd Qu.:151.0   3rd Qu.:20.591  
-##  Max.   :190.0   Max.   :33.188</code></pre>
+##  Max.   :187.0   Max.   :33.426</code></pre>
 <div class="sourceCode" id="cb380"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb380-1"><a href="sampling.html#cb380-1"></a><span class="co"># Summary of raster objects</span></span>
 <span id="cb380-2"><a href="sampling.html#cb380-2"></a><span class="kw">cbind</span>(<span class="kw">summary</span>(volcano_r), <span class="kw">summary</span>(slope_r))</span></code></pre></div>
 <pre><code>##         elev      slope
@@ -632,7 +637,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb383-29"><a href="sampling.html#cb383-29"></a><span class="co"># Summarize the sample values</span></span>
 <span id="cb383-30"><a href="sampling.html#cb383-30"></a><span class="kw">aggregate</span>(slope <span class="op">~</span><span class="st"> </span>method, <span class="dt">data =</span> s, <span class="cf">function</span>(x) <span class="kw">round</span>(<span class="kw">summary</span>(x)))</span></code></pre></div>
 <pre><code>##              method slope.Min. slope.1st Qu. slope.Median slope.Mean slope.3rd Qu. slope.Max.
-## 1              cLHS          1             8           14         15            21         33
+## 1              cLHS          0             8           14         15            21         33
 ## 2     Simple Random          0             7           17         15            23         28
 ## 3 Simple Random 400          0             6           14         15            21         37
 ## 4 Stratified Random          3             6           15         15            21         35</code></pre>
