@@ -6,6 +6,10 @@
 ## (note: they should work fine in regular e.g. Rstudio sessions)
 # remotes::install_github('r-spatial/mapview')
 
+## TODO: code requires to setup local copies of large files required by chapters
+
+
+
 options(bookdown.clean_book = TRUE)
 
 # remove ../book
