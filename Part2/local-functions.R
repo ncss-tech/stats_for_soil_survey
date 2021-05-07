@@ -1,3 +1,7 @@
+## Functions used by chapters in Book / Part2
+##
+##
+
 
 
 ## TODO (DEB): consider placing this in sharpshootR
