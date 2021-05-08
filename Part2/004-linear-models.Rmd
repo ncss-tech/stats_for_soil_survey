@@ -1,8 +1,12 @@
-
+---
+  output: html_document
+  editor_options: 
+    chunk_output_type: console
+---
 
 # Linear Regression
 
-![Statistics for pedologists course banner image](figure/logo.jpg)
+![Statistics for pedologists course banner image](static-figures/logo.jpg)
 
 
 
@@ -10,25 +14,19 @@
 
 Linear regression models the linear relationship between a response variable (y) and an predictor variable (x). 
 
-$y = a + Bx + e$
+$y = \alpha + \beta x + e$
 
 Where:
 
   * $y$ = the dependent variable
 
-  * $a$ = the intercept of the fitted line
+  * $\alpha$ = the intercept of the fitted line
 
-  * $B$ = the Regression coefficient, i.e. slope of the fitted line. Strong relationships will have high values.
+  * $\beta$ = the Regression coefficient, i.e. slope of the fitted line. Strong relationships will have high values.
 
   * $x$ = the independent variable (aka explanatory or predictor variable(s) )
 
   * $e$ = the error term
-
-<!-- fix this -->
-
-[//]: # (- \beta_{0} = intercept of the fitted line)
-[//]: # (- \beta_{1}x = slope of the fitted line)
-[//]: # (- \varepsilon = the error term)
 
 Linear regression has been used for soil survey applications since the early 1900s when Briggs and McLane (1907) developed a pedotransfer function to estimate the wilting coefficient as a function of soil particle size. 
 
@@ -45,7 +43,7 @@ This climate study began in 1998 as part of a national study run by the National
 
 For more details see the "MLRA 30 - Soil Climate Study - Soil Temperature" project in NASIS, on [GitHub](https://github.com/smroecker/mast-mojave), or by [Roecker et al., 2012](https://www.researchgate.net/publication/331977150_Modeling_and_Application_of_Soil_Temperature_in_the_Mojave_and_Lower_Colorado_Deserts_of_California/citations).
 
-```{r nasis-project}
+```{r nasis-project, eval = TRUE}
 
 library(soilDB)
 
@@ -106,7 +104,7 @@ length(unique(mastSeries_df$siteid))
 
 ### Henry Mount Database
 
-The Henry Mount Database already has 59 of the sites from the Mojave. The full dataset however has 68 sites.
+The Henry Mount Database already has 59 of the sites from the Mojave. The full data set however has 68 sites.
 
 ```{r henry, eval = FALSE}
 
@@ -158,7 +156,7 @@ write.csv(mastSites.df, "mastSites.csv")
 
 Since the Henry Mount database is incomplete we will procede with the aggregation from the txt files.
 
-```{r dataset}
+```{r dataset, eval = FALSE}
 
 # Read tempC data
 setwd("D:/projects/soilTemperatureMonitoring/data/R")
@@ -180,7 +178,7 @@ mast_df$tempC <- (mast_df$tempF - 32) * (5 / 9)
 
 Where do our points plot? To start we need to convert them to a spatial object first. Then we can create an interactive we map using `mapview`. Also, if we wish we can also export the locations as a Shapefile.
 
-```{r mapview}
+```{r eval = FALSE}
 
 library(sf)
 library(mapview)
@@ -226,7 +224,7 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 
 As you can see below their are numerous variables we could inspect.
 
-```{r extract, eval = FALSE}
+```{r eval = FALSE}
 
 library(raster)
 
@@ -272,7 +270,7 @@ save(data, mast_df, mast_sf2, mlra, geodata_s, file = "C:/workspace2/github/ncss
 
 Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify pecularities in the data is to plot it.
 
-```{r load-data}
+```{r eval = TRUE}
 
 githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data_v2.Rdata"
 load(url(githubURL))
@@ -283,7 +281,7 @@ summary(data)
 
 You may recall from discussion of EDA that QQ plots are a visual way to inspect the normality of a variable. If the variable is normally distributed, the points (e.g. soil observations) should line up along the straight line.
 
-```{r qq-plot}
+```{r qq-plot, eval = TRUE}
 
 # QQ plot
 
@@ -297,7 +295,7 @@ ggplot(data, aes(sample = tempC)) +
 
 By examining the correlations between some of the predictors we can also determine wheter they are *collinear* (e.g. > 0.6). This is common for similar variables such as landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In additino, collinearity will make it difficult to estimate our regression coefficients. 
 
-```{r}
+```{r, eval = TRUE}
 
 vars <- c("tempC", "elev", "temp", "precip", "tc_2", "tc_1", "tc_3")
 GGally::ggpairs(data[, vars])
@@ -316,7 +314,7 @@ Examining the density plots on the diagonal axis of the scatterplots we can also
 
 Since our data was not randomly sampled, we had better check the distribution of our samples vs the population. We can accomplish this by overlaying the sample distribution of predictor variables vs a large random sample.
 
-```{r}
+```{r, eval = TRUE}
 
 geodata_df <- as.data.frame(geodata_s)
 
@@ -345,7 +343,7 @@ The overlap between our sample and the population appear satistifactory.
 
 R has several functions for fitting linear models. The most common is arguably the `lm()` function from the stats R package, which is loaded by default. The `lm()` function is also extended thru the use of several additional packages such as the car and caret R packages. Another noteworthy R package for linear modeling is rms, which offers the `ols()` function for linear modeling. The rms R package (Harrell et al., 2015) offers an 'almost' comprehesive alternative to `lm()' and it's accessory function. It is difficult to objectively functions say which approach is better. Therefore methods both methods will be demonstrated. Look for comments (i.e. #) below referring to rms, stats, caret or visreg. 
 
-```{r lm-ols}
+```{r lm-ols, eval = TRUE}
 
 # stats
 fit_lm <- lm(tempC ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, weights = data$numDays)
@@ -369,7 +367,7 @@ fit_ols <- ols(tempC ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_
 
 Once we have a model we need to assess residuals for linearity, normality, and homoscedastivity (or constant variance). Oddly this is one area were the rms R package does not offer convient functions for plotting residuals, therefore we'll simply access the results of `lm()`.
 
-```{r residuals}
+```{r residuals, eval = TRUE}
 
 par(mfcol = c(2, 2))
 
@@ -384,14 +382,14 @@ termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 
 As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the **variance inflation factor** (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
 
-```{r vif}
+```{r vif, eval = TRUE}
 
 # vif() function from the rms or car packages
-sqrt(vif(fit_lm))
+sqrt(car::vif(fit_lm))
 
 # or 
 
-sqrt(vif(fit_ols)) > 3
+sqrt(rms::vif(fit_ols)) > 3
 
 ```
 
@@ -404,7 +402,7 @@ Modeling is an iterative process that cycles between fitting and evaluating alte
 
 Both the rms and caret packages offer methods for variable selection and cross-validation. In this instance the rms approach is a bit more convinent, with the one line call to `validate()`.
 
-```{r rms-step1}
+```{r, eval = TRUE}
 
 # Set seed for reproducibility
 set.seed(42)
@@ -418,7 +416,7 @@ step_rms <- validate(fit_ols, method = "crossvalidation", B = 10, bw = TRUE)
 
 The results for `validate()` above and below show which variables were retained and deleted. Below we can see a dot matrix of which variables were retained in during the 10 iterations of the cross validation. In addition, below we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
 
-```{r rms-step2}
+```{r, eval = TRUE}
 
 ## test accuracy and error
 step_rms
@@ -427,7 +425,7 @@ step_rms
 
 The caret package option for variable selection and validation is a bit more verbose than the  rms package. However, the caret package is a more versatile package, with options for over 50 different models, such as other tree-based models.
 
-```{r caret-step1}
+```{r caret-step1, eval = TRUE}
 
 # caret
 library(caret)
@@ -452,7 +450,7 @@ summary(step_caret$resample)
 
 The output from caret is somewhat different. Notice it selected a slightly different combination of variables and more optimistic test accuracy and error.
 
-```{r caret-step2}
+```{r caret-step2, eval = TRUE}
 
 # summary
 summary(step_caret$finalModel)
@@ -463,7 +461,7 @@ summary(step_caret$finalModel)
 ### Final model & accuracy assessment
 
 
-```{r final-model}
+```{r final-model, eval = TRUE}
 
 # rms
 final_ols <- ols(tempC ~ elev + solarcv + tc_1 + tc_2, data = data, weights = data$numDays, x = TRUE, y = TRUE)
@@ -488,12 +486,9 @@ final_lm <- final_caret$finalModel
 
 ### Model Effects
 
-```{r effects}
+```{r, eval = TRUE}
 
 summary(final_lm)
-
-
-# analyis of variance
 
 dd <- datadist(data)
 options(datadist = "dd")
@@ -590,4 +585,8 @@ James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Sta
 Hengl, T. 2009. A Practical Guide to Geostatistical Mapping, 2nd Edt. University of Amsterdam, www.lulu.com, 291 p. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf)
 
 Webster, R. 1997. Regression and functional relations. European Journal of Soil Science, 48, 557-566. [http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract)
+
+
+## References (Linear Models)
+
 

@@ -6,8 +6,12 @@
 ## (note: they should work fine in regular e.g. Rstudio sessions)
 # remotes::install_github('r-spatial/mapview')
 
-## TODO: code requires to setup local copies of large files required by chapters
-
+## TODO: 
+# * R code to setup local copies of large files required by chapters
+# * integrate Yosemite MAST modeling code + appendix
+# * test regression chapters
+# * convert citation in LM, GLM, Tree models chapters to bibtex
+# * 
 
 
 options(bookdown.clean_book = TRUE)

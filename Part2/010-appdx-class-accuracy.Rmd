@@ -4,7 +4,11 @@
     chunk_output_type: console
 ---
 
-```{r data-prep-and-function, echo = FALSE}
+
+# (APPENDIX) Appendix {-} 
+
+
+```{r data-prep-and-function, echo = FALSE, eval = TRUE}
 library(igraph)
 library(latticeExtra)
 library(plyr)
@@ -17,7 +21,7 @@ library(aqp)
 source('local-functions.R')
 ```
 
-```{r simulate-data, echo = FALSE}
+```{r simulate-data, echo = FALSE, eval = TRUE}
 s <- list()
 n <- 1000
 
@@ -31,7 +35,7 @@ alpha.3 <- c(2,2,2,2,40)
 s[['Case 3']] <- simulatePredictions(n=n, alpha=alpha.3)
 ```
 
-```{r make-figures, echo = FALSE}
+```{r make-figures, echo = FALSE, eval = TRUE}
 ## class probabilities
 ss <- ldply(s, function(i) i$predictions.long)
 names(ss)[1] <- 'example'
@@ -99,8 +103,6 @@ panel=function(x, y, subscripts=subscripts, ...) {
 
 ```
 
-
-# (APPENDIX) Appendix {-} 
 
 
 # Accuracy and Uncertainty for Categorical Predictions {#acc-unc-categorical-data}
@@ -240,18 +242,18 @@ It is my recommendation that the $log_{2}$ version of Shannon H be used as our *
 
 ## Review
 
-```{r, fig.width=10, fig.height=4}
+```{r, fig.width=10, fig.height=4, eval = TRUE}
 # examples of three cases
 print(p.1)
 ```
-```{r}
+```{r, eval = TRUE}
 pp <- ldply(s, performance)
 names(pp)[1] <- 'example'
 
 kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
 ```
 
-```{r}
+```{r, eval = TRUE}
 ex <- ldply(s, extractExample, n=1)
 names(ex)[1] <- 'example'
 ex$CI <- NULL
@@ -265,7 +267,7 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 
 The `aqp` package has an implementation of Shannon entropy and Brier score; there are many other implementations but these are convenient for soil survey work. Consider the following table of predicted probabilities (classes A,B,C,D,E) and observed class (actual).
 
-```{r echo=TRUE}
+```{r echo=TRUE, eval = TRUE}
 library(aqp)
 
 # example data
@@ -294,14 +296,14 @@ head(d)
 ```
 
 Brier scores (accuracy) are computed over all predictions and associated observed classes.
-```{r echo=TRUE}
+```{r echo=TRUE, eval = TRUE}
 # compute Brier score from all predictions
 brierScore(d, classLabels = c('A', 'B', 'C', 'D', 'E'), actual = 'actual')
 ```
 
 
 Shannon entropy (uncertainty) is computed from each vector of predicted probabilities.
-```{r echo=TRUE}
+```{r echo=TRUE, eval = TRUE}
 # shannon entropy for first row, could be a single pixel or obs. point
 shannonEntropy(d[1, c('A', 'B', 'C', 'D', 'E')])
 
@@ -331,7 +333,7 @@ apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
 
 
 
-## References (Appdx)
+## References (Class Accuracy / Uncertainty)
  
 
 
