@@ -102,9 +102,9 @@ library(raster)  # guess
 library(sf)      # vector data functions
 library(mapview) # interactive mapping
 library(ggplot2) # graphing
+library(dplyr)   # data manipulation
 library(tidyr)   # data manipulation
-library(caret)   # classification and regression training
-library(car)     # additional regression tools
+library(rms)     # additional regression tools
 ```
 
 
@@ -138,16 +138,12 @@ Generally before we begin modeling you should spend some time exploring the data
 s <- site(pedons) 
 
 # tabulate the number of argillic horizons observed
-table(s$argillic.horizon, useNA = "ifany") 
-
-# or
-
-# summary(s$argillic.horizon) 
+count(s, argillic.horizon)
 
 # Extract argillic presence from the taxonomic subgroup
 s$argillic <- grepl("arg", s$taxsubgrp)
 
-table(s$argillic, useNA = "ifany")
+count(s, argillic)
 
 ```
 
@@ -157,11 +153,11 @@ Ideally, if the diagnostic horizon table had been populated consistently we coul
 ```{r diagnostic}
 
 d <- diagnostic_hz(pedons)
-d_sub <- subset(d, featkind == "argillic horizon" & featdept < 50)
+d_sub <- filter(d, featkind == "argillic horizon" & featdept < 50)
 
 s$argillic.horizon50 <- ifelse(s$peiid %in% d_sub$peiid, TRUE, FALSE)
 
-table(s$argillic.horizon50, useNA = "ifany")
+count(s, argillic.horizon50)
   
 ```
 
@@ -174,16 +170,16 @@ Another obvious place to look is at the geomorphic data in the site table. This 
 ```{r landform}
 
 # Landform vs argillic presence
+s %>%
+  # Subset
+  filter(argillic == TRUE) %>%
+  # Cross tabulate landform vs argillic horizon presence
+  count(landform, argillic) %>%
+  # Subset and print landform.string with > 3 observations
+  filter(n > 3) %>%
+  # sort
+  arrange(-n)
 
-# Subset
-s_sub <- subset(s, argillic == TRUE)
-
-# Cross tabulate landform vs argillic horizon presence
-test <- with(s_sub, 
-             table(landform, argillic, useNA = "ifany")
-             )
-# Subset and print landform.string with > 3 observations
-test[test > 3, ]
 
 # generalize the landform.string
 s$landform_generic <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform), "fan", "hill") 
@@ -198,19 +194,27 @@ Examining the above frequency table we can see that argillic horizons occur pred
 # Hillslope position
 
 # Subset fan landforms
-s_sub <- subset(s, landform_generic == "fan") 
+s_sub <- filter(s, landform_generic == "fan") 
 
-# Cross tabulate and calculate proportions, the "2" calculates the proportions relative to the column totals
-with(s_sub, round(
-  prop.table(table(hillslopeprof, argillic, useNA = "ifany"), 2)
-  * 100)
-  ) 
+# Hillslope
+s_sub %>%
+  count(hillslopeprof, argillic) %>%
+  group_by(argillic) %>%
+  mutate(pct = round(n / sum(n) * 100)) %>%
+  select(-n) %>%
+  pivot_wider(names_from = argillic, values_from = pct)
+
 
 # Slope shape
-with(s_sub, round(
-  prop.table(table(paste(shapedown, shapeacross), argillic, useNA = "ifany"), 2)
-  * 100)
-  )
+s_sub %>%
+  mutate(SS = paste(shapedown, shapeacross)) %>%
+  count(SS, argillic) %>%
+  group_by(argillic) %>%
+  # calculate percent
+  mutate(pct = round(n / sum(n) * 100)) %>%
+  # reshape table
+  select(-n) %>%
+  pivot_wider(names_from = argillic, values_from = pct)
 
 ```
 
@@ -218,18 +222,21 @@ Looking at the hillslope position of fan landforms we can see a slightly higher 
 
 ```{r surface}
 
-# Subset to just look and fans, and select numeric columns
-s_sub <- subset(s, landform_generic == "fan", select = c(argillic, bedrckdepth, slope, elev, surface_total_frags_pct)) 
+s_sub <- s %>%
+  # Subset to just look at fans and select numeric columns
+  filter(landform_generic == "fan") %>%
+  select(argillic, bedrckdepth, slope, elev, surface_total_frags_pct) 
 
-# convert s_sub to wide data format
-s_w <- reshape2::melt(s_sub, id.vars = "argillic", measure.vars = c("bedrckdepth", "slope", "elev", "surface_total_frags_pct"))
+# convert s_sub to long data format
+s_w <- pivot_longer(s_sub, cols = c(bedrckdepth, slope, elev, surface_total_frags_pct))
+
+# examine results
 head(s_w, 2)
 
-library(ggplot2)
-
+# plot results
 ggplot(s_w, aes(x = argillic, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ variable, scale = "free")
+  facet_wrap(~ name, scale = "free")
 
 ```
 
@@ -243,28 +250,26 @@ Next we'll look at soil scientist bias. The question being: Are some soil scient
 ```{r bias, eval=TRUE}
 
 # Custom function to filter out the top 3 soil scientists
-s <- within(s, {
-  old = descname
-  descname2 = NA
-  descname2[grepl("Stephen", old)] = "Stephen" # least senior
-  descname2[grepl("Paul",    old)] = "Paul"
-  descname2[grepl("Peter",   old)] = "Peter"   # most senior
-  })
+s <- s %>%
+  mutate(
+    old = descname,
+    descname2 = NA,
+    descname2 = ifelse(grepl("Stephen", old), "Stephen", descname2), # least senior
+    descname2 = ifelse(grepl("Paul",    old), "Paul",    descname2),
+    descname2 = ifelse(grepl("Peter",   old), "Peter",   descname2)  # most senior
+    )
 
 ```
 
 ```{r bias2}
 
-s_sub <- subset(s, landform_generic == "fan")
-
-# By frequency
-with(s_sub, table(descname2, argillic, useNA = "ifany"))
-
-# By proportion
-with(s_sub, round(
-  prop.table(table(descname2, argillic), margin = 1)
-  * 100)
-  )
+s %>%
+  filter(landform_generic == "fan") %>%
+  count(descname2, argillic) %>%
+  group_by(descname2) %>%
+  mutate(pct = round(n / sum(n) * 100)) %>%
+  select(-n) %>%
+  pivot_wider(names_from = argillic, values_from = pct)
 
 ```
 
@@ -281,8 +286,8 @@ library(sf)
 library(dplyr)
 
 # create an index to remove sites without coordinates
-idx <- complete.cases(s$x_sdt, s$y_std)
-s_sub <- s[idx, ]
+s_sub <- filter(s, complete.cases(x_std, y_std))
+
 
 # convert to sites to a spatial object
 s_sf <- st_as_sf(s_sub,
@@ -294,9 +299,9 @@ s_sf <- st_as_sf(s_sub,
 
 
 # Read in soil survey area boundaries
-ca794 <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") %>%
-  # subset out Joshua Tree National Park
-  filter(areasymbol == "CA794") %>%
+ca794 <- fetchSDA_spatial("CA794", geom.src = "sapolygon") %>%
+  # convert to sf object
+  st_as_sf() %>%
   # reproject
   st_transform(crs = 5070)
 
@@ -304,7 +309,7 @@ ca794 <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_n
 # Plot
 library(mapview)
 
-mapview(ca794, fill = NA) +
+mapview(ca794, alpha.regions = 0, lwd = 2) +
   mapview(s_sf, zcol = "argillic")
 
 
@@ -368,13 +373,13 @@ geodata_r <- stack(geodata_f)
 data <- raster::extract(geodata_r, as(s_sf, "Spatial"), sp = TRUE)@data
 
 # Modify some of the geodata variables
-data <- within(data, {
-  cluster  = factor(cluster)
-  geo      = factor(geo)
-  twi_sc   = abs(twi - 13.8) # 13.8 = twi median
-  gsi      = (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1)
+data <- mutate(data,
+  cluster  = factor(cluster),
+  geo      = factor(geo),
+  twi_sc   = abs(twi - 13.8), # 13.8 = twi median
+  gsi      = (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1),
   ndvi     = (ls_4 - ls_3) / (ls_4 + ls_3)
-  })
+  )
 
 # save(data, ca794, pedons, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data.Rdata")
 
@@ -395,7 +400,7 @@ train <- data
 
 # Select argillic horizons with "arg" in the subgroup name and on fans
 # Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.train$argillic 
-train <- transform(
+train <- mutate(
   train, 
   argillic  = ifelse(grepl("arg", taxsubgrp) & train$mrvbf > 0.15, "yes", "no"),
   ch_log  = log(ch + 1),
@@ -406,12 +411,12 @@ train <- transform(
 idx <- which(names(train) == "z")
 train <- train[idx:ncol(train)]
 
-data_m <- tidyr::gather(train[- c(31:32)], key = key, value = value, - argillic)
+data_m <- pivot_longer(train[- c(31:32)], col = - argillic)
 data_m <- subset(data_m, !is.na(value))
 
 ggplot(data_m, aes(x = argillic, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ key, scales = "free")
+  facet_wrap(~ name, scales = "free")
 
 ```
 
