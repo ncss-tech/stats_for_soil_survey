@@ -57,6 +57,8 @@ Part 2
 
 ### [**Chapter 1:** *Introduction*](http://ncss-tech.github.io/stats_for_soil_survey/book2/intro.html)
 
+- #### [Review](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/Part%202%20Intro.pptx)
+
 - #### [Final Project](http://ncss-tech.github.io/stats_for_soil_survey/chapters/10_final_project/10_final_project.html)
 
 ### [**Chapter 2:** *Uncertainity*](http://ncss-tech.github.io/stats_for_soil_survey/book2/uncertainty.html)
