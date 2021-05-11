@@ -55,7 +55,30 @@ Part 1
 Part 2
 ------
 
-### *TBD*
+### [**Chapter 1:** *Introduction*](http://ncss-tech.github.io/stats_for_soil_survey/book2/intro.html)
+
+- #### [Final Project](http://ncss-tech.github.io/stats_for_soil_survey/chapters/10_final_project/10_final_project.html)
+
+### [**Chapter 2:** *Uncertainity*](http://ncss-tech.github.io/stats_for_soil_survey/book2/uncertainty.html)
+
+- #### [Categorical Predictions](http://ncss-tech.github.io/stats_for_soil_survey/book2/acc-unc-categorical-data.html)
+ 
+- #### [Modeling Frameworks](http://ncss-tech.github.io/stats_for_soil_survey/book2/commentary-selecting-a-modeling-framework.html)
+ 
+### [**Chapter 3:** *Numerical Taxonomy and Ordination*](http://ncss-tech.github.io/stats_for_soil_survey/book2/numerical-tax.html)
+
+### [**Chapter 4:** *Linear Regression*](http://ncss-tech.github.io/stats_for_soil_survey/book2/linear-models.html)
+
+ - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/6_linear_models/linear_regression_pres.html)
+ 
+ ### [**Chapter 5:** *Generalized Linear Models*](http://ncss-tech.github.io/stats_for_soil_survey/book2/glm.html)
+
+ - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/7_logistic_regression/ch7_prez.html)
+
+ ### [**Chapter 6:** *Tree-based models*](http://ncss-tech.github.io/stats_for_soil_survey/book2/tree-based-models.html)
+
+ - #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/8_tree_models/2017Tree_models.pptx)
+
 
 ------------------------------------------------------------------------
 
