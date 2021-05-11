@@ -1308,7 +1308,7 @@ str(s, 1)
 ##  $ mlra            :'data.frame':	75 obs. of  4 variables:
 ##  $ climate.annual  :'data.frame':	88 obs. of  12 variables:
 ##  $ climate.monthly :'data.frame':	264 obs. of  14 variables:
-##  $ soilweb.metadata:'data.frame':	17 obs. of  2 variables:
+##  $ soilweb.metadata:'data.frame':	19 obs. of  2 variables:
 ```
 
 #### Annual Climate Data

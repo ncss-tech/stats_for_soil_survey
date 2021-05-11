@@ -43,8 +43,9 @@ FROM legend
 INNER JOIN mapunit ON mapunit.lkey = legend.lkey
 INNER JOIN component on mapunit.mukey = component.mukey
 WHERE
--- subset SSA
+-- all SSA in California
 -- legend.areasymbol LIKE 'CA%'
+-- specific SSA
 legend.areasymbol IN ('CA790', 'CA630', 'MO071')
 ;
 "

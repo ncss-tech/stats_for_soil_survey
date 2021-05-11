@@ -79,60 +79,24 @@ In addition to the 11-IND MAST modeling efforts there has also been two publishe
 
 ## Data
 
-### Tidy Raw Files
+### Henry Mount Database
 
-Typically the data for MAST and other monitoring projets is downloaded annually. However, some sites now are online and can be accessed remotely. Eitherway prior to loading the information into a proper database it is best to store the data in txt files (Excel files are discouraged). If the data is organized and the filenames encode the metadata, an example such as the one below can be used to efficiently import them into R and combine them into a data frame.
+The Henry Mount Database already has 79 of the sites from the Mojave. However only 8 have temperature records.
 
 
 ```r
-p <- "D:/projects/soilTemperatureMonitoring/data/rawTxtFilesClean"
-setwd(p)
+f <- fetchHenry(sso = "8-VIC")
 
-# get file names of HOBO temp data
-files <- list.files()
-
-# read files
-l <- lapply(files, function(x) {
-
-  # extract the file name
-  fileName = strsplit(x, '[.]')[[1]][1]
-  # parse the siteid from the file name
-  siteid   = strsplit(x, '_')[[1]][1]
-
-  cat(paste("working on", fileName, "\n"))
-  f = paste0(p, "/", x)
-  # read the files
-  f = read.table(file = f, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-  f$siteid <- siteid
-  names(f)[1:3] <- c("date","tempF","tempC")
-
-  f$tempF <-as.numeric(f$tempF)
-  f$tempC <-as.numeric(f$tempC)
-
-  vars = c("date", "siteid", "tempF", "tempC")
-  f    = f[vars]
-  })
-
-mastSeries_df <- do.call("rbind", l)
-
-
-# save cached copy
-save(mastSeries_df, file = "D:/projects/soilTemperatureMonitoring/data/R/mastSeries.Rdata")
-
-length(unique(mastSeries_df$siteid))
+length(unique(f$sensors$user_site_id))
 ```
 
 
-### Henry Mount Database
+```
+## computing un-biased soil temperature summaries
+```
 
-The Henry Mount Database already has 59 of the sites from the Mojave. The full data set however has 68 sites.
-
-
-```r
-library(soilDB)
-
-f <- fetchHenry(sso = "8-VIC")
-length(unique(f$sensors$user_site_id))
+```
+## 79 sensors loaded (1.97 Mb transferred)
 ```
 
 
@@ -140,53 +104,89 @@ length(unique(f$sensors$user_site_id))
 
 
 ```r
-# load cached versions
-load(file = "D:/projects/soilTemperatureMonitoring/data/R/mastSeries.Rdata")
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+
+
+
+```r
+ms_df <- f$soiltemp
+s     <- f$sensors
+  
+
+# convert date time data
+ms_df <- mutate(
+  ms_df,
+  day  = date_time,
+  Jday = doy
+  )
 
 
 # Plot sites visually inspect for flat lines and spikes
-test <- subset(mastSeries_df, site == "JTNP08")
-test.zoo <- read.zoo(test[,c(1,3)],format = "%m/%d/%y %H:%M:%S", tz = "GMT")
-plot(test.zoo, ylab = "tempF")
+ms_df %>%
+  filter(name == "JVOHV2-50") %>%
+  ggplot(aes(x = day, y = sensor_value)) +
+  geom_line()
+```
 
+```
+## Warning: Removed 649 row(s) containing missing values (geom_path).
+```
 
+<img src="004-linear-models_files/figure-html/unnamed-chunk-2-1.png" width="672" />
+
+```r
 # Aggregate by Year, Month, and Julian day (i.e. 1-365, 366 for leap years)
-ms.df <- mastSeries_df
-ms.df$date <- as.POSIXlt(ms.df$date, format="%m/%d/%y %H:%M:%S")
-ms.df$day  <- as.character(format(ms.df$date, "%m/%d/%y"))
-ms.df$Jday <- as.integer(format(ms.df$date, "%j"))
-
 # compute number of days per site
-ms.D.df <- aggregate(tempF ~ site + day, data = ms.df, FUN = mean, na.action = na.exclude)
-ms.D.df <- aggregate(day ~ site, data = ms.D.df, function(x) sum(!is.na(x)))
-names(ms.D.df) <- c("siteid","numDays")
+ms_n_df <- ms_df %>%
+  group_by(sid, day) %>%
+  summarise(mast = mean(sensor_value, na.exclude = TRUE)) %>%
+  group_by(sid) %>%
+  summarise(numDays = sum(!is.na(mast)), ) %>%
+  ungroup()
+```
 
+```
+## `summarise()` has grouped output by 'sid'. You can override using the `.groups` argument.
+```
+
+```r
 # compute mast per year
-ms.Jd.df <- aggregate(tempF ~ siteid + Jday, data = ms.df, mean)
-mastSites.df <- aggregate(tempF ~ siteid, data = ms.Jd.df, mean)
+ms_site_df <- ms_df %>%
+  group_by(sid, Jday) %>%
+  summarise(mast = mean(sensor_value, na.rm = TRUE)) %>%
+  group_by(sid) %>%
+  summarise(mast = mean(mast, na.rm = TRUE)) %>%
+  ungroup()
+```
 
+```
+## `summarise()` has grouped output by 'sid'. You can override using the `.groups` argument.
+```
+
+```r
 # merge mast & numDays
-mastSites.df <- merge(mastSites.df, ms.D.df, by = "siteid")
-write.csv(mastSites.df, "mastSites.csv")
+mast_df <- as.data.frame(s) %>%
+  select(name, sid, sensor_depth, lon = wgs84_longitude, lat = wgs84_latitude) %>%
+  left_join(ms_site_df, by = "sid") %>%
+  left_join(ms_n_df,    by = "sid") %>%
+  filter(sensor_depth == 50 & !is.na(mast))
 ```
 
 
 ### Final Dataset
 
-Since the Henry Mount database is incomplete we will procede with the aggregation from the txt files.
+Since the Henry Mount database is incomplete we will proceed with the aggregation from the original txt files.
 
 
 ```r
-# Read tempC data
-setwd("D:/projects/soilTemperatureMonitoring/data/R")
+# Read mast data
+githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave.Rdata"
 
-sites_df <- read.csv("HOBO_List_2013_0923_master.csv")
-mast_df  <- read.csv("mastSites.csv")
-
-mast_df <- merge(mast_df, sites_df, by = "siteid")
-vars <- c("siteid", "tempF", "numDays", "utmeasting", "utmnorthing")
-mast_df <- mast_df[vars]
-mast_df$tempC <- (mast_df$tempF - 32) * (5 / 9)
+load(url(githubURL))
 ```
 
 
@@ -199,39 +199,32 @@ Where do our points plot? To start we need to convert them to a spatial object f
 
 ```r
 library(sf)
-library(mapview)
-library(dplyr)
+```
 
-githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data_v2.Rdata"
-load(url(githubURL))
+```
+## Warning: package 'sf' was built under R version 4.0.5
+```
+
+```
+## Linking to GEOS 3.9.0, GDAL 3.2.1, PROJ 7.2.1
+```
+
+```r
+# library(mapview)
 
 
 # convert to sites to a spatial object
 mast_sf <- st_as_sf(mast_df,
-                    coords = c("utmeasting", "utmnorthing"),
-                    crs = 26911
+                    coords = c("lon", "lat"),
+                    crs = 4326
                     ) %>%
-# reproject
-st_transform(crs = 4326)
+  # reproject
+  st_transform(crs = 4326)
 
-# reduce precision
-mast_sf2 <- st_as_sf(as.data.frame(round(st_coordinates(mast_sf), 1)),
-                     coords = c("X", "Y"),
-                     crs = 4326
-                     )
-
-# reproject
-mast_sf <- st_transform(mast_sf, 5070)
-
-
-# MLRAs
-mlra <- read_sf(dsn = "D:/geodata/soils/mlra_a_mbr.shp", layer = "mlra_a_mbr") %>% 
-  st_transform(crs = 4326) %>%
-  filter(MLRARSYM %in% 30:31)
 
 # plot
-mapview(mlra, fill = NA) +
-  mapview(mast_sf2)
+# mapview(mlra, alpha.region = 0, lwd = 2) +
+  # mapview(mast_sf)
 ```
 
 
@@ -263,22 +256,27 @@ files <- c(elev    = "ned30m_8VIC_elev5.tif",
 geodata_f <- paste0(folder, files) 
 names(geodata_f) <- names(files)
 
+
 # Create a raster stack
 geodata_r <- stack(geodata_f)
+
 
 # Extract the geodata and add to a data frame
 data <- raster::extract(geodata_r, as(mast_sf, "Spatial"), sp = TRUE)@data
 
+
 # convert aspect
 data$northness <- abs(180 - data$aspect)
+
 
 # random sample
 vars <- c("elev", "temp", "precip", "solar", "tc_1", "twi")
 idx <- which(names(geodata_r) %in% vars)
 geodata_s <- sampleRegular(geodata_r[[idx]], size = 5000)
 
+
 # cache files
-save(data, mast_df, mast_sf2, mlra, geodata_s, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data_v2.Rdata")
+save(data, mast_df, mast_sf, mlra, geodata_s, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/mast_mojave.Rdata")
 ```
 
 
@@ -288,44 +286,44 @@ Generally before we begin modeling it is good to explore the data. By examining 
 
 
 ```r
-githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data_v2.Rdata"
+githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave.Rdata"
 load(url(githubURL))
 
 summary(data)
 ```
 
 ```
-##        siteid       tempF          numDays         tempC      
-##  Cheme01  : 1   Min.   :37.58   Min.   : 363   Min.   : 3.10  
-##  Clark01  : 1   1st Qu.:65.29   1st Qu.:1831   1st Qu.:18.50  
-##  DEVA01   : 1   Median :69.03   Median :2918   Median :20.57  
-##  DEVA02   : 1   Mean   :67.88   Mean   :2465   Mean   :19.93  
-##  DEVA03   : 1   3rd Qu.:74.70   3rd Qu.:3397   3rd Qu.:23.72  
-##  Jawbone01: 1   Max.   :83.78   Max.   :4159   Max.   :28.77  
-##  (Other)  :62                                                 
-##       elev             slope            aspect             twi        
-##  Min.   : -80.02   Min.   : 0.435   Min.   :  7.433   Min.   : 8.519  
-##  1st Qu.: 703.60   1st Qu.: 3.221   1st Qu.: 39.861   1st Qu.: 9.502  
-##  Median : 946.79   Median : 5.667   Median :113.600   Median :12.947  
-##  Mean   :1083.04   Mean   :14.184   Mean   :129.911   Mean   :13.019  
-##  3rd Qu.:1489.26   3rd Qu.:24.142   3rd Qu.:187.696   3rd Qu.:15.744  
-##  Max.   :3038.61   Max.   :54.319   Max.   :342.366   Max.   :21.226  
-##                                                       NA's   :2       
-##      solar         solarcv           tc_1             tc_2       
-##  Min.   :1370   Min.   :18.36   Min.   : 50.31   Min.   : 25.03  
-##  1st Qu.:2031   1st Qu.:31.00   1st Qu.: 93.36   1st Qu.: 48.61  
-##  Median :2101   Median :33.00   Median :125.56   Median : 57.87  
-##  Mean   :2079   Mean   :33.82   Mean   :122.49   Mean   : 58.36  
-##  3rd Qu.:2163   3rd Qu.:34.21   3rd Qu.:152.32   3rd Qu.: 66.18  
-##  Max.   :2654   Max.   :58.81   Max.   :197.26   Max.   :108.98  
-##                                                                  
-##       tc_3             precip            temp         northness      
-##  Min.   :  2.067   Min.   : 3.164   Min.   :10.39   Min.   :  2.547  
-##  1st Qu.: 32.682   1st Qu.: 6.581   1st Qu.:21.12   1st Qu.: 31.923  
-##  Median : 50.433   Median : 7.469   Median :24.05   Median : 91.407  
-##  Mean   : 53.769   Mean   :10.367   Mean   :23.61   Mean   : 90.070  
-##  3rd Qu.: 75.994   3rd Qu.:10.422   3rd Qu.:26.61   3rd Qu.:146.644  
-##  Max.   :124.071   Max.   :45.046   Max.   :31.83   Max.   :172.567  
+##        siteid        mast          numDays          elev        
+##  Cheme01  : 1   Min.   : 3.10   Min.   : 363   Min.   : -80.02  
+##  Clark01  : 1   1st Qu.:18.50   1st Qu.:1831   1st Qu.: 703.60  
+##  DEVA01   : 1   Median :20.57   Median :2918   Median : 946.79  
+##  DEVA02   : 1   Mean   :19.93   Mean   :2465   Mean   :1083.04  
+##  DEVA03   : 1   3rd Qu.:23.72   3rd Qu.:3397   3rd Qu.:1489.26  
+##  Jawbone01: 1   Max.   :28.77   Max.   :4159   Max.   :3038.61  
+##  (Other)  :62                                                   
+##      slope            aspect             twi             solar     
+##  Min.   : 0.435   Min.   :  7.433   Min.   : 8.519   Min.   :1370  
+##  1st Qu.: 3.221   1st Qu.: 39.861   1st Qu.: 9.502   1st Qu.:2031  
+##  Median : 5.667   Median :113.600   Median :12.947   Median :2101  
+##  Mean   :14.184   Mean   :129.911   Mean   :13.019   Mean   :2079  
+##  3rd Qu.:24.142   3rd Qu.:187.696   3rd Qu.:15.744   3rd Qu.:2163  
+##  Max.   :54.319   Max.   :342.366   Max.   :21.226   Max.   :2654  
+##                                     NA's   :2                      
+##     solarcv           tc_1             tc_2             tc_3        
+##  Min.   :18.36   Min.   : 50.31   Min.   : 25.03   Min.   :  2.067  
+##  1st Qu.:31.00   1st Qu.: 93.36   1st Qu.: 48.61   1st Qu.: 32.682  
+##  Median :33.00   Median :125.56   Median : 57.87   Median : 50.433  
+##  Mean   :33.82   Mean   :122.49   Mean   : 58.36   Mean   : 53.769  
+##  3rd Qu.:34.21   3rd Qu.:152.32   3rd Qu.: 66.18   3rd Qu.: 75.994  
+##  Max.   :58.81   Max.   :197.26   Max.   :108.98   Max.   :124.071  
+##                                                                     
+##      precip            temp         northness      
+##  Min.   : 3.164   Min.   :10.39   Min.   :  2.547  
+##  1st Qu.: 6.581   1st Qu.:21.12   1st Qu.: 31.923  
+##  Median : 7.469   Median :24.05   Median : 91.407  
+##  Mean   :10.367   Mean   :23.61   Mean   : 90.070  
+##  3rd Qu.:10.422   3rd Qu.:26.61   3rd Qu.:146.644  
+##  Max.   :45.046   Max.   :31.83   Max.   :172.567  
 ## 
 ```
 
@@ -335,9 +333,7 @@ You may recall from discussion of EDA that QQ plots are a visual way to inspect 
 ```r
 # QQ plot
 
-library(ggplot2)
-
-ggplot(data, aes(sample = tempC)) +
+ggplot(data, aes(sample = mast)) +
   geom_qq() +
   geom_qq_line()
 ```
@@ -348,8 +344,8 @@ By examining the correlations between some of the predictors we can also determi
 
 
 ```r
-vars <- c("tempC", "elev", "temp", "precip", "tc_2", "tc_1", "tc_3")
-GGally::ggpairs(data[, vars])
+vars <- c("mast", "elev", "temp", "precip", "tc_2", "tc_1", "tc_3")
+GGally::ggpairs(data[vars])
 ```
 
 ```
@@ -358,51 +354,14 @@ GGally::ggpairs(data[, vars])
 ##   +.gg   ggplot2
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-4-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-6-1.png" width="672" />
 
 ```r
-vars <- c("tempC", "slope", "twi", "northness", "solar", "solarcv")
-GGally::ggpairs(data[, vars])
+vars <- c("mast", "slope", "twi", "northness", "solar", "solarcv")
+GGally::ggpairs(data[vars])
 ```
 
-```
-## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
-## Removed 2 rows containing missing values
-
-## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
-## Removed 2 rows containing missing values
-```
-
-```
-## Warning: Removed 2 rows containing missing values (geom_point).
-
-## Warning: Removed 2 rows containing missing values (geom_point).
-```
-
-```
-## Warning: Removed 2 rows containing non-finite values (stat_density).
-```
-
-```
-## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
-## Removed 2 rows containing missing values
-
-## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
-## Removed 2 rows containing missing values
-
-## Warning in ggally_statistic(data = data, mapping = mapping, na.rm = na.rm, :
-## Removed 2 rows containing missing values
-```
-
-```
-## Warning: Removed 2 rows containing missing values (geom_point).
-
-## Warning: Removed 2 rows containing missing values (geom_point).
-
-## Warning: Removed 2 rows containing missing values (geom_point).
-```
-
-<img src="004-linear-models_files/figure-html/unnamed-chunk-4-2.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-6-2.png" width="672" />
 
 The correlation matrices and scatter plots above show that that MAST has moderate correlations with some of the variables, particularly the elevation and the climatic variables. 
 
@@ -422,15 +381,14 @@ geodata_df <- rbind(
   data.frame(source = "population", geodata_df)
 )
 
-geodata_w <- reshape::melt(
-  geodata_df,
-  id.vars = "source",
-  measures.vars = vars
+geodata_l <- pivot_longer(
+  geodata_df, 
+  cols = - source
   )
 
-ggplot(geodata_w, aes(x = value, fill = source)) +
+ggplot(geodata_l, aes(x = value, fill = source)) +
   geom_density(alpha = 0.5) +
-  facet_wrap(~ variable, scales = "free") +
+  facet_wrap(~ name, scales = "free") +
   ggtitle("Evaluation of Sample Representativeness")
 ```
 
@@ -438,9 +396,9 @@ ggplot(geodata_w, aes(x = value, fill = source)) +
 ## Warning: Removed 6466 rows containing non-finite values (stat_density).
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-7-1.png" width="672" />
 
-The overlap between our sample and the population appear satistifactory.
+The overlap between our sample and the population appear satisfactory.
 
 
 ## Linear modeling
@@ -450,77 +408,17 @@ R has several functions for fitting linear models. The most common is arguably t
 
 ```r
 # stats
-fit_lm <- lm(tempC ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, weights = data$numDays)
+fit_lm <- lm(mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, weights = data$numDays)
 
 
-# rms
+# rms R package
 
 library(rms)
-```
 
-```
-## Warning: package 'rms' was built under R version 4.0.5
-```
-
-```
-## Loading required package: Hmisc
-```
-
-```
-## Warning: package 'Hmisc' was built under R version 4.0.4
-```
-
-```
-## Loading required package: lattice
-```
-
-```
-## Loading required package: survival
-```
-
-```
-## Warning: package 'survival' was built under R version 4.0.5
-```
-
-```
-## Loading required package: Formula
-```
-
-```
-## 
-## Attaching package: 'Hmisc'
-```
-
-```
-## The following objects are masked from 'package:base':
-## 
-##     format.pval, units
-```
-
-```
-## Loading required package: SparseM
-```
-
-```
-## Warning: package 'SparseM' was built under R version 4.0.4
-```
-
-```
-## 
-## Attaching package: 'SparseM'
-```
-
-```
-## The following object is masked from 'package:base':
-## 
-##     backsolve
-```
-
-```r
 dd <- datadist(data)
 options(datadist = "dd")
 
-fit_ols <- ols(tempC ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, x = TRUE, y = TRUE, weights = data$numDays)
+fit_ols <- ols(mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, x = TRUE, y = TRUE, weights = data$numDays)
 ```
 
 
@@ -534,12 +432,14 @@ Once we have a model we need to assess residuals for linearity, normality, and h
 ```r
 par(mfcol = c(2, 2))
 
+# residual
 plot(fit_lm)
 ```
 
 <img src="004-linear-models_files/figure-html/residuals-1.png" width="672" />
 
 ```r
+# partial residuals
 termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 ```
 
@@ -553,7 +453,7 @@ As we mentioned earlier multicolinearity should be avoided. To assess a model fo
 
 ```r
 # vif() function from the rms or car packages
-sqrt(car::vif(fit_lm))
+sqrt(vif(fit_ols))
 ```
 
 ```
@@ -566,7 +466,7 @@ sqrt(car::vif(fit_lm))
 ```r
 # or 
 
-sqrt(rms::vif(fit_ols)) > 3
+sqrt(vif(fit_ols)) > 3
 ```
 
 ```
@@ -579,9 +479,9 @@ The values above indicate we have several colinear variables in the model, which
 
 ### Variable selection & model validation
 
-Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically require more scrunity from the user. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically require more scrutiny from the user. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation monist the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
 
-Both the rms and caret packages offer methods for variable selection and cross-validation. In this instance the rms approach is a bit more convinent, with the one line call to `validate()`.
+Both the rms and caret packages offer methods for variable selection and cross-validation. In this instance the rms approach is a bit more convenient, with the one line call to `validate()`.
 
 
 ```r
@@ -591,7 +491,7 @@ set.seed(42)
 
 # rms
 ## stepwise selection and validation
-step_rms <- validate(fit_ols, method = "crossvalidation", B = 10, bw = TRUE)
+fit_step <- validate(fit_ols, method = "crossvalidation", B = 10, bw = TRUE)
 ```
 
 ```
@@ -625,7 +525,7 @@ The results for `validate()` above and below show which variables were retained 
 
 ```r
 ## test accuracy and error
-step_rms
+fit_step
 ```
 
 ```
@@ -656,88 +556,6 @@ step_rms
 ## 1 9
 ```
 
-The caret package option for variable selection and validation is a bit more verbose than the  rms package. However, the caret package is a more versatile package, with options for over 50 different models, such as other tree-based models.
-
-
-```r
-# caret
-library(caret)
-```
-
-```
-## 
-## Attaching package: 'caret'
-```
-
-```
-## The following object is masked from 'package:survival':
-## 
-##     cluster
-```
-
-```r
-## cross validation parameters
-train.control <- trainControl(method = "cv", number = 10, savePredictions = TRUE, returnData = TRUE)
-
-## stepwise selection and validation
-step_caret <- train(tempC ~ elev + solar + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + log(precip) + temp^2, 
-                    data = data,
-                    weights = data$numDays,
-                    method = "lmStepAIC",
-                    trace = FALSE,
-                    trControl = train.control,
-                    na.action = na.exclude
-                    )
-
-## test accuracy and error
-summary(step_caret$resample)
-```
-
-```
-##       RMSE          Rsquared           MAE           Resample        
-##  Min.   :0.777   Min.   :0.7788   Min.   :0.6110   Length:10         
-##  1st Qu.:1.112   1st Qu.:0.8856   1st Qu.:0.8779   Class :character  
-##  Median :1.542   Median :0.9423   Median :1.2662   Mode  :character  
-##  Mean   :1.479   Mean   :0.9171   Mean   :1.1279                     
-##  3rd Qu.:1.762   3rd Qu.:0.9756   3rd Qu.:1.3318                     
-##  Max.   :2.373   Max.   :0.9843   Max.   :1.5093
-```
-
-The output from caret is somewhat different. Notice it selected a slightly different combination of variables and more optimistic test accuracy and error.
-
-
-```r
-# summary
-summary(step_caret$finalModel)
-```
-
-```
-## 
-## Call:
-## lm(formula = .outcome ~ elev + twi + solarcv + tc_1 + tc_2 + 
-##     `log(precip)` + temp, data = dat, weights = wts)
-## 
-## Weighted Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -132.087  -30.532   -1.176   35.609  103.131 
-## 
-## Coefficients:
-##                Estimate Std. Error t value Pr(>|t|)    
-## (Intercept)   30.298762   8.367072   3.621 0.000618 ***
-## elev          -0.005103   0.001900  -2.686 0.009420 ** 
-## twi           -0.098647   0.067447  -1.463 0.148976    
-## solarcv       -0.184135   0.020963  -8.784 3.02e-12 ***
-## tc_1          -0.026130   0.009523  -2.744 0.008068 ** 
-## tc_2          -0.073104   0.025710  -2.843 0.006154 ** 
-## `log(precip)`  0.604990   0.425929   1.420 0.160844    
-## temp           0.378019   0.253919   1.489 0.141974    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 55.22 on 58 degrees of freedom
-## Multiple R-squared:  0.9613,	Adjusted R-squared:  0.9566 
-## F-statistic: 205.7 on 7 and 58 DF,  p-value: < 2.2e-16
-```
 
 
 ### Final model & accuracy assessment
@@ -746,39 +564,18 @@ summary(step_caret$finalModel)
 
 ```r
 # rms
-final_ols <- ols(tempC ~ elev + solarcv + tc_1 + tc_2, data = data, weights = data$numDays, x = TRUE, y = TRUE)
+final_ols <- ols(mast ~ elev + solarcv + tc_1 + tc_2, data = data, weights = data$numDays, x = TRUE, y = TRUE)
 
 validate(final_ols, method = "crossvalidation", B = 10)
 ```
 
 ```
 ##           index.orig training   test optimism index.corrected  n
-## R-square      0.9397   0.9410 0.8379   0.1031          0.8367 10
-## MSE           1.7778   1.7181 2.3015  -0.5834          2.3612 10
-## g             5.7652   5.6907 5.8429  -0.1521          5.9174 10
-## Intercept     0.0000   0.0000 0.7950  -0.7950          0.7950 10
-## Slope         1.0000   1.0000 0.9576   0.0424          0.9576 10
-```
-
-```r
-# caret
-final_caret <- train(tempC ~ elev + solarcv + tc_1 + tc_2, 
-                     data = data,
-                     weights = data$numDays,
-                     method = "lm",
-                     trControl = train.control,
-                     na.action = na.exclude
-                     )
-final_caret$results
-```
-
-```
-##   intercept     RMSE  Rsquared      MAE    RMSESD RsquaredSD     MAESD
-## 1      TRUE 1.441123 0.9340218 1.120288 0.3257457 0.03683471 0.2596735
-```
-
-```r
-final_lm <- final_caret$finalModel
+## R-square      0.9397   0.9409 0.5574   0.3835          0.5562 10
+## MSE           1.7778   1.7245 2.2163  -0.4919          2.2697 10
+## g             5.7652   5.6958 4.7817   0.9141          4.8512 10
+## Intercept     0.0000   0.0000 2.3202  -2.3202          2.3202 10
+## Slope         1.0000   1.0000 0.8845   0.1155          0.8845 10
 ```
 
 
@@ -787,42 +584,27 @@ final_lm <- final_caret$finalModel
 
 
 ```r
-summary(final_lm)
+# Model summmary
+summary(final_ols)
 ```
 
 ```
+##              Effects              Response : mast 
 ## 
-## Call:
-## lm(formula = .outcome ~ ., data = dat, weights = wts)
-## 
-## Weighted Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -138.572  -28.633    4.663   35.574  117.141 
-## 
-## Coefficients:
-##               Estimate Std. Error t value Pr(>|t|)    
-## (Intercept) 43.8704062  2.1744491  20.175  < 2e-16 ***
-## elev        -0.0070036  0.0003957 -17.700  < 2e-16 ***
-## solarcv     -0.1919234  0.0211084  -9.092 4.48e-13 ***
-## tc_1        -0.0366152  0.0077992  -4.695 1.49e-05 ***
-## tc_2        -0.0918754  0.0244223  -3.762 0.000372 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 56.91 on 63 degrees of freedom
-## Multiple R-squared:  0.9554,	Adjusted R-squared:  0.9526 
-## F-statistic: 337.8 on 4 and 63 DF,  p-value: < 2.2e-16
+##  Factor  Low     High     Diff.    Effect   S.E.     Lower 0.95 Upper 0.95
+##  elev    703.600 1489.300 785.6700 -5.50250 0.310870 -6.12370   -4.88130  
+##  solarcv  31.000   34.206   3.2061 -0.61532 0.067675 -0.75055   -0.48008  
+##  tc_1     93.361  152.320  58.9640 -2.15900 0.459870 -3.07800   -1.24000  
+##  tc_2     48.614   66.183  17.5690 -1.61410 0.429070 -2.47150   -0.75670
 ```
 
 ```r
-dd <- datadist(data)
-options(datadist = "dd")
-
+# Anova
 anova(final_ols)
 ```
 
 ```
-##                 Analysis of Variance          Response: tempC 
+##                 Analysis of Variance          Response: mast 
 ## 
 ##  Factor     d.f. Partial SS MS          F      P     
 ##  elev        1   1014554.05 1014554.054 313.30 <.0001
@@ -834,55 +616,23 @@ anova(final_ols)
 ```
 
 ```r
-anova(final_lm)
+# Plot Effects
+ggplot(Predict(final_ols),
+       addlayer = geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
+         scale_y_continuous(breaks = c(8, 15, 22))
+       )
 ```
 
-```
-## Analysis of Variance Table
-## 
-## Response: .outcome
-##           Df  Sum Sq Mean Sq   F value    Pr(>F)    
-## elev       1 4059084 4059084 1253.4581 < 2.2e-16 ***
-## solarcv    1  244880  244880   75.6199  2.18e-12 ***
-## tc_1       1   25593   25593    7.9033 0.0065688 ** 
-## tc_2       1   45829   45829   14.1522 0.0003721 ***
-## Residuals 63  204013    3238                        
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-```
+<img src="004-linear-models_files/figure-html/unnamed-chunk-10-1.png" width="672" />
 
 ```r
-# rms
-
-plot(Predict(final_ols))
+# Vary solarcv (North = 23; Flat = 33; South = 55)
+ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
+  geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
+  scale_y_continuous(breaks = c(8, 15, 22))
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-8-1.png" width="672" />
-
-```r
-plot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51)))
-```
-
-<img src="004-linear-models_files/figure-html/unnamed-chunk-8-2.png" width="672" />
-
-```r
-# visreg
-
-library(visreg)
-
-par(mfrow = c(2, 2))
-visreg(final_lm)
-```
-
-<img src="004-linear-models_files/figure-html/unnamed-chunk-8-3.png" width="672" />
-
-```r
-par(mfrow = c(1, 1))
-
-visreg(final_lm, xvar = "elev", by = "solarcv", breaks = c(23, 33, 51), overlay = TRUE)
-```
-
-<img src="004-linear-models_files/figure-html/unnamed-chunk-8-4.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-10-2.png" width="672" />
 
 
 
@@ -890,7 +640,7 @@ visreg(final_lm, xvar = "elev", by = "solarcv", breaks = c(23, 33, 51), overlay 
 
 
 ```r
-# Predict tempC model
+# Predict mast model
 predfun <- function(model, data) {
   v <- predict(model, data, se.fit=TRUE)
   }
@@ -946,8 +696,6 @@ Schmidlin, T.W., F.F. Peterson, and R.O. Gifford, 1983. Soil Temperature Regimes
 Faraway, J.J., 2002. Practical Regression and Anova using R. CRC Press, New York. [https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf](https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf)
 
 James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
-
-Hengl, T. 2009. A Practical Guide to Geostatistical Mapping, 2nd Edt. University of Amsterdam, www.lulu.com, 291 p. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf)
 
 Webster, R. 1997. Regression and functional relations. European Journal of Soil Science, 48, 557-566. [http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract)
 

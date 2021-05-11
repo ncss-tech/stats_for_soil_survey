@@ -6,10 +6,18 @@
 ## (note: they should work fine in regular e.g. Rstudio sessions)
 # remotes::install_github('r-spatial/mapview')
 
+
+## leaftlet-related issues:
+# https://github.com/rstudio/leaflet/issues/732
+# remotes::install_github('rstudio/leaflet')
+
+## leafem too?
+# remotes::install_github('r-spatial/mapview')
+
+
 ## TODO: 
 # * R code to setup local copies of large files required by chapters
 # * integrate Yosemite MAST modeling code + appendix
-# * test regression chapters
 # * convert citation in LM, GLM, Tree models chapters to bibtex
 # * 
 
