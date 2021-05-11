@@ -146,9 +146,9 @@ Since the Henry Mount database is incomplete we will proceed with the aggregatio
 ```{r dataset, eval = TRUE}
 
 # Read mast data
-githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave.Rdata"
+githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave.Rdata")
 
-load(url(githubURL))
+load(githubURL)
 
 ```
 
@@ -187,35 +187,18 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 
 As you can see below their are numerous variables we could inspect.
 
-```{r eval = FALSE}
+```{r eval = TRUE}
 
 library(raster)
 
-# set file path
-folder <- "D:/geodata/project_data/R8-VIC/"
-
-files <- c(elev    = "ned30m_8VIC_elev5.tif",
-           slope   = "ned30m_8VIC_slope5.tif",
-           aspect  = "ned30m_8VIC_aspect5.tif",
-           twi     = "ned30m_8VIC_wetness.tif",
-           solar   = "ned30m_8VIC_solar.tif",
-           solarcv = "ned30m_8VIC_solarcv.tif",
-           tc      = "landsat30m_8VIC_tc123.tif",
-           precip  = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif",
-           temp    = "prism30m_8VIC_tmean_1981_2010_annual_C.tif"
-           )
-
-# combine the folder directory and file names
-geodata_f <- paste0(folder, files) 
-names(geodata_f) <- names(files)
-
-
-# Create a raster stack
-geodata_r <- stack(geodata_f)
+# load raster stack from GitHub
+githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave_rs.rds")
+geodata_r <- readRDS(githubURL)
 
 
 # Extract the geodata and add to a data frame
-data <- raster::extract(geodata_r, as(mast_sf, "Spatial"), sp = TRUE)@data
+mast_sp <- as(st_transform(mast_sf, crs = 5070), "Spatial")
+data <- raster::extract(geodata_r, mast_sp, sp = TRUE)@data
 
 
 # convert aspect
@@ -225,11 +208,7 @@ data$northness <- abs(180 - data$aspect)
 # random sample
 vars <- c("elev", "temp", "precip", "solar", "tc_1", "twi")
 idx <- which(names(geodata_r) %in% vars)
-geodata_s <- sampleRegular(geodata_r[[idx]], size = 5000)
-
-
-# cache files
-save(data, mast_df, mast_sf, mlra, geodata_s, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/mast_mojave.Rdata")
+geodata_s <- sampleRegular(geodata_r[[idx]], size = 1000)
 
 ```
 
@@ -239,9 +218,6 @@ save(data, mast_df, mast_sf, mlra, geodata_s, file = "C:/workspace2/github/ncss-
 Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify pecularities in the data is to plot it.
 
 ```{r eval = TRUE}
-
-githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave.Rdata"
-load(url(githubURL))
 
 summary(data)
 
@@ -443,11 +419,9 @@ predfun <- function(model, data) {
   v <- predict(model, data, se.fit=TRUE)
   }
 
-mast_r <- predict(geodata_r, final_lm, fun = predfun, index = 1:2, progress = 'text')
+mast_r <- predict(geodata_r, final_ols, fun = predfun, index = 1:2, progress = 'text')
 
-writeRaster(mast_r[[1]], filename = "C:/workspace2/mast.tif", format = "GTiff", progress = "text")
-
-writeRaster(mast_r[[2]], filename = "C:/workspace2/mast_se.tif", format = "GTiff", progress = "text")
+names(mast_r) <- c("MAST", "SE")
 
 ```
 
@@ -456,24 +430,8 @@ writeRaster(mast_r[[2]], filename = "C:/workspace2/mast_se.tif", format = "GTiff
 
 ```{r tmap, eval = FALSE}
 
-library(raster)
-
-mlra <- st_transform(mlra, 5070)
-
 # mast
-mast <- raster("C:/workspace2/mast.tif")
-crs(mast) <- "+init=epsg:5070"
-
-plot(mast)
-plot(mlra[1], col = NA, add = TRUE)
-
-
-# mast standard error
-mast_se <- raster("C:/workspace2/mast_se.tif")
-crs(mast_se) <- "+init=epsg:5070"
-
-plot(mast_se)
-plot(mlra[1], col = NA, add = TRUE)
+plot(mast_r)
 
 ```
 
