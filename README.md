@@ -61,6 +61,8 @@ Part 2
 
 ### [**Chapter 2:** *Uncertainity*](http://ncss-tech.github.io/stats_for_soil_survey/book2/uncertainty.html)
 
+- #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/9_uncert_validation/9.%20Uncertainty_and_Validation_Beaudette.pptx)
+
 - #### [Categorical Predictions](http://ncss-tech.github.io/stats_for_soil_survey/book2/acc-unc-categorical-data.html)
  
 - #### [Modeling Frameworks](http://ncss-tech.github.io/stats_for_soil_survey/book2/commentary-selecting-a-modeling-framework.html)
