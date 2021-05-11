@@ -9,12 +9,15 @@ library(tactile)
 
 MU_entropy <- function(i) {
   
-  H <- shannonEntropy(i$comppct_r / 100)
+  H <- shannonEntropy(x = i$comppct_r / 100)
+  Hn <- shannonEntropy(x = i$comppct_r / 100, b = nrow(i))
   
   res <- data.frame(
+    areasymbol = i$areasymbol[1],
     mukey = i$mukey[1],
     mukind = i$mukind[1],
-    H = H
+    H = H,
+    Hn = Hn
   )
   
   return(res)
@@ -72,6 +75,11 @@ plan(sequential)
 all.H <- map(all.H, pluck, 'result')
 all.H <- do.call('rbind', all.H)
 
+
+# saveRDS(all.H, file = '../data/mukind-entropy-calc.rds')
+
+
+
 bwplot(
   mukind ~ H, 
   data = all.H, 
@@ -79,6 +87,22 @@ bwplot(
   varwidth = TRUE,
   main = '',
   xlab = 'Shannon Entropy (base 2)',
+  ylab = '',
+  scales = list(x = list(tick.number = 10)),
+  panel = function(...) {
+    panel.grid(-1, -1)
+    panel.bwplot(...)
+  }
+)
+
+
+bwplot(
+  mukind ~ Hn, 
+  data = all.H, 
+  par.settings = tactile.theme(), 
+  varwidth = TRUE,
+  main = '',
+  xlab = 'Normalized Shannon Entropy',
   ylab = ''
 )
 

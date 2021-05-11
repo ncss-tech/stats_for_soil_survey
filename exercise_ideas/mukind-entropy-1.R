@@ -4,7 +4,7 @@ library(lattice)
 library(tactile)
 
 
-# complex
+# complex or association
 x <- c(45, 40, 3, 3, 3, 3) / 100
 shannonEntropy(x)
 
@@ -25,24 +25,12 @@ x <- rep(1, times = 5) / 5
 shannonEntropy(x)
 
 
+# normalized H
+x <- rep(1, times = 5) / 5
+shannonEntropy(x, b = length(x))
 
 
-MU_entropy <- function(i) {
-  
-  H <- shannonEntropy(i$comppct_r / 100)
-  
-  res <- data.frame(
-    areasymbol = i$areasymbol[1],
-    mukey = i$mukey[1],
-    mukind = i$mukind[1],
-    H = H
-  )
-  
-  return(res)
-  
-}
-
-
+## get component data from SDA
 qq <- "SELECT 
 areasymbol, muname, mukind, mapunit.mukey, cokey, compname, comppct_r
 FROM legend
@@ -59,28 +47,85 @@ legend.areasymbol IN ('CA790', 'CA630', 'MO071')
 # run the query
 x <- SDA_query(qq)
 
+# check
 nrow(x)
 head(x)
 
+# factor levels
 x$mukind <- factor(x$mukind, levels = c("Association", "Consociation", "Complex", "Undifferentiated group"))
-
 
 # ~ median of 4 components / MU
 summary(tapply(x$mukind, x$mukey, length))
 
 
+# simple function applied to collections of components
+MU_entropy <- function(i) {
+  
+  # Shannon H, base 2 (default and commonly used)
+  H <- shannonEntropy(x = i$comppct_r / 100)
+  
+  # normalized H, base n (number of components)
+  Hn <- shannonEntropy(x = i$comppct_r / 100, b = nrow(i))
+  
+  # combine with IDs
+  res <- data.frame(
+    areasymbol = i$areasymbol[1],
+    mukey = i$mukey[1],
+    mukind = i$mukind[1],
+    H = H,
+    Hn = Hn
+  )
+  
+  return(res)
+}
+
+
+# split into list object
 xx <- split(x, x$mukey)
 
+# check
 xx[[1]]
 
+# iterate over map units
 z <- lapply(xx, MU_entropy)
+# flatten to data.frame
 z <- do.call('rbind', z)
 
+# graphical checks
 bwplot(areasymbol ~ H, data = z, par.settings = tactile.theme(), varwidth = TRUE)
-bwplot(mukind ~ H, data = z, par.settings = tactile.theme(), varwidth = TRUE)
+bwplot(areasymbol ~ Hn, data = z, par.settings = tactile.theme(), varwidth = TRUE)
 
-bwplot(mukind ~ H | areasymbol, data = z, par.settings = tactile.theme(), varwidth = TRUE, as.table = TRUE)
+bwplot(mukind ~ H, data = z, par.settings = tactile.theme(), varwidth = TRUE)
+bwplot(mukind ~ Hn, data = z, par.settings = tactile.theme(), varwidth = TRUE)
+
 bwplot(areasymbol ~ H | mukind, data = z, par.settings = tactile.theme(), varwidth = TRUE, as.table = TRUE)
+bwplot(areasymbol ~ Hn | mukind, data = z, par.settings = tactile.theme(), varwidth = TRUE, as.table = TRUE)
+
+
+
+# investigate "high" Hn map units
+subset(z, subset = Hn > 0.95)
+
+
+## note: this will only work with SSA specified in my example
+
+# complex
+x[x$mukey == '466340', ]
+z[z$mukey == '466340', ]
+
+# complex
+x[x$mukey == '2374651', ]
+z[z$mukey == '2374651', ]
+
+# association
+x[x$mukey == '1540935', ]
+z[z$mukey == '1540935', ]
+
+# single component!?
+x[x$mukey == '2537554', ]
+z[z$mukey == '2537554', ]
+
+
 
 
 
