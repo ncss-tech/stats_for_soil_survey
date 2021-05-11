@@ -6,6 +6,35 @@ library(furrr)
 library(lattice)
 library(tactile)
 
+## previously computed Shannon H by map unit, for all of SSURGO
+tf <- tempfile()
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/mukind-entropy-calc.rds', destfile = tf)
+
+all.H <- readRDS(tf)
+
+## interesting...
+bwplot(
+  mukind ~ H, 
+  data = all.H, 
+  par.settings = tactile.theme(), 
+  varwidth = TRUE,
+  main = 'All SSURGO Components',
+  xlab = 'Shannon Entropy (base 2)',
+  ylab = '',
+  scales = list(x = list(tick.number = 10)),
+  panel = function(...) {
+    panel.grid(-1, -1)
+    panel.bwplot(...)
+  }
+)
+
+
+
+
+##
+## compute Shannon H by map unit kind for all of SSURGO!
+## iteration of SSA in parallel
+##
 
 MU_entropy <- function(i) {
   
@@ -71,39 +100,12 @@ plan(sequential)
 
 
 ## flatten
-
 all.H <- map(all.H, pluck, 'result')
 all.H <- do.call('rbind', all.H)
 
-
-# saveRDS(all.H, file = '../data/mukind-entropy-calc.rds')
-
-
-
-bwplot(
-  mukind ~ H, 
-  data = all.H, 
-  par.settings = tactile.theme(), 
-  varwidth = TRUE,
-  main = '',
-  xlab = 'Shannon Entropy (base 2)',
-  ylab = '',
-  scales = list(x = list(tick.number = 10)),
-  panel = function(...) {
-    panel.grid(-1, -1)
-    panel.bwplot(...)
-  }
-)
+## save to a local file for later use
+# saveRDS(all.H, file = 'mukind-entropy-calc.rds')
 
 
-bwplot(
-  mukind ~ Hn, 
-  data = all.H, 
-  par.settings = tactile.theme(), 
-  varwidth = TRUE,
-  main = '',
-  xlab = 'Normalized Shannon Entropy',
-  ylab = ''
-)
 
 
