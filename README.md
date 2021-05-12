@@ -73,7 +73,7 @@ Part 2
 
  - #### [Assignment 1](http://ncss-tech.github.io/stats_for_soil_survey/exercise_ideas/numerical-taxonomy/assignment-1.html)
 
-### [**Chapter 4:** *Linear Regression*](http://ncss-tech.github.io/stats_for_soil_survey/book2/linear-models.html)
+### [**Chapter 4:** *Linear Regression*](http://ncss-tech.github.io/stats_for_soil_survey/book2/linear-regression.html)
 
  - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/6_linear_models/linear_regression_pres.html)
  
