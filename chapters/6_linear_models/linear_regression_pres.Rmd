@@ -6,7 +6,7 @@ output:
   ioslides_presentation:
     widescreen: yes
 nosite: |
-  @bishop2001comparison, @faraway2002practical, @holland2011data, @seybold2009estimating, @whittingham2006we, @wills2013quantifying
+  @bishop2001comparison, @faraway2002practical, @holland2011data, @seybold2009estimating, @whittingham2006we, @wills2013quantifying, @matthews2000storks
 bibliography: bibliography.bib
 ---
 
@@ -35,7 +35,12 @@ Let's stop for a moment before we begin and discuss science.  Are there a few sc
 
 Why is it windy in Iowa?
 
-> - Missouri sucks and Minnesota blows.
+> - Missouri sucks and Minnesota blows
+> - No connection
+
+Where do babies come from?
+
+> - Storks deliver babies
 > - No connection
 
 Why are basements in Iowa full of cracks?
@@ -44,7 +49,7 @@ Why are basements in Iowa full of cracks?
 > - Connection
 
 <div class="notes">
-If we want to predict or explain something, like why it's windy in Iowa, we need to look for connections.  If this question reminds you of the punchline to a joke, you'd of course know the answer.  It's because Missouri sucks and Minnesota blows. This might be a funny joke (if you're from Iowa). Unfortunately though, there isn't a connection between how lousy a person thinks a couple of surrounding states are, and the average wind speed of their state.  This example demonstrates the importance of having a connection between a dependent variable and an independent variable.  The dependent variable is the one we are trying to predict. The independent variable is the one we are using to make the prediction. If I ask why are basements in Iowa full of cracks, you might predict it has something to do with the soil surrounding the basements.  This is an example of a dependent and independent variable which have a connection.
+If we want to predict or explain something, like why it's windy in Iowa, we need to look for connections.  If this question reminds you of the punchline to a joke, you'd of course know the answer.  It's because Missouri sucks and Minnesota blows. This might be a funny joke (if you're from Iowa). Unfortunately though, there isn't a connection between how lousy a person thinks a couple of surrounding states are, and the average wind speed of their state.  This example demonstrates the importance of having a connection between a dependent variable and an independent variable.  The dependent variable is the one we are trying to predict. The independent variable is the one we are using to make the prediction. Another famous example demonstrating the importance of a connection is an attempt to explain where babies come from. If you plot the human birth rate and number of storks across several European countries, as Robert Matthews, a professor at Aston University has already done, you might come to the incorrect conclusion that storks deliver babies. If I ask why are basements in Iowa full of cracks, you might predict it has something to do with the soil surrounding the basements.  This is an example of a dependent and independent variable which have a connection.
 </div>
 
 ## Predictions and Predicting with a Function
@@ -75,11 +80,14 @@ For linear regression to work well, there are 4 assumptions we must understand. 
 
 ## Interpreting the Linear Regression Model
 
-```{r, warning = FALSE, echo = FALSE}
+```{r, warning = FALSE, echo = FALSE, message = FALSE}
 library(ggplot2)
+library(rms)
 
 d<-trees
-lmt<- lm(Height ~ Volume, d)
+dd <- datadist(d)
+options(datadist = "dd")
+fit<- ols(Height ~ Volume, d)
 
 ggplot(trees, aes(y = Height, x = Volume)) +
   geom_point() + stat_smooth(method = "lm", col = "black", se = F) +
@@ -97,7 +105,7 @@ ggplot(trees, aes(y = Height, x = Volume)) +
   annotate("segment", x = 25.7, y = 71, xend = 25.7, yend = 75, color = "red", size = 1.2) +
   annotate("text", x = 27, y = 73.5, label = "epsilon", parse = T, size = 6) +
   annotate("text", x = 45, y =30, label = "y==beta[0]~+~beta[1]~italic('x')~+~epsilon", parse = TRUE, size = 6) +
-  annotate("text", x = 45, y =20, label = paste0("Height==", round(lmt$coefficients[1],0), "+", round(lmt$coefficients[2],1), "~Volume~+~epsilon"), parse = TRUE, size = 6) +
+  annotate("text", x = 45, y =20, label = paste0("Height==", round(fit$coefficients[1],0), "+", round(fit$coefficients[2],1), "~Volume~+~epsilon"), parse = TRUE, size = 6) +
   annotate("text", 65, y = 60, label = "beta[1]==frac(Delta~y, Delta~x)", parse = TRUE, size = 6)
 
 ```
@@ -208,7 +216,6 @@ c5 <- curve((-x^2)-10, from = 0, to = -10)
 c5 <- data.frame(c5)
 c6 <- curve((-x^2)-10, from = 0, to = 10)
 c6 <- data.frame(c6)
-fit <- lmt
 ```
 
 ## Heteroscedasticity
@@ -316,8 +323,8 @@ knit_hooks$set(output = function(x, options) {
 })
 ```
 
-```{r, output.lines=8}
-summary(fit)
+```{r, output.lines=10}
+fit
 ```
 
 <div class="notes">
@@ -326,8 +333,8 @@ The first part of the summary output shows the model formula, followed by the qu
 
 ## Interpreting Model Results
 
-```{r, output.lines=8:15}
-summary(fit)
+```{r, output.lines=10:20}
+fit
 ```
 
 <div class="notes">
@@ -336,15 +343,7 @@ The next part of the summary lists the estimate of the y-intercept and the slope
 T values test the hypothesis that the coefficient is different from 0. You can get the t-values by dividing the coefficient by its standard error. The t-values also show the importance of a variable in the model.
 
 The next column to the right is the two-tail p-values which test the hypothesis that each coefficient is different from 0.
-</div>
 
-## Interpreting Model Results
-
-```{r, output.lines=15:18}
-summary(fit)
-```
-
-<div class="notes">
 The last part is the Residual standard error which is the square root of the residual sum of squares over the degrees of freedom.  The degrees of freedom calculated by taking the number of observations and subtracting 2 (n-2).
 
 $R^2$ shows the amount of variance of Y explained by X. Adjusted $R^2$ shows the same as $R^2$ but adjusted by the # of cases and # of variables. When the # of variables are small and the # of cases is very large then Adj $R^2$ is closer to $R^2$. This provides a more honest association between X and Y.
@@ -356,18 +355,25 @@ The p-value of the model tests whether $R^2$ is different from 0.
 
 ## Diagnostic Plots
 
-```{r, fig.show='hold', out.width = '35%'}
-plot(fit)
-```
+- Residuals vs Fitted
+- Quantile - Quantile (QQ)
+- Spread-Location
+- Leverage Plot
 
 <div class="notes">
-A series of diagnostic plots can easily be generated after the linear model is created in R by using plot(fit) where fit is the object created from the lm() function.
+A series of diagnostic plots can easily be generated after the linear model is created in R by using plot(fit) where fit is the object created from the lm() function. You can also create the plots yourself in ggplot2, which I used in these examples.
 </div>
 
 ## Residuals vs Fitted
 
-```{r}
-plot(fit, 1)
+```{r, out.width = '50%'}
+ggplot() +
+  geom_point(aes(x = fit$fitted.values, y = fit$residuals)) +
+  geom_smooth(aes(x = fit$fitted.values, y = fit$residuals),
+              method = "loess", formula = "y ~ x", se = F) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+  labs(title = "Residuals vs Fitted", x = "Fitted Values", y = "Residuals")
+
 ```
 
 <div class="notes">
@@ -382,8 +388,12 @@ Are there any outliers?
 
 ## QQ Plot
 
-```{r}
-plot(fit, 2)
+```{r, out.width = '50%'}
+ggplot() +
+  geom_qq(aes(sample = fit$residuals)) +
+  geom_qq_line(aes(sample = fit$residuals), linetype = "dashed") +
+  labs(title = "Normal Q-Q", x = "Theoretical Quantiles \n ols(Height ~ Volume)",
+       y = "Standardized Residuals")
 ```
 
 <div class="notes">
@@ -392,8 +402,14 @@ Quantile plot is a probability plot that can be used to compare the shapes of th
 
 ## Spread-Location
 
-```{r}
-plot(fit, 3)
+```{r, out.width = '40%'}
+ggplot() +
+  geom_point(aes(x = fit$fitted.values, y = sqrt(abs(fit$residuals)))) +
+  geom_smooth(aes(x = fit$fitted.values, y = sqrt(abs(fit$residuals))),
+              method = "loess", formula = "y ~ x", se = F) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+labs(title = "Scale-Location", x = "Fitted Values \n ols(Height ~ Volume)",
+     y = "Square Root of Residuals")
 ```
 
 <div class="notes">
@@ -402,17 +418,24 @@ This plot shows if residuals are spread equally along the ranges of predictors. 
 
 ## Leverage Plot
 
-```{r}
-plot(fit, 5)
+```{r, out.width = '40%'}
+class(fit) <- "lm"
+ggplot() +
+  geom_point(aes(x = hat(fit$fitted.values), y = fit$residuals, size = cooks.distance(fit))) +
+  geom_smooth(aes(x = hat(fit$fitted.values), y = fit$residuals),
+              method = "loess", formula = "y ~ x", se = F) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+labs(title = "Residuals vs Leverage", x = "Leverage \n ols(Height ~ Volume)",
+     y = "Standardized Residuals")
 ```
 
 <div class="notes">
-Unlike the other plots, this time patterns are irrelevant. Leverage is a measure of how much each data point influences the regression. Because the regression must pass through the centroid, points that lie far from the centroid have greater leverage, and their leverage increases if there are fewer points nearby. As a result, leverage reflects both the distance from the centroid and the isolation of a point. The plot also shows values of Cook's distance, which measures how much the regression would change if a point was deleted. Cook's distance is increased by leverage and by large residuals: a point far from the centroid with a large residual can severely alter the regression. On this plot, you want to see that the red smoothed line stays close to the horizontal gray dashed line and that no points have a large Cook's distance (i.e. >0.5). What do you notice about this plot?
+Unlike the other plots, this time patterns are irrelevant. Leverage is a measure of how much each data point influences the regression. Because the regression must pass through the centroid, points that lie far from the centroid have greater leverage, and their leverage increases if there are fewer points nearby. As a result, leverage reflects both the distance from the centroid and the isolation of a point. The plot also shows values of Cook's distance, which measures how much the regression would change if a point was deleted. Cook's distance is increased by leverage and by large residuals: a point far from the centroid with a large residual can severely alter the regression. On this plot, you want to see that the blue smoothed line stays close to the horizontal dashed line and that no points have a large Cook's distance (i.e. >0.5). What do you notice about this plot?
 </div>
 
 ## Exercise: Linear Regression
 
-<http://ncss-tech.github.io/stats_for_soil_survey/chapters/6_linear_models/6_Linear_models_v2.html>
+<http://ncss-tech.github.io/stats_for_soil_survey/book2/linear-regression.html>
 
 <div class="notes">
 Are there any questions so far?  Ok, let's continue with an exercise you can find this on the chapters page on GitHub.
@@ -430,19 +453,19 @@ Let's do some review on Linear Regression.
 
 ## Linear Regression in R
 
-$$lm(formula, data)$$
+$$ols(formula, data)$$
 
 **formula** $response \sim predictor_1+predictor_2+predictor_x$  
-**data** specifies the dataset  
-
-**summary()**    detailed statistical summary  
-**plot()**    a series of diagnostic plots
+**data** specifies the dataset
+**fit**    detailed statistical summary  
 
 ```{r, eval = FALSE}
+library(rms)
 d <- trees
-fit <- lm(Height ~ Volume, d)
-summary(fit)
-plot(fit)
+dd <- datadist(d)
+options(datadist = "dd")
+fit <- ols(Height ~ Volume, d)
+fit
 ```
 
 <div class="notes">
@@ -482,13 +505,10 @@ Linear regression is not the only type of regression.  Stephen will cover logist
 
 ## Review Questions
 
->- What are the components of a simple linear regression equation? 
->- What is the main limitation of using linear regression?
->- Can you think of other names for regression?
->- Are more variables better?
+- Kahoot (<http://kahoot.it>)
 
 <div class="notes">
-It's time for some review questions.  Speak up or type your answer in the chat window.
+It's time for some review questions.  Use the link provided to access the Kahoot Quiz.
 </div>
 
 ## Additional Resources
