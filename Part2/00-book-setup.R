@@ -12,7 +12,7 @@
 # remotes::install_github('rstudio/leaflet')
 
 ## leafem too?
-# remotes::install_github('r-spatial/mapview')
+# remotes::install_github('r-spatial/leafem')
 
 
 ## TODO: 
