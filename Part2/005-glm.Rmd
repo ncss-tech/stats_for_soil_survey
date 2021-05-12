@@ -13,7 +13,7 @@
 
 Generalized linear models (GLM) as the name implies are a generalization of the linear modeling framework to allow for the modeling of response variables (e.g. soil attributes) with non-normal distributions and heterogeneous variances. Whereas linear models are designed for predicting continuous soil properties such as clay content or soil temperature, GLM can be used to predict the presence/absence of argillic horizons (i.e. logistic regression) or counts of a plant species along a transect (i.e. Poisson regression). These generalizations greatly expand the applicability of the linear modeling framework, while still allowing for a similar fitting procedure and interpretation of the resulting models.
 
-In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(x). However, such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(x)). These response transformations are not guaranteed to achieve both normality and constant variance simultaneously. GLM approaches transform the response, but also preserve the scale of the response, and provide separate functions to transform the mean response and variance, known as the link and variance functions respectively. So instead of looking like this:
+In the past in order to handle non-linearity and heterogeneous variances, transformations have been made to the response variable, such as the log(y). However, such transformations complicate the models interpretation because the results refer to the transformed scale (e.g. log(y)). These response transformations are not guaranteed to achieve both normality and constant variance simultaneously. GLM approaches transform the response, but also preserve the scale of the response, and provide separate functions to transform the mean response and variance, known as the link and variance functions respectively. So instead of looking like this:
 
 $f(y) = \beta_{0} + \beta_{1}x + \varepsilon$
 
@@ -83,17 +83,15 @@ With this dataset we'll encounter some challenges. To start with, fan piedmont l
 
 To start, as always we need to load some extra packages. This will become a familiar routine every time you start R. Most of the basic functions we need to develop a logistic regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
 
-```{r load packages, eval = TRUE, message=FALSE, warning=FALSE}
+```{r load packages, eval = FALSE, message=FALSE, warning=FALSE}
 
-library(aqp)     # specialized soil classes and functions
-library(soilDB)  # NASIS and SDA import functions
-library(raster)  # guess
+library(raster)  # raster data functions
 library(sf)      # vector data functions
-# library(mapview) # interactive mapping
+library(mapview) # interactive mapping
 library(ggplot2) # graphing
+library(dplyr)   # data manipulation
 library(tidyr)   # data manipulation
-library(caret)   # classification and regression training
-library(car)     # additional regression tools
+library(rms)     # additional regression tools
 ```
 
 
@@ -104,11 +102,15 @@ Hopefully like all good soil scientists and ecological site specialists you ente
 ```{r import data, eval = TRUE}
 
 # pedons <- fetchNASIS()
-githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata"
-load(url(githubURL))
+githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ca794_pedons.rds")
+load(githubURL)
 
-# Examine the makeup of the data we imported from NASIS
-str(pedons, max.level = 2)
+```
+
+```{r View, eval=FALSE}
+
+# Examine the SoilProfileCollection object
+View(pedons)
 
 ```
 
@@ -123,20 +125,20 @@ Generally before we begin modeling you should spend some time exploring the data
 
 # Check consistency of argillic horizon population
 
-# get the site table
+# extract the site table from the SoilProfileCollection object
 s <- site(pedons) 
 
-# tabulate the number of argillic horizons observed
-table(s$argillic.horizon, useNA = "ifany") 
 
-# or
+# tabulate column
+count(s, argillic.horizon)
 
-# summary(s$argillic.horizon) 
 
 # Extract argillic presence from the taxonomic subgroup
-s$argillic <- grepl("arg", s$taxsubgrp)
-
-table(s$argillic, useNA = "ifany")
+s %>%
+  # create a new variable
+  mutate(argillic.taxsubgrp = grepl("arg", taxsubgrp)) %>%
+  # tabulate column
+  count(argillic.taxsubgrp)
 
 ```
 
@@ -145,12 +147,12 @@ Ideally, if the diagnostic horizon table had been populated consistently we coul
 
 ```{r diagnostic, eval = TRUE}
 
-d <- diagnostic_hz(pedons)
-d_sub <- subset(d, featkind == "argillic horizon" & featdept < 50)
-
-s$argillic.horizon50 <- ifelse(s$peiid %in% d_sub$peiid, TRUE, FALSE)
-
-table(s$argillic.horizon50, useNA = "ifany")
+# extract the diagnostic table from the SoilProfileCollection object
+diagnostic_hz(pedons) %>%
+  # create a new variable
+  mutate(argillic.horizon50 = featkind == "argillic horizon" & featdept < 50) %>%
+  # tabulate column
+  count(argillic.horizon50)
   
 ```
 
@@ -163,19 +165,22 @@ Another obvious place to look is at the geomorphic data in the site table. This 
 ```{r landform, eval = TRUE}
 
 # Landform vs argillic presence
+s %>%
+  # subset rows using logical expression
+  filter(argillic == TRUE) %>%
+  # cross-tabulate columns
+  count(landform, argillic) %>%
+  # subset rows by landform.string with > 3 observations
+  filter(n > 3) %>%
+  # sort data by decreasing n
+  arrange(-n)
 
-# Subset
-s_sub <- subset(s, argillic == TRUE)
-
-# Cross tabulate landform vs argillic horizon presence
-test <- with(s_sub, 
-             table(landform, argillic, useNA = "ifany")
-             )
-# Subset and print landform.string with > 3 observations
-test[test > 3, ]
 
 # generalize the landform.string
-s$landform_generic <- ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform), "fan", "hill") 
+s <- mutate(
+  s, 
+  landform_generic = ifelse(grepl("fan|terrace|sheet|drainageway|wash", s$landform), "fan", "hill")
+  )
 
 ```
 
@@ -186,20 +191,34 @@ Examining the above frequency table we can see that argillic horizons occur pred
 
 # Hillslope position
 
-# Subset fan landforms
-s_sub <- subset(s, landform_generic == "fan") 
+# # subset rows using logical expression
+s_sub <- filter(s, landform_generic == "fan") 
 
-# Cross tabulate and calculate proportions, the "2" calculates the proportions relative to the column totals
-with(s_sub, round(
-  prop.table(table(hillslopeprof, argillic, useNA = "ifany"), 2)
-  * 100)
-  ) 
 
-# Slope shape
-with(s_sub, round(
-  prop.table(table(paste(shapedown, shapeacross), argillic, useNA = "ifany"), 2)
-  * 100)
-  )
+# Hillslope
+s_sub %>%
+  # cross-tabulate columns
+  count(hillslopeprof, argillic) %>%
+  # group by variable and calculate percent
+  group_by(argillic) %>%
+  mutate(pct = round(n / sum(n) * 100)) %>%
+  # reshape to wide format
+  select(-n) %>%
+  pivot_wider(names_from = argillic, values_from = pct)
+
+
+# slope shape
+s_sub %>%
+  # create a new variable
+  mutate(SS = paste(shapedown, shapeacross)) %>%
+  # cross-tabulate columns
+  count(SS, argillic) %>%
+  # calculate percent by group
+  group_by(argillic) %>%
+  mutate(pct = round(n / sum(n) * 100)) %>%
+  # reshape to wide format
+  select(-n) %>%
+  pivot_wider(names_from = argillic, values_from = pct)
 
 ```
 
@@ -207,18 +226,23 @@ Looking at the hillslope position of fan landforms we can see a slightly higher 
 
 ```{r surface, eval = TRUE}
 
-# Subset to just look and fans, and select numeric columns
-s_sub <- subset(s, landform_generic == "fan", select = c(argillic, bedrckdepth, slope, elev, surface_total_frags_pct)) 
+s_long <- s %>%
+  # subset rows using logical expression
+  filter(landform_generic == "fan") %>%
+  # extract columns
+  select(argillic, bedrckdepth, slope, elev, surface_total_frags_pct) %>%
+  # reshape to long format
+  pivot_longer(cols = c(bedrckdepth, slope, elev, surface_total_frags_pct))
 
-# convert s_sub to wide data format
-s_w <- reshape2::melt(s_sub, id.vars = "argillic", measure.vars = c("bedrckdepth", "slope", "elev", "surface_total_frags_pct"))
-head(s_w, 2)
 
-library(ggplot2)
+# examine results
+head(s_long)
 
-ggplot(s_w, aes(x = argillic, y = value)) +
+
+# plot results
+ggplot(s_long, aes(x = argillic, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ variable, scale = "free")
+  facet_wrap(~ name, scale = "free")
 
 ```
 
@@ -231,29 +255,31 @@ Next we'll look at soil scientist bias. The question being: Are some soil scient
 
 ```{r bias, eval = TRUE}
 
-# Custom function to filter out the top 3 soil scientists
-s <- within(s, {
-  old = descname
-  descname2 = NA
-  descname2[grepl("Stephen", old)] = "Stephen" # least senior
-  descname2[grepl("Paul",    old)] = "Paul"
-  descname2[grepl("Peter",   old)] = "Peter"   # most senior
-  })
+# Filter and sort most frequent soil scientists by seniority
+s <- s %>%
+  mutate(
+    old = descname,
+    descname2 = NA,
+    descname2 = ifelse(grepl("Stephen", old), "Stephen", descname2), # least senior
+    descname2 = ifelse(grepl("Paul",    old), "Paul",    descname2),
+    descname2 = ifelse(grepl("Peter",   old), "Peter",   descname2)  # most senior
+    )
 
 ```
 
 ```{r bias2, eval = TRUE}
 
-s_sub <- subset(s, landform_generic == "fan")
-
-# By frequency
-with(s_sub, table(descname2, argillic, useNA = "ifany"))
-
-# By proportion
-with(s_sub, round(
-  prop.table(table(descname2, argillic), margin = 1)
-  * 100)
-  )
+s %>%
+  # subset rows using logical expression
+  filter(landform_generic == "fan") %>%
+  # cross-tabulate columns
+  count(descname2, argillic) %>%
+  # calculate percent by group
+  group_by(descname2) %>%
+  mutate(pct = round(n / sum(n) * 100)) %>%
+  # reshape the results into a table
+  select(-n) %>%
+  pivot_wider(names_from = argillic, values_from = pct)
 
 ```
 
@@ -267,46 +293,42 @@ Where do our points plot? To start we need to convert them to a spatial object f
 ```{r plot, eval = FALSE}
 
 library(sf)
-library(dplyr)
-
-# create an index to remove sites without coordinates
-idx <- complete.cases(s$x_sdt, s$y_std)
-s_sub <- s[idx, ]
-
-# convert to sites to a spatial object
-s_sf <- st_as_sf(s_sub,
-                 coords = c("x_std", "y_std"),
-                 crs = 4326
-                 ) %>%
-  # reproject
-  st_transform(crs = 5070)
-
-
-# Read in soil survey area boundaries
-ca794 <- read_sf(dsn = "D:/geodata/soils/soilsa_a_nrcs.shp", layer = "soilsa_a_nrcs") %>%
-  # subset out Joshua Tree National Park
-  filter(areasymbol == "CA794") %>%
-  # reproject
-  st_transform(crs = 5070)
-
-
-# Plot
 library(mapview)
 
-# mapview(ca794, fill = NA) +
+# subset rows with only complete X & Y coordinates 
+s_sub <- filter(s, complete.cases(x_std, y_std))
+
+
+# convert s_sub data.frame to a spatial object
+s_sf <- st_as_sf(s_sub,
+                 # define coordinates
+                 coords = c("x_std", "y_std"),
+                 # define coordinate reference system using ESPG code
+                 crs = 4326
+                 ) %>%
+  # reproject to equal area coordinate reference system using ESPG code
+  st_transform(crs = 5070)
+
+
+# Download soil survey area boundaries
+ca794 <- soilDB::fetchSDA_spatial("CA794", geom.src = "sapolygon") %>%
+  # convert to spatial object
+  st_as_sf() %>%
+  # reproject to equal area coordinate reference system using ESPG code
+  st_transform(crs = 5070)
+
+
+# Plot interactive map
+mapview(ca794, alpha.regions = 0, lwd = 2) +
   mapview(s_sf, zcol = "argillic")
-
-
-# Write shapefile of pedons
-write_sf(s_sf, dsn = "C:/workspace2", "ca794_pedons", driver = "ESRI Shapefile", delete_dsn =  TRUE)
 
 ```
 
 
-## Exercise 1: View the data in ArcGIS
+## Exercise 1: View the data
 
-- Examine the interactive map or shapefile in ArcGIS along with our potential predictive variables.
-- Discuss with your group, and report your observations or hypotheses.
+- Examine the interactive map.
+- Hypothesize what predictor variables/landscape relationships might be predictive.
 
 
 ### Extracting spatial data
@@ -315,43 +337,10 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 
 ```{r extract, eval=FALSE}
 
-library(raster)
+# load raster stack from GitHub
+githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ca794_rs.rds")
+geodata_r <- readRDS(githubURL)
 
-# set file path
-folder <- "D:/geodata/project_data/R8-VIC/ca794/"
-
-# list of file names
-files <- c(
-  z      = "ned30m_8VIC.tif", # elevation
-  slp    = "ned30m_8VIC_slope5.tif", # slope gradient
-  asp    = "ned30m_8VIC_aspect5.tif", # slope aspect
-  twi    = "ned30m_8VIC_wetness.tif", # topographic wetness index
-  twi_sc = "ned30m_8VIC_wetness_sc.tif", # transformed twi
-  ch     = "ned30m_8VIC_cheight.tif", # catchment height
-  z2str  = "ned30m_8VIC_z2stream.tif", # height above streams
-  mrrtf  = "ned30m_8VIC_mrrtf.tif", # multiresolution ridgetop flatness index
-  mrvbf  = "ned30m_8VIC_mrvbf.tif", # multiresolution valley bottom flatness index
-  solar  = "ned30m_8VIC_solar.tif", # solar radiation
-  precip = "prism30m_8VIC_ppt_1981_2010_annual_mm.tif", # annual precipitation
-  precipsum = "prism30m_8VIC_ppt_1981_2010_summer_mm.tif", # summer precipitation
-  temp   = "prism30m_8VIC_tmean_1981_2010_annual_C.tif", # annual temperature
-  mast   = "mast30m_ca794_2013.tif", # mean annual soil temperature
-  ls     = "landsat30m_8VIC_b123457.tif", # landsat bands
-  pc     = "landsat30m_8VIC_pc123456.tif", # principal components of landsat
-  tc     = "landsat30m_8VIC_tc123.tif", # tasseled cap components of landsat
-  k      = "gamma30m_8VIC_namrad_k.tif", # gamma radiometrics signatures
-  th     = "gamma30m_8VIC_namrad_th.tif",
-  u      = "gamma30m_8VIC_namrad_u.tif",
-  cluster = "cluster152.tif", # unsupervised classification
-  geo    = "sgmc30m_8-VIC_geology.tif"
-  )
-
-# combine the folder directory and file names
-geodata_f <- paste0(folder, files) 
-names(geodata_f) <- names(files)
-
-# Create a raster stack
-geodata_r <- stack(geodata_f)
 
 # Extract the geodata and add to a data frame
 data <- raster::extract(geodata_r, as(s_sf, "Spatial"), sp = TRUE)@data
@@ -359,13 +348,10 @@ data <- raster::extract(geodata_r, as(s_sf, "Spatial"), sp = TRUE)@data
 # Modify some of the geodata variables
 data <- within(data, {
   cluster  = factor(cluster)
-  geo      = factor(geo)
   twi_sc   = abs(twi - 13.8) # 13.8 = twi median
   gsi      = (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1)
   ndvi     = (ls_4 - ls_3) / (ls_4 + ls_3)
   })
-
-# save(data, ca794, pedons, file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data.Rdata")
 
 ```
 
@@ -376,31 +362,29 @@ With our spatial data in hand, we can now see whether any of the variables will 
 
 ```{r spatial, fig.width=8, fig.height=10, eval = FALSE}
 
-# Load data
-# githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata"
-# load(url(githubURL))
-load(file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data.Rdata")
 train <- data
 
 # Select argillic horizons with "arg" in the subgroup name and on fans
 # Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.train$argillic 
-train <- transform(
+train <- mutate(
   train, 
-  argillic  = ifelse(grepl("arg", taxsubgrp) & train$mrvbf > 0.15, "yes", "no"),
+  argillic  = ifelse(grepl("arg", taxsubgrp) & train$mrvbf > 0.15, TRUE, FALSE),
   ch_log  = log(ch + 1),
   z2str_log = log(z2str + 1),
   ch    = NULL,
   z2str = NULL
   )
-idx <- which(names(train) == "z")
-train <- train[idx:ncol(train)]
 
-data_m <- tidyr::gather(train[- c(31:32)], key = key, value = value, - argillic)
-data_m <- subset(data_m, !is.na(value))
+train <- select(train, z:z2str_log)
 
-ggplot(data_m, aes(x = argillic, y = value)) +
+data_l <- train %>%
+  select(-cluster) %>%
+  pivot_longer(col = - argillic) %>%
+  filter(!is.na(value))
+
+ggplot(data_l, aes(x = argillic, y = value)) +
   geom_boxplot() +
-  facet_wrap(~ key, scales = "free")
+  facet_wrap(~ name, scales = "free")
 
 ```
 
@@ -413,7 +397,7 @@ R has several functions for fitting linear models. The most common is arguably t
 
 # stats
 
-fit_glm <- glm(argillic ~ z + slp + twi_sc + ch_log + z2str_log + mrrtf + solar + precip + precipsum + temp + mast + tc_1 + tc_2 + tc_3 + k + th + u + cluster, data = train, family = binomial)
+fit_glm <- glm(argillic ~ z + slp + twi_sc + ch_log + z2str_log + mrrtf + solar + precip + precipsum + temp +tc_1 + tc_2 + tc_3 + k + th + u + cluster, data = train, family = binomial)
 
 
 # rms
@@ -423,7 +407,7 @@ library(rms)
 dd <- datadist(train)
 options(datadist = "dd")
 
-fit_lrm <- lrm(argillic ~ z + slp + twi_sc + ch_log + z2str_log + mrrtf + solar + precip + precipsum + temp + mast + tc_1 + tc_2 + tc_3 + k + th + u, data = train, x = TRUE, y = TRUE)
+fit_lrm <- lrm(argillic ~ z + slp + twi_sc + ch_log + z2str_log + mrrtf + solar + precip + precipsum + temp + tc_1 + tc_2 + tc_3 + k + th + u, data = train, x = TRUE, y = TRUE)
 
 ```
 
@@ -436,11 +420,10 @@ One unfortunate side effect of side effect of logistic regression is that the de
 ```{r diag, eval = FALSE}
 
 par(mfcol = c(2, 2))
+
 plot(fit_glm)
-par(mfcol = c(1, 1))
 
-
-car::residualPlots(fit_glm, fit = FALSE, tests = FALSE)
+termplot(fit_glm, partial.resid = TRUE, col.res = "black", pch = 16)
 
 ```
 
@@ -451,7 +434,12 @@ As we mentioned earlier multicolinearity should be avoided. To assess a model fo
 
 ```{r, eval = FALSE}
 
-sqrt(vif(fit_glm))
+# vif() function from the rms or car packages
+sqrt(vif(fit_lrm))
+
+# or 
+
+sqrt(vif(fit_lrm)) > 3
 
 ```
 
@@ -468,7 +456,7 @@ set.seed(42)
 
 # rms
 ## stepwise selection and validation
-step_rms <- validate(fit_lrm, method = "crossvalidation", B = 10, bw = TRUE)
+step_lrm <- validate(fit_lrm, method = "crossvalidation", B = 10, bw = TRUE)
 
 ```
 
@@ -476,42 +464,7 @@ The results for validate() above and below show which variables were retained an
 
 ```{r rms-step2, eval = FALSE}
 ## test accuracy and error
-step_rms
-
-```
-
-The caret package option for variable selection and validation is a bit more verbose than the rms package. However, the caret package is a more versatile package, with options for over 50 different models, such as other tree-based models.
-
-```{r caret-step, eval = FALSE}
-
-# caret
-library(caret)
-
-## cross validation parameters
-train.control <- trainControl(method = "cv", 
-                              number = 10, 
-                              classProbs = TRUE,
-                              savePredictions = TRUE,
-                              summaryFunction = twoClassSummary
-                              )
-
-# stepwise selection and validation
-step_caret <- train(argillic ~ z + slp + twi_sc + ch_log + z2str_log + mrrtf + solar + precip + precipsum + temp + mast + tc_1 + tc_2 + tc_3 + k + th + u,
-                     data = train,
-                     method="glmStepAIC", 
-                     family = "binomial",
-                     direction ="backward",
-                     trace = FALSE,
-                     trControl = train.control,
-                     na.action = na.exclude
-                     )
-
-# test accuracy & error
-step_caret$results
-
-
-# summary
-summary(step_glm <- step_caret$finalModel)
+step_lrm
 
 ```
 
@@ -526,8 +479,14 @@ Because we're dealing with a classification problem, we have to consider both er
 
 ```{r, eval = FALSE}
 
+final_lrm <- lrm(argillic ~ slp + twi_sc + tc_1 + tc_2 + precipsum, data = train, x = TRUE, y = TRUE)
+
+validate(final_lrm, method = "crossvalidation", B = 10)
+
+
+
 # examine possible thresholds
-train$predict <- predict(step_glm, train, type = "response")
+train$predict <- predict(final_lrm, type = "fitted")
 
 ggplot(train, aes(x = predict, fill = argillic)) +
   geom_density(alpha = 0.5) +
@@ -535,35 +494,27 @@ ggplot(train, aes(x = predict, fill = argillic)) +
   xlab("probability") +
   scale_x_continuous(breaks = seq(0, 1, 0.2))
 
-train$predict <- ifelse(train$predict > 0.3, 'yes', 'no')
+train$predict <- ifelse(train$predict > 0.3, TRUE, FALSE)
 
 # Confusion Matrix
 cm <- table(observed = train$argillic, predicted = train$predict)
-confusionMatrix(cm, positive = "yes")
-
-# Deviance squared
-library(modEvA)
-
-# Deviance squared
-Dsquared(step_glm)
-
-# Adjusted deviance squared
-Dsquared(step_glm, adjust = TRUE)
+confusionMatrix(cm, positive = "TRUE")
 
 
 # Spatially variable accuracy
 temp <- train %>%
   group_by(cluster) %>%
-  dplyr::summarize(
-    TP       = sum(predict == "yes" & argillic == "yes", na.rm = TRUE),
-    FN       = sum(predict == "no"  & argillic == "yes", na.rm = TRUE),
+  summarise(
+    TP       = sum(predict == TRUE  & argillic == TRUE, na.rm = TRUE),
+    FN       = sum(predict == FALSE & argillic == TRUE, na.rm = TRUE),
     sensitivity = TP / (TP + FN)
     )
 
 ggplot(temp, aes(x = cluster, y = sensitivity)) +
   geom_point()
 
-table(train$argillic, train$cluster)
+count(train, argillic, cluster) %>%
+  pivot_longer(col )
 
 ```
 
@@ -575,22 +526,19 @@ table(train$argillic, train$cluster)
 ```{r effects, eval = FALSE}
 
 # summary
-summary(step_glm)
+summary(final_lrm)
 
 
 # Convert the coefficients to an odds scale, who here gambles?
-exp(coef(step_glm))
+exp(coef(final_lrm))
 
 
 # analysis of deviance
-anova(step_glm)
+plot(anova(final_lrm))
 
 
-# visreg
-library(visreg)
-
-par(mfrow = c(2, 2))
-visreg(step_glm, scale = "response", ylab = "argillic probability")
+# Plot Effects
+ggplot(Predict(final_lrm, fun = plogis))
 
 ```
 
@@ -607,15 +555,13 @@ visreg(step_glm, scale = "response", ylab = "argillic probability")
 library(raster)
 
 predfun <- function(model, data) {
-  v <- predict(model, data, type = "response", se.fit = TRUE)
-  cbind(
-    p = as.vector(v$fit),
-    se = as.vector(v$se.fit)
-    )
+  prob <- predict(model, data, type = "fitted")
+  se   <- predict(model, data, se.fit = TRUE)
+  cbind(prob, exp(se$se.fit))
   }
   
 # Generate spatial predictions
-r <- predict(geodata_r, step_glm, fun = predfun, index = 1:2, progress = "text")
+r <- predict(geodata_r, final_lrm, fun = predfun, index = 1:2, progress = "text")
 
 # Export the results
 writeRaster(r[[1]], "argi.tif", overwrite = T, progress = "text")
@@ -637,17 +583,6 @@ plot(ca794[1], col = NA, add = TRUE)
 
 ```
 
-
-```{r, eval=FALSE}
-
-# Download clipped example from Pinto Basin Joshua Tree
-githubURL <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/argi_pb.zip"
-
-download.file(githubURL, destfile = "C:/workspace2/argi_pb.zip")
-
-unzip(zipfile="C:/workspace2/argi_pb.zip", exdir="C:/workspace2")
-
-```
 
 ## Exercise 2: View the prediction in ArcGIS
 
