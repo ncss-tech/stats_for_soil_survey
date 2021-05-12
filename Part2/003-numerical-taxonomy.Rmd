@@ -4,6 +4,8 @@
     chunk_output_type: console
 ---
 
+
+
 <!-- load libraries for examples, which run before any code is displayed -->
 ```{r eval = TRUE, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 # load libs for examples
@@ -19,6 +21,11 @@ library(vegan)
 
 # custom functions
 source('local-functions.R')
+
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, 
+                      eval = FALSE, class.source = "codeBlock", class.output = "outputBlock",
+                      fig.retina = 3, fig.align = 'center', 
+                      dev = 'png')
 ```
 
 
@@ -389,7 +396,7 @@ The following example is based on a **data matrix** containing lab measurements 
 
 
 Note that distances between individuals, within clusters, and between clusters **is more apparent in the nMDS** representation of the distance matrix. Similar information is embedded in the dendrogram but it is not as intuitive.
-```{r eval = TRUE, echo=FALSE, results='hide', fig.width=10, fig.height=5}
+```{r eval = TRUE, echo=FALSE, results='hide', fig.width=10, fig.height=5, message=FALSE}
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -434,7 +441,7 @@ mtext('Ordination of Distance Matrix (nMDS)\n(all characteristics, standardized)
 
 ##### Interpreting the Results
 We can conveniently annotate the results of an ordination with contextual information, such as the approximate trends in clay content or CEC. Note that ordination methods represent a *flattening* of multi-dimensional data space, and in the case of nMDS, preserve proportional (vs. exact) pair-wise distances. Therefore, it is quite common for surfaces (the contours below) fit to the 2D ordination to have complex patterns.
-```{r eval = TRUE, echo=FALSE, results='hide', fig.width=10, fig.height=4}
+```{r eval = TRUE, echo=FALSE, results='hide', message=FALSE, fig.width=10, fig.height=4}
 # figure margins
 par(mar=c(1,1,3,1), mfcol=c(1,2))
 
@@ -494,7 +501,7 @@ mtext('profiles arranged from low \u2192 high, profile maximum CEC by NH4-Ac', s
 
 ### Pair-Wise Distances Between Soil Profiles
 
-```{r eval = TRUE, fig.width=8, fig.height=4, echo=FALSE}
+```{r eval = TRUE, fig.width=8, fig.height=4, echo=FALSE, message=FALSE}
 library(sharpshootR)
 # init example data
 data(sp4)
@@ -509,9 +516,9 @@ d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
 # cluster via divisive method
 clust <- diana(d)
 
-# vizualize dissimilarity matrix via hierarchical clustering
-par(mar=c(0,0,3,0))
-plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2, width=0.15, cex.names=0.45, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
+# visualize dissimilarity matrix via hierarchical clustering
+par(mar=c(0,0,3,1))
+plotProfileDendrogram(sp4, clust, dend.y.scale = 50, scaling.factor = 0.66, y.offset = 2.5, width=0.3, cex.names = 0.7, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio', name.style = 'center-center')
 ```
 
 ![](static-figures/drummer-pc-example.png)
@@ -639,9 +646,9 @@ plot(gopheridge.complete, color='clay', id.style='side', label='pedon_id')
 
 The following three functions are essential to the creation of a **distance matrix**:
 
-  * `dist()`: This function is in base R, is simple and fast, and has a limited number of distance metrics.
-  * `daisy()`: This function is in [cluster package](https://cran.r-project.org/web/packages/cluster/index.html), has a better selection of distance metrics, and has simple standardization. Much more convenient than `dist()`.
-  * `vegdist()`: This function is in [vegan package](https://cran.r-project.org/web/packages/vegan/index.html), has many distance metrics, and is primarily designed for species composition data.
+ * `dist()`: This function is in base R, is simple and fast, and has a limited number of distance metrics.
+ * `daisy()`: This function is in [cluster package](https://cran.r-project.org/web/packages/cluster/index.html), has a better selection of distance metrics, and has simple standardization. Much more convenient than `dist()`.
+ * `vegdist()`: This function is in [vegan package](https://cran.r-project.org/web/packages/vegan/index.html), has many distance metrics, and is primarily designed for species composition data.
 
 
 The following is a short demonstration:
@@ -851,7 +858,7 @@ tiplabels(pch=15, col=col.set[cutree(h.complete, 4)])
 
 ##### More on the Flexible UPGMA method
 Test the "flexible UPGMA" method [@belbin1992] by iterating over possible values for $\beta$. Looks like a value near `0.01` would be ideal (e.g. highest cophenetic correlation). Interestingly, this is very close to the cophenetic correlation associated with the "average" linkage criteria.
-```{r eval = TRUE, fig.width=6.5, fig.height=4}
+```{r eval = TRUE, fig.width=6.5, fig.height=4, warning = FALSE}
 # init a sequence spanning -1 to 1
 beta <- seq(from=-1, to=1, length.out = 100)
 # init an empty vector to store results
@@ -873,11 +880,12 @@ text(beta[idx], r[idx], labels = round(beta[idx], 3), pos=4)
 ```
 
 
+<!-- 
 
 #### Comparison of Dendrograms
 
 The following example is rather basic. Many more possibilities are available in the [`dendextend` package](https://cran.r-project.org/web/packages/dendextend/index.html).
-```{r eval = TRUE}
+```{r eval = TRUE, message=FALSE}
 # load sample dataset from aqp package
 data(sp3)
 
@@ -897,6 +905,7 @@ dueling.dendrograms(as.phylo(as.hclust(diana(d.1))),
 as.phylo(as.hclust(agnes(d.1, method='average'))), lab.1='divisive', lab.2='agglomerative: average linkage')
 ```
 
+-->
 
 ### Centroid and Medoid (Partitioning) Clustering
 
@@ -949,9 +958,9 @@ for(i in 1:9) {
 
 ##### K-Medoids
 The `cluster` package provides two interfaces to the k-medoids algorithm:
-
-   * `pam()`: small to medium sized data sets
-   * `clara()`: optmized for larger data sets
+ 
+ * `pam()`: small to medium sized data sets
+ * `clara()`: optmized for larger data sets
 
 A quick example of using `pam()` to identify an increasing number of clusters.
 ```{r eval = TRUE}
@@ -983,6 +992,11 @@ m <- cl$membership
 # convert to colors by interpreting membership as R,G,B proportions
 cols <- rgb(m)
 
+# use Shannon H to set symbol size
+H <- apply(m, 1, shannonEntropy)
+# larger H -> smaller symbols
+pt.cex <- (1/H) * 2.5 
+
 # setup plot
 par(mar=c(4,4,0,0))
 plot(sp4.std$Mg, sp4.std$Ca, asp=1, ylab='Exchangeable Mg (cmol/kg), Standardized', xlab='Exchangeable Ca (cmol/kg), Standardized', type='n')
@@ -990,7 +1004,7 @@ abline(h=0, v=0, col='black')
 grid()
 
 # add original obs
-points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex=1.5, pch=21)
+points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex = pt.cex, pch = 21)
 ```
 
 Save the RGB color representation of cluster membership to the source `data.frame` and convert to `SoilProfileCollection`.
@@ -1196,9 +1210,9 @@ clust <- diana(d)
 ```
 
 ```{r eval = TRUE, fig.width=8, fig.height=4}
-# vizualize dissimilarity matrix via hierarchical clustering
+# visualize dissimilarity matrix via hierarchical clustering
 par(mar=c(0,0,3,1))
-plotProfileDendrogram(sp4, clust, dend.y.scale = max(d), scaling.factor = (1/max(d) * 10), y.offset = 2.25, width=0.25, cex.names=0.6, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio')
+plotProfileDendrogram(sp4, clust, dend.y.scale = 50, scaling.factor = 0.66, y.offset = 2.5, width=0.3, cex.names = 0.7, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio', name.style = 'center-center')
 ```
 
 ### Pair-Wise Distances Between Soil Series
@@ -1242,7 +1256,7 @@ mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = 
 
 #### Hillslope Position
 The [`vizHillslopePosition` function (sharpshootR package)](http://ncss-tech.github.io/sharpshootR/docs/reference/vizHillslopePosition.html) arranges hillslope position proportions (SSURGO) according to divisive hierarchical clustering. Proportions are used as characteristics for each soil series. The branches of the dendrogram are rotated so that ordering within the figure approximates the hydrologic gradient as closely as possible. Rotation is performed by the `dendextend::rotate` function.
-```{r eval = TRUE, fig.width=8, fig.height=5}
+```{r eval = TRUE, fig.width = 10, fig.height = 5}
 # result is a lattice graphics object
 res <- vizHillslopePosition(s$hillpos)
 print(res$fig)
@@ -1298,7 +1312,7 @@ s$b <- rgb.data$b
 pig <- soilColorSignature(s, RescaleLightnessBy = 5, method='depthSlices')
 
 # display results as table
-kable_styling(knitr::kable(head(pig), digits = 3, row.names = FALSE))
+kable_styling(knitr::kable(head(pig), digits = 2, row.names = FALSE), font_size = 10)
 
 # move row names over for distance matrix
 row.names(pig) <- pig[, 1]
@@ -1374,8 +1388,10 @@ Example borrowed from [this tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-
 library(reshape2)
 # set list of component names, same as soil color example
 s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 
-            'hanford', 'cecil', 'sycamore', 'KLAMATH', 'MOGLIA', 'drummer', 
-            'musick', 'zook', 'argonaut', 'PALAU')
+            'hanford', 'cecil', 'sycamore', 'zook')
+
+# get OSD details
+s <- fetchOSD(soils = s.list)
 
 # set list of relevant interpretations
 interp.list <- c('ENG - Construction Materials; Topsoil', 
@@ -1396,7 +1412,7 @@ x <- SDA_query(q)
 
 # reshape long -> wide
 x.wide <- dcast(x, compname ~ mrulename, value.var = 'interplr_mean')
-knitr::kable(x.wide, digits = 3, caption="Mean Fuzzy Ratings for Select Soil Series")
+kable_styling(knitr::kable(x.wide, digits = 2, caption="Mean Fuzzy Ratings for Select Soil Series"), font_size = 10)
 ```
 
 ```{r eval = TRUE}
@@ -1417,7 +1433,7 @@ clust <- diana(d)
 
 ```{r eval = TRUE, fig.width=10, fig.height=6}
 par(mar=c(2,0,2,0))
-plotProfileDendrogram(s, clust, dend.y.scale = 1.5, scaling.factor = 0.004, y.offset = 0.1, width=0.25, cex.names=0.45)
+plotProfileDendrogram(s, clust, dend.y.scale = 1, scaling.factor = 0.004, y.offset = 0.1, width=0.3, cex.names=0.45)
 title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
