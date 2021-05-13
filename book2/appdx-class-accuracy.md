@@ -10,6 +10,10 @@
 
 
 ```
+## Warning: package 'igraph' was built under R version 4.0.5
+```
+
+```
 ## 
 ## Attaching package: 'igraph'
 ```
@@ -27,7 +31,19 @@
 ```
 
 ```
+## Warning: package 'latticeExtra' was built under R version 4.0.5
+```
+
+```
 ## Loading required package: lattice
+```
+
+```
+## Warning: package 'plyr' was built under R version 4.0.5
+```
+
+```
+## Warning: package 'reshape2' was built under R version 4.0.5
 ```
 
 ```
@@ -35,7 +51,11 @@
 ```
 
 ```
-## This is aqp 1.30
+## Warning: package 'aqp' was built under R version 4.0.5
+```
+
+```
+## This is aqp 1.29
 ```
 
 ```
@@ -56,7 +76,7 @@
 ```
 
 ```
-## Warning: package 'kableExtra' was built under R version 4.0.4
+## Warning: package 'kableExtra' was built under R version 4.0.5
 ```
 
 
@@ -236,24 +256,24 @@ kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_widt
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 0.22 </td>
-   <td style="text-align:right;"> 0.17 </td>
-   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:right;"> 0.13 </td>
+   <td style="text-align:right;"> 0.34 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 0.26 </td>
-   <td style="text-align:right;"> 0.20 </td>
+   <td style="text-align:right;"> 0.73 </td>
+   <td style="text-align:right;"> 0.27 </td>
+   <td style="text-align:right;"> 0.21 </td>
    <td style="text-align:right;"> 0.41 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
-   <td style="text-align:right;"> 0.27 </td>
-   <td style="text-align:right;"> 0.81 </td>
-   <td style="text-align:right;"> 0.45 </td>
-   <td style="text-align:right;"> 0.85 </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:right;"> 0.79 </td>
+   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.84 </td>
   </tr>
 </tbody>
 </table>
@@ -288,30 +308,30 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.15 </td>
-   <td style="text-align:right;"> 0.14 </td>
-   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> 0.20 </td>
+   <td style="text-align:right;"> 0.09 </td>
    <td style="text-align:right;"> 0.40 </td>
-   <td style="text-align:right;"> 0.21 </td>
-   <td style="text-align:right;"> 2.15 </td>
+   <td style="text-align:right;"> 0.25 </td>
+   <td style="text-align:right;"> 2.04 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.07 </td>
-   <td style="text-align:right;"> 0.16 </td>
-   <td style="text-align:right;"> 0.26 </td>
-   <td style="text-align:right;"> 0.19 </td>
-   <td style="text-align:right;"> 0.31 </td>
-   <td style="text-align:right;"> 2.19 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 0.50 </td>
+   <td style="text-align:right;"> 1.71 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
    <td style="text-align:right;"> 0.10 </td>
-   <td style="text-align:right;"> 0.06 </td>
-   <td style="text-align:right;"> 0.02 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 0.74 </td>
-   <td style="text-align:right;"> 1.32 </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> 0.01 </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 1.01 </td>
   </tr>
 </tbody>
 </table>

@@ -83,8 +83,28 @@ With this dataset we'll encounter some challenges. To start with, fan piedmont l
 
 To start, as always we need to load some extra packages. This will become a familiar routine every time you start R. Most of the basic functions we need to develop a logistic regression model are contained in base R, but the following contain some useful spatial and data manipulation functions. Believe it or not we will use all of them and more.
 
-```{r load packages, eval = FALSE, message=FALSE, warning=FALSE}
+<!-- load libraries for examples, which run before any code is displayed -->
+```{r eval = TRUE, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+# load libs for examples
+suppressPackageStartupMessages(library(aqp))
+suppressPackageStartupMessages(library(raster))
+suppressPackageStartupMessages(library(sf))     
+suppressPackageStartupMessages(library(mapview))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(dplyr))  
+suppressPackageStartupMessages(library(tidyr)) 
+suppressPackageStartupMessages(library(rms))   
 
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, 
+                      eval = FALSE, class.source = "codeBlock", class.output = "outputBlock",
+                      fig.retina = 3, fig.align = 'center', 
+                      dev = 'png')
+```
+
+
+```{r load packages, eval = FALSE}
+
+library(aqp)     # soil data classes
 library(raster)  # raster data functions
 library(sf)      # vector data functions
 library(mapview) # interactive mapping
@@ -92,17 +112,21 @@ library(ggplot2) # graphing
 library(dplyr)   # data manipulation
 library(tidyr)   # data manipulation
 library(rms)     # additional regression tools
+library(caret)   # additional modeling tools
+
 ```
+
+
 
 
 ### Read in data
 
 Hopefully like all good soil scientists and ecological site specialists you enter your field data into NASIS. Better yet hopefully someone else did it for you! Once data are captured in NASIS it is much easier to import the data into R, extract the pieces you need, manipulate it, model it, etc. If it's not entered into NASIS, it may as well not exist. For this exercise we'll load a cached dataset on GitHub.
 
-```{r import data, eval = TRUE}
+```{r import data, eval=TRUE}
 
 # pedons <- fetchNASIS()
-githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ca794_pedons.rds")
+githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ca794_pedons.RData")
 load(githubURL)
 
 ```
@@ -134,11 +158,11 @@ count(s, argillic.horizon)
 
 
 # Extract argillic presence from the taxonomic subgroup
-s %>%
-  # create a new variable
-  mutate(argillic.taxsubgrp = grepl("arg", taxsubgrp)) %>%
-  # tabulate column
-  count(argillic.taxsubgrp)
+s <- mutate(s, argillic = grepl("arg", taxsubgrp))
+
+
+# tabulate column
+count(s, argillic)
 
 ```
 
@@ -256,14 +280,14 @@ Next we'll look at soil scientist bias. The question being: Are some soil scient
 ```{r bias, eval = TRUE}
 
 # Filter and sort most frequent soil scientists by seniority
-s <- s %>%
-  mutate(
-    old = descname,
-    descname2 = NA,
-    descname2 = ifelse(grepl("Stephen", old), "Stephen", descname2), # least senior
-    descname2 = ifelse(grepl("Paul",    old), "Paul",    descname2),
-    descname2 = ifelse(grepl("Peter",   old), "Peter",   descname2)  # most senior
-    )
+s <- mutate(
+  s,
+  old = descname,
+  descname2 = NA,
+  descname2 = ifelse(grepl("Stephen", old), "Stephen", descname2), # least senior
+  descname2 = ifelse(grepl("Paul",    old), "Paul",    descname2),
+  descname2 = ifelse(grepl("Peter",   old), "Peter",   descname2)  # most senior
+  )
 
 ```
 
@@ -290,10 +314,7 @@ For fan landforms, one of the soil scientists seems more likely than the others 
 
 Where do our points plot? To start we need to convert them to a spatial object first. Then we can create an interactive we map using `mapview`. Also, if we wish we can also export the locations as a Shapefile.
 
-```{r plot, eval = FALSE}
-
-library(sf)
-library(mapview)
+```{r plot, eval = TRUE}
 
 # subset rows with only complete X & Y coordinates 
 s_sub <- filter(s, complete.cases(x_std, y_std))
@@ -317,6 +338,10 @@ ca794 <- soilDB::fetchSDA_spatial("CA794", geom.src = "sapolygon") %>%
   # reproject to equal area coordinate reference system using ESPG code
   st_transform(crs = 5070)
 
+```
+
+
+```{mapview, eval=FALSE}
 
 # Plot interactive map
 mapview(ca794, alpha.regions = 0, lwd = 2) +
@@ -335,7 +360,7 @@ mapview(ca794, alpha.regions = 0, lwd = 2) +
 
 Prior to any spatial analysis or modeling, you will need to develop a suite of geodata files that can be intersected with your field data locations. This is, in and of itself a difficult task, and should be facilitated by your Regional GIS Specialist. Typically, these geodata files would primarily consist of derivatives from a DEM or satellite imagery. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R, and then extract the geodata values where they intersect with field data.
 
-```{r extract, eval=FALSE}
+```{r extract, eval=TRUE}
 
 # load raster stack from GitHub
 githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ca794_rs.rds")
@@ -346,12 +371,13 @@ geodata_r <- readRDS(githubURL)
 data <- raster::extract(geodata_r, as(s_sf, "Spatial"), sp = TRUE)@data
 
 # Modify some of the geodata variables
-data <- within(data, {
-  cluster  = factor(cluster)
-  twi_sc   = abs(twi - 13.8) # 13.8 = twi median
-  gsi      = (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1)
-  ndvi     = (ls_4 - ls_3) / (ls_4 + ls_3)
-  })
+data <- mutate(
+  data, 
+  cluster  = factor(cluster),
+  twi_sc   = abs(twi - 13.8), # 13.8 = twi median
+  gsi      = (ls_3 - ls_1) / (ls_3 + ls_2 + ls_1),
+  ndvi     = (ls_4 - ls_3) / (ls_4 + ls_3),
+  )
 
 ```
 
@@ -360,7 +386,7 @@ data <- within(data, {
 
 With our spatial data in hand, we can now see whether any of the variables will help us separate the presence/absence of argillic horizons. Because we're dealing with a classification problem, we'll compare the numeric variables using boxplots. What we're looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).  
 
-```{r spatial, fig.width=8, fig.height=10, eval = FALSE}
+```{r spatial, fig.width=8, fig.height=10, eval = TRUE}
 
 train <- data
 
@@ -375,7 +401,7 @@ train <- mutate(
   z2str = NULL
   )
 
-train <- select(train, z:z2str_log)
+train <- select(train, c(argillic, z:z2str_log))
 
 data_l <- train %>%
   select(-cluster) %>%
@@ -393,7 +419,7 @@ ggplot(data_l, aes(x = argillic, y = value)) +
 
 R has several functions for fitting linear models. The most common is arguably the `glm()` function from the stats R package, which is loaded by default. The `glm()` function is also extended thru the use of several additional packages such as the car and caret R packages. Another noteworthy R package for logistic regrssion is rms, which offers the `lrm()` function. The rms R package (Harrell et al., 2015) offers an ‘almost’ comprehesive alternative to `glm()` and it’s accessory function. It is difficult to objectively functions say which approach is better. Therefore methods both methods will be demonstrated. Look for comments (i.e. #) below referring to rms, stats, caret or visreg.
 
-```{r glm, eval = FALSE}
+```{r glm, eval=TRUE}
 
 # stats
 
@@ -417,7 +443,7 @@ fit_lrm <- lrm(argillic ~ z + slp + twi_sc + ch_log + z2str_log + mrrtf + solar 
 
 One unfortunate side effect of side effect of logistic regression is that the default residual plots are not interpretable. However the partial residual plots can be useful for identifying outliers and nonlinear trends.
 
-```{r diag, eval = FALSE}
+```{r diag, eval = TRUE}
 
 par(mfcol = c(2, 2))
 
@@ -456,11 +482,11 @@ set.seed(42)
 
 # rms
 ## stepwise selection and validation
-step_lrm <- validate(fit_lrm, method = "crossvalidation", B = 10, bw = TRUE)
+step_lrm <- validate(fit_lrm, method = "boot", B = 40, bw = TRUE)
 
 ```
 
-The results for validate() above and below show which variables were retained and deleted. Below we can see a dot matrix of which variables were retained in during the 10 iterations of the cross validation. In addition, below we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
+The results for validate() above and below show which variables were retained and deleted. Below we can see a dot matrix of which variables were retained in during the 40 iterations of the bootstrapping. In addition, below we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
 
 ```{r rms-step2, eval = FALSE}
 ## test accuracy and error
@@ -494,10 +520,10 @@ ggplot(train, aes(x = predict, fill = argillic)) +
   xlab("probability") +
   scale_x_continuous(breaks = seq(0, 1, 0.2))
 
-train$predict <- ifelse(train$predict > 0.3, TRUE, FALSE)
+train$predictedClass <- ifelse(train$predict > 0.25, TRUE, FALSE)
 
 # Confusion Matrix
-cm <- table(observed = train$argillic, predicted = train$predict)
+cm <- table(predicted = train$predictedClass, observed = train$argillic)
 confusionMatrix(cm, positive = "TRUE")
 
 
@@ -505,16 +531,13 @@ confusionMatrix(cm, positive = "TRUE")
 temp <- train %>%
   group_by(cluster) %>%
   summarise(
-    TP       = sum(predict == TRUE  & argillic == TRUE, na.rm = TRUE),
-    FN       = sum(predict == FALSE & argillic == TRUE, na.rm = TRUE),
+    TP       = sum(predictedClass == TRUE  & argillic == TRUE, na.rm = TRUE),
+    FN       = sum(predictedClass == FALSE & argillic == TRUE, na.rm = TRUE),
     sensitivity = TP / (TP + FN)
     )
 
 ggplot(temp, aes(x = cluster, y = sensitivity)) +
   geom_point()
-
-count(train, argillic, cluster) %>%
-  pivot_longer(col )
 
 ```
 
@@ -527,14 +550,6 @@ count(train, argillic, cluster) %>%
 
 # summary
 summary(final_lrm)
-
-
-# Convert the coefficients to an odds scale, who here gambles?
-exp(coef(final_lrm))
-
-
-# analysis of deviance
-plot(anova(final_lrm))
 
 
 # Plot Effects
@@ -556,17 +571,13 @@ library(raster)
 
 predfun <- function(model, data) {
   prob <- predict(model, data, type = "fitted")
-  se   <- predict(model, data, se.fit = TRUE)
-  cbind(prob, exp(se$se.fit))
+  H    <- apply(cbind(prob, 1 - prob), 1, shannonEntropy)
+  cbind(prob, H)
   }
   
 # Generate spatial predictions
 r <- predict(geodata_r, final_lrm, fun = predfun, index = 1:2, progress = "text")
 
-# Export the results
-writeRaster(r[[1]], "argi.tif", overwrite = T, progress = "text")
-
-writeRaster(r[[2]], "argi_se.tif", overwrite = T, progress = "text")
 ```
 
 ```{r eval = FALSE}
@@ -574,20 +585,13 @@ writeRaster(r[[2]], "argi_se.tif", overwrite = T, progress = "text")
 library(raster)
 
 # argillic probability
-plot(raster("C:/workspace2/argi.tif"))
-plot(ca794[1], col = NA, add = TRUE)
+plot(r[[1]], )
 
-# argillic standard error
-plot(raster("C:/workspace2/argi_se.tif"))
-plot(ca794[1], col = NA, add = TRUE)
+# argillic Shannon Entropy
+plot(r[[2]])
 
 ```
 
-
-## Exercise 2: View the prediction in ArcGIS
-
-- Examine the raster predictions in ArcGIS  and compare them to the Shapefile of that contains the original observations (hint classify the Shapefile symbology using the argillic column)
-- Discuss with your group, and report your observations or hypotheses
 
 
 ## Additional reading

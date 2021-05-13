@@ -46,7 +46,13 @@ Create an example data-set and evaluate dispersion.
 
 ```r
 library(ggplot2)
+```
 
+```
+## Warning: package 'ggplot2' was built under R version 4.0.5
+```
+
+```r
 # set random seed, so that we all get the same results
 set.seed(123)
 
@@ -342,6 +348,10 @@ print(cm)
 # or
 
 library(caret)
+```
+
+```
+## Warning: package 'caret' was built under R version 4.0.5
 ```
 
 ```
