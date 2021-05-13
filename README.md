@@ -82,8 +82,10 @@ Part 2
  - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/7_logistic_regression/ch7_prez.html)
 
  ### [**Chapter 6:** *Tree-based models*](http://ncss-tech.github.io/stats_for_soil_survey/book2/tree-based-models.html)
-
+ 
  - #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/8_tree_models/2017Tree_models.pptx)
+ - #### [Exercise Worksheet](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/exercise_ideas/tree-models/Exercise_Tree_Models2021.pdf)
+ - #### [Exercise Script](https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercise_ideas/tree-models/Exercise_Tree_Models2021.R)
 
 
 ------------------------------------------------------------------------
