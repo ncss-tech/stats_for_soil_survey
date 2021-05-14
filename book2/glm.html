@@ -640,31 +640,32 @@ mapview(ca794, alpha.regions = 0, lwd = 2) +
 <div id="examine-spatial-data" class="section level3">
 <h3><span class="header-section-number">5.6.2</span> Examine spatial data</h3>
 <p>With our spatial data in hand, we can now see whether any of the variables will help us separate the presence/absence of argillic horizons. Because we’re dealing with a classification problem, we’ll compare the numeric variables using boxplots. What we’re looking for are variables with the least amount of overlap in their distribution (i.e. the greatest separation in their median values).</p>
-<div class="sourceCode" id="cb187"><pre class="sourceCode r codeBlock"><code class="sourceCode r"><span id="cb187-1"><a href="glm.html#cb187-1"></a><span class="kw">load</span>(<span class="dt">file =</span> <span class="st">&quot;C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data.Rdata&quot;</span>)</span>
-<span id="cb187-2"><a href="glm.html#cb187-2"></a></span>
-<span id="cb187-3"><a href="glm.html#cb187-3"></a>train &lt;-<span class="st"> </span>data</span>
-<span id="cb187-4"><a href="glm.html#cb187-4"></a></span>
-<span id="cb187-5"><a href="glm.html#cb187-5"></a><span class="co"># Select argillic horizons with &quot;arg&quot; in the subgroup name and on fans</span></span>
-<span id="cb187-6"><a href="glm.html#cb187-6"></a><span class="co"># Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.train$argillic </span></span>
-<span id="cb187-7"><a href="glm.html#cb187-7"></a>train &lt;-<span class="st"> </span><span class="kw">mutate</span>(</span>
-<span id="cb187-8"><a href="glm.html#cb187-8"></a>  train, </span>
-<span id="cb187-9"><a href="glm.html#cb187-9"></a>  <span class="dt">argillic  =</span> <span class="kw">ifelse</span>(<span class="kw">grepl</span>(<span class="st">&quot;arg&quot;</span>, taxsubgrp) <span class="op">&amp;</span><span class="st"> </span>train<span class="op">$</span>mrvbf <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.15</span>, <span class="ot">TRUE</span>, <span class="ot">FALSE</span>),</span>
-<span id="cb187-10"><a href="glm.html#cb187-10"></a>  <span class="dt">ch_log  =</span> <span class="kw">log</span>(ch <span class="op">+</span><span class="st"> </span><span class="dv">1</span>),</span>
-<span id="cb187-11"><a href="glm.html#cb187-11"></a>  <span class="dt">z2str_log =</span> <span class="kw">log</span>(z2str <span class="op">+</span><span class="st"> </span><span class="dv">1</span>),</span>
-<span id="cb187-12"><a href="glm.html#cb187-12"></a>  <span class="dt">ch    =</span> <span class="ot">NULL</span>,</span>
-<span id="cb187-13"><a href="glm.html#cb187-13"></a>  <span class="dt">z2str =</span> <span class="ot">NULL</span></span>
-<span id="cb187-14"><a href="glm.html#cb187-14"></a>  )</span>
-<span id="cb187-15"><a href="glm.html#cb187-15"></a></span>
-<span id="cb187-16"><a href="glm.html#cb187-16"></a>train &lt;-<span class="st"> </span><span class="kw">select</span>(train, <span class="kw">c</span>(argillic, z<span class="op">:</span>z2str_log))</span>
-<span id="cb187-17"><a href="glm.html#cb187-17"></a></span>
-<span id="cb187-18"><a href="glm.html#cb187-18"></a>data_l &lt;-<span class="st"> </span>train <span class="op">%&gt;%</span></span>
-<span id="cb187-19"><a href="glm.html#cb187-19"></a><span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>cluster, <span class="op">-</span>geo) <span class="op">%&gt;%</span></span>
-<span id="cb187-20"><a href="glm.html#cb187-20"></a><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="dt">col =</span> <span class="op">-</span><span class="st"> </span>argillic) <span class="op">%&gt;%</span></span>
-<span id="cb187-21"><a href="glm.html#cb187-21"></a><span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(value))</span>
-<span id="cb187-22"><a href="glm.html#cb187-22"></a></span>
-<span id="cb187-23"><a href="glm.html#cb187-23"></a><span class="kw">ggplot</span>(data_l, <span class="kw">aes</span>(<span class="dt">x =</span> argillic, <span class="dt">y =</span> value)) <span class="op">+</span></span>
-<span id="cb187-24"><a href="glm.html#cb187-24"></a><span class="st">  </span><span class="kw">geom_boxplot</span>() <span class="op">+</span></span>
-<span id="cb187-25"><a href="glm.html#cb187-25"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span><span class="st"> </span>name, <span class="dt">scales =</span> <span class="st">&quot;free&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb187"><pre class="sourceCode r codeBlock"><code class="sourceCode r"><span id="cb187-1"><a href="glm.html#cb187-1"></a>URL &lt;-<span class="st"> </span><span class="kw">url</span>(<span class="st">&quot;https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata&quot;</span>)</span>
+<span id="cb187-2"><a href="glm.html#cb187-2"></a><span class="kw">load</span>(URL)</span>
+<span id="cb187-3"><a href="glm.html#cb187-3"></a></span>
+<span id="cb187-4"><a href="glm.html#cb187-4"></a>train &lt;-<span class="st"> </span>data</span>
+<span id="cb187-5"><a href="glm.html#cb187-5"></a></span>
+<span id="cb187-6"><a href="glm.html#cb187-6"></a><span class="co"># Select argillic horizons with &quot;arg&quot; in the subgroup name and on fans</span></span>
+<span id="cb187-7"><a href="glm.html#cb187-7"></a><span class="co"># Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.train$argillic </span></span>
+<span id="cb187-8"><a href="glm.html#cb187-8"></a>train &lt;-<span class="st"> </span><span class="kw">mutate</span>(</span>
+<span id="cb187-9"><a href="glm.html#cb187-9"></a>  train, </span>
+<span id="cb187-10"><a href="glm.html#cb187-10"></a>  <span class="dt">argillic  =</span> <span class="kw">ifelse</span>(<span class="kw">grepl</span>(<span class="st">&quot;arg&quot;</span>, taxsubgrp) <span class="op">&amp;</span><span class="st"> </span>train<span class="op">$</span>mrvbf <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.15</span>, <span class="ot">TRUE</span>, <span class="ot">FALSE</span>),</span>
+<span id="cb187-11"><a href="glm.html#cb187-11"></a>  <span class="dt">ch_log  =</span> <span class="kw">log</span>(ch <span class="op">+</span><span class="st"> </span><span class="dv">1</span>),</span>
+<span id="cb187-12"><a href="glm.html#cb187-12"></a>  <span class="dt">z2str_log =</span> <span class="kw">log</span>(z2str <span class="op">+</span><span class="st"> </span><span class="dv">1</span>),</span>
+<span id="cb187-13"><a href="glm.html#cb187-13"></a>  <span class="dt">ch    =</span> <span class="ot">NULL</span>,</span>
+<span id="cb187-14"><a href="glm.html#cb187-14"></a>  <span class="dt">z2str =</span> <span class="ot">NULL</span></span>
+<span id="cb187-15"><a href="glm.html#cb187-15"></a>  )</span>
+<span id="cb187-16"><a href="glm.html#cb187-16"></a></span>
+<span id="cb187-17"><a href="glm.html#cb187-17"></a>train &lt;-<span class="st"> </span><span class="kw">select</span>(train, <span class="kw">c</span>(argillic, z<span class="op">:</span>z2str_log))</span>
+<span id="cb187-18"><a href="glm.html#cb187-18"></a></span>
+<span id="cb187-19"><a href="glm.html#cb187-19"></a>data_l &lt;-<span class="st"> </span>train <span class="op">%&gt;%</span></span>
+<span id="cb187-20"><a href="glm.html#cb187-20"></a><span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>cluster, <span class="op">-</span>geo) <span class="op">%&gt;%</span></span>
+<span id="cb187-21"><a href="glm.html#cb187-21"></a><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="dt">col =</span> <span class="op">-</span><span class="st"> </span>argillic) <span class="op">%&gt;%</span></span>
+<span id="cb187-22"><a href="glm.html#cb187-22"></a><span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(value))</span>
+<span id="cb187-23"><a href="glm.html#cb187-23"></a></span>
+<span id="cb187-24"><a href="glm.html#cb187-24"></a><span class="kw">ggplot</span>(data_l, <span class="kw">aes</span>(<span class="dt">x =</span> argillic, <span class="dt">y =</span> value)) <span class="op">+</span></span>
+<span id="cb187-25"><a href="glm.html#cb187-25"></a><span class="st">  </span><span class="kw">geom_boxplot</span>() <span class="op">+</span></span>
+<span id="cb187-26"><a href="glm.html#cb187-26"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span><span class="st"> </span>name, <span class="dt">scales =</span> <span class="st">&quot;free&quot;</span>)</span></code></pre></div>
 <p><img src="005-glm_files/figure-html/spatial-1.png" width="768" style="display: block; margin: auto;" /></p>
 </div>
 </div>
@@ -730,18 +731,18 @@ mapview(ca794, alpha.regions = 0, lwd = 2) +
 <div class="sourceCode" id="cb194"><pre class="sourceCode r codeBlock"><code class="sourceCode r"><span id="cb194-1"><a href="glm.html#cb194-1"></a>final_lrm &lt;-<span class="st"> </span><span class="kw">lrm</span>(argillic <span class="op">~</span><span class="st"> </span>slp <span class="op">+</span><span class="st"> </span>twi_sc <span class="op">+</span><span class="st"> </span>tc_<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>tc_<span class="dv">2</span> <span class="op">+</span><span class="st"> </span>precipsum, <span class="dt">data =</span> train, <span class="dt">x =</span> <span class="ot">TRUE</span>, <span class="dt">y =</span> <span class="ot">TRUE</span>)</span>
 <span id="cb194-2"><a href="glm.html#cb194-2"></a></span>
 <span id="cb194-3"><a href="glm.html#cb194-3"></a><span class="kw">validate</span>(final_lrm, <span class="dt">method =</span> <span class="st">&quot;crossvalidation&quot;</span>, <span class="dt">B =</span> <span class="dv">10</span>)</span></code></pre></div>
-<pre class="outputBlock"><code>##           index.orig training    test optimism index.corrected  n
-## Dxy           0.7068   0.7067  0.6957   0.0110          0.6958 10
-## R2            0.3202   0.3205  0.3128   0.0077          0.3125 10
-## Intercept     0.0000   0.0000 -0.0718   0.0718         -0.0718 10
-## Slope         1.0000   1.0000  0.9909   0.0091          0.9909 10
-## Emax          0.0000   0.0000  0.0183   0.0183          0.0183 10
-## D             0.1684   0.1685  0.1578   0.0106          0.1578 10
-## U            -0.0017  -0.0019  0.0007  -0.0026          0.0009 10
-## Q             0.1701   0.1704  0.1572   0.0132          0.1569 10
-## B             0.0755   0.0754  0.0770  -0.0016          0.0771 10
-## g             3.7232   3.7244  3.6674   0.0571          3.6661 10
-## gp            0.1311   0.1310  0.1291   0.0020          0.1291 10</code></pre>
+<pre class="outputBlock"><code>##           index.orig training   test optimism index.corrected  n
+## Dxy           0.7068   0.7068 0.7106  -0.0039          0.7106 10
+## R2            0.3202   0.3210 0.3517  -0.0307          0.3509 10
+## Intercept     0.0000   0.0000 0.1466  -0.1466          0.1466 10
+## Slope         1.0000   1.0000 1.3614  -0.3614          1.3614 10
+## Emax          0.0000   0.0000 0.0879   0.0879          0.0879 10
+## D             0.1684   0.1687 0.1685   0.0002          0.1682 10
+## U            -0.0017  -0.0019 0.0170  -0.0189          0.0172 10
+## Q             0.1701   0.1706 0.1515   0.0191          0.1510 10
+## B             0.0755   0.0754 0.0775  -0.0021          0.0776 10
+## g             3.7232   3.7337 4.8696  -1.1360          4.8592 10
+## gp            0.1311   0.1311 0.1297   0.0014          0.1296 10</code></pre>
 <div class="sourceCode" id="cb196"><pre class="sourceCode r codeBlock"><code class="sourceCode r"><span id="cb196-1"><a href="glm.html#cb196-1"></a><span class="co"># examine possible thresholds</span></span>
 <span id="cb196-2"><a href="glm.html#cb196-2"></a>train<span class="op">$</span>predict &lt;-<span class="st"> </span><span class="kw">predict</span>(final_lrm, <span class="dt">type =</span> <span class="st">&quot;fitted&quot;</span>)</span>
 <span id="cb196-3"><a href="glm.html#cb196-3"></a></span>
