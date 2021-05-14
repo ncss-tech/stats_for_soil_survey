@@ -32,20 +32,21 @@ library(rgdal) #spatial import
 library(corrplot) #graphical display of correlation matrix
 
 file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
-download.file(file, destfile = "soildata.csv")
-soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+soildata <- read.csv(file)
 coordinates(soildata) <- ~ x + y #set the coordinates; converting dataframe to a spatial object
 proj4string(soildata) <- CRS("+init=EPSG:4269") #set the projection; https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/OverviewCoordinateReferenceSystems.pdf 
 
 map("county", "west virginia") 
 points(soildata) #plot points
+box()
 ```
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-1-1.png" width="672" />
 
 
 ```r
-#convert soildata into a shapefile
+# convert soildata into a shapefile
+# edit DSN path accordingly
 writeOGR(soildata, dsn = "C:/workspace", "soildata", driver = "ESRI Shapefile") 
 ```
 
@@ -56,12 +57,12 @@ Conveniently, environmental covariate values were previously extracted for all o
 
 
 ```r
-#since we converted the soildata dataframe to a spatial object to export as a shapefile, we will need to convert it back to a dataframe to plot and further examine the data in R
+#since we converted the `soildata` `data.frame` to a spatial object to export as an ESRI shapefile, we will need to convert it back to a `data.frame` to plot and further examine the data in R
 
 #re-importing the data and overwriting the soildata object is just one way to achieve this
 file <-'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
-download.file(file, destfile = "soildata.csv")
-soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+soildata <- read.csv(file)
+
 View(soildata) #view the data
 str(soildata) #examine the internal data structure
 ```
@@ -686,9 +687,9 @@ hist(soildata$Otot)
 Let's remove that observation to see how it impacted our model. 
 
 ```r
-file <- 'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
-download.file(file, destfile = "soildata.csv")
-soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
+# file <- 'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
+# download.file(file, destfile = "soildata.csv")
+# soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
 soildata2 <- droplevels(subset(soildata, order!="histosol")) #remove Histosol observation
 
 rf2 <- randomForest(Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, data = soildata2, importance=TRUE, ntree=1000, mtry=9) 
@@ -794,7 +795,7 @@ rasters <- stack(list.files(getwd(),pattern="img$",full.names=FALSE)) #combines 
 
 rasters 
 
-model <- randomForest(Otot~landsatb7+maxent+protection+northwestn+solar, data=soildata2)
+model <- randomForest(Otot ~ landsatb7 + maxent + protection + northwestn + solar, data = soildata2)
 
 predict(rasters,model,progress="window",overwrite=TRUE,filename="rfpredict.img") 
 #type not specified=vector of predicted values, "response" for predicted class, "prob" for probabilities, or "vote" for matrix of vote counts (one column for each class and one row for each new input); either in raw counts or in fractions (if norm.votes=TRUE)

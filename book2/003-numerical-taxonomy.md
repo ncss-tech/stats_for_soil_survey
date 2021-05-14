@@ -829,6 +829,7 @@ Test the "flexible UPGMA" method [@belbin1992] by iterating over possible values
 ```{.r .codeBlock}
 # init a sequence spanning -1 to 1
 beta <- seq(from=-1, to=1, length.out = 100)
+
 # init an empty vector to store results
 r <- vector(mode='numeric', length = length(beta))
 
@@ -920,7 +921,7 @@ for(i in 1:9) {
 <img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-34-1.png" width="768" style="display: block; margin: auto;" />
 
 
-Setting the `nstart` argument ("number of random starts") to a value great than 1 (10 is ideal) will ensure that the final clustering configuration will remain stable between runs. Note that the cluster ID (color) will vary between runs, however, with `nstart=10` the overal configuration remains the same.
+Setting the `nstart` argument ("number of random starts") to a value great than 1 (10 is ideal) will ensure that the final clustering configuration will remain stable between runs. Note that the cluster ID (color) will vary between runs, however, with `nstart=10` the overall configuration remains the same.
 
 ```{.r .codeBlock}
 par(mfrow=c(3,3), mar=c(1,1,1,1))
@@ -1254,7 +1255,7 @@ plotProfileDendrogram(sp4, clust, dend.y.scale = 50, scaling.factor = 0.66, y.of
 
 ### Pair-Wise Distances Between Soil Series
 
-The following figures are a preview of some new [functionality planned for SoilWeb/SDE](http://soilmap2-1.lawr.ucdavis.edu/mike/soilweb/sde/?series=drummer). These related tutorials cover similar material in greater detail:
+The following figures are related to some of the graphical summaries [provided by SoilWeb/SDE](http://casoilresource.lawr.ucdavis.edu/sde/?series=drummer). These related tutorials cover similar material in greater detail:
 
  * [Competing Soil Series](https://ncss-tech.github.io/AQP/soilDB/competing-series.html)
  * [Querying Soil Series Data](https://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html)
@@ -1285,7 +1286,7 @@ str(s, 1)
 ##  $ mlra            :'data.frame':	75 obs. of  4 variables:
 ##  $ climate.annual  :'data.frame':	88 obs. of  12 variables:
 ##  $ climate.monthly :'data.frame':	264 obs. of  14 variables:
-##  $ soilweb.metadata:'data.frame':	17 obs. of  2 variables:
+##  $ soilweb.metadata:'data.frame':	19 obs. of  2 variables:
 ```
 
 #### Annual Climate Data

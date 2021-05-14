@@ -94,6 +94,7 @@ suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(dplyr))  
 suppressPackageStartupMessages(library(tidyr)) 
 suppressPackageStartupMessages(library(rms))   
+suppressPackageStartupMessages(library(caret))   
 
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, 
                       eval = FALSE, class.source = "codeBlock", class.output = "outputBlock",
@@ -388,6 +389,8 @@ With our spatial data in hand, we can now see whether any of the variables will 
 
 ```{r spatial, fig.width=8, fig.height=10, eval = TRUE}
 
+load(file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/ch7_data.Rdata")
+
 train <- data
 
 # Select argillic horizons with "arg" in the subgroup name and on fans
@@ -404,7 +407,7 @@ train <- mutate(
 train <- select(train, c(argillic, z:z2str_log))
 
 data_l <- train %>%
-  select(-cluster) %>%
+  select(-cluster, -geo) %>%
   pivot_longer(col = - argillic) %>%
   filter(!is.na(value))
 
@@ -503,7 +506,7 @@ Because we're dealing with a classification problem, we have to consider both er
 - **Positive** and **negative** predicted values (user's accuracy) examine the inverse concept of how well the predictions match the reference data
 
 
-```{r, eval = FALSE}
+```{r, eval=TRUE}
 
 final_lrm <- lrm(argillic ~ slp + twi_sc + tc_1 + tc_2 + precipsum, data = train, x = TRUE, y = TRUE)
 
@@ -564,7 +567,7 @@ ggplot(Predict(final_lrm, fun = plogis))
 
 ## Generate spatial predictions
 
-```{r prediction, eval=FALSE}
+```{r prediction, eval=TRUE}
 # Custom function to return the predictions and their standard errors
 
 library(raster)
@@ -580,7 +583,7 @@ r <- predict(geodata_r, final_lrm, fun = predfun, index = 1:2, progress = "text"
 
 ```
 
-```{r eval = FALSE}
+```{r eval=TRUE}
 
 library(raster)
 

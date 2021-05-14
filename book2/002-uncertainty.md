@@ -49,7 +49,7 @@ library(ggplot2)
 ```
 
 ```
-## Warning: package 'ggplot2' was built under R version 4.0.5
+## Warning: package 'ggplot2' was built under R version 4.0.3
 ```
 
 ```r
@@ -348,10 +348,6 @@ print(cm)
 # or
 
 library(caret)
-```
-
-```
-## Warning: package 'caret' was built under R version 4.0.5
 ```
 
 ```

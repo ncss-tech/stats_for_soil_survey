@@ -237,7 +237,7 @@ library(raster)
 ```
 
 ```
-## Warning: package 'sp' was built under R version 4.0.5
+## Warning: package 'sp' was built under R version 4.0.3
 ```
 
 ```
