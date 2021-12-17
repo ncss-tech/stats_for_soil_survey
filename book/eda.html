@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Chapter 3 Exploratory Data Analysis | Statistics for Soil Survey - Part 1</title>
   <meta name="description" content="Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::gitbook." />
-  <meta name="generator" content="bookdown 0.20 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.24 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Chapter 3 Exploratory Data Analysis | Statistics for Soil Survey - Part 1" />
   <meta property="og:type" content="book" />
@@ -24,7 +24,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2021-03-22" />
+<meta name="date" content="2021-12-16" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -33,7 +33,9 @@
   
 <link rel="prev" href="data.html"/>
 <link rel="next" href="spatial.html"/>
-<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<script src="libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -49,9 +51,9 @@
 
 
 
-
-<script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
-<script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+<link href="libs/anchor-sections-1.0.1/anchor-sections.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.0.1/anchor-sections.js"></script>
+<script src="libs/htmlwidgets-1.5.4/htmlwidgets.js"></script>
 <link href="libs/leaflet-1.3.1/leaflet.css" rel="stylesheet" />
 <script src="libs/leaflet-1.3.1/leaflet.js"></script>
 <link href="libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet" />
@@ -61,32 +63,27 @@
 <script src="libs/leaflet-binding-2.0.4.1/leaflet.js"></script>
 <script src="libs/leaflet-providers-1.9.0/leaflet-providers_1.9.0.js"></script>
 <script src="libs/leaflet-providers-plugin-2.0.4.1/leaflet-providers-plugin.js"></script>
-<script src="libs/FlatGeoBuf-3.3.3/fgb.js"></script>
-<script src="libs/FlatGeoBuf-3.3.3/flatgeobuf-geojson.min.js"></script>
-<script src="libs/chromajs-2.1.0/chroma.min.js"></script>
-<link id="gopher_locations-1-attachment" rel="attachment" href="libs/gopher_locations-0.0.1/gopher_locations_layer.fgb"/>
 <link href="libs/HomeButton-0.0.1/home-button.css" rel="stylesheet" />
 <script src="libs/HomeButton-0.0.1/home-button.js"></script>
 <script src="libs/HomeButton-0.0.1/easy-button-src.min.js"></script>
 <script src="libs/clipboard-0.0.1/setClipboardText.js"></script>
 <link href="libs/mapviewCSS-0.0.1/mapview-popup.css" rel="stylesheet" />
 <link href="libs/mapviewCSS-0.0.1/mapview.css" rel="stylesheet" />
-<link id="s-series-1-attachment" rel="attachment" href="libs/s-series-0.0.1/s-series_layer.fgb"/>
 
 
 <style type="text/css">
-code.sourceCode > span { display: inline-block; line-height: 1.25; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-code.sourceCode > span:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -106,7 +103,7 @@ pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-le
 div.sourceCode
   {   }
 @media screen {
-code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -139,6 +136,7 @@ code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
+
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
 
@@ -156,14 +154,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><a href="../book2/index.html">Statistics for Soil Survey - Part 2</a></li>
 
 <li class="divider"></li>
-<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Pre-course Assignment</a><ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Pre-course Assignment</a>
+<ul>
 <li class="chapter" data-level="0.1" data-path="index.html"><a href="index.html#create-workspace"><i class="fa fa-check"></i><b>0.1</b> Create Workspace</a></li>
 <li class="chapter" data-level="0.2" data-path="index.html"><a href="index.html#configure-rstudio"><i class="fa fa-check"></i><b>0.2</b> Configure RStudio</a></li>
 <li class="chapter" data-level="0.3" data-path="index.html"><a href="index.html#essentials"><i class="fa fa-check"></i><b>0.3</b> Essentials</a></li>
 <li class="chapter" data-level="0.4" data-path="index.html"><a href="index.html#personalization"><i class="fa fa-check"></i><b>0.4</b> Personalization</a></li>
 <li class="chapter" data-level="0.5" data-path="index.html"><a href="index.html#install-.rprofile"><i class="fa fa-check"></i><b>0.5</b> Install .RProfile</a></li>
 <li class="chapter" data-level="0.6" data-path="index.html"><a href="index.html#install-required-packages"><i class="fa fa-check"></i><b>0.6</b> Install Required Packages</a></li>
-<li class="chapter" data-level="0.7" data-path="index.html"><a href="index.html#dealing-with-errors"><i class="fa fa-check"></i><b>0.7</b> Dealing With Errors</a><ul>
+<li class="chapter" data-level="0.7" data-path="index.html"><a href="index.html#dealing-with-errors"><i class="fa fa-check"></i><b>0.7</b> Dealing With Errors</a>
+<ul>
 <li class="chapter" data-level="0.7.1" data-path="index.html"><a href="index.html#no-output-is-produced-after-pasting-into-console"><i class="fa fa-check"></i><b>0.7.1</b> No output is produced after pasting into console</a></li>
 <li class="chapter" data-level="0.7.2" data-path="index.html"><a href="index.html#somepackage-is-not-available-for-r-version-x.y.z"><i class="fa fa-check"></i><b>0.7.2</b> <code>‘SOMEPACKAGE’ is not available (for R version X.Y.Z)</code></a></li>
 </ul></li>
@@ -172,14 +172,17 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="0.10" data-path="index.html"><a href="index.html#proof"><i class="fa fa-check"></i><b>0.10</b> Proof</a></li>
 <li class="chapter" data-level="0.11" data-path="index.html"><a href="index.html#additional-supportoptional-readings"><i class="fa fa-check"></i><b>0.11</b> Additional Support/Optional Readings</a></li>
 </ul></li>
-<li class="chapter" data-level="1" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>1</b> Introduction to R</a><ul>
+<li class="chapter" data-level="1" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>1</b> Introduction to R</a>
+<ul>
 <li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#outline"><i class="fa fa-check"></i><b>1.1</b> Outline</a></li>
-<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#course-overview"><i class="fa fa-check"></i><b>1.2</b> Course Overview</a><ul>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#course-overview"><i class="fa fa-check"></i><b>1.2</b> Course Overview</a>
+<ul>
 <li class="chapter" data-level="1.2.1" data-path="intro.html"><a href="intro.html#course-objectives"><i class="fa fa-check"></i><b>1.2.1</b> Course Objectives</a></li>
 <li class="chapter" data-level="1.2.2" data-path="intro.html"><a href="intro.html#why-is-this-training-needed"><i class="fa fa-check"></i><b>1.2.2</b> Why is this training needed?</a></li>
 <li class="chapter" data-level="1.2.3" data-path="intro.html"><a href="intro.html#why-is-course-organized-this-way"><i class="fa fa-check"></i><b>1.2.3</b> Why is course organized this way?</a></li>
 </ul></li>
-<li class="chapter" data-level="1.3" data-path="intro.html"><a href="intro.html#what-is-r"><i class="fa fa-check"></i><b>1.3</b> What is R?</a><ul>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a href="intro.html#what-is-r"><i class="fa fa-check"></i><b>1.3</b> What is R?</a>
+<ul>
 <li class="chapter" data-level="1.3.1" data-path="intro.html"><a href="intro.html#why-should-i-learn-r"><i class="fa fa-check"></i><b>1.3.1</b> Why Should I Learn R?</a></li>
 <li class="chapter" data-level="1.3.2" data-path="intro.html"><a href="intro.html#what-can-r-do"><i class="fa fa-check"></i><b>1.3.2</b> What can R do?</a></li>
 <li class="chapter" data-level="1.3.3" data-path="intro.html"><a href="intro.html#packages"><i class="fa fa-check"></i><b>1.3.3</b> Packages</a></li>
@@ -187,59 +190,68 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="1.4" data-path="intro.html"><a href="intro.html#rstudio-an-integrated-development-environment-ide-for-r"><i class="fa fa-check"></i><b>1.4</b> RStudio: An Integrated Development Environment (IDE) for R</a></li>
 <li class="chapter" data-level="1.5" data-path="intro.html"><a href="intro.html#rcmdr-r-commander-a-graphical-user-interface-for-r"><i class="fa fa-check"></i><b>1.5</b> Rcmdr (R Commander): A Graphical User Interface for R</a></li>
 <li class="chapter" data-level="1.6" data-path="intro.html"><a href="intro.html#r-basics"><i class="fa fa-check"></i><b>1.6</b> R basics</a></li>
-<li class="chapter" data-level="1.7" data-path="intro.html"><a href="intro.html#managing-packages"><i class="fa fa-check"></i><b>1.7</b> Managing Packages</a><ul>
+<li class="chapter" data-level="1.7" data-path="intro.html"><a href="intro.html#managing-packages"><i class="fa fa-check"></i><b>1.7</b> Managing Packages</a>
+<ul>
 <li class="chapter" data-level="1.7.1" data-path="intro.html"><a href="intro.html#installing-packages"><i class="fa fa-check"></i><b>1.7.1</b> Installing Packages</a></li>
 <li class="chapter" data-level="1.7.2" data-path="intro.html"><a href="intro.html#loading-packages"><i class="fa fa-check"></i><b>1.7.2</b> Loading Packages</a></li>
 </ul></li>
 <li class="chapter" data-level="1.8" data-path="intro.html"><a href="intro.html#getting-help"><i class="fa fa-check"></i><b>1.8</b> Getting Help</a></li>
-<li class="chapter" data-level="1.9" data-path="intro.html"><a href="intro.html#documenting-your-work"><i class="fa fa-check"></i><b>1.9</b> Documenting your work</a><ul>
+<li class="chapter" data-level="1.9" data-path="intro.html"><a href="intro.html#documenting-your-work"><i class="fa fa-check"></i><b>1.9</b> Documenting your work</a>
+<ul>
 <li class="chapter" data-level="1.9.1" data-path="intro.html"><a href="intro.html#basic-tips-for-scripting"><i class="fa fa-check"></i><b>1.9.1</b> Basic Tips for Scripting</a></li>
 </ul></li>
-<li class="chapter" data-level="1.10" data-path="intro.html"><a href="intro.html#organizing-your-work"><i class="fa fa-check"></i><b>1.10</b> Organizing your work</a><ul>
+<li class="chapter" data-level="1.10" data-path="intro.html"><a href="intro.html#organizing-your-work"><i class="fa fa-check"></i><b>1.10</b> Organizing your work</a>
+<ul>
 <li class="chapter" data-level="1.10.1" data-path="intro.html"><a href="intro.html#setting-the-working-directory"><i class="fa fa-check"></i><b>1.10.1</b> Setting the Working Directory</a></li>
 <li class="chapter" data-level="1.10.2" data-path="intro.html"><a href="intro.html#rstudio-projects-.rproj-files"><i class="fa fa-check"></i><b>1.10.2</b> RStudio Projects (.Rproj files)</a></li>
 </ul></li>
 <li class="chapter" data-level="1.11" data-path="intro.html"><a href="intro.html#saving-your-work"><i class="fa fa-check"></i><b>1.11</b> Saving your work</a></li>
 <li class="chapter" data-level="1.12" data-path="intro.html"><a href="intro.html#exercise-1"><i class="fa fa-check"></i><b>1.12</b> Exercise 1</a></li>
 <li class="chapter" data-level="1.13" data-path="intro.html"><a href="intro.html#loading-data"><i class="fa fa-check"></i><b>1.13</b> Loading Data</a></li>
-<li class="chapter" data-level="1.14" data-path="intro.html"><a href="intro.html#data-manipulation"><i class="fa fa-check"></i><b>1.14</b> Data manipulation</a><ul>
+<li class="chapter" data-level="1.14" data-path="intro.html"><a href="intro.html#data-manipulation"><i class="fa fa-check"></i><b>1.14</b> Data manipulation</a>
+<ul>
 <li class="chapter" data-level="1.14.1" data-path="intro.html"><a href="intro.html#viewing-and-removing-data"><i class="fa fa-check"></i><b>1.14.1</b> Viewing and Removing Data</a></li>
 <li class="chapter" data-level="1.14.2" data-path="intro.html"><a href="intro.html#filtering-or-subsetting-data"><i class="fa fa-check"></i><b>1.14.2</b> Filtering or Subsetting Data</a></li>
 <li class="chapter" data-level="1.14.3" data-path="intro.html"><a href="intro.html#transforming-data"><i class="fa fa-check"></i><b>1.14.3</b> Transforming Data</a></li>
 <li class="chapter" data-level="1.14.4" data-path="intro.html"><a href="intro.html#sorting-data"><i class="fa fa-check"></i><b>1.14.4</b> Sorting Data</a></li>
 <li class="chapter" data-level="1.14.5" data-path="intro.html"><a href="intro.html#piping-data"><i class="fa fa-check"></i><b>1.14.5</b> Piping Data</a></li>
-<li class="chapter" data-level="1.14.6" data-path="intro.html"><a href="intro.html#mergingjoining-or-combining-data"><i class="fa fa-check"></i><b>1.14.6</b> Merging/Joining or Combining Data</a></li>
-<li class="chapter" data-level="1.14.7" data-path="intro.html"><a href="intro.html#aggregating-or-grouping-data"><i class="fa fa-check"></i><b>1.14.7</b> Aggregating or Grouping Data</a></li>
-<li class="chapter" data-level="1.14.8" data-path="intro.html"><a href="intro.html#reshaping-data"><i class="fa fa-check"></i><b>1.14.8</b> Reshaping Data</a></li>
-<li class="chapter" data-level="1.14.9" data-path="intro.html"><a href="intro.html#exporting-data"><i class="fa fa-check"></i><b>1.14.9</b> Exporting Data</a></li>
+<li class="chapter" data-level="1.14.6" data-path="intro.html"><a href="intro.html#aggregating-or-grouping-data"><i class="fa fa-check"></i><b>1.14.6</b> Aggregating or Grouping Data</a></li>
+<li class="chapter" data-level="1.14.7" data-path="intro.html"><a href="intro.html#reshaping-data"><i class="fa fa-check"></i><b>1.14.7</b> Reshaping Data</a></li>
+<li class="chapter" data-level="1.14.8" data-path="intro.html"><a href="intro.html#exporting-data"><i class="fa fa-check"></i><b>1.14.8</b> Exporting Data</a></li>
 </ul></li>
 <li class="chapter" data-level="1.15" data-path="intro.html"><a href="intro.html#exercise-2"><i class="fa fa-check"></i><b>1.15</b> Exercise 2</a></li>
 <li class="chapter" data-level="1.16" data-path="intro.html"><a href="intro.html#review"><i class="fa fa-check"></i><b>1.16</b> Review</a></li>
 <li class="chapter" data-level="1.17" data-path="intro.html"><a href="intro.html#additional-reading-introduction"><i class="fa fa-check"></i><b>1.17</b> Additional Reading (Introduction)</a></li>
 <li class="chapter" data-level="1.18" data-path="intro.html"><a href="intro.html#references-introduction"><i class="fa fa-check"></i><b>1.18</b> References (Introduction)</a></li>
 </ul></li>
-<li class="chapter" data-level="2" data-path="data.html"><a href="data.html"><i class="fa fa-check"></i><b>2</b> The Data We Use</a><ul>
+<li class="chapter" data-level="2" data-path="data.html"><a href="data.html"><i class="fa fa-check"></i><b>2</b> The Data We Use</a>
+<ul>
 <li class="chapter" data-level="2.1" data-path="data.html"><a href="data.html#objectives-tabular-data-structures"><i class="fa fa-check"></i><b>2.1</b> Objectives (Tabular Data Structures)</a></li>
-<li class="chapter" data-level="2.2" data-path="data.html"><a href="data.html#the-structure-of-soil-data"><i class="fa fa-check"></i><b>2.2</b> The Structure of Soil Data</a><ul>
+<li class="chapter" data-level="2.2" data-path="data.html"><a href="data.html#the-structure-of-soil-data"><i class="fa fa-check"></i><b>2.2</b> The Structure of Soil Data</a>
+<ul>
 <li class="chapter" data-level="2.2.1" data-path="data.html"><a href="data.html#package-references"><i class="fa fa-check"></i><b>2.2.1</b> Package References</a></li>
 <li class="chapter" data-level="2.2.2" data-path="data.html"><a href="data.html#soildb-functions-for-tabular-data"><i class="fa fa-check"></i><b>2.2.2</b> soilDB functions for tabular data</a></li>
 <li class="chapter" data-level="2.2.3" data-path="data.html"><a href="data.html#importance-of-pedon-data"><i class="fa fa-check"></i><b>2.2.3</b> Importance of Pedon Data</a></li>
 <li class="chapter" data-level="2.2.4" data-path="data.html"><a href="data.html#some-issues-with-pedon-data"><i class="fa fa-check"></i><b>2.2.4</b> Some Issues With Pedon Data</a></li>
 </ul></li>
-<li class="chapter" data-level="2.3" data-path="data.html"><a href="data.html#challenges-with-pedon-data"><i class="fa fa-check"></i><b>2.3</b> Challenges with Pedon Data</a><ul>
+<li class="chapter" data-level="2.3" data-path="data.html"><a href="data.html#challenges-with-pedon-data"><i class="fa fa-check"></i><b>2.3</b> Challenges with Pedon Data</a>
+<ul>
 <li class="chapter" data-level="2.3.1" data-path="data.html"><a href="data.html#meeting-the-challenges"><i class="fa fa-check"></i><b>2.3.1</b> Meeting the Challenges</a></li>
 </ul></li>
-<li class="chapter" data-level="2.4" data-path="data.html"><a href="data.html#the-soilprofilecollection"><i class="fa fa-check"></i><b>2.4</b> The <code>SoilProfileCollection</code></a><ul>
+<li class="chapter" data-level="2.4" data-path="data.html"><a href="data.html#the-soilprofilecollection"><i class="fa fa-check"></i><b>2.4</b> The <code>SoilProfileCollection</code></a>
+<ul>
 <li class="chapter" data-level="2.4.1" data-path="data.html"><a href="data.html#soilprofilecollection-methods"><i class="fa fa-check"></i><b>2.4.1</b> <code>SoilProfileCollection</code> methods</a></li>
 <li class="chapter" data-level="2.4.2" data-path="data.html"><a href="data.html#exercise-assemble-a-soilprofilecollection-from-several-csv-files"><i class="fa fa-check"></i><b>2.4.2</b> Exercise: Assemble a <code>SoilProfileCollection</code> from several CSV files</a></li>
 </ul></li>
-<li class="chapter" data-level="2.5" data-path="data.html"><a href="data.html#using-the-soildb-package"><i class="fa fa-check"></i><b>2.5</b> Using the <code>soilDB</code> Package</a><ul>
+<li class="chapter" data-level="2.5" data-path="data.html"><a href="data.html#using-the-soildb-package"><i class="fa fa-check"></i><b>2.5</b> Using the <code>soilDB</code> Package</a>
+<ul>
 <li class="chapter" data-level="2.5.1" data-path="data.html"><a href="data.html#open-database-connectivity-odbc-connection-to-nasis"><i class="fa fa-check"></i><b>2.5.1</b> Open Database Connectivity (ODBC) Connection to NASIS</a></li>
 <li class="chapter" data-level="2.5.2" data-path="data.html"><a href="data.html#fetchnasis"><i class="fa fa-check"></i><b>2.5.2</b> <code>fetchNASIS()</code></a></li>
 <li class="chapter" data-level="2.5.3" data-path="data.html"><a href="data.html#the-gopheridge-dataset"><i class="fa fa-check"></i><b>2.5.3</b> The <code>gopheridge</code> Dataset</a></li>
 <li class="chapter" data-level="2.5.4" data-path="data.html"><a href="data.html#further-reading-reference"><i class="fa fa-check"></i><b>2.5.4</b> Further Reading / Reference</a></li>
 </ul></li>
-<li class="chapter" data-level="2.6" data-path="data.html"><a href="data.html#working-with-data-in-r"><i class="fa fa-check"></i><b>2.6</b> Working with Data in R</a><ul>
+<li class="chapter" data-level="2.6" data-path="data.html"><a href="data.html#working-with-data-in-r"><i class="fa fa-check"></i><b>2.6</b> Working with Data in R</a>
+<ul>
 <li class="chapter" data-level="2.6.1" data-path="data.html"><a href="data.html#summaries"><i class="fa fa-check"></i><b>2.6.1</b> Summaries</a></li>
 <li class="chapter" data-level="2.6.2" data-path="data.html"><a href="data.html#missing-values"><i class="fa fa-check"></i><b>2.6.2</b> Missing Values</a></li>
 <li class="chapter" data-level="2.6.3" data-path="data.html"><a href="data.html#logical-operators"><i class="fa fa-check"></i><b>2.6.3</b> Logical Operators</a></li>
@@ -247,39 +259,46 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2.6.5" data-path="data.html"><a href="data.html#filtering"><i class="fa fa-check"></i><b>2.6.5</b> Filtering</a></li>
 <li class="chapter" data-level="2.6.6" data-path="data.html"><a href="data.html#dates-and-times"><i class="fa fa-check"></i><b>2.6.6</b> Dates and Times</a></li>
 </ul></li>
-<li class="chapter" data-level="2.7" data-path="data.html"><a href="data.html#fetchnasis-data-checks"><i class="fa fa-check"></i><b>2.7</b> <code>fetchNASIS</code> data checks</a><ul>
+<li class="chapter" data-level="2.7" data-path="data.html"><a href="data.html#fetchnasis-data-checks"><i class="fa fa-check"></i><b>2.7</b> <code>fetchNASIS</code> data checks</a>
+<ul>
 <li class="chapter" data-level="2.7.1" data-path="data.html"><a href="data.html#inspecting-results"><i class="fa fa-check"></i><b>2.7.1</b> Inspecting Results</a></li>
 </ul></li>
-<li class="chapter" data-level="2.8" data-path="data.html"><a href="data.html#extended-data-functions"><i class="fa fa-check"></i><b>2.8</b> Extended Data Functions</a><ul>
+<li class="chapter" data-level="2.8" data-path="data.html"><a href="data.html#extended-data-functions"><i class="fa fa-check"></i><b>2.8</b> Extended Data Functions</a>
+<ul>
 <li class="chapter" data-level="2.8.1" data-path="data.html"><a href="data.html#elements-of-get_extended_data_from_nasis"><i class="fa fa-check"></i><b>2.8.1</b> Elements of <code>get_extended_data_from_NASIS()</code></a></li>
 <li class="chapter" data-level="2.8.2" data-path="data.html"><a href="data.html#load-example-data-1"><i class="fa fa-check"></i><b>2.8.2</b> Load Example Data</a></li>
 <li class="chapter" data-level="2.8.3" data-path="data.html"><a href="data.html#visualizing-common-landforms"><i class="fa fa-check"></i><b>2.8.3</b> Visualizing Common Landforms</a></li>
 <li class="chapter" data-level="2.8.4" data-path="data.html"><a href="data.html#diagnostic-features"><i class="fa fa-check"></i><b>2.8.4</b> Diagnostic Features</a></li>
 <li class="chapter" data-level="2.8.5" data-path="data.html"><a href="data.html#comparing-horizon-data-with-diagnostic-intervals"><i class="fa fa-check"></i><b>2.8.5</b> Comparing Horizon Data with Diagnostic “Intervals”</a></li>
 </ul></li>
-<li class="chapter" data-level="2.9" data-path="data.html"><a href="data.html#customized-queries-to-local-nasis-database"><i class="fa fa-check"></i><b>2.9</b> Customized Queries to Local NASIS Database</a><ul>
+<li class="chapter" data-level="2.9" data-path="data.html"><a href="data.html#customized-queries-to-local-nasis-database"><i class="fa fa-check"></i><b>2.9</b> Customized Queries to Local NASIS Database</a>
+<ul>
 <li class="chapter" data-level="2.9.1" data-path="data.html"><a href="data.html#rodbc-package"><i class="fa fa-check"></i><b>2.9.1</b> <code>RODBC</code> package</a></li>
 <li class="chapter" data-level="2.9.2" data-path="data.html"><a href="data.html#dbi"><i class="fa fa-check"></i><b>2.9.2</b> <code>DBI</code></a></li>
 </ul></li>
-<li class="chapter" data-level="2.10" data-path="data.html"><a href="data.html#soil-reports"><i class="fa fa-check"></i><b>2.10</b> Soil Reports</a><ul>
+<li class="chapter" data-level="2.10" data-path="data.html"><a href="data.html#soil-reports"><i class="fa fa-check"></i><b>2.10</b> Soil Reports</a>
+<ul>
 <li class="chapter" data-level="2.10.1" data-path="data.html"><a href="data.html#extending-soilreports"><i class="fa fa-check"></i><b>2.10.1</b> Extending <code>soilReports</code></a></li>
 <li class="chapter" data-level="2.10.2" data-path="data.html"><a href="data.html#exercise-run-shiny-pedon-summary"><i class="fa fa-check"></i><b>2.10.2</b> Exercise: Run Shiny Pedon Summary</a></li>
 <li class="chapter" data-level="2.10.3" data-path="data.html"><a href="data.html#exercise-run-mapunit-comparison"><i class="fa fa-check"></i><b>2.10.3</b> Exercise: Run Mapunit Comparison</a></li>
 <li class="chapter" data-level="2.10.4" data-path="data.html"><a href="data.html#exercise-run-lab-summary-by-taxon-name-soil-report"><i class="fa fa-check"></i><b>2.10.4</b> Exercise: Run Lab Summary By Taxon Name Soil Report</a></li>
 </ul></li>
 </ul></li>
-<li class="chapter" data-level="3" data-path="eda.html"><a href="eda.html"><i class="fa fa-check"></i><b>3</b> Exploratory Data Analysis</a><ul>
+<li class="chapter" data-level="3" data-path="eda.html"><a href="eda.html"><i class="fa fa-check"></i><b>3</b> Exploratory Data Analysis</a>
+<ul>
 <li class="chapter" data-level="3.1" data-path="eda.html"><a href="eda.html#objectives-exploratory-data-analysis"><i class="fa fa-check"></i><b>3.1</b> Objectives (Exploratory Data Analysis)</a></li>
 <li class="chapter" data-level="3.2" data-path="eda.html"><a href="eda.html#statistics"><i class="fa fa-check"></i><b>3.2</b> Statistics</a></li>
 <li class="chapter" data-level="3.3" data-path="eda.html"><a href="eda.html#data-inspection"><i class="fa fa-check"></i><b>3.3</b> Data Inspection</a></li>
 <li class="chapter" data-level="3.4" data-path="eda.html"><a href="eda.html#exercise-1-fetch-and-inspect"><i class="fa fa-check"></i><b>3.4</b> Exercise 1: fetch and inspect</a></li>
-<li class="chapter" data-level="3.5" data-path="eda.html"><a href="eda.html#descriptive-statistics"><i class="fa fa-check"></i><b>3.5</b> Descriptive Statistics</a><ul>
+<li class="chapter" data-level="3.5" data-path="eda.html"><a href="eda.html#descriptive-statistics"><i class="fa fa-check"></i><b>3.5</b> Descriptive Statistics</a>
+<ul>
 <li class="chapter" data-level="3.5.1" data-path="eda.html"><a href="eda.html#measures-of-central-tendency"><i class="fa fa-check"></i><b>3.5.1</b> Measures of Central Tendency</a></li>
 <li class="chapter" data-level="3.5.2" data-path="eda.html"><a href="eda.html#measures-of-dispersion"><i class="fa fa-check"></i><b>3.5.2</b> Measures of Dispersion</a></li>
 <li class="chapter" data-level="3.5.3" data-path="eda.html"><a href="eda.html#correlation"><i class="fa fa-check"></i><b>3.5.3</b> Correlation</a></li>
 </ul></li>
 <li class="chapter" data-level="3.6" data-path="eda.html"><a href="eda.html#exercise-2-compute-descriptive-statistics"><i class="fa fa-check"></i><b>3.6</b> Exercise 2: Compute Descriptive Statistics</a></li>
-<li class="chapter" data-level="3.7" data-path="eda.html"><a href="eda.html#graphical-methods"><i class="fa fa-check"></i><b>3.7</b> Graphical Methods</a><ul>
+<li class="chapter" data-level="3.7" data-path="eda.html"><a href="eda.html#graphical-methods"><i class="fa fa-check"></i><b>3.7</b> Graphical Methods</a>
+<ul>
 <li class="chapter" data-level="3.7.1" data-path="eda.html"><a href="eda.html#distributions"><i class="fa fa-check"></i><b>3.7.1</b> Distributions</a></li>
 <li class="chapter" data-level="3.7.2" data-path="eda.html"><a href="eda.html#bar-plot"><i class="fa fa-check"></i><b>3.7.2</b> Bar Plot</a></li>
 <li class="chapter" data-level="3.7.3" data-path="eda.html"><a href="eda.html#histogram"><i class="fa fa-check"></i><b>3.7.3</b> Histogram</a></li>
@@ -291,12 +310,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="3.7.9" data-path="eda.html"><a href="eda.html#rd-dimension---color-shape-size-layers-etc"><i class="fa fa-check"></i><b>3.7.9</b> 3rd Dimension - Color, Shape, Size, Layers, etc…</a></li>
 </ul></li>
 <li class="chapter" data-level="3.8" data-path="eda.html"><a href="eda.html#exercise-3-graphical-methods"><i class="fa fa-check"></i><b>3.8</b> Exercise 3: Graphical Methods</a></li>
-<li class="chapter" data-level="3.9" data-path="eda.html"><a href="eda.html#transformations"><i class="fa fa-check"></i><b>3.9</b> Transformations</a><ul>
+<li class="chapter" data-level="3.9" data-path="eda.html"><a href="eda.html#transformations"><i class="fa fa-check"></i><b>3.9</b> Transformations</a>
+<ul>
 <li class="chapter" data-level="3.9.1" data-path="eda.html"><a href="eda.html#ph"><i class="fa fa-check"></i><b>3.9.1</b> pH</a></li>
 <li class="chapter" data-level="3.9.2" data-path="eda.html"><a href="eda.html#circular-data"><i class="fa fa-check"></i><b>3.9.2</b> Circular data</a></li>
 <li class="chapter" data-level="3.9.3" data-path="eda.html"><a href="eda.html#texture"><i class="fa fa-check"></i><b>3.9.3</b> Texture</a></li>
 </ul></li>
-<li class="chapter" data-level="3.10" data-path="eda.html"><a href="eda.html#the-shiny-package"><i class="fa fa-check"></i><b>3.10</b> The Shiny Package</a><ul>
+<li class="chapter" data-level="3.10" data-path="eda.html"><a href="eda.html#the-shiny-package"><i class="fa fa-check"></i><b>3.10</b> The Shiny Package</a>
+<ul>
 <li class="chapter" data-level="3.10.1" data-path="eda.html"><a href="eda.html#online"><i class="fa fa-check"></i><b>3.10.1</b> Online</a></li>
 <li class="chapter" data-level="3.10.2" data-path="eda.html"><a href="eda.html#locally"><i class="fa fa-check"></i><b>3.10.2</b> Locally</a></li>
 <li class="chapter" data-level="3.10.3" data-path="eda.html"><a href="eda.html#web-app-demonstration"><i class="fa fa-check"></i><b>3.10.3</b> Web App Demonstration</a></li>
@@ -309,15 +330,18 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="3.11" data-path="eda.html"><a href="eda.html#references-exploratory-data-analysis"><i class="fa fa-check"></i><b>3.11</b> References (Exploratory Data Analysis)</a></li>
 <li class="chapter" data-level="3.12" data-path="eda.html"><a href="eda.html#additional-reading-exploratory-data-analysis"><i class="fa fa-check"></i><b>3.12</b> Additional Reading (Exploratory Data Analysis)</a></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="spatial.html"><a href="spatial.html"><i class="fa fa-check"></i><b>4</b> Spatial Data in R</a><ul>
+<li class="chapter" data-level="4" data-path="spatial.html"><a href="spatial.html"><i class="fa fa-check"></i><b>4</b> Spatial Data in R</a>
+<ul>
 <li class="chapter" data-level="4.1" data-path="spatial.html"><a href="spatial.html#objectives-spatial-data-structures"><i class="fa fa-check"></i><b>4.1</b> Objectives (Spatial Data Structures)</a></li>
 <li class="chapter" data-level="4.2" data-path="spatial.html"><a href="spatial.html#making-maps-with-r"><i class="fa fa-check"></i><b>4.2</b> Making Maps with R</a></li>
 <li class="chapter" data-level="4.3" data-path="spatial.html"><a href="spatial.html#spatial-data-sources"><i class="fa fa-check"></i><b>4.3</b> Spatial Data Sources</a></li>
-<li class="chapter" data-level="4.4" data-path="spatial.html"><a href="spatial.html#viewing-pedon-locations"><i class="fa fa-check"></i><b>4.4</b> Viewing Pedon Locations</a><ul>
+<li class="chapter" data-level="4.4" data-path="spatial.html"><a href="spatial.html#viewing-pedon-locations"><i class="fa fa-check"></i><b>4.4</b> Viewing Pedon Locations</a>
+<ul>
 <li class="chapter" data-level="4.4.1" data-path="spatial.html"><a href="spatial.html#plotting-geographic-data"><i class="fa fa-check"></i><b>4.4.1</b> Plotting Geographic Data</a></li>
 <li class="chapter" data-level="4.4.2" data-path="spatial.html"><a href="spatial.html#exercise-1-spatial-intro"><i class="fa fa-check"></i><b>4.4.2</b> EXERCISE 1 (Spatial Intro)</a></li>
 </ul></li>
-<li class="chapter" data-level="4.5" data-path="spatial.html"><a href="spatial.html#many-packages-many-spatial-representations"><i class="fa fa-check"></i><b>4.5</b> Many Packages, Many Spatial Representations</a><ul>
+<li class="chapter" data-level="4.5" data-path="spatial.html"><a href="spatial.html#many-packages-many-spatial-representations"><i class="fa fa-check"></i><b>4.5</b> Many Packages, Many Spatial Representations</a>
+<ul>
 <li class="chapter" data-level="4.5.1" data-path="spatial.html"><a href="spatial.html#the-sf-package"><i class="fa fa-check"></i><b>4.5.1</b> The <code>sf</code> package</a></li>
 <li class="chapter" data-level="4.5.2" data-path="spatial.html"><a href="spatial.html#the-sp-package"><i class="fa fa-check"></i><b>4.5.2</b> The <code>sp</code> Package</a></li>
 <li class="chapter" data-level="4.5.3" data-path="spatial.html"><a href="spatial.html#converting-sp-and-sf"><i class="fa fa-check"></i><b>4.5.3</b> Converting <code>sp</code> and <code>sf</code></a></li>
@@ -326,10 +350,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="4.5.6" data-path="spatial.html"><a href="spatial.html#the-raster-package"><i class="fa fa-check"></i><b>4.5.6</b> The <code>raster</code> Package</a></li>
 <li class="chapter" data-level="4.5.7" data-path="spatial.html"><a href="spatial.html#converting-vector-to-raster"><i class="fa fa-check"></i><b>4.5.7</b> Converting Vector to Raster</a></li>
 </ul></li>
-<li class="chapter" data-level="4.6" data-path="spatial.html"><a href="spatial.html#coordinate-reference-systems"><i class="fa fa-check"></i><b>4.6</b> Coordinate Reference Systems</a><ul>
+<li class="chapter" data-level="4.6" data-path="spatial.html"><a href="spatial.html#coordinate-reference-systems"><i class="fa fa-check"></i><b>4.6</b> Coordinate Reference Systems</a>
+<ul>
 <li class="chapter" data-level="4.6.1" data-path="spatial.html"><a href="spatial.html#assigning-and-transforming-coordinate-systems"><i class="fa fa-check"></i><b>4.6.1</b> Assigning and Transforming Coordinate Systems</a></li>
 </ul></li>
-<li class="chapter" data-level="4.7" data-path="spatial.html"><a href="spatial.html#exercise-working-with-real-data"><i class="fa fa-check"></i><b>4.7</b> EXERCISE: Working with real data</a><ul>
+<li class="chapter" data-level="4.7" data-path="spatial.html"><a href="spatial.html#exercise-working-with-real-data"><i class="fa fa-check"></i><b>4.7</b> EXERCISE: Working with real data</a>
+<ul>
 <li class="chapter" data-level="4.7.1" data-path="spatial.html"><a href="spatial.html#load-required-packages"><i class="fa fa-check"></i><b>4.7.1</b> Load Required Packages</a></li>
 <li class="chapter" data-level="4.7.2" data-path="spatial.html"><a href="spatial.html#download-example-data"><i class="fa fa-check"></i><b>4.7.2</b> Download Example Data</a></li>
 <li class="chapter" data-level="4.7.3" data-path="spatial.html"><a href="spatial.html#load-the-data"><i class="fa fa-check"></i><b>4.7.3</b> Load the Data</a></li>
@@ -338,19 +364,23 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="4.8" data-path="spatial.html"><a href="spatial.html#additional-reading-spatial"><i class="fa fa-check"></i><b>4.8</b> Additional Reading (Spatial)</a></li>
 </ul></li>
-<li class="chapter" data-level="5" data-path="sampling.html"><a href="sampling.html"><i class="fa fa-check"></i><b>5</b> Sampling</a><ul>
+<li class="chapter" data-level="5" data-path="sampling.html"><a href="sampling.html"><i class="fa fa-check"></i><b>5</b> Sampling</a>
+<ul>
 <li class="chapter" data-level="5.1" data-path="sampling.html"><a href="sampling.html#introduction"><i class="fa fa-check"></i><b>5.1</b> Introduction</a></li>
-<li class="chapter" data-level="5.2" data-path="sampling.html"><a href="sampling.html#sampling-strategies"><i class="fa fa-check"></i><b>5.2</b> Sampling Strategies</a><ul>
+<li class="chapter" data-level="5.2" data-path="sampling.html"><a href="sampling.html#sampling-strategies"><i class="fa fa-check"></i><b>5.2</b> Sampling Strategies</a>
+<ul>
 <li class="chapter" data-level="5.2.1" data-path="sampling.html"><a href="sampling.html#simple-random"><i class="fa fa-check"></i><b>5.2.1</b> Simple Random</a></li>
 <li class="chapter" data-level="5.2.2" data-path="sampling.html"><a href="sampling.html#systematic"><i class="fa fa-check"></i><b>5.2.2</b> Systematic</a></li>
 <li class="chapter" data-level="5.2.3" data-path="sampling.html"><a href="sampling.html#cluster"><i class="fa fa-check"></i><b>5.2.3</b> Cluster</a></li>
 <li class="chapter" data-level="5.2.4" data-path="sampling.html"><a href="sampling.html#stratified-random"><i class="fa fa-check"></i><b>5.2.4</b> Stratified Random</a></li>
 <li class="chapter" data-level="5.2.5" data-path="sampling.html"><a href="sampling.html#multistage-stratified-random"><i class="fa fa-check"></i><b>5.2.5</b> Multistage Stratified Random</a></li>
 </ul></li>
-<li class="chapter" data-level="5.3" data-path="sampling.html"><a href="sampling.html#evaluating-a-sampling-strategy"><i class="fa fa-check"></i><b>5.3</b> Evaluating a Sampling Strategy</a><ul>
+<li class="chapter" data-level="5.3" data-path="sampling.html"><a href="sampling.html#evaluating-a-sampling-strategy"><i class="fa fa-check"></i><b>5.3</b> Evaluating a Sampling Strategy</a>
+<ul>
 <li class="chapter" data-level="5.3.1" data-path="sampling.html"><a href="sampling.html#exercise-design-a-sampling-strategy"><i class="fa fa-check"></i><b>5.3.1</b> Exercise: Design a Sampling Strategy</a></li>
 </ul></li>
-<li class="chapter" data-level="5.4" data-path="sampling.html"><a href="sampling.html#other-tools-for-selecting-random-features"><i class="fa fa-check"></i><b>5.4</b> Other Tools for Selecting Random Features</a><ul>
+<li class="chapter" data-level="5.4" data-path="sampling.html"><a href="sampling.html#other-tools-for-selecting-random-features"><i class="fa fa-check"></i><b>5.4</b> Other Tools for Selecting Random Features</a>
+<ul>
 <li class="chapter" data-level="5.4.1" data-path="sampling.html"><a href="sampling.html#clhs-using-teui"><i class="fa fa-check"></i><b>5.4.1</b> cLHS Using TEUI</a></li>
 <li class="chapter" data-level="5.4.2" data-path="sampling.html"><a href="sampling.html#two-stage-stratified-random-sample-design-using-arcgis"><i class="fa fa-check"></i><b>5.4.2</b> Two-Stage Stratified Random Sample Design Using ArcGIS</a></li>
 </ul></li>
@@ -377,7 +407,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="eda" class="section level1">
+<div id="eda" class="section level1" number="3">
 <h1><span class="header-section-number">Chapter 3</span> Exploratory Data Analysis</h1>
 <p><img src="static-figures/logo.jpg" /></p>
 <p>Before embarking on developing statistical models and generating predictions, it is essential to understand your data. This is typically done using conventional numerical and graphical methods. John Tukey (Tukey, 1977) advocated the practice of exploratory data analysis (EDA) as a critical part of the scientific process.</p>
@@ -385,7 +415,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>“No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper and transparencies are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated.”</p>
 </blockquote>
 <p>Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the ‘pictures’ (i.e., graphical output) and descriptive statistics needed to explore our data.</p>
-<div id="objectives-exploratory-data-analysis" class="section level2">
+<div id="objectives-exploratory-data-analysis" class="section level2" number="3.1">
 <h2><span class="header-section-number">3.1</span> Objectives (Exploratory Data Analysis)</h2>
 <ul>
 <li>Review methods for estimating Low, RV, and High values</li>
@@ -393,7 +423,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>Review data transformations</li>
 </ul>
 </div>
-<div id="statistics" class="section level2">
+<div id="statistics" class="section level2" number="3.2">
 <h2><span class="header-section-number">3.2</span> Statistics</h2>
 <p>Descriptive statistics include:</p>
 <ul>
@@ -421,61 +451,61 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><strong>Radial plots</strong> - plots formatted for the representation of circular data</li>
 </ul>
 </div>
-<div id="data-inspection" class="section level2">
+<div id="data-inspection" class="section level2" number="3.3">
 <h2><span class="header-section-number">3.3</span> Data Inspection</h2>
 <p>Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine appropriate statistical analyses. For this chapter we’ll use the loafercreek dataset from the CA630 Soil Survey Area.</p>
-<div class="sourceCode" id="cb194"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb194-1"><a href="eda.html#cb194-1"></a><span class="co"># Load from the the loakercreek dataset</span></span>
-<span id="cb194-2"><a href="eda.html#cb194-2"></a><span class="kw">data</span>(<span class="st">&quot;loafercreek&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;soilDB&quot;</span>) </span>
-<span id="cb194-3"><a href="eda.html#cb194-3"></a></span>
-<span id="cb194-4"><a href="eda.html#cb194-4"></a><span class="co"># Extract the horizon table</span></span>
-<span id="cb194-5"><a href="eda.html#cb194-5"></a>h &lt;-<span class="st"> </span>aqp<span class="op">::</span><span class="kw">horizons</span>(loafercreek)</span>
-<span id="cb194-6"><a href="eda.html#cb194-6"></a></span>
-<span id="cb194-7"><a href="eda.html#cb194-7"></a><span class="co"># Construct generalized horizon designations</span></span>
-<span id="cb194-8"><a href="eda.html#cb194-8"></a>n &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,</span>
-<span id="cb194-9"><a href="eda.html#cb194-9"></a>       <span class="st">&quot;BAt&quot;</span>,</span>
-<span id="cb194-10"><a href="eda.html#cb194-10"></a>       <span class="st">&quot;Bt1&quot;</span>,</span>
-<span id="cb194-11"><a href="eda.html#cb194-11"></a>       <span class="st">&quot;Bt2&quot;</span>,</span>
-<span id="cb194-12"><a href="eda.html#cb194-12"></a>       <span class="st">&quot;Cr&quot;</span>,</span>
-<span id="cb194-13"><a href="eda.html#cb194-13"></a>       <span class="st">&quot;R&quot;</span>)</span>
-<span id="cb194-14"><a href="eda.html#cb194-14"></a><span class="co"># REGEX rules</span></span>
-<span id="cb194-15"><a href="eda.html#cb194-15"></a>p &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,</span>
-<span id="cb194-16"><a href="eda.html#cb194-16"></a>       <span class="st">&quot;BA|AB&quot;</span>,</span>
-<span id="cb194-17"><a href="eda.html#cb194-17"></a>       <span class="st">&quot;Bt|Bw&quot;</span>,</span>
-<span id="cb194-18"><a href="eda.html#cb194-18"></a>       <span class="st">&quot;Bt3|Bt4|2B|C&quot;</span>,</span>
-<span id="cb194-19"><a href="eda.html#cb194-19"></a>       <span class="st">&quot;Cr&quot;</span>,</span>
-<span id="cb194-20"><a href="eda.html#cb194-20"></a>       <span class="st">&quot;R&quot;</span>)</span>
-<span id="cb194-21"><a href="eda.html#cb194-21"></a></span>
-<span id="cb194-22"><a href="eda.html#cb194-22"></a><span class="co"># Compute genhz labels and add to loafercreek dataset</span></span>
-<span id="cb194-23"><a href="eda.html#cb194-23"></a>h<span class="op">$</span>genhz &lt;-<span class="st"> </span>aqp<span class="op">::</span><span class="kw">generalize.hz</span>(h<span class="op">$</span>hzname, n, p)</span>
-<span id="cb194-24"><a href="eda.html#cb194-24"></a></span>
-<span id="cb194-25"><a href="eda.html#cb194-25"></a><span class="co"># Examine the matching of pairing of the genhz label to the hznames</span></span>
-<span id="cb194-26"><a href="eda.html#cb194-26"></a><span class="kw">table</span>(h<span class="op">$</span>genhz, h<span class="op">$</span>hzname)</span></code></pre></div>
+<div class="sourceCode" id="cb194"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb194-1"><a href="eda.html#cb194-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load from the the loakercreek dataset</span></span>
+<span id="cb194-2"><a href="eda.html#cb194-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;loafercreek&quot;</span>, <span class="at">package =</span> <span class="st">&quot;soilDB&quot;</span>) </span>
+<span id="cb194-3"><a href="eda.html#cb194-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb194-4"><a href="eda.html#cb194-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the horizon table</span></span>
+<span id="cb194-5"><a href="eda.html#cb194-5" aria-hidden="true" tabindex="-1"></a>h <span class="ot">&lt;-</span> aqp<span class="sc">::</span><span class="fu">horizons</span>(loafercreek)</span>
+<span id="cb194-6"><a href="eda.html#cb194-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb194-7"><a href="eda.html#cb194-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Construct generalized horizon designations</span></span>
+<span id="cb194-8"><a href="eda.html#cb194-8" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>,</span>
+<span id="cb194-9"><a href="eda.html#cb194-9" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;BAt&quot;</span>,</span>
+<span id="cb194-10"><a href="eda.html#cb194-10" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Bt1&quot;</span>,</span>
+<span id="cb194-11"><a href="eda.html#cb194-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Bt2&quot;</span>,</span>
+<span id="cb194-12"><a href="eda.html#cb194-12" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Cr&quot;</span>,</span>
+<span id="cb194-13"><a href="eda.html#cb194-13" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;R&quot;</span>)</span>
+<span id="cb194-14"><a href="eda.html#cb194-14" aria-hidden="true" tabindex="-1"></a><span class="co"># REGEX rules</span></span>
+<span id="cb194-15"><a href="eda.html#cb194-15" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>,</span>
+<span id="cb194-16"><a href="eda.html#cb194-16" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;BA|AB&quot;</span>,</span>
+<span id="cb194-17"><a href="eda.html#cb194-17" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Bt|Bw&quot;</span>,</span>
+<span id="cb194-18"><a href="eda.html#cb194-18" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Bt3|Bt4|2B|C&quot;</span>,</span>
+<span id="cb194-19"><a href="eda.html#cb194-19" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Cr&quot;</span>,</span>
+<span id="cb194-20"><a href="eda.html#cb194-20" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;R&quot;</span>)</span>
+<span id="cb194-21"><a href="eda.html#cb194-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb194-22"><a href="eda.html#cb194-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute genhz labels and add to loafercreek dataset</span></span>
+<span id="cb194-23"><a href="eda.html#cb194-23" aria-hidden="true" tabindex="-1"></a>h<span class="sc">$</span>genhz <span class="ot">&lt;-</span> aqp<span class="sc">::</span><span class="fu">generalize.hz</span>(h<span class="sc">$</span>hzname, n, p)</span>
+<span id="cb194-24"><a href="eda.html#cb194-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb194-25"><a href="eda.html#cb194-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Examine the matching of pairing of the genhz label to the hznames</span></span>
+<span id="cb194-26"><a href="eda.html#cb194-26" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(h<span class="sc">$</span>genhz, h<span class="sc">$</span>hzname)</span></code></pre></div>
 <pre><code>##           
-##            2BC 2BCt 2Bt1 2Bt2 2Bt3 2Bt4 2Bt5 2CB 2CBt 2Cr 2Crt 2R  A A1 A2 AB ABt Ad Ap  B BA BAt BC BCt Bt
-##   A          0    0    0    0    0    0    0   0    0   0    0  0 97  7  7  0   0  1  1  0  0   0  0   0  0
-##   BAt        0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  1   0  0  0  0 31   8  0   0  0
-##   Bt1        0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  0   2  0  0  0  0   0  0   0  8
-##   Bt2        1    1    3    8    8    6    1   1    1   0    0  0  0  0  0  0   0  0  0  0  0   0  4  16  0
-##   Cr         0    0    0    0    0    0    0   0    0   4    2  0  0  0  0  0   0  0  0  0  0   0  0   0  0
-##   R          0    0    0    0    0    0    0   0    0   0    0  6  0  0  0  0   0  0  0  0  0   0  0   0  0
-##   not-used   0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  0   0  0  0  1  0   0  0   0  0
+##            2BC 2BCt 2Bt1 2Bt2 2Bt3 2Bt4 2Bt5 2CB 2CBt 2Cr 2Crt 2R  A A1 A2 AB ABt Ad Ap  B BA BAt BC BCt
+##   A          0    0    0    0    0    0    0   0    0   0    0  0 97  7  7  0   0  1  1  0  0   0  0   0
+##   BAt        0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  1   0  0  0  0 31   8  0   0
+##   Bt1        0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  0   2  0  0  0  0   0  0   0
+##   Bt2        1    1    3    8    8    6    1   1    1   0    0  0  0  0  0  0   0  0  0  0  0   0  4  16
+##   Cr         0    0    0    0    0    0    0   0    0   4    2  0  0  0  0  0   0  0  0  0  0   0  0   0
+##   R          0    0    0    0    0    0    0   0    0   0    0  6  0  0  0  0   0  0  0  0  0   0  0   0
+##   not-used   0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  0   0  0  0  1  0   0  0   0
 ##           
-##            Bt1 Bt2 Bt3 Bt4 Bw Bw1 Bw2 Bw3  C CBt Cd Cr Cr/R Crt H1 Oi  R Rt
-##   A          0   0   0   0  0   0   0   0  0   0  0  0    0   0  0  0  0  0
-##   BAt        0   0   0   0  0   0   0   0  0   0  0  0    0   0  0  0  0  0
-##   Bt1       93  88   0   0 10   2   2   1  0   0  0  0    0   0  0  0  0  0
-##   Bt2        0   0  47   8  0   0   0   0  6   6  1  0    0   0  0  0  0  0
-##   Cr         0   0   0   0  0   0   0   0  0   0  0 49    0  20  0  0  0  0
-##   R          0   0   0   0  0   0   0   0  0   0  0  0    1   0  0  0 40  1
-##   not-used   0   0   0   0  0   0   0   0  0   0  0  0    0   0  1 24  0  0</code></pre>
+##            Bt Bt1 Bt2 Bt3 Bt4 Bw Bw1 Bw2 Bw3  C CBt Cd Cr Cr/R Crt H1 Oi  R Rt
+##   A         0   0   0   0   0  0   0   0   0  0   0  0  0    0   0  0  0  0  0
+##   BAt       0   0   0   0   0  0   0   0   0  0   0  0  0    0   0  0  0  0  0
+##   Bt1       8  93  88   0   0 10   2   2   1  0   0  0  0    0   0  0  0  0  0
+##   Bt2       0   0   0  47   8  0   0   0   0  6   6  1  0    0   0  0  0  0  0
+##   Cr        0   0   0   0   0  0   0   0   0  0   0  0 49    0  20  0  0  0  0
+##   R         0   0   0   0   0  0   0   0   0  0   0  0  0    1   0  0  0 40  1
+##   not-used  0   0   0   0   0  0   0   0   0  0   0  0  0    0   0  1 24  0  0</code></pre>
 <p>As noted in Chapter 1, a visual examination of the raw data is possible by clicking on the dataset in the environment tab, or via commandline:</p>
-<div class="sourceCode" id="cb196"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb196-1"><a href="eda.html#cb196-1"></a><span class="kw">View</span>(h) </span></code></pre></div>
+<div class="sourceCode" id="cb196"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb196-1"><a href="eda.html#cb196-1" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(h) </span></code></pre></div>
 <p>This view is fine for a small dataset, but can be cumbersome for larger ones. The <code>summary()</code> function can be used to quickly summarize a dataset however, even for our small example dataset, the output can be voluminous. Therefore in the interest of saving space we’ll only look at a sample of columns.</p>
-<div class="sourceCode" id="cb197"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb197-1"><a href="eda.html#cb197-1"></a><span class="kw">library</span>(dplyr)</span>
-<span id="cb197-2"><a href="eda.html#cb197-2"></a></span>
-<span id="cb197-3"><a href="eda.html#cb197-3"></a>h <span class="op">%&gt;%</span></span>
-<span id="cb197-4"><a href="eda.html#cb197-4"></a><span class="st">  </span><span class="kw">select</span>(genhz, clay, total_frags_pct, phfield, effclass) <span class="op">%&gt;%</span></span>
-<span id="cb197-5"><a href="eda.html#cb197-5"></a><span class="st">  </span><span class="kw">summary</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb197"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb197-1"><a href="eda.html#cb197-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb197-2"><a href="eda.html#cb197-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb197-3"><a href="eda.html#cb197-3" aria-hidden="true" tabindex="-1"></a>h <span class="sc">%&gt;%</span></span>
+<span id="cb197-4"><a href="eda.html#cb197-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(genhz, clay, total_frags_pct, phfield, effclass) <span class="sc">%&gt;%</span></span>
+<span id="cb197-5"><a href="eda.html#cb197-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>()</span></code></pre></div>
 <pre><code>##       genhz          clay       total_frags_pct    phfield       effclass        
 ##  A       :113   Min.   :10.00   Min.   : 0.00   Min.   :4.90   Length:626        
 ##  BAt     : 40   1st Qu.:18.00   1st Qu.: 0.00   1st Qu.:6.00   Class :character  
@@ -492,19 +522,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><p><strong>Read</strong> the help file for the function you’re attempting to use. Many functions have additional arguments for dealing with missing values, such as <code>na.rm</code>.</p></li>
 </ol>
 <p>A quick check for typos would be to examine the list of levels for a factor or character, such as:</p>
-<div class="sourceCode" id="cb199"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb199-1"><a href="eda.html#cb199-1"></a><span class="co"># just for factors</span></span>
-<span id="cb199-2"><a href="eda.html#cb199-2"></a><span class="kw">levels</span>(h<span class="op">$</span>genhz)</span></code></pre></div>
+<div class="sourceCode" id="cb199"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb199-1"><a href="eda.html#cb199-1" aria-hidden="true" tabindex="-1"></a><span class="co"># just for factors</span></span>
+<span id="cb199-2"><a href="eda.html#cb199-2" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(h<span class="sc">$</span>genhz)</span></code></pre></div>
 <pre><code>## [1] &quot;A&quot;        &quot;BAt&quot;      &quot;Bt1&quot;      &quot;Bt2&quot;      &quot;Cr&quot;       &quot;R&quot;        &quot;not-used&quot;</code></pre>
-<div class="sourceCode" id="cb201"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb201-1"><a href="eda.html#cb201-1"></a><span class="co"># for characters and factors</span></span>
-<span id="cb201-2"><a href="eda.html#cb201-2"></a><span class="kw">sort</span>(<span class="kw">unique</span>(h<span class="op">$</span>hzname)) </span></code></pre></div>
-<pre><code>##  [1] &quot;2BC&quot;  &quot;2BCt&quot; &quot;2Bt1&quot; &quot;2Bt2&quot; &quot;2Bt3&quot; &quot;2Bt4&quot; &quot;2Bt5&quot; &quot;2CB&quot;  &quot;2CBt&quot; &quot;2Cr&quot;  &quot;2Crt&quot; &quot;2R&quot;   &quot;A&quot;    &quot;A1&quot;   &quot;A2&quot;  
-## [16] &quot;AB&quot;   &quot;ABt&quot;  &quot;Ad&quot;   &quot;Ap&quot;   &quot;B&quot;    &quot;BA&quot;   &quot;BAt&quot;  &quot;BC&quot;   &quot;BCt&quot;  &quot;Bt&quot;   &quot;Bt1&quot;  &quot;Bt2&quot;  &quot;Bt3&quot;  &quot;Bt4&quot;  &quot;Bw&quot;  
-## [31] &quot;Bw1&quot;  &quot;Bw2&quot;  &quot;Bw3&quot;  &quot;C&quot;    &quot;CBt&quot;  &quot;Cd&quot;   &quot;Cr&quot;   &quot;Cr/R&quot; &quot;Crt&quot;  &quot;H1&quot;   &quot;Oi&quot;   &quot;R&quot;    &quot;Rt&quot;</code></pre>
-<p>If the <code>unique()</code> function returned typos such as “BT” or “B t”, you could either fix your original dataset or you could make an adjustment in R, such as:</p>
-<div class="sourceCode" id="cb203"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb203-1"><a href="eda.html#cb203-1"></a>h<span class="op">$</span>hzname &lt;-<span class="st"> </span><span class="kw">ifelse</span>(h<span class="op">$</span>hzname <span class="op">==</span><span class="st"> &quot;BT&quot;</span>, <span class="st">&quot;Bt&quot;</span>, h<span class="op">$</span>hzname)</span></code></pre></div>
+<div class="sourceCode" id="cb201"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb201-1"><a href="eda.html#cb201-1" aria-hidden="true" tabindex="-1"></a><span class="co"># for characters and factors</span></span>
+<span id="cb201-2"><a href="eda.html#cb201-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">unique</span>(h<span class="sc">$</span>hzname)) </span></code></pre></div>
+<pre><code>##  [1] &quot;2BC&quot;  &quot;2BCt&quot; &quot;2Bt1&quot; &quot;2Bt2&quot; &quot;2Bt3&quot; &quot;2Bt4&quot; &quot;2Bt5&quot; &quot;2CB&quot;  &quot;2CBt&quot; &quot;2Cr&quot;  &quot;2Crt&quot; &quot;2R&quot;   &quot;A&quot;    &quot;A1&quot;  
+## [15] &quot;A2&quot;   &quot;AB&quot;   &quot;ABt&quot;  &quot;Ad&quot;   &quot;Ap&quot;   &quot;B&quot;    &quot;BA&quot;   &quot;BAt&quot;  &quot;BC&quot;   &quot;BCt&quot;  &quot;Bt&quot;   &quot;Bt1&quot;  &quot;Bt2&quot;  &quot;Bt3&quot; 
+## [29] &quot;Bt4&quot;  &quot;Bw&quot;   &quot;Bw1&quot;  &quot;Bw2&quot;  &quot;Bw3&quot;  &quot;C&quot;    &quot;CBt&quot;  &quot;Cd&quot;   &quot;Cr&quot;   &quot;Cr/R&quot; &quot;Crt&quot;  &quot;H1&quot;   &quot;Oi&quot;   &quot;R&quot;   
+## [43] &quot;Rt&quot;</code></pre>
+<p>If the <code>unique()</code> function returned typos such as “BT” or “B t,” you could either fix your original dataset or you could make an adjustment in R, such as:</p>
+<div class="sourceCode" id="cb203"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb203-1"><a href="eda.html#cb203-1" aria-hidden="true" tabindex="-1"></a>h<span class="sc">$</span>hzname <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(h<span class="sc">$</span>hzname <span class="sc">==</span> <span class="st">&quot;BT&quot;</span>, <span class="st">&quot;Bt&quot;</span>, h<span class="sc">$</span>hzname)</span></code></pre></div>
 <p>Typo errors such as these are a common problem with old pedon data in NASIS.</p>
 </div>
-<div id="exercise-1-fetch-and-inspect" class="section level2">
+<div id="exercise-1-fetch-and-inspect" class="section level2" number="3.4">
 <h2><span class="header-section-number">3.4</span> Exercise 1: fetch and inspect</h2>
 <ol style="list-style-type: decimal">
 <li>Create a new R script</li>
@@ -513,11 +544,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>Summarize the <code>hzdept</code>, <code>genhz</code>, <code>texture_class</code>, <code>sand</code>, and <code>fine gravel</code>.</li>
 <li>Save your R script, and forward to your instructor.</li>
 </ol>
-<div class="sourceCode" id="cb204"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb204-1"><a href="eda.html#cb204-1"></a><span class="co"># gopheridge rules</span></span>
-<span id="cb204-2"><a href="eda.html#cb204-2"></a>n &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;Bt1&#39;</span>, <span class="st">&#39;Bt2&#39;</span>, <span class="st">&#39;Bt3&#39;</span>,<span class="st">&#39;Cr&#39;</span>,<span class="st">&#39;R&#39;</span>)</span>
-<span id="cb204-3"><a href="eda.html#cb204-3"></a>p &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;^A|BA$&#39;</span>, <span class="st">&#39;Bt1|Bw&#39;</span>,<span class="st">&#39;Bt$|Bt2&#39;</span>, <span class="st">&#39;Bt3|CBt$|BCt&#39;</span>,<span class="st">&#39;Cr&#39;</span>,<span class="st">&#39;R&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb204"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb204-1"><a href="eda.html#cb204-1" aria-hidden="true" tabindex="-1"></a><span class="co"># gopheridge rules</span></span>
+<span id="cb204-2"><a href="eda.html#cb204-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;Bt1&#39;</span>, <span class="st">&#39;Bt2&#39;</span>, <span class="st">&#39;Bt3&#39;</span>,<span class="st">&#39;Cr&#39;</span>,<span class="st">&#39;R&#39;</span>)</span>
+<span id="cb204-3"><a href="eda.html#cb204-3" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;^A|BA$&#39;</span>, <span class="st">&#39;Bt1|Bw&#39;</span>,<span class="st">&#39;Bt$|Bt2&#39;</span>, <span class="st">&#39;Bt3|CBt$|BCt&#39;</span>,<span class="st">&#39;Cr&#39;</span>,<span class="st">&#39;R&#39;</span>)</span></code></pre></div>
 </div>
-<div id="descriptive-statistics" class="section level2">
+<div id="descriptive-statistics" class="section level2" number="3.5">
 <h2><span class="header-section-number">3.5</span> Descriptive Statistics</h2>
 <table>
 <caption><span id="tab:unnamed-chunk-90">Table 3.1: </span>Short Description of Descriptive Statistics and R Functions</caption>
@@ -568,40 +599,40 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 </tbody>
 </table>
-<div id="measures-of-central-tendency" class="section level3">
+<div id="measures-of-central-tendency" class="section level3" number="3.5.1">
 <h3><span class="header-section-number">3.5.1</span> Measures of Central Tendency</h3>
 <p>These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used measures for our purposes.</p>
 <p><strong>Mean</strong> - is the arithmetic average all are familiar with, formally expressed as: <span class="math inline">\(\bar{x} =\frac{\sum_{i=1}^{n}x_i}{n}\)</span> which sums ( <span class="math inline">\(\sum\)</span> ) all the X values in the sample and divides by the number (n) of samples. It is assumed that all references in this document refer to samples rather than a population.</p>
 <p>The mean clay content from the loafercreek dataset may be determined:</p>
-<div class="sourceCode" id="cb205"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb205-1"><a href="eda.html#cb205-1"></a><span class="co"># first remove missing values and create a new vector</span></span>
-<span id="cb205-2"><a href="eda.html#cb205-2"></a>clay &lt;-<span class="st"> </span><span class="kw">na.exclude</span>(h<span class="op">$</span>clay)</span>
-<span id="cb205-3"><a href="eda.html#cb205-3"></a><span class="kw">mean</span>(clay)</span></code></pre></div>
+<div class="sourceCode" id="cb205"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb205-1"><a href="eda.html#cb205-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first remove missing values and create a new vector</span></span>
+<span id="cb205-2"><a href="eda.html#cb205-2" aria-hidden="true" tabindex="-1"></a>clay <span class="ot">&lt;-</span> <span class="fu">na.exclude</span>(h<span class="sc">$</span>clay)</span>
+<span id="cb205-3"><a href="eda.html#cb205-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(clay)</span></code></pre></div>
 <pre><code>## [1] 23.62767</code></pre>
-<div class="sourceCode" id="cb207"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb207-1"><a href="eda.html#cb207-1"></a><span class="co"># or use the additional na.rm argument</span></span>
-<span id="cb207-2"><a href="eda.html#cb207-2"></a><span class="kw">mean</span>(h<span class="op">$</span>clay, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb207"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb207-1"><a href="eda.html#cb207-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or use the additional na.rm argument</span></span>
+<span id="cb207-2"><a href="eda.html#cb207-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(h<span class="sc">$</span>clay, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## [1] 23.62767</code></pre>
 <p><strong>Median</strong> is the middle measurement of a sample set, and as such is a more robust estimate of central tendency than the mean. This is known as the middle or 50th quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.</p>
 <p>The median from the sample dataset may be determined:</p>
-<div class="sourceCode" id="cb209"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb209-1"><a href="eda.html#cb209-1"></a><span class="kw">median</span>(clay)</span></code></pre></div>
+<div class="sourceCode" id="cb209"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb209-1"><a href="eda.html#cb209-1" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(clay)</span></code></pre></div>
 <pre><code>## [1] 22</code></pre>
 <p><strong>Mode</strong> - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. R does not include a function for calculating the mode, but we can calculate it using the following example.</p>
-<div class="sourceCode" id="cb211"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb211-1"><a href="eda.html#cb211-1"></a><span class="co"># sort and select the 1st value, which will be the mode</span></span>
-<span id="cb211-2"><a href="eda.html#cb211-2"></a><span class="kw">sort</span>(<span class="kw">table</span>(<span class="kw">round</span>(h<span class="op">$</span>clay)), <span class="dt">decreasing =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>] </span></code></pre></div>
+<div class="sourceCode" id="cb211"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb211-1"><a href="eda.html#cb211-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sort and select the 1st value, which will be the mode</span></span>
+<span id="cb211-2"><a href="eda.html#cb211-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(<span class="fu">round</span>(h<span class="sc">$</span>clay)), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)[<span class="dv">1</span>] </span></code></pre></div>
 <pre><code>## 25 
 ## 42</code></pre>
 <p><strong>Frequencies</strong></p>
 <p>To summarize factors and characters we can examine their frequency or number of observations. This is accomplished using the <code>table()</code> or <code>summary()</code> functions.</p>
-<div class="sourceCode" id="cb213"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb213-1"><a href="eda.html#cb213-1"></a><span class="kw">table</span>(h<span class="op">$</span>genhz)</span></code></pre></div>
+<div class="sourceCode" id="cb213"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb213-1"><a href="eda.html#cb213-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(h<span class="sc">$</span>genhz)</span></code></pre></div>
 <pre><code>## 
 ##        A      BAt      Bt1      Bt2       Cr        R not-used 
 ##      113       40      206      118       75       48       26</code></pre>
-<div class="sourceCode" id="cb215"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb215-1"><a href="eda.html#cb215-1"></a><span class="co"># or</span></span>
-<span id="cb215-2"><a href="eda.html#cb215-2"></a></span>
-<span id="cb215-3"><a href="eda.html#cb215-3"></a><span class="kw">summary</span>(h<span class="op">$</span>genhz)</span></code></pre></div>
+<div class="sourceCode" id="cb215"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb215-1"><a href="eda.html#cb215-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb215-2"><a href="eda.html#cb215-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb215-3"><a href="eda.html#cb215-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(h<span class="sc">$</span>genhz)</span></code></pre></div>
 <pre><code>##        A      BAt      Bt1      Bt2       Cr        R not-used 
 ##      113       40      206      118       75       48       26</code></pre>
 <p>This gives us a count of the number of observations for each horizon. If we want to see the comparison between two different factors or characters, we can include two variables.</p>
-<div class="sourceCode" id="cb217"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb217-1"><a href="eda.html#cb217-1"></a><span class="kw">table</span>(h<span class="op">$</span>genhz, h<span class="op">$</span>texcl)</span></code></pre></div>
+<div class="sourceCode" id="cb217"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb217-1"><a href="eda.html#cb217-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(h<span class="sc">$</span>genhz, h<span class="sc">$</span>texcl)</span></code></pre></div>
 <pre><code>##           
 ##              c  cl   l scl sic sicl sil  sl
 ##   A          0   0  78   0   0    0  27   6
@@ -612,8 +643,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ##   R          0   0   0   0   0    0   0   0
 ##   not-used   0   1   0   0   0    0   0   0</code></pre>
 <p>We can also add margin totals to the table or convert the table frequencies to proportions.</p>
-<div class="sourceCode" id="cb219"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb219-1"><a href="eda.html#cb219-1"></a><span class="co"># append the table with row and column sums</span></span>
-<span id="cb219-2"><a href="eda.html#cb219-2"></a><span class="kw">addmargins</span>(<span class="kw">table</span>(h<span class="op">$</span>genhz, h<span class="op">$</span>texcl))</span></code></pre></div>
+<div class="sourceCode" id="cb219"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb219-1"><a href="eda.html#cb219-1" aria-hidden="true" tabindex="-1"></a><span class="co"># append the table with row and column sums</span></span>
+<span id="cb219-2"><a href="eda.html#cb219-2" aria-hidden="true" tabindex="-1"></a><span class="fu">addmargins</span>(<span class="fu">table</span>(h<span class="sc">$</span>genhz, h<span class="sc">$</span>texcl))</span></code></pre></div>
 <pre><code>##           
 ##              c  cl   l scl sic sicl sil  sl Sum
 ##   A          0   0  78   0   0    0  27   6 111
@@ -624,10 +655,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ##   R          0   0   0   0   0    0   0   0   0
 ##   not-used   0   1   0   0   0    0   0   0   1
 ##   Sum       19 101 265   9   2    9  56   8 469</code></pre>
-<div class="sourceCode" id="cb221"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb221-1"><a href="eda.html#cb221-1"></a><span class="co"># calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations</span></span>
-<span id="cb221-2"><a href="eda.html#cb221-2"></a><span class="kw">table</span>(h<span class="op">$</span>genhz, h<span class="op">$</span>texture_class) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb221-3"><a href="eda.html#cb221-3"></a><span class="st">  </span><span class="kw">prop.table</span>(<span class="dt">margin =</span> <span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb221-4"><a href="eda.html#cb221-4"></a><span class="st">  </span><span class="kw">round</span>(<span class="dv">2</span>) <span class="op">*</span><span class="st"> </span><span class="dv">100</span></span></code></pre></div>
+<div class="sourceCode" id="cb221"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb221-1"><a href="eda.html#cb221-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations</span></span>
+<span id="cb221-2"><a href="eda.html#cb221-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(h<span class="sc">$</span>genhz, h<span class="sc">$</span>texture_class) <span class="sc">%&gt;%</span> </span>
+<span id="cb221-3"><a href="eda.html#cb221-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prop.table</span>(<span class="at">margin =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb221-4"><a href="eda.html#cb221-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="dv">2</span>) <span class="sc">*</span> <span class="dv">100</span></span></code></pre></div>
 <pre><code>##           
 ##             br   c  cb  cl  gr   l  pg scl sic sicl sil  sl spm
 ##   A          0   0   0   0   0  70   0   0   0    0  24   5   0
@@ -638,11 +669,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ##   R        100   0   0   0   0   0   0   0   0    0   0   0   0
 ##   not-used   0   0   0   4   0   0   0   0   0    0   0   0  96</code></pre>
 <p>To determine the mean by a group or category, use the <code>group_by</code> and <code>summarize</code> functions:</p>
-<div class="sourceCode" id="cb223"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb223-1"><a href="eda.html#cb223-1"></a>h <span class="op">%&gt;%</span></span>
-<span id="cb223-2"><a href="eda.html#cb223-2"></a><span class="st">  </span><span class="kw">group_by</span>(genhz) <span class="op">%&gt;%</span></span>
-<span id="cb223-3"><a href="eda.html#cb223-3"></a><span class="st">  </span><span class="kw">summarize</span>(<span class="dt">clay_avg =</span> <span class="kw">mean</span>(clay, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>),</span>
-<span id="cb223-4"><a href="eda.html#cb223-4"></a>            <span class="dt">clay_med =</span> <span class="kw">median</span>(clay, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb223-5"><a href="eda.html#cb223-5"></a>            )</span></code></pre></div>
+<div class="sourceCode" id="cb223"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb223-1"><a href="eda.html#cb223-1" aria-hidden="true" tabindex="-1"></a>h <span class="sc">%&gt;%</span></span>
+<span id="cb223-2"><a href="eda.html#cb223-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(genhz) <span class="sc">%&gt;%</span></span>
+<span id="cb223-3"><a href="eda.html#cb223-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">clay_avg =</span> <span class="fu">mean</span>(clay, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb223-4"><a href="eda.html#cb223-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">clay_med =</span> <span class="fu">median</span>(clay, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb223-5"><a href="eda.html#cb223-5" aria-hidden="true" tabindex="-1"></a>            )</span></code></pre></div>
 <pre><code>## # A tibble: 7 x 3
 ##   genhz    clay_avg clay_med
 ##   &lt;fct&gt;       &lt;dbl&gt;    &lt;dbl&gt;
@@ -654,67 +685,67 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## 6 R           NaN         NA
 ## 7 not-used    NaN         NA</code></pre>
 </div>
-<div id="measures-of-dispersion" class="section level3">
+<div id="measures-of-dispersion" class="section level3" number="3.5.2">
 <h3><span class="header-section-number">3.5.2</span> Measures of Dispersion</h3>
 <p>These are measures used to determine the spread of values around the mid-point. This is useful to determine if the samples are spread widely across the range of observations or concentrated near the mid-point. In NASIS speak these values might equate to the low (L) and high (H) values for numeric and integer data.</p>
 <p><strong>Variance</strong> is a positive value indicating deviation from the mean:</p>
 <p><span class="math inline">\(s^2 = \frac{\sum_{i=1}^{n}(x_i - \bar{x})^2} {n - 1}\)</span></p>
 <p>This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the <em>standard deviation</em>. Variance for the sample dataset is:</p>
-<div class="sourceCode" id="cb225"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb225-1"><a href="eda.html#cb225-1"></a><span class="kw">var</span>(h<span class="op">$</span>clay, <span class="dt">na.rm=</span><span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb225"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb225-1"><a href="eda.html#cb225-1" aria-hidden="true" tabindex="-1"></a><span class="fu">var</span>(h<span class="sc">$</span>clay, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## [1] 64.27607</code></pre>
 <p><strong>Standard Deviation</strong> is the square root of the variance:</p>
 <p><span class="math inline">\(s = \sqrt\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2} {n - 1}\)</span></p>
 <p>The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:</p>
-<div class="sourceCode" id="cb227"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb227-1"><a href="eda.html#cb227-1"></a><span class="kw">sd</span>(h<span class="op">$</span>clay, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb227"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb227-1"><a href="eda.html#cb227-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sd</span>(h<span class="sc">$</span>clay, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## [1] 8.017236</code></pre>
-<div class="sourceCode" id="cb229"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb229-1"><a href="eda.html#cb229-1"></a><span class="co"># or</span></span>
-<span id="cb229-2"><a href="eda.html#cb229-2"></a></span>
-<span id="cb229-3"><a href="eda.html#cb229-3"></a><span class="kw">sqrt</span>(<span class="kw">var</span>(clay))</span></code></pre></div>
+<div class="sourceCode" id="cb229"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb229-1"><a href="eda.html#cb229-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb229-2"><a href="eda.html#cb229-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb229-3"><a href="eda.html#cb229-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span>(<span class="fu">var</span>(clay))</span></code></pre></div>
 <pre><code>## [1] 8.017236</code></pre>
 <p><strong>Coefficient of Variation</strong> (CV) is a relative (i.e., unitless) measure of standard deviation:</p>
 <p><span class="math inline">\(CV = \frac{s}{\bar{x}} \times 100\)</span></p>
 <p>CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:</p>
-<div class="sourceCode" id="cb231"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb231-1"><a href="eda.html#cb231-1"></a><span class="kw">sd</span>(clay) <span class="op">/</span><span class="st"> </span><span class="kw">mean</span>(clay) <span class="op">*</span><span class="st"> </span><span class="dv">100</span></span></code></pre></div>
+<div class="sourceCode" id="cb231"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb231-1"><a href="eda.html#cb231-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sd</span>(clay) <span class="sc">/</span> <span class="fu">mean</span>(clay) <span class="sc">*</span> <span class="dv">100</span></span></code></pre></div>
 <pre><code>## [1] 33.93156</code></pre>
 <p><strong>Quantiles (a.k.a. Percentiles)</strong> - the percentile is the value that cuts off the first nth percent of the data values when sorted in ascending order.</p>
 <p>The default for the <code>quantile()</code> function returns the min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.</p>
-<div class="sourceCode" id="cb233"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb233-1"><a href="eda.html#cb233-1"></a><span class="kw">quantile</span>(clay)</span></code></pre></div>
+<div class="sourceCode" id="cb233"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb233-1"><a href="eda.html#cb233-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(clay)</span></code></pre></div>
 <pre><code>##   0%  25%  50%  75% 100% 
 ##   10   18   22   28   60</code></pre>
-<div class="sourceCode" id="cb235"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb235-1"><a href="eda.html#cb235-1"></a><span class="co"># or</span></span>
-<span id="cb235-2"><a href="eda.html#cb235-2"></a></span>
-<span id="cb235-3"><a href="eda.html#cb235-3"></a><span class="kw">quantile</span>(clay, <span class="kw">c</span>(<span class="fl">0.05</span>, <span class="fl">0.5</span>, <span class="fl">0.95</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb235"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb235-1"><a href="eda.html#cb235-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb235-2"><a href="eda.html#cb235-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb235-3"><a href="eda.html#cb235-3" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(clay, <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.5</span>, <span class="fl">0.95</span>))</span></code></pre></div>
 <pre><code>##   5%  50%  95% 
 ## 13.0 22.0 38.1</code></pre>
 <p>Thus, for the five number summary 25% of the observations fall between each of the intervals. <a href="https://ncss-tech.github.io/soil-range-in-characteristics/why-percentiles.html">Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpretation</a>.</p>
 <p><strong>Range</strong> is the difference between the highest and lowest measurement of a group. Using the sample data it may be determined as:</p>
-<div class="sourceCode" id="cb237"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb237-1"><a href="eda.html#cb237-1"></a><span class="kw">range</span>(clay)</span></code></pre></div>
+<div class="sourceCode" id="cb237"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb237-1"><a href="eda.html#cb237-1" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span>(clay)</span></code></pre></div>
 <pre><code>## [1] 10 60</code></pre>
 <p>which returns the minimum and maximum values observed, or:</p>
-<div class="sourceCode" id="cb239"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb239-1"><a href="eda.html#cb239-1"></a><span class="kw">diff</span>(<span class="kw">range</span>(clay))</span></code></pre></div>
+<div class="sourceCode" id="cb239"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb239-1"><a href="eda.html#cb239-1" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(<span class="fu">range</span>(clay))</span></code></pre></div>
 <pre><code>## [1] 50</code></pre>
-<div class="sourceCode" id="cb241"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb241-1"><a href="eda.html#cb241-1"></a><span class="co"># or</span></span>
-<span id="cb241-2"><a href="eda.html#cb241-2"></a></span>
-<span id="cb241-3"><a href="eda.html#cb241-3"></a><span class="kw">max</span>(clay) <span class="op">-</span><span class="st"> </span><span class="kw">min</span>(clay)</span></code></pre></div>
+<div class="sourceCode" id="cb241"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb241-1"><a href="eda.html#cb241-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb241-2"><a href="eda.html#cb241-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb241-3"><a href="eda.html#cb241-3" aria-hidden="true" tabindex="-1"></a><span class="fu">max</span>(clay) <span class="sc">-</span> <span class="fu">min</span>(clay)</span></code></pre></div>
 <pre><code>## [1] 50</code></pre>
 <p><strong>Interquartile Range</strong> (IQR) is the range from the upper (75%) quartile to the lower (25%) quartile. This represents 50% of the observations occurring in the mid-range of a sample. IQR is a robust measure of dispersion, unaffected by the distribution of data. In soil survey lingo you could consider the IQR to estimate the central concept of a soil property. IQR may be calculated for the sample dataset as:</p>
-<div class="sourceCode" id="cb243"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb243-1"><a href="eda.html#cb243-1"></a><span class="kw">IQR</span>(clay)</span></code></pre></div>
+<div class="sourceCode" id="cb243"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb243-1"><a href="eda.html#cb243-1" aria-hidden="true" tabindex="-1"></a><span class="fu">IQR</span>(clay)</span></code></pre></div>
 <pre><code>## [1] 10</code></pre>
-<div class="sourceCode" id="cb245"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb245-1"><a href="eda.html#cb245-1"></a><span class="co"># or</span></span>
-<span id="cb245-2"><a href="eda.html#cb245-2"></a></span>
-<span id="cb245-3"><a href="eda.html#cb245-3"></a><span class="kw">diff</span>(<span class="kw">quantile</span>(clay, <span class="dt">p =</span> <span class="kw">c</span>(<span class="fl">0.25</span>, <span class="fl">0.75</span>)))</span></code></pre></div>
+<div class="sourceCode" id="cb245"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb245-1"><a href="eda.html#cb245-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb245-2"><a href="eda.html#cb245-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb245-3"><a href="eda.html#cb245-3" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(<span class="fu">quantile</span>(clay, <span class="at">p =</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.75</span>)))</span></code></pre></div>
 <pre><code>## 75% 
 ##  10</code></pre>
 </div>
-<div id="correlation" class="section level3">
+<div id="correlation" class="section level3" number="3.5.3">
 <h3><span class="header-section-number">3.5.3</span> Correlation</h3>
 <p>A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:</p>
-<div class="sourceCode" id="cb247"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb247-1"><a href="eda.html#cb247-1"></a>h<span class="op">$</span>hzdepm &lt;-<span class="st"> </span>(h<span class="op">$</span>hzdepb <span class="op">+</span><span class="st"> </span>h<span class="op">$</span>hzdept) <span class="op">/</span><span class="st"> </span><span class="dv">2</span> <span class="co"># Compute the middle horizon depth</span></span>
-<span id="cb247-2"><a href="eda.html#cb247-2"></a></span>
-<span id="cb247-3"><a href="eda.html#cb247-3"></a>h <span class="op">%&gt;%</span></span>
-<span id="cb247-4"><a href="eda.html#cb247-4"></a><span class="st">  </span><span class="kw">select</span>(hzdepm, clay, sand, total_frags_pct, phfield) <span class="op">%&gt;%</span></span>
-<span id="cb247-5"><a href="eda.html#cb247-5"></a><span class="st">  </span><span class="kw">cor</span>(<span class="dt">use =</span> <span class="st">&quot;complete.obs&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb247-6"><a href="eda.html#cb247-6"></a><span class="st">  </span><span class="kw">round</span>(<span class="dv">2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb247"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb247-1"><a href="eda.html#cb247-1" aria-hidden="true" tabindex="-1"></a>h<span class="sc">$</span>hzdepm <span class="ot">&lt;-</span> (h<span class="sc">$</span>hzdepb <span class="sc">+</span> h<span class="sc">$</span>hzdept) <span class="sc">/</span> <span class="dv">2</span> <span class="co"># Compute the middle horizon depth</span></span>
+<span id="cb247-2"><a href="eda.html#cb247-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb247-3"><a href="eda.html#cb247-3" aria-hidden="true" tabindex="-1"></a>h <span class="sc">%&gt;%</span></span>
+<span id="cb247-4"><a href="eda.html#cb247-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(hzdepm, clay, sand, total_frags_pct, phfield) <span class="sc">%&gt;%</span></span>
+<span id="cb247-5"><a href="eda.html#cb247-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(<span class="at">use =</span> <span class="st">&quot;complete.obs&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb247-6"><a href="eda.html#cb247-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="dv">2</span>)</span></code></pre></div>
 <pre><code>##                 hzdepm  clay  sand total_frags_pct phfield
 ## hzdepm            1.00  0.59 -0.08            0.50   -0.03
 ## clay              0.59  1.00 -0.17            0.28    0.13
@@ -724,7 +755,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0. Negative values indicate a negative relationship between variables. What is considered highly correlated? A good rule of thumb is anything with a value of <strong>0.7</strong> or greater is considered highly correlated.</p>
 </div>
 </div>
-<div id="exercise-2-compute-descriptive-statistics" class="section level2">
+<div id="exercise-2-compute-descriptive-statistics" class="section level2" number="3.6">
 <h2><span class="header-section-number">3.6</span> Exercise 2: Compute Descriptive Statistics</h2>
 <ol style="list-style-type: decimal">
 <li>Add to your existing R script from Exercise 1.</li>
@@ -734,7 +765,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>Save your R script, and forward to your instructor.</li>
 </ol>
 </div>
-<div id="graphical-methods" class="section level2">
+<div id="graphical-methods" class="section level2" number="3.7">
 <h2><span class="header-section-number">3.7</span> Graphical Methods</h2>
 <p>Now that we’ve checked for missing values and typos and made corrections, we can graphically examine the sample data distribution of our data. Frequency distributions are useful because they can help us visualize the center (e.g., RV) and spread or dispersion (e.g., low and high) of our data. Typically in introductory statistics the normal (i.e., Gaussian) distribution is emphasized.</p>
 <table>
@@ -825,35 +856,35 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </tr>
 </tbody>
 </table>
-<div id="distributions" class="section level3">
+<div id="distributions" class="section level3" number="3.7.1">
 <h3><span class="header-section-number">3.7.1</span> Distributions</h3>
 <p><img src="s4ssbook_files/figure-html/distribution%20comparison-1.png" width="768" style="display: block; margin: auto;" /></p>
 </div>
-<div id="bar-plot" class="section level3">
+<div id="bar-plot" class="section level3" number="3.7.2">
 <h3><span class="header-section-number">3.7.2</span> Bar Plot</h3>
 <p>A bar plot is a graphical display of the frequency (i.e. number of observations (count or n)), such as soil texture, that fall within a given class. It is a graphical alternative to to the <code>table()</code> function.</p>
-<div class="sourceCode" id="cb249"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb249-1"><a href="eda.html#cb249-1"></a><span class="kw">library</span>(ggplot2)</span>
-<span id="cb249-2"><a href="eda.html#cb249-2"></a></span>
-<span id="cb249-3"><a href="eda.html#cb249-3"></a><span class="co"># bar plot</span></span>
-<span id="cb249-4"><a href="eda.html#cb249-4"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> texcl)) <span class="op">+</span></span>
-<span id="cb249-5"><a href="eda.html#cb249-5"></a><span class="st">  </span><span class="kw">geom_bar</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb249"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb249-1"><a href="eda.html#cb249-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb249-2"><a href="eda.html#cb249-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb249-3"><a href="eda.html#cb249-3" aria-hidden="true" tabindex="-1"></a><span class="co"># bar plot</span></span>
+<span id="cb249-4"><a href="eda.html#cb249-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> texcl)) <span class="sc">+</span></span>
+<span id="cb249-5"><a href="eda.html#cb249-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/barplot-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
-<div id="histogram" class="section level3">
+<div id="histogram" class="section level3" number="3.7.3">
 <h3><span class="header-section-number">3.7.3</span> Histogram</h3>
 <p>A histogram is similar to a bar plot, except that instead of summarizing categorical data, it categorizes a continuous variable like clay content into non-overlappying intervals for the sake of display. The number of intervals can be specified by the user, or can be automatically determined using an algorithm, such as <code>nclass.Sturges()</code>. Since histograms are dependent on the number of bins, for small datasets they’re not the best method of determining the shape of a distribution.</p>
-<div class="sourceCode" id="cb250"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb250-1"><a href="eda.html#cb250-1"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> clay)) <span class="op">+</span></span>
-<span id="cb250-2"><a href="eda.html#cb250-2"></a><span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">bins =</span> <span class="kw">nclass.Sturges</span>(h<span class="op">$</span>clay))</span></code></pre></div>
+<div class="sourceCode" id="cb250"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb250-1"><a href="eda.html#cb250-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> clay)) <span class="sc">+</span></span>
+<span id="cb250-2"><a href="eda.html#cb250-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="fu">nclass.Sturges</span>(h<span class="sc">$</span>clay))</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/histogram-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
-<div id="density-curve" class="section level3">
+<div id="density-curve" class="section level3" number="3.7.4">
 <h3><span class="header-section-number">3.7.4</span> Density Curve</h3>
 <p>A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram. Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. One curious feature of the density curve is the hint of a two peaks (i.e. bimodal distribution?). Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.</p>
-<div class="sourceCode" id="cb251"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb251-1"><a href="eda.html#cb251-1"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> clay)) <span class="op">+</span></span>
-<span id="cb251-2"><a href="eda.html#cb251-2"></a><span class="st">  </span><span class="kw">geom_density</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb251"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb251-1"><a href="eda.html#cb251-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> clay)) <span class="sc">+</span></span>
+<span id="cb251-2"><a href="eda.html#cb251-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/densityplot-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
-<div id="box-plots" class="section level3">
+<div id="box-plots" class="section level3" number="3.7.5">
 <h3><span class="header-section-number">3.7.5</span> Box plots</h3>
 <p>Box plots are a graphical representation of the five number summary, depicting quartiles (i.e. the 25%, 50%, and 75% quantiles), minimum, maximum and outliers (if present). Boxplots convey the shape of the data distribution, the presence of extreme values, and the ability to compare with other variables using the same scale, providing an excellent tool for screening data, determining thresholds for variables and developing working hypotheses.</p>
 <p>The parts of the boxplot are shown in the figure below. The “box” of the boxplot is defined as the 1st quartile, (Q1 in the figure) and the 3rd quartile, (Q3 in the figure). The median, or 2nd quartile, is the dark line in the box. The whiskers (typically) show data that is 1.5 * IQR above and below the 3rd and 1st quartile. Any data point that is beyond a whisker is considered an outlier.</p>
@@ -862,32 +893,32 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <img src="static-figures/ch4_fig28.jpg" alt="" />
 <p class="caption">Boxplot description (Seltman, 2009)</p>
 </div>
-<div class="sourceCode" id="cb252"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb252-1"><a href="eda.html#cb252-1"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> genhz, <span class="dt">y =</span> clay)) <span class="op">+</span></span>
-<span id="cb252-2"><a href="eda.html#cb252-2"></a><span class="st">  </span><span class="kw">geom_boxplot</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb252"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb252-1"><a href="eda.html#cb252-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> genhz, <span class="at">y =</span> clay)) <span class="sc">+</span></span>
+<span id="cb252-2"><a href="eda.html#cb252-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/boxplots-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>The above box plot shows a steady increase in clay content with depth. Notice the outliers in the box plots, identified by the individual circles.</p>
 </div>
-<div id="quantile-comparison-plots-qqplot" class="section level3">
+<div id="quantile-comparison-plots-qqplot" class="section level3" number="3.7.6">
 <h3><span class="header-section-number">3.7.6</span> Quantile comparison plots (QQplot)</h3>
 <p>A QQ plot is a plot of the actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).</p>
-<div class="sourceCode" id="cb253"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb253-1"><a href="eda.html#cb253-1"></a><span class="co"># QQ Plot for Clay</span></span>
-<span id="cb253-2"><a href="eda.html#cb253-2"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">sample =</span> clay)) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb253-3"><a href="eda.html#cb253-3"></a><span class="st">  </span><span class="kw">geom_qq</span>() <span class="op">+</span></span>
-<span id="cb253-4"><a href="eda.html#cb253-4"></a><span class="st">  </span><span class="kw">geom_qq_line</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb253"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb253-1"><a href="eda.html#cb253-1" aria-hidden="true" tabindex="-1"></a><span class="co"># QQ Plot for Clay</span></span>
+<span id="cb253-2"><a href="eda.html#cb253-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">sample =</span> clay)) <span class="sc">+</span> </span>
+<span id="cb253-3"><a href="eda.html#cb253-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_qq</span>() <span class="sc">+</span></span>
+<span id="cb253-4"><a href="eda.html#cb253-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_qq_line</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-106-1.png" width="672" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb254"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb254-1"><a href="eda.html#cb254-1"></a><span class="co"># QQ Plot for Frags</span></span>
-<span id="cb254-2"><a href="eda.html#cb254-2"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">sample =</span> total_frags_pct)) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb254-3"><a href="eda.html#cb254-3"></a><span class="st">  </span><span class="kw">geom_qq</span>() <span class="op">+</span></span>
-<span id="cb254-4"><a href="eda.html#cb254-4"></a><span class="st">  </span><span class="kw">geom_qq_line</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb254"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb254-1"><a href="eda.html#cb254-1" aria-hidden="true" tabindex="-1"></a><span class="co"># QQ Plot for Frags</span></span>
+<span id="cb254-2"><a href="eda.html#cb254-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">sample =</span> total_frags_pct)) <span class="sc">+</span> </span>
+<span id="cb254-3"><a href="eda.html#cb254-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_qq</span>() <span class="sc">+</span></span>
+<span id="cb254-4"><a href="eda.html#cb254-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_qq_line</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-106-2.png" width="672" style="display: block; margin: auto;" /></p>
 <p>If the data set is perfectly symmetric (i.e. normal), the data points will form a straight line. Overall this plot shows that our clay example is more or less symmetric. However the second plot shows that our rock fragments are far from evenly distributed.</p>
 <p>A more detailed explanation of QQ plots may be found on Wikipedia:<br />
 <a href="https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot">https://en.wikipedia.org/wiki/QQ_plot</a></p>
 </div>
-<div id="the-normal-distribution" class="section level3">
+<div id="the-normal-distribution" class="section level3" number="3.7.7">
 <h3><span class="header-section-number">3.7.7</span> The ‘Normal’ distribution</h3>
 <p>What is a normal distribution and why should you care? Many statistical methods are based on the properties of a normal distribution. Applying certain methods to data that are not normally distributed can give misleading or incorrect results. Most methods that assume normality are robust enough for all data except the very abnormal. This section is not meant to be a recipe for decision making, but more an extension of tools available to help you examine your data and proceed accordingly. The impact of normality is most commonly seen for parameters used by pedologists for documenting the ranges of a variable (i.e., Low, RV and High values). Often a rule-of thumb similar to: “two standard deviations” is used to define the low and high values of a variable. This is fine if the data are normally distributed. However, if the data are skewed, using the standard deviation as a parameter does not provide useful information of the data distribution. The quantitative measures of Kurtosis (peakedness) and Skewness (symmetry) can be used to assist in accessing normality and can be found in the <a href="https://cran.r-project.org/web/packages/psych/index.html">fBasics</a> package, but <a href="http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract">Webster (2001)</a> cautions against using significance tests for assessing normality. The preceding sections and chapters will demonstrate various methods to cope with alternative distributions.</p>
-<p>A Gaussian distribution is often referred to as “Bell Curve”, and has the following properties (Lane):</p>
+<p>A Gaussian distribution is often referred to as “Bell Curve,” and has the following properties (Lane):</p>
 <ol style="list-style-type: decimal">
 <li>Gaussian distributions are <strong>symmetric</strong> around their mean</li>
 <li>The mean, median, and mode of a Gaussian distribution are <strong>equal</strong></li>
@@ -911,100 +942,100 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>The median always represents the same thing independent of the data distribution, namely, 50% of the samples are below and 50% are above the median. The example for clay again indicates that distribution is approximately normal.</p>
 <p>However for rock fragments, we commonly see a long tailed distribution (e.g., skewed). Using the mean in this instance would overestimate the rock fragments. Although in this instance the difference between the mean and median is only 9 percent.</p>
 </div>
-<div id="scatterplots-and-line-plots" class="section level3">
+<div id="scatterplots-and-line-plots" class="section level3" number="3.7.8">
 <h3><span class="header-section-number">3.7.8</span> Scatterplots and Line Plots</h3>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-109-1.png" width="768" style="display: block; margin: auto;" /></p>
 <p>Plotting points of one ratio or interval variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offers the potential to correlate soil attributes with a large variety of raster datasets.</p>
 <p>The purpose of a scatterplot is to see how one variable relates to another. With modeling in general the goal is parsimony (i.e., simple). The goal is to determine the fewest number of variables required to explain or describe a relationship. If two variables explain the same thing, i.e., they are highly correlated, only one variable is needed. The scatterplot provides a perfect visual reference for this.</p>
 <p>Create a basic scatter plot using the loafercreek dataset.</p>
-<div class="sourceCode" id="cb255"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb255-1"><a href="eda.html#cb255-1"></a><span class="co"># scatter plot</span></span>
-<span id="cb255-2"><a href="eda.html#cb255-2"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> clay, <span class="dt">y =</span> hzdepm)) <span class="op">+</span></span>
-<span id="cb255-3"><a href="eda.html#cb255-3"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
-<span id="cb255-4"><a href="eda.html#cb255-4"></a><span class="st">  </span><span class="kw">ylim</span>(<span class="dv">100</span>, <span class="dv">0</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb255"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb255-1"><a href="eda.html#cb255-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scatter plot</span></span>
+<span id="cb255-2"><a href="eda.html#cb255-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> clay, <span class="at">y =</span> hzdepm)) <span class="sc">+</span></span>
+<span id="cb255-3"><a href="eda.html#cb255-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb255-4"><a href="eda.html#cb255-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">100</span>, <span class="dv">0</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-110-1.png" width="672" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb256"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb256-1"><a href="eda.html#cb256-1"></a><span class="co"># line plot</span></span>
-<span id="cb256-2"><a href="eda.html#cb256-2"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">y =</span> clay, <span class="dt">x =</span> hzdepm, <span class="dt">group =</span> peiid)) <span class="op">+</span></span>
-<span id="cb256-3"><a href="eda.html#cb256-3"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></span>
-<span id="cb256-4"><a href="eda.html#cb256-4"></a><span class="st">  </span><span class="kw">coord_flip</span>() <span class="op">+</span></span>
-<span id="cb256-5"><a href="eda.html#cb256-5"></a><span class="st">  </span><span class="kw">xlim</span>(<span class="dv">100</span>, <span class="dv">0</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb256"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb256-1"><a href="eda.html#cb256-1" aria-hidden="true" tabindex="-1"></a><span class="co"># line plot</span></span>
+<span id="cb256-2"><a href="eda.html#cb256-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">y =</span> clay, <span class="at">x =</span> hzdepm, <span class="at">group =</span> peiid)) <span class="sc">+</span></span>
+<span id="cb256-3"><a href="eda.html#cb256-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb256-4"><a href="eda.html#cb256-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb256-5"><a href="eda.html#cb256-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlim</span>(<span class="dv">100</span>, <span class="dv">0</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-110-2.png" width="672" style="display: block; margin: auto;" /></p>
 <p>This plots clay on the X axis and depth on the X axis. As shown in the scatterplot above, there is a moderate correlation between these variables.</p>
 <p>The function below produces a scatterplot matrix for all the numeric variables in the dataset. This is a good command to use for determining rough linear correlations for continuous variables.</p>
-<div class="sourceCode" id="cb257"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb257-1"><a href="eda.html#cb257-1"></a><span class="kw">library</span>(GGally)</span>
-<span id="cb257-2"><a href="eda.html#cb257-2"></a>  </span>
-<span id="cb257-3"><a href="eda.html#cb257-3"></a>h <span class="op">%&gt;%</span></span>
-<span id="cb257-4"><a href="eda.html#cb257-4"></a><span class="st">  </span><span class="kw">select</span>(hzdepm, clay, phfield, total_frags_pct) <span class="op">%&gt;%</span></span>
-<span id="cb257-5"><a href="eda.html#cb257-5"></a><span class="st">  </span><span class="kw">ggpairs</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb257"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb257-1"><a href="eda.html#cb257-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GGally)</span>
+<span id="cb257-2"><a href="eda.html#cb257-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb257-3"><a href="eda.html#cb257-3" aria-hidden="true" tabindex="-1"></a>h <span class="sc">%&gt;%</span></span>
+<span id="cb257-4"><a href="eda.html#cb257-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(hzdepm, clay, phfield, total_frags_pct) <span class="sc">%&gt;%</span></span>
+<span id="cb257-5"><a href="eda.html#cb257-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggpairs</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-111-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
-<div id="rd-dimension---color-shape-size-layers-etc" class="section level3">
+<div id="rd-dimension---color-shape-size-layers-etc" class="section level3" number="3.7.9">
 <h3><span class="header-section-number">3.7.9</span> 3rd Dimension - Color, Shape, Size, Layers, etc…</h3>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-112-1.png" width="768" style="display: block; margin: auto;" /></p>
-<div id="color-and-groups" class="section level4">
+<div id="color-and-groups" class="section level4" number="3.7.9.1">
 <h4><span class="header-section-number">3.7.9.1</span> Color and Groups</h4>
-<div class="sourceCode" id="cb258"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb258-1"><a href="eda.html#cb258-1"></a><span class="co"># scatter plot</span></span>
-<span id="cb258-2"><a href="eda.html#cb258-2"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> clay, <span class="dt">y =</span> hzdepm, <span class="dt">color =</span> genhz)) <span class="op">+</span></span>
-<span id="cb258-3"><a href="eda.html#cb258-3"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">size =</span> <span class="dv">3</span>) <span class="op">+</span></span>
-<span id="cb258-4"><a href="eda.html#cb258-4"></a><span class="st">  </span><span class="kw">ylim</span>(<span class="dv">100</span>, <span class="dv">0</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb258"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb258-1"><a href="eda.html#cb258-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scatter plot</span></span>
+<span id="cb258-2"><a href="eda.html#cb258-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> clay, <span class="at">y =</span> hzdepm, <span class="at">color =</span> genhz)) <span class="sc">+</span></span>
+<span id="cb258-3"><a href="eda.html#cb258-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb258-4"><a href="eda.html#cb258-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">100</span>, <span class="dv">0</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/color-1.png" width="768" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb259"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb259-1"><a href="eda.html#cb259-1"></a><span class="co"># density plot</span></span>
-<span id="cb259-2"><a href="eda.html#cb259-2"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> clay, <span class="dt">color =</span> genhz)) <span class="op">+</span></span>
-<span id="cb259-3"><a href="eda.html#cb259-3"></a><span class="st">  </span><span class="kw">geom_density</span>(<span class="dt">size =</span> <span class="dv">2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb259"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb259-1"><a href="eda.html#cb259-1" aria-hidden="true" tabindex="-1"></a><span class="co"># density plot</span></span>
+<span id="cb259-2"><a href="eda.html#cb259-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> clay, <span class="at">color =</span> genhz)) <span class="sc">+</span></span>
+<span id="cb259-3"><a href="eda.html#cb259-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">size =</span> <span class="dv">2</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/color-2.png" width="768" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb260"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb260-1"><a href="eda.html#cb260-1"></a><span class="co"># bar plot</span></span>
-<span id="cb260-2"><a href="eda.html#cb260-2"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> genhz, <span class="dt">fill =</span> texture_class)) <span class="op">+</span></span>
-<span id="cb260-3"><a href="eda.html#cb260-3"></a><span class="st">  </span><span class="kw">geom_bar</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb260"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb260-1"><a href="eda.html#cb260-1" aria-hidden="true" tabindex="-1"></a><span class="co"># bar plot</span></span>
+<span id="cb260-2"><a href="eda.html#cb260-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> genhz, <span class="at">fill =</span> texture_class)) <span class="sc">+</span></span>
+<span id="cb260-3"><a href="eda.html#cb260-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/color-3.png" width="768" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb261"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb261-1"><a href="eda.html#cb261-1"></a><span class="co"># box plot</span></span>
-<span id="cb261-2"><a href="eda.html#cb261-2"></a><span class="kw">ggplot</span>(h, <span class="kw">aes</span>(<span class="dt">x =</span> genhz, <span class="dt">y =</span> clay)) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb261-3"><a href="eda.html#cb261-3"></a><span class="st">  </span><span class="kw">geom_boxplot</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb261"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb261-1"><a href="eda.html#cb261-1" aria-hidden="true" tabindex="-1"></a><span class="co"># box plot</span></span>
+<span id="cb261-2"><a href="eda.html#cb261-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> genhz, <span class="at">y =</span> clay)) <span class="sc">+</span> </span>
+<span id="cb261-3"><a href="eda.html#cb261-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/color-4.png" width="768" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb262"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb262-1"><a href="eda.html#cb262-1"></a><span class="co"># heat map (pseudo bar plot)</span></span>
-<span id="cb262-2"><a href="eda.html#cb262-2"></a>s &lt;-<span class="st"> </span>aqp<span class="op">::</span><span class="kw">site</span>(loafercreek)</span>
-<span id="cb262-3"><a href="eda.html#cb262-3"></a></span>
-<span id="cb262-4"><a href="eda.html#cb262-4"></a><span class="kw">ggplot</span>(s, <span class="kw">aes</span>(<span class="dt">x =</span> landform_string, <span class="dt">y =</span> pmkind)) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb262-5"><a href="eda.html#cb262-5"></a><span class="st">  </span><span class="kw">geom_tile</span>(<span class="dt">alpha =</span> <span class="fl">0.2</span>) </span></code></pre></div>
+<div class="sourceCode" id="cb262"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb262-1"><a href="eda.html#cb262-1" aria-hidden="true" tabindex="-1"></a><span class="co"># heat map (pseudo bar plot)</span></span>
+<span id="cb262-2"><a href="eda.html#cb262-2" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> aqp<span class="sc">::</span><span class="fu">site</span>(loafercreek)</span>
+<span id="cb262-3"><a href="eda.html#cb262-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb262-4"><a href="eda.html#cb262-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(s, <span class="fu">aes</span>(<span class="at">x =</span> landform_string, <span class="at">y =</span> pmkind)) <span class="sc">+</span> </span>
+<span id="cb262-5"><a href="eda.html#cb262-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_tile</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>) </span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/color-5.png" width="768" style="display: block; margin: auto;" /></p>
 </div>
-<div id="facets---box-plots" class="section level4">
+<div id="facets---box-plots" class="section level4" number="3.7.9.2">
 <h4><span class="header-section-number">3.7.9.2</span> Facets - box plots</h4>
-<div class="sourceCode" id="cb263"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb263-1"><a href="eda.html#cb263-1"></a><span class="kw">library</span>(tidyr)</span>
-<span id="cb263-2"><a href="eda.html#cb263-2"></a></span>
-<span id="cb263-3"><a href="eda.html#cb263-3"></a><span class="co"># convert to long format</span></span>
-<span id="cb263-4"><a href="eda.html#cb263-4"></a>df &lt;-<span class="st"> </span>h <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb263-5"><a href="eda.html#cb263-5"></a><span class="st">  </span><span class="kw">select</span>(peiid, genhz, hzdepm, clay, phfield, total_frags_pct) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb263-6"><a href="eda.html#cb263-6"></a><span class="st">  </span><span class="kw">pivot_longer</span>(<span class="dt">cols =</span> <span class="kw">c</span>(<span class="st">&quot;clay&quot;</span>, <span class="st">&quot;phfield&quot;</span>, <span class="st">&quot;total_frags_pct&quot;</span>))</span>
-<span id="cb263-7"><a href="eda.html#cb263-7"></a></span>
-<span id="cb263-8"><a href="eda.html#cb263-8"></a><span class="kw">ggplot</span>(df, <span class="kw">aes</span>(<span class="dt">x =</span> genhz, <span class="dt">y =</span> value)) <span class="op">+</span></span>
-<span id="cb263-9"><a href="eda.html#cb263-9"></a><span class="st">  </span><span class="kw">geom_boxplot</span>() <span class="op">+</span></span>
-<span id="cb263-10"><a href="eda.html#cb263-10"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;genhz&quot;</span>) <span class="op">+</span></span>
-<span id="cb263-11"><a href="eda.html#cb263-11"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span><span class="st"> </span>name, <span class="dt">scales =</span> <span class="st">&quot;free_y&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb263"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb263-1"><a href="eda.html#cb263-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb263-2"><a href="eda.html#cb263-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb263-3"><a href="eda.html#cb263-3" aria-hidden="true" tabindex="-1"></a><span class="co"># convert to long format</span></span>
+<span id="cb263-4"><a href="eda.html#cb263-4" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> h <span class="sc">%&gt;%</span> </span>
+<span id="cb263-5"><a href="eda.html#cb263-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(peiid, genhz, hzdepm, clay, phfield, total_frags_pct) <span class="sc">%&gt;%</span> </span>
+<span id="cb263-6"><a href="eda.html#cb263-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(<span class="st">&quot;clay&quot;</span>, <span class="st">&quot;phfield&quot;</span>, <span class="st">&quot;total_frags_pct&quot;</span>))</span>
+<span id="cb263-7"><a href="eda.html#cb263-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb263-8"><a href="eda.html#cb263-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> genhz, <span class="at">y =</span> value)) <span class="sc">+</span></span>
+<span id="cb263-9"><a href="eda.html#cb263-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb263-10"><a href="eda.html#cb263-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;genhz&quot;</span>) <span class="sc">+</span></span>
+<span id="cb263-11"><a href="eda.html#cb263-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> name, <span class="at">scales =</span> <span class="st">&quot;free_y&quot;</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/facets-1.png" width="768" style="display: block; margin: auto;" /></p>
 </div>
-<div id="facets---depth-plots" class="section level4">
+<div id="facets---depth-plots" class="section level4" number="3.7.9.3">
 <h4><span class="header-section-number">3.7.9.3</span> Facets - depth plots</h4>
-<div class="sourceCode" id="cb264"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb264-1"><a href="eda.html#cb264-1"></a><span class="kw">data</span>(loafercreek, <span class="dt">package =</span> <span class="st">&quot;soilDB&quot;</span>)</span>
-<span id="cb264-2"><a href="eda.html#cb264-2"></a></span>
-<span id="cb264-3"><a href="eda.html#cb264-3"></a>s &lt;-<span class="st"> </span>aqp<span class="op">::</span><span class="kw">slab</span>(loafercreek, </span>
-<span id="cb264-4"><a href="eda.html#cb264-4"></a>               <span class="dt">fm =</span> <span class="op">~</span><span class="st"> </span>clay <span class="op">+</span><span class="st"> </span>phfield <span class="op">+</span><span class="st"> </span>total_frags_pct,</span>
-<span id="cb264-5"><a href="eda.html#cb264-5"></a>               <span class="dt">slab.structure =</span> <span class="dv">0</span><span class="op">:</span><span class="dv">100</span>,</span>
-<span id="cb264-6"><a href="eda.html#cb264-6"></a>               <span class="dt">slab.fun =</span> <span class="cf">function</span>(x) <span class="kw">quantile</span>(x, <span class="kw">c</span>(<span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span>), <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</span>
-<span id="cb264-7"><a href="eda.html#cb264-7"></a></span>
-<span id="cb264-8"><a href="eda.html#cb264-8"></a><span class="kw">ggplot</span>(s, <span class="kw">aes</span>(<span class="dt">x =</span> top, <span class="dt">y =</span> X50.)) <span class="op">+</span></span>
-<span id="cb264-9"><a href="eda.html#cb264-9"></a><span class="st">  </span><span class="co"># plot median</span></span>
-<span id="cb264-10"><a href="eda.html#cb264-10"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></span>
-<span id="cb264-11"><a href="eda.html#cb264-11"></a><span class="st">  </span><span class="co"># plot 10th &amp; 90th quantiles</span></span>
-<span id="cb264-12"><a href="eda.html#cb264-12"></a><span class="st">  </span><span class="kw">geom_ribbon</span>(<span class="kw">aes</span>(<span class="dt">ymin =</span> X10., <span class="dt">ymax =</span> X90., <span class="dt">x =</span> top), <span class="dt">alpha =</span> <span class="fl">0.2</span>) <span class="op">+</span></span>
-<span id="cb264-13"><a href="eda.html#cb264-13"></a><span class="st">  </span><span class="co"># invert depths</span></span>
-<span id="cb264-14"><a href="eda.html#cb264-14"></a><span class="st">  </span><span class="kw">xlim</span>(<span class="kw">c</span>(<span class="dv">100</span>, <span class="dv">0</span>)) <span class="op">+</span></span>
-<span id="cb264-15"><a href="eda.html#cb264-15"></a><span class="st">  </span><span class="co"># flip axis</span></span>
-<span id="cb264-16"><a href="eda.html#cb264-16"></a><span class="st">  </span><span class="kw">coord_flip</span>() <span class="op">+</span></span>
-<span id="cb264-17"><a href="eda.html#cb264-17"></a><span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span><span class="st"> </span>variable, <span class="dt">scales =</span> <span class="st">&quot;free_x&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb264"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb264-1"><a href="eda.html#cb264-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(loafercreek, <span class="at">package =</span> <span class="st">&quot;soilDB&quot;</span>)</span>
+<span id="cb264-2"><a href="eda.html#cb264-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb264-3"><a href="eda.html#cb264-3" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> aqp<span class="sc">::</span><span class="fu">slab</span>(loafercreek, </span>
+<span id="cb264-4"><a href="eda.html#cb264-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">fm =</span> <span class="sc">~</span> clay <span class="sc">+</span> phfield <span class="sc">+</span> total_frags_pct,</span>
+<span id="cb264-5"><a href="eda.html#cb264-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">slab.structure =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">100</span>,</span>
+<span id="cb264-6"><a href="eda.html#cb264-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">slab.fun =</span> <span class="cf">function</span>(x) <span class="fu">quantile</span>(x, <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span>), <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb264-7"><a href="eda.html#cb264-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb264-8"><a href="eda.html#cb264-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(s, <span class="fu">aes</span>(<span class="at">x =</span> top, <span class="at">y =</span> X50.)) <span class="sc">+</span></span>
+<span id="cb264-9"><a href="eda.html#cb264-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># plot median</span></span>
+<span id="cb264-10"><a href="eda.html#cb264-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb264-11"><a href="eda.html#cb264-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># plot 10th &amp; 90th quantiles</span></span>
+<span id="cb264-12"><a href="eda.html#cb264-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> X10., <span class="at">ymax =</span> X90., <span class="at">x =</span> top), <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb264-13"><a href="eda.html#cb264-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># invert depths</span></span>
+<span id="cb264-14"><a href="eda.html#cb264-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlim</span>(<span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb264-15"><a href="eda.html#cb264-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># flip axis</span></span>
+<span id="cb264-16"><a href="eda.html#cb264-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb264-17"><a href="eda.html#cb264-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> variable, <span class="at">scales =</span> <span class="st">&quot;free_x&quot;</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-113-1.png" width="768" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 </div>
-<div id="exercise-3-graphical-methods" class="section level2">
+<div id="exercise-3-graphical-methods" class="section level2" number="3.8">
 <h2><span class="header-section-number">3.8</span> Exercise 3: Graphical Methods</h2>
 <ol style="list-style-type: decimal">
 <li>Add to your existing R script from Exercise 2.</li>
@@ -1013,92 +1044,92 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>Save your R script, and forward to your instructor.</li>
 </ol>
 </div>
-<div id="transformations" class="section level2">
+<div id="transformations" class="section level2" number="3.9">
 <h2><span class="header-section-number">3.9</span> Transformations</h2>
 <p>Slope aspect and pH are two common variables warranting special consideration for pedologists.</p>
-<div id="ph" class="section level3">
+<div id="ph" class="section level3" number="3.9.1">
 <h3><span class="header-section-number">3.9.1</span> pH</h3>
 <p>Since <strong>pH</strong> has a logarithmic distribution, the use of median and quantile ranges are the <a href="http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm">preferred</a> measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively. The actual average is 5.26; -log10((0.000001 + 0.00001) / 2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the pH range, the greater the difference between the geometric and arithmetic mean. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.</p>
 <p>If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:</p>
-<div class="sourceCode" id="cb265"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb265-1"><a href="eda.html#cb265-1"></a><span class="co"># arithmetic mean</span></span>
-<span id="cb265-2"><a href="eda.html#cb265-2"></a><span class="kw">log10</span>(<span class="kw">mean</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">10</span><span class="op">^-</span>h<span class="op">$</span>phfield, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>)) </span></code></pre></div>
+<div class="sourceCode" id="cb265"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb265-1"><a href="eda.html#cb265-1" aria-hidden="true" tabindex="-1"></a><span class="co"># arithmetic mean</span></span>
+<span id="cb265-2"><a href="eda.html#cb265-2" aria-hidden="true" tabindex="-1"></a><span class="fu">log10</span>(<span class="fu">mean</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">10</span><span class="sc">^-</span>h<span class="sc">$</span>phfield, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) </span></code></pre></div>
 <pre><code>## [1] 6.371026</code></pre>
-<div class="sourceCode" id="cb267"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb267-1"><a href="eda.html#cb267-1"></a><span class="co"># geometric mean</span></span>
-<span id="cb267-2"><a href="eda.html#cb267-2"></a><span class="kw">mean</span>(h<span class="op">$</span>phfield, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>) </span></code></pre></div>
+<div class="sourceCode" id="cb267"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb267-1"><a href="eda.html#cb267-1" aria-hidden="true" tabindex="-1"></a><span class="co"># geometric mean</span></span>
+<span id="cb267-2"><a href="eda.html#cb267-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(h<span class="sc">$</span>phfield, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) </span></code></pre></div>
 <pre><code>## [1] 6.18</code></pre>
 </div>
-<div id="circular-data" class="section level3">
+<div id="circular-data" class="section level3" number="3.9.2">
 <h3><span class="header-section-number">3.9.2</span> Circular data</h3>
 <p><strong>Slope aspect</strong> - requires the use of circular statistics for summarizing numerically, or graphical interpretation using circular plots. For example, if soil map units being summarized have a uniform distribution of slope aspects ranging from 335 degrees to 25 degrees, the Zonal Statistics tool in ArcGIS would return a mean of 180.</p>
 <p>The most intuitive means available for evaluating and describing slope aspect are circular plots available with the circular package in R and the radial plot option in the <a href="http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html">TEUI</a> Toolkit. The circular package in R will also calculate circular statistics like mean, median, quartiles etc.</p>
-<div class="sourceCode" id="cb269"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb269-1"><a href="eda.html#cb269-1"></a><span class="kw">library</span>(circular)</span>
-<span id="cb269-2"><a href="eda.html#cb269-2"></a></span>
-<span id="cb269-3"><a href="eda.html#cb269-3"></a><span class="co"># Extract the site table</span></span>
-<span id="cb269-4"><a href="eda.html#cb269-4"></a>s &lt;-<span class="st"> </span>aqp<span class="op">::</span><span class="kw">site</span>(loafercreek) </span>
-<span id="cb269-5"><a href="eda.html#cb269-5"></a></span>
-<span id="cb269-6"><a href="eda.html#cb269-6"></a>aspect &lt;-<span class="st"> </span>s<span class="op">$</span>aspect_field</span>
-<span id="cb269-7"><a href="eda.html#cb269-7"></a>aspect &lt;-<span class="st"> </span><span class="kw">circular</span>(aspect, <span class="dt">template=</span><span class="st">&quot;geographic&quot;</span>, <span class="dt">units=</span><span class="st">&quot;degrees&quot;</span>, <span class="dt">modulo=</span><span class="st">&quot;2pi&quot;</span>)</span>
-<span id="cb269-8"><a href="eda.html#cb269-8"></a></span>
-<span id="cb269-9"><a href="eda.html#cb269-9"></a><span class="kw">summary</span>(aspect)</span></code></pre></div>
+<div class="sourceCode" id="cb269"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb269-1"><a href="eda.html#cb269-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(circular)</span>
+<span id="cb269-2"><a href="eda.html#cb269-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb269-3"><a href="eda.html#cb269-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the site table</span></span>
+<span id="cb269-4"><a href="eda.html#cb269-4" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> aqp<span class="sc">::</span><span class="fu">site</span>(loafercreek) </span>
+<span id="cb269-5"><a href="eda.html#cb269-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb269-6"><a href="eda.html#cb269-6" aria-hidden="true" tabindex="-1"></a>aspect <span class="ot">&lt;-</span> s<span class="sc">$</span>aspect_field</span>
+<span id="cb269-7"><a href="eda.html#cb269-7" aria-hidden="true" tabindex="-1"></a>aspect <span class="ot">&lt;-</span> <span class="fu">circular</span>(aspect, <span class="at">template=</span><span class="st">&quot;geographic&quot;</span>, <span class="at">units=</span><span class="st">&quot;degrees&quot;</span>, <span class="at">modulo=</span><span class="st">&quot;2pi&quot;</span>)</span>
+<span id="cb269-8"><a href="eda.html#cb269-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb269-9"><a href="eda.html#cb269-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(aspect)</span></code></pre></div>
 <pre><code>##        n     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.      Rho     NA&#39;s 
 ## 101.0000  12.0000 255.0000 195.0000 199.5000 115.0000  20.0000   0.1772   5.0000</code></pre>
 <p>The numeric output is fine, but a following graphic is more revealing, which shows the dominant Southwest slope aspect.</p>
-<div class="sourceCode" id="cb271"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb271-1"><a href="eda.html#cb271-1"></a><span class="kw">rose.diag</span>(aspect, <span class="dt">bins =</span> <span class="dv">8</span>, <span class="dt">col=</span><span class="st">&quot;grey&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb271"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb271-1"><a href="eda.html#cb271-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rose.diag</span>(aspect, <span class="at">bins =</span> <span class="dv">8</span>, <span class="at">col=</span><span class="st">&quot;grey&quot;</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-116-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
-<div id="texture" class="section level3">
+<div id="texture" class="section level3" number="3.9.3">
 <h3><span class="header-section-number">3.9.3</span> Texture</h3>
 <p>NASIS has an abundance of field data captured within it, dating back in some cases as far as 1975. This legacy data, as it’s often called, captures raw and unfiltered information about our soil series and map unit component concepts. In the future it will undoubtable inform future digital soil mapping products by serving as training data. However, as most soil scientists are aware, legacy data is not a panacea. In many cases, the data is not as detailed as we would like (nor is some newer data). For example, many pedon descriptions include soil texture class and modifiers, but lack continuous estimates such as clay content and rock fragments %. This lack of continuous data makes it difficult to analyze and estimate other properties, such as available water capacity. However, while much continuous soil data is missing, it can still be estimated by the class ranges and averages. NASIS has several such calculations to estimate missing values. To facilitate this process in R, several new functions have recently been added to the aqp package. This package hosts a variety of R functions specifically designed to analyze and plot soil data. It is also taught in conjunction with the NEDC course Statistics for Soil Survey.These new aqp functions are intended to impute missing values or check existing values. The ssc_to_texcl() function uses the same logic as the particle size estimator calculation in NASIS to classify sand and clay into texture class. The results are stored in data(soiltexture) and used by texcl_to_ssc() as a lookup table to convert texture class to sand, silt and clay. The function texcl_to_ssc() replicates the functionality described by Levi (2017). Unlike the other functions, texture_to_taxpartsize() is intended to be computed on weighted averages within the family particle size control section. Below is a demonstration of these new aqp R functions.</p>
-<div class="sourceCode" id="cb272"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb272-1"><a href="eda.html#cb272-1"></a><span class="kw">library</span>(aqp)</span>
-<span id="cb272-2"><a href="eda.html#cb272-2"></a><span class="kw">library</span>(soiltexture)</span>
-<span id="cb272-3"><a href="eda.html#cb272-3"></a></span>
-<span id="cb272-4"><a href="eda.html#cb272-4"></a><span class="co"># example of texcl_to_ssc(texcl)</span></span>
-<span id="cb272-5"><a href="eda.html#cb272-5"></a>texcl &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;s&quot;</span>,  <span class="st">&quot;ls&quot;</span>,  <span class="st">&quot;l&quot;</span>,  <span class="st">&quot;cl&quot;</span>,  <span class="st">&quot;c&quot;</span>)   </span>
-<span id="cb272-6"><a href="eda.html#cb272-6"></a>test &lt;-<span class="st"> </span><span class="kw">texcl_to_ssc</span>(texcl) </span>
-<span id="cb272-7"><a href="eda.html#cb272-7"></a><span class="kw">head</span>(<span class="kw">cbind</span>(texcl, test))</span>
-<span id="cb272-8"><a href="eda.html#cb272-8"></a></span>
-<span id="cb272-9"><a href="eda.html#cb272-9"></a><span class="co"># example of ssc_to_texcl()</span></span>
-<span id="cb272-10"><a href="eda.html#cb272-10"></a>ssc &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">CLAY =</span> <span class="kw">c</span>(<span class="dv">55</span>, <span class="dv">33</span>, <span class="dv">18</span>, <span class="dv">6</span>, <span class="dv">3</span>),</span>
-<span id="cb272-11"><a href="eda.html#cb272-11"></a>                  <span class="dt">SAND =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">33</span>, <span class="dv">42</span>, <span class="dv">82</span>, <span class="dv">93</span>),</span>
-<span id="cb272-12"><a href="eda.html#cb272-12"></a>                  <span class="dt">SILT =</span> <span class="kw">c</span>(<span class="dv">25</span>, <span class="dv">34</span>, <span class="dv">40</span>, <span class="dv">12</span>,  <span class="dv">4</span>)</span>
-<span id="cb272-13"><a href="eda.html#cb272-13"></a>                  )  </span>
-<span id="cb272-14"><a href="eda.html#cb272-14"></a>texcl &lt;-<span class="st"> </span><span class="kw">ssc_to_texcl</span>(<span class="dt">sand =</span> ssc<span class="op">$</span>SAND, </span>
-<span id="cb272-15"><a href="eda.html#cb272-15"></a>                      <span class="dt">clay =</span> ssc<span class="op">$</span>CLAY</span>
-<span id="cb272-16"><a href="eda.html#cb272-16"></a>                      )</span>
-<span id="cb272-17"><a href="eda.html#cb272-17"></a>ssc_texcl &lt;-<span class="st"> </span><span class="kw">cbind</span>(ssc, texcl)</span>
-<span id="cb272-18"><a href="eda.html#cb272-18"></a><span class="kw">head</span>(ssc_texcl)</span>
-<span id="cb272-19"><a href="eda.html#cb272-19"></a></span>
-<span id="cb272-20"><a href="eda.html#cb272-20"></a><span class="co"># plot on a textural triangle</span></span>
-<span id="cb272-21"><a href="eda.html#cb272-21"></a><span class="kw">TT.plot</span>(<span class="dt">class.sys =</span> <span class="st">&quot;USDA-NCSS.TT&quot;</span>, </span>
-<span id="cb272-22"><a href="eda.html#cb272-22"></a>        <span class="dt">tri.data =</span> ssc_texcl,</span>
-<span id="cb272-23"><a href="eda.html#cb272-23"></a>        <span class="dt">pch =</span> <span class="dv">16</span>, <span class="dt">col =</span> <span class="st">&quot;blue&quot;</span></span>
-<span id="cb272-24"><a href="eda.html#cb272-24"></a>        )</span>
-<span id="cb272-25"><a href="eda.html#cb272-25"></a></span>
-<span id="cb272-26"><a href="eda.html#cb272-26"></a></span>
-<span id="cb272-27"><a href="eda.html#cb272-27"></a><span class="co"># example of texmod_to_fragvoltol()</span></span>
-<span id="cb272-28"><a href="eda.html#cb272-28"></a>frags &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;gr&quot;</span>,  <span class="st">&quot;grv&quot;</span>,  <span class="st">&quot;grx&quot;</span>,  <span class="st">&quot;pgr&quot;</span>,  <span class="st">&quot;pgrv&quot;</span>,  <span class="st">&quot;pgrx&quot;</span>) </span>
-<span id="cb272-29"><a href="eda.html#cb272-29"></a>test &lt;-<span class="st"> </span><span class="kw">texmod_to_fragvoltot</span>(frags)[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]</span>
-<span id="cb272-30"><a href="eda.html#cb272-30"></a><span class="kw">head</span>(test)</span>
-<span id="cb272-31"><a href="eda.html#cb272-31"></a></span>
-<span id="cb272-32"><a href="eda.html#cb272-32"></a><span class="co"># example of texture_to_taxpartsize()</span></span>
-<span id="cb272-33"><a href="eda.html#cb272-33"></a>tex &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">texcl =</span> <span class="kw">c</span>(<span class="st">&quot;c&quot;</span>,  <span class="st">&quot;cl&quot;</span>,  <span class="st">&quot;l&quot;</span>,  <span class="st">&quot;ls&quot;</span>,  <span class="st">&quot;s&quot;</span>),</span>
-<span id="cb272-34"><a href="eda.html#cb272-34"></a>                  <span class="dt">clay  =</span> <span class="kw">c</span>(<span class="dv">55</span>, <span class="dv">33</span>, <span class="dv">18</span>, <span class="dv">6</span>, <span class="dv">3</span>),</span>
-<span id="cb272-35"><a href="eda.html#cb272-35"></a>                  <span class="dt">sand  =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">33</span>, <span class="dv">42</span>, <span class="dv">82</span>, <span class="dv">93</span>),</span>
-<span id="cb272-36"><a href="eda.html#cb272-36"></a>                  <span class="dt">fragvoltot =</span> <span class="kw">c</span>(<span class="dv">35</span>, <span class="dv">15</span>, <span class="dv">34</span>, <span class="dv">60</span>, <span class="dv">91</span>)</span>
-<span id="cb272-37"><a href="eda.html#cb272-37"></a>                  )</span>
-<span id="cb272-38"><a href="eda.html#cb272-38"></a>tex<span class="op">$</span>fpsc &lt;-<span class="st"> </span><span class="kw">texture_to_taxpartsize</span>(</span>
-<span id="cb272-39"><a href="eda.html#cb272-39"></a>  <span class="dt">texcl =</span> tex<span class="op">$</span>texcl, </span>
-<span id="cb272-40"><a href="eda.html#cb272-40"></a>  <span class="dt">clay =</span> tex<span class="op">$</span>clay,</span>
-<span id="cb272-41"><a href="eda.html#cb272-41"></a>  <span class="dt">sand =</span> tex<span class="op">$</span>sand, </span>
-<span id="cb272-42"><a href="eda.html#cb272-42"></a>  <span class="dt">fragvoltot =</span> tex<span class="op">$</span>fragvoltot</span>
-<span id="cb272-43"><a href="eda.html#cb272-43"></a>  ) </span>
-<span id="cb272-44"><a href="eda.html#cb272-44"></a><span class="kw">head</span>(tex)</span></code></pre></div>
+<div class="sourceCode" id="cb272"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb272-1"><a href="eda.html#cb272-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
+<span id="cb272-2"><a href="eda.html#cb272-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(soiltexture)</span>
+<span id="cb272-3"><a href="eda.html#cb272-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb272-4"><a href="eda.html#cb272-4" aria-hidden="true" tabindex="-1"></a><span class="co"># example of texcl_to_ssc(texcl)</span></span>
+<span id="cb272-5"><a href="eda.html#cb272-5" aria-hidden="true" tabindex="-1"></a>texcl <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;s&quot;</span>,  <span class="st">&quot;ls&quot;</span>,  <span class="st">&quot;l&quot;</span>,  <span class="st">&quot;cl&quot;</span>,  <span class="st">&quot;c&quot;</span>)   </span>
+<span id="cb272-6"><a href="eda.html#cb272-6" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">texcl_to_ssc</span>(texcl) </span>
+<span id="cb272-7"><a href="eda.html#cb272-7" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">cbind</span>(texcl, test))</span>
+<span id="cb272-8"><a href="eda.html#cb272-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb272-9"><a href="eda.html#cb272-9" aria-hidden="true" tabindex="-1"></a><span class="co"># example of ssc_to_texcl()</span></span>
+<span id="cb272-10"><a href="eda.html#cb272-10" aria-hidden="true" tabindex="-1"></a>ssc <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">CLAY =</span> <span class="fu">c</span>(<span class="dv">55</span>, <span class="dv">33</span>, <span class="dv">18</span>, <span class="dv">6</span>, <span class="dv">3</span>),</span>
+<span id="cb272-11"><a href="eda.html#cb272-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">SAND =</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">33</span>, <span class="dv">42</span>, <span class="dv">82</span>, <span class="dv">93</span>),</span>
+<span id="cb272-12"><a href="eda.html#cb272-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">SILT =</span> <span class="fu">c</span>(<span class="dv">25</span>, <span class="dv">34</span>, <span class="dv">40</span>, <span class="dv">12</span>,  <span class="dv">4</span>)</span>
+<span id="cb272-13"><a href="eda.html#cb272-13" aria-hidden="true" tabindex="-1"></a>                  )  </span>
+<span id="cb272-14"><a href="eda.html#cb272-14" aria-hidden="true" tabindex="-1"></a>texcl <span class="ot">&lt;-</span> <span class="fu">ssc_to_texcl</span>(<span class="at">sand =</span> ssc<span class="sc">$</span>SAND, </span>
+<span id="cb272-15"><a href="eda.html#cb272-15" aria-hidden="true" tabindex="-1"></a>                      <span class="at">clay =</span> ssc<span class="sc">$</span>CLAY</span>
+<span id="cb272-16"><a href="eda.html#cb272-16" aria-hidden="true" tabindex="-1"></a>                      )</span>
+<span id="cb272-17"><a href="eda.html#cb272-17" aria-hidden="true" tabindex="-1"></a>ssc_texcl <span class="ot">&lt;-</span> <span class="fu">cbind</span>(ssc, texcl)</span>
+<span id="cb272-18"><a href="eda.html#cb272-18" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(ssc_texcl)</span>
+<span id="cb272-19"><a href="eda.html#cb272-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb272-20"><a href="eda.html#cb272-20" aria-hidden="true" tabindex="-1"></a><span class="co"># plot on a textural triangle</span></span>
+<span id="cb272-21"><a href="eda.html#cb272-21" aria-hidden="true" tabindex="-1"></a><span class="fu">TT.plot</span>(<span class="at">class.sys =</span> <span class="st">&quot;USDA-NCSS.TT&quot;</span>, </span>
+<span id="cb272-22"><a href="eda.html#cb272-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">tri.data =</span> ssc_texcl,</span>
+<span id="cb272-23"><a href="eda.html#cb272-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">pch =</span> <span class="dv">16</span>, <span class="at">col =</span> <span class="st">&quot;blue&quot;</span></span>
+<span id="cb272-24"><a href="eda.html#cb272-24" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb272-25"><a href="eda.html#cb272-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb272-26"><a href="eda.html#cb272-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb272-27"><a href="eda.html#cb272-27" aria-hidden="true" tabindex="-1"></a><span class="co"># example of texmod_to_fragvoltol()</span></span>
+<span id="cb272-28"><a href="eda.html#cb272-28" aria-hidden="true" tabindex="-1"></a>frags <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;gr&quot;</span>,  <span class="st">&quot;grv&quot;</span>,  <span class="st">&quot;grx&quot;</span>,  <span class="st">&quot;pgr&quot;</span>,  <span class="st">&quot;pgrv&quot;</span>,  <span class="st">&quot;pgrx&quot;</span>) </span>
+<span id="cb272-29"><a href="eda.html#cb272-29" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">texmod_to_fragvoltot</span>(frags)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span>
+<span id="cb272-30"><a href="eda.html#cb272-30" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(test)</span>
+<span id="cb272-31"><a href="eda.html#cb272-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb272-32"><a href="eda.html#cb272-32" aria-hidden="true" tabindex="-1"></a><span class="co"># example of texture_to_taxpartsize()</span></span>
+<span id="cb272-33"><a href="eda.html#cb272-33" aria-hidden="true" tabindex="-1"></a>tex <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">texcl =</span> <span class="fu">c</span>(<span class="st">&quot;c&quot;</span>,  <span class="st">&quot;cl&quot;</span>,  <span class="st">&quot;l&quot;</span>,  <span class="st">&quot;ls&quot;</span>,  <span class="st">&quot;s&quot;</span>),</span>
+<span id="cb272-34"><a href="eda.html#cb272-34" aria-hidden="true" tabindex="-1"></a>                  <span class="at">clay  =</span> <span class="fu">c</span>(<span class="dv">55</span>, <span class="dv">33</span>, <span class="dv">18</span>, <span class="dv">6</span>, <span class="dv">3</span>),</span>
+<span id="cb272-35"><a href="eda.html#cb272-35" aria-hidden="true" tabindex="-1"></a>                  <span class="at">sand  =</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">33</span>, <span class="dv">42</span>, <span class="dv">82</span>, <span class="dv">93</span>),</span>
+<span id="cb272-36"><a href="eda.html#cb272-36" aria-hidden="true" tabindex="-1"></a>                  <span class="at">fragvoltot =</span> <span class="fu">c</span>(<span class="dv">35</span>, <span class="dv">15</span>, <span class="dv">34</span>, <span class="dv">60</span>, <span class="dv">91</span>)</span>
+<span id="cb272-37"><a href="eda.html#cb272-37" aria-hidden="true" tabindex="-1"></a>                  )</span>
+<span id="cb272-38"><a href="eda.html#cb272-38" aria-hidden="true" tabindex="-1"></a>tex<span class="sc">$</span>fpsc <span class="ot">&lt;-</span> <span class="fu">texture_to_taxpartsize</span>(</span>
+<span id="cb272-39"><a href="eda.html#cb272-39" aria-hidden="true" tabindex="-1"></a>  <span class="at">texcl =</span> tex<span class="sc">$</span>texcl, </span>
+<span id="cb272-40"><a href="eda.html#cb272-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">clay =</span> tex<span class="sc">$</span>clay,</span>
+<span id="cb272-41"><a href="eda.html#cb272-41" aria-hidden="true" tabindex="-1"></a>  <span class="at">sand =</span> tex<span class="sc">$</span>sand, </span>
+<span id="cb272-42"><a href="eda.html#cb272-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">fragvoltot =</span> tex<span class="sc">$</span>fragvoltot</span>
+<span id="cb272-43"><a href="eda.html#cb272-43" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb272-44"><a href="eda.html#cb272-44" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tex)</span></code></pre></div>
 </div>
 </div>
-<div id="the-shiny-package" class="section level2">
+<div id="the-shiny-package" class="section level2" number="3.10">
 <h2><span class="header-section-number">3.10</span> The Shiny Package</h2>
 <p>Shiny is an R package which combines R programming with the interactivity of the web.</p>
-<div class="sourceCode" id="cb273"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb273-1"><a href="eda.html#cb273-1"></a><span class="kw">install.packages</span>(<span class="st">&quot;shiny&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb273"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb273-1"><a href="eda.html#cb273-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;shiny&quot;</span>)</span></code></pre></div>
 <p>Methods for Use</p>
 <ul>
 <li>Online</li>
@@ -1107,7 +1138,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="notes">
 <p>The shiny package, created by RStudio, enables users to not only use interactive applications created by others, but to build them as well.</p>
 </div>
-<div id="online" class="section level3">
+<div id="online" class="section level3" number="3.10.1">
 <h3><span class="header-section-number">3.10.1</span> Online</h3>
 <p>Easiest Method</p>
 <ul>
@@ -1119,7 +1150,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>The ability to use a shiny app online is one of the most useful features of the package. All of the R code is executed on a remote computer which sends the results over a live http connection. Very little is required of the user in order to obtain results.</p>
 </div>
 </div>
-<div id="locally" class="section level3">
+<div id="locally" class="section level3" number="3.10.2">
 <h3><span class="header-section-number">3.10.2</span> Locally</h3>
 <p>No Internet required once configured</p>
 <ul>
@@ -1129,7 +1160,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul>
 <p>The online method may be easy for the user, but it does require a significant amount of additional effort for the creator. We won’t get into those details here! The local method, however simply requires the creator to share a single app.R file. It is the user which needs to put forth the additional effort.</p>
 </div>
-<div id="web-app-demonstration" class="section level3">
+<div id="web-app-demonstration" class="section level3" number="3.10.3">
 <h3><span class="header-section-number">3.10.3</span> Web App Demonstration</h3>
 <p>Online:</p>
 <ul>
@@ -1143,7 +1174,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>It is also relient on the successful operation of those data systems. If the NASIS Web Reports or SDA is down for maintanence, the app fails.
 Local apps have the ability to leverage local data systems more easily like NASIS or other proprietary data.</p>
 </div>
-<div id="troubleshooting-errors" class="section level3">
+<div id="troubleshooting-errors" class="section level3" number="3.10.4">
 <h3><span class="header-section-number">3.10.4</span> Troubleshooting Errors</h3>
 <ol style="list-style-type: decimal">
 <li><p>Reload the app and try again. (refresh browser, or click stop, and run app again in RStudio) When the app throws an error, it stops. All other tabs/reports will no longer function until the app is reloaded.</p></li>
@@ -1157,65 +1188,65 @@ Local apps have the ability to leverage local data systems more easily like NASI
 </ol>
 <p>When you run into trouble, there are a few steps you can take on your own to get things working again. This list may help you get your issue resolved. If not, contact me and I can assist.</p>
 </div>
-<div id="shiny-app-embedding" class="section level3">
+<div id="shiny-app-embedding" class="section level3" number="3.10.5">
 <h3><span class="header-section-number">3.10.5</span> Shiny App Embedding</h3>
 <p>Shiny apps are extremely versatile, they can be embedded into presentations, Markdown, or HTML Those same formats can also be embedded in to a shiny app. This is a very simple example of a shiny app which consists of an interactive dropdown menu which controls what region is displayed in the bar chart. Let’s take a look at the code.</p>
-<div id="shiny-app-code" class="section level4">
+<div id="shiny-app-code" class="section level4" number="3.10.5.1">
 <h4><span class="header-section-number">3.10.5.1</span> Shiny App Code</h4>
-<div class="sourceCode" id="cb274"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb274-1"><a href="eda.html#cb274-1"></a><span class="kw">shinyApp</span>(</span>
-<span id="cb274-2"><a href="eda.html#cb274-2"></a>  </span>
-<span id="cb274-3"><a href="eda.html#cb274-3"></a>  <span class="dt">ui =</span> </span>
-<span id="cb274-4"><a href="eda.html#cb274-4"></a><span class="co"># Rely on the &#39;WorldPhones&#39; dataset in the datasets</span></span>
-<span id="cb274-5"><a href="eda.html#cb274-5"></a><span class="co"># package (which generally comes preloaded).</span></span>
-<span id="cb274-6"><a href="eda.html#cb274-6"></a><span class="kw">library</span>(datasets)</span>
-<span id="cb274-7"><a href="eda.html#cb274-7"></a></span>
-<span id="cb274-8"><a href="eda.html#cb274-8"></a><span class="co"># Use a fluid Bootstrap layout</span></span>
-<span id="cb274-9"><a href="eda.html#cb274-9"></a><span class="kw">fluidPage</span>(    </span>
-<span id="cb274-10"><a href="eda.html#cb274-10"></a>  </span>
-<span id="cb274-11"><a href="eda.html#cb274-11"></a>  <span class="co"># Give the page a title</span></span>
-<span id="cb274-12"><a href="eda.html#cb274-12"></a>  <span class="kw">titlePanel</span>(<span class="st">&quot;Telephones by region&quot;</span>),</span>
-<span id="cb274-13"><a href="eda.html#cb274-13"></a>  </span>
-<span id="cb274-14"><a href="eda.html#cb274-14"></a>  <span class="co"># Generate a row with a sidebar</span></span>
-<span id="cb274-15"><a href="eda.html#cb274-15"></a>  <span class="kw">sidebarLayout</span>(      </span>
-<span id="cb274-16"><a href="eda.html#cb274-16"></a>    </span>
-<span id="cb274-17"><a href="eda.html#cb274-17"></a>    <span class="co"># Define the sidebar with one input</span></span>
-<span id="cb274-18"><a href="eda.html#cb274-18"></a>    <span class="kw">sidebarPanel</span>(</span>
-<span id="cb274-19"><a href="eda.html#cb274-19"></a>      <span class="kw">selectInput</span>(<span class="st">&quot;region&quot;</span>, <span class="st">&quot;Region:&quot;</span>, </span>
-<span id="cb274-20"><a href="eda.html#cb274-20"></a>                  <span class="dt">choices=</span><span class="kw">colnames</span>(WorldPhones)),</span>
-<span id="cb274-21"><a href="eda.html#cb274-21"></a>      <span class="kw">hr</span>(),</span>
-<span id="cb274-22"><a href="eda.html#cb274-22"></a>      <span class="kw">helpText</span>(<span class="st">&quot;Data from AT&amp;T (1961) The World&#39;s Telephones.&quot;</span>)</span>
-<span id="cb274-23"><a href="eda.html#cb274-23"></a>    ),</span>
-<span id="cb274-24"><a href="eda.html#cb274-24"></a>    </span>
-<span id="cb274-25"><a href="eda.html#cb274-25"></a>    <span class="co"># Create a spot for the barplot</span></span>
-<span id="cb274-26"><a href="eda.html#cb274-26"></a>    <span class="kw">mainPanel</span>(</span>
-<span id="cb274-27"><a href="eda.html#cb274-27"></a>      <span class="kw">plotOutput</span>(<span class="st">&quot;phonePlot&quot;</span>)  </span>
-<span id="cb274-28"><a href="eda.html#cb274-28"></a>    )</span>
-<span id="cb274-29"><a href="eda.html#cb274-29"></a>    </span>
-<span id="cb274-30"><a href="eda.html#cb274-30"></a>  )</span>
-<span id="cb274-31"><a href="eda.html#cb274-31"></a>)</span>
-<span id="cb274-32"><a href="eda.html#cb274-32"></a>  <span class="dt">server =</span> </span>
-<span id="cb274-33"><a href="eda.html#cb274-33"></a><span class="co"># Rely on the &#39;WorldPhones&#39; dataset in the datasets</span></span>
-<span id="cb274-34"><a href="eda.html#cb274-34"></a><span class="co"># package (which generally comes preloaded).</span></span>
-<span id="cb274-35"><a href="eda.html#cb274-35"></a><span class="kw">library</span>(datasets)</span>
-<span id="cb274-36"><a href="eda.html#cb274-36"></a></span>
-<span id="cb274-37"><a href="eda.html#cb274-37"></a><span class="co"># Define a server for the Shiny app</span></span>
-<span id="cb274-38"><a href="eda.html#cb274-38"></a><span class="cf">function</span>(input, output) {</span>
-<span id="cb274-39"><a href="eda.html#cb274-39"></a>  </span>
-<span id="cb274-40"><a href="eda.html#cb274-40"></a>  <span class="co"># Fill in the spot we created for a plot</span></span>
-<span id="cb274-41"><a href="eda.html#cb274-41"></a>  output<span class="op">$</span>phonePlot &lt;-<span class="st"> </span><span class="kw">renderPlot</span>({</span>
-<span id="cb274-42"><a href="eda.html#cb274-42"></a>    </span>
-<span id="cb274-43"><a href="eda.html#cb274-43"></a>    <span class="co"># Render a barplot</span></span>
-<span id="cb274-44"><a href="eda.html#cb274-44"></a>    <span class="kw">barplot</span>(WorldPhones[,input<span class="op">$</span>region]<span class="op">*</span><span class="dv">1000</span>, </span>
-<span id="cb274-45"><a href="eda.html#cb274-45"></a>            <span class="dt">main=</span>input<span class="op">$</span>region,</span>
-<span id="cb274-46"><a href="eda.html#cb274-46"></a>            <span class="dt">ylab=</span><span class="st">&quot;Number of Telephones&quot;</span>,</span>
-<span id="cb274-47"><a href="eda.html#cb274-47"></a>            <span class="dt">xlab=</span><span class="st">&quot;Year&quot;</span>)</span>
-<span id="cb274-48"><a href="eda.html#cb274-48"></a>  })</span>
-<span id="cb274-49"><a href="eda.html#cb274-49"></a>}</span>
-<span id="cb274-50"><a href="eda.html#cb274-50"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb274"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb274-1"><a href="eda.html#cb274-1" aria-hidden="true" tabindex="-1"></a><span class="fu">shinyApp</span>(</span>
+<span id="cb274-2"><a href="eda.html#cb274-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb274-3"><a href="eda.html#cb274-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">ui =</span> </span>
+<span id="cb274-4"><a href="eda.html#cb274-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Rely on the &#39;WorldPhones&#39; dataset in the datasets</span></span>
+<span id="cb274-5"><a href="eda.html#cb274-5" aria-hidden="true" tabindex="-1"></a><span class="co"># package (which generally comes preloaded).</span></span>
+<span id="cb274-6"><a href="eda.html#cb274-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(datasets)</span>
+<span id="cb274-7"><a href="eda.html#cb274-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb274-8"><a href="eda.html#cb274-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Use a fluid Bootstrap layout</span></span>
+<span id="cb274-9"><a href="eda.html#cb274-9" aria-hidden="true" tabindex="-1"></a><span class="fu">fluidPage</span>(    </span>
+<span id="cb274-10"><a href="eda.html#cb274-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb274-11"><a href="eda.html#cb274-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Give the page a title</span></span>
+<span id="cb274-12"><a href="eda.html#cb274-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">titlePanel</span>(<span class="st">&quot;Telephones by region&quot;</span>),</span>
+<span id="cb274-13"><a href="eda.html#cb274-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb274-14"><a href="eda.html#cb274-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Generate a row with a sidebar</span></span>
+<span id="cb274-15"><a href="eda.html#cb274-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sidebarLayout</span>(      </span>
+<span id="cb274-16"><a href="eda.html#cb274-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb274-17"><a href="eda.html#cb274-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Define the sidebar with one input</span></span>
+<span id="cb274-18"><a href="eda.html#cb274-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sidebarPanel</span>(</span>
+<span id="cb274-19"><a href="eda.html#cb274-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">selectInput</span>(<span class="st">&quot;region&quot;</span>, <span class="st">&quot;Region:&quot;</span>, </span>
+<span id="cb274-20"><a href="eda.html#cb274-20" aria-hidden="true" tabindex="-1"></a>                  <span class="at">choices=</span><span class="fu">colnames</span>(WorldPhones)),</span>
+<span id="cb274-21"><a href="eda.html#cb274-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">hr</span>(),</span>
+<span id="cb274-22"><a href="eda.html#cb274-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">helpText</span>(<span class="st">&quot;Data from AT&amp;T (1961) The World&#39;s Telephones.&quot;</span>)</span>
+<span id="cb274-23"><a href="eda.html#cb274-23" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb274-24"><a href="eda.html#cb274-24" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb274-25"><a href="eda.html#cb274-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Create a spot for the barplot</span></span>
+<span id="cb274-26"><a href="eda.html#cb274-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mainPanel</span>(</span>
+<span id="cb274-27"><a href="eda.html#cb274-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plotOutput</span>(<span class="st">&quot;phonePlot&quot;</span>)  </span>
+<span id="cb274-28"><a href="eda.html#cb274-28" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb274-29"><a href="eda.html#cb274-29" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb274-30"><a href="eda.html#cb274-30" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb274-31"><a href="eda.html#cb274-31" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb274-32"><a href="eda.html#cb274-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">server =</span> </span>
+<span id="cb274-33"><a href="eda.html#cb274-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Rely on the &#39;WorldPhones&#39; dataset in the datasets</span></span>
+<span id="cb274-34"><a href="eda.html#cb274-34" aria-hidden="true" tabindex="-1"></a><span class="co"># package (which generally comes preloaded).</span></span>
+<span id="cb274-35"><a href="eda.html#cb274-35" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(datasets)</span>
+<span id="cb274-36"><a href="eda.html#cb274-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb274-37"><a href="eda.html#cb274-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a server for the Shiny app</span></span>
+<span id="cb274-38"><a href="eda.html#cb274-38" aria-hidden="true" tabindex="-1"></a><span class="cf">function</span>(input, output) {</span>
+<span id="cb274-39"><a href="eda.html#cb274-39" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb274-40"><a href="eda.html#cb274-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fill in the spot we created for a plot</span></span>
+<span id="cb274-41"><a href="eda.html#cb274-41" aria-hidden="true" tabindex="-1"></a>  output<span class="sc">$</span>phonePlot <span class="ot">&lt;-</span> <span class="fu">renderPlot</span>({</span>
+<span id="cb274-42"><a href="eda.html#cb274-42" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb274-43"><a href="eda.html#cb274-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Render a barplot</span></span>
+<span id="cb274-44"><a href="eda.html#cb274-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">barplot</span>(WorldPhones[,input<span class="sc">$</span>region]<span class="sc">*</span><span class="dv">1000</span>, </span>
+<span id="cb274-45"><a href="eda.html#cb274-45" aria-hidden="true" tabindex="-1"></a>            <span class="at">main=</span>input<span class="sc">$</span>region,</span>
+<span id="cb274-46"><a href="eda.html#cb274-46" aria-hidden="true" tabindex="-1"></a>            <span class="at">ylab=</span><span class="st">&quot;Number of Telephones&quot;</span>,</span>
+<span id="cb274-47"><a href="eda.html#cb274-47" aria-hidden="true" tabindex="-1"></a>            <span class="at">xlab=</span><span class="st">&quot;Year&quot;</span>)</span>
+<span id="cb274-48"><a href="eda.html#cb274-48" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb274-49"><a href="eda.html#cb274-49" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb274-50"><a href="eda.html#cb274-50" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 <p>Shiny apps consist of a <em>ui</em> and a <em>server</em>. The ui is the part of the shiny app the user sees, the user interface. In the ui, a user can choose or enter inputs for processing and viewing the results. The server takes the inputs, performs some data processing and rendering of those inputs and generates the outputs for the ui to display.</p>
 </div>
 </div>
-<div id="questions" class="section level3">
+<div id="questions" class="section level3" number="3.10.6">
 <h3><span class="header-section-number">3.10.6</span> Questions</h3>
 <ol style="list-style-type: decimal">
 <li><p>What new features in RStudio are available for you to use once the <code>shiny</code> package is installed?</p></li>
@@ -1224,63 +1255,63 @@ Local apps have the ability to leverage local data systems more easily like NASI
 <li><p>Poll: A shiny app consists of:</p></li>
 </ol>
 </div>
-<div id="examples" class="section level3">
+<div id="examples" class="section level3" number="3.10.7">
 <h3><span class="header-section-number">3.10.7</span> Examples</h3>
-<div id="nasis-reports" class="section level4">
+<div id="nasis-reports" class="section level4" number="3.10.7.1">
 <h4><span class="header-section-number">3.10.7.1</span> NASIS Reports</h4>
 <p><img src="static-figures/usda.shinyapps.io_r11_app_nasis.png" /></p>
 <p>The NASIS Reports button is a link to a master list of NASIS Web reports for Regions 10 and 11.</p>
 </div>
-<div id="water-table" class="section level4">
+<div id="water-table" class="section level4" number="3.10.7.2">
 <h4><span class="header-section-number">3.10.7.2</span> Water Table</h4>
 <p><img src="static-figures/usda.shinyapps.io_r11_app_wt.png" /></p>
 <p>The query method option allows you to choose between MUKEY, NATSYM, MUNAME. It also has a radio button for switching between flooding and ponding.</p>
 <p>Plots and Data Tables are on separate sub-menu items.</p>
 </div>
-<div id="organic-matter" class="section level4">
+<div id="organic-matter" class="section level4" number="3.10.7.3">
 <h4><span class="header-section-number">3.10.7.3</span> Organic Matter</h4>
 <p><img src="static-figures/usda.shinyapps.io_r11_app_om.png" /></p>
 <p>Same options as the Water Table Tab except no radio button. The query method option allows you to choose between MUKEY, NATSYM, MUNAME.</p>
 <p>Plots and Data Tables are on separate sub-menu items.</p>
 </div>
-<div id="project-report" class="section level4">
+<div id="project-report" class="section level4" number="3.10.7.4">
 <h4><span class="header-section-number">3.10.7.4</span> Project Report</h4>
 <p>The project report can accept multiple projects. Use the semicolon (;) as a separator. You can also save a copy of the report by clicking the link below the submit button.</p>
 <p><img src="static-figures/usda.shinyapps.io_r11_app_pr.png" /></p>
 </div>
-<div id="project-extent" class="section level4">
+<div id="project-extent" class="section level4" number="3.10.7.5">
 <h4><span class="header-section-number">3.10.7.5</span> Project Extent</h4>
 <p><img src="static-figures/usda.shinyapps.io_r11_app_pe.png" /></p>
 <p>Type in Year, type or select office and type project name for the Project extent query. Zoom and pan to view extent. Use the layers button to change the basemap or toggle layers. Click the link below the submit button to download a .zip containing the extent as a ESRI shapefile.</p>
 </div>
-<div id="long-range-plan" class="section level4">
+<div id="long-range-plan" class="section level4" number="3.10.7.6">
 <h4><span class="header-section-number">3.10.7.6</span> Long Range Plan</h4>
 <p><img src="static-figures/usda.shinyapps.io_r11_app_lrp.png" /></p>
 <p>Enter an office symbol to generate a long range plan report.</p>
 </div>
-<div id="interpretations" class="section level4">
+<div id="interpretations" class="section level4" number="3.10.7.7">
 <h4><span class="header-section-number">3.10.7.7</span> Interpretations</h4>
 <p><img src="static-figures/usda.shinyapps.io_r11_app_i.png" /></p>
 <p>Enter the national mapunit symbol to plot all available interpretations for the mapunit from SDA.</p>
 </div>
 </div>
-<div id="work-on-your-own" class="section level3">
+<div id="work-on-your-own" class="section level3" number="3.10.8">
 <h3><span class="header-section-number">3.10.8</span> Work on your Own</h3>
-<div id="project-report-1" class="section level4">
+<div id="project-report-1" class="section level4" number="3.10.8.1">
 <h4><span class="header-section-number">3.10.8.1</span> Project Report</h4>
 <p>Use the project report to generate a report on a project in your own area. Save the results and explain the results of pH plots for one of your components.</p>
 </div>
-<div id="project-extent-1" class="section level4">
+<div id="project-extent-1" class="section level4" number="3.10.8.2">
 <h4><span class="header-section-number">3.10.8.2</span> Project Extent</h4>
 <p>Map an extent of a project. How many layers are available to choose from as a basemap? How many layers can be toggled on or off?</p>
 </div>
-<div id="long-range-plan-1" class="section level4">
+<div id="long-range-plan-1" class="section level4" number="3.10.8.3">
 <h4><span class="header-section-number">3.10.8.3</span> Long Range Plan</h4>
 <p>Choose an office to generate a long range plan. What is the highest acreage project for 2025?</p>
 </div>
 </div>
 </div>
-<div id="references-exploratory-data-analysis" class="section level2">
+<div id="references-exploratory-data-analysis" class="section level2" number="3.11">
 <h2><span class="header-section-number">3.11</span> References (Exploratory Data Analysis)</h2>
 <p>FAO Corporate Document Repository.
 <a href="http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm">http://www.fao.org/docrep/field/003/AC175E/AC175E07.htm</a></p>
@@ -1290,7 +1321,7 @@ Local apps have the ability to leverage local data systems more easily like NASI
 <p>Tukey, J. 1980. We need both exploratory and confirmatory. The American Statistician, 34:1, 23-25.</p>
 <p>Webster, R. 2001. Statistics to support soil research and their presentation. European Journal of Soil Science. 52:331-340. <a href="http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract">http://onlinelibrary.wiley.com/doi/10.1046/j.1365-2389.2001.00383.x/abstract</a></p>
 </div>
-<div id="additional-reading-exploratory-data-analysis" class="section level2">
+<div id="additional-reading-exploratory-data-analysis" class="section level2" number="3.12">
 <h2><span class="header-section-number">3.12</span> Additional Reading (Exploratory Data Analysis)</h2>
 <p>Healy, K., 2018. Data Visualization: a practical introduction. Princeton University Press. <a href="http://socviz.co/">http://socviz.co/</a></p>
 <p>Helsel, D.R., and R.M. Hirsch, 2002. Statistical Methods in Water Resources Techniques of Water Resources Investigations, Book 4, chapter A3. U.S. Geological Survey. 522 pages. <a href="http://pubs.usgs.gov/twri/twri4a3/">http://pubs.usgs.gov/twri/twri4a3/</a></p>
@@ -1311,7 +1342,6 @@ Local apps have the ability to leverage local data systems more easily like NASI
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
-<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
 <script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
@@ -1330,6 +1360,7 @@ gitbook.start({
 "weibo": false,
 "instapaper": false,
 "vk": false,
+"whatsapp": false,
 "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
 },
 "fontsettings": {
@@ -1350,6 +1381,10 @@ gitbook.start({
 "text": null
 },
 "download": ["s4ssbook.pdf", "s4ssbook.epub"],
+"search": {
+"engine": "fuse",
+"options": null
+},
 "toc": {
 "collapse": "subsection"
 }
