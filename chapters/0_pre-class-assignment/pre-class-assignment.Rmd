@@ -97,31 +97,7 @@ To install the **R** packages used in this class copy all of the code from the b
 Downloading and configuring the packages will take a while if you are installing or upgrading all of the packages in the list below. 
 
 ```{r, eval = FALSE}
-# ipkCRAN: a helper fuction for installing required packages from CRAN
-# - p: vector of package names
-# - up: logical - upgrade installed packages? Default: TRUE
-ipkCRAN <- function(p, up = TRUE){
-  message('installing packages from CRAN...')
-  if (up) {
-    # default is to re-install everything
-    install.packages(p, dependencies = TRUE)
-  } else {
-    # but if up != TRUE install just what is needed
-    new.pkg <- p[! (p %in% installed.packages()[, "Package"])]
-    if (length(new.pkg) > 0) {
-      install.packages(new.pkg, dependencies = TRUE)
-    }
-  }
-  # finally, check and see if any failed
-  missing.pkg <- p[! (p %in% installed.packages()[, "Package"])]
-  if (length(missing.pkg) > 0) { 
-     warning(sprintf('\033[31mOne or more packages failed to install!\033[39m\n%s',
-             sprintf("Restart R then try `\033[35minstall.packages(c(%s))\033[39m`",
-             paste0(sprintf('"%s"', missing.pkg), collapse = ","))), call. = FALSE)
-  }
-}
-
-## character vector of packages
+## character vector of package names
 packages <- c(
     # soil
     "aqp", "soilDB", "sharpshootR", "soiltexture",
@@ -134,17 +110,21 @@ packages <- c(
     "DBI", "odbc", "RSQLite", "RODBC",
     # graphics
     "ggplot2", "latticeExtra", "maps", "spData", "tmap", 
-    "mapview", "plotrix", "rpart.plot", "visreg",
+    "mapview", "plotrix", "rpart.plot", "visreg", "diagram", "GGally",
     # modeling
     "car", "rms", "randomForest", "ranger", "party", "caret", "vegan", "ape", "shape",
     # sampling
     "clhs"
   )
 
-## install vector of CRAN packages "safely"
-##  up = TRUE to download all packages 
-##  up = FALSE to download only packages you don't already have installed
-ipkCRAN(packages, up = TRUE)
+# ipkCRAN: a helper fuction for installing required packages from CRAN
+source("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/ipkCRAN.R")
+
+## - p: vector of package names
+## - up: logical - upgrade installed packages? Default: TRUE
+##       up = TRUE to download all packages 
+##       up = FALSE to download only packages you don't already have installed
+ipkCRAN(p = packages, up = TRUE)
 ```
 
 The `ipkCRAN` function will let you know if any of the above packages fail to install.
