@@ -8,4 +8,3 @@ library(soilDB)
 
 mt647 <- fetchNASIS(rmHzErrors = FALSE)
 save(mt647, soilDB.env, file =  "../data/book/02/mt647.rda")
-zip("../data/book/02/mt647.zip", "../data/book/02/mt647.rda")
