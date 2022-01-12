@@ -1,0 +1,169 @@
+---
+output: html_document
+---
+# Dichotomous Soil Sorting Key in R
+## Greg Schmidtt
+
+This strategy is based on known relationships of ecology to soil properties. 
+
+It forces you to use the properties in the `SoilProfileCollection` to make a decision for every component.
+
+I have seen many vague keys out there which only loosely translate into which component should be included, especially keys that are not dichotomous. The keys written in R can get complicated, but like taxonomic keys, you can break it into smaller units. 
+
+Here’s an example wherein I’ve determined that a set of soils would meet the criteria for being “Sandy”, and then need to be broken down into groups based on hydrology:
+
+The "Sandy" group was determined using the following key.
+
+All sites have the label “Not” as their site name, and as they are processed by the key, categories that come out in earlier keys such as flood-plains get their own label so has to not be included in the subsequent keys. 
+
+This also shows that I had to make some allowance for differences based on geography, which meant that I had to do some MLRA/LRU assignment in GIS and link to the data frames in R:
+
+```{r}
+library(aqp)
+library(soilDB)
+```
+
+```{r, echo=FALSE, include=FALSE}
+# inspection to find a suitable SDA dataset
+# res <- SDA_query("SELECT DISTINCT ecoclassname, cokey FROM coecoclass 
+#                   WHERE ecoclassname LIKE '%sandy depression%'")
+#       
+```
+
+```{r}
+s <- get_component_from_SDA("ecoclassname LIKE '%depression%'")
+x <- get_chorizon_from_SDA(paste0("c.cokey IN ", format_SQL_in_statement(s$cokey)))
+
+depths(x) <- cokey ~ hzdept_r + hzdepb_r
+site(x) <- s
+x <- fillHzGaps(x, to_bottom = 200)
+```
+
+Calculate a few properties at a few depths
+
+```{r}
+property_columns <- c("sandtotal_r", "claytotal_r", "ph1to1h2o_r")
+subset_columns <- c(idname(x), property_columns)
+
+s50 <- horizons(trunc(x, 49, 50)[,1])[, subset_columns]
+s150 <- horizons(trunc(x, 149, 150)[,1])[, subset_columns]
+colnames(s50) <- c(idname(x), paste0("T50_", c("sand", "clay", "pH")))
+colnames(s150) <- c(idname(x), paste0("T150_", c("sand", "clay", "pH")))
+
+# add carbonate depth (shallowest k subscript)
+x$ksuffix <- grepl("k", x$hzname)
+x$highcaco3 <- !is.na(x$caco3_r) & x$caco3_r > 10 
+x$is_calcareous <- ifelse(x$ksuffix | x$highcaco3, "calcareous", "non-calcareous")
+x$carbdepth <- minDepthOf(x, 
+                          pattern = "^calcareous",
+                          hzdesgn = "is_calcareous", 
+                          no.contact.assigned = 200)$hzdept_r
+
+# join in new site data (slices from target depths, properties renamed)
+site(x) <- s50
+site(x) <- s150
+
+# remove components with NA data in key properties
+x <- subset(x, complete.cases(site(x)[,unique(c("carbdepth", colnames(s50), colnames(s150)))]))
+```
+
+### Grouping of "Sandy" "Acid" and "Calcareous" sites
+
+All components with an ecosite that has `"Sandy"` in the correlated ecological site name are assigned to the `"Sandy"` group. In addition, `"Sandy"` contains any component with 50cm sand >80%, or 50cm sand >70% and 150cm sand >80%, or any Ultisols/Ultic subgroups with 150cm clay <20% and 50cm pH <6.
+
+`"Acid"` is assigned in 4 cases to components that are not Sandy:
+1. If the 50cm pH is <5.5 and carbonate depth >150cm and not a Mollisols/Mollic subgroup
+2. If the 50cm pH is <6 and carbonate depth >100cm and a Fragi great groups
+3. Ultisols and Ultic subgroups
+4. Dystr- great groups
+
+`"Calcareous"` is assigned in all remaining cases.
+
+```{r}
+#3 Sand
+x$Site <- ifelse(grepl("Sandy", x$ecoclassname),
+                 yes = "Sandy",
+                 no = ifelse((x$T150_sand >= 80 & x$T50_sand >= 70) | 
+                                (x$T50_sand >= 80) | 
+                                  (x$T150_clay < 20 & x$T50_pH < 6 & grepl('ult', x$taxsubgrp, ignore.case = T)),
+                              yes = "Sandy",
+                              no = ifelse((x$T50_pH < 5.5 & x$carbdepth > 150 & !grepl('oll', x$taxsubgrp, ignore.case = T)) | 
+                                            (x$T50_pH < 6 & x$carbdepth > 100 & grepl('frag', x$taxsubgrp, ignore.case = T)) | 
+                                              grepl('ult', x$taxsubgrp, ignore.case = T) | 
+                                                grepl('dys', x$taxsubgrp, ignore.case = T), 
+                                          yes = "Acid", 
+                                          no = "Calcareous")))
+```
+ 
+### Water Table depth
+
+The `Water_Table` values are not directly measured properties, but were classes that created in this key:
+
+```{r}
+# set all water tables to 250cm (i.e. apprx. out of series control section)
+site(x)$Water_Table <- 250
+
+# use hydric rating and drainage class (`hydricrating`, `drainagecl`) to assign values for depth to water
+x$Water_Table <- ifelse(x$hydricrating %in% "No" & !is.na(x$hydricrating),
+                        yes =  ifelse(x$drainagecl %in% "Moderately well drained" & !is.na(x$drainagecl), 
+                                      yes = 100, 
+                                      no = ifelse(grepl('Poorly drained', x$drainagecl) & !is.na(x$drainagecl),
+                                                  yes = 50, 
+                                                  no = x$Water_Table)),
+                        no = ifelse(x$hydricrating %in% "Yes" & !is.na(x$hydricrating),
+                                    yes = ifelse(x$drainagecl %in% "Very poorly drained" & !is.na(x$drainagecl), 
+                                                 yes = 0, 
+                                                 no = 25),
+                                    no = ifelse(x$drainagecl %in% "Very poorly drained" & !is.na(x$drainagecl), 
+                                                yes = 0,
+                                                no = ifelse(x$drainagecl %in% "Poorly drained" & !is.na(x$drainagecl), 
+                                                            yes = 25,
+                                                            no = ifelse(x$drainagecl %in% "Somewhat poorly drained" & !is.na(x$drainagecl), 
+                                                                        yes = 50,
+                                                                        no = ifelse(x$drainagecl %in% "Moderately well drained" & !is.na(x$drainagecl), 
+                                                                                    yes = 100, 
+                                                                                    no = 250))))))
+```
+
+The final key uses `Site` and `Water_Table` variables calculated in the above two keys to make assignments. 
+
+The key was intended to cover multiple MLRAs, and only output generic groupings. I used a separate table to actually give the ecosite ID to the soil group like a taxonomic synonymy table. 
+
+```{r}
+# Subdivide the "Sandy" group into 5 different subgroups
+x$Site <- ifelse(x$Site %in% "Sandy",
+                 yes = ifelse(x$Water_Table <= 25,
+                               yes = "S1 Wet Sandy Depression",
+                               no = ifelse(x$Water_Table <= 50,
+                                           yes = "S2 Sandy Depression",
+                                           no = ifelse(x$Water_Table <= 100,
+                                                       yes = "S3 Moist Sandy Plains",
+                                                       no = ifelse(x$slope_r >= 15, 
+                                                                   yes = "S5 Sandy Slopes", 
+                                                                   no = "S4 Sandy Plains")))),
+                 no = x$Site)
+```
+
+In some MLRAs I lumped groups into the same site concept; rather than rewriting the script, I used the synonymy table to do the job.
+
+```{r}
+table(x$Site)
+```
+
+### Sand by group
+
+```{r}
+plot(density(subset(x, grepl("Sandy", Site))$sandtotal_r, na.rm = TRUE), ylim=c(0,0.1))
+lines(density(subset(x, grepl("Calcareous", Site))$sandtotal_r, na.rm = TRUE), col=2, lwd=2, lty=2)
+lines(density(subset(x, grepl("Acid", Site))$sandtotal_r, na.rm = TRUE), col=3, lwd=3, lty=2)
+legend("topleft", legend = c("Sandy", "Calcareous", "Acid"), lwd=1:3, col=1:3, lty=1:3)
+```
+
+### pH by group
+
+```{r}
+plot(density(subset(x, grepl("Sandy", Site))$ph1to1h2o_r, na.rm = TRUE), ylim=0:1)
+lines(density(subset(x, grepl("Calcareous", Site))$ph1to1h2o_r, na.rm = TRUE), col=2, lwd=2, lty=2)
+lines(density(subset(x, grepl("Acid", Site))$ph1to1h2o_r, na.rm = TRUE), col=3, lwd=3, lty=3)
+legend("topleft", legend = c("Sandy", "Calcareous", "Acid"), lwd=1:3, col=1:3, lty=1:3)
+```
