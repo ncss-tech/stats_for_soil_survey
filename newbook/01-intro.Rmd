@@ -3,6 +3,14 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
+```{r eval = TRUE, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+
+knitr::opts_chunk$set(class.source = "codeBlock", class.output = "outputBlock",
+                      fig.retina = 3, fig.align = 'center', 
+                      dev = 'png')
+```
+
 # Introduction to R {#intro}
 
 ![](static-figures/logo.jpg)  
@@ -40,13 +48,13 @@ editor_options:
 
 ### Why is this training needed?
 
-- Long standing goal of the Soil Science Division to have a course in statistics [(Mausbach, 2003)](https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs142p2_051833.pdf)
-- Opportunities to learn these techniques are limited, especially at the undergraduate level [(Hennemann and Rossiter, 2004)]([http://www.css.cornell.edu/faculty/dgr2/Docs/ChaAm/ChaAmKeynoteHennemann.pdf)
+- Long standing goal of the Soil Science Division to have a course in statistics [@mausbach2003]
+- Opportunities to learn these techniques are limited, especially at the undergraduate level [@hennemann2004]
 - Consistent methodology (data analysis, data population, sampling design, etc.)
 - There is continually a greater need to use these techniques:
-    - Mapping of lands at high production rates ([MacMillan et al., 2007](https://www.sciencedirect.com/science/article/pii/S0016706107001152); [Kempen et al., 2012](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2011.0424); [Brevik et al., 2016](https://www.sciencedirect.com/science/article/pii/S034181621630220X))
-    - Ecological Sites [(Maynard et al., 2019)](dl.sciencesocieties.org/publications/sssaj/abstracts/83/3/666)
-    - Soil survey refinement (disaggregation) ([Chaney et al., 2016](https://www.sciencedirect.com/science/article/pii/S0016706116301434); [Ramcharan et al., 2017](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2017.04.0122))
+    - Mapping of lands at high production rates ([@macmillan2007]; [@kempen2012]; [@brevik2016])
+    - Ecological Sites [@maynard2019]
+    - Soil survey refinement (disaggregation) (@chaney2016];[@ramcharan2018])
 
 
 
@@ -61,15 +69,15 @@ editor_options:
 
 ## What is R?
 
-R is a free, open-source software and programming language developed in 1995 at the University of Auckland as an environment for statistical computing and graphics [(Ikaha and Gentleman, 1996)](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf). Since then R has become one of the dominant software environments for data analysis and is used by a variety of scientific disiplines, including soil science, ecology, and geoinformatics ([Envirometrics CRAN Task View](https://cran.r-project.org/web/views/Environmetrics.html); [Spatial CRAN Task View](https://cran.r-project.org/web/views/Spatial.html)). R is particularly popular for its graphical capabilities, but it is also prized for it's GIS capabilities which make it relatively easy to generate raster-based models. More recently, R has also gained several packages which are designed specifically for analyzing soil data.
+R is a free, open-source software and programming language developed in 1995 at the University of Auckland as an environment for statistical computing and graphics [@ihaka1996]. Since then R has become one of the dominant software environments for data analysis and is used by a variety of scientific disiplines, including soil science, ecology, and geoinformatics ([Envirometrics CRAN Task View](https://cran.r-project.org/web/views/Environmetrics.html); [Spatial CRAN Task View](https://cran.r-project.org/web/views/Spatial.html)). R is particularly popular for its graphical capabilities, but it is also prized for it's GIS capabilities which make it relatively easy to generate raster-based models. More recently, R has also gained several packages which are designed specifically for analyzing soil data.
 
-1. a software environment: 
+1. a software **environment**: 
     + statistics
     + graphics
     + programming
     + calculator
     + GIS
-2. a language to explore, summarize, and model data
+2. a **language** to explore, summarize, and model data
     + functions = verbs
     + objects = nouns
 
@@ -102,8 +110,7 @@ While the vast majority of people use Microsoft Excel for data analysis, R offer
     + [R books](https://www.r-project.org/doc/bib/R-books.html)
     + [(Free Online) R Books](https://bookdown.org/)
     
-5. R is 'becoming' the new norm (paradigm shift?) "If we don't accept these challenges, other who are less qualified will; and soil scientists will be displaced by apathy." [(Arnold and Wilding, 1992)](https://dl.sciencesocieties.org/publications/books/abstracts/sssaspecialpubl/spatialvariabil/1)
-
+5. R is 'becoming' the new norm (paradigm shift?) "If we don't accept these challenges, others who are less qualified will; and soil scientists will be displaced by apathy." [@arnold1991]
 
 While some people find the use of a commandline environment daunting, it is becoming a necessary skill for scientists as the volume and variety of data has grown. Thus scripting or programming has become a third language for many scientists, in addition to their native language and disipline specific terminology. Other popular programming languages include: SQL (i.e. NASIS), Python (i.e. ArcGIS), and JavaScript. 
 
@@ -165,22 +172,27 @@ p <- c("A",
 # Compute genhz labels and add to loafercreek dataset
 loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
 
-plotSPC(loafercreek[1:5,], color = "genhz", label = "pedon_id")
+hzdesgnname(loafercreek)  <- "genhz"
+plotSPC(loafercreek[5:10,])
 ```
 
 
 ##### Draw Depth Plots
 
 ```{r, purl=FALSE, echo=FALSE, eval=TRUE, fig.dim=c(10, 5)}
-s <- aqp::slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
-
-s <- aqp::slab(s, fm = ~ clay + phfield + total_frags_pct,
-               slab.fun = function(x) {
-                            quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE)
-                          })
-
-names(s) <- gsub("\\.", "", names(s))
-names(s) <- gsub("^X", "p", names(s))
+s <- horizons(loafercreek) |>
+  segment(intervals = 1:100, hzdepcols = c("hzdept", "hzdepb"))
+vars <- c("clay", "phfield", "total_frags_pct")
+s <- lapply(vars, function(x) {
+  temp <- aggregate(s[x], list(id = s$segment_id, top = s$hzdept, bot = s$hzdepb), 
+            quantile, 
+            p = c(0.1, 0.5, 0.9), 
+            na.rm = TRUE
+            )
+  temp <- cbind(temp[1:3], var = x, temp[[x]])
+  }) 
+s <- do.call("rbind", s)
+names(s)[5:7] <- c("p10", "p50", "p90")
 
 
 library(ggplot2)
@@ -190,8 +202,9 @@ ggplot(s, aes(x = top, y = p50)) +
   geom_ribbon(aes(ymin = p10, ymax = p90, x = top), alpha = 0.2) +
   xlim(c(100, 0)) + xlab("depth (cm)") + ylab("") +
   coord_flip() +
-  facet_wrap( ~ variable, scales = "free_x") +
+  facet_wrap( ~ var, scales = "free_x") +
   ggtitle("Loafercreek")
+
 ```
 
 
@@ -371,14 +384,14 @@ library()
 installed.packages()
 ``` 
 
-One useful package for soil scientists is the `soiltexture` package. It allows you to plot soil textural triangles. The following command shows how to install this package if you do not have currently have it downloaded:  
+One useful package for soil scientists is the `soiltexture` package. It allows you to plot soil textural triangles. The following command shows how to install this package if you do not currently have it downloaded:  
 
 ```{r}
 # CRAN (static version)
-installed.packages(c("aqp", "soilDB", "soilReports", "soiltexture"))
+install.packages(c("soiltexture"))
 
 # GitHub (development version)
-devtools::install_github("ncss-tech/soilDB", dependencies = FALSE, upgrade_dependencies = FALSE, build = FALSE)
+remotes::install_github("julienmoeys/soiltexture/pkg/soiltexture", dependencies = FALSE, upgrade = FALSE, build = FALSE)
 ``` 
 
 
@@ -807,12 +820,12 @@ mu[c(-1, -2), ]  # drop multiple rows
 
 **Logical Operators**
   - `==` R uses a double equal sign as "equal-to" in SQL
-  - `!=` Not-equal-to
+  - `!=` "Not-equal-to"
   - `<, >, <=, >=` Less than, greater than, less than or equal to, and greater than or equal
   - `&` Equivalent to `AND` in SQL and Soil Taxonomy, must match both conditions
   - `|` Equivalent to `OR` in SQL and Soil Taxonomy, must match at least one condition
   - `%in%` Equivalent to `IN ()` in SQL (e.g. `mu$areasymbol %in% c("IN001", "IN111"`)
-  - `grepl()` equivlant to `LIKE` in SQL (e.g. `grepl("IN%", mu$areasymbol)`)
+  - `grepl()` equivalent to `LIKE` in SQL (e.g. `grepl("IN%", mu$areasymbol)`)
   
 
 **Filtering with logicals**
@@ -1011,11 +1024,11 @@ write.dbf(mu_agg, file = "mu_agg.dbf")
 ## Exercise 2
 
 1. Create a new R script file.
-2. Load a 2021 project table from `mlrassoarea = "2-SON"` and a mapunit table from `areasymbol = c("CA630", "CA649")`.
+2. Load a project table from `mlrassoarea = "2-SON"` and `fiscalyear = 2021`, and a mapunit table from `areasymbol = c("CA630", "CA649")`.
 3. Filter your project table for rows where the `projectapprovedflag == TRUE`.
 4. Calculate the acreage of hydric soils for each map unit by multiplying `muacres * pct_hydric`.
-5. Join your filtered project table to the mapunit table using a left join.
-6. Aggregate the total acreage of hydric soils each soil survey area.
+5. Aggregate the total acreage of hydric soils each soil survey area.
+6. Join your filtered project table to the mapunit table using a left join by `"nonmlrassarea" = "areasymbol"`.
 7. Save your R script and forward to your instructor.
 
 
@@ -1047,6 +1060,7 @@ Given what you now know about R, try to answer the following questions:
 * Advanced DSM R Books
     + [Predictive Soil Mapping with R](https://envirometrix.github.io/PredictiveSoilMapping/)
     + [Using R for Digital Soil Mapping (not free)](http://www.springer.com/us/book/9783319443256)
+    + [Soil Spectral Inference with R (not free)](https://github.com/AlexandreWadoux/soilspec)
 * Soil Science R Applications
     + [aqp and soilDB tutorials](http://ncss-tech.github.io/AQP/)
     + [ISRIC World Soil Information Example Training Courses](https://www.isric.org/utilise/capacity-building/training-courses#examplecourses)
@@ -1063,20 +1077,6 @@ Given what you now know about R, try to answer the following questions:
 
 ## References (Introduction)
 
-Brevik, E.C., J.A. Homburg, B.A. Miller, T.E. Fenton, J.A. Doolittle, and S.J. Indorante, 2016. Selected highlights in American soil science history from the 1980s to the mid-2010s. Catena 146:128-146.
 
-Chaney, N., E. Wood, A.B. McBratney, J.W. Hempel, T.W. Nauman, C.W. Brungard, and N.P. Odgers, 2016. POLARIS: A 30-meter probabilistic soil series maps of the contiguous United States. Geoderma 274(15)54-67. [https://www.sciencedirect.com/science/article/pii/S0016706116301434](https://www.sciencedirect.com/science/article/pii/S0016706116301434)
-
-Hennemann, G.R., and Rossiter, DG., 2004. Training needs for the next generation of soil surveyors. International Conference on Innovative Techniques in Soil Survey; 22-26 March 2004, Cha-Am, Thailand. [http://www.css.cornell.edu/faculty/dgr2/Docs/ChaAm/ChaAmKeynoteHennemann.pdf](http://www.css.cornell.edu/faculty/dgr2/Docs/ChaAm/ChaAmKeynoteHennemann.pdf)
-
-Kempen, B., D. Brus, J. Stoorvogel, G. Heuvelink, F. de Vries, 2012. Efficiency Comparison of Conventional and Digital Soil Mapping for Updating Soil Maps. Geoderma 76(6)2095-2115. [https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2011.0424](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2011.0424)
-
-Ihaka, R., and R. Gentleman. 1996. R: A language for data analysis and graphics. Journal of Computational and Graphical Statistics 5(3):399–314. [https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf](https://www.stat.auckland.ac.nz/~ihaka/downloads/R-paper.pdf)
-
-MacMillian, R., D. Moon, and R. Coupe, 2007. Automated predictive ecological mapping in a Forest Region in B.C., Canada, 2001-2005. Geoderma 140(4)353-373. [www.sciencedirect.com/science/article/pii/S0016706107001152](www.sciencedirect.com/science/article/pii/S0016706107001152)
-
-Mausbach, 2003. The Importance of Statistical Documentation - Keeping Soil Survey Information Relevant in the 21st Century. 2003 National Cooperative Soil Survey Conference, Plymouth, MA. [https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs142p2_051833.pdf](https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs142p2_051833.pdf)
-
-Ramcharan, A., T. Hengl, T. Nauman, C. Brungard, S. Waltman, S. Wills, and J. Thompson, 2017. Soil Property and Class Mas of the Conterminous United States at 100-Meter Spatial Resolution. Soil Science Society of America Journal, 82(1)186-201. [https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2017.04.0122](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2017.04.0122)
-
-
+<div style = "font-size: 80%;">
+</div>
