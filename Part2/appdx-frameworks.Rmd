@@ -35,7 +35,5 @@ The third panel down represents the nearly-exact (over?) fitting of STR probabil
 ---------------------------------
 ![](https://imgs.xkcd.com/comics/machine_learning.png)
 
-## References (Modeling Frameworks)
-
 
 
