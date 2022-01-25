@@ -9,59 +9,9 @@
 
 
 
-```
-## Warning: package 'igraph' was built under R version 4.0.3
-```
 
-```
-## 
-## Attaching package: 'igraph'
-```
 
-```
-## The following objects are masked from 'package:stats':
-## 
-##     decompose, spectrum
-```
 
-```
-## The following object is masked from 'package:base':
-## 
-##     union
-```
-
-```
-## Loading required package: lattice
-```
-
-```
-## Warning: package 'wesanderson' was built under R version 4.0.5
-```
-
-```
-## This is aqp 1.29
-```
-
-```
-## 
-## Attaching package: 'aqp'
-```
-
-```
-## The following objects are masked from 'package:plyr':
-## 
-##     mutate, summarize
-```
-
-```
-## The following object is masked from 'package:stats':
-## 
-##     filter
-```
-
-```
-## Warning: package 'kableExtra' was built under R version 4.0.4
-```
 
 
 
@@ -128,14 +78,14 @@ Consider a supervised classification that generates predictions for 5 possible s
  * "Case 3": class **E** is always the most likely class, all other classes have probabilities < 0.2
 
 
-```r
+```{.r .codeBlock}
 # examples of three cases
 print(p.1)
 ```
 
-<div class="figure">
-<img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-1-1.png" alt="Probability distributions of predictions." width="960" />
-<p class="caption">(\#fig:unnamed-chunk-1)Probability distributions of predictions.</p>
+<div class="figure" style="text-align: center">
+<img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-2-1.svg" alt="Probability distributions of predictions." width="960" />
+<p class="caption">(\#fig:unnamed-chunk-2)Probability distributions of predictions.</p>
 </div>
 
 Even though these are simulated data, the three cases above demonstrate common modeling scenarios where classification uncertainty ranges from very low ("Case 3") in some areas to quite high ("Case 1") in others. These three cases could easily be associated with real situations:
@@ -213,14 +163,14 @@ It is my recommendation that the $log_{2}$ version of Shannon H be used as our *
 ## Review
 
 
-```r
+```{.r .codeBlock}
 # examples of three cases
 print(p.1)
 ```
 
-<img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-2-1.png" width="960" />
+<img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-3-1.svg" width="960" style="display: block; margin: auto;" />
 
-```r
+```{.r .codeBlock}
 pp <- ldply(s, performance)
 names(pp)[1] <- 'example'
 
@@ -240,30 +190,30 @@ kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_widt
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.74 </td>
-   <td style="text-align:right;"> 0.18 </td>
-   <td style="text-align:right;"> 0.13 </td>
-   <td style="text-align:right;"> 0.35 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Case 2 </td>
    <td style="text-align:right;"> 0.73 </td>
    <td style="text-align:right;"> 0.24 </td>
-   <td style="text-align:right;"> 0.19 </td>
+   <td style="text-align:right;"> 0.18 </td>
    <td style="text-align:right;"> 0.39 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> Case 2 </td>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> 0.20 </td>
+   <td style="text-align:right;"> 0.41 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> Case 3 </td>
-   <td style="text-align:right;"> 0.29 </td>
-   <td style="text-align:right;"> 0.79 </td>
-   <td style="text-align:right;"> 0.44 </td>
-   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 0.32 </td>
+   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 0.43 </td>
+   <td style="text-align:right;"> 0.81 </td>
   </tr>
 </tbody>
 </table>
 
 
-```r
+```{.r .codeBlock}
 ex <- ldply(s, extractExample, n=1)
 names(ex)[1] <- 'example'
 ex$CI <- NULL
@@ -292,30 +242,30 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.13 </td>
-   <td style="text-align:right;"> 0.19 </td>
-   <td style="text-align:right;"> 0.10 </td>
-   <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:right;"> 0.25 </td>
-   <td style="text-align:right;"> 2.19 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:right;"> 0.24 </td>
+   <td style="text-align:right;"> 0.35 </td>
+   <td style="text-align:right;"> 2.08 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 0.19 </td>
-   <td style="text-align:right;"> 0.14 </td>
-   <td style="text-align:right;"> 0.19 </td>
-   <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 2.11 </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:right;"> 0.13 </td>
+   <td style="text-align:right;"> 0.30 </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:right;"> 0.48 </td>
+   <td style="text-align:right;"> 1.82 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
-   <td style="text-align:right;"> 0.11 </td>
-   <td style="text-align:right;"> 0.04 </td>
-   <td style="text-align:right;"> 0.04 </td>
-   <td style="text-align:right;"> 0.05 </td>
-   <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:right;"> 1.22 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> 0.01 </td>
+   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:right;"> 0.63 </td>
   </tr>
 </tbody>
 </table>
@@ -326,7 +276,7 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 The `aqp` package has an implementation of Shannon entropy and Brier score; there are many other implementations but these are convenient for soil survey work. Consider the following table of predicted probabilities (classes A,B,C,D,E) and observed class (actual).
 
 
-```r
+```{.r .codeBlock}
 library(aqp)
 
 # example data
@@ -354,7 +304,7 @@ d <- structure(list(A = c(0.0897243494322252, 0.0537087411977284,
 head(d)
 ```
 
-```
+```{.outputBlock}
 ##            A         B          C         D         E   id actual
 ## 1 0.08972435 0.1911101 0.12194174 0.3511088 0.2461150    1      D
 ## 2 0.05370874 0.1872440 0.07705390 0.3221201 0.3598732   10      B
@@ -366,33 +316,33 @@ head(d)
 
 Brier scores (accuracy) are computed over all predictions and associated observed classes.
 
-```r
+```{.r .codeBlock}
 # compute Brier score from all predictions
 brierScore(d, classLabels = c('A', 'B', 'C', 'D', 'E'), actual = 'actual')
 ```
 
-```
+```{.outputBlock}
 ## [1] 0.5833992
 ```
 
 
 Shannon entropy (uncertainty) is computed from each vector of predicted probabilities.
 
-```r
+```{.r .codeBlock}
 # shannon entropy for first row, could be a single pixel or obs. point
 shannonEntropy(d[1, c('A', 'B', 'C', 'D', 'E')])
 ```
 
-```
+```{.outputBlock}
 ## [1] 2.166525
 ```
 
-```r
+```{.r .codeBlock}
 # compute shannon entropy for all rows
 apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
 ```
 
-```
+```{.outputBlock}
 ##        1        2        3        4        5        6        7        8 
 ## 2.166525 2.021157 1.982791 2.024063 2.011094 1.971243 2.036219 2.151995 
 ##        9       10 
@@ -420,8 +370,6 @@ apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
  * [Demonstration of sampling density vs. stability of median](http://ncss-tech.github.io/AQP/sharpshootR/sampling-stability-demo.html)
 
 
-
-## References (Class Accuracy / Uncertainty)
 
 
 

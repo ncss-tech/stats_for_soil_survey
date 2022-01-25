@@ -827,4 +827,3 @@ Gareth, J., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to St
 Rad, M.R.P., N. Toomanian, F. Khormali, C.W. Brungard, C.B. Komaki, and P. Bogaert. 2014. Updating soil survey maps using random forest and conditioned Latin hypercube sampling in the loess derived soils of northern Iran. Geoderma. 232-234: 97-106. 
 
 
-## References (Tree-based Models)

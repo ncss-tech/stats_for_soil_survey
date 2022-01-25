@@ -96,7 +96,7 @@ There are many other ways to define "distance" (e.g. distance metrics), but they
 
 Using the sand and clay percentages from the data above, dissimilarity is represented as the length of the line connecting any two individuals in property space.
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-3-1.png" width="480" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-3-1.svg" width="480" style="display: block; margin: auto;" />
 
 The following is a matrix of all pair-wise distances (the [**distance matrix**](https://en.wikipedia.org/wiki/Distance_matrix)):
 
@@ -121,14 +121,14 @@ Interpretation of the matrix is simple: Individual "A" is more like "ABt" than l
 #### Distances You Can See: Perceptual Color Difference
 
 Simulated redoximorphic feature colors, constrast classes and CIE $\Delta{E_{00}}$. Details [here](https://ncss-tech.github.io/AQP/aqp/color-contrast.html).
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-4-1.svg" width="768" style="display: block; margin: auto;" />
 
 
 ### Standardization of Characteristics
 
 Euclidean distance doesn't make much sense if the characteristics do not share a common unit of measure or range of values. Nor is it relevant when some characteristics are categorical and some are continuous. For example, distances are distorted if you compare clay (%) and exchangeable Ca (cmol/kg).
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-5-1.png" width="480" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-5-1.svg" width="480" style="display: block; margin: auto;" />
 
 In this example, exchangeable Ca contributes less to the distance between individuals than clay content, effectively down-weighting the importance of the exchangeable Ca. Typically, characteristics are given equal weight [@Sneath1973]; however, weighting is much simpler to apply after **standardization**.
 
@@ -187,7 +187,7 @@ There are several other **standardization** methods covered later. The new data 
 
 Using the standardized data matrix, distances computed in the property space of clay and exchangeable calcium are unbiased by the unique central tendency or spread of each character.
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-7-1.png" width="480" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-7-1.svg" width="480" style="display: block; margin: auto;" />
 
 Rarely can the question of "dissimilarity" be answered with only two characteristics (dimensions). Euclidean distance, however, can be extended to an arbitrary number of $n$ dimensions.
 
@@ -195,10 +195,10 @@ $$D(p,q) = \sqrt{ \sum_{i=1}^{n}{(p_{i} - q_{i})^{2}} }$$
 
 In the equation above, $i$ is one of $n$ total characteristics. Imagining what distance "looks like" is difficult if there are more than three dimensions. Instead, examine the distance matrix calculated using all five characteristics.
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-8-1.png" width="624" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-8-1.svg" width="624" style="display: block; margin: auto;" />
 
 Rescaling to the interval {0,1}.
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-9-1.png" width="624" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-9-1.svg" width="624" style="display: block; margin: auto;" />
 
 You can now begin to describe dissimilarity between individuals using an arbitrary number of (relevant) characteristics. You can make statements like *"The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon."* Although this is a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
@@ -227,7 +227,7 @@ Missing data are a fact of life. Soil scientists are quite familiar with missing
 
 [Dendrograms](http://en.wikipedia.org/wiki/Dendrogram) are a convenient approximation of [pair-wise distances](http://hymenoptera.tamu.edu/courses/ento601/pdf/Sokal_1966.pdf) between individuals (after application of hierarchical grouping criteria; more on this later). Dissimilarity between branches is proportional to the level at which branches merge: branching at higher levels (relative to the root of the tree) suggests greater dissimilarity; branching at lower levels suggests greater similarity. Consider the previous example in which distance between individuals was defined in terms of sand and clay percentages.
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-10-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-10-1.svg" width="960" style="display: block; margin: auto;" />
 
 Interpretation is simple. Euclidean distance in property-space is directly proportional to branching height in the corresponding dendrogram. Visualizing the geometry of pair-wise distances in more than three dimensions is difficult. A dendrogram, however, can conveniently summarize a distance matrix created from an arbitrary number of characteristics (dimensions). It is important to note that some information about pair-wise distances is lost or distorted in the dendrogram. Distortion is *least* near the terminal "leaves" of the dendrogram. This phenomena is analogous to the distortion generated by a map projection. It is impossible to flatten a higher-dimensional entity to a lower-dimensional form without causing distortion.
 
@@ -261,7 +261,7 @@ Note that the widespread use of color in the following examples is not for aesth
 #### Hierarchical Clustering
 [Hierarchical clustering](https://en.wikipedia.org/wiki/Hierarchical_clustering) is useful when a full **distance matrix** is available and the optimal number of clusters is not yet known. This form of clustering creates a data structure that can encode "grouping" information from one cluster to as many clusters as there are individuals. The expert must determine the optimal place to "cut the tree" and generate a fixed set of clusters. The results from a hierarchical clustering operation are nearly always presented as a dendrogram.
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-11-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-11-1.svg" width="960" style="display: block; margin: auto;" />
 
 ##### Methods
 
@@ -298,7 +298,7 @@ See [@Kaufman2005], [@Arkley1976], [@Legendre1998], and [`agnes()` manual page](
 #### Centroid and Medoid (Partitioning) Clustering
 Centroid and medoid cluster analyses are commonly referred to as [k-means](https://en.wikipedia.org/wiki/K-means_clustering)-style analysis. "K-means," however, is just one of many possible clustering algorithms that partition property-space into a fixed number of groups. These type of algorithms can be applied to very large datasets because they do not rely on the **distance matrix**. Instead, they are based on an iterative shuffling of group "centroids" until some criterion is minimized, for example, the mean variance within groups.  
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-12-1.png" width="576" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-12-1.svg" width="576" style="display: block; margin: auto;" />
 
 ##### Methods
 
@@ -349,15 +349,15 @@ The following example is based on a **data matrix** containing lab measurements 
 
 
 Note that distances between individuals, within clusters, and between clusters **is more apparent in the nMDS** representation of the distance matrix. Similar information is embedded in the dendrogram but it is not as intuitive.
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-13-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-13-1.svg" width="960" style="display: block; margin: auto;" />
 
 
 ##### Interpreting the Results
 We can conveniently annotate the results of an ordination with contextual information, such as the approximate trends in clay content or CEC. Note that ordination methods represent a *flattening* of multi-dimensional data space, and in the case of nMDS, preserve proportional (vs. exact) pair-wise distances. Therefore, it is quite common for surfaces (the contours below) fit to the 2D ordination to have complex patterns.
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-14-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-14-1.svg" width="960" style="display: block; margin: auto;" />
 
 Putting the clustering results into context is important: recall that we are working with *individuals* that represent genetic horizons that have been clustered according to 5 physical / chemical properties (*characteristics*). Differences in CEC by NH4-Ac are one of the strongest contributors to the pair-wise distances and overall clustering structure.
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-15-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-15-1.svg" width="960" style="display: block; margin: auto;" />
 
 
 ### Review and Discuss
@@ -369,7 +369,7 @@ Putting the clustering results into context is important: recall that we are wor
 
 ### Pair-Wise Distances Between Soil Profiles
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-16-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-16-1.svg" width="768" style="display: block; margin: auto;" />
 
 ![](static-figures/GHL-pair-wise-distances.png)
 
@@ -476,7 +476,7 @@ line=-2, cex.axis=0.65, las=2)
 title('Gopheridge pedons sorted according to data completeness (clay, sand, pH)')
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-18-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-18-1.svg" width="960" style="display: block; margin: auto;" />
 
 
 **missingDataGrid**
@@ -489,7 +489,7 @@ res <- missingDataGrid(gopheridge, max_depth=100, vars=c('clay', 'sand', 'phfiel
 print(res$fig)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-19-1.png" width="912" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-19-1.svg" width="912" style="display: block; margin: auto;" />
 
 ```{.r .codeBlock}
 # check results
@@ -521,7 +521,7 @@ par(mar=c(0,0,3,1))
 plot(gopheridge.complete, color='clay', id.style='side', label='pedon_id')
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-20-1.png" width="816" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-20-1.svg" width="816" style="display: block; margin: auto;" />
 
 
 
@@ -593,6 +593,8 @@ The following example is excerpted from ["A Novel Display of Categorical Pedon D
 # load some example NASIS data
 data(loafercreek, package='soilDB')
 
+hzdesgnname(loafercreek) <- 'hzname'
+
 # cut-down to a subset, first 20 pedons
 loafercreek <- loafercreek[1:20, ]
 
@@ -609,7 +611,7 @@ v <- c('lithic.contact', 'paralithic.contact', 'argillic.horizon',
 x <- diagnosticPropertyPlot(loafercreek, v, k=5, grid.label='bedrckkind', dend.label = 'taxonname')
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-22-1.png" width="816" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-22-1.svg" width="816" style="display: block; margin: auto;" />
 
 If you are wondering what is in the object `x`, the `str()` function or manual page (`?diagnosticPropertyPlot`) can help.
 
@@ -647,7 +649,7 @@ plot(sp4.h, font=2, cex=0.85)
 rect.hclust(sp4.h, 4)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-23-1.png" width="672" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-23-1.svg" width="672" style="display: block; margin: auto;" />
 
 
 #### Better Plots via `ape` Package
@@ -697,7 +699,7 @@ plot(p, type='unrooted', font=1, cex=0.85, main='unrooted')
 tiplabels(pch=15, col=cols)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-25-1.png" width="864" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-25-1.svg" width="864" style="display: block; margin: auto;" />
 
 
 #### Evaluation of Dendrogram Representation
@@ -818,7 +820,7 @@ plot(as.phylo(as.hclust(h.complete)), label.offset=0.125, direction='right', fon
 tiplabels(pch=15, col=col.set[cutree(h.complete, 4)])
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-30-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-30-1.svg" width="768" style="display: block; margin: auto;" />
 
 
 
@@ -848,7 +850,7 @@ points(beta[idx], r[idx], col='red', cex=2, lwd=2)
 text(beta[idx], r[idx], labels = round(beta[idx], 3), pos=4)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-31-1.png" width="624" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-31-1.svg" width="624" style="display: block; margin: auto;" />
 
 
 <!-- 
@@ -877,7 +879,7 @@ dueling.dendrograms(as.phylo(as.hclust(diana(d.1))),
 as.phylo(as.hclust(agnes(d.1, method='average'))), lab.1='divisive', lab.2='agglomerative: average linkage')
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-32-1.png" width="672" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-32-1.svg" width="672" style="display: block; margin: auto;" />
 
 -->
 
@@ -918,7 +920,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-34-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-34-1.svg" width="768" style="display: block; margin: auto;" />
 
 
 Setting the `nstart` argument ("number of random starts") to a value great than 1 (10 is ideal) will ensure that the final clustering configuration will remain stable between runs. Note that the cluster ID (color) will vary between runs, however, with `nstart=10` the overall configuration remains the same.
@@ -934,7 +936,7 @@ for(i in 1:9) {
 }
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-35-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-35-1.svg" width="768" style="display: block; margin: auto;" />
 
 
 ##### K-Medoids
@@ -956,7 +958,7 @@ for(i in 2:7) {
 }
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-36-1.png" width="672" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-36-1.svg" width="672" style="display: block; margin: auto;" />
 
 
 #### Fuzzy Clusters
@@ -992,7 +994,7 @@ grid()
 points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex = pt.cex, pch = 21)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-37-1.png" width="576" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-37-1.svg" width="576" style="display: block; margin: auto;" />
 
 Save the RGB color representation of cluster membership to the source `data.frame` and convert to `SoilProfileCollection`.
 
@@ -1005,7 +1007,7 @@ plot(sp4.std, color='colors', cex.names=0.75)
 title('Fuzzy Clustering Results in Context', line=-1)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-38-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-38-1.svg" width="960" style="display: block; margin: auto;" />
 
 From the source:
 <div style="font-size:95%; font-style: italic; width: 90%; margin: auto;">Of the 11 parent materials, 9 were serpentinites. The parent materials in Napa and Tehama Counties were quite different from each other and from those of the nine other sites. Neither had parent rock that contained serpentine minerals. They were, therefore, not serpentinites. The Napa County parent material contained dominantly vermiculite and albite and had minor amounts of Ca-bearing clino-pyroxene. The Tehama County parent material was dominated by grossularite, which is a calcsilicate ugrandite garnet, and had subdominant amounts of the Ca-bearing sorosilicate, pumpellyite, and Ca-bearing clinopyroxene. The rocks from the Shasta and Kings County sites were serpentinite, dominated by serpentine minerals. They had minor amounts of Ca-bearing accessory minerals (calcic clinoamphibole [tremolite] and calcsilicate ugrandite garnet [andradite]). The seven other parent materials were serpentinites and exhibited, at most, trace amounts of Ca-bearing minerals.</div>
@@ -1035,7 +1037,7 @@ plot(sil.widths, type='b', xlab='Number of Clusters', ylab='Average Silhouette W
 grid()
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-39-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-39-1.svg" width="768" style="display: block; margin: auto;" />
 According to *this metric*, it looks like 3 clusters is reasonable. Again, this is a judgement call--most decisions related to clustering algorithm selection and the "optimal number of clusters" are somewhat subjective.
 
 
@@ -1054,7 +1056,7 @@ grid()
 points(sp4.std$Mg, sp4.std$Ca, bg=cl$clustering, col='black', cex=1.25, pch=21)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-40-1.png" width="576" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-40-1.svg" width="576" style="display: block; margin: auto;" />
 
 TODO: other cluster metrics packages
 
@@ -1098,7 +1100,7 @@ text(pca[, 1:2], sp4.scaled$name, cex=0.75, col=cols, font=2)
 box()
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-41-1.png" width="576" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-41-1.svg" width="576" style="display: block; margin: auto;" />
 
 #### Sammon's Non-linear Mapping
 Simple interface to nMDS, input is a distance matrix. Note that this algorithm will fail if there are 0's or ties within the distance matrix. See `?sammon` for details.
@@ -1135,7 +1137,7 @@ text(s$points, rownames(s$points), cex=0.75, col=cols, font=2)
 box()
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-42-1.png" width="576" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-42-1.svg" width="576" style="display: block; margin: auto;" />
 
 #### nMDS with the `vegan` Package
 
@@ -1177,7 +1179,7 @@ text(fig$sites, sp4$name, cex=0.75, font=2, col=cols)
 box()
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-43-1.png" width="576" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-43-1.svg" width="576" style="display: block; margin: auto;" />
 
 
 #### Rotations
@@ -1251,7 +1253,7 @@ par(mar=c(0,0,3,1))
 plotProfileDendrogram(sp4, clust, dend.y.scale = 50, scaling.factor = 0.66, y.offset = 3.5, width=0.3, cex.names = 0.7, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio', name.style = 'center-center')
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-46-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-46-1.svg" width="768" style="display: block; margin: auto;" />
 
 ### Pair-Wise Distances Between Soil Series
 
@@ -1272,7 +1274,7 @@ str(s, 1)
 ```
 
 ```{.outputBlock}
-## List of 14
+## List of 16
 ##  $ SPC             :Formal class 'SoilProfileCollection' [package "aqp"] with 9 slots
 ##  $ competing       :'data.frame':	57 obs. of  3 variables:
 ##  $ geog_assoc_soils:'data.frame':	75 obs. of  2 variables:
@@ -1281,12 +1283,14 @@ str(s, 1)
 ##  $ mtnpos          :'data.frame':	2 obs. of  9 variables:
 ##  $ terrace         :'data.frame':	8 obs. of  5 variables:
 ##  $ flats           :'data.frame':	7 obs. of  7 variables:
+##  $ shape_across    :'data.frame':	11 obs. of  8 variables:
+##  $ shape_down      :'data.frame':	11 obs. of  8 variables:
 ##  $ pmkind          :'data.frame':	19 obs. of  5 variables:
 ##  $ pmorigin        :'data.frame':	44 obs. of  5 variables:
 ##  $ mlra            :'data.frame':	75 obs. of  4 variables:
 ##  $ climate.annual  :'data.frame':	88 obs. of  12 variables:
 ##  $ climate.monthly :'data.frame':	264 obs. of  14 variables:
-##  $ soilweb.metadata:'data.frame':	17 obs. of  2 variables:
+##  $ soilweb.metadata:'data.frame':	18 obs. of  2 variables:
 ```
 
 #### Annual Climate Data
@@ -1303,7 +1307,7 @@ res <- vizAnnualClimate(s$climate.annual, IQR.cex = 1.25, cex=1.1, pch=18)
 print(res$fig)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-48-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-48-1.svg" width="960" style="display: block; margin: auto;" />
 
 
 ```{.r .codeBlock}
@@ -1314,7 +1318,7 @@ plotProfileDendrogram(s$SPC, clust = res$clust, scaling.factor = 0.05, width = 0
 mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = -1.5, font=3)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-49-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-49-1.svg" width="960" style="display: block; margin: auto;" />
 
 
 #### Hillslope Position
@@ -1326,7 +1330,7 @@ res <- vizHillslopePosition(s$hillpos)
 print(res$fig)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-50-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-50-1.svg" width="960" style="display: block; margin: auto;" />
 
 ### Pair-Wise Distances Between Subgroup-Level Taxa
 
@@ -1345,7 +1349,7 @@ par(mar=c(0,0,2,0))
 plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-51-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-51-1.svg" width="960" style="display: block; margin: auto;" />
 
 ```{.r .codeBlock}
 # check structure of some site-level attributes
@@ -1415,7 +1419,7 @@ par(mar=c(0,1,1,1))
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01, width=0.2, cex.names=0.5)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-53-1.png" width="1152" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-53-1.svg" width="1152" style="display: block; margin: auto;" />
 
 Check the resulting distance matrix.
 
@@ -1545,7 +1549,7 @@ par(mar=c(0,0,0.25,1))
 plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.offset = 6, width=0.2, cex.names=0.5)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-55-1.png" width="1152" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-55-1.svg" width="1152" style="display: block; margin: auto;" />
 
 ### Clustering of Soil Colors
 Just for fun, use hierarchical clustering and nMDS on soil color data from the OSDs that were used in the previous example.
@@ -1601,7 +1605,7 @@ lab.data <- unique(lab.data)
 pairs(lab.data, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-56-1.png" width="576" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-56-1.svg" width="576" style="display: block; margin: auto;" />
 
 
 ```{.r .codeBlock}
@@ -1631,7 +1635,7 @@ abline(h=0, v=0, col='black', lty=3)
 points(d.sammon$points, bg=rgb(rgb.data), pch=21, cex=3.5, col='white')
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-57-1.png" width="1152" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-57-1.svg" width="1152" style="display: block; margin: auto;" />
 
 
 ### "How Do the Interpretations Compare?"
@@ -1692,7 +1696,7 @@ kable_styling(knitr::kable(x.wide, digits = 2, caption="Mean Fuzzy Ratings for S
   <tr>
    <td style="text-align:left;"> CECIL </td>
    <td style="text-align:right;"> 0.41 </td>
-   <td style="text-align:right;"> 0.67 </td>
+   <td style="text-align:right;"> 0.66 </td>
    <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 0.30 </td>
   </tr>
@@ -1701,7 +1705,7 @@ kable_styling(knitr::kable(x.wide, digits = 2, caption="Mean Fuzzy Ratings for S
    <td style="text-align:right;"> 0.68 </td>
    <td style="text-align:right;"> 0.99 </td>
    <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 0.20 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PARDEE </td>
@@ -1722,14 +1726,14 @@ kable_styling(knitr::kable(x.wide, digits = 2, caption="Mean Fuzzy Ratings for S
    <td style="text-align:right;"> 0.02 </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:right;"> 0.80 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> SYCAMORE </td>
    <td style="text-align:right;"> 0.82 </td>
    <td style="text-align:right;"> 1.00 </td>
    <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:right;"> 0.92 </td>
+   <td style="text-align:right;"> 0.78 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> WILLOWS </td>
@@ -1740,10 +1744,10 @@ kable_styling(knitr::kable(x.wide, digits = 2, caption="Mean Fuzzy Ratings for S
   </tr>
   <tr>
    <td style="text-align:left;"> YOLO </td>
-   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 0.85 </td>
    <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> 0.61 </td>
-   <td style="text-align:right;"> 0.77 </td>
+   <td style="text-align:right;"> 0.61 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ZOOK </td>
@@ -1780,7 +1784,7 @@ title('Component Similarity via Select Fuzzy Ratings')
 mtext('Profile Sketches are from OSDs', 1)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-60-1.png" width="960" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-60-1.svg" width="960" style="display: block; margin: auto;" />
 
 
 
@@ -1852,7 +1856,7 @@ title('nMDS with mean annual air temperature (deg C) surface')
 box()
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-62-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-62-1.svg" width="768" style="display: block; margin: auto;" />
 
 
 #### Principle Coordinates
@@ -1883,7 +1887,7 @@ plot(
 )
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-63-1.png" width="768" style="display: block; margin: auto;" />
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-63-1.svg" width="768" style="display: block; margin: auto;" />
 
 Pair-wise comparisons at the 90% level of confidence. 
 
@@ -1893,20 +1897,15 @@ par(mar=c(4.5, 5.5, 4.5, 1))
 plot(TukeyHSD(d.betadisper, conf.level = 0.9), las=1)
 ```
 
-<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-64-1.png" width="672" style="display: block; margin: auto;" />
-
-
-## References (Numerical Taxonomy and Ordination)
-
-
+<img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-64-1.svg" width="672" style="display: block; margin: auto;" />
 
 
 
 <!-- TODO: consider this kind of information in the front matter -->
 <div style = "font-size: 80%;">
-This document is based on `aqp` version 1.29 and `soilDB` version 2.6.1 and `sharpshootR` version 1.8.1.
+This document is based on `aqp` version 1.41 and `soilDB` version 2.6.13 and `sharpshootR` version 1.9.
 </div>
 
 
-
+<!-- references automatically added here  -->
 

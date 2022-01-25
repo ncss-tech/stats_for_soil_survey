@@ -59,19 +59,24 @@ subset(prj, projectname == "MLRA 30 - Soil Climate Study - Soil Temperature")
 ```
 
 ```
-## # A tibble: 1 x 30
 ##   mlrassoarea nonmlrassaarea mlraarea projecttypename fiscalyear
-##   <chr>       <chr>             <int> <chr>                <int>
-## 1 8-VIC       <NA>                 30 MLRA                  2015
-## # ... with 25 more variables: fiscalyear_goaled <int>, projectiid <int>,
-## #   uprojectid <chr>, projectname <chr>, projectapprovedflag <lgl>,
-## #   projectconcerntypename <chr>, projectdesc <chr>, n_projectdesc <int>,
-## #   n_areasymbol <int>, n_nationalmusym <int>, n_spatial <int>,
-## #   date_start <date>, date_complete <date>, date_qc <date>,
-## #   date_qa_start <date>, date_qa_complete <date>, date_qc_spatial <date>,
-## #   date_qa_spatial <date>, pl_username <chr>, qa_username <chr>,
-## #   muacres <int>, acre_landcat <int>, acre_goal <int>, acre_progress <int>,
-## #   pct_progress <int>
+## 4       8-VIC           <NA>       30            MLRA       2015
+##   fiscalyear_goaled projectiid                        uprojectid
+## 4              2015      95689 0000-VIC-Soil Climate Studies-001
+##                                       projectname projectapprovedflag
+## 4 MLRA 30 - Soil Climate Study - Soil Temperature                TRUE
+##   projectconcerntypename
+## 4                   <NA>
+##                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               projectdesc
+## 4 8-VIC, Victorville, CA MLRA Soil Survey Office\r\nSoil Climate Study Plan \r\nProject Outline Worksheet \r\n\r\nProject Name:  MLRA 30 and 31 - Soil Climate Study Plan\r\n\r\nIdentification \r\nState/s: CA and NV (proposed to add in AZ as well)\r\nMLRAs: 30 and 31\r\nPlan Author: Carrie-Ann Houdeshell, MLRA SSPL and Stephen Roecker Soil Scientist\r\nRegional Office Staff: \r\nDavis, CA: Ed Tallyn, Senior Regional Soil Scientist; Jennifer Wood, Soil Data Quality Specialist\r\nPhoenix, AZ:  Nathan Starman, Soil Data Quality Specialist\r\nArea Office Staff: Peter Fahnestock, Area Resource Soil Scientist\r\n\r\nProject Contact Person(s) \r\nName: Carrie-Ann Houdeshell or Stephen Roecker\r\naddress: 15415 W. Sand St. #103, Victorville, CA 92392\r\nphone: (760) 843-6882\r\nemail: Carrie-Ann.Houdeshell@ca.usda.gov or Stephen.Roecker@ca.usda.gov\r\n\r\nProject Objective(s)  \r\nThe original objective of this study was to determine the thermic/hyperthermic boundary across MLRA 30. Currently the primary objective is to estimate soil tempe...
+##   n_projectdesc n_areasymbol n_nationalmusym n_spatial date_start date_complete
+## 4         13724           NA              NA        NA       <NA>          <NA>
+##   date_qc date_qa_start date_qa_complete date_qc_spatial date_qa_spatial
+## 4    <NA>          <NA>             <NA>            <NA>            <NA>
+##        pl_username qa_username muacres acre_landcat acre_goal acre_progress
+## 4 Ballmer, Matthew        <NA>      NA           NA         0             0
+##   pct_progress
+## 4           NA
 ```
 
 In addition to the 11-IND MAST modeling efforts there has also been two published studies on the Mojave. The first was by Schmidlin et al. (1983) who examined both the Great Basin and Mojave Deserts in Nevada. The second was by Bai et al. (2010) who examined the Mojave Desert in California. Both studies developed regression models using elevation, but Schmidlin et al. (1983) also incorporated latitude. The results from Bai et al. (2010) displayed considerably larger areas of hyperthermic soils than Schmidlin et al. (1983). This made be due to the unconventional method used by Bai et al. (2010) to measure MAST.
@@ -96,7 +101,7 @@ length(unique(f$sensors$user_site_id))
 ```
 
 ```
-## 79 sensors loaded (1.97 Mb transferred)
+## 79 sensors loaded (1.86 Mb transferred)
 ```
 
 
@@ -229,26 +234,12 @@ library(raster)
 ```
 
 ```
-## Warning: package 'raster' was built under R version 4.0.5
-```
-
-```
 ## Loading required package: sp
-```
-
-```
-## Warning: package 'sp' was built under R version 4.0.3
 ```
 
 ```
 ## 
 ## Attaching package: 'raster'
-```
-
-```
-## The following object is masked from 'package:tidyr':
-## 
-##     extract
 ```
 
 ```
@@ -657,6 +648,18 @@ names(mast_r) <- c("MAST", "SE")
 plot(mast_r)
 ```
 
+## Additional reading
+
+Faraway, J.J., 2002. Practical Regression and Anova using R. CRC Press, New York. [https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf](https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf)
+
+James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+
+Webster, R. 1997. Regression and functional relations. European Journal of Soil Science, 48, 557-566. [http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract)
+
+
+
+
+<!-- integrate into .bib DB -->
 
 ## Literature
 Bai, Y., T.A. Scott, W. Chen, R.C. Graham, L. Wu, A.C. Chang, and L.J. Lund, 2010. Soil Temperature Regimes in the Mojave Desert. Soil Science, 175(8):398-404. 
@@ -671,15 +674,7 @@ Peterson, F.F., 1992. Status of Soil Climate Studies in Nevada. pp1-11.
 
 Schmidlin, T.W., F.F. Peterson, and R.O. Gifford, 1983. Soil Temperature Regimes of Nevada. Soil So. Sci. Am. J., 47:977-982. 
 
-## Additional reading
-
-Faraway, J.J., 2002. Practical Regression and Anova using R. CRC Press, New York. [https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf](https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf)
-
-James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
-
-Webster, R. 1997. Regression and functional relations. European Journal of Soil Science, 48, 557-566. [http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract)
 
 
-## References (Linear Models)
 
 

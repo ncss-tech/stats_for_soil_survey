@@ -1,7 +1,7 @@
 --- 
 title: "Statistics for Soil Survey - Part 2"
 author: "Soil Survey Staff"
-date: "2021-05-14"
+date: "2022-01-25"
 site: bookdown::bookdown_site
 documentclass: book
 bibliography: [book.bib, packages.bib]
@@ -127,10 +127,10 @@ Click **Yes**.
 
 For example, to download and install the `remotes` package from CRAN:
   
-  
-  ```{.r .codeBlock}
-  install.packages("remotes")
-  ```
+
+```{.r .codeBlock}
+install.packages("remotes")
+```
 
 To install the **R** packages used in this class copy all of the code from the box below and paste into the **R** console window. Paste after the command prompt (`>`) and press **enter**. 
 

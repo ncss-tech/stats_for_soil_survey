@@ -46,13 +46,7 @@ Create an example data-set and evaluate dispersion.
 
 ```r
 library(ggplot2)
-```
 
-```
-## Warning: package 'ggplot2' was built under R version 4.0.3
-```
-
-```r
 # set random seed, so that we all get the same results
 set.seed(123)
 
@@ -552,6 +546,8 @@ In this case, an independent data-set is used as the test case.
   
 The use of validation will be demonstrated as part of each modeling section. The size of the data-set used, understanding of the variables involved and the nature of the statistical models and algorithms used all influence which validation techniques are most convenient and appropriate.
 
+This is just some junk [@Sneath1973] and [@Kaufman2005].
+
 
 ## Additional reading
 
@@ -560,8 +556,7 @@ James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Sta
 Hastie, T., R. Tibshirani, and J. Friedman 2009. The Elements of Statistical Learning: Data Mining, Inference, and Prediction. Springer, New York. [http://statweb.stanford.edu/~tibs/ElemStatLearn/](http://statweb.stanford.edu/~tibs/ElemStatLearn/)
 
 
-
-## References (Uncertainty)
+## Move to .bib Refs
 
 Efron, B., Tibshirani, R.J., 1993. An introduction to the bootstrap. Monographs on Statistics and Applied Probability, vol. 57. Chapman & Hall, London, UK.
 
@@ -574,6 +569,10 @@ Molinaro, A. M. (2005). Prediction error estimation: a comparison of resampling 
 Shmueli, G.. (2010). To Explain or to Predict?. Statistical Science, 25(3), 289:310. Retrieved from http://www.jstor.org/stable/41058949
 
 Zar, J.H., 1999. Biostatistical analysis. Pearson Education India.
+
+
+
+<!-- references automatically added here  -->
 
 
 
