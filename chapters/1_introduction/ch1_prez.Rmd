@@ -10,6 +10,8 @@ output:
     fig_width: 3
 editor_options: 
   chunk_output_type: console
+bibliography: "../../newbook/book.bib"
+biblio-style: apalike
 ---
 
 ```{r setup, include=FALSE}
@@ -51,14 +53,14 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
 
 ## Why is this training needed?
 
-- Long standing goal of the Soil Science Division to have a course in statistics [(Mausbach, 2003)](https://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs142p2_051833.pdf)
-- Opportunities to learn these techniques are limited, especially at the undergraduate level [(Hennemann and Rossiter, 2004)]([http://www.css.cornell.edu/faculty/dgr2/Docs/ChaAm/ChaAmKeynoteHennemann.pdf)
+- Long standing goal of the Soil Science Division to have a course in statistics [@mausbach2003]
+- Opportunities to learn these techniques are limited, especially at the undergraduate level [@hennemann2004]
 - Consistent methodology (data analysis, data population, sampling design, etc.)
 - There is continually a greater need to use these techniques:
-    - Mapping of lands at high production rates ([MacMillan et al., 2007](https://www.sciencedirect.com/science/article/pii/S0016706107001152); [Kempen et al., 2012](https://acsess.onlinelibrary.wiley.com/doi/10.2136/sssaj2011.0424); [Brevik et al., 2016](https://www.sciencedirect.com/science/article/pii/S034181621630220X))
-    - Ecological Sites [(Maynard et al., 2019)](dl.sciencesocieties.org/publications/sssaj/abstracts/83/3/666)
-    - Soil survey refinement (disaggregation) ([Chaney et al., 2016](https://www.sciencedirect.com/science/article/pii/S0016706116301434); [Ramcharan et al., 2017](dl.sciencesocieties.org/publications/sssaj/abstracts/82/1/186))
-
+    - Mapping of lands at high production rates [@macmillan2007; @kempen2012; @brevik2016]
+    - Ecological Sites [@maynard2019]
+    - Soil survey refinement (disaggregation) [@chaney2016; @ramcharan2018]
+    
 ---
 
 ## Why is course organized this way?
@@ -110,7 +112,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, results='asis')
     + [R books](https://www.r-project.org/doc/bib/R-books.html)
     + [(Free Online) R Books](https://bookdown.org/)
 
-5.  R is 'becoming' the new norm (paradigm shift?). "If we don't accept these challenges, other who are less qualified will; and soil scientists will be displaced by apathy." [(Arnold and Wilding, 1992)](https://dl.sciencesocieties.org/publications/books/abstracts/sssaspecialpubl/spatialvariabil/1)
+5.  R is 'becoming' the new norm (paradigm shift?). "If we don't accept these challenges, other who are less qualified will; and soil scientists will be displaced by apathy." [@arnold1991]
 
 ---
 
@@ -167,8 +169,8 @@ p <- c("A",
 # Compute genhz labels and add to loafercreek dataset
 loafercreek$genhz <- generalize.hz(loafercreek$hzname, n, p)
 
-plot(loafercreek[1:5], color = "genhz", label = "pedon_id")
-
+hzdesgnname(loafercreek)  <- "genhz"
+plotSPC(loafercreek[5:10,])
 ```
 
 ---
@@ -178,19 +180,29 @@ plot(loafercreek[1:5], color = "genhz", label = "pedon_id")
 
 ```{r, echo=FALSE, fig.dim=c(10, 5)}
 
-s <- aqp::slice(loafercreek, 1:100 ~ clay + phfield + total_frags_pct)
-s <- aqp::slab(s, fm = ~ clay + phfield + total_frags_pct, slab.fun = function(x) quantile(x, c(0, 0.5, 1), na.rm = TRUE))
-names(s) <- gsub("\\.", "", names(s))
-names(s) <- gsub("^X", "p", names(s))
+s <- horizons(loafercreek) |>
+  segment(intervals = 1:100, hzdepcols = c("hzdept", "hzdepb"))
+vars <- c("clay", "phfield", "total_frags_pct")
+s <- lapply(vars, function(x) {
+  temp <- aggregate(s[x], list(id = s$segment_id, top = s$hzdept, bot = s$hzdepb), 
+            quantile, 
+            p = c(0.1, 0.5, 0.9), 
+            na.rm = TRUE
+            )
+  temp <- cbind(temp[1:3], var = x, temp[[x]])
+  }) 
+s <- do.call("rbind", s)
+names(s)[5:7] <- c("p10", "p50", "p90")
 
 
 library(ggplot2)
+
 ggplot(s, aes(x = top, y = p50)) +
   geom_line() +
-  geom_ribbon(aes(ymin = p0, ymax = p100, x = top), alpha = 0.2) +
+  geom_ribbon(aes(ymin = p10, ymax = p90, x = top), alpha = 0.2) +
   xlim(c(100, 0)) + xlab("depth (cm)") + ylab("") +
   coord_flip() +
-  facet_wrap(~ variable, scales = "free_x") +
+  facet_wrap( ~ var, scales = "free_x") +
   ggtitle("Loafercreek")
 
 ```
@@ -304,6 +316,7 @@ library(Rcmdr)
 * Advanced DSM R Books
     + [Predictive Soil Mapping with R](https://envirometrix.github.io/PredictiveSoilMapping/)
     + [Using R for Digital Soil Mapping (not free)](http://www.springer.com/us/book/9783319443256)
+    + [Soil Spectral Inference with R (not free)](https://github.com/AlexandreWadoux/soilspec)
 
 * Soil Science R Tutorials
     + [aqp and soilDB tutorials](http://ncss-tech.github.io/AQP/)
@@ -312,4 +325,9 @@ library(Rcmdr)
     + [NEON Tutorials](https://www.neonscience.org/resources/learning-hub/tutorials)
     + [Pierre Roudier](https://pierreroudier.github.io/teaching/index.html)
 
+---
 
+
+`r if(knitr:::is_html_output()) '## References'`
+ 
+ 
