@@ -41,6 +41,7 @@ Graphical methods include:
 Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine the appropriate statistical analyses. For this chapter we'll use the loafercreek dataset from the CA630 Soil Survey Area.
 
 ```{r, warning=FALSE, message=FALSE, eval=TRUE}
+library(dplyr)
 
 # Load from the the loakercreek dataset
 data("loafercreek", package = "soilDB") 
@@ -66,8 +67,11 @@ p <- c("A",
 # Compute genhz labels and add to loafercreek dataset
 h$genhz <- aqp::generalize.hz(h$hzname, n, p)
 
-# Examine the matching of pairing of the genhz label to the hznames
+# Examine genhz vs hznames (wide format)
 table(h$genhz, h$hzname)
+
+# Examine matching pairs (long format)
+h %>% group_by(genhz, hzname) %>% count()
 
 ```
 
@@ -80,7 +84,6 @@ View(h)
 This view is fine for a small dataset, but can be cumbersome for larger ones. The `summary()` function can be used to quickly summarize a dataset however, even for our small example dataset, the output can be voluminous. Therefore in the interest of saving space we'll only look at a sample of columns.
 
 ```{r, message=FALSE, warning=FALSE, eval=TRUE}
-library(dplyr)
 
 h %>%
   select(genhz, clay, total_frags_pct, phfield, effclass) %>%
@@ -158,11 +161,6 @@ These measures are used to determine the mid-point of the range of observed valu
 The mean clay content from the loafercreek dataset may be determined:
 
 ```{r, eval=TRUE}
-# first remove missing values and create a new vector
-clay <- na.exclude(h$clay)
-mean(clay)
-
-# or use the additional na.rm argument
 mean(h$clay, na.rm = TRUE)
 ```
 
@@ -171,7 +169,7 @@ mean(h$clay, na.rm = TRUE)
 The median from the sample dataset may be determined:
 
 ```{r, eval=TRUE}
-median(clay)
+median(h$clay, na.rm = TRUE)
 ```
 
 **Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. R does not include a function for calculating the mode, but we can calculate it using the following example.
@@ -197,6 +195,11 @@ This gives us a count of the number of observations for each horizon. If we want
 
 ```{r eval=TRUE}
 table(h$genhz, h$texcl)
+
+# or
+
+h %>% count(genhz, texcl)
+
 ```
 
 We can also add margin totals to the table or convert the table frequencies to proportions.
@@ -248,7 +251,7 @@ sd(h$clay, na.rm = TRUE)
 
 # or
 
-sqrt(var(clay))
+sqrt(var(h$clay, na.rm = TRUE))
 ```
 
 **Coefficient of Variation** (CV) is a relative (i.e., unitless) measure of standard deviation:
@@ -258,6 +261,9 @@ $CV = \frac{s}{\bar{x}} \times 100$
 CV is calculated by dividing the standard deviation by the mean and multiplying by 100. Since standard deviation varies in magnitude with the value of the mean, the CV is useful for comparing relative variation amongst different datasets. However Webster (2001) discourages using CV to compare different variables. Webster (2001) also stresses that CV is reserved for variables that have an absolute 0, like clay content. CV may be calculated for the sample dataset as:
 
 ```{r, eval=TRUE}
+# remove NA values and create a new variable
+clay <- na.exclude(h$clay)
+
 sd(clay) / mean(clay) * 100
 ```
 
@@ -266,11 +272,11 @@ sd(clay) / mean(clay) * 100
 The default for the `quantile()` function returns the min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
 
 ```{r, eval=TRUE}
-quantile(clay)
+quantile(h$clay, na.rm = TRUE)
 
 # or
 
-quantile(clay, c(0.05, 0.5, 0.95))
+quantile(clay, probs = c(0.05, 0.5, 0.95), na.rm = TRUE)
 ```
 
 Thus, for the five number summary 25% of the observations fall between each of the intervals. [Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpretation](https://ncss-tech.github.io/soil-range-in-characteristics/why-percentiles.html).
@@ -450,6 +456,33 @@ Box plots are a graphical representation of the five number summary, depicting q
 The parts of the boxplot are shown in the figure below. The "box" of the boxplot is defined as the 1st quartile, (Q1 in the figure) and the 3rd quartile, (Q3 in the figure). The median, or 2nd quartile, is the dark line in the box. The whiskers (typically) show data that is 1.5 \* IQR above and below the 3rd and 1st quartile. Any data point that is beyond a whisker is considered an outlier.
 
 That is not to say the outlier points are in error, just that they are extreme compared to the rest of the data set. However, you may want to evaluate these points to ensure that they are correct.
+
+```{r bp, echo=FALSE, fig.width=1}
+
+lab1 <- c("whisker", "lower quartile (25%)", "median (50%)", "upper quartile (50%)", "whisker")
+fn <- boxplot.stats(h$clay)$stats
+df <- data.frame(lab1, fn = fn)
+# df <- rbind(data.frame(lab1 = "outliers", fn = 52), df)
+df2 <- data.frame(fn = c(52, mean(fn[c(4, 5)]), fn[3]), var = c("outliers", "1.5 x IQR", "interquartile range (IQR)"))
+
+ggplot(h, aes(y = clay)) +
+  geom_boxplot()  + 
+  geom_text(data = df, aes(x = -0.85, y = fn, label = lab1)) +
+  geom_text(data = df2, aes(x = 1 - c(0.4, 0.3, -0.15), y = fn, label = var)) +
+  # outliners
+  annotate("segment", x = 0.35, xend = 0.35, y = max(h$clay, na.rm = TRUE), yend = df$fn[5], 
+           arrow = grid::arrow(ends = "both", angle = 90, length = unit(0.1, "cm"))) +
+  # whiskers
+  annotate("segment", x = 0.45, xend = 0.45, y = df$fn[4], yend = df$fn[5], 
+           arrow = grid::arrow(ends = "both", angle = 90, length = unit(0.1, "cm"))) +
+  # IQR
+  annotate("segment", x = 0.55, xend = 0.55, y = df$fn[2], yend = df$fn[4], 
+           arrow = grid::arrow(ends = "both", angle = 90, length = unit(0.1, "cm"))) +
+  scale_x_discrete(breaks = NULL) + 
+  xlab("") + ylab("clay (%)") +
+  ggtitle("Boxplot Components")
+
+````
 
 
 ```{r boxplots, eval=TRUE}
@@ -778,7 +811,7 @@ Slope aspect and pH are two common variables warranting special consideration fo
 
 ### pH
 
-Since **pH** has a logarithmic distribution, the use of median and quantile ranges are the preferred [@kutty1987] measures when summarizing pH. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively. The actual average is 5.26; -log10((0.000001 + 0.00001) / 2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the pH range, the greater the difference between the geometric and arithmetic mean. The difference between the correct average of 5.26 and the incorrect of 5.5 is small, but proper handling of data types is a best practice.
+There is a recurring debate as to the best way to average **pH* since is it a log transformed variable. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively. The actual average is 5.26; -log10((0.000001 + 0.00001) / 2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the pH range, the greater the difference between the geometric and arithmetic mean. The difference between the arithmatic average of 5.26 and the geometric average of 5.5 is small. @boyd2011 examined the issue in detail, and suggests regardless of whatever method is used it should be documented.
 
 If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:
 
