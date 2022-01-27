@@ -9,10 +9,15 @@ andesite <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-d
 
 andesites.site <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/rasmussen-andisitic-lahar-site.csv', stringsAsFactors = FALSE)
 
+# note: these are data.frame objects
+class(granite)
 
-# convert Munsell notation into R colors (sRGB)
+## convert Munsell notation into R colors (sRGB)
 granite$soil_color <- with(granite, munsell2rgb(hue, value, chroma))
 andesite$soil_color <- with(andesite, munsell2rgb(hue, value, chroma))
+
+# results are hex notation of sRGB color coordinates, used by most software and WWW pages
+granite$soil_color
 
 
 ## init SoilProfileCollection for granite transect
@@ -47,23 +52,35 @@ proj4string(g) <- '+proj=longlat +datum=NAD83'
 hzdesgnname(g) <- 'name'
 
 
-# quick check
-par(mar = c(0,0,3,1))
+## quick check
+# tighter margins
+par(mar = c(0, 0, 3, 1))
+
 plotSPC(g, width = 0.3)
 plotSPC(g, width = 0.3, color = 'clay')
+
+# fancy plot
+par(mar = c(0, 0, 0, 0))
+plotSPC(g, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, cex.names = 0.66, width = 0.3, shrink = TRUE)
+
+# see ?plotSPC for documentation on all function arguments
+
 
 ## load and merge sampled raster data
 gis.data <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/transect-GIS-data.csv', stringsAsFactors = FALSE)
 
+# this is an implicit left join
 site(g) <- gis.data
 
+# re-order accorging to elevation and effective PPT
 plotSPC(g, width = 0.3, plot.order = order(g$elev))
-plotSPC(g, width = 0.3, plot.order = order(g$elev))
+plotSPC(g, width = 0.3, plot.order = order(g$effective.ppt_800))
 
+par(mar = c(0, 0, 3, 1))
 plotSPC(g, width = 0.3, color = 'clay', plot.order = order(g$elev))
 plotSPC(g, width = 0.3, color = 'clay', plot.order = order(g$effective.ppt_800))
 
-## compute some idices if possible
+## compute ratio of oxalate-extractable Fe to CBD-extractable Fe
 g$Fe_o_to_Fe_d <- g$Fe_o / g$Fe_d
 
 # nice
@@ -71,19 +88,22 @@ plotSPC(g, width = 0.3, color = 'Fe_o_to_Fe_d', plot.order = order(g$effective.p
 
 
 
-# re-level factors
+# re-level grouping variable (a factor in R)
 g$transect <- factor(g$transect, levels = c('Granite', 'Andesite'))
 
 # plot grouped data
-par(mar = c(0, 0, 1, 0))
-groupedProfilePlot(g, groups = 'transect', group.name.offset = -15)
+# note we can use the same arguments to plotSPC
+par(mar = c(0, 0, 0, 1))
+groupedProfilePlot(g, groups = 'transect', group.name.offset = -15, name.style = 'center-center', cex.names = 0.55, width = 0.3, shrink = TRUE)
 
 
 ## interactive map
+# you may have to install this package
 library(mapview)
 
 # convert site + sp components of SPC -> sp object
 g.spdf <- as(g, 'SpatialPointsDataFrame')
 
+# interactive map!
 mapview(g.spdf, zcol = 'transect')
 
