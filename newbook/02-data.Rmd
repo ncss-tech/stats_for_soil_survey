@@ -890,11 +890,31 @@ title('Loamy-skeletal Ultic Haploxeralfs')
 
 ### Dates and Times
 
-It is important to recognize that date/time is treated as a special format in R.  The Unix time is a system for describing a point in time. It is the number of seconds that have elapsed since the Unix epoch, minus leap seconds; the Unix epoch is 00:00:00 UTC on 1 January 1970.
+Dates and times use special object types in R. The [Unix time](https://en.wikipedia.org/wiki/Unix_time), also known as "Posix time," is a system for describing a point in time. Unix epoch is a whole number value that is the number of seconds elapsed since the 00:00:00 UTC on 1 January 1970 minus leap seconds.
 
-Above, we use the fact that you can logically compare dates and times if their string representation is converted to a common base R UNIX time representation known as `POSIXlt`. 
+We can use logical comparison operators on dates and times if their string representation such as `"01/01/1970"` is converted to a common base R UNIX time representation known as `POSIXlt` or `POSIXct`. 
 
-This conversion accounts for important things like timezone, using your current locale -- which is important to keep in mind.
+This conversion accounts for important things such as timezone using your computer's locale--which is important to keep in mind.
+
+When converting to POSIX time several unambiguous (year-month-day) date time formats can be detected. 
+
+For instance, if you want to convert a date in the common month-day-year format, you need to specify the `format` argument:
+
+```{r}
+as.POSIXlt("01/01/1970", format = "%m/%d/%Y")
+```
+
+By default the timezone will match your current timezone. Dates without times are treated as being at midnight UTC.
+
+You can customize the timezone with `tz` argument:
+
+```{r}
+as.POSIXlt("01/01/1970", tz = "UTC", format = "%m/%d/%Y")
+```
+
+POSIXlt and POSIXct objects can be formatted with the `format()` function. `strptime()` can be used to parse character vectors into date/times. 
+
+R also has the Date class which can be used for formatting calendar dates. You can convert POSIXlt/POSIXct objects to Date with `as.Date()`
 
 <!-- Thinking this might be too much to cover/include here? Or perhaps expand as example for next time.
 
@@ -930,23 +950,23 @@ mixing dry colors ... [33 of 4108 horizons]
 mixing moist colors ... [60 of 4532 horizons]
 ```
 
-_Quality control on fragments, horizon data, site data, tables_
+_Quality control and limited "filling" of fragments, horizon depth data, site data, tables_
 
 ```
--> QC: some fragsize_h values == 76mm, may be mis-classified as cobbles [52 / 10372 records]
-replacing missing lower horizon depths with top depth + 1cm ... [152 horizons]
--> QC: duplicate pedons: use `get('dup.pedon.ids', envir=soilDB.env)` for related peiid values
--> QC: horizon errors detected, use `get('bad.pedon.ids', envir=soilDB.env)` for related userpedonid values or `get('bad.horizons', envir=soilDB.env)` for related horizon designations
--> QC: pedons missing bottom hz depths: use `get('missing.bottom.depths', envir=soilDB.env)` for related pedon IDs
+replacing missing lower horizon depths with top depth + 1cm ... [19 horizons]
+-> QC: horizon errors detected:
+	Use `get('bad.pedon.ids', envir=soilDB.env)` for pedon record IDs (peiid)
+	Use `get('bad.horizons', envir=soilDB.env)` for horizon designations
+-> QC: pedons missing bottom hz depths:
+	Use `get('missing.bottom.depths', envir=soilDB.env)` for pedon record IDs (peiid)
 ```
 
-_Warnings about default settings and handling of `NULL` (missing data elements or records)_
+Notes about default settings and handling of `NULL` (missing data elements or records)_
 
 ```
-Warning messages:
-1: some records are missing rock fragment volume, these have been removed 
-2: some records are missing artifact volume, these have been removed 
-3: all records are missing artifact volume (NULL). buffering result with NA. will be converted to zero if nullFragsAreZero = TRUE.
+NOTE: some records are missing surface fragment cover
+NOTE: some records are missing rock fragment volume
+NOTE: all records are missing artifact volume
 ```
 
 ### Inspecting Results
@@ -1347,7 +1367,7 @@ channel <- dbConnectNASIS()
 d <- dbQueryNASIS(channel, q)
 ```
 
-The functions `dbConnectNASIS()` (alias `NASIS()`) and `dbQueryNASIS()` allow you to create a connection to the NASIS local database and send queries to that connection, respectively. By default, `dbQueryNASIS()` will close your connection after completing the queryl; you can change this by setting `close=FALSE`.
+The functions `dbConnectNASIS()` (alias `NASIS()`) and `dbQueryNASIS()` allow you to create a connection to the NASIS local database and send queries to that connection, respectively. By default, `dbQueryNASIS()` will close your connection after completing the query; you can change this by setting `close=FALSE`.
 
 ```{r, eval =  FALSE}
 # check results
