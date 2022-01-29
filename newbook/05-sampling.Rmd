@@ -1,9 +1,3 @@
----
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-
 # Sampling {#sampling}
 
 
@@ -61,10 +55,29 @@ Some rules of thumb for regression models are as follows:
 
 
 ## Sampling Strategies
+
+```{r, echo=FALSE}
+theme_update(axis.ticks = element_blank(), axis.text = element_blank())
+```
  
+```{r grid, fig.width=4, fig.height=4, eval=TRUE}
+
+library(sf)
+library(ggplot2)
+
+# Create a sixteen square polygon
+set.seed(4)
+
+bb <- st_make_grid(st_bbox(c(xmin = 0, xmax = 4, ymin = 0, ymax = 4)), n = 4)
+grd <- st_as_sf(bb)
+grd$ID <- 1:length(bb)
+
+```
+
+
 ### Simple Random 
 
-In simple random sampling, all samples within the region have an equal chance of being selected. A simple random selection of points can be made using either the `spsample()` function within the sp R package or the Create Random Points tool in ArcGIS.
+In simple random sampling, all samples within the region have an equal chance of being selected. A simple random selection of points can be made using either the `st_sample()` function within the sf R package or the Create Random Points tool in ArcGIS.
 
 **Advantages**
 
@@ -80,16 +93,13 @@ In simple random sampling, all samples within the region have an equal chance of
  - Samples may not be representative of the feature attribute(s)  
 
 ```{r simple, fig.width=4, fig.height=4, eval=TRUE}
-library(sp)
-
-# Create a sixteen square polygon
-grd <- GridTopology(c(1, 1), c(1, 1), c(4, 4))
-polys <- as.SpatialPolygons.GridTopology(grd)
-plot(polys)
-
 # Generate simple random sample
-test <- spsample(polys, n = 15, type = "random")
-points(test, pch = 19)
+test <- st_sample(grd, size = 16, type = "random")
+
+ggplot() + 
+  geom_sf(data = grd) + 
+  geom_sf(data = test) + 
+  ggtitle("Simple")
 ```
 
 
@@ -107,34 +117,54 @@ In systematic sampling, a sample is taken according to a regularized pattern. Th
  - Lower precision
 
 ```{r systematic, fig.width=4, fig.height=4, eval=TRUE}
-plot(polys, main = "Systematic sample")
-
 # Generate systematic random sample
-test <- spsample(polys, n = 15, type = "regular")
-points(test, pch = 19)
+test <- st_sample(grd, size = 16, type = "regular")
+
+ggplot() + 
+  geom_sf(data = grd) + 
+  geom_sf(data = test) + 
+  ggtitle("Systematic")
+
 ```
 
 
-### Cluster
+### Spatial Coverage Sampling
 
-In cluster sampling, a cluster or group of points is selected at one or more sites. The transect is an example of this strategy, although other shapes are possible (e.g., square, triangle, or cross shapes). It is common to orient the transect in the direction of greatest variability.
+```{r spcosa, fig.width=4, fig.height=4, eval=TRUE}
+# spcosa ----
+library(spcosa)
 
-**Advantages**
+grd2 <- st_crs(grd, NA)
+grd_sp <- as(grd, "Spatial")
 
- - Greater efficiency
- - Lower cost   
- 
-**Disadvantages**
+strata <- stratify(grd_sp, nStrata = 16) 
 
- - Lower precision  
+pts    <- spsample(strata)
+plot(strata, pts) + 
+  ggtitle("Spatial Coverage")
 
-```{r clustered, fig.width=4, fig.height=4, eval=TRUE} 
-plot(polys, main = "Clustered (n = 3) random sample")
-
-# Generate cluster random sample
-test <- spsample(polys, nclusters = 3, type = "clustered")
-points(test, pch = 19)
 ```
+
+<!-- ### Cluster -->
+
+<!-- In cluster sampling, a cluster or group of points is selected at one or more sites. The transect is an example of this strategy, although other shapes are possible (e.g., square, triangle, or cross shapes). It is common to orient the transect in the direction of greatest variability. -->
+
+<!-- **Advantages** -->
+
+<!--  - Greater efficiency -->
+<!--  - Lower cost    -->
+
+<!-- **Disadvantages** -->
+
+<!--  - Lower precision   -->
+
+<!-- ```{r clustered, fig.width=4, fig.height=4, eval=TRUE}  -->
+<!-- plot(polys, main = "Clustered (n = 3) random sample") -->
+
+<!-- # Generate cluster random sample -->
+<!-- test <- spsample(polys, nclusters = 3, type = "clustered") -->
+<!-- points(test, pch = 19) -->
+<!-- ``` -->
 
 
 
@@ -152,12 +182,16 @@ In stratified random sampling, the sampling region is spatially subset into diff
  - The existing knowledge used to construct strata may be flawed.
 
 ```{r stratified, fig.width=4, fig.height=4, eval=TRUE}
-plot(polys, main = "Stratified random sample")
+grd2 <- st_cast(grd, "MULTIPOLYGON")
+st_crs(grd2) <- 5070
 
-# Generate a spatially stratified random sample
-test <- sapply(slot(polys, 'polygons'), function(x) spsample(x, n = 1, type = "random"))
-test <- do.call("rbind", test)
-points(test, pch = 19)
+test <- st_sample(grd2, size = 16, type = "random", by_polygon = TRUE)
+
+ggplot() + 
+  geom_sf(data = grd) + 
+  geom_sf(data = test) + 
+  ggtitle("Stratified")
+
 ```
 
 Note that the `spsample()` function only stratifies the points spatially. Other more sophisticated designs can be implemented using the [spsurvey](https://cran.r-project.org/package=spsurvey), [spcosa](https://cran.r-project.org/package=spcosa), [sharpshootR](http://ncss-tech.github.io/sharpshootR/docs/reference/constantDensitySampling.html), or [clhs](https://cran.r-project.org/package=clhs) packages.
@@ -178,12 +212,19 @@ In multistage random sampling, the region is separated into different subsets th
  - Stronger clustering than simple random sampling
 
 ```{r two_stage, fig.width=4, fig.height=4, eval=TRUE}
-plot(polys, main = "Two-stage random")
-
 # Select 8 samples from each square
-s <- sapply(slot(polys, "polygons"), function(x) spsample(x, n = 5, type = "random"))
-points(sample(s, 1)[[1]], pch = 19) # randomly select 1 square and plot
-points(sample(s, 1)[[1]], pch = 19) # randomly select 1 square and plot
+idx <- sample(1:nrow(grd), size = 2, replace = FALSE)
+grd_sub <- grd[idx, ]
+test <- sapply(1:2, function(i) {
+  st_coordinates(st_sample(grd_sub[i, ], size = 8, type = "random"))
+})
+test <- st_as_sf(as.data.frame(test), coords = 1:2)
+
+ggplot() + 
+  geom_sf(data = grd) + 
+  geom_sf(data = test) + 
+  ggtitle("Two-stage")
+
 ```
 
 
@@ -253,35 +294,39 @@ The simple example below demonstrates how to compare several sampling strategies
 set.seed(1234)
 
 # create a polygon from the spatial extent of the volcano dataset
-test <- as(extent(volcano_r), "SpatialPolygons")
+test <- st_make_grid(extent(volcano_r), n = 1)
 
 # take a large random sample
-sr400 <- spsample(test, n = 400, type = "random")
+sr400 <- st_sample(test, size = 400, type = "random")
 
 # take a small random sample
-sr <- spsample(test, n = 20, type = "random")
+sr <- st_sample(test, size = 20, type = "random")
 
-# take a small stratified random sample
-str <- spsample(test, n = 23, type = "stratified", iter = 1000)[1:20]
+# take a small systematic random sample
+str <- st_sample(test, size = 20, type = "regular")
 
 # take a cLHS sample
 # cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
 
 # Combind and Extract Samples
 s <- rbind(data.frame(method = "Simple Random 400", 
-                      extract(rs, sr400)),
+                      extract(rs, st_coordinates(sr400))
+                      ),
            data.frame(method = "Simple Random", 
-                      extract(rs, sr)),
+                      extract(rs, st_coordinates(sr))
+                      ),
            data.frame(method = "Stratified Random", 
-                      extract(rs, str)),
+                      extract(rs, st_coordinates(str))
+                      ),
            data.frame(method = "cLHS", 
-                      slot(cs$sampled_data, 'data')))
+                      slot(cs$sampled_data, 'data')
+                      )
+           )
 
 # Summarize the sample values
 aggregate(slope ~ method, data = s, function(x) round(summary(x)))
 
 # Plot overlapping density plots to compare the distributions between the large and small samples
-library(ggplot2)
 ggplot(s, aes(x = slope, col = method)) + 
         geom_density(cex = 2)
 ```
