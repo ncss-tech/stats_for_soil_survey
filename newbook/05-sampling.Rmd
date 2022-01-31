@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Sampling {#sampling}
 
 
@@ -12,46 +17,112 @@ Sampling is a fundamental part of statistics. Samples are collected to achieve a
 
 **How many samples are needed?**  
 
-Because you are typically interested in using field point data to derive inferences, you need enough samples to be confident that they approximate the target population. In the case of calibrating a laboratory device, you might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that sample size is closely related to the inherent variability in the data. The number of samples required increases with increasing variability. Also, the more samples you have, the greater the confidence level you can achieve. For example, sampling at an 85 percent confidence level is less intensive than sampling at a 95 percent confidence level.
+The question of how many samples are required is complex. As per usual, the answer is 'it depends'. For example, it depends on the type of analysis (e.g. non-spatial vs spatial) and properties of the data (e.g. continuous vs categorical). In all cases it requires an understanding/assumptions of the underlying population. If a scientist can estimate the several population variables, formulas exist to estimate the required number of samples. For non-spatial data 4 methods exist:
 
-If you have prior knowledge about the soil attribute being sampled, you can use a t-test to estimate the number (n) of samples needed to detect a significant difference. You can use either the `power.t.test()` or `power.prop.tes()` functions. See the following example of differences in clay content.
+1. Standard error
+2. Confidence interval
+3. Power analysis (hypothesis testing)
+4. Distance/time
+5. Prediction error
+6. Rules of thumb
+7. NSSH 627.8
 
-```{r, eval=TRUE}
-# Clay example. Test to see the number of samples necessary to detect a 3 percent difference in clay between two horizons.
-power.t.test(power = 0.95, sd = 2, delta = 16 - 19) # delta = the difference between the two means
-power.t.test(power = 0.95, sd = 3, delta = 16 - 19)
+
+The first 3 methods use formulas for their corresponding statistics to solve for the sample size, each results in progressively higher sample size requirements. The `PracTools` R package [@valliant2022] offers several functions for the 1st and 2nd methods. The `pwr` [@champely2020] and `WebPower` [@zhang2021] R packages offer several functions for the 3rd method, based on a variety of statistical models. @gelman2020 provides a nice illustration of the variables involved with thes methods.  
+
+
+### DSM classes
+
+A variation of the 2nd method is described by @congalton2019 for use with categorical data, which is applicable to digital soil mapping.
+
+
+```{r dsm size}
+
+nMultinomial <- function(k = NULL, p = 0.5, error = 0.1, alpha = 0.05) {
+  # k     = number of classes
+  # p     = proportion of the largest class
+  # error = margin of error
+  # alpha = confidence level probability
+  ceiling(qchisq(1 - alpha / k, 1) * p * (1 - p) / e^2)
+}
+nMultinomial(k = c(10, 20, 30))
+
 ```
 
-```{r, echo=FALSE,, eval=TRUE}
-# Generate a graphical comparison of a fictitious clay example with 2 standard deviations
-x1 <- seq(12, 20, 0.1)
-y1 <- dnorm(x1, mean = 16, sd = 2)
+<!-- Because you are typically interested in using field point data to derive inferences, you need enough samples to be confident that they approximate the target population. In the case of calibrating a laboratory device, you might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that sample size is closely related to the inherent variability in the data. The number of samples required increases with increasing variability. Also, the more samples you have, the greater the confidence level you can achieve. For example, sampling at an 85 percent confidence level is less intensive than sampling at a 95 percent confidence level. -->
 
-x2 <- seq(15, 23, 0.1)
-y2 <- dnorm(x2, mean = 19, sd = 2)
+<!-- If you have prior knowledge about the soil attribute being sampled, you can use a t-test to estimate the number (n) of samples needed to detect a significant difference. You can use either the `power.t.test()` or `power.prop.tes()` functions. See the following example of differences in clay content. -->
 
-summary(c(x1, x2))
+<!-- ```{r, eval=TRUE} -->
+<!-- # Clay example. Test to see the number of samples necessary to detect a 3 percent difference in clay between two horizons. -->
+<!-- power.t.test(power = 0.95, sd = 2, delta = 16 - 19) # delta = the difference between the two means -->
+<!-- power.t.test(power = 0.95, sd = 3, delta = 16 - 19) -->
+<!-- ``` -->
 
-plot(x1, y1, type = "l", xlim = range(c(x1, x2)), 
-     main = "Overlapping Populations", 
-     xlab = "Clay %"
-     )
-lines(x2, y2)
-abline(v = mean(c(x1, x2)), lty = 2)
-```
+<!-- ```{r, echo=FALSE,, eval=TRUE} -->
+<!-- # Generate a graphical comparison of a fictitious clay example with 2 standard deviations -->
+<!-- x1 <- seq(12, 20, 0.1) -->
+<!-- y1 <- dnorm(x1, mean = 16, sd = 2) -->
 
-From the figure above, you can see how difficult it is to separate two overlapping populations (e.g., horizons). Also, a 1-unit increase in the standard deviation doubles the number of samples required. This simplistic example, although enlightening, is hard to implement in practice and serves only as a theoretical exercise. 
+<!-- x2 <- seq(15, 23, 0.1) -->
+<!-- y2 <- dnorm(x2, mean = 19, sd = 2) -->
+
+<!-- summary(c(x1, x2)) -->
+
+<!-- plot(x1, y1, type = "l", xlim = range(c(x1, x2)),  -->
+<!--      main = "Overlapping Populations",  -->
+<!--      xlab = "Clay %" -->
+<!--      ) -->
+<!-- lines(x2, y2) -->
+<!-- abline(v = mean(c(x1, x2)), lty = 2) -->
+<!-- ``` -->
+
+<!-- From the figure above, you can see how difficult it is to separate two overlapping populations (e.g., horizons). Also, a 1-unit increase in the standard deviation doubles the number of samples required. This simplistic example, although enlightening, is hard to implement in practice and serves only as a theoretical exercise.  -->
+
+### Rules of thumb
 
 Some rules of thumb for regression models are as follows:
 
-- Use \> 10 observations (n) per predictor (m) (Kutner et al., 2005).
-- Use \> 20 n per m and n > 104 + m to test regression coefficients (Rossiter, 2015; Franklin and Miller, 2009).
-- Never use n < 5*m (Rossiter, 2015).
+- 
+- Use \> 10 observations (n) per predictor (m) (@kutner2005).
+- Use \> 20 n per m and n > 104 + m to test regression coefficients [@rossiter2017; @franklin2009].
+- Never use n < 5*m [@rossiter2017].
 
-**Soil Survey Applications:**
+<!-- **Soil Survey Applications:** -->
 
-1. Capture range of soil-forming factors
-2. Determine map unit composition
+<!-- 1. Capture range of soil-forming factors -->
+<!-- 2. Determine map unit composition -->
+
+
+### NSSH 627.8
+
+Documentation requirement for the following data elements are specified in the section [627.8](https://directives.sc.egov.usda.gov/OpenNonWebContent.aspx?content=45136.wba) of the National Soil Survey Handbook (NSSH).
+
+```{r nssh}
+# NSSH 627.8 Documentation
+
+# soil series
+ss <- data.frame(
+  n     = c(5, 10),
+  acres = c(2000, 20000)
+  )
+ss
+
+# components
+co <- data.frame(
+  n     = 1,
+  acres = 3000
+  )
+co
+
+# map units
+mu <- data.frame(
+  n     = cumsum(c(30, rep(10, 3))),
+  acres = c(2000, seq(from = 4000, by = 4000, length.out = 3))
+  )
+mu
+
+```
 
 
 ## Sampling Strategies
@@ -170,7 +241,7 @@ plot(strata, pts) +
 
 ### Stratified Random
 
-In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area, it can be used to develop the strata. Strata may be sampled equally or in proportion to area; however, if the target of interest is rare in the population, it may be preferable to sample the strata equally (Franklin and Miller, 2009).
+In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area, it can be used to develop the strata. Strata may be sampled equally or in proportion to area; however, if the target of interest is rare in the population, it may be preferable to sample the strata equally @franklin2009].
 
 **Advantages**
 
@@ -194,7 +265,7 @@ ggplot() +
 
 ```
 
-Note that the `spsample()` function only stratifies the points spatially. Other more sophisticated designs can be implemented using the [spsurvey](https://cran.r-project.org/package=spsurvey), [spcosa](https://cran.r-project.org/package=spcosa), [sharpshootR](http://ncss-tech.github.io/sharpshootR/docs/reference/constantDensitySampling.html), or [clhs](https://cran.r-project.org/package=clhs) packages.
+Note that the `spsample()` function only stratifies the points spatially. Other more sophisticated designs can be implemented using the [spsurvey](https://cran.r-project.org/package=spsurvey), [sharpshootR](http://ncss-tech.github.io/sharpshootR/docs/reference/constantDensitySampling.html), or [clhs](https://cran.r-project.org/package=clhs) packages.
 
 
 ### Multistage Stratified Random
@@ -230,7 +301,7 @@ ggplot() +
 
 #### Conditioned Latin Hypercube (cLHS)
 
-Conditioned Latin hypercube sampling is a multi-staged stratified random sampling technique to obtain representative samples from feature (attribute) space (Minasny and McBratney, 2006). For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
+Conditioned Latin hypercube sampling is a multi-staged stratified random sampling technique to obtain representative samples from feature (attribute) space [@minasny2006]. For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
 
  - Normalized Difference Vegetation Index (NDVI),  
  - Topographic Wetness Index (a.k.a. Wetness Index, compound topographic index),  
@@ -239,7 +310,7 @@ Conditioned Latin hypercube sampling is a multi-staged stratified random samplin
  
 The cLHS procedure iteratively selects samples from the strata variables such that they replicate the range of values from each stratum. Without a technique such as cLHS, obtaining a sample that is representative of the feature space becomes increasingly difficult as the number of variables (strata) increases.
 
-To perform cLHS using R, you can use the clhs package (Roudier, 2011).
+To perform cLHS using R, you can use the clhs package [@roudier].
 
 ```{r clhs, fig.width=4, fig.height=4, eval=TRUE}
 library(clhs)
@@ -285,7 +356,7 @@ sub_s <- sampleRandom(volcano_r, size = 200, sp = TRUE) # random sample function
 
 ## Evaluating a Sampling Strategy
 
-To gauge the representativeness of a sampling strategy, you can compare the results it produces to the results for other variables you think might coincide with the soil properties or classes of interest (Hengl, 2009). Examples include slope gradient, slope aspect, and vegetative cover. These other variables may be used to stratify the sampling design or to assess the representativeness of our existing samples (e.g., NASIS pedons).
+To gauge the representativeness of a sampling strategy, you can compare the results it produces to the results for other variables you think might coincide with the soil properties or classes of interest [@hengl2009]. Examples include slope gradient, slope aspect, and vegetative cover. These other variables may be used to stratify the sampling design or to assess the representativeness of our existing samples (e.g., NASIS pedons).
 
 The simple example below demonstrates how to compare several sampling strategies by evaluating how well they replicate the distribution of elevation. 
 
@@ -303,7 +374,7 @@ sr400 <- st_sample(test, size = 400, type = "random")
 sr <- st_sample(test, size = 20, type = "random")
 
 # take a small systematic random sample
-str <- st_sample(test, size = 20, type = "regular")
+sys <- st_sample(test, size = 20, type = "regular")
 
 # take a cLHS sample
 # cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
@@ -332,13 +403,15 @@ ggplot(s, aes(x = slope, col = method)) +
 ```
 
 ```{r fig.width=8.25, fig.height=3.5, eval=TRUE}
+volcano_r2 <- as(volcano_r, "SpatialPixelsDataFrame")
+
 # plot the spatial locations            
 par(mfrow = c(1, 3), mar=c(1,2,4,5))
 plot(volcano_r, main = "Simple random", cex.main = 2, axes=FALSE)
-points(sr, pch = 3, cex = 1.2)
+points(st_coordinates(sr), pch = 3, cex = 1.2)
 
 plot(volcano_r, main = "Stratified random", cex.main = 2, axes=FALSE)
-points(str, pch = 3, cex = 1.2)
+points(st_coordinates(sys), pch = 3, cex = 1.2)
 
 plot(volcano_r, main = "cLHS", cex.main = 2, axes=FALSE)
 points(cs$sampled_data, pch = 3, cex = 1.2)
@@ -354,117 +427,103 @@ The cLHS approach best duplicates the distribution of elevation (because elevati
 
 - Show your work and submit the results to your coach.
 
-## Other Tools for Selecting Random Features  
+<!-- ## Other Tools for Selecting Random Features   -->
 
-An ArcGIS tool for selecting random features is available from the [Job Aids page](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&ext=pdf). This tool randomly selects the specified number of features from a dataset or set of selected features in ArcGIS. It is an ideal tool for the first stage of a two-stage random sample.  
+<!-- An ArcGIS tool for selecting random features is available from the [Job Aids page](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&ext=pdf). This tool randomly selects the specified number of features from a dataset or set of selected features in ArcGIS. It is an ideal tool for the first stage of a two-stage random sample.   -->
 
-### cLHS Using TEUI  
+<!-- ### cLHS Using TEUI   -->
 
-The TEUI toolkit includes a tool for generating cLHS samples on large raster datasets. The tool is based on the clhs R package (Roudier, 2011).
+<!-- The TEUI toolkit includes a tool for generating cLHS samples on large raster datasets. The tool is based on the clhs R package [@roudier2011]. -->
 
- - Relative Elevation (a.k.a. relative position)  
- - Northwestness  
- - Normalized Difference Vegetation Difference (a.k.a. NDVI)  
- 
-![R GUI image](static-figures/ch3_fig17.jpg)
+<!--  - Relative Elevation (a.k.a. relative position)   -->
+<!--  - Northwestness   -->
+<!--  - Normalized Difference Vegetation Difference (a.k.a. NDVI)   -->
 
-Open ArcGIS. Add the TEUI Toolkit Toolbar by clicking the **Customize** tab, pointing to **Toolbars**, and checking **TEUI**.  
+<!-- ![R GUI image](static-figures/ch3_fig17.jpg) -->
 
-![R GUI image](static-figures/ch3_fig18.jpg)  
+<!-- Open ArcGIS. Add the TEUI Toolkit Toolbar by clicking the **Customize** tab, pointing to **Toolbars**, and checking **TEUI**.   -->
 
-The TEUI Toolbar looks like the following.  
+<!-- ![R GUI image](static-figures/ch3_fig18.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig19.jpg)  
+<!-- The TEUI Toolbar looks like the following.   -->
 
-Click the **Cube icon** to open the Latin Hyper Cube Generator Tool.
+<!-- ![R GUI image](static-figures/ch3_fig19.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig20.jpg)  
+<!-- Click the **Cube icon** to open the Latin Hyper Cube Generator Tool. -->
 
-![R GUI image](static-figures/ch3_fig21.jpg)  
+<!-- ![R GUI image](static-figures/ch3_fig20.jpg)   -->
 
-The Tool requires that all raster data be in Imagine format (i.e., have the "img" extension) and share a common projection and resolution. 
+<!-- ![R GUI image](static-figures/ch3_fig21.jpg)   -->
 
-The tool adds all raster layers in the Table of Contents to the Layers section. The layers to be used are checked.  
+<!-- The Tool requires that all raster data be in Imagine format (i.e., have the "img" extension) and share a common projection and resolution.  -->
 
-An exclusion layer is used in this example. An exclusion layer is a binary raster with values of 0 and 1. Using an exclusion layer confines the selection of points to those areas with a raster value of 1.  
+<!-- The tool adds all raster layers in the Table of Contents to the Layers section. The layers to be used are checked.   -->
 
-The output file is a shapefile named "samples.shp." The Number of Points is 30. The Number of Iterations is increased from the default of 100 to 300. Increasing the number of iterations increases the processing time, but it also increases the likelihood that the samples selected are representative of the selected strata.  
+<!-- An exclusion layer is used in this example. An exclusion layer is a binary raster with values of 0 and 1. Using an exclusion layer confines the selection of points to those areas with a raster value of 1.   -->
 
-Click **Generate** and let the routine process. This can take from several minutes to several hours, depending on how large the area is in terms of columns and rows and how many layers are used.  
+<!-- The output file is a shapefile named "samples.shp." The Number of Points is 30. The Number of Iterations is increased from the default of 100 to 300. Increasing the number of iterations increases the processing time, but it also increases the likelihood that the samples selected are representative of the selected strata.   -->
 
-The resulting output shows 30 points confined to the watershed of interest.  
+<!-- Click **Generate** and let the routine process. This can take from several minutes to several hours, depending on how large the area is in terms of columns and rows and how many layers are used.   -->
 
-![R GUI image](static-figures/ch3_fig22.jpg)  
+<!-- The resulting output shows 30 points confined to the watershed of interest.   -->
 
-Comparing the frequency distribution of the samples to the population shows a reasonable representation, especially considering the small sample size.  
+<!-- ![R GUI image](static-figures/ch3_fig22.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig23.jpg) 
+<!-- Comparing the frequency distribution of the samples to the population shows a reasonable representation, especially considering the small sample size.   -->
 
-### Two-Stage Stratified Random Sample Design Using ArcGIS
+<!-- ![R GUI image](static-figures/ch3_fig23.jpg)  -->
 
-The following example examines a sampling design executed by Wendy Noll, USDA-NRCS, Morgantown, WV and used by NRCS and USFS investigators in the Monongahela National Forest. They were interested in quantifying the depth of organic surface horizons in soils that correlated to the Mandy soil series and formed under red spruce canopy on backslopes in the Upper Greenbrier Watershed (HUC 8 -05050003). This project ultimately led to the development of new soil series and the update of thousands of acres of forest soils in West Virginia. 
+<!-- ### Two-Stage Stratified Random Sample Design Using ArcGIS -->
 
-Stage 1: Sub-watersheds in the study area were randomly selected. 
- 
-![R GUI image](static-figures/ch3_fig7.jpg)  
+<!-- The following example examines a sampling design executed by Wendy Noll, USDA-NRCS, Morgantown, WV and used by NRCS and USFS investigators in the Monongahela National Forest. They were interested in quantifying the depth of organic surface horizons in soils that correlated to the Mandy soil series and formed under red spruce canopy on backslopes in the Upper Greenbrier Watershed (HUC 8 -05050003). This project ultimately led to the development of new soil series and the update of thousands of acres of forest soils in West Virginia.  -->
 
-Strata: Sampling was based on three stratum.  
+<!-- Stage 1: Sub-watersheds in the study area were randomly selected.  -->
 
- - Mandy soil map units (MfE, MfF, MfG, and other)
- - Red spruce canopy cover (>30% canopy, other)
- - Slope (<= 35%, >= 35%)  
- 
-Data layers: Input layers included coregistered raster data of each stratum, reclassed as follows.  
+<!-- ![R GUI image](static-figures/ch3_fig7.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig8.jpg)  
+<!-- Strata: Sampling was based on three stratum.   -->
 
-The Raster Calculator was used to add data layers together.  
+<!--  - Mandy soil map units (MfE, MfF, MfG, and other) -->
+<!--  - Red spruce canopy cover (>30% canopy, other) -->
+<!--  - Slope (<= 35%, >= 35%)   -->
 
-![R GUI image](static-figures/ch3_fig9.jpg)  
+<!-- Data layers: Input layers included coregistered raster data of each stratum, reclassed as follows.   -->
 
-The resulting raster file had the following combinations.  
+<!-- ![R GUI image](static-figures/ch3_fig8.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig10.jpg)  
+<!-- The Raster Calculator was used to add data layers together.   -->
 
-The following guide was used to verify the selection of sample numbers allocated according to the proportionate extent of the strata.  
+<!-- ![R GUI image](static-figures/ch3_fig9.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig11.jpg)  
+<!-- The resulting raster file had the following combinations.   -->
 
-The Create Random Points tool was used within each sub-watershed. The tool is in **Data Management Tools** > **Feature Class toolbox**.  
+<!-- ![R GUI image](static-figures/ch3_fig10.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig12.jpg)  
+<!-- The following guide was used to verify the selection of sample numbers allocated according to the proportionate extent of the strata.   -->
 
-The sub-watershed layer was specified as the Constraining Feature Class. The number of points selected was 50.  
+<!-- ![R GUI image](static-figures/ch3_fig11.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig13.jpg)  
+<!-- The Create Random Points tool was used within each sub-watershed. The tool is in **Data Management Tools** > **Feature Class toolbox**.   -->
 
-The resulting point file had 50 points per polygon.  
+<!-- ![R GUI image](static-figures/ch3_fig12.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig14.jpg)  
+<!-- The sub-watershed layer was specified as the Constraining Feature Class. The number of points selected was 50.   -->
 
-The following image was used to check if the sample points adequately represented the proportionate extent of the data made by summarizing the GRIDCODE of the points.  
+<!-- ![R GUI image](static-figures/ch3_fig13.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig15.jpg)  
+<!-- The resulting point file had 50 points per polygon.   -->
 
-The results compared well to the extent of the population.  
+<!-- ![R GUI image](static-figures/ch3_fig14.jpg)   -->
 
-![R GUI image](static-figures/ch3_fig16.jpg)
+<!-- The following image was used to check if the sample points adequately represented the proportionate extent of the data made by summarizing the GRIDCODE of the points.   -->
 
-## References (Sampling)
+<!-- ![R GUI image](static-figures/ch3_fig15.jpg)   -->
 
-Franklin, J., and J.A. Miller. 2009. Mapping species distributions: Spatial inference and prediction. Cambridge: Cambridge University Press. [http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction](http://www.cambridge.org/us/academic/subjects/life-sciences/ecology-and-conservation/mapping-species-distributions-spatial-inference-and-prediction).
+<!-- The results compared well to the extent of the population.   -->
 
-Hengl, T. 2009. A practical guide to geostatistical mapping, 2nd Ed. University of Amsterdam. ISBN 978-90-9024981-0. [http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf](http://spatial-analyst.net/book/system/files/Hengl_2009_GEOSTATe2c0w.pdf).
+<!-- ![R GUI image](static-figures/ch3_fig16.jpg) -->
 
-Kutner, M.H., C.J. Nachtsheim, J. Neter, and W. Li (Eds.). 2005. Applied linear statistical models, 5th edition. McGraw-Hill.
-
-Roudier, P. 2011. cLHS: A R package for conditioned Latin hypercube sampling. [https://cran.r-project.org/web/packages/clhs/index.html](https://cran.r-project.org/web/packages/clhs/index.html).
-
-Rossiter, D. 2015. Spatial modelling and analysis applied to agronomic and environmental systems [Lecture notes]. [http://www.css.cornell.edu/faculty/dgr2/teach/CSS6200.html](http://www.css.cornell.edu/faculty/dgr2/teach/CSS6200.html).
-
-Minasny, B., and A.B. McBratney. 2006. A conditioned Latin hypercube method for sampling in the presence of ancillary information. Computers & Geosciences. 32(9):1378-1388. [http://www.sciencedirect.com/science/article/pii/S009830040500292X](http://www.sciencedirect.com/science/article/pii/S009830040500292X).
-
-Vaughan, R., and K. Megown. 2015. The Terrestrial Ecological Unit Inventory (TEUI) Geospatial Toolkit: User guide v5.2. RSAC-10117-MAN1. Salt Lake City, UT: U.S. Department of Agriculture, Forest Service, Remote Sensing Applications Center. [http://www.fs.fed.us/eng/rsac/programs/teui/about.html](http://www.fs.fed.us/eng/rsac/programs/teui/about.html).
+<!-- Vaughan, R., and K. Megown. 2015. The Terrestrial Ecological Unit Inventory (TEUI) Geospatial Toolkit: User guide v5.2. RSAC-10117-MAN1. Salt Lake City, UT: U.S. Department of Agriculture, Forest Service, Remote Sensing Applications Center. [http://www.fs.fed.us/eng/rsac/programs/teui/about.html](http://www.fs.fed.us/eng/rsac/programs/teui/about.html). -->
 
 
 ## Additional Reading (Sampling)
@@ -473,10 +532,8 @@ Brungard, C., & Johanson, J. (2015). The gate's locked! I can't get to the exact
 
 Brus, D.J. and J.J. de Gruijter. "Random sampling or geostatistical modelling? Choosing between design-based and model-based sampling strategies for soil (with discussion)." Geoderma. Vol. 80. 1. Elsevier, 1997. 1-44. [https://www.sciencedirect.com/science/article/pii/S0016706197000724](https://www.sciencedirect.com/science/article/pii/S0016706197000724)
 
+Brus, Dick J. Spatial Sampling with R. First edition, CRC Press, 2022, [https://github.com/DickBrus/SpatialSamplingwithR](https://github.com/DickBrus/SpatialSamplingwithR).
+
 de Gruijter, J., D.J. Brus, M.F.P. Bierkens, and M. Knotters. 2006. Sampling for natural resource monitoring: Springer. [http://www.springer.com/us/book/9783540224860](http://www.springer.com/us/book/9783540224860).
-
-Schreuder, H.T., R. Ernst, and H. Ramirez-Maldonado. 2004. Statistical techniques for sampling and monitoring natural resources. Gen. Tech. Rep. RMRS-GTR-126. Fort Collins, CO: U.S. Department of Agriculture, Forest Service, Rocky Mountain Research Station. [http://www.fs.fed.us/rm/pubs/rmrs_gtr126.html](http://www.fs.fed.us/rm/pubs/rmrs_gtr126.html).
-
-U.S. Environmental Protection Agency. 2002. Guidance for choosing a sampling design for environmental data collection. Washington, DC: US EPA. [http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality](http://www.epa.gov/quality/guidance-choosing-sampling-design-environmental-data-collection-use-developing-quality).
 
 Viscarra Rossel, R.A., et al. "Baseline estimates of soil organic carbon by proximal sensing: Comparing design-based, model-assisted and model-based inference." Geoderma 265 (2016): 152-163. [https://www.sciencedirect.com/science/article/pii/S0016706115301312](https://www.sciencedirect.com/science/article/pii/S0016706115301312)
