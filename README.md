@@ -17,7 +17,7 @@ Part 1
 
  - #### [Final Project](http://ncss-tech.github.io/stats_for_soil_survey/chapters/10_final_project/10_final_project.html)
  
- - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/ch1_prez.html)
+ - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/ch1_prez.pptx)
 
  - #### [GitHub](https://ncss-tech.github.io/stats_for_soil_survey/chapters/1_introduction/github.html)
 
@@ -31,7 +31,7 @@ Part 1
 
 ### [**Chapter 3:** *Exploratory Data Analysis*](http://ncss-tech.github.io/stats_for_soil_survey/book/eda.html)
 
- - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/ch4_prez.html)
+ - #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/ch4_prez.pptx)
 
  - #### [Shiny Apps](http://ncss-tech.github.io/stats_for_soil_survey/presentations/4_exploratory_data_analysis/shiny_app_pres.html)
 
