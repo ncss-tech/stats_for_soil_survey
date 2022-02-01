@@ -56,6 +56,9 @@ help(aqp)
         + [NASIS pedon/horizon data](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html)
         + [NASIS DMU/MU/component data](http://ncss-tech.github.io/AQP/soilDB/NASIS-component-data.html)
         
+- **[fetchVegdata()](http://ncss-tech.github.io/soilDB/reference/fetchVegdata.html)**
+    - Gets Vegetation Plot and related/child tables into a list from a local NASIS database.
+        
 - **[fetchNASISLabData()](http://ncss-tech.github.io/soilDB/reference/fetchNASISLabData.html)**
     - Gets KSSL laboratory pedon/horizon layer data from a local NASIS database.
     
@@ -865,10 +868,7 @@ We use the `SoilProfileCollection` `subset` method, where we first specify a dat
 Here, we combine two logical expressions to find `taxsubgrp` containing `"alfs"` (Alfisols) with `obsdate` before January 1st, 2010. 
 
 ```{r, eval=TRUE,  fig.width=8, fig.height=4}
-subset2 <- subset(
-  pedons, 
-  grepl("alfs", taxsubgrp) & obs_date < as.POSIXlt("2010-01-01")
-)
+subset2 <- subset(pedons, grepl("alfs", taxsubgrp) & obs_date < as.POSIXlt("2010-01-01"))
 
 # check taxonomic range of particle size classes in the data
 # overwhelmingly these are described as loamy-skeletal ultic haploxeralfs
@@ -986,6 +986,8 @@ download.file("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/dat
               destfile = example.data.path)
 ```
 
+Downloading and installing the above .rda is equivalent to doing NASIS query  "_PedonPC_Plus_DataDump_select" (MLRA04 Bozeman) for to fill your selected set for User Site ID: `%MT647%`, NASIS Site: `MLRA04%`, NASIS Group: `4-MIS Pedons`, followed by `mt647 <- fetchNASIS()`.
+
 #### Load Example Data
 
 To load the sample object data into R, just use `load()` and the path to the _.rda_ file (`example.data.path` or `"C:/workspace2/mt647.rda"`)
@@ -1011,19 +1013,19 @@ We can compare this to what we see in the NASIS Pedon Diagnostic Features table:
 
 Any profiles that have have logic errors detected are stored in `soilDB.env` `bad.pedon.ids` variable after you run `fetchNASIS`. If this variable does not exist either you have not run `fetchNASIS()` in the current session or there are no errors
 
-```{r, eval=TRUE}
+```{r}
 # these are the troublesome user pedon IDs
 get('bad.pedon.ids', envir=soilDB.env)
 ```
 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 # by default, rmHzErrors removes the "bad" illogical pedons
 any(mt647$pedon_id %in% get('bad.pedon.ids', envir=soilDB.env))
 ```
 
 When `fetchNASIS(..., rmHzErrors = TRUE)` (the default), any horizons that were omitted from the SoilProfileCollection will be stored in the `bad.horizons` variable in the `soilDB.env` environment.
 
-```{r, eval=TRUE}
+```{r}
 head(get('bad.horizons', envir=soilDB.env))
 ```
 
@@ -1056,14 +1058,14 @@ head(logic_tests[!logic_tests$valid, ])
 site(mt647) <- logic_tests
 ```
 
-Use the `$valid` vector to subset to find the "bad" (`logic_tests$valid == FALSE`)
+Use the `$valid` vector in result to filter out profiles with missing depths (`logic_tests$valid == FALSE`)
 
 ```{r, eval=TRUE}
 bad.profiles <- subset(mt647, !valid)
 bad.profiles
 ```
 
-And the "good." (`logic_tests$valid == TRUE`)
+And also filter out the valid ones (`logic_tests$valid == TRUE`)
 
 ```{r, eval=TRUE}
 good.profiles <- subset(mt647, logic_tests$valid)
