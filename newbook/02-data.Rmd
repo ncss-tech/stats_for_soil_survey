@@ -1009,15 +1009,22 @@ We can compare this to what we see in the NASIS Pedon Diagnostic Features table:
 
 ![](static-figures/ch2_mt647_asp_diagnostics.png)
 
-Any profiles that have have logic errors detected are stored in `soilDB.env` `bad.pedon.ids` variable after you run `fetchNASIS`. If this variable does not exist either you have not run `fetchNASIS()` in the current session or there are no errors.
+Any profiles that have have logic errors detected are stored in `soilDB.env` `bad.pedon.ids` variable after you run `fetchNASIS`. If this variable does not exist either you have not run `fetchNASIS()` in the current session or there are no errors
 
-<!-- consider eval=FALSE for less output that contains very little information -->
-```{r, eval=FALSE}
-# these are the troublesome pedon IDs
-get('bad.pedon.ids', envir = soilDB.env)
+```{r, eval=TRUE}
+# these are the troublesome user pedon IDs
+get('bad.pedon.ids', envir=soilDB.env)
+```
 
-# the bad pedons are in mt647 with rmHzErrors = FALSE
-mt647$pedon_id %in% get('bad.pedon.ids', envir = soilDB.env)
+```{r, eval=TRUE}
+# by default, rmHzErrors removes the "bad" illogical pedons
+any(mt647$pedon_id %in% get('bad.pedon.ids', envir=soilDB.env))
+```
+
+When `fetchNASIS(..., rmHzErrors = TRUE)` (the default), any horizons that were omitted from the SoilProfileCollection will be stored in the `bad.horizons` variable in the `soilDB.env` environment.
+
+```{r, eval=TRUE}
+head(get('bad.horizons', envir=soilDB.env))
 ```
 
 #### Logic Checks for the `SoilProfileCollection`

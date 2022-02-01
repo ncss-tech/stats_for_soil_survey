@@ -6,5 +6,6 @@ library(soilDB)
 #  NASIS Site: MLRA04%
 #  NASIS Group: 4-MIS Pedons
 
-mt647 <- fetchNASIS(rmHzErrors = FALSE)
-save(mt647, soilDB.env, file =  "../data/book/02/mt647.rda")
+mt647err <- fetchNASIS(rmHzErrors = FALSE)
+mt647 <- fetchNASIS()
+save(mt647, mt647err, soilDB.env, file =  "../data/book/02/mt647.rda")
