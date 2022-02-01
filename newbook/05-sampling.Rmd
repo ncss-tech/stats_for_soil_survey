@@ -17,7 +17,7 @@ Sampling is a fundamental part of statistics. Samples are collected to achieve a
 
 **How many samples are needed?**  
 
-The question of how many samples are required is complex. As per usual, the answer is 'it depends'. For example, it depends on the type of analysis (e.g. non-spatial vs spatial) and properties of the data (e.g. continuous vs categorical). In all cases it requires an understanding/assumptions of the underlying population. If a scientist can estimate the several population variables, formulas exist to estimate the required number of samples. For non-spatial data 4 methods exist:
+The question of how many samples are required is complex. As per usual, the answer is 'it depends'. For example, it depends on the type of analysis (e.g. non-spatial vs spatial) and properties of the data (e.g. continuous vs categorical). In all cases it requires an understanding/assumptions of the underlying population. If a scientist can estimate the several population variables, formulas exist to estimate the required number of samples.  The following are a list of methods for estimating sample size:
 
 1. Standard error
 2. Confidence interval
@@ -28,7 +28,7 @@ The question of how many samples are required is complex. As per usual, the answ
 7. NSSH 627.8
 
 
-The first 3 methods use formulas for their corresponding statistics to solve for the sample size, each results in progressively higher sample size requirements. The `PracTools` R package [@valliant2022] offers several functions for the 1st and 2nd methods. The `pwr` [@champely2020] and `WebPower` [@zhang2021] R packages offer several functions for the 3rd method, based on a variety of statistical models. @gelman2020 provides a nice illustration of the variables involved with thes methods.  
+The first 3 methods use formulas for their corresponding statistics to solve for the sample size, each results in progressively higher sample size requirements. The `PracTools` R package [@valliant2022] offers several functions for the 1st and 2nd methods. The `pwr` [@champely2020] and `WebPower` [@zhang2021] R packages offer several functions for the 3rd method, based on a variety of statistical models. @gelman2020 provides a nice graphical illustration of the variables involved with these methods.  
 
 
 ### DSM classes
@@ -43,9 +43,11 @@ nMultinomial <- function(k = NULL, p = 0.5, error = 0.1, alpha = 0.05) {
   # p     = proportion of the largest class
   # error = margin of error
   # alpha = confidence level probability
-  ceiling(qchisq(1 - alpha / k, 1) * p * (1 - p) / e^2)
+  ceiling(qchisq(1 - alpha / k, 1) * p * (1 - p) / error^2)
 }
 nMultinomial(k = c(10, 20, 30))
+nMultinomial(k = 10, error = c(0.05, 0.1, 0.2))
+nMultinomial(k = 10, alpha = c(0.05, 0.1, 0.2))
 ```
 
 <!-- Because you are typically interested in using field point data to derive inferences, you need enough samples to be confident that they approximate the target population. In the case of calibrating a laboratory device, you might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that sample size is closely related to the inherent variability in the data. The number of samples required increases with increasing variability. Also, the more samples you have, the greater the confidence level you can achieve. For example, sampling at an 85 percent confidence level is less intensive than sampling at a 95 percent confidence level. -->
