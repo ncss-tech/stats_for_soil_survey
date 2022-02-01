@@ -36,7 +36,7 @@ The first 3 methods use formulas for their corresponding statistics to solve for
 A variation of the 2nd method is described by @congalton2019 for use with categorical data, which is applicable to digital soil mapping.
 
 
-```{r dsm size}
+```{r dsm size, eval=TRUE}
 
 nMultinomial <- function(k = NULL, p = 0.5, error = 0.1, alpha = 0.05) {
   # k     = number of classes
@@ -46,7 +46,6 @@ nMultinomial <- function(k = NULL, p = 0.5, error = 0.1, alpha = 0.05) {
   ceiling(qchisq(1 - alpha / k, 1) * p * (1 - p) / e^2)
 }
 nMultinomial(k = c(10, 20, 30))
-
 ```
 
 <!-- Because you are typically interested in using field point data to derive inferences, you need enough samples to be confident that they approximate the target population. In the case of calibrating a laboratory device, you might only need two measurements, each at opposite ends of the measurement scale. This illustrates the point that sample size is closely related to the inherent variability in the data. The number of samples required increases with increasing variability. Also, the more samples you have, the greater the confidence level you can achieve. For example, sampling at an 85 percent confidence level is less intensive than sampling at a 95 percent confidence level. -->
@@ -83,7 +82,6 @@ nMultinomial(k = c(10, 20, 30))
 
 Some rules of thumb for regression models are as follows:
 
-- 
 - Use \> 10 observations (n) per predictor (m) (@kutner2005).
 - Use \> 20 n per m and n > 104 + m to test regression coefficients [@rossiter2017; @franklin2009].
 - Never use n < 5*m [@rossiter2017].
@@ -98,7 +96,7 @@ Some rules of thumb for regression models are as follows:
 
 Documentation requirement for the following data elements are specified in the section [627.8](https://directives.sc.egov.usda.gov/OpenNonWebContent.aspx?content=45136.wba) of the National Soil Survey Handbook (NSSH).
 
-```{r nssh}
+```{r nssh, eval=TRUE}
 # NSSH 627.8 Documentation
 
 # soil series
@@ -310,7 +308,7 @@ Conditioned Latin hypercube sampling is a multi-staged stratified random samplin
  
 The cLHS procedure iteratively selects samples from the strata variables such that they replicate the range of values from each stratum. Without a technique such as cLHS, obtaining a sample that is representative of the feature space becomes increasingly difficult as the number of variables (strata) increases.
 
-To perform cLHS using R, you can use the clhs package [@roudier].
+To perform cLHS using R, you can use the clhs package [@roudier2011].
 
 ```{r clhs, fig.width=4, fig.height=4, eval=TRUE}
 library(clhs)
@@ -386,8 +384,8 @@ s <- rbind(data.frame(method = "Simple Random 400",
            data.frame(method = "Simple Random", 
                       extract(rs, st_coordinates(sr))
                       ),
-           data.frame(method = "Stratified Random", 
-                      extract(rs, st_coordinates(str))
+           data.frame(method = "Systematic Random", 
+                      extract(rs, st_coordinates(sys))
                       ),
            data.frame(method = "cLHS", 
                       slot(cs$sampled_data, 'data')
@@ -410,7 +408,7 @@ par(mfrow = c(1, 3), mar=c(1,2,4,5))
 plot(volcano_r, main = "Simple random", cex.main = 2, axes=FALSE)
 points(st_coordinates(sr), pch = 3, cex = 1.2)
 
-plot(volcano_r, main = "Stratified random", cex.main = 2, axes=FALSE)
+plot(volcano_r, main = "Systematic random", cex.main = 2, axes=FALSE)
 points(st_coordinates(sys), pch = 3, cex = 1.2)
 
 plot(volcano_r, main = "cLHS", cex.main = 2, axes=FALSE)
