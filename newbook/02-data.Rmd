@@ -961,7 +961,7 @@ replacing missing lower horizon depths with top depth + 1cm ... [19 horizons]
 	Use `get('missing.bottom.depths', envir=soilDB.env)` for pedon record IDs (peiid)
 ```
 
-Notes about default settings and handling of `NULL` (missing data elements or records)_
+_Notes about default settings and handling of `NULL` (missing data elements or records)_
 
 ```
 NOTE: some records are missing surface fragment cover
@@ -1013,19 +1013,19 @@ We can compare this to what we see in the NASIS Pedon Diagnostic Features table:
 
 Any profiles that have have logic errors detected are stored in `soilDB.env` `bad.pedon.ids` variable after you run `fetchNASIS`. If this variable does not exist either you have not run `fetchNASIS()` in the current session or there are no errors
 
-```{r}
+```{r, eval=TRUE}
 # these are the troublesome user pedon IDs
 get('bad.pedon.ids', envir=soilDB.env)
 ```
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # by default, rmHzErrors removes the "bad" illogical pedons
 any(mt647$pedon_id %in% get('bad.pedon.ids', envir=soilDB.env))
 ```
 
 When `fetchNASIS(..., rmHzErrors = TRUE)` (the default), any horizons that were omitted from the SoilProfileCollection will be stored in the `bad.horizons` variable in the `soilDB.env` environment.
 
-```{r}
+```{r, eval=TRUE}
 head(get('bad.horizons', envir=soilDB.env))
 ```
 
@@ -1046,7 +1046,7 @@ Checks for:
  4. missing depths (`"missingDepth"`)
  
 ```{r, eval=TRUE}
-logic_tests <- checkHzDepthLogic(mt647)
+logic_tests <- checkHzDepthLogic(mt647err)
 
 # look at first few (look OK; valid == TRUE)
 head(logic_tests)
@@ -1055,20 +1055,20 @@ head(logic_tests)
 head(logic_tests[!logic_tests$valid, ])
 
 # join the logic test data into the site table
-site(mt647) <- logic_tests
+site(mt647err) <- logic_tests
 ```
 
 Use the `$valid` vector in result to filter out profiles with missing depths (`logic_tests$valid == FALSE`)
 
 ```{r, eval=TRUE}
-bad.profiles <- subset(mt647, !valid)
+bad.profiles <- subset(mt647err, !valid)
 bad.profiles
 ```
 
 And also filter out the valid ones (`logic_tests$valid == TRUE`)
 
 ```{r, eval=TRUE}
-good.profiles <- subset(mt647, logic_tests$valid)
+good.profiles <- subset(mt647err, logic_tests$valid)
 good.profiles
 ```
 
