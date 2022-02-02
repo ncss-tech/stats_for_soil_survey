@@ -165,11 +165,13 @@ The great thing about the GHL approach is that you can "test" the effect of addi
 
 ## Micro-correlation
 
-First, you first need your "prototype" scheme for the soil you are studying. Essentially this is the list of horizon labels that occurs in your hypothetical, idealized, "typical" soil.
+First, you will need your "prototype" horizons for the soil you are studying. 
+
+Essentially this is the list of horizon labels that occurs in your hypothetical, idealized, "typical" soil.
 
 This could be, for instance, the horizons that occur in the OSD/TUD/component pedon or some generalization of them. 
 
-For this exercise wen wil try to produce a set of REGEX patterns that correlate the field-observed horizon designations to your prototype horizons. 
+For this exercise we will try to produce a set of REGEX patterns that correlate the field-observed horizon designations to your prototype horizons. 
 
 Let's take a look at the horizon designations from the Loafercreek OSD for inspiration.
 
@@ -218,7 +220,7 @@ Define the paired patterns for each `prototype.label`
 # REGEX rules describing mapping from field data to prototype.labels
 patterns.to.match <- c('^A',
                       '^B[^Ct]*$',
-                      '.*B.*t.*',
+                      'B.*t',
                       'Cr|R')
 ```
 
@@ -266,9 +268,7 @@ Since we don't want to overwrite the data that came out of NASIS at this point, 
 
 ```{r}
 # apply prototype labels `new` to horizons matching `pat`
-pedons$newgenhz <- generalize.hz(x = pedons$hzname,
-                                 new = prototype.labels,
-                                 pat = patterns.to.match)
+pedons$newgenhz <- generalize.hz(x = pedons$hzname, new = prototype.labels, pat = patterns.to.match)
 ```
 
 ## Cross-tabulate Results
@@ -315,7 +315,6 @@ So, let's say we've decided we don't want these 'not-used' horizons lumped with 
 
 Since there are only a handful of observations for the C's and O's (4 and 2 of each, respectively) they may not be particularly "representative" for the "Loafercreek series." 
 
-
 The lack of clay films ("t" subscript) may be a thing in common between "BC" and "C" -- could they be combined?
 
 If you were trying to apply generalized labels to Loafercreek, you could test the idea that they have an unusually large volume of rock fragments (`horizons(loafercreek)$total_frags_pct`) -- maybe some of them do and some don't. 
@@ -343,7 +342,7 @@ prototype.labels.v2 <- c('A',
 # REGEX rules describing mapping from field data to prototype.labels
 patterns.to.match.v2 <- c('^A',
                           '^B[^Ct]*$',
-                          '.*B.*t.*',
+                          'B.*t',
                           'C[^t]*',
                           'Cr|R')
 
@@ -389,10 +388,7 @@ Compare the coloring (based on `pedons$newgenhz2`) with the field horizon design
 
 # plot profile sketches - first 20 profiles; color by gen hz.
 par(mar=c(0,0,3,1))
-plotSPC(pedons,
-        name = 'hzname',
-        color = 'newgenhz2',
-        print.id = FALSE)
+plotSPC(pedons, name = 'hzname', color = 'newgenhz2', print.id = FALSE)
 ```
 
 Here are a few things that are evident for the Loafercreek example:
