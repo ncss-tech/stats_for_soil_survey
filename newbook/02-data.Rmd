@@ -1397,7 +1397,6 @@ d$doy <- as.integer(format(d$obs_date, "%j"))
 hist(
   d$doy,
   xlim = c(1, 366),
-  breaks = 30,
   las = 1,
   main = 'Soil Temperature Measurements',
   xlab = 'Day of Year'
@@ -1407,14 +1406,46 @@ hist(
 plot(
   soitemp ~ doy,
   data = d,
+  main = 'Soil Temperature Measurements (CA792)\nNASIS "Site Soil Temperature" table',
   type = 'p',
+  pch = 21, 
+  bg = 'royalblue',
   xlim = c(1, 366),
-  ylim = c(-1, 25),
+  ylim = c(-1, 26),
   xlab = 'Day of Year',
   ylab = 'Soil Temperature at 50cm (deg C)',
   las = 1
 )
+
+# vernal equinox, summer solstice, autumnal equinox, winter solstice
+x <- as.Date(c('2022-03-20', '2022-06-21', '2022-09-23', '2022-12-21'))
+
+# convert dates -> Julian date, or day-of-year
+doy <- as.integer(format(x, "%j"))
+
+# add vertical lines
+abline(v = doy, lty = 3, col = grey(0.45))
+
+# annotate
+# pos argument: left-center offset
+text(
+  x = doy, 
+  y = -1, 
+  labels = c('vernal equinox', 'summer solstice', 'autumnal equinox', 'winter solstice'), 
+  pos = 2,
+  cex = 0.75,
+  font = 3
+)
+
+# box/whisker plot showing distribution of day-of-year 
+# when measurements (pedon descriptions) were collected
+boxplot(d$doy, at = 26, horizontal = TRUE, add = TRUE, lty = 1, width = 1, col = 'white', axes = FALSE)
 ```
+
+
+![](static-figures/CA792-soil-temperature-example.png)
+
+
 
 ```{r, echo=FALSE}
 rm(list = ls(all = TRUE))
