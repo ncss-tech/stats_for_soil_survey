@@ -1076,8 +1076,8 @@ All of the above together means that more time and energy can be put towards to 
 <div id="make-profile-sketches" class="section level4" number="2.5.3.1">
 <h4><span class="header-section-number">2.5.3.1</span> Make profile sketches</h4>
 <p>The <code>plotSPC()</code> or <code>plot()</code> function applied to a <code>SoilProfileCollection</code> object generates sketches based on horizon depths, designations, and colors. The <a href="https://ncss-tech.github.io/AQP/aqp/aqp-intro.html#10_Plotting_SoilProfileCollection_Objects"><code>SoilProfileCollection</code> Reference</a> contains many examples demonstrating way in which these sketches can be customized.</p>
-<p>The <code>fetchNASIS()</code> function automatically converts moist Munsell colors into R-style colors.</p>
-<p>Multiple colors per horizon are mixed to make the ones that are shown by default in the calculated <code>soil_color</code> fields. See <a href="http://ncss-tech.github.io/aqp/reference/SoilProfileCollection-plotting-methods.html"><code>?plotSPC</code> for a detailed list of arguments and examples</a>.</p>
+<p>The <code>fetchNASIS()</code> function automatically converts moist Munsell colors into R-style colors, available in the <code>soil_color</code> horizon level attribute. An approximate color mixture is used when multiple colors per horizon are present.</p>
+<p>See <a href="http://ncss-tech.github.io/aqp/reference/SoilProfileCollection-plotting-methods.html"><code>?plotSPC</code> for a detailed list of arguments and examples</a>.</p>
 <div class="sourceCode" id="cb71"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb71-1"><a href="data.html#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span>
 <span id="cb71-2"><a href="data.html#cb71-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb71-3"><a href="data.html#cb71-3" aria-hidden="true" tabindex="-1"></a><span class="co"># omitting pedon IDs and horizon designations</span></span>
@@ -1087,6 +1087,13 @@ All of the above together means that more time and energy can be put towards to 
 <span id="cb71-7"><a href="data.html#cb71-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">width =</span> <span class="fl">0.3</span>)</span>
 <span id="cb71-8"><a href="data.html#cb71-8" aria-hidden="true" tabindex="-1"></a><span class="fu">title</span>(<span class="st">&#39;Pedons from the `gopheridge` sample dataset&#39;</span>, <span class="at">line =</span> <span class="sc">-</span><span class="fl">0.5</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-53-1.png" width="960" style="display: block; margin: auto;" /></p>
+<p>Additional examples / documentation related to soil profile sketches:
+* <a href="https://github.com/ncss-tech/stats_for_soil_survey/blob/master/exercise_ideas/plotSPC-examples.R">live-coding examples from class</a>
+* <a href="http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html">OSD Dendrogram tutorial</a>
+* <a href="https://ncss-tech.github.io/AQP/aqp/hz-boundaries.html">Visualization of Horizon Boundaries tutorial</a>
+* <a href="https://ncss-tech.github.io/AQP/aqp/aqp-intro.html"><code>SoilProfileCollection</code> Reference</a>
+* <a href="http://ncss-tech.github.io/AQP/soilDB/competing-series.html">Competing Series tutorial</a>
+* <a href="http://ncss-tech.github.io/AQP/aqp/genhz-distance-eval.html">Pair-Wise Distances by Generalized Horizon Labels tutorial</a></p>
 </div>
 <div id="pedon-data-checks" class="section level4" number="2.5.3.2">
 <h4><span class="header-section-number">2.5.3.2</span> Pedon Data Checks</h4>
@@ -1985,6 +1992,12 @@ NOTE: all records are missing artifact volume</code></pre>
 <span id="cb170-58"><a href="data.html#cb170-58" aria-hidden="true" tabindex="-1"></a><span class="co"># when measurements (pedon descriptions) were collected</span></span>
 <span id="cb170-59"><a href="data.html#cb170-59" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(d<span class="sc">$</span>doy, <span class="at">at =</span> <span class="dv">26</span>, <span class="at">horizontal =</span> <span class="cn">TRUE</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">lty =</span> <span class="dv">1</span>, <span class="at">width =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="st">&#39;white&#39;</span>, <span class="at">axes =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <p><img src="static-figures/CA792-soil-temperature-example.png" /></p>
+<p>Alternatively, use a circular histogram. Days of the year progress clockwise from 0.</p>
+<div class="sourceCode" id="cb171"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb171-1"><a href="data.html#cb171-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(circular)</span>
+<span id="cb171-2"><a href="data.html#cb171-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb171-3"><a href="data.html#cb171-3" aria-hidden="true" tabindex="-1"></a>d.circ <span class="ot">&lt;-</span> <span class="fu">circular</span>(d<span class="sc">$</span>doy, <span class="at">type =</span> <span class="st">&#39;angles&#39;</span>, <span class="at">units =</span> <span class="st">&#39;degrees&#39;</span>, <span class="at">rotation =</span> <span class="st">&#39;clock&#39;</span>, <span class="at">zero =</span> pi<span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb171-4"><a href="data.html#cb171-4" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))</span>
+<span id="cb171-5"><a href="data.html#cb171-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot.circular</span>(d.circ, <span class="at">stack =</span> <span class="cn">TRUE</span>, <span class="at">bg =</span> <span class="st">&#39;royalblue&#39;</span>, <span class="at">pch =</span> <span class="dv">21</span>, <span class="at">sep =</span> <span class="fl">0.04</span>, <span class="at">shrink =</span> <span class="fl">1.5</span>)</span></code></pre></div>
 
 </div>
 </div>

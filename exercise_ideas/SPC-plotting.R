@@ -86,14 +86,11 @@ plotSPC(x, color = 'p1', cex.names = 0.8)
 
 # demonstrate plot.order
 
-# soil depth
-sd <- getSoilDepthClass(x)
+# bottom depth of each profile
+.depths <- profileApply(x, max)
 
 # sort `depth` ascending order
-new.order <- order(sd$depth)
-
-# result is an integer index which "orders" the soil depth values
-sd[new.order, ]
+new.order <- order(.depths)
 
 # use this index to re-order profiles
 plotSPC(x, color = 'p1', cex.names = 0.8, plot.order = new.order)

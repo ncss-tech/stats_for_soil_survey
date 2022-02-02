@@ -566,9 +566,10 @@ horizonNames(gopheridge)
 
 The `plotSPC()` or `plot()` function applied to a `SoilProfileCollection` object generates sketches based on horizon depths, designations, and colors. The [`SoilProfileCollection` Reference](https://ncss-tech.github.io/AQP/aqp/aqp-intro.html#10_Plotting_SoilProfileCollection_Objects) contains many examples demonstrating way in which these sketches can be customized.
 
-The `fetchNASIS()` function automatically converts moist Munsell colors into R-style colors. 
+The `fetchNASIS()` function automatically converts moist Munsell colors into R-style colors, available in the `soil_color` horizon level attribute. An approximate color mixture is used when multiple colors per horizon are present. 
 
-Multiple colors per horizon are mixed to make the ones that are shown by default in the calculated `soil_color` fields. See [`?plotSPC` for a detailed list of arguments and examples](http://ncss-tech.github.io/aqp/reference/SoilProfileCollection-plotting-methods.html).
+See [`?plotSPC` for a detailed list of arguments and examples](http://ncss-tech.github.io/aqp/reference/SoilProfileCollection-plotting-methods.html).
+
 
 ```{r, fig.width=10, fig.height=4, eval=TRUE}
 par(mar = c(1, 1, 1, 1))
@@ -580,6 +581,14 @@ plotSPC(gopheridge,
      width = 0.3)
 title('Pedons from the `gopheridge` sample dataset', line = -0.5)
 ```
+
+Additional examples / documentation related to soil profile sketches:
+  * [live-coding examples from class](https://github.com/ncss-tech/stats_for_soil_survey/blob/master/exercise_ideas/plotSPC-examples.R)
+  * [OSD Dendrogram tutorial](http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html)
+  * [Visualization of Horizon Boundaries tutorial](https://ncss-tech.github.io/AQP/aqp/hz-boundaries.html)
+  * [`SoilProfileCollection` Reference](https://ncss-tech.github.io/AQP/aqp/aqp-intro.html)
+  * [Competing Series tutorial](http://ncss-tech.github.io/AQP/soilDB/competing-series.html)
+  * [Pair-Wise Distances by Generalized Horizon Labels tutorial](http://ncss-tech.github.io/AQP/aqp/genhz-distance-eval.html)
 
 #### Pedon Data Checks
 
@@ -1380,6 +1389,7 @@ d <- dbQueryNASIS(channel, q)
 
 The functions `dbConnectNASIS()` (alias `NASIS()`) and `dbQueryNASIS()` allow you to create a connection to the NASIS local database and send queries to that connection, respectively. By default, `dbQueryNASIS()` will close your connection after completing the query; you can change this by setting `close=FALSE`.
 
+
 ```{r, eval =  FALSE}
 # check results
 str(d)
@@ -1442,8 +1452,21 @@ text(
 boxplot(d$doy, at = 26, horizontal = TRUE, add = TRUE, lty = 1, width = 1, col = 'white', axes = FALSE)
 ```
 
-
 ![](static-figures/CA792-soil-temperature-example.png)
+
+
+
+Alternatively, use a circular histogram. Days of the year progress clockwise from 0.
+```{r, eval =  FALSE}
+library(circular)
+
+d.circ <- circular(d$doy, type = 'angles', units = 'degrees', rotation = 'clock', zero = pi/2)
+par(mar = c(0, 0, 0, 0))
+plot.circular(d.circ, stack = TRUE, bg = 'royalblue', pch = 21, sep = 0.04, shrink = 1.5)
+```
+
+
+
 
 
 
