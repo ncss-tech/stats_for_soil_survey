@@ -30,6 +30,45 @@ The question of how many samples are required is complex. As per usual, the answ
 
 The first 3 methods use formulas for their corresponding statistics to solve for the sample size, each results in progressively higher sample size requirements. The `PracTools` R package [@valliant2022] offers several functions for the 1st and 2nd methods. The `pwr` [@champely2020] and `WebPower` [@zhang2021] R packages offer several functions for the 3rd method, based on a variety of statistical models. @gelman2020 provides a nice graphical illustration of the variables involved with these methods.  
 
+```{r ci, echo=FALSE}
+set.seed(42)
+df <- rbind(
+  data.frame(n = 10,  mu = 16, clay = rnorm(10,  mean = 16, sd = 2)),
+  data.frame(n = 50,  mu = 16, clay = rnorm(50,  mean = 16, sd = 2)),
+  data.frame(n = 100, mu = 16, clay = rnorm(100, mean = 16, sd = 2)),
+  data.frame(n = 10,  mu = 19, clay = rnorm(10,  mean = 19, sd = 2)),
+  data.frame(n = 50,  mu = 19, clay = rnorm(50,  mean = 19, sd = 2)),
+  data.frame(n = 100, mu = 19, clay = rnorm(100, mean = 19, sd = 2))
+)
+df$n  <- factor(paste("n =", df$n),  levels = c("n = 10", "n = 50", "n = 100"))
+df$mu <- factor(as.character(df$mu), levels = c("16", "19")) 
+
+df2 <- {
+  split(df, list(df$mu, df$n)) ->.;
+  lapply(., function(x) {
+    if (x$mu[1] == "16") {p = 0.975
+    } else p = 0.8
+    y = cbind(x[1, 1:2], data.frame(density(x$clay)[c("x", "y")]))
+    if (x$mu[1] == "16") {
+      y$ci = (y$x > mean(x$clay) + -qt(p, length(x$clay) - 1) * sd(x$clay)) & (y$x < mean(x$clay) + qt(p, length(x$clay) - 1) * sd(x$clay))
+    } else y$ci = y$x > mean(x$clay) + -qt(p, length(x$clay) - 1) * sd(x$clay)
+    return(y)
+    # x[1:3]
+  }) ->.;
+  do.call("rbind", .) ->.;
+}
+
+ggplot(df2, aes(x = x, y = y, fill = mu)) +
+  # geom_density() +
+  geom_vline(xintercept = c(16, 19)) +
+  geom_vline(xintercept = 18, linetype = "dashed") +
+  geom_line() +
+  geom_area(data = df2, mapping = aes(x = ifelse(ci, x, NA)), alpha = 0.3) +
+  facet_wrap(~ n, ncol = 1) +
+  ylab("probability") + xlab("clay (%)") +
+  ggtitle("Comparison of 2 groups with similar clay contents")
+```
+
 
 ### DSM classes
 
@@ -102,25 +141,26 @@ Documentation requirement for the following data elements are specified in the s
 # NSSH 627.8 Documentation
 
 # soil series
-ss <- data.frame(
+data.frame(
+  level = "soil series", 
   n     = c(5, 10),
   acres = c(2000, 20000)
   )
-ss
+
 
 # components
-co <- data.frame(
+data.frame(
+  level = "components",
   n     = 1,
   acres = 3000
   )
-co
 
 # map units
-mu <- data.frame(
+data.frame(
+  level = "map unit",
   n     = cumsum(c(30, rep(10, 3))),
   acres = c(2000, seq(from = 4000, by = 4000, length.out = 3))
   )
-mu
 
 ```
 
@@ -136,9 +176,10 @@ theme_update(axis.ticks = element_blank(), axis.text = element_blank())
 library(sf)
 library(ggplot2)
 
-# Create a sixteen square polygon
+# set the seed for the random number generator
 set.seed(4)
 
+# Create a sixteen square polygon
 bb <- st_make_grid(st_bbox(c(xmin = 0, xmax = 4, ymin = 0, ymax = 4)), n = 4)
 grd <- st_as_sf(bb)
 grd$ID <- 1:length(bb)
