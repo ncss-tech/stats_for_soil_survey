@@ -48,7 +48,7 @@ Part 1
 
 ### [**Chapter 5:** *Sampling*](http://ncss-tech.github.io/stats_for_soil_survey/book/sampling.html)
 
- - #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/3_sampling/3.%20Sampling.pptx)
+ - #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/3_sampling/sampling_fy22.pptx)
 
 ------------------------------------------------------------------------
 
