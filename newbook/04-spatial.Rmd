@@ -799,7 +799,7 @@ gdd <- raster::raster(file.path(ch4.data.path, 'GDD.tif'))
 rain_fraction <- raster::raster(file.path(ch4.data.path, 'rain_fraction.tif'))
 
 # annual sum of monthly PPT - ET_p
-ppt_eff <- raster::raster(file.path(ch4.data.path, 'effective_preciptitation.tif'))
+ppt_eff <- raster::raster(file.path(ch4.data.path, 'effective_precipitation.tif'))
 ```
 
 Sometimes it is convenient to "stack" raster data that share a common grid size, extent, and coordinate reference system into a multilayer `terra` `SpatRaster` object. Calling `terra::rast()` on a `list` of `SpatRaster` is equivalent to making a `RasterStack` from several `RasterLayer`s with `raster::stack()`.
@@ -951,7 +951,7 @@ More information on [`SoilProfileCollection objects here`](http://ncss-tech.gith
 res <- cbind(s, e)
 
 # extract unique IDs and PRISM data; dplyr verbs work with sf data.frames
-res2 <- dplyr::select(res, pedon_key, MAAT, MAP, FFD, GDD, rain_fraction, effective_preciptitation)
+res2 <- dplyr::select(res, pedon_key, MAAT, MAP, FFD, GDD, rain_fraction, effective_precipitation)
 
 # join with original SoilProfileCollection object via pedon_key
 site(auburn) <- res2
@@ -963,7 +963,7 @@ Does there appear to be a relationship between soil morphology and "effective pr
 
 ```{r fig.width=12, fig.height=6.5, eval=TRUE}
 # create an ordering of pedons based on the extracted effective PPT
-new.order <- order(auburn$effective_preciptitation)
+new.order <- order(auburn$effective_precipitation)
 
 # setup figure margins, 1x1 row*column layout
 par(mar = c(4.5, 0, 4, 0), mfcol = c(1, 1))
@@ -986,7 +986,7 @@ plotSPC(auburn,
 # add an axis with extracted raster values
 axis(side = 1,
      at = 1:length(auburn),
-     labels = round(auburn$effective_preciptitation[new.order]),
+     labels = round(auburn$effective_precipitation[new.order]),
      cex.axis = 0.75)
 
 mtext('Annual Sum of Monthly (PPT - ET_p) (mm)',
@@ -1177,9 +1177,7 @@ table(cds$mlra)
 Extract values from the `SpatVector` of PRISM data as a `data.frame`.
 
 ```{r, eval=TRUE, warning=FALSE}
-e <- extract(rast(rs), 
-             project(vect(cds), crs(rast(rs))),
-             df = TRUE)
+e <- extract(rast(rs), project(vect(cds), crs(rast(rs))))
 
 # join columns from extracted values and sampling points
 s.df <- cbind(as(cds, 'data.frame'), e)
@@ -1192,7 +1190,7 @@ Summarizing multivariate data by group (MLRA) is usually much simpler after resh
 
 ```{r, eval=TRUE}
 # reshape from wide to long format
-m <- tidyr::pivot_longer(s.df, cols = c(MAAT, MAP, FFD, GDD, rain_fraction, effective_preciptitation))
+m <- tidyr::pivot_longer(s.df, cols = c(MAAT, MAP, FFD, GDD, rain_fraction, effective_precipitation))
 
 # check "wide" format
 head(m)
