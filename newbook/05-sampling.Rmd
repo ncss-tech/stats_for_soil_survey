@@ -193,16 +193,19 @@ In simple random sampling, all samples within the region have an equal chance of
 
 **Advantages**
 
- - Simplicity  
- - Requires little prior knowledge of the population    
+ - Simple
+ - Unbiased (equal probability of inclusion)
+ - Requires little prior knowledge of the population
+ - Howell et al. (2004) - produced a “much more sensitive, more accurate, and greater range of estimated values” than the models from the subjective samples
+   
        
 **Disadvantages**
 
- - Lower accuracy  
+ - Inefficient (requires large numbers)
+ - Lower accuracy
  - Higher cost
- - Lower efficiency
- - Samples may be clustered spatially
- - Samples may not be representative of the feature attribute(s)  
+ - Samples may not be representative of the feature attribute(s)
+ - Uneven spatial distribution (e.g. clustered)
 
 ```{r simple, fig.width=4, fig.height=4, eval=TRUE}
 # Generate simple random sample
@@ -221,12 +224,20 @@ In systematic sampling, a sample is taken according to a regularized pattern. Th
 
 **Advantages**
 
+ - Simple
+ - Precise estimates
+ - Even spatial coverage
  - Greater efficiency
- - Lower cost
+
 
 **Disadvantages**
 
- - Lower precision
+ - Biased estimates (particularly sampling variance)
+ - May miss individuals that don’t coincide with the sampling interval
+ - If so, the density needs to be increased
+ - Limited utility for areas larger than a single field
+ - Grid may not optimally fit irregular shapes
+
 
 ```{r systematic, fig.width=4, fig.height=4, eval=TRUE}
 # Generate systematic random sample
@@ -286,12 +297,18 @@ In stratified random sampling, the sampling region is spatially subset into diff
 
 **Advantages**
 
+ - More efficient than simple-random
  - Higher accuracy
- - Lower cost 
+ - Lower cost
+ - Sampling can be sized relative to proportion or variance
+ 
 
 **Disadvantages**
 
- - The existing knowledge used to construct strata may be flawed.
+ - Require pre-existing knowledge of the population (which may be flawed)
+ - If sampling is uneven, weights need to be known
+ - May need to construct the strata manually
+
 
 ```{r stratified, fig.width=4, fig.height=4, eval=TRUE}
 grd2 <- st_cast(grd, "MULTIPOLYGON")
@@ -315,13 +332,19 @@ In multistage random sampling, the region is separated into different subsets th
 
 **Advantages**
 
- - Greater efficiency
- - Lower cost  
+ - Most efficient
+ - Lower cost
+ - Sampling can be sized relative to proportion or variance
+  
 
 **Disadvantages**
 
- - Lower precision
- - Stronger clustering than simple random sampling
+ - Less precise
+ - Uneven spatial distribution (e.g. clustered)
+ - Require pre-existing knowledge of the population (which may be flawed)
+ - If sampling is uneven, weights need to be known
+ - May need to construct the strata manually
+
 
 ```{r two_stage, fig.width=4, fig.height=4, eval=TRUE}
 # Select 8 samples from each square
@@ -340,9 +363,26 @@ ggplot() +
 ```
 
 
-#### Conditioned Latin Hypercube (cLHS)
+### Conditioned Latin Hypercube (cLHS)
 
-Conditioned Latin hypercube sampling is a multi-staged stratified random sampling technique to obtain representative samples from feature (attribute) space [@minasny2006]. For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
+Conditioned Latin hypercube sampling is a stratified random sampling technique to obtain representative samples from feature (attribute) space [@minasny2006]. 
+
+**Advantages**
+
+ - Maximumly stratifies the predictors
+ - Automated sample selection
+ - Incorporates cost constraints
+ - Can incorporate legacy points
+ - Easily scales to multiple GIS layers
+
+**Disadvantages**
+
+ - Not ideal for map validation (non – probability sample)
+ - Not ideal for developing map unit concepts (puts points in weird landscape positions)
+ - Difficult to find alternatives for non-accessible points
+ - Inefficient with large GIS layers
+
+For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:  
 
  - Normalized Difference Vegetation Index (NDVI),  
  - Topographic Wetness Index (a.k.a. Wetness Index, compound topographic index),  
@@ -388,10 +428,10 @@ cbind(summary(volcano_r), summary(slope_r))
 
 Although the above example works well on our small volcano dataset, the clhs package is inefficient if you are working with large raster datasets. To overcome this limitation, you can first take a large random sample and then subsample it using cLHS.
 
-```{r clhs_sub, eval=TRUE}
+```{r clhs_sub, eval=FALSE}
 sub_s <- sampleRandom(volcano_r, size = 200, sp = TRUE) # random sample function from the raster package
 
-# s <- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)
+s <- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)
 ```
 
 
@@ -412,13 +452,15 @@ test <- st_make_grid(extent(volcano_r), n = 1)
 sr400 <- st_sample(test, size = 400, type = "random")
 
 # take a small random sample
-sr <- st_sample(test, size = 20, type = "random")
+sr  <- st_sample(test, size = 20, type = "random")
+sr2 <- sampleRandom(volcano_r, size = 20)
 
 # take a small systematic random sample
-sys <- st_sample(test, size = 20, type = "regular")
+sys  <- st_sample(test, size = 20, type = "regular")
+sys2 <- sampleRegular(volcano_r, size = 20)
 
 # take a cLHS sample
-# cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
 
 # Combind and Extract Samples
 s <- rbind(data.frame(method = "Simple Random 400", 
@@ -464,9 +506,9 @@ The cLHS approach best duplicates the distribution of elevation (because elevati
 
 ### Exercise: Design a Sampling Strategy
 
-- Using the "tahoe\_lidar\_highesthit.tif" dataset in the `gdalUtils` package or using your own data set (highly encouraged), compare two or more sampling approaches.
-
-- Show your work and submit the results to your coach.
+1. Load the "tahoe\_lidar\_highesthit.tif" dataset in the `gdalUtils` package (i.e. `tahoe <- raster::raster(system.file("external/tahoe_lidar_highesthit.tif", package="gdalUtils"))`) or use your own data set.
+2. Compare two or more sampling approaches and evaluate how representative they are.
+3. Show your work and submit the results to your mentor.
 
 <!-- ## Other Tools for Selecting Random Features   -->
 

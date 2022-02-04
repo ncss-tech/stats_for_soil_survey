@@ -24,7 +24,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2022-02-03" />
+<meta name="date" content="2022-02-04" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -391,6 +391,7 @@ div.csl-indent {
 <li class="chapter" data-level="5.2.3" data-path="sampling.html"><a href="sampling.html#spatial-coverage-sampling"><i class="fa fa-check"></i><b>5.2.3</b> Spatial Coverage Sampling</a></li>
 <li class="chapter" data-level="5.2.4" data-path="sampling.html"><a href="sampling.html#stratified-random"><i class="fa fa-check"></i><b>5.2.4</b> Stratified Random</a></li>
 <li class="chapter" data-level="5.2.5" data-path="sampling.html"><a href="sampling.html#multistage-stratified-random"><i class="fa fa-check"></i><b>5.2.5</b> Multistage Stratified Random</a></li>
+<li class="chapter" data-level="5.2.6" data-path="sampling.html"><a href="sampling.html#conditioned-latin-hypercube-clhs"><i class="fa fa-check"></i><b>5.2.6</b> Conditioned Latin Hypercube (cLHS)</a></li>
 </ul></li>
 <li class="chapter" data-level="5.3" data-path="sampling.html"><a href="sampling.html#evaluating-a-sampling-strategy"><i class="fa fa-check"></i><b>5.3</b> Evaluating a Sampling Strategy</a>
 <ul>
@@ -1252,18 +1253,18 @@ Anecdote about using `dplyr` for very simple base R things, and deprecation/pack
 <div class="sourceCode" id="cb88"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb88-1"><a href="data.html#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="co"># it can also be applied to horizon level columns in the SPC</span></span>
 <span id="cb88-2"><a href="data.html#cb88-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(pedons<span class="sc">$</span>texture), <span class="at">decreasing=</span><span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## 
-##        BR         L      GR-L     GRV-L     CBV-L       SPM     GRX-L       SIL    GRV-CL    CBV-CL    GR-SIL 
-##        58        36        33        24        18        14        12        12         9         8         7 
-##     CBX-L    GRX-CL    CBX-CL   GRV-SIL        CL   GRV-SCL     GRX-C       MPM        SL      CB-L     GR-CL 
-##         6         5         4         4         3         3         3         3         3         2         2 
-##   GRX-SCL     PGR-C    PGRX-L      SICL    STV-CL     STV-L     STX-C     STX-L         C      CB-C     CB-CL 
-##         2         2         2         2         2         2         2         2         1         1         1 
-##    CB-SCL    CB-SIL   CBV-SIL   CBX-SCL      CN-L   CN-SICL     CNX-L  CNX-SICL     FLV-L      GR-C    GR-SIC 
-##         1         1         1         1         1         1         1         1         1         1         1 
-##  GRV-SICL   GRX-SIC   GRX-SIL  PCB-SICL PCBV-SICL     PCN-C   PCNX-CL    PGRV-C   PGRV-CL  PGRX-SCL  PGRX-SIL 
-##         1         1         1         1         1         1         1         1         1         1         1 
-##      ST-L     STV-C    STX-CL  STX-SICL 
-##         1         1         1         1</code></pre>
+##        BR         L      GR-L     GRV-L     CBV-L       SPM     GRX-L       SIL    GRV-CL    CBV-CL 
+##        58        36        33        24        18        14        12        12         9         8 
+##    GR-SIL     CBX-L    GRX-CL    CBX-CL   GRV-SIL        CL   GRV-SCL     GRX-C       MPM        SL 
+##         7         6         5         4         4         3         3         3         3         3 
+##      CB-L     GR-CL   GRX-SCL     PGR-C    PGRX-L      SICL    STV-CL     STV-L     STX-C     STX-L 
+##         2         2         2         2         2         2         2         2         2         2 
+##         C      CB-C     CB-CL    CB-SCL    CB-SIL   CBV-SIL   CBX-SCL      CN-L   CN-SICL     CNX-L 
+##         1         1         1         1         1         1         1         1         1         1 
+##  CNX-SICL     FLV-L      GR-C    GR-SIC  GRV-SICL   GRX-SIC   GRX-SIL  PCB-SICL PCBV-SICL     PCN-C 
+##         1         1         1         1         1         1         1         1         1         1 
+##   PCNX-CL    PGRV-C   PGRV-CL  PGRX-SCL  PGRX-SIL      ST-L     STV-C    STX-CL  STX-SICL 
+##         1         1         1         1         1         1         1         1         1</code></pre>
 </div>
 <div id="logical-operators" class="section level3" number="2.6.3">
 <h3><span class="header-section-number">2.6.3</span> Logical Operators</h3>
@@ -1519,11 +1520,12 @@ NOTE: all records are missing artifact volume</code></pre>
 <p>Any profiles that have have logic errors detected are stored in <code>soilDB.env</code> <code>bad.pedon.ids</code> variable after you run <code>fetchNASIS</code>. If this variable does not exist either you have not run <code>fetchNASIS()</code> in the current session or there are no errors</p>
 <div class="sourceCode" id="cb118"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb118-1"><a href="data.html#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="co"># these are the troublesome user pedon IDs</span></span>
 <span id="cb118-2"><a href="data.html#cb118-2" aria-hidden="true" tabindex="-1"></a><span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir=</span>soilDB.env)</span></code></pre></div>
-<pre><code>##  [1] &quot;P93-037&quot; &quot;P90-008&quot; &quot;P90-004&quot; &quot;P90-009&quot; &quot;P93-058&quot; &quot;P93-059&quot; &quot;P90-025&quot; &quot;P90-002&quot; &quot;P90-012&quot; &quot;P92-001&quot; &quot;P92-085&quot;
-## [12] &quot;P91-105&quot; &quot;P90-019&quot; &quot;P75-006&quot; &quot;P90-010&quot; &quot;P90-015&quot; &quot;P91-094&quot; &quot;P92-029&quot; &quot;P92-076&quot; &quot;P93-026&quot; &quot;P93-035&quot; &quot;P93-063&quot;
-## [23] &quot;P93-064&quot; &quot;P93-041&quot; &quot;P93-043&quot; &quot;P93-044&quot; &quot;P93-083&quot; &quot;P93-112&quot; &quot;P93-113&quot; &quot;P93-124&quot; &quot;P93-001&quot; &quot;P96-007&quot; &quot;P91-025&quot;
-## [34] &quot;P93-078&quot; &quot;P92-044&quot; &quot;P91-112&quot; &quot;P92-038&quot; &quot;P90-018&quot; &quot;P93-057&quot; &quot;P93-084&quot; &quot;P91-059&quot; &quot;P90-016&quot; &quot;P92-063&quot; &quot;P92-048&quot;
-## [45] &quot;P93-052&quot; &quot;F01-230&quot; &quot;F95-420&quot; &quot;F95-114&quot; &quot;F96-205&quot;</code></pre>
+<pre><code>##  [1] &quot;P93-037&quot; &quot;P90-008&quot; &quot;P90-004&quot; &quot;P90-009&quot; &quot;P93-058&quot; &quot;P93-059&quot; &quot;P90-025&quot; &quot;P90-002&quot; &quot;P90-012&quot;
+## [10] &quot;P92-001&quot; &quot;P92-085&quot; &quot;P91-105&quot; &quot;P90-019&quot; &quot;P75-006&quot; &quot;P90-010&quot; &quot;P90-015&quot; &quot;P91-094&quot; &quot;P92-029&quot;
+## [19] &quot;P92-076&quot; &quot;P93-026&quot; &quot;P93-035&quot; &quot;P93-063&quot; &quot;P93-064&quot; &quot;P93-041&quot; &quot;P93-043&quot; &quot;P93-044&quot; &quot;P93-083&quot;
+## [28] &quot;P93-112&quot; &quot;P93-113&quot; &quot;P93-124&quot; &quot;P93-001&quot; &quot;P96-007&quot; &quot;P91-025&quot; &quot;P93-078&quot; &quot;P92-044&quot; &quot;P91-112&quot;
+## [37] &quot;P92-038&quot; &quot;P90-018&quot; &quot;P93-057&quot; &quot;P93-084&quot; &quot;P91-059&quot; &quot;P90-016&quot; &quot;P92-063&quot; &quot;P92-048&quot; &quot;P93-052&quot;
+## [46] &quot;F01-230&quot; &quot;F95-420&quot; &quot;F95-114&quot; &quot;F96-205&quot;</code></pre>
 <div class="sourceCode" id="cb120"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb120-1"><a href="data.html#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="co"># by default, rmHzErrors removes the &quot;bad&quot; illogical pedons</span></span>
 <span id="cb120-2"><a href="data.html#cb120-2" aria-hidden="true" tabindex="-1"></a><span class="fu">any</span>(mt647<span class="sc">$</span>pedon_id <span class="sc">%in%</span> <span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
 <pre><code>## [1] FALSE</code></pre>
@@ -1682,19 +1684,18 @@ NOTE: all records are missing artifact volume</code></pre>
 <span id="cb136-2"><a href="data.html#cb136-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb136-3"><a href="data.html#cb136-3" aria-hidden="true" tabindex="-1"></a><span class="co"># list all dataframes in the extended data</span></span>
 <span id="cb136-4"><a href="data.html#cb136-4" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(mt663ext, <span class="dv">1</span>)</span></code></pre></div>
-<pre><code>## List of 15
+<pre><code>## List of 14
 ##  $ ecositehistory   :&#39;data.frame&#39;:   0 obs. of  5 variables:
 ##  $ diagnostic       :&#39;data.frame&#39;:   292 obs. of  4 variables:
 ##  $ diagHzBoolean    :&#39;data.frame&#39;:   115 obs. of  20 variables:
 ##  $ restriction      :&#39;data.frame&#39;:   11 obs. of  8 variables:
 ##  $ frag_summary     :&#39;data.frame&#39;:   561 obs. of  18 variables:
-##  $ frag_summary_v2  :&#39;data.frame&#39;:   580 obs. of  18 variables:
 ##  $ art_summary      :&#39;data.frame&#39;:   561 obs. of  14 variables:
 ##  $ surf_frag_summary:&#39;data.frame&#39;:   134 obs. of  10 variables:
 ##  $ texmodifier      :&#39;data.frame&#39;:   622 obs. of  5 variables:
-##  $ geomorph         :&#39;data.frame&#39;:   241 obs. of  7 variables:
-##  $ taxhistory       :&#39;data.frame&#39;:   115 obs. of  20 variables:
-##  $ photo            :&#39;data.frame&#39;:   793 obs. of  5 variables:
+##  $ geomorph         :&#39;data.frame&#39;:   241 obs. of  9 variables:
+##  $ taxhistory       :&#39;data.frame&#39;:   115 obs. of  21 variables:
+##  $ photo            :&#39;data.frame&#39;:   793 obs. of  4 variables:
 ##  $ pm               :&#39;data.frame&#39;:   179 obs. of  10 variables:
 ##  $ struct           :&#39;data.frame&#39;:   444 obs. of  6 variables:
 ##  $ hzdesgn          :&#39;data.frame&#39;:   561 obs. of  19 variables:</code></pre>
@@ -1706,24 +1707,27 @@ NOTE: all records are missing artifact volume</code></pre>
 <pre><code>## [1] &quot;peiid&quot;    &quot;featkind&quot; &quot;featdept&quot; &quot;featdepb&quot;</code></pre>
 <div class="sourceCode" id="cb142"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb142-1"><a href="data.html#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="co"># surface rock fragments</span></span>
 <span id="cb142-2"><a href="data.html#cb142-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>surf_frag_summary)</span></code></pre></div>
-<pre><code>##  [1] &quot;peiid&quot;               &quot;surface_fgravel&quot;     &quot;surface_gravel&quot;      &quot;surface_cobbles&quot;     &quot;surface_stones&quot;     
-##  [6] &quot;surface_boulders&quot;    &quot;surface_channers&quot;    &quot;surface_flagstones&quot;  &quot;surface_paragravel&quot;  &quot;surface_paracobbles&quot;</code></pre>
+<pre><code>##  [1] &quot;peiid&quot;               &quot;surface_fgravel&quot;     &quot;surface_gravel&quot;      &quot;surface_cobbles&quot;    
+##  [5] &quot;surface_stones&quot;      &quot;surface_boulders&quot;    &quot;surface_channers&quot;    &quot;surface_flagstones&quot; 
+##  [9] &quot;surface_paragravel&quot;  &quot;surface_paracobbles&quot;</code></pre>
 <div class="sourceCode" id="cb144"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb144-1"><a href="data.html#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="co"># geomorphic description</span></span>
 <span id="cb144-2"><a href="data.html#cb144-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>geomorph)</span></code></pre></div>
-<pre><code>## [1] &quot;peiid&quot;        &quot;geomfmod&quot;     &quot;geomfname&quot;    &quot;geomfeatid&quot;   &quot;existsonfeat&quot; &quot;geomfiidref&quot;  &quot;geomftname&quot;</code></pre>
+<pre><code>## [1] &quot;peiid&quot;          &quot;geomicrorelief&quot; &quot;geommicelev&quot;    &quot;geomfmod&quot;       &quot;geomfname&quot;     
+## [6] &quot;geomfeatid&quot;     &quot;existsonfeat&quot;   &quot;geomfiidref&quot;    &quot;geomftname&quot;</code></pre>
 <div class="sourceCode" id="cb146"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb146-1"><a href="data.html#cb146-1" aria-hidden="true" tabindex="-1"></a><span class="co"># taxonomic history data</span></span>
 <span id="cb146-2"><a href="data.html#cb146-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>taxhistory)</span></code></pre></div>
-<pre><code>##  [1] &quot;peiid&quot;          &quot;classdate&quot;      &quot;classifier&quot;     &quot;classtype&quot;      &quot;taxonname&quot;      &quot;localphase&quot;    
-##  [7] &quot;taxonkind&quot;      &quot;seriesstatus&quot;   &quot;taxpartsize&quot;    &quot;taxorder&quot;       &quot;taxsuborder&quot;    &quot;taxgrtgroup&quot;   
-## [13] &quot;taxsubgrp&quot;      &quot;soiltaxedition&quot; &quot;osdtypelocflag&quot; &quot;taxmoistcl&quot;     &quot;taxtempregime&quot;  &quot;taxfamother&quot;   
-## [19] &quot;psctopdepth&quot;    &quot;pscbotdepth&quot;</code></pre>
+<pre><code>##  [1] &quot;peiid&quot;          &quot;classdate&quot;      &quot;classifier&quot;     &quot;classtype&quot;      &quot;taxonname&quot;     
+##  [6] &quot;localphase&quot;     &quot;taxonkind&quot;      &quot;seriesstatus&quot;   &quot;taxclname&quot;      &quot;taxpartsize&quot;   
+## [11] &quot;taxorder&quot;       &quot;taxsuborder&quot;    &quot;taxgrtgroup&quot;    &quot;taxsubgrp&quot;      &quot;soiltaxedition&quot;
+## [16] &quot;osdtypelocflag&quot; &quot;taxmoistcl&quot;     &quot;taxtempregime&quot;  &quot;taxfamother&quot;    &quot;psctopdepth&quot;   
+## [21] &quot;pscbotdepth&quot;</code></pre>
 <div class="sourceCode" id="cb148"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb148-1"><a href="data.html#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="co"># linked photo stored in site textnotes</span></span>
 <span id="cb148-2"><a href="data.html#cb148-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>photo) </span></code></pre></div>
-<pre><code>## [1] &quot;siteiid&quot;   &quot;recdate&quot;   &quot;textcat&quot;   &quot;imagepath&quot; &quot;imagename&quot;</code></pre>
+<pre><code>## [1] &quot;siteiid&quot;   &quot;recdate&quot;   &quot;textcat&quot;   &quot;imagepath&quot;</code></pre>
 <div class="sourceCode" id="cb150"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb150-1"><a href="data.html#cb150-1" aria-hidden="true" tabindex="-1"></a><span class="co"># site parent materials</span></span>
 <span id="cb150-2"><a href="data.html#cb150-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>pm)</span></code></pre></div>
-<pre><code>##  [1] &quot;siteiid&quot;      &quot;seqnum&quot;       &quot;pmorder&quot;      &quot;pmdept&quot;       &quot;pmdepb&quot;       &quot;pmmodifier&quot;   &quot;pmgenmod&quot;    
-##  [8] &quot;pmkind&quot;       &quot;pmorigin&quot;     &quot;pmweathering&quot;</code></pre>
+<pre><code>##  [1] &quot;siteiid&quot;      &quot;seqnum&quot;       &quot;pmorder&quot;      &quot;pmdept&quot;       &quot;pmdepb&quot;       &quot;pmmodifier&quot;  
+##  [7] &quot;pmgenmod&quot;     &quot;pmkind&quot;       &quot;pmorigin&quot;     &quot;pmweathering&quot;</code></pre>
 <div class="sourceCode" id="cb152"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb152-1"><a href="data.html#cb152-1" aria-hidden="true" tabindex="-1"></a><span class="do">###</span></span>
 <span id="cb152-2"><a href="data.html#cb152-2" aria-hidden="true" tabindex="-1"></a><span class="do">### horizon related extended data</span></span>
 <span id="cb152-3"><a href="data.html#cb152-3" aria-hidden="true" tabindex="-1"></a><span class="do">### </span></span>
@@ -1775,11 +1779,13 @@ NOTE: all records are missing artifact volume</code></pre>
 <span id="cb159-3"><a href="data.html#cb159-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb159-4"><a href="data.html#cb159-4" aria-hidden="true" tabindex="-1"></a><span class="co"># summary of the diagnostic features in your data!</span></span>
 <span id="cb159-5"><a href="data.html#cb159-5" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(d<span class="sc">$</span>featkind)</span></code></pre></div>
-<pre><code>##  [1] &quot;ochric epipedon&quot;          &quot;cambic horizon&quot;           &quot;lithic contact&quot;           &quot;mollic epipedon&quot;         
-##  [5] &quot;argillic horizon&quot;         &quot;redox concentrations&quot;     &quot;andic soil properties&quot;    &quot;secondary carbonates&quot;    
-##  [9] &quot;sapric soil materials&quot;    &quot;aquic conditions&quot;         &quot;reduced matrix&quot;           &quot;albic horizon&quot;           
-## [13] &quot;spodic horizon&quot;           &quot;glossic horizon&quot;          &quot;spodic materials&quot;         &quot;lithologic discontinuity&quot;
-## [17] &quot;densic materials&quot;         &quot;umbric epipedon&quot;          &quot;albic materials&quot;          NA</code></pre>
+<pre><code>##  [1] &quot;ochric epipedon&quot;          &quot;cambic horizon&quot;           &quot;lithic contact&quot;          
+##  [4] &quot;mollic epipedon&quot;          &quot;argillic horizon&quot;         &quot;redox concentrations&quot;    
+##  [7] &quot;andic soil properties&quot;    &quot;secondary carbonates&quot;     &quot;sapric soil materials&quot;   
+## [10] &quot;aquic conditions&quot;         &quot;reduced matrix&quot;           &quot;albic horizon&quot;           
+## [13] &quot;spodic horizon&quot;           &quot;glossic horizon&quot;          &quot;spodic materials&quot;        
+## [16] &quot;lithologic discontinuity&quot; &quot;densic materials&quot;         &quot;umbric epipedon&quot;         
+## [19] &quot;albic materials&quot;          NA</code></pre>
 <div class="sourceCode" id="cb161"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb161-1"><a href="data.html#cb161-1" aria-hidden="true" tabindex="-1"></a><span class="co"># tabulate</span></span>
 <span id="cb161-2"><a href="data.html#cb161-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(<span class="fu">droplevels</span>(<span class="fu">factor</span>(d<span class="sc">$</span>featkind))), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## 

@@ -24,7 +24,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2022-02-03" />
+<meta name="date" content="2022-02-04" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -391,6 +391,7 @@ div.csl-indent {
 <li class="chapter" data-level="5.2.3" data-path="sampling.html"><a href="sampling.html#spatial-coverage-sampling"><i class="fa fa-check"></i><b>5.2.3</b> Spatial Coverage Sampling</a></li>
 <li class="chapter" data-level="5.2.4" data-path="sampling.html"><a href="sampling.html#stratified-random"><i class="fa fa-check"></i><b>5.2.4</b> Stratified Random</a></li>
 <li class="chapter" data-level="5.2.5" data-path="sampling.html"><a href="sampling.html#multistage-stratified-random"><i class="fa fa-check"></i><b>5.2.5</b> Multistage Stratified Random</a></li>
+<li class="chapter" data-level="5.2.6" data-path="sampling.html"><a href="sampling.html#conditioned-latin-hypercube-clhs"><i class="fa fa-check"></i><b>5.2.6</b> Conditioned Latin Hypercube (cLHS)</a></li>
 </ul></li>
 <li class="chapter" data-level="5.3" data-path="sampling.html"><a href="sampling.html#evaluating-a-sampling-strategy"><i class="fa fa-check"></i><b>5.3</b> Evaluating a Sampling Strategy</a>
 <ul>
@@ -541,18 +542,18 @@ div.csl-indent {
 <p>In simple random sampling, all samples within the region have an equal chance of being selected. A simple random selection of points can be made using either the <code>st_sample()</code> function within the sf R package or the Create Random Points tool in ArcGIS.</p>
 <p><strong>Advantages</strong></p>
 <ul>
-<li>Simplicity<br />
-</li>
+<li>Simple</li>
+<li>Unbiased (equal probability of inclusion)</li>
 <li>Requires little prior knowledge of the population</li>
+<li>Howell et al. (2004) - produced a “much more sensitive, more accurate, and greater range of estimated values” than the models from the subjective samples</li>
 </ul>
 <p><strong>Disadvantages</strong></p>
 <ul>
-<li>Lower accuracy<br />
-</li>
+<li>Inefficient (requires large numbers)</li>
+<li>Lower accuracy</li>
 <li>Higher cost</li>
-<li>Lower efficiency</li>
-<li>Samples may be clustered spatially</li>
 <li>Samples may not be representative of the feature attribute(s)</li>
+<li>Uneven spatial distribution (e.g. clustered)</li>
 </ul>
 <div class="sourceCode" id="cb364"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb364-1"><a href="sampling.html#cb364-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate simple random sample</span></span>
 <span id="cb364-2"><a href="sampling.html#cb364-2" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">st_sample</span>(grd, <span class="at">size =</span> <span class="dv">16</span>, <span class="at">type =</span> <span class="st">&quot;random&quot;</span>)</span>
@@ -568,12 +569,18 @@ div.csl-indent {
 <p>In systematic sampling, a sample is taken according to a regularized pattern. This approach ensures even spatial coverage. Patterns may be rectilinear, triangular, or hexagonal. This sampling strategy can be inaccurate if the variation in the population doesn’t coincide with the regular pattern (e.g., if the population exhibits periodicity).</p>
 <p><strong>Advantages</strong></p>
 <ul>
+<li>Simple</li>
+<li>Precise estimates</li>
+<li>Even spatial coverage</li>
 <li>Greater efficiency</li>
-<li>Lower cost</li>
 </ul>
 <p><strong>Disadvantages</strong></p>
 <ul>
-<li>Lower precision</li>
+<li>Biased estimates (particularly sampling variance)</li>
+<li>May miss individuals that don’t coincide with the sampling interval</li>
+<li>If so, the density needs to be increased</li>
+<li>Limited utility for areas larger than a single field</li>
+<li>Grid may not optimally fit irregular shapes</li>
 </ul>
 <div class="sourceCode" id="cb365"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb365-1"><a href="sampling.html#cb365-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate systematic random sample</span></span>
 <span id="cb365-2"><a href="sampling.html#cb365-2" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">st_sample</span>(grd, <span class="at">size =</span> <span class="dv">16</span>, <span class="at">type =</span> <span class="st">&quot;regular&quot;</span>)</span>
@@ -617,12 +624,16 @@ div.csl-indent {
 <p>In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area, it can be used to develop the strata. Strata may be sampled equally or in proportion to area; however, if the target of interest is rare in the population, it may be preferable to sample the strata equally <span class="citation"><a href="#ref-franklin2009" role="doc-biblioref">Franklin and Miller</a> (<a href="#ref-franklin2009" role="doc-biblioref">2009</a>)</span>].</p>
 <p><strong>Advantages</strong></p>
 <ul>
+<li>More efficient than simple-random</li>
 <li>Higher accuracy</li>
 <li>Lower cost</li>
+<li>Sampling can be sized relative to proportion or variance</li>
 </ul>
 <p><strong>Disadvantages</strong></p>
 <ul>
-<li>The existing knowledge used to construct strata may be flawed.</li>
+<li>Require pre-existing knowledge of the population (which may be flawed)</li>
+<li>If sampling is uneven, weights need to be known</li>
+<li>May need to construct the strata manually</li>
 </ul>
 <div class="sourceCode" id="cb367"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb367-1"><a href="sampling.html#cb367-1" aria-hidden="true" tabindex="-1"></a>grd2 <span class="ot">&lt;-</span> <span class="fu">st_cast</span>(grd, <span class="st">&quot;MULTIPOLYGON&quot;</span>)</span>
 <span id="cb367-2"><a href="sampling.html#cb367-2" aria-hidden="true" tabindex="-1"></a><span class="fu">st_crs</span>(grd2) <span class="ot">&lt;-</span> <span class="dv">5070</span></span>
@@ -641,13 +652,17 @@ div.csl-indent {
 <p>In multistage random sampling, the region is separated into different subsets that are randomly selected (i.e., first stage), and then the selected subsets are randomly sampled (i.e., second stage). This is similar to stratified random sampling, except that with stratified random sampling each strata is sampled.</p>
 <p><strong>Advantages</strong></p>
 <ul>
-<li>Greater efficiency</li>
+<li>Most efficient</li>
 <li>Lower cost</li>
+<li>Sampling can be sized relative to proportion or variance</li>
 </ul>
 <p><strong>Disadvantages</strong></p>
 <ul>
-<li>Lower precision</li>
-<li>Stronger clustering than simple random sampling</li>
+<li>Less precise</li>
+<li>Uneven spatial distribution (e.g. clustered)</li>
+<li>Require pre-existing knowledge of the population (which may be flawed)</li>
+<li>If sampling is uneven, weights need to be known</li>
+<li>May need to construct the strata manually</li>
 </ul>
 <div class="sourceCode" id="cb368"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb368-1"><a href="sampling.html#cb368-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select 8 samples from each square</span></span>
 <span id="cb368-2"><a href="sampling.html#cb368-2" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(grd), <span class="at">size =</span> <span class="dv">2</span>, <span class="at">replace =</span> <span class="cn">FALSE</span>)</span>
@@ -662,9 +677,26 @@ div.csl-indent {
 <span id="cb368-11"><a href="sampling.html#cb368-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="at">data =</span> test) <span class="sc">+</span> </span>
 <span id="cb368-12"><a href="sampling.html#cb368-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Two-stage&quot;</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/two_stage-1.png" width="384" style="display: block; margin: auto;" /></p>
-<div id="conditioned-latin-hypercube-clhs" class="section level4" number="5.2.5.1">
-<h4><span class="header-section-number">5.2.5.1</span> Conditioned Latin Hypercube (cLHS)</h4>
-<p>Conditioned Latin hypercube sampling is a multi-staged stratified random sampling technique to obtain representative samples from feature (attribute) space <span class="citation">(<a href="#ref-minasny2006" role="doc-biblioref">Minasny and McBratney 2006</a>)</span>. For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:</p>
+</div>
+<div id="conditioned-latin-hypercube-clhs" class="section level3" number="5.2.6">
+<h3><span class="header-section-number">5.2.6</span> Conditioned Latin Hypercube (cLHS)</h3>
+<p>Conditioned Latin hypercube sampling is a stratified random sampling technique to obtain representative samples from feature (attribute) space <span class="citation">(<a href="#ref-minasny2006" role="doc-biblioref">Minasny and McBratney 2006</a>)</span>.</p>
+<p><strong>Advantages</strong></p>
+<ul>
+<li>Maximumly stratifies the predictors</li>
+<li>Automated sample selection</li>
+<li>Incorporates cost constraints</li>
+<li>Can incorporate legacy points</li>
+<li>Easily scales to multiple GIS layers</li>
+</ul>
+<p><strong>Disadvantages</strong></p>
+<ul>
+<li>Not ideal for map validation (non – probability sample)</li>
+<li>Not ideal for developing map unit concepts (puts points in weird landscape positions)</li>
+<li>Difficult to find alternatives for non-accessible points</li>
+<li>Inefficient with large GIS layers</li>
+</ul>
+<p>For example, assume you have prior knowledge of a study area and have the time and resources to collect 120 points. You also know the following variables (strata), which are represented as coregistered raster datasets, to be of importance to the soil property or class being investigated:</p>
 <ul>
 <li>Normalized Difference Vegetation Index (NDVI),<br />
 </li>
@@ -722,8 +754,7 @@ div.csl-indent {
 <p>Although the above example works well on our small volcano dataset, the clhs package is inefficient if you are working with large raster datasets. To overcome this limitation, you can first take a large random sample and then subsample it using cLHS.</p>
 <div class="sourceCode" id="cb374"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb374-1"><a href="sampling.html#cb374-1" aria-hidden="true" tabindex="-1"></a>sub_s <span class="ot">&lt;-</span> <span class="fu">sampleRandom</span>(volcano_r, <span class="at">size =</span> <span class="dv">200</span>, <span class="at">sp =</span> <span class="cn">TRUE</span>) <span class="co"># random sample function from the raster package</span></span>
 <span id="cb374-2"><a href="sampling.html#cb374-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb374-3"><a href="sampling.html#cb374-3" aria-hidden="true" tabindex="-1"></a><span class="co"># s &lt;- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)</span></span></code></pre></div>
-</div>
+<span id="cb374-3"><a href="sampling.html#cb374-3" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">clhs</span>(sub_s, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">simple =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 </div>
 </div>
 <div id="evaluating-a-sampling-strategy" class="section level2" number="5.3">
@@ -740,36 +771,38 @@ div.csl-indent {
 <span id="cb375-8"><a href="sampling.html#cb375-8" aria-hidden="true" tabindex="-1"></a>sr400 <span class="ot">&lt;-</span> <span class="fu">st_sample</span>(test, <span class="at">size =</span> <span class="dv">400</span>, <span class="at">type =</span> <span class="st">&quot;random&quot;</span>)</span>
 <span id="cb375-9"><a href="sampling.html#cb375-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb375-10"><a href="sampling.html#cb375-10" aria-hidden="true" tabindex="-1"></a><span class="co"># take a small random sample</span></span>
-<span id="cb375-11"><a href="sampling.html#cb375-11" aria-hidden="true" tabindex="-1"></a>sr <span class="ot">&lt;-</span> <span class="fu">st_sample</span>(test, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">type =</span> <span class="st">&quot;random&quot;</span>)</span>
-<span id="cb375-12"><a href="sampling.html#cb375-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb375-13"><a href="sampling.html#cb375-13" aria-hidden="true" tabindex="-1"></a><span class="co"># take a small systematic random sample</span></span>
-<span id="cb375-14"><a href="sampling.html#cb375-14" aria-hidden="true" tabindex="-1"></a>sys <span class="ot">&lt;-</span> <span class="fu">st_sample</span>(test, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">type =</span> <span class="st">&quot;regular&quot;</span>)</span>
-<span id="cb375-15"><a href="sampling.html#cb375-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb375-16"><a href="sampling.html#cb375-16" aria-hidden="true" tabindex="-1"></a><span class="co"># take a cLHS sample</span></span>
-<span id="cb375-17"><a href="sampling.html#cb375-17" aria-hidden="true" tabindex="-1"></a><span class="co"># cs &lt;- clhs(rs, size = 20, progress = FALSE, simple = FALSE)</span></span>
-<span id="cb375-18"><a href="sampling.html#cb375-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb375-19"><a href="sampling.html#cb375-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Combind and Extract Samples</span></span>
-<span id="cb375-20"><a href="sampling.html#cb375-20" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Simple Random 400&quot;</span>, </span>
-<span id="cb375-21"><a href="sampling.html#cb375-21" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">extract</span>(rs, <span class="fu">st_coordinates</span>(sr400))</span>
-<span id="cb375-22"><a href="sampling.html#cb375-22" aria-hidden="true" tabindex="-1"></a>                      ),</span>
-<span id="cb375-23"><a href="sampling.html#cb375-23" aria-hidden="true" tabindex="-1"></a>           <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Simple Random&quot;</span>, </span>
-<span id="cb375-24"><a href="sampling.html#cb375-24" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">extract</span>(rs, <span class="fu">st_coordinates</span>(sr))</span>
-<span id="cb375-25"><a href="sampling.html#cb375-25" aria-hidden="true" tabindex="-1"></a>                      ),</span>
-<span id="cb375-26"><a href="sampling.html#cb375-26" aria-hidden="true" tabindex="-1"></a>           <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Systematic Random&quot;</span>, </span>
-<span id="cb375-27"><a href="sampling.html#cb375-27" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">extract</span>(rs, <span class="fu">st_coordinates</span>(sys))</span>
-<span id="cb375-28"><a href="sampling.html#cb375-28" aria-hidden="true" tabindex="-1"></a>                      ),</span>
-<span id="cb375-29"><a href="sampling.html#cb375-29" aria-hidden="true" tabindex="-1"></a>           <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;cLHS&quot;</span>, </span>
-<span id="cb375-30"><a href="sampling.html#cb375-30" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">slot</span>(cs<span class="sc">$</span>sampled_data, <span class="st">&#39;data&#39;</span>)</span>
-<span id="cb375-31"><a href="sampling.html#cb375-31" aria-hidden="true" tabindex="-1"></a>                      )</span>
-<span id="cb375-32"><a href="sampling.html#cb375-32" aria-hidden="true" tabindex="-1"></a>           )</span>
-<span id="cb375-33"><a href="sampling.html#cb375-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb375-34"><a href="sampling.html#cb375-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize the sample values</span></span>
-<span id="cb375-35"><a href="sampling.html#cb375-35" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(slope <span class="sc">~</span> method, <span class="at">data =</span> s, <span class="cf">function</span>(x) <span class="fu">round</span>(<span class="fu">summary</span>(x)))</span></code></pre></div>
+<span id="cb375-11"><a href="sampling.html#cb375-11" aria-hidden="true" tabindex="-1"></a>sr  <span class="ot">&lt;-</span> <span class="fu">st_sample</span>(test, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">type =</span> <span class="st">&quot;random&quot;</span>)</span>
+<span id="cb375-12"><a href="sampling.html#cb375-12" aria-hidden="true" tabindex="-1"></a>sr2 <span class="ot">&lt;-</span> <span class="fu">sampleRandom</span>(volcano_r, <span class="at">size =</span> <span class="dv">20</span>)</span>
+<span id="cb375-13"><a href="sampling.html#cb375-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb375-14"><a href="sampling.html#cb375-14" aria-hidden="true" tabindex="-1"></a><span class="co"># take a small systematic random sample</span></span>
+<span id="cb375-15"><a href="sampling.html#cb375-15" aria-hidden="true" tabindex="-1"></a>sys  <span class="ot">&lt;-</span> <span class="fu">st_sample</span>(test, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">type =</span> <span class="st">&quot;regular&quot;</span>)</span>
+<span id="cb375-16"><a href="sampling.html#cb375-16" aria-hidden="true" tabindex="-1"></a>sys2 <span class="ot">&lt;-</span> <span class="fu">sampleRegular</span>(volcano_r, <span class="at">size =</span> <span class="dv">20</span>)</span>
+<span id="cb375-17"><a href="sampling.html#cb375-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb375-18"><a href="sampling.html#cb375-18" aria-hidden="true" tabindex="-1"></a><span class="co"># take a cLHS sample</span></span>
+<span id="cb375-19"><a href="sampling.html#cb375-19" aria-hidden="true" tabindex="-1"></a>cs <span class="ot">&lt;-</span> <span class="fu">clhs</span>(rs, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">simple =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb375-20"><a href="sampling.html#cb375-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb375-21"><a href="sampling.html#cb375-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Combind and Extract Samples</span></span>
+<span id="cb375-22"><a href="sampling.html#cb375-22" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Simple Random 400&quot;</span>, </span>
+<span id="cb375-23"><a href="sampling.html#cb375-23" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">extract</span>(rs, <span class="fu">st_coordinates</span>(sr400))</span>
+<span id="cb375-24"><a href="sampling.html#cb375-24" aria-hidden="true" tabindex="-1"></a>                      ),</span>
+<span id="cb375-25"><a href="sampling.html#cb375-25" aria-hidden="true" tabindex="-1"></a>           <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Simple Random&quot;</span>, </span>
+<span id="cb375-26"><a href="sampling.html#cb375-26" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">extract</span>(rs, <span class="fu">st_coordinates</span>(sr))</span>
+<span id="cb375-27"><a href="sampling.html#cb375-27" aria-hidden="true" tabindex="-1"></a>                      ),</span>
+<span id="cb375-28"><a href="sampling.html#cb375-28" aria-hidden="true" tabindex="-1"></a>           <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Systematic Random&quot;</span>, </span>
+<span id="cb375-29"><a href="sampling.html#cb375-29" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">extract</span>(rs, <span class="fu">st_coordinates</span>(sys))</span>
+<span id="cb375-30"><a href="sampling.html#cb375-30" aria-hidden="true" tabindex="-1"></a>                      ),</span>
+<span id="cb375-31"><a href="sampling.html#cb375-31" aria-hidden="true" tabindex="-1"></a>           <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;cLHS&quot;</span>, </span>
+<span id="cb375-32"><a href="sampling.html#cb375-32" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">slot</span>(cs<span class="sc">$</span>sampled_data, <span class="st">&#39;data&#39;</span>)</span>
+<span id="cb375-33"><a href="sampling.html#cb375-33" aria-hidden="true" tabindex="-1"></a>                      )</span>
+<span id="cb375-34"><a href="sampling.html#cb375-34" aria-hidden="true" tabindex="-1"></a>           )</span>
+<span id="cb375-35"><a href="sampling.html#cb375-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb375-36"><a href="sampling.html#cb375-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize the sample values</span></span>
+<span id="cb375-37"><a href="sampling.html#cb375-37" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(slope <span class="sc">~</span> method, <span class="at">data =</span> s, <span class="cf">function</span>(x) <span class="fu">round</span>(<span class="fu">summary</span>(x)))</span></code></pre></div>
 <pre><code>##              method slope.Min. slope.1st Qu. slope.Median slope.Mean slope.3rd Qu. slope.Max.
-## 1              cLHS          0             7           14         15            21         37
+## 1              cLHS          1             8           14         15            21         39
 ## 2     Simple Random          0             7           17         15            23         28
 ## 3 Simple Random 400          0             6           14         15            21         37
-## 4 Systematic Random          2             5           13         13            18         32</code></pre>
+## 4 Systematic Random          0             4           12         13            18         30</code></pre>
 <div class="sourceCode" id="cb377"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb377-1"><a href="sampling.html#cb377-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot overlapping density plots to compare the distributions between the large and small samples</span></span>
 <span id="cb377-2"><a href="sampling.html#cb377-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(s, <span class="fu">aes</span>(<span class="at">x =</span> slope, <span class="at">col =</span> method)) <span class="sc">+</span> </span>
 <span id="cb377-3"><a href="sampling.html#cb377-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">geom_density</span>(<span class="at">cex =</span> <span class="dv">2</span>)</span></code></pre></div>
@@ -791,10 +824,11 @@ div.csl-indent {
 <p>The cLHS approach best duplicates the distribution of elevation (because elevation is explicitly used in the stratification process). The contrast is less severe in the summary metrics, but again cLHS more closely resembles the larger sample. Other comparisons are possible using the approaches in the following chapters.</p>
 <div id="exercise-design-a-sampling-strategy" class="section level3" number="5.3.1">
 <h3><span class="header-section-number">5.3.1</span> Exercise: Design a Sampling Strategy</h3>
-<ul>
-<li><p>Using the “tahoe_lidar_highesthit.tif” dataset in the <code>gdalUtils</code> package or using your own data set (highly encouraged), compare two or more sampling approaches.</p></li>
-<li><p>Show your work and submit the results to your coach.</p></li>
-</ul>
+<ol style="list-style-type: decimal">
+<li>Load the “tahoe_lidar_highesthit.tif” dataset in the <code>gdalUtils</code> package (i.e. <code>tahoe &lt;- raster::raster(system.file("external/tahoe_lidar_highesthit.tif", package="gdalUtils"))</code>) or use your own data set.</li>
+<li>Compare two or more sampling approaches and evaluate how representative they are.</li>
+<li>Show your work and submit the results to your mentor.</li>
+</ol>
 <!-- ## Other Tools for Selecting Random Features   -->
 <!-- An ArcGIS tool for selecting random features is available from the [Job Aids page](http://www.nrcs.usda.gov/wps/PA_NRCSConsumption/download?cid=stelprdb1258054&ext=pdf). This tool randomly selects the specified number of features from a dataset or set of selected features in ArcGIS. It is an ideal tool for the first stage of a two-stage random sample.   -->
 <!-- ### cLHS Using TEUI   -->
