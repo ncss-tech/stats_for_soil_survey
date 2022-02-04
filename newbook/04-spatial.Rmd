@@ -317,7 +317,7 @@ For a Geodatabase, you should specify the feature class using the `layer` argume
 
 ```{r eval=FALSE}
 x <- sf::st_read(dsn = 'E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer = 'ca630_a')
-x <- sf::read_sf(x, dsn = 'E:/gis_data/ca630/pedon_locations.shp')
+x <- sf::read_sf(dsn = 'E:/gis_data/ca630/pedon_locations.shp')
 ```
 
 ```{r eval=FALSE}
@@ -604,9 +604,9 @@ writeRaster(r.wgs84, filename='r_wgs84.tif', options=c("COMPRESS=LZW"))
    * [rspatial.org - Spatial Data Science with R](https://rspatial.org/)
    * [Goodbye PROJ.4 strings! How to specify a coordinate reference system in R?](https://inbo.github.io/tutorials/tutorials/spatial_crs_coding/)
 
-### Raster data
+## Raster data
 
-#### In-memory versus disk-based processing
+### In-memory versus disk-based processing
 
 Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory.With the `raster` package, the initial file/disk-based reference can be converted to an in-memory `RasterLayer` with the `readAll()` function. You can achieve a similar effect in `terra` by doing `values(object) <- values(object)`, but bypassing the heuristics for loading raster data into memory is not recommended.
 
@@ -637,7 +637,7 @@ The `writeRaster()` function interprets the given (and missing) arguments as:
 * default `datatype`
 * default `NAflag`
 
-#### Object Properties
+### Object Properties
 
 `RasterLayer` objects are similar to `sf` and `sp` objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of `RasterLayer` objects should be performed using functions such as:
   
@@ -648,7 +648,7 @@ The `writeRaster()` function interprets the given (and missing) arguments as:
 * `dataType(r)`: get / set the data type
 * ... many more, see the `raster` package manual
 
-#### Data Types
+### Data Types
 
 Commonly used raster `datatypes` include: "unsigned integer", "signed integer", and "floating point" of variable precision.
 
@@ -673,7 +673,7 @@ writeRaster(r, filename = 'r.tif', datatype = 'INT1U')
 writeRaster(r, filename = 'r.tif', datatype = 'FLT4S')
 ```
 
-##### Notes on Compression
+#### Notes on Compression
 
 It is often a good idea to create internally-compressed raster data. 
 
@@ -691,11 +691,11 @@ writeRaster(r, filename='r.tif', options=c("COMPRESS=DEFLATE", "PREDICTOR=2", "Z
 
 See [this article](https://kokoalberti.com/articles/geotiff-compression-optimization-guide/) for some ideas on optimization of file read/write times and associated compressed file sizes.  
 
-### Spatial Overlay Operations
+## Spatial Overlay Operations
 
 Spatial data are lot more useful when "combined" (overlay, intersect, spatial query, etc.) to generate something new. For simplicity, we will refer to this kind of operation as an "extraction". The CRS of the two objects being overlaid must match.
 
-#### Vector Data
+### Vector Data
 
 ```{r}
 p <- sf::st_as_sf(data.frame(x = -120, y = 37.5),
@@ -773,14 +773,14 @@ unzip(
 
 We will be using polygons associated with MLRA 15 and 18 as part of this demonstration. 
 
-Import these data  with `terra::vect()`.
+Import these data  with `sf::st_read()`.
 
 ```{r results='hide', eval=TRUE} 
 # load MLRA polygons
 mlra <- sf::st_read(file.path(ch4.data.path, 'mlra-18-15-AEA.shp'))
 ```
 
-We will load the sample raster data (PRISM derived) using `terra::rast()`
+We will load the sample raster data (PRISM derived) using `raster::raster()`
 
 ```{r results='hide', eval=TRUE} 
 # mean annual air temperature, Deg C
@@ -812,7 +812,7 @@ rs
 plot(rs)
 ```
 
-#### Approach
+### Approach
 
 Typically, spatial queries of raster data by polygon features are performed in two ways:
   
@@ -828,25 +828,29 @@ The `extract()` function can perform several operations in one pass, such as buf
 
 Sampling and extraction with `raster` methods results in a `matrix` object.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # sampling single RasterLayer
-spatSample(rast(maat), size = 10)
+terra::spatSample(terra::rast(maat), size = 10)
 
 # sampling RasterStack
-spatSample(rast(maat), size = 10)
+terra::spatSample(terra::rast(rs), size = 10)
 ```
 
 Sampling and extraction with `terra`, result is a `SpatVector` object.
 
-```{r fig.width=8, fig.height=5}
+```{r fig.width=8, fig.height=5, eval=TRUE}
 par(mfcol = c(1, 2), mar = c(1, 1, 3, 1))
 
 # regular sampling + extraction of raster values
-x.regular <-  spatSample(rast(maat),
-                         method = "regular",
-                         size = 100,
-                         as.points = TRUE)
+x.regular <-  terra::spatSample(
+  terra::rast(maat),
+  method = "regular",
+  size = 100,
+  as.points = TRUE
+)
 x.regular
+
+# see also raster::sampleRegular()
 
 plot(maat,
      axes = FALSE,
@@ -860,6 +864,9 @@ x.random <- spatSample(rast(maat),
                        size = 100,
                        as.points = TRUE,
                        na.rm = TRUE)
+
+# see also raster::sampleRandom()
+
 plot(maat,
      axes = FALSE,
      legend = FALSE,
@@ -904,7 +911,6 @@ plot(st_geometry(mlra), main = 'MLRA 15 and 18')
 box()
 
 # MAAT raster
-# recall that maat is a raster object
 plot(maat, main = 'PRISM Mean Annual Air Temperature (deg C)')
 
 # plot MAAT raster with MLRA polygons on top
@@ -1024,14 +1030,17 @@ The `SDA_query` function is used to send arbitrary queries written in SQL to SDA
 
 ```{r, eval=TRUE}
 # result is a data.frame
-mukeys <- SDA_query("SELECT DISTINCT mukey FROM component
-                     WHERE compname = 'Amador' AND majcompflag = 'Yes';")
+mukeys <- soilDB::SDA_query("SELECT DISTINCT mukey FROM component
+                             WHERE compname = 'Amador' AND majcompflag = 'Yes';")
 
 # result is a SpatialPointsDataFrame
-amador.pts <- fetchSDA_spatial(mukeys$mukey,
-                               by.col = 'mukey',
-                               method = 'point',
-                               chunk.size = 2)
+amador.pts <- soilDB::fetchSDA_spatial(
+  mukeys$mukey,
+  by.col = 'mukey',
+  method = 'point',
+  chunk.size = 2
+)
+
 amador.pts <- sf::st_as_sf(amador.pts)
 ```
 
@@ -1283,7 +1292,7 @@ tps <- list(
     )
   )
 
-bwplot(mlra ~ value | name, data=m,                 # setup plot and data source
+bwplot(mlra ~ value | name, data = m,                   # setup plot and data source
        as.table=TRUE,                                   # start panels in top/left corner
        varwidth=TRUE,                                   # scale width of box by number of obs
        scales=list(alternating=3, relation='free'),     # setup scales
