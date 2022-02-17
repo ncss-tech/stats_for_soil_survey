@@ -608,7 +608,9 @@ writeRaster(r.wgs84, filename='r_wgs84.tif', options=c("COMPRESS=LZW"))
 
 ### In-memory versus disk-based processing
 
-Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory.With the `raster` package, the initial file/disk-based reference can be converted to an in-memory `RasterLayer` with the `readAll()` function. You can achieve a similar effect in `terra` by doing `values(object) <- values(object)`, but bypassing the heuristics for loading raster data into memory is not recommended.
+Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory. 
+
+With the `raster` package, the initial file/disk-based reference can be converted to an in-memory `RasterLayer` with the `readAll()` function. You can achieve a similar effect in `terra` by doing `set.values(object)`.
 
 ```{r}
 # check: file is on disk
@@ -627,7 +629,14 @@ See the manual pages for `writeRaster()`, `writeFormats()`, and `dataType()` for
   
 ```{r eval=FALSE}
 # using previous example data set
-writeRaster(r, filename = 'r.tif', options = c("COMPRESS=LZW"))
+raster::writeRaster(r, filename = 'r.tif', options = c("COMPRESS=LZW"))
+```
+
+With terra, "LZW" compression is used by default when writing GeoTiff files. Using the `gdal` argument e.g.: `terra::writeRaster(..., gdal=)` is equivalent to specifying `option` argument to `raster::writeRaster()`.
+
+```{r eval=FALSE}
+# using previous example data set
+terra::writeRaster(t.wgs84, filename = 't.wgs84.tif')
 ```
 
 The `writeRaster()` function interprets the given (and missing) arguments as:
@@ -639,18 +648,18 @@ The `writeRaster()` function interprets the given (and missing) arguments as:
 
 ### Object Properties
 
-`RasterLayer` objects are similar to `sf` and `sp` objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of `RasterLayer` objects should be performed using functions such as:
+`RasterLayer` and `SpatRaster` objects are similar to `sf` and `sp` objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of raster objects should be performed using functions such as:
   
-* `NAvalue(r)`: get / set the NODATA value
-* `wkt(r)` (preferred) OR `crs(r)` OR `proj4string(r)`: get / set the coordinate reference system
+* `raster::NAvalue(r)` / `terra::NAflag(r)`: get / set the NODATA value
+* `raster::wkt(r)` OR `terra::crs(r)`: get / set the coordinate reference system
 * `res(r)`: get / set the resolution
-* `extent(r)`: get / set the extent
-* `dataType(r)`: get / set the data type
-* ... many more, see the `raster` package manual
+* `raster::extent(r)` or `terra::ext(r)`: get / set the extent
+* `raster::dataType(r)` / `terra::writeRaster(..., datatype=)`: get / set the data type
+* ... many more, see the [`raster`](https://rspatial.github.io/raster/) and [`terra`](https://rspatial.github.io/terra/) package manuals
 
 ### Data Types
 
-Commonly used raster `datatypes` include: "unsigned integer", "signed integer", and "floating point" of variable precision.
+Commonly used raster `datatype` include: "unsigned integer", "signed integer", and "floating point" of variable precision.
 
  * `INT1U`: integers from 0 to 255
  * `INT2U`: integers from 0 to 65,534
@@ -666,30 +675,32 @@ For example, if you have generated a `RasterLayer` that warrants integer precisi
 ```{eval = FALSE}
 # integer grid with a range of 0-100
 # maybe soil texture classes
-writeRaster(r, filename = 'r.tif', datatype = 'INT1U')
+raster::writeRaster(r, filename = 'r.tif', datatype = 'INT1U')
 
 # floating point grid with very wide range
 # maybe DSM model output
-writeRaster(r, filename = 'r.tif', datatype = 'FLT4S')
+terra::writeRaster(t.wgs84, filename = 'r.tif', datatype = 'FLT4S')
 ```
 
 #### Notes on Compression
 
 It is often a good idea to create internally-compressed raster data. 
 
-The [GeoTiff format](https://gdal.org/drivers/raster/gtiff.html) can accommodate many different compression algorithms, including lossy (JPEG) compression. Usually, the default "LZW" or "DEFLATE" compression will result in significant savings, especially for data encoded as integers.
+The [GeoTiff format](https://gdal.org/drivers/raster/gtiff.html) can accommodate many different compression algorithms, including lossy (JPEG) compression. Usually, the default "LZW" or "DEFLATE" compression will result in significant savings, especially for data encoded as integers. 
 
 For example, the CONUS gSSURGO map unit key grid at 30m resolution is about 55Gb (GeoTiff, no compression) vs. 2.4Gb after LZW compression.
 
 ```{r eval = FALSE}
-# reasonable compression
-writeRaster(r, filename='r.tif', options=c("COMPRESS=LZW"))
+# reasonable compression using LZW is the default, compare to 
+raster::writeRaster(r, filename='r.tif', options=c("COMPRESS=NONE"))
 
 # takes longer to write the file, but better compression
-writeRaster(r, filename='r.tif', options=c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9"))
+terra::writeRaster(terra::writeRaster(t.wgs84, filename='r.tif', gdal=c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9"))
 ```
 
 See [this article](https://kokoalberti.com/articles/geotiff-compression-optimization-guide/) for some ideas on optimization of file read/write times and associated compressed file sizes.  
+
+
 
 ## Spatial Overlay Operations
 
@@ -826,17 +837,16 @@ The second method is more efficient (10-100x faster), requires less memory, and 
 
 The `extract()` function can perform several operations in one pass, such as buffering (in projected units) with `buffer` argument. See the manual page for anextensive listing of optional arguments and what they do.
 
-Sampling and extraction with `raster` methods results in a `matrix` object.
+Sampling and extraction with `raster` methods results in a `matrix` object. Sampling and extraction with `terra`, result is a `SpatVector`  object.
 
 ```{r, eval=TRUE}
-# sampling single RasterLayer
+# sampling single RasterLayer -> SpatRaster
 terra::spatSample(terra::rast(maat), size = 10)
 
-# sampling RasterStack
+# sampling RasterStack -> SpatRaster
 terra::spatSample(terra::rast(rs), size = 10)
 ```
 
-Sampling and extraction with `terra`, result is a `SpatVector` object.
 
 ```{r fig.width=8, fig.height=5, eval=TRUE}
 par(mfcol = c(1, 2), mar = c(1, 1, 3, 1))
@@ -860,10 +870,12 @@ points(x.regular)
 
 # random sample + extraction of raster values
 # note that NULL values are removed
-x.random <- spatSample(rast(maat),
-                       size = 100,
-                       as.points = TRUE,
-                       na.rm = TRUE)
+x.random <- terra::spatSample(
+  terra::rast(maat),
+  size = 100,
+  as.points = TRUE,
+  na.rm = TRUE
+)
 
 # see also raster::sampleRandom()
 
@@ -878,7 +890,7 @@ Note that the mean can be efficiently estimated, even with a relatively small nu
 
 ```{r}
 # all values: slow for large grids
-mean(values(maat), na.rm = TRUE)
+mean(raster::values(maat), na.rm = TRUE)
 
 # regular sampling: efficient, central tendency comparable to above
 mean(x.regular$MAAT, na.rm = TRUE)
@@ -893,9 +905,9 @@ Just how much variation can we expect when collecting 100, randomly-located samp
 ```{r}
 # 10 replications of samples of n=100
 z <- replicate(10, {
-  mean(spatSample(rast(maat), 
-                  size = 100, 
-                  na.rm = TRUE)$MAAT, 
+  mean(terra::spatSample(terra::rast(maat),
+                         size = 100,
+                         na.rm = TRUE)$MAAT,
        na.rm = TRUE)
 })
 
@@ -907,7 +919,7 @@ Do the above routine 100 times: compute the mean MAAT from 100 randomly-located 
 
 ```{r, fig.width=5, fig.height=6.75, eval=TRUE}
 # MLRA polygons in native coordinate system
-plot(st_geometry(mlra), main = 'MLRA 15 and 18')
+plot(sf::st_geometry(mlra), main = 'MLRA 15 and 18')
 box()
 
 # MAAT raster
@@ -930,10 +942,10 @@ Get some KSSL data and upgrade the "site" data to a `SpatialPointsDataFrame`.
 
 ```{r, eval=TRUE}
 # result is a SoilProfileCollection object
-auburn <- fetchKSSL(series = 'auburn')
+auburn <- soilDB::fetchKSSL(series = 'auburn')
 
 # extract site data
-s <-  sf::st_as_sf(site(auburn),
+s <-  sf::st_as_sf(aqp::site(auburn),
                    coords = c("x", "y"),
                    crs = 4326)
 ```
@@ -1012,7 +1024,7 @@ Get an approximate extent for the [Amador](http://casoilresource.lawr.ucdavis.ed
 
 ```{r, eval=TRUE}
 # get (generalized) amador soil series extent from SoilWeb
-amador <- seriesExtent(s = 'amador')
+amador <- soilDB::seriesExtent(s = 'amador')
 
 # convert to EPSG:5070 Albers Equal Area
 amador <- sf::st_transform(sf::st_as_sf(amador), 5070)
@@ -1074,8 +1086,8 @@ Extract PRISM data (the `RasterStack` object we made earlier) at the sampling lo
 
 ```{r, eval=TRUE}
 # return the result as a data.frame object
-e <- extract(rs, sf::as_Spatial(hexagonal), df = TRUE)
-e.pts <- extract(rs, sf::as_Spatial(amador.pts), df = TRUE)
+e <- raster::extract(rs, sf::as_Spatial(hexagonal), df = TRUE)
+e.pts <- raster::extract(rs, sf::as_Spatial(amador.pts), df = TRUE)
 
 # check out the extracted data
 summary(e[,-1])
@@ -1186,7 +1198,8 @@ table(cds$mlra)
 Extract values from the `SpatVector` of PRISM data as a `data.frame`.
 
 ```{r, eval=TRUE, warning=FALSE}
-e <- extract(rast(rs), project(vect(cds), crs(rast(rs))))
+trs <- terra::rast(rs)
+e <- terra::extract(trs, terra::project(terra::vect(cds), terra::crs(trs)))
 
 # join columns from extracted values and sampling points
 s.df <- cbind(as(cds, 'data.frame'), e)
