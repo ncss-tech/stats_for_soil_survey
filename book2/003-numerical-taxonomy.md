@@ -1,7 +1,7 @@
 ---
-  output: html_document
-  editor_options: 
-    chunk_output_type: console
+output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 
@@ -399,7 +399,7 @@ This is the fun part.
 ### Set Up the R Session
 Install R packages as needed. Open a new R script file to use as you follow along.
 
-```{.r .codeBlock}
+```r
 # load libraries
 library(aqp)
 library(soilDB)
@@ -445,7 +445,7 @@ The following examples are based on the `gopheridge` sample dataset.
 
 **evalMissingData**
 
-```{.r .codeBlock}
+```r
 # example data
 data("gopheridge", package = "soilDB")
 
@@ -456,12 +456,12 @@ gopheridge$data.complete <- evalMissingData(gopheridge, vars = c('clay', 'sand',
 summary(gopheridge$data.complete)
 ```
 
-```{.outputBlock}
+```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##  0.0000  0.0000  0.2143  0.4672  1.0000  1.0000
 ```
 
-```{.r .codeBlock}
+```r
 # rank
 new.order <- order(gopheridge$data.complete)
 
@@ -481,7 +481,7 @@ title('Gopheridge pedons sorted according to data completeness (clay, sand, pH)'
 
 **missingDataGrid**
 
-```{.r .codeBlock}
+```r
 # view missing data as a fraction
 res <- missingDataGrid(gopheridge, max_depth=100, vars=c('clay', 'sand', 'phfield'), filter.column='hzname', filter.regex = 'Cr|R|Cd', main='Fraction of missing data (clay, sand, pH)', cols = viridis(10))
 
@@ -491,12 +491,12 @@ print(res$fig)
 
 <img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-19-1.svg" width="912" style="display: block; margin: auto;" />
 
-```{.r .codeBlock}
+```r
 # check results
 head(res$summary)
 ```
 
-```{.outputBlock}
+```
 ##     peiid clay sand phfield
 ## 1 1137354    0  100     100
 ## 2 1147151    0    0     100
@@ -508,7 +508,7 @@ head(res$summary)
 
 For now, extract those profiles that have a complete set of field-described clay, sand, or pH values for later use.
 
-```{.r .codeBlock}
+```r
 # be sure to read the manual page for this function
 gopheridge.complete <- subset(gopheridge, data.complete > 0.99)
 
@@ -536,7 +536,7 @@ The following three functions are essential to the creation of a **distance matr
 
 The following is a short demonstration:
 
-```{.r .codeBlock}
+```r
 # get some example data from the aqp package
 data('sp4', package = 'aqp')
 # subset select rows and columns
@@ -549,19 +549,19 @@ row.names(sp4) <- sp4$name
 round(dist(sp4[, -1], method = 'euclidean'))
 ```
 
-```{.outputBlock}
+```
 ##      A ABt Bt1
 ## ABt  8        
 ## Bt1 15   7    
 ## Bt2 48  44  39
 ```
 
-```{.r .codeBlock}
+```r
 # Euclidean distance, standardization
 round(daisy(sp4[, -1], stand = TRUE, metric = 'euclidean'), 2)
 ```
 
-```{.outputBlock}
+```
 ## Dissimilarities :
 ##        A  ABt  Bt1
 ## ABt 1.45          
@@ -572,12 +572,12 @@ round(daisy(sp4[, -1], stand = TRUE, metric = 'euclidean'), 2)
 ## Number of objects : 4
 ```
 
-```{.r .codeBlock}
+```r
 # Gower's generalized distance metric (includes standardization)
 round(vegdist(sp4[, -1], method = 'gower'), 2)
 ```
 
-```{.outputBlock}
+```
 ##        A  ABt  Bt1
 ## ABt 0.19          
 ## Bt1 0.32 0.16     
@@ -589,7 +589,7 @@ round(vegdist(sp4[, -1], method = 'gower'), 2)
 The following example is excerpted from ["A Novel Display of Categorical Pedon Data"](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html). This example illustrates an application of clustering binary data (presence or absence of a diagnostic feature). Internally, the `diagnosticPropertyPlot()` function uses the `daisy()` function to compute pair-wise distances using the "general dissimilarity coefficient" of Gower [@Gower1971]. A concise summary of this distance metric is in [@Kaufman2005].
 
 
-```{.r .codeBlock}
+```r
 # load some example NASIS data
 data(loafercreek, package='soilDB')
 
@@ -629,7 +629,7 @@ The go-to functions for hierarchical clustering are as follows:
 The `hclust()` function and resulting `hclust`-class objects are simple to use, but limited.
 
 
-```{.r .codeBlock}
+```r
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -656,7 +656,7 @@ rect.hclust(sp4.h, 4)
 
 This example uses a different approach to plotting based on functions and classes from the `ape` package.
 
-```{.r .codeBlock}
+```r
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -684,7 +684,7 @@ cols <- col.set[groups]
 
 The plot methods for `phylo` class objects are quite flexible. Be sure to see the manual page `?plot.phylo`.
 
-```{.r .codeBlock}
+```r
 par(mar=c(1,1,1,1), mfcol=c(2,2))
 plot(p, label.offset=0.125, direction='right', font=1, cex=0.85, main='dendrogram')
 tiplabels(pch=15, col=cols)
@@ -706,7 +706,7 @@ tiplabels(pch=15, col=cols)
 
 Re-visiting our sample data from before, develop hierarchical clusterings using several strategies (methods / linkage criteria).
 
-```{.r .codeBlock}
+```r
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -729,7 +729,7 @@ h.div <- diana(d)
 
 The correlation between original distance matrix and [cophenetic distance matrix](https://en.wikipedia.org/wiki/Cophenetic) is a reasonable index of how faithfully a dendrogram preserves the original pair-wise distances.
 
-```{.r .codeBlock}
+```r
 # agglomerative hierarchical clustering with various linkage criteria
 corr.avg <- cor(d, cophenetic(h.avg))
 corr.single <- cor(d, cophenetic(h.single))
@@ -743,7 +743,7 @@ corr.div <- cor(d, cophenetic(h.div))
 
 Combine the results into a table for quick comparison. Note that the [`agnes`](https://www.rdocumentation.org/packages/cluster/versions/2.0.7-1/topics/agnes.object) and [`diana`](https://www.rdocumentation.org/packages/cluster/versions/2.0.7-1/topics/diana) functions provide an agglomerative / divisive coefficient that can be used to evaluate clustering efficiency (e.g. cluster size and "compactness"). Depending on the application, one metric may be more informative than the other.
 
-```{.r .codeBlock}
+```r
 res <- data.frame(
   method=c('average', 'single', 'complete', 'ward', 'flexible UPGMA', 'divisive'), 
   cophenetic.correlation=c(corr.avg, corr.single, corr.complete, corr.ward, corr.flexible, corr.div),
@@ -798,7 +798,7 @@ res <- res[order(res$cophenetic.correlation, decreasing = TRUE), ]
 
 Investigate differences graphically: I've ranked according to the frequency withwhich I use the various methods.
 
-```{.r .codeBlock}
+```r
 par(mar=c(0,0.25,1.5,0.25), mfrow=c(2,3))
 
 plot(as.phylo(as.hclust(h.div)), label.offset=0.125, direction='right', font=1, cex=0.65, main='1. Divisive')
@@ -828,7 +828,7 @@ tiplabels(pch=15, col=col.set[cutree(h.complete, 4)])
 ##### More on the Flexible UPGMA method
 Test the "flexible UPGMA" method [@belbin1992] by iterating over possible values for $\beta$. Looks like a value near `0.01` would be ideal (e.g. highest cophenetic correlation). Interestingly, this is very close to the cophenetic correlation associated with the "average" linkage criteria.
 
-```{.r .codeBlock}
+```r
 # init a sequence spanning -1 to 1
 beta <- seq(from=-1, to=1, length.out = 100)
 
@@ -859,7 +859,7 @@ text(beta[idx], r[idx], labels = round(beta[idx], 3), pos=4)
 
 The following example is rather basic. Many more possibilities are available in the [`dendextend` package](https://cran.r-project.org/web/packages/dendextend/index.html).
 
-```{.r .codeBlock}
+```r
 # load sample dataset from aqp package
 data(sp3)
 
@@ -891,7 +891,7 @@ The following creates simulated data for demonstration purposes, representing tw
   2. mean = 1, sd = 0.3
   
 
-```{.r .codeBlock}
+```r
 # nice colors for later
 col.set <- brewer.pal(9, 'Set1')
 
@@ -909,7 +909,7 @@ colnames(x) <- c("x", "y")
 It is important to note that the k-means algorithm is sensitive to the initial selection of centroid locations (typically random). The default behavior of the `kmeans()` function does **not** attempt to correct for this limitation. Note that cluster assignment and centroid vary across runs (panels in the figure below).
 
 
-```{.r .codeBlock}
+```r
 par(mfrow=c(3,3), mar=c(1,1,1,1))
 for(i in 1:9) {
   cl <- kmeans(x, centers=3)
@@ -925,7 +925,7 @@ for(i in 1:9) {
 
 Setting the `nstart` argument ("number of random starts") to a value great than 1 (10 is ideal) will ensure that the final clustering configuration will remain stable between runs. Note that the cluster ID (color) will vary between runs, however, with `nstart=10` the overall configuration remains the same.
 
-```{.r .codeBlock}
+```r
 par(mfrow=c(3,3), mar=c(1,1,1,1))
 for(i in 1:9) {
   cl <- kmeans(x, centers=3, nstart = 10, iter.max = 100)
@@ -947,7 +947,7 @@ The `cluster` package provides two interfaces to the k-medoids algorithm:
 
 A quick example of using `pam()` to identify an increasing number of clusters.
 
-```{.r .codeBlock}
+```r
 par(mfrow=c(2,3), mar=c(1,1,1,1))
 for(i in 2:7) {
   cl <- pam(x, k = i, stand = TRUE)
@@ -965,7 +965,7 @@ for(i in 2:7) {
 Clustering results are in the form of class membership; values ranging between 0 and 1. This means that group membership is a continuum vs. the "hard" classes assigned by k-means or k-medoids. The "mixture" of class membership in the example below is conveniently expressed using proportions of red, green, and blue.
 
 
-```{.r .codeBlock}
+```r
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4.std <- data.frame(sp4[, c('id', 'name', 'top', 'bottom')], scale( sp4[, c('Mg', 'Ca')]))
@@ -998,7 +998,7 @@ points(sp4.std$Mg, sp4.std$Ca, bg=cols, col='black', cex = pt.cex, pch = 21)
 
 Save the RGB color representation of cluster membership to the source `data.frame` and convert to `SoilProfileCollection`.
 
-```{.r .codeBlock}
+```r
 sp4.std$colors <- cols
 depths(sp4.std) <- id ~ top + bottom
 
@@ -1020,7 +1020,7 @@ There is no simple answer to the question "How many clusters are in my data?" So
 
 
 
-```{.r .codeBlock}
+```r
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4.std <- data.frame(sp4[, c('id', 'name', 'top', 'bottom')], scale( sp4[, c('Mg', 'Ca')]))
@@ -1042,7 +1042,7 @@ According to *this metric*, it looks like 3 clusters is reasonable. Again, this 
 
 
 
-```{.r .codeBlock}
+```r
 # perform fuzzy clustering
 cl <- pam(sp4.std[, c('Mg', 'Ca')], k = 3, stand = FALSE)
 
@@ -1067,7 +1067,7 @@ TODO: other cluster metrics packages
 A simple, constrained ordination based on variance. This method does not use the distance matrix, rather it seeks to find a new set of axes that describe maximum variance via linear combinations of characteristics. Standardization is essential.
 
 
-```{.r .codeBlock}
+```r
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -1106,7 +1106,7 @@ box()
 Simple interface to nMDS, input is a distance matrix. Note that this algorithm will fail if there are 0's or ties within the distance matrix. See `?sammon` for details.
 
 
-```{.r .codeBlock}
+```r
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -1145,7 +1145,7 @@ The following example is quite brief. See the [*Introduction to ordination in ve
 
 The `metaMDS()` function from the `vegan` package provides a convenience function that automates most of the steps required to create an oridination.
 
-```{.r .codeBlock}
+```r
 # re-make data, this time with all profiles
 data('sp4', package = 'aqp')
 sp4 <- sp4[, c('name', 'clay', 'sand', 'Mg', 'Ca', 'CEC_7')]
@@ -1185,7 +1185,7 @@ box()
 #### Rotations
 procrustes, etc.
 
-```{.r .codeBlock}
+```r
 # https://ncss-tech.github.io/AQP/aqp/color-contrast.html
 ```
 
@@ -1199,7 +1199,7 @@ Before you work through the following examples, you should review the [SoilProfi
 ### Pair-Wise Distances Between Soil Profiles 
 
 
-```{.r .codeBlock}
+```r
 # init example data
 data(sp4)
 depths(sp4) <- id ~ top + bottom
@@ -1214,7 +1214,7 @@ d <- profile_compare(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k=0, max_d=40)
 round(d, 1)
 ```
 
-```{.outputBlock}
+```
 ## Dissimilarities :
 ##                colusa glenn kings mariposa mendocino napa san benito shasta
 ## glenn            13.5                                                      
@@ -1241,13 +1241,13 @@ round(d, 1)
 ## Number of objects : 10
 ```
 
-```{.r .codeBlock}
+```r
 # cluster via divisive method
 clust <- diana(d)
 ```
 
 
-```{.r .codeBlock}
+```r
 # visualize dissimilarity matrix via hierarchical clustering
 par(mar=c(0,0,3,1))
 plotProfileDendrogram(sp4, clust, dend.y.scale = 50, scaling.factor = 0.66, y.offset = 3.5, width=0.3, cex.names = 0.7, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio', name.style = 'center-center')
@@ -1264,7 +1264,7 @@ The following figures are related to some of the graphical summaries [provided b
 
 The `fetchOSD` function can return [additional summaries](https://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html) tabulated from climate data, MLRA boundaries, SSURGO, and much more with the `extended=TRUE` argument. Lets experiment with distances computed from annual climate data and hillslope position.
 
-```{.r .codeBlock}
+```r
 # soil series from around CONUS
 soils <- c('redding', 'pentz', 'willows', 'yolo', 'hanford', 'cecil', 'sycamore', 'KLAMATH', 'drummer', 'musick', 'zook')
 s <- fetchOSD(soils, extended = TRUE)
@@ -1273,11 +1273,11 @@ s <- fetchOSD(soils, extended = TRUE)
 str(s, 1)
 ```
 
-```{.outputBlock}
-## List of 16
+```
+## List of 17
 ##  $ SPC             :Formal class 'SoilProfileCollection' [package "aqp"] with 9 slots
 ##  $ competing       :'data.frame':	57 obs. of  3 variables:
-##  $ geog_assoc_soils:'data.frame':	75 obs. of  2 variables:
+##  $ geog_assoc_soils:'data.frame':	83 obs. of  2 variables:
 ##  $ geomcomp        :'data.frame':	9 obs. of  9 variables:
 ##  $ hillpos         :'data.frame':	10 obs. of  8 variables:
 ##  $ mtnpos          :'data.frame':	2 obs. of  9 variables:
@@ -1290,13 +1290,14 @@ str(s, 1)
 ##  $ mlra            :'data.frame':	75 obs. of  4 variables:
 ##  $ climate.annual  :'data.frame':	88 obs. of  12 variables:
 ##  $ climate.monthly :'data.frame':	264 obs. of  14 variables:
-##  $ soilweb.metadata:'data.frame':	18 obs. of  2 variables:
+##  $ NCCPI           :'data.frame':	11 obs. of  16 variables:
+##  $ soilweb.metadata:'data.frame':	20 obs. of  2 variables:
 ```
 
 #### Annual Climate Data
 The [`vizAnnualClimate` function (sharpshootR package)](http://ncss-tech.github.io/sharpshootR/docs/reference/vizAnnualClimate.html) arranges percentiles of annual climate summaries according to divisive hierarchical clustering applied to median values. Climate summaries were derived from 800m, daily PRISM data spanning 1981-2010.
 
-```{.r .codeBlock}
+```r
 # control color like this
 trellis.par.set(plot.line=list(col='RoyalBlue'))
 
@@ -1310,7 +1311,7 @@ print(res$fig)
 <img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-48-1.svg" width="960" style="display: block; margin: auto;" />
 
 
-```{.r .codeBlock}
+```r
 # do something with clustering
 par(mar=c(0,0,1,1))
 # usually requires tinkering...
@@ -1324,7 +1325,7 @@ mtext('sorted by annual climate summaries', side = 3, at = 0.5, adj = 0, line = 
 #### Hillslope Position
 The [`vizHillslopePosition` function (sharpshootR package)](http://ncss-tech.github.io/sharpshootR/docs/reference/vizHillslopePosition.html) arranges hillslope position proportions (SSURGO) according to divisive hierarchical clustering. Proportions are used as characteristics for each soil series. The branches of the dendrogram are rotated so that ordering within the figure approximates the hydrologic gradient as closely as possible. Rotation is performed by the `dendextend::rotate` function.
 
-```{.r .codeBlock}
+```r
 # result is a lattice graphics object
 res <- vizHillslopePosition(s$hillpos)
 print(res$fig)
@@ -1337,7 +1338,7 @@ print(res$fig)
 The following are demonstrations of pair-wise distances computed from categorical data and the use of a dendrogram to organize groups from Soil Taxonomy. [Click here](http://ncss-tech.github.io/AQP/sharpshootR/OSD-dendrogram.html) for details.
 
 
-```{.r .codeBlock}
+```r
 # define a vector of series
 s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 'hanford', 'cecil', 'sycamore', 'KLAMATH', 'MOGLIA', 'drummer', 'musick', 'zook', 'argonaut', 'PALAU')
 
@@ -1351,7 +1352,7 @@ plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 
 <img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-51-1.svg" width="960" style="display: block; margin: auto;" />
 
-```{.r .codeBlock}
+```r
 # check structure of some site-level attributes
 # head(site(s))[, c('id', 'soilorder', 'suborder', 'greatgroup', 'subgroup')])
 ```
@@ -1413,7 +1414,7 @@ plot(s) ; title('Selected Pedons from Official Series Descriptions', line=0)
 </table>
 
 
-```{.r .codeBlock}
+```r
 par(mar=c(0,1,1,1))
 # plot dendrogram + profiles
 d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01, width=0.2, cex.names=0.5)
@@ -1423,7 +1424,7 @@ d <- SoilTaxonomyDendrogram(s, scaling.factor = 0.01, width=0.2, cex.names=0.5)
 
 Check the resulting distance matrix.
 
-```{.r .codeBlock}
+```r
 print(d)
 ```
 
@@ -1433,7 +1434,7 @@ print(d)
 
 See this [related tutorial](http://ncss-tech.github.io/AQP/aqp/soil-color-signatures.html) for additional examples.
 
-```{.r .codeBlock}
+```r
 # manually convert Munsell -> sRGB
 rgb.data <- munsell2rgb(s$hue, s$value, s$chroma, return_triplets = TRUE)
 s$r <- rgb.data$r
@@ -1538,7 +1539,7 @@ kable_styling(knitr::kable(head(pig), digits = 2, row.names = FALSE), font_size 
 </tbody>
 </table>
 
-```{.r .codeBlock}
+```r
 # move row names over for distance matrix
 row.names(pig) <- pig[, 1]
 d <- daisy(pig[, -1])
@@ -1555,7 +1556,7 @@ plotProfileDendrogram(s, dd, dend.y.scale = max(d) * 2, scaling.factor = 0.3, y.
 Just for fun, use hierarchical clustering and nMDS on soil color data from the OSDs that were used in the previous example.
 
 
-```{.r .codeBlock}
+```r
 # extract horizon data from select OSDs in above example
 h <- horizons(s)
 
@@ -1568,7 +1569,7 @@ lab.data <- munsell2rgb(h$hue, h$value, h$chroma, returnLAB = TRUE)
 head(rgb.data)
 ```
 
-```{.outputBlock}
+```
 ##           r         g          b
 ## 1 0.4360624 0.3706674 0.29697452
 ## 2 0.5589675 0.4673350 0.35663875
@@ -1578,11 +1579,11 @@ head(rgb.data)
 ## 6 0.4309729 0.2327690 0.09771028
 ```
 
-```{.r .codeBlock}
+```r
 head(lab.data)
 ```
 
-```{.outputBlock}
+```
 ##          L         A        B
 ## 1 41.24855  3.681301 13.29762
 ## 2 51.62124  4.870262 18.95563
@@ -1592,7 +1593,7 @@ head(lab.data)
 ## 6 30.80674 19.311423 30.21539
 ```
 
-```{.r .codeBlock}
+```r
 # remove NA
 rgb.data <- na.omit(rgb.data)
 lab.data <- na.omit(lab.data)
@@ -1608,7 +1609,7 @@ pairs(lab.data, col='white', bg=rgb(rgb.data), pch=21, cex=2)
 <img src="003-numerical-taxonomy_files/figure-html/unnamed-chunk-56-1.svg" width="576" style="display: block; margin: auto;" />
 
 
-```{.r .codeBlock}
+```r
 # create distance matrix from LAB coordinates
 d <- daisy(lab.data, stand=FALSE)
 
@@ -1643,7 +1644,7 @@ Example borrowed from [this tutorial](http://ncss-tech.github.io/AQP/soilDB/SDA-
 
 
 
-```{.r .codeBlock}
+```r
 library(reshape2)
 # set list of component names, same as soil color example
 s.list <- c('amador', 'redding', 'pentz', 'willows', 'pardee', 'yolo', 
@@ -1760,7 +1761,7 @@ kable_styling(knitr::kable(x.wide, digits = 2, caption="Mean Fuzzy Ratings for S
 </table>
 
 
-```{.r .codeBlock}
+```r
 # note: component name and series name have been converted to upper case
 # sort rows of fuzzy ratings based on profiles from OSDs
 new.order <- match(x.wide$compname, profile_id(s))
@@ -1777,7 +1778,7 @@ clust <- diana(d)
 ```
 
 
-```{.r .codeBlock}
+```r
 par(mar=c(2,0,2,0))
 plotProfileDendrogram(s, clust, dend.y.scale = 2, scaling.factor = 0.007, y.offset = 0.1, width=0.3, cex.names=0.45)
 title('Component Similarity via Select Fuzzy Ratings')
@@ -1804,7 +1805,7 @@ Get and process example data, originally sampled from PRISM raster and DEM withi
  * growing degree days
    
 
-```{.r .codeBlock}
+```r
 library(MASS)
 library(vegan)
 library(cluster)
@@ -1836,7 +1837,7 @@ cols <- cols[c(1:5,7,9)]
 
 A smooh surface fit to mean annual air temperature highlights structure within a nMDS ordination.
 
-```{.r .codeBlock}
+```r
 m <- metaMDS(d.sub[, -c(1:3)], distance = 'gower')
 
 # margins
@@ -1872,7 +1873,7 @@ This example generates an ordination (via principal coordinates) of environmenta
  
 
 
-```{.r .codeBlock}
+```r
 ## NOTE: data with very low variability will cause warnings
 # eval numerical distance, removing first 3 columns of IDs
 d.dist <- daisy(d.sub[, -c(1:3)], stand=TRUE)
@@ -1891,7 +1892,7 @@ plot(
 
 Pair-wise comparisons at the 90% level of confidence. 
 
-```{.r .codeBlock}
+```r
 ## pair-wise comparisons of variance
 par(mar=c(4.5, 5.5, 4.5, 1))
 plot(TukeyHSD(d.betadisper, conf.level = 0.9), las=1)
@@ -1903,7 +1904,7 @@ plot(TukeyHSD(d.betadisper, conf.level = 0.9), las=1)
 
 <!-- TODO: consider this kind of information in the front matter -->
 <div style = "font-size: 80%;">
-This document is based on `aqp` version 1.41 and `soilDB` version 2.6.13 and `sharpshootR` version 1.9.
+This document is based on `aqp` version 1.41 and `soilDB` version 2.6.14 and `sharpshootR` version 1.9.1.
 </div>
 
 

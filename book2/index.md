@@ -1,7 +1,7 @@
 --- 
 title: "Statistics for Soil Survey - Part 2"
 author: "Soil Survey Staff"
-date: "2022-01-25"
+date: "2022-02-23"
 site: bookdown::bookdown_site
 documentclass: book
 bibliography: [book.bib, packages.bib]
@@ -42,6 +42,12 @@ remotes::install_github('r-spatial/mapview')
 
 
 
+
+<style type="text/css">
+.codeBlocks {
+  font-size: 90%;
+}
+</style>
 
 
 
@@ -100,7 +106,7 @@ We want to prevent installs to `~` (your `$HOME` directory) which is typically o
 _Hint: the **R** console is the lower left or left window in RStudio with a tab labeled "Console"._
 
 
-```{.r .codeBlock}
+```{.r .codeBlocks}
 source('https://raw.githubusercontent.com/ncss-tech/soilReports/master/R/installRprofile.R')
 installRprofile(overwrite=TRUE)
 ```
@@ -128,7 +134,7 @@ Click **Yes**.
 For example, to download and install the `remotes` package from CRAN:
   
 
-```{.r .codeBlock}
+```{.r .codeBlocks}
 install.packages("remotes")
 ```
 
@@ -137,7 +143,7 @@ To install the **R** packages used in this class copy all of the code from the b
 Downloading and configuring the packages will take a while if you are installing or upgrading all of the packages in the list below. 
 
 
-```{.r .codeBlock}
+```{.r .codeBlocks}
 # ipkCRAN: a helper function for installing required packages from CRAN
 # - p: vector of package names
 # - up: logical - upgrade installed packages? Default: TRUE
@@ -218,7 +224,7 @@ Note that not all **R** packages are available on CRAN: there are many other way
 <!-- These packages aren't available to our computers as we are stuck at an older version of R, or not currently on CRAN. The `soilDB` and `sharpshootR` packages should be back on CRAN by early February. 
 
 
-```{.r .codeBlock}
+```{.r .codeBlocks}
 # temporary CRAN fix - get previous version for R 4.0
 install.packages('https://cran.microsoft.com/snapshot/2020-06-15/bin/windows/contrib/4.0/Rcpp_1.0.4.6.zip', repos = NULL)
 install.packages("https://cran.microsoft.com/snapshot/2020-06-24/bin/windows/contrib/4.0/raster_3.1-5.zip", repos = NULL)
@@ -240,7 +246,7 @@ The AQP packages are updated much more frequently on GitHub than they are on CRA
 Generally, the CRAN versions (installed above) are the "stable" releases whereas the GitHub repositories have new features and bug fixes.
 
 
-```{.r .codeBlock}
+```{.r .codeBlocks}
 remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 remotes::install_github("ncss-tech/soilDB", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade=FALSE, build=FALSE)
@@ -261,7 +267,7 @@ Once you've successfully established a ODBC connection, prove it by loading your
 Submit the resulting plot to your mentor (from "Plot" pane (bottom-right): **Export &rarr; Save as PDF...**)
 
 
-```{.r .codeBlock}
+```{.r .codeBlocks}
 # load packages into the current session
 library(aqp) # provides "SoilProfileCollection" object & more
 library(soilDB) # provides database access methods
@@ -287,7 +293,7 @@ plot(test, label='pedon_id')
 Follow the one line example below, copy the output, and submit the results to your mentor. This will help us to verify that all of the required packages have been installed.
 
 
-```{.r .codeBlock}
+```{.r .codeBlocks}
 # dump list of packages that are loaded into the current session
 sessionInfo()
 ```

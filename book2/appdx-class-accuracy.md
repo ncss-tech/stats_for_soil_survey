@@ -1,7 +1,7 @@
 ---
-  output: html_document
-  editor_options: 
-    chunk_output_type: console
+output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 
@@ -78,12 +78,12 @@ Consider a supervised classification that generates predictions for 5 possible s
  * "Case 3": class **E** is always the most likely class, all other classes have probabilities < 0.2
 
 
-```{.r .codeBlock}
+```r
 # examples of three cases
 print(p.1)
 ```
 
-<div class="figure" style="text-align: center">
+<div class="figure">
 <img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-2-1.svg" alt="Probability distributions of predictions." width="960" />
 <p class="caption">(\#fig:unnamed-chunk-2)Probability distributions of predictions.</p>
 </div>
@@ -163,14 +163,14 @@ It is my recommendation that the $log_{2}$ version of Shannon H be used as our *
 ## Review
 
 
-```{.r .codeBlock}
+```r
 # examples of three cases
 print(p.1)
 ```
 
-<img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-3-1.svg" width="960" style="display: block; margin: auto;" />
+<img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-3-1.svg" width="960" />
 
-```{.r .codeBlock}
+```r
 pp <- ldply(s, performance)
 names(pp)[1] <- 'example'
 
@@ -190,30 +190,30 @@ kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_widt
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.73 </td>
-   <td style="text-align:right;"> 0.24 </td>
-   <td style="text-align:right;"> 0.18 </td>
-   <td style="text-align:right;"> 0.39 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 0.20 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 0.36 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:right;"> 0.26 </td>
-   <td style="text-align:right;"> 0.20 </td>
-   <td style="text-align:right;"> 0.41 </td>
+   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 0.27 </td>
+   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.42 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
-   <td style="text-align:right;"> 0.32 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 0.43 </td>
-   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 0.30 </td>
+   <td style="text-align:right;"> 0.79 </td>
+   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.83 </td>
   </tr>
 </tbody>
 </table>
 
 
-```{.r .codeBlock}
+```r
 ex <- ldply(s, extractExample, n=1)
 names(ex)[1] <- 'example'
 ex$CI <- NULL
@@ -242,30 +242,30 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.07 </td>
-   <td style="text-align:right;"> 0.26 </td>
-   <td style="text-align:right;"> 0.07 </td>
-   <td style="text-align:right;"> 0.24 </td>
-   <td style="text-align:right;"> 0.35 </td>
-   <td style="text-align:right;"> 2.08 </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 0.08 </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:right;"> 0.37 </td>
+   <td style="text-align:right;"> 2.10 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.05 </td>
-   <td style="text-align:right;"> 0.13 </td>
-   <td style="text-align:right;"> 0.30 </td>
-   <td style="text-align:right;"> 0.05 </td>
-   <td style="text-align:right;"> 0.48 </td>
-   <td style="text-align:right;"> 1.82 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:right;"> 0.16 </td>
+   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 2.09 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
    <td style="text-align:right;"> 0.02 </td>
    <td style="text-align:right;"> 0.03 </td>
-   <td style="text-align:right;"> 0.03 </td>
-   <td style="text-align:right;"> 0.01 </td>
-   <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:right;"> 0.63 </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> 0.08 </td>
+   <td style="text-align:right;"> 0.83 </td>
+   <td style="text-align:right;"> 0.95 </td>
   </tr>
 </tbody>
 </table>
@@ -276,7 +276,7 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 The `aqp` package has an implementation of Shannon entropy and Brier score; there are many other implementations but these are convenient for soil survey work. Consider the following table of predicted probabilities (classes A,B,C,D,E) and observed class (actual).
 
 
-```{.r .codeBlock}
+```r
 library(aqp)
 
 # example data
@@ -304,7 +304,7 @@ d <- structure(list(A = c(0.0897243494322252, 0.0537087411977284,
 head(d)
 ```
 
-```{.outputBlock}
+```
 ##            A         B          C         D         E   id actual
 ## 1 0.08972435 0.1911101 0.12194174 0.3511088 0.2461150    1      D
 ## 2 0.05370874 0.1872440 0.07705390 0.3221201 0.3598732   10      B
@@ -316,33 +316,33 @@ head(d)
 
 Brier scores (accuracy) are computed over all predictions and associated observed classes.
 
-```{.r .codeBlock}
+```r
 # compute Brier score from all predictions
 brierScore(d, classLabels = c('A', 'B', 'C', 'D', 'E'), actual = 'actual')
 ```
 
-```{.outputBlock}
+```
 ## [1] 0.5833992
 ```
 
 
 Shannon entropy (uncertainty) is computed from each vector of predicted probabilities.
 
-```{.r .codeBlock}
+```r
 # shannon entropy for first row, could be a single pixel or obs. point
 shannonEntropy(d[1, c('A', 'B', 'C', 'D', 'E')])
 ```
 
-```{.outputBlock}
+```
 ## [1] 2.166525
 ```
 
-```{.r .codeBlock}
+```r
 # compute shannon entropy for all rows
 apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
 ```
 
-```{.outputBlock}
+```
 ##        1        2        3        4        5        6        7        8 
 ## 2.166525 2.021157 1.982791 2.024063 2.011094 1.971243 2.036219 2.151995 
 ##        9       10 

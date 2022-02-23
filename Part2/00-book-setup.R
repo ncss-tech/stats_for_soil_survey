@@ -19,14 +19,14 @@
 # * R code to setup local copies of large files required by chapters
 # * integrate Yosemite MAST modeling code + appendix
 # * convert citation in LM, GLM, Tree models chapters to bibtex
-# * 
+
 
 
 options(bookdown.clean_book = TRUE)
 
 # remove ../book
 bookdown::clean_book()
-# file.remove("s4ssbook.Rmd")
+file.remove("s4ssbook.Rmd")
 
 # create ../book2
 bookdown::render_book(".")

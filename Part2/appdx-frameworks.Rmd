@@ -1,7 +1,7 @@
 ---
-  output: html_document
-  editor_options: 
-    chunk_output_type: console
+output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Commentary: Selecting a Modeling Framework
