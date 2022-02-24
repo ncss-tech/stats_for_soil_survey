@@ -1291,7 +1291,7 @@ str(s, 1)
 ##  $ climate.annual  :'data.frame':	88 obs. of  12 variables:
 ##  $ climate.monthly :'data.frame':	264 obs. of  14 variables:
 ##  $ NCCPI           :'data.frame':	11 obs. of  16 variables:
-##  $ soilweb.metadata:'data.frame':	20 obs. of  2 variables:
+##  $ soilweb.metadata:'data.frame':	22 obs. of  2 variables:
 ```
 
 #### Annual Climate Data
@@ -1904,7 +1904,7 @@ plot(TukeyHSD(d.betadisper, conf.level = 0.9), las=1)
 
 <!-- TODO: consider this kind of information in the front matter -->
 <div style = "font-size: 80%;">
-This document is based on `aqp` version 1.41 and `soilDB` version 2.6.14 and `sharpshootR` version 1.9.1.
+This document is based on `aqp` version 1.41 and `soilDB` version 2.6.14 and `sharpshootR` version 1.9.
 </div>
 
 

@@ -1,7 +1,7 @@
 --- 
 title: "Statistics for Soil Survey - Part 2"
 author: "Soil Survey Staff"
-date: "2022-02-23"
+date: "2022-02-24"
 site: bookdown::bookdown_site
 documentclass: book
 bibliography: [book.bib, packages.bib]
@@ -48,6 +48,7 @@ remotes::install_github('r-spatial/mapview')
   font-size: 90%;
 }
 </style>
+
 
 
 
