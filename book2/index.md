@@ -1,7 +1,7 @@
 --- 
 title: "Statistics for Soil Survey - Part 2"
 author: "Soil Survey Staff"
-date: "2022-02-24"
+date: "2022-02-27"
 site: bookdown::bookdown_site
 documentclass: book
 bibliography: [book.bib, packages.bib]

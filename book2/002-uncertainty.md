@@ -6,6 +6,9 @@ editor_options:
 
 # Uncertainty {#uncertainty}
 
+
+
+
 ![](static-figures/logo.jpg)
 
 ## Introduction
@@ -18,6 +21,7 @@ Validating and assessing the uncertainty of a model is just as, if not more impo
 - Classification errors
 - Generalization errors
 - Interpolation errors
+- Semantic errors
 
 Errors are simply the difference between reality and our representation of reality. Assessing the data structure with simple statistical measures such as mean, median and mode can be useful for understanding the central tendency of the data, but more complicated calculations are needed to get at dispersion or the variation of a property within a population to further assess error and uncertainty (Zar, 1999).
 
@@ -39,100 +43,105 @@ Errors are simply the difference between reality and our representation of reali
 - Confidence interval: Interval in which you are confident that a given percentage (known as the confidence limit 95, 80, 75%) of the population lie. If a normal distribution is assumed, for a 95% confidence interval, it can be estimated that the value is 95% likely to fall between as SD * 1.96 +/- mean.   
 
 
-### Exercise - Dispersion
-
-Create an example data-set and evaluate dispersion.
+### Examples - Dispersion
 
 
 ```r
-library(ggplot2)
+# load the GSP Salt Affected Soil dataset
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
+sas <- read.csv(url)
 
-# set random seed, so that we all get the same results
-set.seed(123)
+n   <- nrow(sas)
 
-# create a sample dataset with 10 values between 20 - 60
-d1 <- data.frame(
-  soil = "alpha",
-  depth = sample(20:60, size = 10, replace = TRUE)
-  )
 
-# create a sample dataset with 100 values between 20 - 60
-d2 <- data.frame(
-  soil = "beta",
-  depth = sample(20:60, size = 100, replace = TRUE)
-  )
+# take a random sample of 100
+set.seed(42)
+idx <- sample(1:n, 100)
+sas_n100 <- cbind(n = "100", sas[idx, ])
+
+
+# take a random sample of 1000
+set.seed(42)
+idx <- sample(1:n, 1000)
+sas_n1000 <- cbind(n = "1000", sas[idx, ])
+
 
 # combine d1 and d2
-d3 <- rbind(d1, d2)
+sas_sub <- rbind(sas_n100, sas_n1000)
 
-aggregate(depth ~ soil, data = d3, quantile)
+aggregate(pH_0.30_obs ~ n, data = sas_sub, quantile)
 ```
 
 ```
-##    soil depth.0% depth.25% depth.50% depth.75% depth.100%
-## 1 alpha    22.00     33.00     39.00     45.75      56.00
-## 2  beta    22.00     32.00     42.00     50.00      60.00
+##      n pH_0.30_obs.0% pH_0.30_obs.25% pH_0.30_obs.50% pH_0.30_obs.75%
+## 1  100       4.021620        5.214799        5.742846        6.500468
+## 2 1000       2.370782        5.252397        5.957984        6.836619
+##   pH_0.30_obs.100%
+## 1         8.854437
+## 2         9.865657
 ```
 
 ```r
 # examine box plots
-ggplot(d3, aes(x = soil, y = depth)) + geom_boxplot()
+library(ggplot2)
+
+ggplot(sas_sub, aes(x = pH_0.30_obs, y = n)) + geom_boxplot()
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-1-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="672" />
 
 Dispersion or variance is a characteristic of the population being evaluated. While more or better sample collection might give you better precision of those estimates, we would not expect them to change the dispersion calculated. Conversely, measures of certainty of the central tendency (how sure are you of the typical value reported) depends both on the characteristic dispersion/variance and the number of samples collected.
 
   
-### Exercise - Variation and Certainty
+### Examples - Variation and Certainty
 
 Create an example data-set and and evaluate variation and certainty.
 
 
 ```r
-# calculate the mean of depth
-m <- mean(d2$depth)
- 
+# calculate the mean
+mu <- mean(sas$pH_0.30_obs, na.rm = TRUE)
+
 # subtract mean from each value and square (i.e. residuals)
-d2$S <- (d2$depth - m)^2
- 
-#calculate overall sum of squares
-SS <- sum(d2$S)
- 
-#calculate sample variance (length gives us the total number of sample/observations)
-SS / (length(d2$depth) - 1)
+sas$S <- (sas$pH_0.30_obs - mu)^2
+
+# calculate overall sum of squares
+SS <- sum(sas$S, na.rm = TRUE)
+
+# calculate sample variance (length gives us the total number of sample/observations)
+SS / (sum(!is.na(sas$pH_0.30_obs)) - 1)
 ```
 
 ```
-## [1] 113.3425
+## [1] 1.143514
 ```
 
-Note the differences in range and variance calculated for Depth in both examples (10 samples vs. 100)
+Note the differences in range and variance calculated for pH in both examples (100 samples vs. 1000)
 
 
 ```r
-aggregate(depth ~ soil, data = d3, var)
+aggregate(pH_0.30_obs ~ n, data = sas_sub, var)
 ```
 
 ```
-##    soil    depth
-## 1 alpha 125.5667
-## 2  beta 113.3425
+##      n pH_0.30_obs
+## 1  100    1.047552
+## 2 1000    1.138315
 ```
 
 Now Compare Standard Error (standard deviation / square root of n)
 
 
 ```r
-SE <- function(x) sd(x) / sqrt(length(x))
+SE <- function(x) sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x)))
 
-aggregate(depth ~ soil, data = d3, SE)
+aggregate(pH_0.30_obs ~ n, data = sas_sub, SE)
 ```
 
 ```
-##    soil    depth
-## 1 alpha 3.543539
-## 2  beta 1.064624
+##      n pH_0.30_obs
+## 1  100  0.11101414
+## 2 1000  0.03827549
 ```
 
 Why are the standard errors different?
@@ -162,35 +171,35 @@ While explanatory and predictive modeling can use the same types of models, data
   
 When calculating many basic statistical parameters, the assumption is that the data is parametric. That implies that the data is continuous (ratio or interval) and normally distributed. This is rarely the case with soil data. Soil properties are often not normally distributed (you cannot have less that 0% organic matter, for instance) and often we are trying to predict soil taxa or other nominal classes. 
 
-Re-sampling is a general term that defines any procedure to repeatedly draw samples form a given data-set. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Re-sampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation (Good, 2001).  
+Re-sampling is a general term that defines any procedure to repeatedly draw samples form a given data-set. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Re-sampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation [@good2013].  
 
 
-### Exercise - Resampling
+### Examples
 
 
 ```r
-# this bootstrap is estimating the uncertainty associated with the variance of d2$depth
+# this bootstrap is estimating the uncertainty associated with the variance of sas$pH_0.30_obs
 # an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
 
 # abbreviate our data to simply the commands
-d <- d2$depth
-n <- length(d)
+ph <- na.exclude(sas$pH_0.30_obs)
+n <- 100
 
 # set number of iterations
-N <- 50
+k <- 50
 
 # create a data frame to store the results
 boot_stats <- data.frame(
-  vars = numeric(N),
-  means = numeric(N)
+  vars = numeric(k),
+  means = numeric(k)
   )
 
 # for each instance (i) in the set from 1 to N (50 in this case)
-for (i in 1:N) {
+for (i in 1:k) {
   # create a new variable dB from each bootstrap sample of d
-  boot.sample = sample(d, n, replace = TRUE) 
+  boot.sample = sample(ph, n, replace = TRUE) 
   boot_stats$means[i] = mean(boot.sample)
-  boot_stats$vars[i] = var(boot.sample)
+  boot_stats$vars[i]  = var(boot.sample)
   }
 
 quantile(boot_stats$vars)
@@ -198,22 +207,22 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-##  91.54293 107.14240 112.61833 120.47970 139.81818
+## 0.9002976 1.0326038 1.1305090 1.2524690 1.4563505
 ```
 
 ```r
 stripchart(boot_stats$vars)
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-6-1.png" width="672" />
 
 ```r
 # Traditional Approach
 ci <- c(
   # lower 5th
-  l = mean(d) - 1.96 * sd(d) / sqrt(n),
+  l = mean(ph) - 1.96 * sd(ph) / sqrt(n),
   # upper 95th
-  u = mean(d) + 1.96 * sd(d) / sqrt(n)
+  u = mean(ph) + 1.96 * sd(ph) / sqrt(n)
   )
 
 # Compare Bootstrap to Confidence Interval
@@ -221,8 +230,8 @@ quantile(boot_stats$means, c(0.05, 0.95))
 ```
 
 ```
-##     5%    95% 
-## 39.663 43.005
+##       5%      95% 
+## 5.914707 6.149212
 ```
 
 ```r
@@ -231,200 +240,302 @@ ci
 
 ```
 ##        l        u 
-## 39.38334 43.55666
+## 5.804082 6.223267
 ```
+
 
 ## Performance Metrics
 
-**Numerical**
+### Numerical
 
-- Coefficient of variation ($R^2$): % of variance explained
+Accuracy:
+
+- Coefficient of variation ($R^2$): % of variance explained (`caret::R2(formula = "traditional)`); beware alternative definitions refer to this as correlation coefficient squared (`caret::R2()`), however this version does not assess the accuracy; see [http://mng.bz/ndYf](http://mng.bz/ndYf) for when the two terms overlap
 - Mean Error (ME): average error
 - Root Mean Square Error (RMSE): average residual
 
-**Categorical** (derivatives of confusion matrix)
+Precision:
 
-- Overall Accuracy: % of observations that were correctly classified, for all classes
-- Precision (i.e. user's accuracy, errors of commission (Type II): % of observations that were correctly classified, for an individual class
-- Sensitivity (i.e. producer's accuracy, errors of omission (Type I)): % of predictions that were correctly classified, for an individual class
+- Standard error (SE)
+- Prediction intervals (percentiles)
+- Distance
 
-
-Confusion Matrix | Observed           |                     |
------------------|--------------------|---------------------|
-**Predicted**    | No                 | Yes                 |
-No               | True Negative (TN) | False Negative (FN) |
-Yes              | False Positive (FP)| True Positive (TP)  |
-
-
-### Exercise - Numeric Metrics
 
 
 ```r
-### Numeric error metrics
-
-### Linear model example
-
-# Create a Ficticous Data-set
-d_num <- data.frame(
-  depth = 21:60 + rnorm(40, mean = 0, sd = 10),
-  slope = 60:21
-  )
-
-num_lm <- lm(depth ~ slope, data = d_num, y = TRUE)
-
-# R2
-summary(num_lm)$r.squared
-```
-
-```
-## [1] 0.5795156
-```
-
-```r
-# or
-
-predicted <- num_lm$fitted.values
-observed <- num_lm$y
-
-cor(predicted, observed)^2
-```
-
-```
-## [1] 0.5795156
-```
-
-```r
-# ME
-mean(predicted - observed)
-```
-
-```
-## [1] 2.220446e-16
-```
-
-```r
-# RMSE
-sqrt(mean((predicted - observed)^2))
-```
-
-```
-## [1] 11.48239
-```
-
-
-### Exercise - Categorical Metrics
-
-
-```r
-# Create a Ficticous Data-set
-r <- runif(175)
-idx <- sample(which(r > 0.5), 75)
-r <- r[-idx]
-
-d_cat = data.frame(
-  predicted = r, 
-  observed  = (r + rnorm(100, sd = 0.2)) > 0.5
-  )
-
-# Compute Confusion Matrix
-cm <- table(predicted = d_cat$predicted > 0.5, observed = d_cat$observed)
-print(cm)
-```
-
-```
-##          observed
-## predicted FALSE TRUE
-##     FALSE    66   14
-##     TRUE      2   18
-```
-
-```r
-# or
-
 library(caret)
+
+# Numeric error metrics----
+
+# R2 ----
+R2(pred = sas$pH_0.30_pred, obs = sas$pH_0.30_obs, formula = "traditional", na.rm = TRUE)
 ```
 
 ```
-## Loading required package: lattice
-```
-
-```r
-confusionMatrix(cm, positive = "TRUE")
-```
-
-```
-## Confusion Matrix and Statistics
-## 
-##          observed
-## predicted FALSE TRUE
-##     FALSE    66   14
-##     TRUE      2   18
-##                                           
-##                Accuracy : 0.84            
-##                  95% CI : (0.7532, 0.9057)
-##     No Information Rate : 0.68            
-##     P-Value [Acc > NIR] : 0.0002249       
-##                                           
-##                   Kappa : 0.5918          
-##                                           
-##  Mcnemar's Test P-Value : 0.0059595       
-##                                           
-##             Sensitivity : 0.5625          
-##             Specificity : 0.9706          
-##          Pos Pred Value : 0.9000          
-##          Neg Pred Value : 0.8250          
-##              Prevalence : 0.3200          
-##          Detection Rate : 0.1800          
-##    Detection Prevalence : 0.2000          
-##       Balanced Accuracy : 0.7665          
-##                                           
-##        'Positive' Class : TRUE            
-## 
+## [1] 0.8526782
 ```
 
 ```r
-# Examine threshoold
-ggplot(d_cat, aes(x = predicted, color = observed)) +
-  geom_density(lwd = 1.5)
+# RMSE ----
+sqrt(mean((sas$pH_0.30_pred - sas$pH_0.30_obs)^2, na.rm = TRUE))
+```
+
+```
+## [1] 0.4690274
+```
+
+```r
+# or
+
+RMSE(pred = sas$pH_0.30_pred, obs = sas$pH_0.30_obs, na.rm = TRUE)
+```
+
+```
+## [1] 0.4690274
+```
+
+```r
+# plot errors
+
+idx <- sample(1:nrow(sas), 100)
+
+ggplot(sas[idx, ], aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
+  geom_point() +
+  # draw a 1 to 1 line
+  geom_abline() +
+  # draw a linear fit; method = "lm"
+  geom_smooth(method = "lm")
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-7-1.png" width="672" />
 
 ```r
-# Trade Precision for Sensitivity by Varying the Threshold 
-cm <- table(predicted = d_cat$predicted > 0.4, observed = d_cat$observed)
-confusionMatrix(cm, positive = "TRUE")
+ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
+  # use if too many points overlap
+  geom_hex() +
+  geom_abline() +
+  geom_smooth()
+```
+
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-7-2.png" width="672" />
+
+
+
+### Categorical 
+
+**Probability-based metrics** (threshold-independent)
+
+Beware the $D^2$ and Tjur's D only apply to binary classes.
+
+Accuracy:
+
+- Brier score: equivalent to the mean square error (`aqp::brierScore()`)
+- Deviance squared ($D^2$): % of devariance explained $R^2$ (`modEvA::Dsquared()`)
+- Coefficient of discrimination (or Tjur's D)(`modEvA::RsqGLM()`)
+
+Precision:
+
+- Shannon entropy (`aqp::shannonEntropy()`)
+- Confusion index (`aqp::confusionIndex()`)
+
+
+**Class-based metrics** are derivatives of the confusion matrix [@zumel2014; kuhn2013; @james2021; @congalton2019)(`caret::confusionMatrix()`)
+
+
+Confusion Matrix   | Observed           |                     |Metric                     |
+-------------------|--------------------|---------------------|--------------|
+**Predicted**      | No                 | Yes                 |            UA|
+No                 | True Negative (TN) | False Negative (FN) |            UA|
+Yes                | False Positive (FP)| True Positive (TP)  |Precision / UA|
+-------------------|--------------------|---------------------|--------------|
+Metric             |Specificity / PA    |Sensitivity / PA     |Overall       |
+ 
+                   
+
+- Overall Accuracy: % of observations that were correctly classified, for all classes
+- Specificity:
+    - TN / (TN + FP)
+    - errors of commission (Type I)
+- Sensitivity (also known as Recall or True Positive Rate):
+    - TP / (TP + FN)
+    - errors of omission (Type II))
+    - % of predictions that were correctly classified, for an individual class
+- Precision:
+    - TP / (TP + FP)
+    - % of observations that were correctly classified, for an individual class
+- User's Accuracy (UA):
+    - diagonal values / predicted values
+- Producer's Accuracy (PA):
+    - diagonal values (TN & TP) / observed values
+- Tau index (`aqp::tauW()`)
+
+
+
+```r
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_bs.csv"
+bs <- read.csv(url)
+bs <- subset(bs, complete.cases(BS1_obs, BS2_obs))
+
+
+# Probability metrics ----
+
+## Brier score ----
+vars <- c("BS2_pred", "BS2_obs")
+aqp::brierScore(bs[vars], "BS2_pred", actual = "BS2_obs")
+```
+
+```
+## [1] 0.04384271
+```
+
+```r
+## D2 & Tjur D2----
+modEvA::RsqGLM(obs = bs$BS2_obs, pred = bs$BS2_pred, plot = FALSE)
+```
+
+```
+## $CoxSnell
+## [1] 0.3957293
+## 
+## $Nagelkerke
+## [1] 0.7857143
+## 
+## $McFadden
+## [1] 0.7191203
+## 
+## $Tjur
+## [1] 0.4823267
+## 
+## $sqPearson
+## [1] 0.5992087
+```
+
+```r
+# Shannon entropy ----
+# fake example
+test <- seq(0, 0.5, 0.1)
+test <- data.frame(obs = test, pred = 1 - test)
+cbind(
+  test,
+  entropy = apply(test, 1, aqp::shannonEntropy)
+)
+```
+
+```
+##   obs pred   entropy
+## 1 0.0  1.0 0.0000000
+## 2 0.1  0.9 0.4689956
+## 3 0.2  0.8 0.7219281
+## 4 0.3  0.7 0.8812909
+## 5 0.4  0.6 0.9709506
+## 6 0.5  0.5 1.0000000
+```
+
+```r
+# bs example
+summary(
+  apply(data.frame(bs$BS2_pred, 1 - bs$BS2_pred), 1, aqp::shannonEntropy)
+)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  0.0000  0.2111  0.4327  0.4722  0.7418  1.0000
+```
+
+```r
+# Class-based metrics -----
+
+## Confusion matrix ----
+# beware conf_mat prefers factors with equal numbers of levels
+cm1 <- table(pred = as.factor(bs$BS2_pred > 0.5), obs = as.factor(bs$BS2_obs))
+cm1
+```
+
+```
+##        obs
+## pred    FALSE  TRUE
+##   FALSE 28788   979
+##   TRUE    411  2696
+```
+
+```r
+# or
+
+cm2 <- confusionMatrix(cm1, positive = "TRUE")
+cm2
 ```
 
 ```
 ## Confusion Matrix and Statistics
 ## 
-##          observed
-## predicted FALSE TRUE
-##     FALSE    56    8
-##     TRUE     12   24
+##        obs
+## pred    FALSE  TRUE
+##   FALSE 28788   979
+##   TRUE    411  2696
 ##                                           
-##                Accuracy : 0.8             
-##                  95% CI : (0.7082, 0.8733)
-##     No Information Rate : 0.68            
-##     P-Value [Acc > NIR] : 0.005378        
+##                Accuracy : 0.9577          
+##                  95% CI : (0.9555, 0.9599)
+##     No Information Rate : 0.8882          
+##     P-Value [Acc > NIR] : < 2.2e-16       
 ##                                           
-##                   Kappa : 0.5552          
+##                   Kappa : 0.7717          
 ##                                           
-##  Mcnemar's Test P-Value : 0.502335        
+##  Mcnemar's Test P-Value : < 2.2e-16       
 ##                                           
-##             Sensitivity : 0.7500          
-##             Specificity : 0.8235          
-##          Pos Pred Value : 0.6667          
-##          Neg Pred Value : 0.8750          
-##              Prevalence : 0.3200          
-##          Detection Rate : 0.2400          
-##    Detection Prevalence : 0.3600          
-##       Balanced Accuracy : 0.7868          
+##             Sensitivity : 0.73361         
+##             Specificity : 0.98592         
+##          Pos Pred Value : 0.86772         
+##          Neg Pred Value : 0.96711         
+##              Prevalence : 0.11179         
+##          Detection Rate : 0.08201         
+##    Detection Prevalence : 0.09451         
+##       Balanced Accuracy : 0.85976         
 ##                                           
 ##        'Positive' Class : TRUE            
 ## 
 ```
+
+```r
+## Examine thresholds ----
+ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
+  geom_density(alpha = 0.5) +
+  xlab("BS2 Probability")
+```
+
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+
+```r
+## Trade Precision for Sensitivity by Varying the Threshold 
+table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
+```
+
+```
+##          observed
+## predicted FALSE  TRUE
+##     FALSE 28788   979
+##     TRUE    411  2696
+```
+
+
+### Exercise ?
+
+Using the examples discussed thus far as a guide, demonstrate your mastery of the material by performing the following tasks.
+
+1. Calculate the Brier score, $D^2$ and Shannon Entropy for the `BS1` class from the `bs` dataset.
+2. What probably threshold creates the best split for the `BS1` class.
+3. Calculate a confusion matrix for the `sas` dataset. Be sure to manually set the factor levels as shown below.
+
+
+```r
+lev <- unique(c(sas$sas030_obs, sas$sas030_pred))
+lev <- lev[c(1, 8, 9, 4, 12, 5, 3, 6, 7, 11)]
+sas$sas030_obs  <- factor(sas$sas030_obs,  levels = lev)
+sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
+```
+
+4. Why can't you calculate a Brier score and Shannon entropy for the `SAS` classes from the `sas` dataset?
+
 
 ## Validation
   
@@ -440,26 +551,25 @@ In soil science, we typically use the term model validation to refer to a statis
 
 **Three types of validation used in the course**
 
-- Apparent - Performance on sample used to develop model
 - Internal - Performance on population underlying the sample
 - External - Performance on related (similar/adjacent) but independent population
 
 
-## Apparent Validation
-  
-In this exploratory and explanatory phase you are looking for relationships that can be used later for predictive purposes.
+<!-- ## Apparent Validation -->
 
-- Use Goodness of fit tests on all the data in your sample
-    - Correlation (R2, rho, etc.)
-    - P-values (test questions about individual or combinations of variables)
-- Analyze Residuals (distribution of model errors) to diagnose modeling problems. One or more of these issues indicate that one or more important variables was omitted from the model or that an incorrect functional form was used (linear when the function should be non-linear)
-    - Heteroscedasticity
-    - Normality
-    - Spatial distribution (auto-correlation)
+<!-- In this exploratory and explanatory phase you are looking for relationships that can be used later for predictive purposes. -->
 
-## Inherent Validation 
+<!-- - Use Goodness of fit tests on all the data in your sample -->
+<!--     - Correlation (R2, rho, etc.) -->
+<!--     - P-values (test questions about individual or combinations of variables) -->
+<!-- - Analyze Residuals (distribution of model errors) to diagnose modeling problems. One or more of these issues indicate that one or more important variables was omitted from the model or that an incorrect functional form was used (linear when the function should be non-linear) -->
+<!--     - Heteroscedasticity -->
+<!--     - Normality -->
+<!--     - Spatial distribution (auto-correlation) -->
 
-### Split-sample - A single partition of the data into a learning and a calibration set.
+### Internal Validation 
+
+#### Split-sample - A single partition of the data into a learning and a calibration set.
 
 - Achieve an independent validation by partitioning the samples into calibration or training and validation data-sets (70% of the samples available are recommended for calibration)
     - Build model on calibration (training) data-set
@@ -467,7 +577,7 @@ In this exploratory and explanatory phase you are looking for relationships that
     - Report accuracy on the validation data-set
 - This method is relatively simple (conceptually and computationally). Results depend on having an adequate sample size to both develop and test the model.
 
-### Cross-validation - Alternate development and validation
+#### Cross-validation - Alternate development and validation
 
 **Leave-One-Out Cross-Validation (LOOCV)**
 
@@ -488,20 +598,19 @@ In this exploratory and explanatory phase you are looking for relationships that
 ```r
 ### Linear model example
 # Create folds
-folds <- createFolds(d_num$depth, k = 10)
+folds <- createFolds(1:nrow(sas), k = 10)
 
 # Cross validate
 lm_cv <- lapply(folds, function(x) {
-  train   = d_num[-x,]
-  test    = d_num[x,]
-  model   = lm(depth ~ ., data = train, y = TRUE)
-  actual  = test$depth
-  predict = predict(model, test)
-  RMSE    = sqrt(mean((actual - predict)^2, na.rm = TRUE))
-  R2      = cor(actual, predict, use = "pairwise")^2
+  train = sas[-x,]
+  test  = sas[x,]
+  obs   = test$pH_0.30_obs
+  # predict = predict(model, test)
+  pred  = test$pH_0.30_pred
+  RMSE  = RMSE(pred, obs, na.rm = TRUE)
+  R2    = R2(pred, obs, formula = "traditional", na.rm = TRUE)
   return(c(RMSE = RMSE, R2 = R2))
-  }
-  )
+})
 
 # Convert to a data.frame
 lm_cv <- do.call(rbind, lm_cv)
@@ -511,17 +620,17 @@ summary(lm_cv)
 ```
 
 ```
-##       RMSE              R2         
-##  Min.   : 5.115   Min.   :0.07494  
-##  1st Qu.: 8.806   1st Qu.:0.76935  
-##  Median :11.283   Median :0.82930  
-##  Mean   :11.552   Mean   :0.74810  
-##  3rd Qu.:15.006   3rd Qu.:0.93548  
-##  Max.   :17.183   Max.   :0.98633
+##       RMSE              R2        
+##  Min.   :0.4508   Min.   :0.8394  
+##  1st Qu.:0.4613   1st Qu.:0.8482  
+##  Median :0.4690   Median :0.8542  
+##  Mean   :0.4689   Mean   :0.8526  
+##  3rd Qu.:0.4740   3rd Qu.:0.8567  
+##  Max.   :0.4934   Max.   :0.8651
 ```
 
   
-### Subsample (Resampling or sample simulation)
+#### Subsample (Resampling or sample simulation)
 
 In this method, the 'leave-out' method can be random (Bootstrap) or observation selection can use a more sophisticated method to select observations to represent the population including Monte Carlo (Molarino, 2005) and .632+bootstrap of Efron & Tibshirani (1997). The details of those aren't important, except to know that they can give you a better idea of the robustness of your model.
 
@@ -546,31 +655,18 @@ In this case, an independent data-set is used as the test case.
   
 The use of validation will be demonstrated as part of each modeling section. The size of the data-set used, understanding of the variables involved and the nature of the statistical models and algorithms used all influence which validation techniques are most convenient and appropriate.
 
-This is just some junk [@Sneath1973] and [@Kaufman2005].
 
+<!-- ## Additional reading -->
 
-## Additional reading
+<!-- Efron, B., Tibshirani, R.J., 1993. An introduction to the bootstrap. Monographs on Statistics and Applied Probability, vol. 57. Chapman & Hall, London, UK. -->
 
-James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
+<!-- Hastie, T., R. Tibshirani, and J. Friedman 2009. The Elements of Statistical Learning: Data Mining, Inference, and Prediction. Springer, New York. [http://statweb.stanford.edu/~tibs/ElemStatLearn/](http://statweb.stanford.edu/~tibs/ElemStatLearn/) -->
 
-Hastie, T., R. Tibshirani, and J. Friedman 2009. The Elements of Statistical Learning: Data Mining, Inference, and Prediction. Springer, New York. [http://statweb.stanford.edu/~tibs/ElemStatLearn/](http://statweb.stanford.edu/~tibs/ElemStatLearn/)
+<!-- Molinaro, A. M. (2005). Prediction error estimation: a comparison of resampling methods. Bioinformatics, 21(15), 3301-3307. doi:10.1093/bioinformatics/bti499 -->
 
+<!-- Shmueli, G.. (2010). To Explain or to Predict?. Statistical Science, 25(3), 289:310. Retrieved from http://www.jstor.org/stable/41058949 -->
 
-## Move to .bib Refs
-
-Efron, B., Tibshirani, R.J., 1993. An introduction to the bootstrap. Monographs on Statistics and Applied Probability, vol. 57. Chapman & Hall, London, UK.
-
-Good, P.I., 2001. Resampling methods. Birkhäuser.
-
-James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
-
-Molinaro, A. M. (2005). Prediction error estimation: a comparison of resampling methods. Bioinformatics, 21(15), 3301-3307. doi:10.1093/bioinformatics/bti499
-
-Shmueli, G.. (2010). To Explain or to Predict?. Statistical Science, 25(3), 289:310. Retrieved from http://www.jstor.org/stable/41058949
-
-Zar, J.H., 1999. Biostatistical analysis. Pearson Education India.
-
-
+<!-- Zar, J.H., 1999. Biostatistical analysis. Pearson Education India. -->
 
 <!-- references automatically added here  -->
 

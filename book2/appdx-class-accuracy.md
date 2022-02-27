@@ -190,7 +190,7 @@ kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_widt
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.73 </td>
+   <td style="text-align:right;"> 0.74 </td>
    <td style="text-align:right;"> 0.20 </td>
    <td style="text-align:right;"> 0.14 </td>
    <td style="text-align:right;"> 0.36 </td>
@@ -204,10 +204,10 @@ kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_widt
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
-   <td style="text-align:right;"> 0.31 </td>
-   <td style="text-align:right;"> 0.77 </td>
-   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.26 </td>
    <td style="text-align:right;"> 0.82 </td>
+   <td style="text-align:right;"> 0.45 </td>
+   <td style="text-align:right;"> 0.86 </td>
   </tr>
 </tbody>
 </table>
@@ -242,30 +242,30 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:right;"> 0.04 </td>
    <td style="text-align:right;"> 0.17 </td>
-   <td style="text-align:right;"> 0.05 </td>
-   <td style="text-align:right;"> 0.30 </td>
-   <td style="text-align:right;"> 0.42 </td>
-   <td style="text-align:right;"> 1.92 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:right;"> 0.32 </td>
+   <td style="text-align:right;"> 0.38 </td>
+   <td style="text-align:right;"> 1.98 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.05 </td>
-   <td style="text-align:right;"> 0.11 </td>
-   <td style="text-align:right;"> 0.26 </td>
-   <td style="text-align:right;"> 0.16 </td>
-   <td style="text-align:right;"> 0.43 </td>
-   <td style="text-align:right;"> 2.00 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 0.15 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:right;"> 0.17 </td>
+   <td style="text-align:right;"> 0.46 </td>
+   <td style="text-align:right;"> 2.06 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
-   <td style="text-align:right;"> 0.01 </td>
-   <td style="text-align:right;"> 0.04 </td>
-   <td style="text-align:right;"> 0.07 </td>
-   <td style="text-align:right;"> 0.05 </td>
-   <td style="text-align:right;"> 0.83 </td>
-   <td style="text-align:right;"> 0.97 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.91 </td>
+   <td style="text-align:right;"> 0.60 </td>
   </tr>
 </tbody>
 </table>

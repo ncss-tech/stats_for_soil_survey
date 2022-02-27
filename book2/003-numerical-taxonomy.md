@@ -1291,7 +1291,7 @@ str(s, 1)
 ##  $ climate.annual  :'data.frame':	88 obs. of  12 variables:
 ##  $ climate.monthly :'data.frame':	264 obs. of  14 variables:
 ##  $ NCCPI           :'data.frame':	11 obs. of  16 variables:
-##  $ soilweb.metadata:'data.frame':	22 obs. of  2 variables:
+##  $ soilweb.metadata:'data.frame':	20 obs. of  2 variables:
 ```
 
 #### Annual Climate Data
