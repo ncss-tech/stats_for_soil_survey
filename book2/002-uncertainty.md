@@ -174,8 +174,6 @@ When calculating many basic statistical parameters, the assumption is that the d
 Re-sampling is a general term that defines any procedure to repeatedly draw samples form a given data-set. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Re-sampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation [@good2013].  
 
 
-### Examples
-
 
 ```r
 # this bootstrap is estimating the uncertainty associated with the variance of sas$pH_0.30_obs
@@ -226,12 +224,12 @@ ci <- c(
   )
 
 # Compare Bootstrap to Confidence Interval
-quantile(boot_stats$means, c(0.05, 0.95))
+quantile(boot_stats$means, c(0.025, 0.975))
 ```
 
 ```
-##       5%      95% 
-## 5.914707 6.149212
+##     2.5%    97.5% 
+## 5.888672 6.197441
 ```
 
 ```r
@@ -244,6 +242,13 @@ ci
 ```
 
 
+### Exercise 1
+
+1. Calculate a bootstrapped median, 10th percentile, and 90th percentile for `EC_0.30_obs`.
+2. Calculate a traditional confidence interval for `EC_0.30_obs`.
+3. What is wrong with the traditional confidence interval?
+
+
 ## Performance Metrics
 
 ### Numerical
@@ -252,6 +257,7 @@ Accuracy:
 
 - Coefficient of variation ($R^2$): % of variance explained (`caret::R2(formula = "traditional)`); beware alternative definitions refer to this as correlation coefficient squared (`caret::R2()`), however this version does not assess the accuracy; see [http://mng.bz/ndYf](http://mng.bz/ndYf) for when the two terms overlap
 - Mean Error (ME): average error
+- Mean Absolute Error (MAE): average absolute error
 - Root Mean Square Error (RMSE): average residual
 
 Precision:
@@ -320,6 +326,13 @@ ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-7-2.png" width="672" />
 
 
+### Exercise 2
+
+1. Compare the traditional $R^2$ to the alternative $R^2$ for `EC_0.30_obs` vs `EC_0.30_pred`?
+2. Calculate the `RMSE()` and `MAE()`for `EC_0.30_obs` vs `EC_0.30_pred`?
+3. Plot a hex bin scatterplot of `EC_0.30_obs` vs `EC_0.30_pred` with a linear smoother.
+
+
 
 ### Categorical 
 
@@ -339,7 +352,7 @@ Precision:
 - Confusion index (`aqp::confusionIndex()`)
 
 
-**Class-based metrics** are derivatives of the confusion matrix [@zumel2014; kuhn2013; @james2021; @congalton2019)(`caret::confusionMatrix()`)
+**Class-based metrics** are derivatives of the confusion matrix [kuhn2013; @zumel2014; @congalton2019; @james2021](`caret::confusionMatrix()`)
 
 
 Confusion Matrix   | Observed           |                     |Metric                     |
@@ -518,18 +531,18 @@ table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
 ```
 
 
-### Exercise ?
+### Exercise 3
 
 Using the examples discussed thus far as a guide, demonstrate your mastery of the material by performing the following tasks.
 
 1. Calculate the Brier score, $D^2$ and Shannon Entropy for the `BS1` class from the `bs` dataset.
 2. What probably threshold creates the best split for the `BS1` class.
-3. Calculate a confusion matrix for the `sas` dataset. Be sure to manually set the factor levels as shown below.
+3. Calculate a confusion matrix for `sas30_obs` vs `sas30_pred` from the `sas` dataset. Be sure to manually set the factor levels as shown below.
 
 
 ```r
 lev <- unique(c(sas$sas030_obs, sas$sas030_pred))
-lev <- lev[c(1, 8, 9, 4, 12, 5, 3, 6, 7, 11)]
+lev <- lev[c(1, 4, 8, 9, 12, 5, 3, 6, 7, 11)]
 sas$sas030_obs  <- factor(sas$sas030_obs,  levels = lev)
 sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 ```
