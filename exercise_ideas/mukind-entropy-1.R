@@ -3,6 +3,20 @@ library(soilDB)
 library(lattice)
 library(tactile)
 
+## Excerpt from Soil Survey Handbook
+#
+# Consociations
+# 
+# In a consociation, delineated areas use a single name from the dominant component in the map unit. Dissimilar components are minor in extent.
+# 
+# Complexes and associations
+# 
+# Complexes and associations consist of two or more dissimilar components that occur in a regularly repeating pattern. The total amount of other dissimilar components is minor in extent.
+# 
+# Undifferentiated groups
+# 
+# Undifferentiated groups consist of two or more components that are not consistently associated geographically and, therefore, do not always occur together in the same map delineation.
+
 
 # complex or association
 x <- c(45, 40, 3, 3, 3, 3) / 100
@@ -88,7 +102,8 @@ MU_entropy <- function(i) {
     mukey = i$mukey[1],
     mukind = i$mukind[1],
     H = H,
-    Hn = Hn
+    Hn = Hn,
+    n = nrow(i)
   )
   
   return(res)

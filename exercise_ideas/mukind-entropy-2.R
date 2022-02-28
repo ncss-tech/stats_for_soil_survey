@@ -58,6 +58,29 @@ bwplot(
 
 
 
+# using ggplot style visualization
+
+library(ggdist)
+library(ggplot2)
+
+all.H <- na.omit(all.H)
+
+
+ggplot(all.H, aes(x = H, y = mukind)) +
+  stat_interval(inherit.aes = TRUE, orientation = 'horizontal', size = 5) + 
+  theme_minimal() +
+  theme(legend.position = c(1, 1), legend.justification ='right', legend.direction	
+        = 'horizontal', legend.background = element_rect(fill = 'white', color = NA), axis.text.y = element_text(size = 12, face = 'bold')) + 
+  stat_summary(geom = 'point', fun = median, shape = 21, fill = 'black', col = 'white', cex = 3) +
+  scale_color_brewer(palette = 'Blues') + 
+  xlab('Shannon Entropy (base 2)') + ylab('') +
+  labs(title = 'All SSURGO Components', color = 'Interval')
+
+
+
+
+
+
 
 
 ###################### re-create the example data #####################
@@ -115,6 +138,8 @@ legend.areasymbol = '%s'", ssa)
   
 }
 
+## all of SSURGO areasymbols
+# != 'US' excludes STATSGO
 q <- "SELECT areasymbol, saverest FROM sacatalog WHERE areasymbol ! = 'US' ;"
 x <- SDA_query(q)
 head(x)
