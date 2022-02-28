@@ -28,12 +28,17 @@ bwplot(
   }
 )
 
-###################### stop here #####################
+
+
+
+
+###################### re-create the example data #####################
+
 
 
 ##
 ## compute Shannon H by map unit kind for all of SSURGO!
-## iteration of SSA in parallel
+## iteration over SSA in parallel
 ##
 
 MU_entropy <- function(i) {
@@ -103,8 +108,11 @@ plan(sequential)
 all.H <- map(all.H, pluck, 'result')
 all.H <- do.call('rbind', all.H)
 
+# FY22: 318,671 map unit keys
+nrow(all.H)
+
 ## save to a local file for later use
-# saveRDS(all.H, file = 'mukind-entropy-calc.rds')
+saveRDS(all.H, file = '../data/mukind-entropy-calc.rds')
 
 
 

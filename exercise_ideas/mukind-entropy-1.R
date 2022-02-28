@@ -7,14 +7,18 @@ library(tactile)
 # complex or association
 x <- c(45, 40, 3, 3, 3, 3) / 100
 shannonEntropy(x)
+shannonEntropy(x, b = length(x))
 
 # consociation 1
 x <- c(76, 9, 5, 5, 3, 2) / 100
 shannonEntropy(x)
+shannonEntropy(x, b = length(x))
 
 # consociation 2
 x <- c(85, 10, 5) / 100
 shannonEntropy(x)
+shannonEntropy(x, b = length(x))
+
 
 # 4, equal prob
 x <- rep(1, times = 4) / 4
@@ -23,7 +27,6 @@ shannonEntropy(x)
 # 5, equal prob
 x <- rep(1, times = 5) / 5
 shannonEntropy(x)
-
 
 # normalized H
 x <- rep(1, times = 5) / 5
@@ -54,8 +57,20 @@ head(x)
 # factor levels
 x$mukind <- factor(x$mukind, levels = c("Association", "Consociation", "Complex", "Undifferentiated group"))
 
+# investigate proportions of map unit kind by areasymbol
+x.mu <- unique(x[, c('areasymbol', 'mukey', 'mukind')])
+
+# cross-tab
+tab <- table(x.mu$areasymbol, x.mu$mukind)
+
+# convert to row-wise proportions
+# round to 2 decimal places
+round(prop.table(tab, margin = 1), 2)
+
+
 # ~ median of 4 components / MU
 summary(tapply(x$mukind, x$mukey, length))
+
 
 
 # simple function applied to collections of components
@@ -88,6 +103,7 @@ xx[[1]]
 
 # iterate over map units
 z <- lapply(xx, MU_entropy)
+
 # flatten to data.frame
 z <- do.call('rbind', z)
 
