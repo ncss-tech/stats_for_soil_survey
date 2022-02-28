@@ -46,7 +46,7 @@ bwplot(
   data = all.H, 
   par.settings = tactile.theme(), 
   varwidth = TRUE,
-  main = 'All SSURGO Components',
+  main = 'All SSURGO All SSURGO Map Units',
   xlab = 'Shannon Entropy (base 2)',
   ylab = '',
   scales = list(x = list(tick.number = 10)),
@@ -74,7 +74,7 @@ ggplot(all.H, aes(x = H, y = mukind)) +
   stat_summary(geom = 'point', fun = median, shape = 21, fill = 'black', col = 'white', cex = 3) +
   scale_color_brewer(palette = 'Blues') + 
   xlab('Shannon Entropy (base 2)') + ylab('') +
-  labs(title = 'All SSURGO Components', color = 'Interval')
+  labs(title = 'All SSURGO Map Units', color = 'Interval')
 
 
 
