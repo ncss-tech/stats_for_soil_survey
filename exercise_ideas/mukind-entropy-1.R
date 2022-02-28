@@ -107,6 +107,23 @@ z <- lapply(xx, MU_entropy)
 # flatten to data.frame
 z <- do.call('rbind', z)
 
+
+## Excerpt from Soil Survey Handbook
+#
+# Consociations
+# 
+# In a consociation, delineated areas use a single name from the dominant component in the map unit. Dissimilar components are minor in extent.
+# 
+# Complexes and associations
+# 
+# Complexes and associations consist of two or more dissimilar components that occur in a regularly repeating pattern. The total amount of other dissimilar components is minor in extent.
+# 
+# Undifferentiated groups
+# 
+# Undifferentiated groups consist of two or more components that are not consistently associated geographically and, therefore, do not always occur together in the same map delineation.
+
+
+
 # graphical checks
 bwplot(areasymbol ~ H, data = z, par.settings = tactile.theme(), varwidth = TRUE)
 bwplot(areasymbol ~ Hn, data = z, par.settings = tactile.theme(), varwidth = TRUE)

@@ -1,7 +1,21 @@
-library(aqp)
-library(soilDB)
-library(purrr)
-library(furrr)
+
+
+## Excerpt from Soil Survey Handbook
+#
+# Consociations
+# 
+# In a consociation, delineated areas use a single name from the dominant component in the map unit. Dissimilar components are minor in extent.
+# 
+# Complexes and associations
+# 
+# Complexes and associations consist of two or more dissimilar components that occur in a regularly repeating pattern. The total amount of other dissimilar components is minor in extent.
+# 
+# Undifferentiated groups
+# 
+# Undifferentiated groups consist of two or more components that are not consistently associated geographically and, therefore, do not always occur together in the same map delineation.
+
+
+
 
 library(lattice)
 library(tactile)
@@ -12,7 +26,21 @@ download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/dat
 
 all.H <- readRDS(tf)
 
-## interesting...
+
+# tabulate map unit kinds for all SSURGO map unit keys
+sort(
+  round(
+    prop.table(
+      table(all.H$mukind)
+    ),
+    digits = 2
+  ), decreasing = TRUE
+)
+
+
+
+
+# interesting...
 bwplot(
   mukind ~ H, 
   data = all.H, 
@@ -35,6 +63,10 @@ bwplot(
 ###################### re-create the example data #####################
 
 
+library(aqp)
+library(soilDB)
+library(purrr)
+library(furrr)
 
 ##
 ## compute Shannon H by map unit kind for all of SSURGO!
