@@ -244,9 +244,11 @@ ci
 
 ### Exercise 1
 
-1. Calculate a bootstrapped median, 10th percentile, and 90th percentile for `EC_0.30_obs`.
-2. Calculate a traditional confidence interval for `EC_0.30_obs`.
-3. What is wrong with the traditional confidence interval?
+1. Create a new R script.
+2. Calculate a bootstrapped median, 10th percentile, and 90th percentile for `EC_0.30_obs`.
+3. Calculate a traditional confidence interval for `EC_0.30_obs`.
+4. What is wrong with the traditional confidence interval?
+5. Forward you R script your instructor.
 
 
 ## Performance Metrics
@@ -328,9 +330,11 @@ ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
 
 ### Exercise 2
 
-1. Compare the traditional $R^2$ to the alternative $R^2$ for `EC_0.30_obs` vs `EC_0.30_pred`?
-2. Calculate the `RMSE()` and `MAE()`for `EC_0.30_obs` vs `EC_0.30_pred`?
-3. Plot a hex bin scatterplot of `EC_0.30_obs` vs `EC_0.30_pred` with a linear smoother.
+1. Append the following exercises to your previous R script.
+2. Compare the traditional $R^2$ to the alternative $R^2$ for `EC_0.30_obs` vs `EC_0.30_pred`?
+3. Calculate the `RMSE()` and `MAE()`for `EC_0.30_obs` vs `EC_0.30_pred`?
+4. Plot a hex bin scatterplot of `EC_0.30_obs` vs `EC_0.30_pred` with a linear smoother.
+5. Forward you R script your instructor.
 
 
 
@@ -352,7 +356,7 @@ Precision:
 - Confusion index (`aqp::confusionIndex()`)
 
 
-**Class-based metrics** are derivatives of the confusion matrix [kuhn2013; @zumel2014; @congalton2019; @james2021](`caret::confusionMatrix()`)
+**Class-based metrics** are derivatives of the confusion matrix [@kuhn2013; @zumel2014; @congalton2019; @james2021](`caret::confusionMatrix()`)
 
 
 Confusion Matrix   | Observed           |                     |Metric                     |
@@ -533,11 +537,10 @@ table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
 
 ### Exercise 3
 
-Using the examples discussed thus far as a guide, demonstrate your mastery of the material by performing the following tasks.
-
-1. Calculate the Brier score, $D^2$ and Shannon Entropy for the `BS1` class from the `bs` dataset.
-2. What probably threshold creates the best split for the `BS1` class.
-3. Calculate a confusion matrix for `sas30_obs` vs `sas30_pred` from the `sas` dataset. Be sure to manually set the factor levels as shown below.
+1. Append the following exercises to your previous R script.
+2. Calculate the Brier score, $D^2$ and Shannon Entropy for the `BS1` class from the `bs` dataset.
+3. What probably threshold creates the best split for the `BS1` class.
+4. Calculate a confusion matrix for `sas30_obs` vs `sas30_pred` from the `sas` dataset. Be sure to manually set the factor levels as shown below.
 
 
 ```r
@@ -547,7 +550,8 @@ sas$sas030_obs  <- factor(sas$sas030_obs,  levels = lev)
 sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 ```
 
-4. Why can't you calculate a Brier score and Shannon entropy for the `SAS` classes from the `sas` dataset?
+5. Why can't you calculate a Brier score and Shannon entropy for the `SAS` classes from the `sas` dataset?
+6. Forward you R script your instructor.
 
 
 ## Validation
