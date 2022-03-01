@@ -47,4 +47,7 @@ s <- m
 # save for later use
 save(s, file='cached-data.rda')
 
+write.csv(as.data.frame(s), "henry_CA790_data.csv", row.names = TRUE)
+
+
 
