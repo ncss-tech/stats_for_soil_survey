@@ -49,7 +49,7 @@ save(s, file='cached-data.rda')
 
 xy <- coordinates(spTransform(s, CRS("+init=epsg:4326")))
 s2 <- cbind(xy, as.data.frame(s)[-c(25:26)])
-write.csv(s2, "henry_CA790_data.csv", row.names = TRUE)
+write.csv(s2, "henry_CA790_data.csv", row.names = FALSE)
 
 
 
