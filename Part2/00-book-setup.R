@@ -26,7 +26,7 @@ options(bookdown.clean_book = TRUE)
 
 # remove ../book
 bookdown::clean_book()
-# file.remove("s4ssbook.Rmd")
+file.remove("s4ssbook.rds")
 
 # create ../book2
 bookdown::render_book(".")
