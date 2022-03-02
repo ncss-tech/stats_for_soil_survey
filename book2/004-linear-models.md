@@ -107,6 +107,8 @@ length(unique(f$sensors$user_site_id))
 
 ### Aggregate Time Series
 
+For our purposes the daily soil temperature measurements need to be aggregated to the mean annual soil temperature (MAST). However, depending data you query using, `fetchHenry()` maybe able to return pre-aggregated results using the `gran` function argument. 
+
 
 ```r
 library(dplyr)
@@ -118,11 +120,12 @@ library(ggplot2)
 
 
 ```r
+# extract the site and sensor data frames from the list
 ms_df <- f$soiltemp
 s     <- f$sensors
   
 
-# convert date time data
+# rename 2 columns
 ms_df <- mutate(
   ms_df,
   day  = date_time,
@@ -155,7 +158,8 @@ ms_n_df <- ms_df %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'sid'. You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'sid'. You can override using the `.groups`
+## argument.
 ```
 
 ```r
@@ -169,7 +173,8 @@ ms_site_df <- ms_df %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'sid'. You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'sid'. You can override using the `.groups`
+## argument.
 ```
 
 ```r
@@ -184,7 +189,8 @@ mast_df <- as.data.frame(s) %>%
 
 ### Final Dataset
 
-Since the Henry Mount database is incomplete we will proceed with the aggregation from the original txt files.
+Since the Henry Mount database is partially incomplete we will proceed with the aggregation from the original txt files.
+
 
 
 ```r
@@ -214,11 +220,13 @@ mast_sf <- st_as_sf(mast_df,
                     ) %>%
   # reproject
   st_transform(crs = 4326)
+```
 
 
+```r
 # plot
-# mapview(mlra, alpha.region = 0, lwd = 2) +
-  # mapview(mast_sf)
+mapview(mlra, alpha.region = 0, lwd = 2) +
+  mapview(mast_sf)
 ```
 
 
@@ -257,9 +265,9 @@ geodata_r <- readRDS(githubURL)
 
 
 # Extract the geodata and add to a data frame
-mast_sp <- as(st_transform(mast_sf, crs = 5070), "Spatial")
-data <- raster::extract(geodata_r, mast_sp, sp = TRUE)@data
-
+mast_sf <- st_transform(mast_sf, crs = 5070)
+data <- raster::extract(geodata_r, st_coordinates(mast_sf))
+data <- cbind(st_drop_geometry(mast_sf), data)
 
 # convert aspect
 data$northness <- abs(180 - data$aspect)
@@ -274,7 +282,7 @@ geodata_s <- sampleRegular(geodata_r[[idx]], size = 1000)
 
 ## Exploratory Data Analysis (EDA)
 
-Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify pecularities in the data is to plot it.
+Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify peculiarities in the data is to plot it.
 
 
 ```r
@@ -329,7 +337,7 @@ ggplot(data, aes(sample = mast)) +
 
 <img src="004-linear-models_files/figure-html/qq-plot-1.png" width="672" />
 
-By examining the correlations between some of the predictors we can also determine wheter they are *collinear* (e.g. > 0.6). This is common for similar variables such as landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In additino, collinearity will make it difficult to estimate our regression coefficients. 
+By examining the correlations between some of the predictors we can also determine whether they are *collinear* (e.g. > 0.6). This is common for similar variables such as Landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In addition, collinearity will make it difficult to estimate our regression coefficients. 
 
 
 ```r
@@ -343,18 +351,18 @@ GGally::ggpairs(data[vars])
 ##   +.gg   ggplot2
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-7-1.png" width="672" />
 
 ```r
 vars <- c("mast", "slope", "twi", "northness", "solar", "solarcv")
 GGally::ggpairs(data[vars])
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-6-2.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-7-2.png" width="672" />
 
 The correlation matrices and scatter plots above show that that MAST has moderate correlations with some of the variables, particularly the elevation and the climatic variables. 
 
-Examining the density plots on the diagonal axis of the scatterplots we can also see that some variables are skewed.
+Examining the density plots on the diagonal axis of the scatter plots we can also see that some variables are skewed.
 
 
 ### Compare Samples vs Population 
@@ -385,14 +393,14 @@ ggplot(geodata_l, aes(x = value, fill = source)) +
 ## Warning: Removed 1266 rows containing non-finite values (stat_density).
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-7-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-8-1.png" width="672" />
 
 The overlap between our sample and the population appear satisfactory.
 
 
 ## Linear modeling
 
-R has several functions for fitting linear models. The most common is arguably the `lm()` function from the stats R package, which is loaded by default. The `lm()` function is also extended thru the use of several additional packages such as the car and caret R packages. Another noteworthy R package for linear modeling is rms, which offers the `ols()` function for linear modeling. The rms R package [@harrell2015] offers an 'almost' comprehesive alternative to `lm()' and it's accessory function. It is difficult to objectively functions say which approach is better. Therefore methods both methods will be demonstrated. Look for comments (i.e. #) below referring to rms, stats, caret or visreg. 
+R has several functions for fitting linear models. The most common is arguably the `lm()` function from the stats R package, which is loaded by default. The `lm()` function is also extended through the use of several additional packages such as the car and caret R packages. Another noteworthy R package for linear modeling is rms, which offers the `ols()` function for linear modeling. The rms R package [@harrell2015] offers an 'almost' comprehensive alternative to `lm()' and it's accessory function. Each function offers useful features, therefore for the we will demonstrate elements of both. Look for comments (i.e. #) below referring to rms or stats. 
 
 
 ```r
@@ -420,24 +428,62 @@ Once we have a model we need to assess residuals for linearity, normality, and h
 
 ```r
 par(mfcol = c(2, 2))
+```
 
+
+```r
 # residual
 plot(fit_lm)
 ```
 
-<img src="004-linear-models_files/figure-html/residuals-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-9-1.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-2.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-3.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-4.png" width="672" />
 
 ```r
 # partial residuals
 termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 ```
 
-<img src="004-linear-models_files/figure-html/residuals-2.png" width="672" /><img src="004-linear-models_files/figure-html/residuals-3.png" width="672" /><img src="004-linear-models_files/figure-html/residuals-4.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-9-5.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-6.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-7.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-8.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-9.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-10.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-11.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-12.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-13.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-14.png" width="672" />
+
+Remember the residuals are simply just the observed values minus the predicted values, which are easy enough to calculate. Alternatively we can simply extract them from the fitted model object.
+
+
+```r
+pred <- predict(fit_lm, data)
+res  <- data$mast - pred
+head(res)
+```
+
+```
+##          1          2          3          4          5          6 
+## -1.3182498 -0.4111067  0.1231537  1.4750626 -0.1719747 -0.1036808
+```
+
+```r
+# or 
+
+head(residuals(fit_lm))
+```
+
+```
+##          1          2          3          4          5          6 
+## -1.3182498 -0.4111067  0.1231537  1.4750626 -0.1719747 -0.1036808
+```
+
+
+```r
+# Manually plot the residuals
+res <- data.frame(res, pred)
+
+ggplot(res, aes(x = pred, y = res)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0)
+```
 
 
 #### Multicolinearity
 
-As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the **variance inflation factor** (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
+As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the **variance inflation factor** (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value [@faraway2004].
 
 
 ```r
@@ -468,7 +514,7 @@ The values above indicate we have several colinear variables in the model, which
 
 ### Variable selection & model validation
 
-Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically require more scrutiny from the user. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation monist the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically less automated. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongist the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
 
 Both the rms and caret packages offer methods for variable selection and cross-validation. In this instance the rms approach is a bit more convenient, with the one line call to `validate()`.
 
@@ -479,8 +525,8 @@ set.seed(42)
 
 
 # rms
-## stepwise selection and validation
-fit_step <- validate(fit_ols, method = "crossvalidation", B = 10, bw = TRUE)
+## stepwise selection
+validate(fit_ols, bw = TRUE)
 ```
 
 ```
@@ -509,82 +555,199 @@ fit_step <- validate(fit_ols, method = "crossvalidation", B = 10, bw = TRUE)
 ## [1] elev  solar tc_1  tc_2
 ```
 
-The results for `validate()` above and below show which variables were retained and deleted. Below we can see a dot matrix of which variables were retained in during the 10 iterations of the cross validation. In addition, below we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
-
-
-```r
-## test accuracy and error
-fit_step
-```
-
 ```
 ##           index.orig training   test optimism index.corrected  n
-## R-square      0.9286   0.9293 0.6377   0.2915          0.6370 10
-## MSE           2.1473   2.1143 3.4892  -1.3750          3.5223 10
-## g             5.6666   5.6878 5.3049   0.3829          5.2837 10
-## Intercept     0.0000   0.0000 2.6416  -2.6416          2.6416 10
-## Slope         1.0000   1.0000 0.8829   0.1171          0.8829 10
+## R-square      0.9286   0.9319 0.9154   0.0165          0.9120 40
+## MSE           2.1473   1.8643 2.5430  -0.6787          2.8261 40
+## g             5.6666   5.6236 5.6643  -0.0407          5.7074 40
+## Intercept     0.0000   0.0000 0.1430  -0.1430          0.1430 40
+## Slope         1.0000   1.0000 0.9917   0.0083          0.9917 40
 ## 
 ## Factors Retained in Backwards Elimination
 ## 
 ##  elev aspect twi solar solarcv tc_1 tc_2 tc_3 precip temp
+##  *               *             *    *                    
 ##  *                     *       *    *                    
 ##  *               *             *    *                    
-##  *               *             *    *                    
+##                  *             *    *                *   
+##  *               *             *              *          
 ##  *               *             *    *                    
 ##  *               *             *    *                    
 ##                        *       *    *                *   
-##  *               *             *                         
-##  *                     *       *    *                    
 ##  *               *             *    *                    
+##  *               *             *    *                    
+##  *                     *       *    *                    
+##                        *       *    *                *   
+##  *               *             *    *                    
+##  *               *             *    *                    
+##  *               *             *    *                    
+##  *                     *       *    *                    
+##  *                     *       *    *         *          
+##              *   *                  *                *   
+##  *                     *       *    *                    
+##                        *       *    *                *   
+##  *               *             *    *    *               
+##              *   *                  *    *           *   
+##                        *       *    *                *   
+##  *               *                       *               
+##  *               *             *    *         *          
+##                  *             *    *                *   
+##  *                     *                                 
+##  *                     *       *    *                    
+##  *               *             *    *    *           *   
+##                  *             *    *                *   
+##              *         *            *                *   
+##  *                     *                                 
+##  *                     *       *    *                    
+##                        *       *    *                *   
+##  *               *             *                         
+##                  *             *    *                *   
+##                        *       *    *                *   
+##  *               *             *    *                    
+##  *                             *         *    *          
 ##  *                     *       *    *                    
 ## 
 ## Frequencies of Numbers of Factors Retained
 ## 
-## 3 4 
-## 1 9
+##  2  3  4  5  6 
+##  2  2 31  4  1
 ```
 
+The results for `validate()` above show which variables were retained and deleted. Above we can see a dot matrix of which variables were retained during each of the 10 iterations of from cross validation. In addition, we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
 
 
 ### Final model & accuracy assessment
 
+Once we have a model we are 'happy' with we can fit the final model, and call `validate()` again which gives performace metrics such as `R$2` and the mean square error (MSE). If we want the root mean square error (RMSE), which is in the original units of our measurements we can take the square root of MSE using `sqrt()`. 
 
 
 ```r
 # rms
 final_ols <- ols(mast ~ elev + solarcv + tc_1 + tc_2, data = data, weights = data$numDays, x = TRUE, y = TRUE)
+final_ols
+```
 
+```
+## Linear Regression Model
+##  
+##  ols(formula = mast ~ elev + solarcv + tc_1 + tc_2, data = data, 
+##      weights = data$numDays, x = TRUE, y = TRUE)
+##  
+##                   Model Likelihood    Discrimination    
+##                         Ratio Test           Indexes    
+##  Obs       68    LR chi2    177.01    R2       0.926    
+##  sigma73.3628    d.f.            4    R2 adj   0.921    
+##  d.f.      63    Pr(> chi2) 0.0000    g        5.720    
+##  
+##  Residuals
+##  
+##      Min      1Q  Median      3Q     Max 
+##  -3.7912 -0.8006 -0.1218  0.7401  4.0016 
+##  
+##  
+##            Coef    S.E.   t      Pr(>|t|)
+##  Intercept 49.9906 3.7439  13.35 <0.0001 
+##  elev      -0.0066 0.0006 -11.82 <0.0001 
+##  solarcv   -0.2421 0.0526  -4.60 <0.0001 
+##  tc_1      -0.0535 0.0113  -4.75 <0.0001 
+##  tc_2      -0.1469 0.0362  -4.06 0.0001  
+## 
+```
+
+```r
+set.seed(42)
 validate(final_ols, method = "crossvalidation", B = 10)
 ```
 
 ```
 ##           index.orig training   test optimism index.corrected  n
-## R-square      0.9209   0.9228 0.3214   0.6015          0.3194 10
-## MSE           2.3332   2.2565 2.7699  -0.5133          2.8465 10
-## g             5.7197   5.6587 4.6978   0.9609          4.7588 10
-## Intercept     0.0000   0.0000 1.8893  -1.8893          1.8893 10
-## Slope         1.0000   1.0000 0.9020   0.0980          0.9020 10
+## R-square      0.9209   0.9227 0.7896   0.1331          0.7878 10
+## MSE           2.3332   2.2652 2.7234  -0.4582          2.7914 10
+## g             5.7197   5.6658 5.4657   0.2001          5.5196 10
+## Intercept     0.0000   0.0000 0.8853  -0.8853          0.8853 10
+## Slope         1.0000   1.0000 0.9571   0.0429          0.9571 10
 ```
 
+```r
+data$pred <- predict(final_ols)
 
 
-### Model Effects
+# RMSE
+sqrt((MSE = 1.7218))
+```
+
+```
+## [1] 1.312174
+```
+
+```r
+caret::RMSE(pred = data$pred, obs = data$mast)
+```
+
+```
+## [1] 1.527477
+```
+
+```r
+# R2
+caret::R2(pred = data$pred, obs = data$mast, formula = "traditional")
+```
+
+```
+## [1] 0.9208941
+```
+
+```r
+# plot model fit
+
+ggplot(data, aes(x = mast, y = pred)) +
+  geom_point() +
+  geom_abline() + 
+  geom_smooth(method = "lm") +
+  ggtitle("Model Fit")
+```
+
+```
+## `geom_smooth()` using formula 'y ~ x'
+```
+
+<img src="004-linear-models_files/figure-html/final-model-1.png" width="672" />
+
+
+
+### Model Interpretation
 
 
 ```r
-# Model summmary
-summary(final_ols)
+# Model accuracy, residuals, and slopes (e.g. coefficents)
+final_ols
 ```
 
 ```
-##              Effects              Response : mast 
+## Linear Regression Model
+##  
+##  ols(formula = mast ~ elev + solarcv + tc_1 + tc_2, data = data, 
+##      weights = data$numDays, x = TRUE, y = TRUE)
+##  
+##                   Model Likelihood    Discrimination    
+##                         Ratio Test           Indexes    
+##  Obs       68    LR chi2    177.01    R2       0.926    
+##  sigma73.3628    d.f.            4    R2 adj   0.921    
+##  d.f.      63    Pr(> chi2) 0.0000    g        5.720    
+##  
+##  Residuals
+##  
+##      Min      1Q  Median      3Q     Max 
+##  -3.7912 -0.8006 -0.1218  0.7401  4.0016 
+##  
+##  
+##            Coef    S.E.   t      Pr(>|t|)
+##  Intercept 49.9906 3.7439  13.35 <0.0001 
+##  elev      -0.0066 0.0006 -11.82 <0.0001 
+##  solarcv   -0.2421 0.0526  -4.60 <0.0001 
+##  tc_1      -0.0535 0.0113  -4.75 <0.0001 
+##  tc_2      -0.1469 0.0362  -4.06 0.0001  
 ## 
-##  Factor  Low    High    Diff.  Effect   S.E.    Lower 0.95 Upper 0.95
-##  elev    699.25 1480.20 781.00 -5.19080 0.43926 -6.06860   -4.31300  
-##  solarcv  31.00   33.25   2.25 -0.54478 0.11836 -0.78131   -0.30826  
-##  tc_1     97.75  143.50  45.75 -2.44820 0.51488 -3.47710   -1.41930  
-##  tc_2     47.75   64.00  16.25 -2.38690 0.58767 -3.56120   -1.21250
 ```
 
 ```r
@@ -605,6 +768,13 @@ anova(final_ols)
 ```
 
 ```r
+# Model Effects
+plot(summary(final_ols))
+```
+
+<img src="004-linear-models_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+
+```r
 # Plot Effects
 ggplot(Predict(final_ols),
        addlayer = geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
@@ -612,7 +782,7 @@ ggplot(Predict(final_ols),
        )
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-10-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-13-2.png" width="672" />
 
 ```r
 # Vary solarcv (North = 23; Flat = 33; South = 55)
@@ -621,7 +791,7 @@ ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
   scale_y_continuous(breaks = c(8, 15, 22))
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-10-2.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-13-3.png" width="672" />
 
 
 
@@ -648,16 +818,34 @@ names(mast_r) <- c("MAST", "SE")
 plot(mast_r)
 ```
 
+
+## Exercise
+
+1. Load the CA790 MAST dataset.
+
+
+```r
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/chapters/6_linear_models/yosemite-example/henry_CA790_data.csv"
+mast2 <- read.csv(url)
+```
+
+
+
+2. Fit a linear model.
+3. Examine the residuals and check for multi-collinearity.
+    - Are their any outliers?
+4. Perform a variable selection.
+    - Does the automatic selection make sense?
+5. Assess the model accuracy and plot the fit.
+    - How do the train vs test accuracies compare?
+6. Summarize and plot the model effects.
+    - Which variable has the steepest slope?
+    - Which variable has the greatest effect?
+    - Which variable explains the most variance?
+
+
 ## Additional reading
 
-Faraway, J.J., 2002. Practical Regression and Anova using R. CRC Press, New York. [https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf](https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf)
-
-James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
-
-Webster, R. 1997. Regression and functional relations. European Journal of Soil Science, 48, 557-566. [http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract)
-
-
-
-
+The proper use and misuse of regression in soil science has been described by [@webster1997]. @james2021 provide a useful introduction to linear regression. For more discussion of extending regression to incorporate spatial trends in the residuals see @hengl2009.
 
 

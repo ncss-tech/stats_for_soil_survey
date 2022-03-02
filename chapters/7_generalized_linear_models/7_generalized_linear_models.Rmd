@@ -402,7 +402,7 @@ train <- data
 # Argillic horizons that occur on hills and mountains more than likely form by different process, and therefore would require a different model.train$argillic 
 train <- mutate(
   train, 
-  argillic  = ifelse(grepl("arg", taxsubgrp) & train$mrvbf > 0.15, "yes", "no"),
+  argillic  = ifelse(grepl("arg", taxsubgrp) & train$mrvbf > 0.15, 1, 0),
   ch_log  = log(ch + 1),
   z2str_log = log(z2str + 1),
   ch    = NULL,
@@ -449,15 +449,21 @@ fit_lrm <- lrm(argillic ~ z + slp + twi_sc + ch_log + z2str_log + mrrtf + solar 
 
 One unfortunate side effect of side effect of logitistic regression is that the default residual plots are not interpretable. However the partial residual plots can be useful for identifying outliers and nonlinear trends.
 
-```{r diag}
-
+```{r diag, echo = FALSE}
 par(mfcol = c(2, 2))
+```
+
+```{r}
 plot(fit_glm)
+```
+
+```{r, echo=FALSE}
 par(mfcol = c(1, 1))
+```
 
-
+```{r}
 car::residualPlots(fit_glm, fit = FALSE, tests = FALSE)
-
+```
 ```
 
 

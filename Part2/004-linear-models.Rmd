@@ -77,6 +77,8 @@ f <- fetchHenry(sso = "8-VIC")
 
 ### Aggregate Time Series
 
+For our purposes the daily soil temperature measurements need to be aggregated to the mean annual soil temperature (MAST). However, depending data you query using, `fetchHenry()` maybe able to return pre-aggregated results using the `gran` function argument. 
+
 ```{r aggregate, eval=FALSE, message=FALSE}
 library(dplyr)
 library(tidyr)
@@ -92,11 +94,12 @@ suppressPackageStartupMessages(library(sf))
 
 ```{r, eval=TRUE}
 
+# extract the site and sensor data frames from the list
 ms_df <- f$soiltemp
 s     <- f$sensors
   
 
-# convert date time data
+# rename 2 columns
 ms_df <- mutate(
   ms_df,
   day  = date_time,
@@ -142,9 +145,12 @@ mast_df <- as.data.frame(s) %>%
 
 ### Final Dataset
 
-Since the Henry Mount database is incomplete we will proceed with the aggregation from the original txt files.
+Since the Henry Mount database is partially incomplete we will proceed with the aggregation from the original txt files.
+
 
 ```{r dataset, eval = TRUE}
+
+
 
 # Read mast data
 githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave.Rdata")
@@ -175,10 +181,12 @@ mast_sf <- st_as_sf(mast_df,
   st_transform(crs = 4326)
 
 
-# plot
-# mapview(mlra, alpha.region = 0, lwd = 2) +
-  # mapview(mast_sf)
+```
 
+```{r, eval=FALSE}
+# plot
+mapview(mlra, alpha.region = 0, lwd = 2) +
+  mapview(mast_sf)
 ```
 
 
@@ -198,9 +206,9 @@ geodata_r <- readRDS(githubURL)
 
 
 # Extract the geodata and add to a data frame
-mast_sp <- as(st_transform(mast_sf, crs = 5070), "Spatial")
-data <- raster::extract(geodata_r, mast_sp, sp = TRUE)@data
-
+mast_sf <- st_transform(mast_sf, crs = 5070)
+data <- raster::extract(geodata_r, st_coordinates(mast_sf))
+data <- cbind(st_drop_geometry(mast_sf), data)
 
 # convert aspect
 data$northness <- abs(180 - data$aspect)
@@ -216,7 +224,7 @@ geodata_s <- sampleRegular(geodata_r[[idx]], size = 1000)
 
 ## Exploratory Data Analysis (EDA)
 
-Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify pecularities in the data is to plot it.
+Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify peculiarities in the data is to plot it.
 
 ```{r eval = TRUE}
 
@@ -236,7 +244,7 @@ ggplot(data, aes(sample = mast)) +
 
 ```
 
-By examining the correlations between some of the predictors we can also determine wheter they are *collinear* (e.g. > 0.6). This is common for similar variables such as landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In additino, collinearity will make it difficult to estimate our regression coefficients. 
+By examining the correlations between some of the predictors we can also determine whether they are *collinear* (e.g. > 0.6). This is common for similar variables such as Landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In addition, collinearity will make it difficult to estimate our regression coefficients. 
 
 ```{r, eval = TRUE, warning=FALSE}
 
@@ -250,7 +258,7 @@ GGally::ggpairs(data[vars])
 
 The correlation matrices and scatter plots above show that that MAST has moderate correlations with some of the variables, particularly the elevation and the climatic variables. 
 
-Examining the density plots on the diagonal axis of the scatterplots we can also see that some variables are skewed.
+Examining the density plots on the diagonal axis of the scatter plots we can also see that some variables are skewed.
 
 
 ### Compare Samples vs Population 
@@ -283,7 +291,7 @@ The overlap between our sample and the population appear satisfactory.
 
 ## Linear modeling
 
-R has several functions for fitting linear models. The most common is arguably the `lm()` function from the stats R package, which is loaded by default. The `lm()` function is also extended thru the use of several additional packages such as the car and caret R packages. Another noteworthy R package for linear modeling is rms, which offers the `ols()` function for linear modeling. The rms R package [@harrell2015] offers an 'almost' comprehesive alternative to `lm()' and it's accessory function. It is difficult to objectively functions say which approach is better. Therefore methods both methods will be demonstrated. Look for comments (i.e. #) below referring to rms, stats, caret or visreg. 
+R has several functions for fitting linear models. The most common is arguably the `lm()` function from the stats R package, which is loaded by default. The `lm()` function is also extended through the use of several additional packages such as the car and caret R packages. Another noteworthy R package for linear modeling is rms, which offers the `ols()` function for linear modeling. The rms R package [@harrell2015] offers an 'almost' comprehensive alternative to `lm()' and it's accessory function. Each function offers useful features, therefore for the we will demonstrate elements of both. Look for comments (i.e. #) below referring to rms or stats. 
 
 ```{r lm-ols, eval = TRUE, warning=FALSE, message=FALSE}
 
@@ -309,10 +317,11 @@ fit_ols <- ols(mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3
 
 Once we have a model we need to assess residuals for linearity, normality, and homoscedastivity (or constant variance). Oddly this is one area were the rms R package does not offer convient functions for plotting residuals, therefore we'll simply access the results of `lm()`.
 
-```{r residuals, eval = TRUE}
-
+```{r residuals, eval = TRUE, echo=TRUE}
 par(mfcol = c(2, 2))
+```
 
+```{r}
 # residual
 plot(fit_lm)
 
@@ -321,10 +330,31 @@ termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 
 ```
 
+Remember the residuals are simply just the observed values minus the predicted values, which are easy enough to calculate. Alternatively we can simply extract them from the fitted model object.
+
+```{r}
+pred <- predict(fit_lm, data)
+res  <- data$mast - pred
+head(res)
+
+# or 
+
+head(residuals(fit_lm))
+```
+
+```{r, eval=FALSE}
+# Manually plot the residuals
+res <- data.frame(res, pred)
+
+ggplot(res, aes(x = pred, y = res)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0)
+```
+
 
 #### Multicolinearity
 
-As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the **variance inflation factor** (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value.
+As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the **variance inflation factor** (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value [@faraway2004].
 
 ```{r vif, eval = TRUE}
 
@@ -342,7 +372,7 @@ The values above indicate we have several colinear variables in the model, which
 
 ### Variable selection & model validation
 
-Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically require more scrutiny from the user. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation monist the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically less automated. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongist the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
 
 Both the rms and caret packages offer methods for variable selection and cross-validation. In this instance the rms approach is a bit more convenient, with the one line call to `validate()`.
 
@@ -353,46 +383,64 @@ set.seed(42)
 
 
 # rms
-## stepwise selection and validation
-fit_step <- validate(fit_ols, method = "crossvalidation", B = 10, bw = TRUE)
+## stepwise selection
+validate(fit_ols, bw = TRUE)
 
 ```
 
-The results for `validate()` above and below show which variables were retained and deleted. Below we can see a dot matrix of which variables were retained in during the 10 iterations of the cross validation. In addition, below we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
-
-```{r, eval = TRUE}
-
-## test accuracy and error
-fit_step
-
-```
-
+The results for `validate()` above show which variables were retained and deleted. Above we can see a dot matrix of which variables were retained during each of the 10 iterations of from cross validation. In addition, we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
 
 
 ### Final model & accuracy assessment
 
+Once we have a model we are 'happy' with we can fit the final model, and call `validate()` again which gives performace metrics such as `R$2` and the mean square error (MSE). If we want the root mean square error (RMSE), which is in the original units of our measurements we can take the square root of MSE using `sqrt()`. 
 
 ```{r final-model, eval = TRUE}
 
 # rms
 final_ols <- ols(mast ~ elev + solarcv + tc_1 + tc_2, data = data, weights = data$numDays, x = TRUE, y = TRUE)
+final_ols
 
+set.seed(42)
 validate(final_ols, method = "crossvalidation", B = 10)
+
+data$pred <- predict(final_ols)
+
+
+# RMSE
+sqrt((MSE = 1.7218))
+caret::RMSE(pred = data$pred, obs = data$mast)
+
+# R2
+caret::R2(pred = data$pred, obs = data$mast, formula = "traditional")
+
+
+# plot model fit
+
+ggplot(data, aes(x = mast, y = pred)) +
+  geom_point() +
+  geom_abline() + 
+  geom_smooth(method = "lm") +
+  ggtitle("Model Fit")
 
 ```
 
 
 
-### Model Effects
+### Model Interpretation
 
 ```{r, eval = TRUE}
 
-# Model summmary
-summary(final_ols)
+# Model accuracy, residuals, and slopes (e.g. coefficents)
+final_ols
 
 
 # Anova
 anova(final_ols)
+
+
+# Model Effects
+plot(summary(final_ols))
 
 
 # Plot Effects
@@ -436,16 +484,38 @@ plot(mast_r)
 
 ```
 
+
+## Exercise
+
+1. Load the CA790 MAST dataset.
+
+```{r}
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/chapters/6_linear_models/yosemite-example/henry_CA790_data.csv"
+mast2 <- read.csv(url)
+```
+
+```{r, echo=FALSE, eval=FALSE}
+mast2_sf <- st_as_sf(mast2,
+                     coords = c("wgs84_longitude", "wgs84_latitude"),
+                     crs = 4326
+                     )
+```
+
+2. Fit a linear model.
+3. Examine the residuals and check for multi-collinearity.
+    - Are their any outliers?
+4. Perform a variable selection.
+    - Does the automatic selection make sense?
+5. Assess the model accuracy and plot the fit.
+    - How do the train vs test accuracies compare?
+6. Summarize and plot the model effects.
+    - Which variable has the steepest slope?
+    - Which variable has the greatest effect?
+    - Which variable explains the most variance?
+
+
 ## Additional reading
 
-Faraway, J.J., 2002. Practical Regression and Anova using R. CRC Press, New York. [https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf](https://cran.r-project.org/doc/contrib/Faraway-PRA.pdf)
-
-James, G., D. Witten, T. Hastie, and R. Tibshirani, 2014. An Introduction to Statistical Learning: with Applications in R. Springer, New York. [http://www-bcf.usc.edu/~gareth/ISL/](http://www-bcf.usc.edu/~gareth/ISL/)
-
-Webster, R. 1997. Regression and functional relations. European Journal of Soil Science, 48, 557-566. [http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2389.1997.tb00222.x/abstract)
-
-
-
-
+The proper use and misuse of regression in soil science has been described by [@webster1997]. @james2021 provide a useful introduction to linear regression. For more discussion of extending regression to incorporate spatial trends in the residuals see @hengl2009.
 
 
