@@ -1162,6 +1162,7 @@ s <- metaMDS(sp4.scaled[, -1], distance = 'gower', autotransform = FALSE, wascor
 ## this is used to generate 4 classes from a divisive hierarchical clustering
 # manually compute distance matrix
 d <- dist(sp4.scaled[, -1])
+
 m <- as.matrix(d)
 dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
 d <- as.dist(m)
@@ -1177,23 +1178,42 @@ par(mar=c(3,1,3,1))
 fig <- ordiplot(s, type='none', cex.axis=0.75, axes=FALSE, xlab='', ylab='', main='nMDS by metaMDS()')
 abline(h=0, v=0, lty=2, col='grey')
 text(fig$sites, sp4$name, cex=0.75, font=2, col=cols)
-# ordicluster(fig, agnes(daisy(sp4.scaled[, -1]), method='ward'), prune=3, col = "orange")
 box()
 ```
 
-Goodness of nMDS fit and the Shepard diagram (stress plot).
-```{r eval = TRUE, results='hide', fig.width=6, fig.height=6}
+It is also possible to annotate an ordination using information from a hierarchical clustering via `vegan::ordicluster`.
+```{r eval = TRUE, results='hide', fig.width=12, fig.height=6}
+par(mfcol = c(1, 2), mar=c(3,1,3,1))
 
+fig <- ordiplot(s, type='none', cex.axis=0.75, axes=FALSE, xlab='', ylab='', main='nMDS by metaMDS()')
+
+abline(h=0, v=0, lty=2, col='grey')
+text(fig$sites, sp4$name, cex=0.75, font=2, col=cols)
+
+# annotate with hierarchical clustering
+ordicluster(fig, h, prune=3, col = "black")
+
+box()
+
+p <- as.phylo(h)
+plot(p, cex = 0.66, label.offset = 0.5)
+tiplabels(, pch = 15, col = cols)
+```
+
+Goodness of nMDS fit at each point (scaled and `sqrt`-transformed). Smaller symbols suggest better fit.
+```{r eval = TRUE, results='hide', fig.width=6, fig.height=6}
 pt.cex <- sqrt(goodness(s) * 50)
 
 par(mar=c(3,1,3,1))
 fig <- ordiplot(s, type='none', cex.axis=0.75, axes=FALSE, xlab='', ylab='', main='nMDS by metaMDS()')
 abline(h=0, v=0, lty=2, col='grey')
 text(fig$sites, sp4$name, font=2, col=cols, cex = pt.cex)
-ordicluster(fig, agnes(daisy(sp4.scaled[, -1]), method='ward'), prune=3, col = "orange")
+# ordicluster(fig, agnes(daisy(sp4.scaled[, -1]), method='ward'), prune=3, col = "orange")
 box()
+```
 
-
+The [Shepard diagram](https://rdrr.io/rforge/vegan/man/goodness.metaMDS.html) (stress plot) is used to assess the quality of a nMDS ordination. There should be as little scatter as possible in this diagram.
+```{r eval = TRUE, results='hide', fig.width=6, fig.height=6}
 stressplot(s)
 ```
 
