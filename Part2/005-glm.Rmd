@@ -633,15 +633,69 @@ train2$shallow[is.na(train2$shallow)] <- FALSE
 train2 <- select(train2, z:mast, pc_1:u, ndvi:gsi, shallow)
 ```
 
-2. Fit a GLM.
-3. Perform a variable selection.
+2. Fit a GLM
+```{r, eval=FALSE, echo=FALSE}
+fit_glm <- glm(shallow ~ ., data = train2, family = binomial)
+
+
+library(rms)
+
+dd <- datadist(train2)
+options(datadist = "dd")
+fit <- lrm(shallow ~., data = train2, x = TRUE, y = TRUE)
+```
+3. Perform a variable selection
     - Does the automatic selection make sense?
-5. Assess the model accuracy and plot the fit.
+```{r, eval=FALSE, echo=FALSE}
+table(train2$shallow)
+
+data_l <- select(train2, z:shallow) %>%
+  tidyr::pivot_longer(col = - shallow) %>%
+  filter(!is.na(value))
+
+ggplot(data_l, aes(x = shallow, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ name, scales = "free")
+
+validate(fit, bw = TRUE)
+```
+4. Assess the model accuracy and plot the fit
     - How do the train vs test accuracies compare?
-6. Summarize and plot the model effects.
+```{r, eval=FALSE, echo=FALSE}
+fit_final <- lrm(shallow ~ z + pc_1 + ch + mrrtf + mrvbf, data = train2, x = TRUE, y = TRUE)
+validate(fit_final)
+
+train2$pred <- predict(fit_final, train2, type = "fitted")
+
+ggplot(train2, aes(x = pred, fill = shallow)) + 
+  geom_density(alpha = 0.5)
+
+cm <- table(pred = train2$pred > 0.4, train2$shallow)
+
+caret::confusionMatrix(cm, positive = "TRUE")
+```
+5. Summarize and plot the model effects
     - Which variable has the steepest slope?
     - Which variable has the greatest effect?
     - Which variable has the highest Chi-squared?
+```{r, eval=FALSE, echo=FALSE}
+# - which variable has the steepest slope?
+coefficients(fit_final)
+exp(coefficients(fit_final))
+# mrvbf
+
+# - Which variable has the greatest effect?
+plot(summary(fit_final))
+plot(Predict(fit_final, fun = plogis))
+
+# elevation
+
+# - Which variable has the highest Chi-squared?
+
+anova(fit_final)
+
+# mrvbf
+```
 
 ## Additional reading
 

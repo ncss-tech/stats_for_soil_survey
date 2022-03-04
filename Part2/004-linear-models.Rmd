@@ -499,18 +499,50 @@ mast2_sf <- st_as_sf(mast2,
                      crs = 4326
                      )
 ```
-
 2. Fit a linear model.
+```{r, eval=FALSE, echo=FALSE}
+fit_lm <- lm(MAST ~ elev + solar + tci + o.hz.thick, data = mast2, weights = mast2$days.of.data)
+
+library(rms)
+
+vars <- c("MAST", "Winter", "Summer", "STR", "elev", "solar", "tci", "o.hz.thick")
+dd <- datadist(mast2[vars])
+options(datadist = "dd")
+
+fit_ols <- ols(Winter ~ elev + solar + tci + o.hz.thick, data = mast2, x = TRUE, y = TRUE, weights = mast2$days.of.data)
+```
 3. Examine the residuals and check for multi-collinearity.
     - Are their any outliers?
+```{r, eval=FALSE, echo=FALSE}
+plot(fit_lm)
+termplot(fit_lm3, partial.resid = TRUE)
+```
 4. Perform a variable selection.
     - Does the automatic selection make sense?
+```{r, eval=FALSE, echo=FALSE}
+validate(fit_ols, bw = TRUE)
+```
 5. Assess the model accuracy and plot the fit.
     - How do the train vs test accuracies compare?
+```{r, eval=FALSE, echo=FALSE}
+validate(fit_ols, method = "crossvalidation", B = 10)
+```
 6. Summarize and plot the model effects.
     - Which variable has the steepest slope?
     - Which variable has the greatest effect?
     - Which variable explains the most variance?
+```{r, eval=FALSE, echo=FALSE}
+# - Which variable has the steepest slope?
+coefficients(fit_ols)
+
+# - Which variable has the greatest effect?
+plot(summary(fit_ols))
+plot(Predict(fit_ols, elev = NA, solar = c()))
+plot(Predict(fit_ols, elev = NA, solar = c(33962, 68700, 85701)))
+
+# - Which variable explains the most variance?
+anova(fit_ols)
+```
 
 
 ## Additional reading

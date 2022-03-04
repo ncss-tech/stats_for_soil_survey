@@ -194,8 +194,43 @@ ci
 
 1. Create a new R script.
 2. Calculate a bootstrapped median, 10th percentile, and 90th percentile for `EC_0.30_obs`.
+```{r, eval=FALSE, echo=FALSE}
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
+sas <- read.csv(url)
+EC <- na.exclude(sas$EC_0.30_obs)
+n <- 100
+
+# set number of iterations
+k <- 50
+
+# create a data frame to store the results
+boot_stats <- data.frame(
+  vars  = numeric(k),
+  means = numeric(k)
+)
+
+# for each instance (i) in the set from 1 to N (50 in this case)
+for (i in 1:k) {
+  # create a new variable dB from each bootstrap sample of d
+  boot.sample = sample(EC, n, replace = TRUE) 
+  boot_stats$means[i] = median(boot.sample)
+  boot_stats$pct10[i] = quantile(boot.sample, probs = 0.1)
+  boot_stats$pct90[i] = quantile(boot.sample, probs = 0.9)
+}
+quantile(boot_stats$means, c(0.1, 0.9), na.rm = TRUE)
+```
 3. Calculate a traditional confidence interval for `EC_0.30_obs`.
+```{r, eval=FALSE, echo=FALSE}
+c(# lower 5th
+  l = mean(EC) - 1.96 * sd(EC) / sqrt(n),
+  # upper 95th
+  u = mean(EC) + 1.96 * sd(EC) / sqrt(n)
+)
+```
 4. What is wrong with the traditional confidence interval?
+```{r, eval=FALSE, echo=FALSE}
+# if not transformed it returns negative values
+```
 5. Forward you R script your instructor.
 
 
@@ -260,8 +295,25 @@ ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
 
 1. Append the following exercises to your previous R script.
 2. Compare the traditional $R^2$ to the alternative $R^2$ for `EC_0.30_obs` vs `EC_0.30_pred`?
+```{r, eval=FALSE, echo=FALSE}
+library(caret)
+
+R2(pred = sas$EC_0.30_pred, obs = sas$EC_0.30_obs, formula = "traditional", na.rm = TRUE)
+R2(pred = sas$EC_0.30_pred, obs = sas$EC_0.30_obs, na.rm = TRUE)
+```
 3. Calculate the `RMSE()` and `MAE()`for `EC_0.30_obs` vs `EC_0.30_pred`?
+```{r, eval=FALSE, echo=FALSE}
+RMSE(pred = sas$EC_0.30_pred, obs = sas$EC_0.30_obs, na.rm = TRUE)
+MAE(pred = sas$EC_0.30_pred, obs = sas$EC_0.30_obs, na.rm = TRUE)
+```
 4. Plot a hex bin scatterplot of `EC_0.30_obs` vs `EC_0.30_pred` with a linear smoother.
+```{r, eval=FALSE, echo=FALSE}
+ggplot(sas, aes(x = EC_0.30_obs, y = EC_0.30_pred)) +
+  geom_hex() +
+  geom_abline() +
+  geom_smooth() +
+  geom_smooth(method = "lm")
+```
 5. Forward you R script your instructor.
 
 
@@ -376,7 +428,18 @@ table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
 
 1. Append the following exercises to your previous R script.
 2. Calculate the Brier score, $D^2$ and Shannon Entropy for the `BS1` class from the `bs` dataset.
+```{r, eval=FALSE, echo=FALSE}
+aqp::brierScore(bs[c("BS1_obs", "BS1_pred")], "BS1_pred", "BS1_obs")
+modEvA::RsqGLM(obs = bs$BS1_obs, pred = bs$BS1_pred, plot = FALSE)
+summary(apply(bs[c("BS1_obs", "BS1_pred")], 1, aqp::shannonEntropy))
+```
 3. What probably threshold creates the best split for the `BS1` class.
+```{r, eval=FALSE, echo=FALSE}
+ggplot(bs, aes(x = BS1_pred, fill = BS1_obs)) +
+  geom_density(alpha = 0.5) +
+  xlab("BS2 Probability")
+table(predicted = bs$BS2_pred > 0.25, observed = bs$BS2_obs)
+```
 4. Calculate a confusion matrix for `sas30_obs` vs `sas30_pred` from the `sas` dataset. Be sure to manually set the factor levels as shown below.
 
 ```{r, echo=TRUE, eval=FALSE}
@@ -385,8 +448,14 @@ lev <- lev[c(1, 4, 8, 9, 12, 5, 3, 6, 7, 11)]
 sas$sas030_obs  <- factor(sas$sas030_obs,  levels = lev)
 sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 ```
-
+```{r, eval=FALSE, echo=FALSE}
+cm <- table(pred = sas$sas030_pred, obs = sas$sas030_obs)
+caret::confusionMatrix(cm)
+```
 5. Why can't you calculate a Brier score and Shannon entropy for the `SAS` classes from the `sas` dataset?
+```{r, eval=FALSE, echo=FALSE}
+# SAS calculated from 3 properties, so their is no estimate of probability
+```
 6. Forward you R script your instructor.
 
 
