@@ -6,7 +6,7 @@
 
 #### 2021-01-25
 
-### **[Precourse Assignment](http://ncss-tech.github.io/stats_for_soil_survey/chapters/0_pre-class-assignment/pre-class-assignment.html)**
+### **[Precourse Assignment](http://ncss-tech.github.io/stats_for_soil_survey/book/index.html)**
 
 ------------------------------------------------------------------------
 
