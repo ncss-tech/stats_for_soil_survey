@@ -5,9 +5,7 @@ editor_options:
 
 # Linear Regression
 
-![Statistics for pedologists course banner image](static-figures/logo.jpg)
-
-
+![Statistics for Soil Survey course banner image](static-figures/logo.jpg)
 
 ## Introduction
 
@@ -41,6 +39,11 @@ Now that we've got some of the basic theory out of the way we'll move on to a re
 This climate study began in 1998 as part of a national study run by the National Lab and led by Henry Mount [@mount2002]. The objective was to determine if the hyperthermic line was consistent across the southern US, which at the time was thought to be ~3000 in elevation. Up until 2015 their were 77 active MAST sites, and 12 SCAN sites throughout MLRA 30 and 31.
 
 For more details see the "MLRA 30 - Soil Climate Study - Soil Temperature" project in NASIS, on [GitHub](https://github.com/smroecker/mast-mojave), or by [@roecker2012].
+
+```{r include=FALSE}
+# support for bigger downloads on slow connections
+options(timeout = 600)
+```
 
 ```{r nasis-project, eval=TRUE, warning=FALSE}
 
@@ -134,13 +137,15 @@ ms_site_df <- ms_df %>%
 
 # merge mast & numDays
 mast_df <- as.data.frame(s) %>%
-  select(name, sid, sensor_depth, lon = wgs84_longitude, lat = wgs84_latitude) %>%
+  select(name, sid, sensor_depth, geometry) %>%
   left_join(ms_site_df, by = "sid") %>%
   left_join(ms_n_df,    by = "sid") %>%
   filter(sensor_depth == 50 & !is.na(mast))
 
+head(mast_df)
 ```
 
+Note that we have a column in result data.frame called `"geometry"` since we created it from an sf object.
 
 ### Final Dataset
 
@@ -148,14 +153,10 @@ Since the Henry Mount database is partially incomplete we will proceed with the 
 
 
 ```{r dataset, eval = TRUE}
-
-
-
 # Read mast data
 githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave.Rdata")
 
 load(githubURL)
-
 ```
 
 
@@ -165,21 +166,12 @@ load(githubURL)
 
 Where do our points plot? To start we need to convert them to a spatial object first. Then we can create an interactive we map using `mapview`. Also, if we wish we can also export the locations as a Shapefile.
 
-```{r eval = TRUE}
-
+```{r, include = FALSE}
 library(sf)
-# library(mapview)
+library(mapview)
 
-
-# convert to sites to a spatial object
-mast_sf <- st_as_sf(mast_df,
-                    coords = c("lon", "lat"),
-                    crs = 4326
-                    ) %>%
-  # reproject
-  st_transform(crs = 4326)
-
-
+# convert to sites to a spatial object 
+mast_sf <- st_as_sf(mast_df, coords = c('lon', 'lat'), crs = 4326)
 ```
 
 ```{r, eval=FALSE}
@@ -273,10 +265,8 @@ geodata_df <- rbind(
   data.frame(source = "population", geodata_df)
 )
 
-geodata_l <- pivot_longer(
-  geodata_df, 
-  cols = - source
-  )
+geodata_l <- pivot_longer(geodata_df,
+                          cols = -source)
 
 ggplot(geodata_l, aes(x = value, fill = source)) +
   geom_density(alpha = 0.5) +
