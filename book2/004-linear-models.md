@@ -5,9 +5,7 @@ editor_options:
 
 # Linear Regression
 
-![Statistics for pedologists course banner image](static-figures/logo.jpg)
-
-
+![Statistics for Soil Survey course banner image](static-figures/logo.jpg)
 
 ## Introduction
 
@@ -41,6 +39,8 @@ Now that we've got some of the basic theory out of the way we'll move on to a re
 This climate study began in 1998 as part of a national study run by the National Lab and led by Henry Mount [@mount2002]. The objective was to determine if the hyperthermic line was consistent across the southern US, which at the time was thought to be ~3000 in elevation. Up until 2015 their were 77 active MAST sites, and 12 SCAN sites throughout MLRA 30 and 31.
 
 For more details see the "MLRA 30 - Soil Climate Study - Soil Temperature" project in NASIS, on [GitHub](https://github.com/smroecker/mast-mojave), or by [@roecker2012].
+
+
 
 
 ```r
@@ -100,7 +100,7 @@ length(unique(f$sensors$user_site_id))
 ```
 
 ```
-## 79 sensors loaded (1.86 Mb transferred)
+## 79 sensors loaded (1.89 Mb transferred)
 ```
 
 
@@ -143,7 +143,7 @@ ms_df %>%
 ## Warning: Removed 649 row(s) containing missing values (geom_path).
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-2-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-3-1.png" width="672" />
 
 ```r
 # Aggregate by Year, Month, and Julian day (i.e. 1-365, 366 for leap years)
@@ -179,12 +179,25 @@ ms_site_df <- ms_df %>%
 ```r
 # merge mast & numDays
 mast_df <- as.data.frame(s) %>%
-  select(name, sid, sensor_depth, lon = wgs84_longitude, lat = wgs84_latitude) %>%
+  select(name, sid, sensor_depth, geometry) %>%
   left_join(ms_site_df, by = "sid") %>%
   left_join(ms_n_df,    by = "sid") %>%
   filter(sensor_depth == 50 & !is.na(mast))
+
+head(mast_df)
 ```
 
+```
+##        name sid sensor_depth              geometry     mast numDays
+## 1    JTNP15 923           50 POINT (-116.01 34.02) 19.97123     321
+## 2 JAWBONE01 903           50  POINT (-117.99 35.5) 19.40847    3742
+## 3 JAWBONE02 972           50  POINT (-118.14 35.5) 19.27930    3063
+## 4    JVOHV1 924           50 POINT (-116.47 34.52) 21.89822    4461
+## 5    JVOHV2 925           50 POINT (-116.64 34.52) 21.13497    4091
+## 6    DEVA01 971           50   POINT (-116.9 36.3) 28.20590     253
+```
+
+Note that we have a column in result data.frame called `"geometry"` since we created it from an sf object.
 
 ### Final Dataset
 
@@ -207,19 +220,6 @@ load(githubURL)
 Where do our points plot? To start we need to convert them to a spatial object first. Then we can create an interactive we map using `mapview`. Also, if we wish we can also export the locations as a Shapefile.
 
 
-```r
-library(sf)
-# library(mapview)
-
-
-# convert to sites to a spatial object
-mast_sf <- st_as_sf(mast_df,
-                    coords = c("lon", "lat"),
-                    crs = 4326
-                    ) %>%
-  # reproject
-  st_transform(crs = 4326)
-```
 
 
 ```r
@@ -238,6 +238,10 @@ As you can see below their are numerous variables we could inspect.
 
 ```r
 library(raster)
+```
+
+```
+## Warning: package 'raster' was built under R version 4.2.1
 ```
 
 ```
@@ -350,14 +354,14 @@ GGally::ggpairs(data[vars])
 ##   +.gg   ggplot2
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-7-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-8-1.png" width="672" />
 
 ```r
 vars <- c("mast", "slope", "twi", "northness", "solar", "solarcv")
 GGally::ggpairs(data[vars])
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-7-2.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-8-2.png" width="672" />
 
 The correlation matrices and scatter plots above show that that MAST has moderate correlations with some of the variables, particularly the elevation and the climatic variables. 
 
@@ -377,10 +381,8 @@ geodata_df <- rbind(
   data.frame(source = "population", geodata_df)
 )
 
-geodata_l <- pivot_longer(
-  geodata_df, 
-  cols = - source
-  )
+geodata_l <- pivot_longer(geodata_df,
+                          cols = -source)
 
 ggplot(geodata_l, aes(x = value, fill = source)) +
   geom_density(alpha = 0.5) +
@@ -392,7 +394,7 @@ ggplot(geodata_l, aes(x = value, fill = source)) +
 ## Warning: Removed 1266 rows containing non-finite values (stat_density).
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-9-1.png" width="672" />
 
 The overlap between our sample and the population appear satisfactory.
 
@@ -435,14 +437,14 @@ par(mfcol = c(2, 2))
 plot(fit_lm)
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-9-1.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-2.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-3.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-4.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-10-1.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-2.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-3.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-4.png" width="672" />
 
 ```r
 # partial residuals
 termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-9-5.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-6.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-7.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-8.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-9.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-10.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-11.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-12.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-13.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-9-14.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-10-5.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-6.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-7.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-8.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-9.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-10.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-11.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-12.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-13.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-14.png" width="672" />
 
 Remember the residuals are simply just the observed values minus the predicted values, which are easy enough to calculate. Alternatively we can simply extract them from the fitted model object.
 
@@ -771,7 +773,7 @@ anova(final_ols)
 plot(summary(final_ols))
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-14-1.png" width="672" />
 
 ```r
 # Plot Effects
@@ -781,7 +783,7 @@ ggplot(Predict(final_ols),
        )
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-13-2.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-14-2.png" width="672" />
 
 ```r
 # Vary solarcv (North = 23; Flat = 33; South = 55)
@@ -790,7 +792,7 @@ ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
   scale_y_continuous(breaks = c(8, 15, 22))
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-13-3.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-14-3.png" width="672" />
 
 
 
@@ -829,18 +831,22 @@ mast2 <- read.csv(url)
 ```
 
 
-
 2. Fit a linear model.
+
 3. Examine the residuals and check for multi-collinearity.
     - Are their any outliers?
+
 4. Perform a variable selection.
     - Does the automatic selection make sense?
+
 5. Assess the model accuracy and plot the fit.
     - How do the train vs test accuracies compare?
+
 6. Summarize and plot the model effects.
     - Which variable has the steepest slope?
     - Which variable has the greatest effect?
     - Which variable explains the most variance?
+
 
 
 ## Additional reading

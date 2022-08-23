@@ -245,8 +245,11 @@ ci
 
 1. Create a new R script.
 2. Calculate a bootstrapped median, 10th percentile, and 90th percentile for `EC_0.30_obs`.
+
 3. Calculate a traditional confidence interval for `EC_0.30_obs`.
+
 4. What is wrong with the traditional confidence interval?
+
 5. Forward you R script your instructor.
 
 
@@ -314,7 +317,7 @@ ggplot(sas[idx, ], aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
   geom_smooth(method = "lm")
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-7-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-10-1.png" width="672" />
 
 ```r
 ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
@@ -324,15 +327,18 @@ ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
   geom_smooth()
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-7-2.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-10-2.png" width="672" />
 
 
 ### Exercise 2
 
 1. Append the following exercises to your previous R script.
 2. Compare the traditional $R^2$ to the alternative $R^2$ for `EC_0.30_obs` vs `EC_0.30_pred`?
+
 3. Calculate the `RMSE()` and `MAE()`for `EC_0.30_obs` vs `EC_0.30_pred`?
+
 4. Plot a hex bin scatterplot of `EC_0.30_obs` vs `EC_0.30_pred` with a linear smoother.
+
 5. Forward you R script your instructor.
 
 
@@ -519,7 +525,7 @@ ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
   xlab("BS2 Probability")
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-14-1.png" width="672" />
 
 ```r
 ## Trade Precision for Sensitivity by Varying the Threshold 
@@ -538,7 +544,9 @@ table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
 
 1. Append the following exercises to your previous R script.
 2. Calculate the Brier score, $D^2$ and Shannon Entropy for the `BS1` class from the `bs` dataset.
+
 3. What probably threshold creates the best split for the `BS1` class.
+
 4. Calculate a confusion matrix for `sas30_obs` vs `sas30_pred` from the `sas` dataset. Be sure to manually set the factor levels as shown below.
 
 
@@ -550,6 +558,7 @@ sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 ```
 
 5. Why can't you calculate a Brier score and Shannon entropy for the `SAS` classes from the `sas` dataset?
+
 6. Forward you R script your instructor.
 
 
