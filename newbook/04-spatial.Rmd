@@ -1179,7 +1179,7 @@ library(sharpshootR)
 # the next function requires a polygon ID: 
 #  each polygon gets a unique number 1--number of polygons
 mlra$pID <- 1:nrow(mlra)
-cds <- constantDensitySampling(sf::as_Spatial(mlra), n.pts.per.ac = 0.001)
+cds <- constantDensitySampling(mlra, n.pts.per.ac = 0.001)
 ```
 
 Extract MLRA symbol at sample points using the `over()` function. The result will be a `data.frame` object with all attributes from our MLRA polygons that intersect sampling points `s`.
@@ -1199,7 +1199,7 @@ Extract values from the `SpatVector` of PRISM data as a `data.frame`.
 
 ```{r, eval=TRUE, warning=FALSE}
 trs <- terra::rast(rs)
-e <- terra::extract(trs, terra::project(terra::vect(cds), terra::crs(trs)))
+e <- terra::extract(trs, terra::project(cds, terra::crs(trs)))
 
 # join columns from extracted values and sampling points
 s.df <- cbind(as(cds, 'data.frame'), e)
