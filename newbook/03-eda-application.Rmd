@@ -9,6 +9,8 @@ Before embarking on developing statistical models and generating predictions, it
 
 Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the 'pictures' (i.e., graphical output) and descriptive statistics needed to explore our data.
 
+NASIS has an abundance of tabular soils data captured within it, dating back in some cases as far as 1975. These records capture a large amount of raw information about our soil series and map unit component concepts. In many cases, the data are not as clear to interpret or detailed as we would like. This chapter will demonstrate ways to characterize a variety of different data types.
+
 ## Objectives (Exploratory Data Analysis)
 
 -   Review methods for estimating Low, RV, and High values
@@ -38,7 +40,7 @@ Graphical methods include:
 
 ## Data Inspection
 
-Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine the appropriate statistical analyses. For this chapter we'll use the loafercreek dataset from the CA630 Soil Survey Area.
+Before you start an EDA, you should inspect your data and correct all typos and blatant errors. EDA can then be used to identify additional errors such as outliers and help you determine the appropriate statistical analyses. For this chapter we'll use the `loafercreek` dataset from the CA630 Soil Survey Area.
 
 ```{r, warning=FALSE, message=FALSE, eval=TRUE}
 library(dplyr)
@@ -440,7 +442,7 @@ ggplot(h, aes(x = clay)) +
 
 ### Density Curve
 
-A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram. Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. One curious feature of the density curve is the hint of a two peaks (i.e. bimodal distribution?). Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.
+A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram. Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. One curious feature of the density curve is the hint of two peaks (i.e. bimodal distribution?). Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However, considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
 ```{r densityplot, eval=TRUE}
 
@@ -811,7 +813,7 @@ Slope aspect and pH are two common variables warranting special consideration fo
 
 ### pH
 
-There is a recurring debate as to the best way to average **pH* since is it a log transformed variable. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively. The actual average is 5.26; -log10((0.000001 + 0.00001) / 2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the pH range, the greater the difference between the geometric and arithmetic mean. The difference between the arithmatic average of 5.26 and the geometric average of 5.5 is small. @boyd2011 examined the issue in detail, and suggests regardless of whatever method is used it should be documented.
+There is a recurring debate as to the best way to average **pH** since is it a log transformed variable. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively. The actual average is 5.26; -log10((0.000001 + 0.00001) / 2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the pH range, the greater the difference between the geometric and arithmetic mean. The difference between the arithmetic average of 5.26 and the geometric average of 5.5 is small. @boyd2011 examined the issue in detail, and suggests that regardless of the method is used it should be documented.
 
 If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:
 
@@ -825,7 +827,7 @@ mean(h$phfield, na.rm = TRUE)
 
 ### Circular data
 
-**Slope aspect** - requires the use of circular statistics for summarizing numerically, or graphical interpretation using circular plots. For example, if soil map units being summarized have a uniform distribution of slope aspects ranging from 335 degrees to 25 degrees, the Zonal Statistics tool in ArcGIS would return a mean of 180.
+**Slope aspect** - requires the use of circular statistics for numerical summaries, or graphical interpretation using circular plots. For example, if soil map units being summarized have a uniform distribution of slope aspects ranging from 335 degrees to 25 degrees, the Zonal Statistics tool in ArcGIS would return a mean of 180.
 
 The most intuitive means available for evaluating and describing slope aspect are circular plots available with the circular package in R and the radial plot option in the [TEUI](http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html) Toolkit. The circular package in R will also calculate circular statistics like mean, median, quartiles etc.
 
@@ -847,9 +849,11 @@ The numeric output is fine, but a following graphic is more revealing, which sho
 rose.diag(aspect, bins = 8, col="grey")
 ```
 
-### Texture
+### Texture Class and Fine-earth Separates
 
-NASIS has an abundance of field data captured within it, dating back in some cases as far as 1975. This legacy data, as it's often called, captures raw and unfiltered information about our soil series and map unit component concepts. In the future it will undoubtable inform future digital soil mapping products by serving as training data. However, as most soil scientists are aware, legacy data is not a panacea. In many cases, the data is not as detailed as we would like (nor is some newer data). For example, many pedon descriptions include soil texture class and modifiers, but lack continuous estimates such as clay content and rock fragments %. This lack of continuous data makes it difficult to analyze and estimate other properties, such as available water capacity. However, while much continuous soil data is missing, it can still be estimated by the class ranges and averages. NASIS has several such calculations to estimate missing values. To facilitate this process in R, several new functions have recently been added to the aqp package. This package hosts a variety of R functions specifically designed to analyze and plot soil data. It is also taught in conjunction with the NEDC course Statistics for Soil Survey.These new aqp functions are intended to impute missing values or check existing values. The ssc_to_texcl() function uses the same logic as the particle size estimator calculation in NASIS to classify sand and clay into texture class. The results are stored in data(soiltexture) and used by texcl_to_ssc() as a lookup table to convert texture class to sand, silt and clay. The function texcl_to_ssc() replicates the functionality described by Levi (2017). Unlike the other functions, texture_to_taxpartsize() is intended to be computed on weighted averages within the family particle size control section. Below is a demonstration of these new aqp R functions.
+Many pedon descriptions include soil texture class and modifiers, but lack numeric estimates such as clay content and rock fragments percentage. This lack of "continuous" numeric data makes it difficult to analyze and estimate certain properties precisely.
+
+While numeric data on textural separates may be missing, it can still be estimated by the class ranges and averages. NASIS has many calculations used to estimate missing values. To facilitate this process in R, several new functions have recently been added to the aqp package. These new aqp functions are intended to impute missing values or check existing values. The `ssc_to_texcl()` function uses the same logic as the particle size estimator calculation in NASIS to classify sand and clay into texture class. The results are stored in `data(soiltexture)` and used by `texcl_to_ssc()` as a lookup table to convert texture class to sand, silt and clay. The function `texcl_to_ssc()` replicates the functionality described by Levi (2017). Unlike the other functions, `texture_to_taxpartsize()` is intended to be computed on weighted averages within the family particle size control section. Below is a demonstration of these new aqp R functions.
 
 ```{r, warning=FALSE, message=FALSE}
 
@@ -971,7 +975,7 @@ It is also relient on the successful operation of those data systems. If the NAS
 
 8.  Contact the app author ([john.hammerly\@usda.gov](mailto:john.hammerly@usda.gov){.email})
 
-When you run into trouble, there are a few steps you can take on your own to get things working again. This list may help you get your issue resolved. If not, contact me and I can assist.
+When you run into trouble, there are a few steps you can take on your own to get things working again. This list may help you get your issue resolved. If not, contact ([john.hammerly\@usda.gov](mailto:john.hammerly@usda.gov){.email}) for assistance.
 
 ### Shiny App Embedding
 
@@ -986,53 +990,45 @@ Shiny apps are extremely versatile, they can be embedded into presentations, Mar
 ```{r, eval=FALSE, echo=TRUE, include=TRUE}
 shinyApp(
   
-  ui = 
-# Rely on the 'WorldPhones' dataset in the datasets
-# package (which generally comes preloaded).
-library(datasets)
-
-# Use a fluid Bootstrap layout
-fluidPage(    
-  
-  # Give the page a title
-  titlePanel("Telephones by region"),
-  
-  # Generate a row with a sidebar
-  sidebarLayout(      
+  # Use a fluid Bootstrap layout
+  ui = fluidPage(    
     
-    # Define the sidebar with one input
-    sidebarPanel(
-      selectInput("region", "Region:", 
-                  choices=colnames(WorldPhones)),
-      hr(),
-      helpText("Data from AT&T (1961) The World's Telephones.")
-    ),
+    # Give the page a title
+    titlePanel("Telephones by region"),
     
-    # Create a spot for the barplot
-    mainPanel(
-      plotOutput("phonePlot")  
+    # Generate a row with a sidebar
+    sidebarLayout(      
+      
+      # Define the sidebar with one input
+      sidebarPanel(
+        selectInput("region", "Region:", 
+                    choices = colnames(datasets::WorldPhones)), 
+        hr(),
+        helpText("Data from AT&T (1961) The World's Telephones.")
+      ),
+      
+      # Create a spot for the barplot
+      mainPanel(
+        plotOutput("phonePlot")  
+      )
+      
     )
+  ),
+  # Define a server function for the Shiny app
+  server = function(input, output) {
     
-  )
-)
-  server = 
-# Rely on the 'WorldPhones' dataset in the datasets
-# package (which generally comes preloaded).
-library(datasets)
-
-# Define a server for the Shiny app
-function(input, output) {
-  
-  # Fill in the spot we created for a plot
-  output$phonePlot <- renderPlot({
-    
-    # Render a barplot
-    barplot(WorldPhones[,input$region]*1000, 
-            main=input$region,
-            ylab="Number of Telephones",
-            xlab="Year")
-  })
-}
+    # Fill in the spot we created for a plot
+    output$phonePlot <- renderPlot({
+      
+      # Render a barplot
+      barplot(
+        datasets::WorldPhones[, input$region] * 1000,
+        main = input$region,
+        ylab = "Number of Telephones",
+        xlab = "Year"
+      )
+    })
+  }
 )
 ```
 
@@ -1157,7 +1153,7 @@ The left INPUT sidebar has numerous options for subsetting pedon data. Specifica
 
 ![Example: Analyzing the Loafercreek Taxadjuncts](https://ncss-tech.github.io/soilReports/docs/shiny-pedon-summary/shiny-pedon_loafercreek-taxadjuncts.PNG)
 
-1.  **Create an instance** of the `region2/shiny-pedon-summary` report with `soilReports`:
+1.  **Create an instance of the `region2/shiny-pedon-summary` report with `soilReports`**:
 
 ```{r eval=FALSE}
 # create new instance of reports 
@@ -1177,7 +1173,7 @@ reportSetup('region2/shiny-pedon-summary')
 copyReport('region2/shiny-pedon-summary', outputDir = shinyped.path, overwrite = TRUE)
 ```
 
-2.  Update the `config.R` file
+2.  **Update the `config.R` file**
 
 You can update the `config.R` file in "C:/workspace2/chapter3/shiny-pedon" (or wherever you installed the report) to use the `soilDB` datasets `loafercreek` and `gopheridge` by setting `demo_mode <- TRUE`. This is the *simplest* way to demonstrate how this report works. Alternately, when `demo_mode <- FALSE`, pedons will be loaded from your NASIS selected set.
 
@@ -1187,7 +1183,7 @@ Furthermore, a default (very general) set of REGEX generalized horizon patterns 
 
 The default `config.R` settings use the general patterns: `use_regex_ghz <- TRUE`. You are welcome to modify the defaults. If you want to use the values you have populated in NASIS *Pedon Horizon Component Layer ID*, set `use_regex_ghz <- FALSE`.
 
-3.  Run the report via `shiny.Rmd`
+3.  **Run the report via `shiny.Rmd`**
 
 This report uses the Shiny `flexdashboard` interface. Open up `shiny.Rmd` and click the "Run Document" button to start the report. This will load the pedon and spatial data specified in `config.R`.
 
@@ -1205,7 +1201,7 @@ This report uses constant density sampling (`sharpshootR::constantDensitySamplin
 
 In this example, we clip a small portion of SSURGO polygons from the CA630 soil survey area extent. We then select a small set of mapunit symbols (5012, 3046, 7083, 7085, 7088) that occur within the clipping extent. These mapunits have soil forming factors we expect to contrast with one another in several ways. You can inspect other mapunit symbols by changing `mu.set` in `config.R`.
 
-1.  **Download** the demo data:
+1.  **Download the demo data**:
 
 ```{r eval=TRUE}
 # set up ch4 path and path for report
@@ -1224,7 +1220,7 @@ download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/dat
 unzip(mucomp.zip, exdir = mucomp.path, overwrite = TRUE)
 ```
 
-2.  **Create an instance** of the `region2/mu-comparison` report with `soilReports`:
+2.  **Create an instance of the `region2/mu-comparison` report with `soilReports`**:
 
 ```{r eval=FALSE}
 # create new instance of reports 
@@ -1239,18 +1235,20 @@ copyReport('region2/mu-comparison', outputDir = mucomp.path, overwrite = TRUE)
 
 If you want, you can now set up the default `config.R` that is created by `copyReport()` to work with your own data. OR you can use the "sample" `config.R` file (called `new_config.R`) in the ZIP file downloaded above.
 
-3.  Run the code below to **replace the default** `config.R` with the sample `config.R`:
+3.  **Run this code to replace the default `config.R` with the sample data `config.R`**:
 
 ```{r eval=FALSE}
 # copy config file containing relative paths to rasters downloaded above
-file.copy(file.path(mucomp.path, "new_config.R"), file.path(mucomp.path, "config.R"), overwrite = TRUE)
+file.copy(from = file.path(mucomp.path, "new_config.R"), 
+          to = file.path(mucomp.path, "config.R"), 
+          overwrite = TRUE)
 ```
 
-4.  **Open** `report.Rmd` in the `C:/workspace2/chapter3/mucomp` folder and click the "Knit" button at the top of the RStudio source pane to run the report.
+4.  **Open `report.Rmd` in the `C:/workspace2/chapter3/mucomp` folder and click the "Knit" button at the top of the RStudio source pane to run the report.**
 
-5.  Inspect the report output HTML file, as well as the spatial and tabular data output in the `output` folder.
+5.  **Inspect the report output HTML file, as well as the spatial and tabular data output in the `output` folder.**
 
-*Question: What are the major differences that you can see, based on the report, between the five different mapunit symbols that were analysed?*
+*Question: What differences can you see between the five mapunit symbols that were analyzed?*
 
 ### Exercise: Run Lab Summary By Taxon Name Soil Report
 

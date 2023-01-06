@@ -433,11 +433,11 @@ The [`raster` package](https://cran.r-project.org/web/packages/raster/index.html
 
 ##### `terra`
 
-A more complete background on the capabilities of the `raster` package, and the replacement [`terra`](https://rspatial.org/terra/index.html) are described in the and [*Spatial Data Science with R*](http://rspatial.org/) online book.
+A more complete background on the capabilities of the `raster` package, and the replacement [`terra`](https://rspatial.org/terra/index.html) are described in the [*Spatial Data Science with R*](http://rspatial.org/) online book.
 
 ##### `stars`
 
-There is also a package called [`stars`](https://r-spatial.github.io/stars/) (Spatiotemporal Arrays: Raster and Vector Datacubes) that is the `sf`-centric way of dealing with higher dimensional raster and vector "datacubes." The specific focus is on data where time, spectral band, and sensor form dimensions of the data.
+There is also a package called [`stars`](https://r-spatial.github.io/stars/) (Spatiotemporal Arrays: Raster and Vector Datacubes) that is the `sf`-centric way of dealing with higher dimensional raster and vector "datacubes." Data cubes have dimensions related to time, spectral band, and sensor. The `stars` data structures are often used for processing satellite data sources.
   
 #### Importing / Exporting Rasters
 
@@ -472,17 +472,24 @@ The R object only stores a reference to the data until they are needed to be loa
 #### [`fasterize::fasterize()`](https://www.rdocumentation.org/packages/fasterize/versions/1.0.3/topics/fasterize)
 
 
-## Coordinate Reference Systems
+## Coordinate Reference Systems (CRS)
 
-Spatial data aren't all that useful without an accurate description of the coordinate reference system (CRS). This type of information is typically stored within the ".prj" component of a shapefile, or in the header of a GeoTIFF. 
+Spatial data aren't all that useful without an accurate description of the Coordinate Reference System (CRS). This type of information is typically stored within the ".prj" component of a shapefile, or in the header of a GeoTIFF. 
 
 Without a CRS it is not possible to perform coordinate transformations (e.g. conversion of geographic coordinates to projected coordinates), spatial overlay (e.g. intersection), or geometric calculations (e.g. distance or area).
 
-The "old" way (PROJ.4) of specifying coordinate reference systems is using character strings containing, for example: `+proj` or `+init` arguments. In general, this still "works," so you may encounter it and need to know about it. But you also may encounter cases where CRS are specified using integer EPSG codes, OGC codes or well-known text (WKT).
+The "old" way (PROJ.4) of specifying coordinate reference systems is using character strings containing, for example: `+proj` or `+init` arguments. In general, this still "works," so you may encounter it and need to know about it. But you also may encounter cases where CRS are specified using integers, strings of the form `authority:code`, or well-known text (WKT).
 
-Some common examples of coordinate system EPSG codes and their legacy PROJ.4 strings:
+Some common examples of coordinate system "EPSG" codes and their legacy "PROJ.4" strings. 4
+
+ - "EPSG" stands for European Petroleum Survey Group. The "EPSG Geodetic Parameter Dataset" is a public registry of geodetic datums, spatial reference systems, Earth ellipsoids, coordinate transformations and related units of measurement. 
+ 
+ - "OGC" refers to the Open Geospatial Consortium, which is an example of another important `authority:code`. "ESRI" (company that develops ArcGIS) also defines many CRS codes. 
+ 
+ - "PROJ" is the software responsible for transforming coordinates from one CRS to another. The current version of PROJ available is 9, and in PROJ > 6 major changes were made to the way that coordinate reference systems are defined and transformed led to the "PROJ.4" syntax falling out of favor.
 
  * _EPSG_: [`4326`](https://epsg.io/4326) / _PROJ.4_:`+proj=longlat +datum=WGS84` - geographic, WGS84 datum (NASIS Standard)
+ * _OGC_:[`CRS84`](http://defs.opengis.net/vocprez/object?uri=http://www.opengis.net/def/ogc/CRS84) - geographic, WGS84 datum (same as above but explicit longitude, latitude XY order)
  * _EPSG_: [`4269`](https://epsg.io/4269) / _PROJ.4_:`+proj=longlat +datum=NAD83` - geographic, NAD83 datum
  * _EPSG_: [`4267`](https://epsg.io/4267) / _PROJ.4_:`+proj=longlat +datum=NAD27` - geographic, NAD27 datum
  * _EPSG_: [`26910`](https://epsg.io/26910) / _PROJ.4_:`+proj=utm +zone=10 +datum=NAD83` - projected (UTM zone 10), NAD83 datum
@@ -533,7 +540,7 @@ st_crs(s) == st_crs(4326)
 st_crs(s) <- st_crs(4326)
 ```
 
-Transformation of points, lines, and polygons with `sf` requires an "origin" CRS be defined in the object that is the argument `x`, and "target" CRS defined in `crs` argument as an integer, or output of `st_crs()`.
+Transformation of points, lines, and polygons with `sf` requires an “origin” CRS be defined in the argument `x`. The “target” CRS is defined as an integer (EPSG code) in the `crs` argument or is the output of `st_crs()`.
 
 ```{r, eval=TRUE}
 # transform to UTM zone 10
@@ -570,18 +577,18 @@ s.nad27 <- spTransform(s.sp, CRS('+proj=longlat +datum=NAD27'))
 
 #### `terra` and `raster`
 
-Use `crs<-` and `crs` for `raster`, `terra` or `Spatial` objects, it takes as argument and returns a `sp` `CRS` object (raster/sp) or a t
+Use `crs<-` and `crs` for `raster`, `terra` or `sp` `CRS` objects.
 
 ```{r, eval=FALSE}
 # r is a raster object; set CRS as the CRS of itself
 crs(r) <- raster::crs(sp::CRS(r))
 ```
 
-"Transforming" or "warping" a raster is a different matter than a vector as it requires interpolation of pixels to a defined target resolution and CRS. 
+"Transforming" or "warping" a raster is a different from with a vector as it requires interpolation of pixels to a target resolution and CRS. 
 
-The method provided by `terra` is `project()` and in raster `raster` it is `projectRaster()`. 
+The method provided by `terra` is `project()` and in `raster` it is `projectRaster()`. 
 
-It works the same as the above transform methods in that you specify an object to transform, and the target reference system or a template for the object. 
+It works the same as the above "transform" methods in that you specify an object to transform, and the target reference system or a template for the object. 
 
 ```{r, eval=FALSE}
 t.wgs84 <- terra::project(terra::rast(r), terra::crs("EPSG:4326"))
@@ -835,9 +842,9 @@ The first method ensures that all data are included in the analysis, however, pr
 
 The second method is more efficient (10-100x faster), requires less memory, and can remain statistically sound--as long as a reasonable sampling strategy is applied. Sampling may also help you avoid low-acreage "anomalies" in the raster product. More on sampling methods in the next chapter. 
 
-The `extract()` function can perform several operations in one pass, such as buffering (in projected units) with `buffer` argument. See the manual page for anextensive listing of optional arguments and what they do.
+The `extract()` function can perform several operations in one call, such as buffering (in projected units) with `buffer` argument. See the manual page for an extensive listing of optional arguments and what they do.
 
-Sampling and extraction with `raster` methods results in a `matrix` object. Sampling and extraction with `terra`, result is a `SpatVector`  object.
+Sampling and extraction with `raster` methods results in a `matrix` object. Sampling and extraction with `terra` the results in a `SpatVector` object.
 
 ```{r, eval=TRUE}
 # sampling single RasterLayer -> SpatRaster
