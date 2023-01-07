@@ -23,7 +23,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2022-12-09" />
+<meta name="date" content="2023-01-06" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -323,7 +323,7 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="3.9.1" data-path="eda.html"><a href="eda.html#ph"><i class="fa fa-check"></i><b>3.9.1</b> pH</a></li>
 <li class="chapter" data-level="3.9.2" data-path="eda.html"><a href="eda.html#circular-data"><i class="fa fa-check"></i><b>3.9.2</b> Circular data</a></li>
-<li class="chapter" data-level="3.9.3" data-path="eda.html"><a href="eda.html#texture"><i class="fa fa-check"></i><b>3.9.3</b> Texture</a></li>
+<li class="chapter" data-level="3.9.3" data-path="eda.html"><a href="eda.html#texture-class-and-fine-earth-separates"><i class="fa fa-check"></i><b>3.9.3</b> Texture Class and Fine-earth Separates</a></li>
 </ul></li>
 <li class="chapter" data-level="3.10" data-path="eda.html"><a href="eda.html#the-shiny-package"><i class="fa fa-check"></i><b>3.10</b> The Shiny Package</a>
 <ul>
@@ -365,7 +365,7 @@ div.csl-indent {
 <li class="chapter" data-level="4.5.6" data-path="spatial.html"><a href="spatial.html#the-raster-package"><i class="fa fa-check"></i><b>4.5.6</b> The <code>raster</code> Package</a></li>
 <li class="chapter" data-level="4.5.7" data-path="spatial.html"><a href="spatial.html#converting-vector-to-raster"><i class="fa fa-check"></i><b>4.5.7</b> Converting Vector to Raster</a></li>
 </ul></li>
-<li class="chapter" data-level="4.6" data-path="spatial.html"><a href="spatial.html#coordinate-reference-systems"><i class="fa fa-check"></i><b>4.6</b> Coordinate Reference Systems</a>
+<li class="chapter" data-level="4.6" data-path="spatial.html"><a href="spatial.html#coordinate-reference-systems-crs"><i class="fa fa-check"></i><b>4.6</b> Coordinate Reference Systems (CRS)</a>
 <ul>
 <li class="chapter" data-level="4.6.1" data-path="spatial.html"><a href="spatial.html#assigning-and-transforming-coordinate-systems"><i class="fa fa-check"></i><b>4.6.1</b> Assigning and Transforming Coordinate Systems</a></li>
 </ul></li>
@@ -435,6 +435,7 @@ div.csl-indent {
 <p>“No catalog of techniques can convey a willingness to look for what can be seen, whether or not anticipated. Yet this is at the heart of exploratory data analysis. The graph paper and transparencies are there, not as a technique, but rather as a recognition that the picture examining eye is the best finder we have of the wholly unanticipated.”</p>
 </blockquote>
 <p>Fortunately, we can dispense with the graph paper and transparencies and use software that makes routine work of developing the ‘pictures’ (i.e., graphical output) and descriptive statistics needed to explore our data.</p>
+<p>NASIS has an abundance of tabular soils data captured within it, dating back in some cases as far as 1975. These records capture a large amount of raw information about our soil series and map unit component concepts. In many cases, the data are not as clear to interpret or detailed as we would like. This chapter will demonstrate ways to characterize a variety of different data types.</p>
 <div id="objectives-exploratory-data-analysis" class="section level2 hasAnchor" number="3.1">
 <h2><span class="header-section-number">3.1</span> Objectives (Exploratory Data Analysis)<a href="eda.html#objectives-exploratory-data-analysis" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ul>
@@ -473,7 +474,7 @@ div.csl-indent {
 </div>
 <div id="data-inspection" class="section level2 hasAnchor" number="3.3">
 <h2><span class="header-section-number">3.3</span> Data Inspection<a href="eda.html#data-inspection" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<p>Before you start an EDA, you should inspect your data and correct all typos and blatent errors. EDA can then be used to identify additional errors such as outliers and help you determine the appropriate statistical analyses. For this chapter we’ll use the loafercreek dataset from the CA630 Soil Survey Area.</p>
+<p>Before you start an EDA, you should inspect your data and correct all typos and blatant errors. EDA can then be used to identify additional errors such as outliers and help you determine the appropriate statistical analyses. For this chapter we’ll use the <code>loafercreek</code> dataset from the CA630 Soil Survey Area.</p>
 <div class="sourceCode" id="cb171"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb171-1"><a href="eda.html#cb171-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb171-2"><a href="eda.html#cb171-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb171-3"><a href="eda.html#cb171-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Load from the the loakercreek dataset</span></span>
@@ -503,23 +504,23 @@ div.csl-indent {
 <span id="cb171-27"><a href="eda.html#cb171-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Examine genhz vs hznames (wide format)</span></span>
 <span id="cb171-28"><a href="eda.html#cb171-28" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(h<span class="sc">$</span>genhz, h<span class="sc">$</span>hzname)</span></code></pre></div>
 <pre><code>##           
-##            2BC 2BCt 2Bt1 2Bt2 2Bt3 2Bt4 2Bt5 2CB 2CBt 2Cr 2Crt 2R  A A1 A2 AB ABt Ad Ap  B BA BAt BC BCt Bt Bt1 Bt2
-##   A          0    0    0    0    0    0    0   0    0   0    0  0 97  7  7  0   0  1  1  0  0   0  0   0  0   0   0
-##   BAt        0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  1   0  0  0  0 31   8  0   0  0   0   0
-##   Bt1        0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  0   2  0  0  0  0   0  0   0  8  93  88
-##   Bt2        1    1    3    8    8    6    1   1    1   0    0  0  0  0  0  0   0  0  0  0  0   0  4  16  0   0   0
-##   Cr         0    0    0    0    0    0    0   0    0   4    2  0  0  0  0  0   0  0  0  0  0   0  0   0  0   0   0
-##   R          0    0    0    0    0    0    0   0    0   0    0  6  0  0  0  0   0  0  0  0  0   0  0   0  0   0   0
-##   not-used   0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  0   0  0  0  1  0   0  0   0  0   0   0
+##            2BC 2BCt 2Bt1 2Bt2 2Bt3 2Bt4 2Bt5 2CB 2CBt 2Cr 2Crt 2R  A A1 A2 AB ABt Ad Ap  B BA BAt BC BCt Bt Bt1 Bt2 Bt3 Bt4 Bw Bw1 Bw2 Bw3  C CBt Cd Cr Cr/R Crt
+##   A          0    0    0    0    0    0    0   0    0   0    0  0 97  7  7  0   0  1  1  0  0   0  0   0  0   0   0   0   0  0   0   0   0  0   0  0  0    0   0
+##   BAt        0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  1   0  0  0  0 31   8  0   0  0   0   0   0   0  0   0   0   0  0   0  0  0    0   0
+##   Bt1        0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  0   2  0  0  0  0   0  0   0  8  93  88   0   0 10   2   2   1  0   0  0  0    0   0
+##   Bt2        1    1    3    8    8    6    1   1    1   0    0  0  0  0  0  0   0  0  0  0  0   0  4  16  0   0   0  47   8  0   0   0   0  6   6  1  0    0   0
+##   Cr         0    0    0    0    0    0    0   0    0   4    2  0  0  0  0  0   0  0  0  0  0   0  0   0  0   0   0   0   0  0   0   0   0  0   0  0 49    0  20
+##   R          0    0    0    0    0    0    0   0    0   0    0  6  0  0  0  0   0  0  0  0  0   0  0   0  0   0   0   0   0  0   0   0   0  0   0  0  0    1   0
+##   not-used   0    0    0    0    0    0    0   0    0   0    0  0  0  0  0  0   0  0  0  1  0   0  0   0  0   0   0   0   0  0   0   0   0  0   0  0  0    0   0
 ##           
-##            Bt3 Bt4 Bw Bw1 Bw2 Bw3  C CBt Cd Cr Cr/R Crt H1 Oi  R Rt
-##   A          0   0  0   0   0   0  0   0  0  0    0   0  0  0  0  0
-##   BAt        0   0  0   0   0   0  0   0  0  0    0   0  0  0  0  0
-##   Bt1        0   0 10   2   2   1  0   0  0  0    0   0  0  0  0  0
-##   Bt2       47   8  0   0   0   0  6   6  1  0    0   0  0  0  0  0
-##   Cr         0   0  0   0   0   0  0   0  0 49    0  20  0  0  0  0
-##   R          0   0  0   0   0   0  0   0  0  0    1   0  0  0 40  1
-##   not-used   0   0  0   0   0   0  0   0  0  0    0   0  1 24  0  0</code></pre>
+##            H1 Oi  R Rt
+##   A         0  0  0  0
+##   BAt       0  0  0  0
+##   Bt1       0  0  0  0
+##   Bt2       0  0  0  0
+##   Cr        0  0  0  0
+##   R         0  0 40  1
+##   not-used  1 24  0  0</code></pre>
 <div class="sourceCode" id="cb173"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb173-1"><a href="eda.html#cb173-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Examine matching pairs (long format)</span></span>
 <span id="cb173-2"><a href="eda.html#cb173-2" aria-hidden="true" tabindex="-1"></a>h <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(genhz, hzname) <span class="sc">%&gt;%</span> <span class="fu">count</span>()</span></code></pre></div>
 <pre><code>## # A tibble: 43 × 3
@@ -564,9 +565,8 @@ div.csl-indent {
 <pre><code>## [1] &quot;A&quot;        &quot;BAt&quot;      &quot;Bt1&quot;      &quot;Bt2&quot;      &quot;Cr&quot;       &quot;R&quot;        &quot;not-used&quot;</code></pre>
 <div class="sourceCode" id="cb180"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb180-1"><a href="eda.html#cb180-1" aria-hidden="true" tabindex="-1"></a><span class="co"># for characters and factors</span></span>
 <span id="cb180-2"><a href="eda.html#cb180-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">unique</span>(h<span class="sc">$</span>hzname)) </span></code></pre></div>
-<pre><code>##  [1] &quot;2BC&quot;  &quot;2BCt&quot; &quot;2Bt1&quot; &quot;2Bt2&quot; &quot;2Bt3&quot; &quot;2Bt4&quot; &quot;2Bt5&quot; &quot;2CB&quot;  &quot;2CBt&quot; &quot;2Cr&quot;  &quot;2Crt&quot; &quot;2R&quot;   &quot;A&quot;    &quot;A1&quot;   &quot;A2&quot;   &quot;AB&quot;  
-## [17] &quot;ABt&quot;  &quot;Ad&quot;   &quot;Ap&quot;   &quot;B&quot;    &quot;BA&quot;   &quot;BAt&quot;  &quot;BC&quot;   &quot;BCt&quot;  &quot;Bt&quot;   &quot;Bt1&quot;  &quot;Bt2&quot;  &quot;Bt3&quot;  &quot;Bt4&quot;  &quot;Bw&quot;   &quot;Bw1&quot;  &quot;Bw2&quot; 
-## [33] &quot;Bw3&quot;  &quot;C&quot;    &quot;CBt&quot;  &quot;Cd&quot;   &quot;Cr&quot;   &quot;Cr/R&quot; &quot;Crt&quot;  &quot;H1&quot;   &quot;Oi&quot;   &quot;R&quot;    &quot;Rt&quot;</code></pre>
+<pre><code>##  [1] &quot;2BC&quot;  &quot;2BCt&quot; &quot;2Bt1&quot; &quot;2Bt2&quot; &quot;2Bt3&quot; &quot;2Bt4&quot; &quot;2Bt5&quot; &quot;2CB&quot;  &quot;2CBt&quot; &quot;2Cr&quot;  &quot;2Crt&quot; &quot;2R&quot;   &quot;A&quot;    &quot;A1&quot;   &quot;A2&quot;   &quot;AB&quot;   &quot;ABt&quot;  &quot;Ad&quot;   &quot;Ap&quot;   &quot;B&quot;    &quot;BA&quot;   &quot;BAt&quot; 
+## [23] &quot;BC&quot;   &quot;BCt&quot;  &quot;Bt&quot;   &quot;Bt1&quot;  &quot;Bt2&quot;  &quot;Bt3&quot;  &quot;Bt4&quot;  &quot;Bw&quot;   &quot;Bw1&quot;  &quot;Bw2&quot;  &quot;Bw3&quot;  &quot;C&quot;    &quot;CBt&quot;  &quot;Cd&quot;   &quot;Cr&quot;   &quot;Cr/R&quot; &quot;Crt&quot;  &quot;H1&quot;   &quot;Oi&quot;   &quot;R&quot;    &quot;Rt&quot;</code></pre>
 <p>If the <code>unique()</code> function returned typos such as “BT” or “B t”, you could either fix your original dataset or you could make an adjustment in R, such as:</p>
 <div class="sourceCode" id="cb182"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb182-1"><a href="eda.html#cb182-1" aria-hidden="true" tabindex="-1"></a>h<span class="sc">$</span>hzname <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(h<span class="sc">$</span>hzname <span class="sc">==</span> <span class="st">&quot;BT&quot;</span>, <span class="st">&quot;Bt&quot;</span>, h<span class="sc">$</span>hzname)</span></code></pre></div>
 <p>Typo errors such as these are a common problem with old pedon data in NASIS.</p>
@@ -949,7 +949,7 @@ div.csl-indent {
 </div>
 <div id="density-curve" class="section level3 hasAnchor" number="3.7.4">
 <h3><span class="header-section-number">3.7.4</span> Density Curve<a href="eda.html#density-curve" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram. Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. One curious feature of the density curve is the hint of a two peaks (i.e. bimodal distribution?). Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However considering how much the two distributions overlap, it seems impractical to separate them in this instance.</p>
+<p>A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram. Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. One curious feature of the density curve is the hint of two peaks (i.e. bimodal distribution?). Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However, considering how much the two distributions overlap, it seems impractical to separate them in this instance.</p>
 <div class="sourceCode" id="cb230"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb230-1"><a href="eda.html#cb230-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(h, <span class="fu">aes</span>(<span class="at">x =</span> clay)) <span class="sc">+</span></span>
 <span id="cb230-2"><a href="eda.html#cb230-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>()</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/densityplot-1.png" width="672" style="display: block; margin: auto;" /></p>
@@ -1116,7 +1116,7 @@ div.csl-indent {
 <p>Slope aspect and pH are two common variables warranting special consideration for pedologists.</p>
 <div id="ph" class="section level3 hasAnchor" number="3.9.1">
 <h3><span class="header-section-number">3.9.1</span> pH<a href="eda.html#ph" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>There is a recurring debate as to the best way to average **pH* since is it a log transformed variable. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively. The actual average is 5.26; -log10((0.000001 + 0.00001) / 2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the pH range, the greater the difference between the geometric and arithmetic mean. The difference between the arithmatic average of 5.26 and the geometric average of 5.5 is small. <span class="citation">Boyd, Tucker, and Viriyatum (<a href="#ref-boyd2011" role="doc-biblioref">2011</a>)</span> examined the issue in detail, and suggests regardless of whatever method is used it should be documented.</p>
+<p>There is a recurring debate as to the best way to average <strong>pH</strong> since is it a log transformed variable. Remember, pHs of 6 and 5 correspond to hydrogen ion concentrations of 0.000001 and 0.00001 respectively. The actual average is 5.26; -log10((0.000001 + 0.00001) / 2). If no conversions are made for pH, the mean and sd in the summary are considered the geometric mean and sd, not the arithmetic. The wider the pH range, the greater the difference between the geometric and arithmetic mean. The difference between the arithmetic average of 5.26 and the geometric average of 5.5 is small. <span class="citation">Boyd, Tucker, and Viriyatum (<a href="#ref-boyd2011" role="doc-biblioref">2011</a>)</span> examined the issue in detail, and suggests that regardless of the method is used it should be documented.</p>
 <p>If you have a table with pH values and wish to calculate the arithmetic mean using R, this example will work:</p>
 <div class="sourceCode" id="cb244"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb244-1"><a href="eda.html#cb244-1" aria-hidden="true" tabindex="-1"></a><span class="co"># arithmetic mean</span></span>
 <span id="cb244-2"><a href="eda.html#cb244-2" aria-hidden="true" tabindex="-1"></a><span class="fu">log10</span>(<span class="fu">mean</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">10</span><span class="sc">^-</span>h<span class="sc">$</span>phfield, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) </span></code></pre></div>
@@ -1127,7 +1127,7 @@ div.csl-indent {
 </div>
 <div id="circular-data" class="section level3 hasAnchor" number="3.9.2">
 <h3><span class="header-section-number">3.9.2</span> Circular data<a href="eda.html#circular-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p><strong>Slope aspect</strong> - requires the use of circular statistics for summarizing numerically, or graphical interpretation using circular plots. For example, if soil map units being summarized have a uniform distribution of slope aspects ranging from 335 degrees to 25 degrees, the Zonal Statistics tool in ArcGIS would return a mean of 180.</p>
+<p><strong>Slope aspect</strong> - requires the use of circular statistics for numerical summaries, or graphical interpretation using circular plots. For example, if soil map units being summarized have a uniform distribution of slope aspects ranging from 335 degrees to 25 degrees, the Zonal Statistics tool in ArcGIS would return a mean of 180.</p>
 <p>The most intuitive means available for evaluating and describing slope aspect are circular plots available with the circular package in R and the radial plot option in the <a href="http://www.fs.fed.us/eng/rsac/programs/teui/downloads.html">TEUI</a> Toolkit. The circular package in R will also calculate circular statistics like mean, median, quartiles etc.</p>
 <div class="sourceCode" id="cb248"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb248-1"><a href="eda.html#cb248-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(circular)</span>
 <span id="cb248-2"><a href="eda.html#cb248-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1144,9 +1144,10 @@ div.csl-indent {
 <div class="sourceCode" id="cb250"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb250-1"><a href="eda.html#cb250-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rose.diag</span>(aspect, <span class="at">bins =</span> <span class="dv">8</span>, <span class="at">col=</span><span class="st">&quot;grey&quot;</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-112-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
-<div id="texture" class="section level3 hasAnchor" number="3.9.3">
-<h3><span class="header-section-number">3.9.3</span> Texture<a href="eda.html#texture" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>NASIS has an abundance of field data captured within it, dating back in some cases as far as 1975. This legacy data, as it’s often called, captures raw and unfiltered information about our soil series and map unit component concepts. In the future it will undoubtable inform future digital soil mapping products by serving as training data. However, as most soil scientists are aware, legacy data is not a panacea. In many cases, the data is not as detailed as we would like (nor is some newer data). For example, many pedon descriptions include soil texture class and modifiers, but lack continuous estimates such as clay content and rock fragments %. This lack of continuous data makes it difficult to analyze and estimate other properties, such as available water capacity. However, while much continuous soil data is missing, it can still be estimated by the class ranges and averages. NASIS has several such calculations to estimate missing values. To facilitate this process in R, several new functions have recently been added to the aqp package. This package hosts a variety of R functions specifically designed to analyze and plot soil data. It is also taught in conjunction with the NEDC course Statistics for Soil Survey.These new aqp functions are intended to impute missing values or check existing values. The ssc_to_texcl() function uses the same logic as the particle size estimator calculation in NASIS to classify sand and clay into texture class. The results are stored in data(soiltexture) and used by texcl_to_ssc() as a lookup table to convert texture class to sand, silt and clay. The function texcl_to_ssc() replicates the functionality described by Levi (2017). Unlike the other functions, texture_to_taxpartsize() is intended to be computed on weighted averages within the family particle size control section. Below is a demonstration of these new aqp R functions.</p>
+<div id="texture-class-and-fine-earth-separates" class="section level3 hasAnchor" number="3.9.3">
+<h3><span class="header-section-number">3.9.3</span> Texture Class and Fine-earth Separates<a href="eda.html#texture-class-and-fine-earth-separates" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Many pedon descriptions include soil texture class and modifiers, but lack numeric estimates such as clay content and rock fragments percentage. This lack of “continuous” numeric data makes it difficult to analyze and estimate certain properties precisely.</p>
+<p>While numeric data on textural separates may be missing, it can still be estimated by the class ranges and averages. NASIS has many calculations used to estimate missing values. To facilitate this process in R, several new functions have recently been added to the aqp package. These new aqp functions are intended to impute missing values or check existing values. The <code>ssc_to_texcl()</code> function uses the same logic as the particle size estimator calculation in NASIS to classify sand and clay into texture class. The results are stored in <code>data(soiltexture)</code> and used by <code>texcl_to_ssc()</code> as a lookup table to convert texture class to sand, silt and clay. The function <code>texcl_to_ssc()</code> replicates the functionality described by Levi (2017). Unlike the other functions, <code>texture_to_taxpartsize()</code> is intended to be computed on weighted averages within the family particle size control section. Below is a demonstration of these new aqp R functions.</p>
 <div class="sourceCode" id="cb251"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb251-1"><a href="eda.html#cb251-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
 <span id="cb251-2"><a href="eda.html#cb251-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(soiltexture)</span>
 <span id="cb251-3"><a href="eda.html#cb251-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1252,7 +1253,7 @@ div.csl-indent {
 <li><p>Check the app issues page to see if the issue you are experiencing is already documented. (Polite but not required)</p></li>
 <li><p>Contact the app author (<a href="mailto:john.hammerly@usda.gov" class="email">john.hammerly@usda.gov</a>)</p></li>
 </ol>
-<p>When you run into trouble, there are a few steps you can take on your own to get things working again. This list may help you get your issue resolved. If not, contact me and I can assist.</p>
+<p>When you run into trouble, there are a few steps you can take on your own to get things working again. This list may help you get your issue resolved. If not, contact (<a href="mailto:john.hammerly@usda.gov" class="email">john.hammerly@usda.gov</a>) for assistance.</p>
 </div>
 <div id="shiny-app-embedding" class="section level3 hasAnchor" number="3.10.5">
 <h3><span class="header-section-number">3.10.5</span> Shiny App Embedding<a href="eda.html#shiny-app-embedding" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -1261,54 +1262,46 @@ div.csl-indent {
 <h4><span class="header-section-number">3.10.5.1</span> Shiny App Code<a href="eda.html#shiny-app-code" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <div class="sourceCode" id="cb253"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb253-1"><a href="eda.html#cb253-1" aria-hidden="true" tabindex="-1"></a><span class="fu">shinyApp</span>(</span>
 <span id="cb253-2"><a href="eda.html#cb253-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb253-3"><a href="eda.html#cb253-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">ui =</span> </span>
-<span id="cb253-4"><a href="eda.html#cb253-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Rely on the &#39;WorldPhones&#39; dataset in the datasets</span></span>
-<span id="cb253-5"><a href="eda.html#cb253-5" aria-hidden="true" tabindex="-1"></a><span class="co"># package (which generally comes preloaded).</span></span>
-<span id="cb253-6"><a href="eda.html#cb253-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(datasets)</span>
-<span id="cb253-7"><a href="eda.html#cb253-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb253-8"><a href="eda.html#cb253-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Use a fluid Bootstrap layout</span></span>
-<span id="cb253-9"><a href="eda.html#cb253-9" aria-hidden="true" tabindex="-1"></a><span class="fu">fluidPage</span>(    </span>
-<span id="cb253-10"><a href="eda.html#cb253-10" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb253-11"><a href="eda.html#cb253-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Give the page a title</span></span>
-<span id="cb253-12"><a href="eda.html#cb253-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">titlePanel</span>(<span class="st">&quot;Telephones by region&quot;</span>),</span>
-<span id="cb253-13"><a href="eda.html#cb253-13" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb253-14"><a href="eda.html#cb253-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Generate a row with a sidebar</span></span>
-<span id="cb253-15"><a href="eda.html#cb253-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sidebarLayout</span>(      </span>
-<span id="cb253-16"><a href="eda.html#cb253-16" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb253-17"><a href="eda.html#cb253-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Define the sidebar with one input</span></span>
-<span id="cb253-18"><a href="eda.html#cb253-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sidebarPanel</span>(</span>
-<span id="cb253-19"><a href="eda.html#cb253-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">selectInput</span>(<span class="st">&quot;region&quot;</span>, <span class="st">&quot;Region:&quot;</span>, </span>
-<span id="cb253-20"><a href="eda.html#cb253-20" aria-hidden="true" tabindex="-1"></a>                  <span class="at">choices=</span><span class="fu">colnames</span>(WorldPhones)),</span>
-<span id="cb253-21"><a href="eda.html#cb253-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">hr</span>(),</span>
-<span id="cb253-22"><a href="eda.html#cb253-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">helpText</span>(<span class="st">&quot;Data from AT&amp;T (1961) The World&#39;s Telephones.&quot;</span>)</span>
-<span id="cb253-23"><a href="eda.html#cb253-23" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb253-24"><a href="eda.html#cb253-24" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb253-25"><a href="eda.html#cb253-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Create a spot for the barplot</span></span>
-<span id="cb253-26"><a href="eda.html#cb253-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mainPanel</span>(</span>
-<span id="cb253-27"><a href="eda.html#cb253-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plotOutput</span>(<span class="st">&quot;phonePlot&quot;</span>)  </span>
-<span id="cb253-28"><a href="eda.html#cb253-28" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb253-3"><a href="eda.html#cb253-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Use a fluid Bootstrap layout</span></span>
+<span id="cb253-4"><a href="eda.html#cb253-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">ui =</span> <span class="fu">fluidPage</span>(    </span>
+<span id="cb253-5"><a href="eda.html#cb253-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb253-6"><a href="eda.html#cb253-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Give the page a title</span></span>
+<span id="cb253-7"><a href="eda.html#cb253-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">titlePanel</span>(<span class="st">&quot;Telephones by region&quot;</span>),</span>
+<span id="cb253-8"><a href="eda.html#cb253-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb253-9"><a href="eda.html#cb253-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Generate a row with a sidebar</span></span>
+<span id="cb253-10"><a href="eda.html#cb253-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sidebarLayout</span>(      </span>
+<span id="cb253-11"><a href="eda.html#cb253-11" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb253-12"><a href="eda.html#cb253-12" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Define the sidebar with one input</span></span>
+<span id="cb253-13"><a href="eda.html#cb253-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sidebarPanel</span>(</span>
+<span id="cb253-14"><a href="eda.html#cb253-14" aria-hidden="true" tabindex="-1"></a>        <span class="fu">selectInput</span>(<span class="st">&quot;region&quot;</span>, <span class="st">&quot;Region:&quot;</span>, </span>
+<span id="cb253-15"><a href="eda.html#cb253-15" aria-hidden="true" tabindex="-1"></a>                    <span class="at">choices =</span> <span class="fu">colnames</span>(datasets<span class="sc">::</span>WorldPhones)), </span>
+<span id="cb253-16"><a href="eda.html#cb253-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">hr</span>(),</span>
+<span id="cb253-17"><a href="eda.html#cb253-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">helpText</span>(<span class="st">&quot;Data from AT&amp;T (1961) The World&#39;s Telephones.&quot;</span>)</span>
+<span id="cb253-18"><a href="eda.html#cb253-18" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb253-19"><a href="eda.html#cb253-19" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb253-20"><a href="eda.html#cb253-20" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Create a spot for the barplot</span></span>
+<span id="cb253-21"><a href="eda.html#cb253-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mainPanel</span>(</span>
+<span id="cb253-22"><a href="eda.html#cb253-22" aria-hidden="true" tabindex="-1"></a>        <span class="fu">plotOutput</span>(<span class="st">&quot;phonePlot&quot;</span>)  </span>
+<span id="cb253-23"><a href="eda.html#cb253-23" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb253-24"><a href="eda.html#cb253-24" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb253-25"><a href="eda.html#cb253-25" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb253-26"><a href="eda.html#cb253-26" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb253-27"><a href="eda.html#cb253-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Define a server function for the Shiny app</span></span>
+<span id="cb253-28"><a href="eda.html#cb253-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">server =</span> <span class="cf">function</span>(input, output) {</span>
 <span id="cb253-29"><a href="eda.html#cb253-29" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb253-30"><a href="eda.html#cb253-30" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb253-31"><a href="eda.html#cb253-31" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb253-32"><a href="eda.html#cb253-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">server =</span> </span>
-<span id="cb253-33"><a href="eda.html#cb253-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Rely on the &#39;WorldPhones&#39; dataset in the datasets</span></span>
-<span id="cb253-34"><a href="eda.html#cb253-34" aria-hidden="true" tabindex="-1"></a><span class="co"># package (which generally comes preloaded).</span></span>
-<span id="cb253-35"><a href="eda.html#cb253-35" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(datasets)</span>
-<span id="cb253-36"><a href="eda.html#cb253-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb253-37"><a href="eda.html#cb253-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a server for the Shiny app</span></span>
-<span id="cb253-38"><a href="eda.html#cb253-38" aria-hidden="true" tabindex="-1"></a><span class="cf">function</span>(input, output) {</span>
-<span id="cb253-39"><a href="eda.html#cb253-39" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb253-40"><a href="eda.html#cb253-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fill in the spot we created for a plot</span></span>
-<span id="cb253-41"><a href="eda.html#cb253-41" aria-hidden="true" tabindex="-1"></a>  output<span class="sc">$</span>phonePlot <span class="ot">&lt;-</span> <span class="fu">renderPlot</span>({</span>
-<span id="cb253-42"><a href="eda.html#cb253-42" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb253-43"><a href="eda.html#cb253-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Render a barplot</span></span>
-<span id="cb253-44"><a href="eda.html#cb253-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">barplot</span>(WorldPhones[,input<span class="sc">$</span>region]<span class="sc">*</span><span class="dv">1000</span>, </span>
-<span id="cb253-45"><a href="eda.html#cb253-45" aria-hidden="true" tabindex="-1"></a>            <span class="at">main=</span>input<span class="sc">$</span>region,</span>
-<span id="cb253-46"><a href="eda.html#cb253-46" aria-hidden="true" tabindex="-1"></a>            <span class="at">ylab=</span><span class="st">&quot;Number of Telephones&quot;</span>,</span>
-<span id="cb253-47"><a href="eda.html#cb253-47" aria-hidden="true" tabindex="-1"></a>            <span class="at">xlab=</span><span class="st">&quot;Year&quot;</span>)</span>
-<span id="cb253-48"><a href="eda.html#cb253-48" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb253-49"><a href="eda.html#cb253-49" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb253-50"><a href="eda.html#cb253-50" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb253-30"><a href="eda.html#cb253-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Fill in the spot we created for a plot</span></span>
+<span id="cb253-31"><a href="eda.html#cb253-31" aria-hidden="true" tabindex="-1"></a>    output<span class="sc">$</span>phonePlot <span class="ot">&lt;-</span> <span class="fu">renderPlot</span>({</span>
+<span id="cb253-32"><a href="eda.html#cb253-32" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb253-33"><a href="eda.html#cb253-33" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Render a barplot</span></span>
+<span id="cb253-34"><a href="eda.html#cb253-34" aria-hidden="true" tabindex="-1"></a>      <span class="fu">barplot</span>(</span>
+<span id="cb253-35"><a href="eda.html#cb253-35" aria-hidden="true" tabindex="-1"></a>        datasets<span class="sc">::</span>WorldPhones[, input<span class="sc">$</span>region] <span class="sc">*</span> <span class="dv">1000</span>,</span>
+<span id="cb253-36"><a href="eda.html#cb253-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> input<span class="sc">$</span>region,</span>
+<span id="cb253-37"><a href="eda.html#cb253-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">ylab =</span> <span class="st">&quot;Number of Telephones&quot;</span>,</span>
+<span id="cb253-38"><a href="eda.html#cb253-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">xlab =</span> <span class="st">&quot;Year&quot;</span></span>
+<span id="cb253-39"><a href="eda.html#cb253-39" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb253-40"><a href="eda.html#cb253-40" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb253-41"><a href="eda.html#cb253-41" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb253-42"><a href="eda.html#cb253-42" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 <p>Shiny apps consist of a <em>ui</em> and a <em>server</em>. The ui is the part of the shiny app the user sees, the user interface. In the ui, a user can choose or enter inputs for processing and viewing the results. The server takes the inputs, performs some data processing and rendering of those inputs and generates the outputs for the ui to display.</p>
 </div>
 </div>
@@ -1395,46 +1388,26 @@ div.csl-indent {
 <span id="cb255-3"><a href="eda.html#cb255-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb255-4"><a href="eda.html#cb255-4" aria-hidden="true" tabindex="-1"></a><span class="co"># List reports</span></span>
 <span id="cb255-5"><a href="eda.html#cb255-5" aria-hidden="true" tabindex="-1"></a><span class="fu">listReports</span>()</span></code></pre></div>
-<pre><code>##                                     name version
-## 1                     national/DT-report     1.0
-## 2  region11/component_summary_by_project     0.1
-## 3      region11/lab_summary_by_taxonname     1.0
-## 4  region11/mupolygon_summary_by_project     0.1
-## 5    region11/pedon_summary_by_taxonname       1
-## 6                       region2/dmu-diff     0.7
-## 7                    region2/dmu-summary     0.3
-## 8             region2/edit-soil-features   0.2.1
-## 9                    region2/gdb-acreage     1.0
-## 10       region2/mlra-comparison-dynamic     0.1
-## 11               region2/mlra-comparison     1.0
-## 12       region2/mu-comparison-dashboard   0.0.0
-## 13                 region2/mu-comparison   4.0.1
-## 14                    region2/mu-summary       1
-## 15                 region2/pedon-summary     0.9
-## 16                    region2/QA-summary     0.6
-## 17           region2/shiny-pedon-summary     1.0
-## 18                region2/spatial-pedons     1.0
-## 19                     templates/minimal     1.0
-##                                                                                              description
-## 1                                                          Create interactive data tables from CSV files
-## 2                                                           summarize component data for an MLRA project
-## 3                                                          summarize lab data from NASIS Lab Layer table
-## 4                                                           summarize mupolygon layer from a geodatabase
-## 5                                                          summarize field pedons from NASIS pedon table
-## 6                                                                         Differences between select DMU
-## 7                                                                                     DMU Summary Report
-## 8                                 Generate summaries of NASIS components for EDIT Soil Features sections
-## 9                                                             Geodatabase Mapunit Acreage Summary Report
-## 10                                    compare MLRA/LRU-scale delineations, based on mu-comparison report
-## 11                                                  compare MLRA using pre-made, raster sample databases
-## 12            interactively subset and summarize SSURGO data for input to `region2/mu-comparison` report
-## 13                     compare stack of raster data, sampled from polygons associated with 1-8 map units
-## 14                                     summarize raster data for a large collection of map unit polygons
-## 15                                       Generate summaries from pedons (NASIS) and associated GIS data.
-## 16                                                                                     QA Summary Report
-## 17                        Interactively subset and summarize NASIS pedon data from one or more map units
-## 18 Visualize NASIS pedons in interactive HTML report with overlays of SSURGO, STATSGO or custom polygons
-## 19                                                                        A minimal soilReports template</code></pre>
+<pre><code>##                                     name version                                                                                           description
+## 1                     national/DT-report     1.0                                                         Create interactive data tables from CSV files
+## 2  region11/component_summary_by_project     0.1                                                          summarize component data for an MLRA project
+## 3      region11/lab_summary_by_taxonname     1.0                                                         summarize lab data from NASIS Lab Layer table
+## 4  region11/mupolygon_summary_by_project     0.1                                                          summarize mupolygon layer from a geodatabase
+## 5    region11/pedon_summary_by_taxonname       1                                                         summarize field pedons from NASIS pedon table
+## 6                       region2/dmu-diff     0.7                                                                        Differences between select DMU
+## 7                    region2/dmu-summary     0.3                                                                                    DMU Summary Report
+## 8             region2/edit-soil-features   0.2.1                                Generate summaries of NASIS components for EDIT Soil Features sections
+## 9                    region2/gdb-acreage     1.0                                                            Geodatabase Mapunit Acreage Summary Report
+## 10       region2/mlra-comparison-dynamic     0.1                                    compare MLRA/LRU-scale delineations, based on mu-comparison report
+## 11               region2/mlra-comparison     1.0                                                  compare MLRA using pre-made, raster sample databases
+## 12       region2/mu-comparison-dashboard   0.0.0            interactively subset and summarize SSURGO data for input to `region2/mu-comparison` report
+## 13                 region2/mu-comparison   4.0.1                     compare stack of raster data, sampled from polygons associated with 1-8 map units
+## 14                    region2/mu-summary       1                                     summarize raster data for a large collection of map unit polygons
+## 15                 region2/pedon-summary     0.9                                       Generate summaries from pedons (NASIS) and associated GIS data.
+## 16                    region2/QA-summary     0.6                                                                                     QA Summary Report
+## 17           region2/shiny-pedon-summary     1.0                        Interactively subset and summarize NASIS pedon data from one or more map units
+## 18                region2/spatial-pedons     1.0 Visualize NASIS pedons in interactive HTML report with overlays of SSURGO, STATSGO or custom polygons
+## 19                     templates/minimal     1.0                                                                        A minimal soilReports template</code></pre>
 <div id="extending-soilreports" class="section level3 hasAnchor" number="3.11.1">
 <h3><span class="header-section-number">3.11.1</span> Extending <code>soilReports</code><a href="eda.html#extending-soilreports" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Each report in <code>soilReports</code> has a “manifest” that describes any dependencies, configuration files or inputs for your R Markdown report document. If you can identify these things it is easy to convert your own R-based analyses to the <code>soilReports</code> format.</p>
@@ -1453,7 +1426,7 @@ div.csl-indent {
 <p class="caption">Example: Analyzing the Loafercreek Taxadjuncts</p>
 </div>
 <ol style="list-style-type: decimal">
-<li><strong>Create an instance</strong> of the <code>region2/shiny-pedon-summary</code> report with <code>soilReports</code>:</li>
+<li><strong>Create an instance of the <code>region2/shiny-pedon-summary</code> report with <code>soilReports</code></strong>:</li>
 </ol>
 <div class="sourceCode" id="cb257"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb257-1"><a href="eda.html#cb257-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create new instance of reports </span></span>
 <span id="cb257-2"><a href="eda.html#cb257-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(soilReports)</span>
@@ -1471,14 +1444,14 @@ div.csl-indent {
 <span id="cb257-14"><a href="eda.html#cb257-14" aria-hidden="true" tabindex="-1"></a><span class="co"># copy report contents to target path</span></span>
 <span id="cb257-15"><a href="eda.html#cb257-15" aria-hidden="true" tabindex="-1"></a><span class="fu">copyReport</span>(<span class="st">&#39;region2/shiny-pedon-summary&#39;</span>, <span class="at">outputDir =</span> shinyped.path, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <ol start="2" style="list-style-type: decimal">
-<li>Update the <code>config.R</code> file</li>
+<li><strong>Update the <code>config.R</code> file</strong></li>
 </ol>
 <p>You can update the <code>config.R</code> file in “C:/workspace2/chapter3/shiny-pedon” (or wherever you installed the report) to use the <code>soilDB</code> datasets <code>loafercreek</code> and <code>gopheridge</code> by setting <code>demo_mode &lt;- TRUE</code>. This is the <em>simplest</em> way to demonstrate how this report works. Alternately, when <code>demo_mode &lt;- FALSE</code>, pedons will be loaded from your NASIS selected set.</p>
 <p><code>config.R</code> also allows you to specify a shapefile for overlaying the points on – to determine mapunit symbol – as well as several raster data sources whose values will be extracted at point locations and summarized. The demo dataset does not use either of these by default, due to large file sizes.</p>
 <p>Furthermore, a default (very general) set of REGEX generalized horizon patterns is provided to assign generalized horizon labels for provisional grouping. These provided patterns are unlikely to cover ALL cases, and <em>always</em> need to be modified for final correlation. That said, they do a decent job of making a first-pass correlation for diverse types of soils.</p>
 <p>The default <code>config.R</code> settings use the general patterns: <code>use_regex_ghz &lt;- TRUE</code>. You are welcome to modify the defaults. If you want to use the values you have populated in NASIS <em>Pedon Horizon Component Layer ID</em>, set <code>use_regex_ghz &lt;- FALSE</code>.</p>
 <ol start="3" style="list-style-type: decimal">
-<li>Run the report via <code>shiny.Rmd</code></li>
+<li><strong>Run the report via <code>shiny.Rmd</code></strong></li>
 </ol>
 <p>This report uses the Shiny <code>flexdashboard</code> interface. Open up <code>shiny.Rmd</code> and click the “Run Document” button to start the report. This will load the pedon and spatial data specified in <code>config.R</code>.</p>
 <p><strong>NOTE:</strong> <em>If a Viewer Window does not pop-up right away, click the gear icon to the right of the “Run Document” button. Be sure the option “Preview in Window” is checked, then click “Run Document” again.</em></p>
@@ -1493,7 +1466,7 @@ div.csl-indent {
 <p>This report uses constant density sampling (<code>sharpshootR::constantDensitySampling()</code>) to extract numeric and categorical values from multiple raster data sources that overlap a set of user-supplied polygons.</p>
 <p>In this example, we clip a small portion of SSURGO polygons from the CA630 soil survey area extent. We then select a small set of mapunit symbols (5012, 3046, 7083, 7085, 7088) that occur within the clipping extent. These mapunits have soil forming factors we expect to contrast with one another in several ways. You can inspect other mapunit symbols by changing <code>mu.set</code> in <code>config.R</code>.</p>
 <ol style="list-style-type: decimal">
-<li><strong>Download</strong> the demo data:</li>
+<li><strong>Download the demo data</strong>:</li>
 </ol>
 <div class="sourceCode" id="cb258"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb258-1"><a href="eda.html#cb258-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set up ch4 path and path for report</span></span>
 <span id="cb258-2"><a href="eda.html#cb258-2" aria-hidden="true" tabindex="-1"></a>mucomp.path <span class="ot">&lt;-</span> <span class="st">&quot;C:/workspace2/chapter3/mucomp&quot;</span></span>
@@ -1510,7 +1483,7 @@ div.csl-indent {
 <span id="cb258-13"><a href="eda.html#cb258-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb258-14"><a href="eda.html#cb258-14" aria-hidden="true" tabindex="-1"></a><span class="fu">unzip</span>(mucomp.zip, <span class="at">exdir =</span> mucomp.path, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <ol start="2" style="list-style-type: decimal">
-<li><strong>Create an instance</strong> of the <code>region2/mu-comparison</code> report with <code>soilReports</code>:</li>
+<li><strong>Create an instance of the <code>region2/mu-comparison</code> report with <code>soilReports</code></strong>:</li>
 </ol>
 <div class="sourceCode" id="cb259"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb259-1"><a href="eda.html#cb259-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create new instance of reports </span></span>
 <span id="cb259-2"><a href="eda.html#cb259-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(soilReports)</span>
@@ -1522,15 +1495,17 @@ div.csl-indent {
 <span id="cb259-8"><a href="eda.html#cb259-8" aria-hidden="true" tabindex="-1"></a><span class="fu">copyReport</span>(<span class="st">&#39;region2/mu-comparison&#39;</span>, <span class="at">outputDir =</span> mucomp.path, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <p>If you want, you can now set up the default <code>config.R</code> that is created by <code>copyReport()</code> to work with your own data. OR you can use the “sample” <code>config.R</code> file (called <code>new_config.R</code>) in the ZIP file downloaded above.</p>
 <ol start="3" style="list-style-type: decimal">
-<li>Run the code below to <strong>replace the default</strong> <code>config.R</code> with the sample <code>config.R</code>:</li>
+<li><strong>Run this code to replace the default <code>config.R</code> with the sample data <code>config.R</code></strong>:</li>
 </ol>
 <div class="sourceCode" id="cb260"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb260-1"><a href="eda.html#cb260-1" aria-hidden="true" tabindex="-1"></a><span class="co"># copy config file containing relative paths to rasters downloaded above</span></span>
-<span id="cb260-2"><a href="eda.html#cb260-2" aria-hidden="true" tabindex="-1"></a><span class="fu">file.copy</span>(<span class="fu">file.path</span>(mucomp.path, <span class="st">&quot;new_config.R&quot;</span>), <span class="fu">file.path</span>(mucomp.path, <span class="st">&quot;config.R&quot;</span>), <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<span id="cb260-2"><a href="eda.html#cb260-2" aria-hidden="true" tabindex="-1"></a><span class="fu">file.copy</span>(<span class="at">from =</span> <span class="fu">file.path</span>(mucomp.path, <span class="st">&quot;new_config.R&quot;</span>), </span>
+<span id="cb260-3"><a href="eda.html#cb260-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">to =</span> <span class="fu">file.path</span>(mucomp.path, <span class="st">&quot;config.R&quot;</span>), </span>
+<span id="cb260-4"><a href="eda.html#cb260-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <ol start="4" style="list-style-type: decimal">
-<li><p><strong>Open</strong> <code>report.Rmd</code> in the <code>C:/workspace2/chapter3/mucomp</code> folder and click the “Knit” button at the top of the RStudio source pane to run the report.</p></li>
-<li><p>Inspect the report output HTML file, as well as the spatial and tabular data output in the <code>output</code> folder.</p></li>
+<li><p><strong>Open <code>report.Rmd</code> in the <code>C:/workspace2/chapter3/mucomp</code> folder and click the “Knit” button at the top of the RStudio source pane to run the report.</strong></p></li>
+<li><p><strong>Inspect the report output HTML file, as well as the spatial and tabular data output in the <code>output</code> folder.</strong></p></li>
 </ol>
-<p><em>Question: What are the major differences that you can see, based on the report, between the five different mapunit symbols that were analysed?</em></p>
+<p><em>Question: What differences can you see between the five mapunit symbols that were analyzed?</em></p>
 </div>
 <div id="exercise-run-lab-summary-by-taxon-name-soil-report" class="section level3 hasAnchor" number="3.11.4">
 <h3><span class="header-section-number">3.11.4</span> Exercise: Run Lab Summary By Taxon Name Soil Report<a href="eda.html#exercise-run-lab-summary-by-taxon-name-soil-report" class="anchor-section" aria-label="Anchor link to header"></a></h3>
