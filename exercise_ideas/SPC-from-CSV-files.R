@@ -44,8 +44,12 @@ site(andesite)$transect <- 'Andesite'
 ## combine into single SPC, note that attribute names may not be the same
 g <- c(granite, andesite)
 
-## init spatial data from coordinates
-initSpatial(g, crs="OGC:CRS84") <- ~ x + y
+## init spatial data from coordinates (aqp 2.0+)
+initSpatial(g, crs = "OGC:CRS84") <- ~ x + y
+
+## alternately: init spatial data from coordinates (aqp <2.0; warnings on aqp 2.0+)
+# coordinates(g) <- ~ x + y
+# proj4string(g) <- "+proj=longlat +datum=WGS84"
 
 # set horizon designation in metadata
 hzdesgnname(g) <- 'name'
