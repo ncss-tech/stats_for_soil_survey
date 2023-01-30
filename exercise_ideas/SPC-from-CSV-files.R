@@ -67,7 +67,8 @@ par(mar = c(0, 0, 0, 0))
 plotSPC(g, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, cex.names = 0.66, width = 0.3, shrink = TRUE)
 
 # see ?plotSPC for documentation on all function arguments
-
+# expanded discussion of arguments + examples:
+# https://ncss-tech.github.io/AQP/aqp/sketches.html
 
 ## load and merge sampled raster data
 gis.data <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/transect-GIS-data.csv', stringsAsFactors = FALSE)
