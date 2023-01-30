@@ -350,7 +350,7 @@ The `mapview` and `leaflet` packages make it possible to display interactive map
 * [`leaflet` package](https://rstudio.github.io/leaflet/)
 * [`leafem`: 'leaflet' Extensions for 'mapview'](https://cran.r-project.org/web/packages/leafem/index.html)
 
-The `seriesExtent` function in `soilDB` returns an `sp` object (`SpatialPolygonsDataFrame`) showing generalized extent polygons for a given soil series.
+The `seriesExtent` function in `soilDB` returns an `sf` object showing generalized extent polygons for a given soil series.
 
 ```{r, results='asis', eval=TRUE, out.width="100%"}
 # load required packages, just in case
@@ -358,13 +358,9 @@ library(soilDB)
 library(sf)
 library(mapview)
 
-# series extents from SoilWeb (sp objects)
+# series extents from SoilWeb (sf objects)
 pentz <- seriesExtent('pentz')
 amador <- seriesExtent('amador')
-
-# convert to sf objects (way of the future)
-pentz <- st_as_sf(pentz)
-amador <- st_as_sf(amador)
 
 # combine into a single object
 s <- rbind(pentz, amador)
@@ -392,13 +388,8 @@ library(mapview)
 series.names <- c('auberry', 'sierra', 'holland', 'cagwin')
 
 # iterate over series names, get extent
-# result is a list
+# result is a list of sf objects
 s <- lapply(series.names, soilDB::seriesExtent)
-
-# iterate over series extents (sp objects)
-# convert to sf objects
-# result is a list
-s <- lapply(s, st_as_sf)
 
 # flatten list -> single sf object
 s <- do.call('rbind', s)
@@ -429,7 +420,7 @@ The [`terra` package](https://cran.r-project.org/web/packages/terra/index.html) 
 
 #### Other approaches to raster data
 
-##### `raster``
+##### `raster`
 
 A more complete background on the capabilities of the `raster` package, and the replacement [`terra`](https://rspatial.org/terra/index.html), are described in the [*Spatial Data Science with R*](http://rspatial.org/) online book.
 
