@@ -604,22 +604,24 @@ writeRaster(r.wgs84, filename='r_wgs84.tif', options=c("COMPRESS=LZW"))
 
 ## Raster data
 
-### In-memory versus disk-based processing
+### Object Properties
 
-Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory. 
+`RasterLayer` and `SpatRaster` objects are similar to `sf`, `sp` and other R spatial objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of raster objects should be performed using functions such as:
+  
+* `raster::NAvalue(r)` / `terra::NAflag(r)`: get / set the NODATA value
+* `raster::wkt(r)` OR `terra::crs(r)`: get / set the coordinate reference system
+* `res(r)`: get / set the resolution
+* `raster::extent(r)` or `terra::ext(r)`: get / set the extent
+* `raster::dataType(r)` / `terra::datatype(r)`: get / set the data type
+* ... many more, see the [`raster`](https://rspatial.github.io/raster/) and [`terra`](https://rspatial.github.io/terra/) package manuals
+
+### Rasters "In Memory" v.s. "File-Based"
+
+Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory. The `terra` package handles basically all of the logic delegating in v.s. out of memory processing internally--so it is rare that any adjustments to defaults are required.
 
 With the `raster` package, the initial file/disk-based reference can be converted to an in-memory `RasterLayer` with the `readAll()` function. You can achieve a similar effect in `terra` by doing `set.values(object)`.
 
-```{r}
-# check: file is on disk
-inMemory(r)
-
-# load into memory, if possible
-r <- readAll(r)
-
-# check: file is in memory
-inMemory(r)
-```
+### Writing Rasters to File
 
 Exporting data requires consideration of the output format, datatype, encoding of NODATA, and other options such as compression. 
 
@@ -630,7 +632,7 @@ See the manual pages for `writeRaster()`, `writeFormats()`, and `dataType()` for
 raster::writeRaster(r, filename = 'r.tif', options = c("COMPRESS=LZW"))
 ```
 
-With terra, "LZW" compression is used by default when writing GeoTiff files. Using the `gdal` argument e.g.: `terra::writeRaster(..., gdal=)` is equivalent to specifying `option` argument to `raster::writeRaster()`.
+With terra, "LZW" compression is used by default when writing GeoTIFF files. Using the `gdal` argument e.g.: `terra::writeRaster(..., gdal=)` is equivalent to specifying `option` argument to `raster::writeRaster()`.
 
 ```{r eval=FALSE}
 # using previous example data set
@@ -643,17 +645,6 @@ The `writeRaster()` function interprets the given (and missing) arguments as:
 * creation options of "LZW compression" passed to GeoTiff driver
 * default `datatype`
 * default `NAflag`
-
-### Object Properties
-
-`RasterLayer` and `SpatRaster` objects are similar to `sf` and `sp` objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of raster objects should be performed using functions such as:
-  
-* `raster::NAvalue(r)` / `terra::NAflag(r)`: get / set the NODATA value
-* `raster::wkt(r)` OR `terra::crs(r)`: get / set the coordinate reference system
-* `res(r)`: get / set the resolution
-* `raster::extent(r)` or `terra::ext(r)`: get / set the extent
-* `raster::dataType(r)` / `terra::writeRaster(..., datatype=)`: get / set the data type
-* ... many more, see the [`raster`](https://rspatial.github.io/raster/) and [`terra`](https://rspatial.github.io/terra/) package manuals
 
 ### Data Types
 
@@ -676,7 +667,7 @@ For example, if you have generated a `RasterLayer` that warrants integer precisi
 raster::writeRaster(r, filename = 'r.tif', datatype = 'INT1U')
 
 # floating point grid with very wide range
-# maybe DSM model output
+# maybe DSM soil property model output
 terra::writeRaster(t.wgs84, filename = 'r.tif', datatype = 'FLT4S')
 ```
 
@@ -690,6 +681,7 @@ For example, the CONUS gSSURGO map unit key grid at 30m resolution is about 55Gb
 
 ```{r eval = FALSE}
 # reasonable compression using LZW is the default, compare to 
+
 raster::writeRaster(r, filename='r.tif', options=c("COMPRESS=NONE"))
 
 # takes longer to write the file, but better compression
