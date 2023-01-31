@@ -91,7 +91,6 @@ g$Fe_o_to_Fe_d <- g$Fe_o / g$Fe_d
 plotSPC(g, width = 0.3, color = 'Fe_o_to_Fe_d', plot.order = order(g$effective.ppt_800))
 
 
-
 # re-level grouping variable (a factor in R)
 g$transect <- factor(g$transect, levels = c('Granite', 'Andesite'))
 
@@ -99,15 +98,3 @@ g$transect <- factor(g$transect, levels = c('Granite', 'Andesite'))
 # note we can use the same arguments to plotSPC
 par(mar = c(0, 0, 0, 1))
 groupedProfilePlot(g, groups = 'transect', group.name.offset = -15, name.style = 'center-center', cex.names = 0.55, width = 0.3, shrink = TRUE)
-
-
-## interactive map
-# you may have to install this package
-library(mapview)
-
-# convert site + sp components of SPC -> sp object
-g.spdf <- as(g, 'SpatialPointsDataFrame')
-
-# interactive map!
-mapview(g.spdf, zcol = 'transect')
-

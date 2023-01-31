@@ -14,9 +14,9 @@ editor_options:
 - Understand the structure of data stored in a `SoilProfileCollection` (SPC)
 - Learn about the checks run on data loaded by the `fetchNASIS()` function
 - Learn ways to logically filter and subset data in R
+- Begin to explore the power of regular expression (regex) patterns
 - Learn how functions can be used to bundle operations
 - Review additional data that is accessible via extended data functions
-- Introduce `soilReports` R package
 
 ## The Structure of Soil Data
 
@@ -24,27 +24,24 @@ What if you could extract, organize, and visualize data from NASIS and many othe
 
 ![](static-figures/soilDB_figure.png)
 
-The aqp (Algorithms for Quantitative Pedology) and soilDB packages enable data to be fetched from various sources and cast into a SoilProfileCollection(SPC) object. Tabular and spatial data objects fetched via soilDB and aqp methods can simplify the process of working with commonly used soil data.
+The aqp (Algorithms for Quantitative Pedology) and soilDB packages enable data to be fetched from various sources and cast into a SoilProfileCollection (SPC) object. Tabular and spatial data objects fetched via soilDB and processed using aqp methods can simplify the process of working with commonly used soil data.
  
 ### Package References
-
- - [**SoilProfileCollection Object Introduction**](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html)
-
- * [**Tutorials on the AQP website**](http://ncss-tech.github.io/AQP/)
  * [**Package 'aqp' manual**](http://ncss-tech.github.io/aqp/)
  * [**Package 'soilDB' manual**](http://ncss-tech.github.io/soilDB/)
- * [**Package 'sharpshootR' manual**](http://ncss-tech.github.io/sharpshootR/docs/)
+ * [**Package 'sharpshootR' manual**](http://ncss-tech.github.io/sharpshootR/)
+ 
+ - [**SoilProfileCollection Object Introduction**](http://ncss-tech.github.io/aqp/articles/Introduction-to-SoilProfileCollection-Objects.html)
+
+- [**Tutorials on the AQP website**](http://ncss-tech.github.io/AQP/)
+
 
 The manual pages for `soilDB` and `aqp` are accessible (click **index** at the bottom of the **Help** tab in RStudio) by entering the following into the R console: 
 
 ```{r, purl=FALSE, eval=FALSE}
-# load the libaries
+# load the libraries
 library(soilDB)
 library(aqp)
-
-# links to lots of great examples
-help(soilDB)
-help(aqp)
 ```
 
 ### soilDB functions for tabular data
@@ -228,23 +225,25 @@ For more information regarding difficult pedon data, see the following tutorial 
 
 ## The `SoilProfileCollection`
 
-The [`SoilProfileCollection`](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) class (SPC) provided by the `aqp` package is a specialized structure for soil data analysis. It simplifies the process of working with collections of data associated with soil profiles, e.g., site-level data, horizon-level data, spatial data, diagnostic horizon data, metadata, etc. 
+The [`SoilProfileCollection`](http://ncss-tech.github.io/AQP/aqp/aqp-intro.html) class (SPC) provided by the `aqp` package is a specialized structure for soil data analysis. It simplifies the process of working with collections of data associated with soil profiles, e.g., site-level, horizon-level, spatial, diagnostic horizons, and other metadata.
 
 A `SoilProfileCollection` is similar to the NASIS Site/Pedon "object" in that it provides generalizations, specific routines and rules about data tables and their relationships.
 
-In many ways the SPC is more adaptable than the NASIS Pedon concept because it is more general. However, the SPC is not as expressive as the complex hierarchy of objects in NASIS, which are more aligned with data archival vs. analysis.
+The `SoilProfileCollection` is an S4 R object. S4 objects have [slots](https://stat.ethz.ch/R-manual/R-patched/library/methods/html/slot.html). Of primary importance, are the slots for site-level and horizon-level data.
+
+In many ways the SPC is more adaptable than the NASIS "Pedon" concept because it is more general. However, the SPC is not as expressive as the complex hierarchy of objects in NASIS, which are more aligned with data archival vs. analysis.
 
 ### `SoilProfileCollection` methods
 
 Many "familiar" methods are defined for the `SoilProfileCollection` object. Some are unique, and others operate like more common functions of vector and `data.frame` objects, such as `nrow()` (*"how many horizons?"*) or `length()` (*"how many sites/pedons?"*). 
 
-Perhaps most importantly, when you access the `site()` data or the `horizons()` data of a `SoilProfileCollection`, you get a `data.frame` object that you can use like any other you might use or make in R.
+Perhaps most importantly, when you access the site data (with  `site(<object>)`) or the horizon data (with `horizons(<object>)`) of a `SoilProfileCollection`, you get a `data.frame` object that you can use like any other you might use or make in R.
 
 #### Promoting a `data.frame` to `SoilProfileCollection`
 
-The `SoilProfileCollection` object is a collection of 1-D profile descriptions, of the type conventionally described on a Form 232, or on tabular data returned from laboratory. 
+The `SoilProfileCollection` object is a collection of 1-dimensional profile descriptions, of the type conventionally described on a Form 232, or of tabular data returned from laboratory. 
 
-The object is "horizon data forward" in that you start with that, and can create site-level attributes by normalization, joins, calculations and more.
+The object is "horizon data forward" in that you start with the layers, and can add or create site-level attributes by normalization, joins, and calculation.
 
 Most of the time if you are using your NASIS data, or an official database, there are defined ways of getting the data "into" an SPC. For example, `fetchOSD` returns a `SoilProfileCollection` that has been assembled from horizon and site level attributes gleaned from the OSDs text, Soil Classification database, and other sources.
 
@@ -292,29 +291,30 @@ class(sp4)
 sp4
 ```
 
+ The formula expresses the idea that a profile `id` defined by set of `top` and `bottom` depths.
 
-<!-- I'd like to refine the following before including, currently confusing to me -->
-
-<!-- The formula expresses the idea that a profile 1-dimensional description `id` has a vertical extent (Z, in profile) defined by set of `top` and `bottom` depths described for that profile.  -->
-
-<!-- In this simplified 1-dimensional model we are concerned about keeping track of things like thickness, order, overlaps, gaps, or duplication in the data. From this, we can do a lot of "logic" checks--strictly from a perspective of basic physical representation of the horizon data. -->
-
-<!--
 NOTE: A character vector with same names has the same effect, and can be easier to "program" with than the formula-based syntax.
 
 ```{r}
 depths(sp4) <- c("id","top","bottom")
 ```
+
 ### Extending the `SoilProfileCollection` Spatial Model 
 
-The "spatial" definition that comes with defining the horizon depths at object creation can be further extended to real space using the `coordinates<-` method to define "X" and "Y" and `proj4string<-` to define the Coordinate Reference System (more on that later). Elevation ("Z", landscape) is generally recorded as a site attribute.
--->
+You can also use the SoilProfileCollection to manage the information about a profile's position on the Earth.
+
+Chapter 4 will cover spatial data in greater detail, but for now know you can use the `initSpatial<-` method to define "X" and "Y" coordinate columns and the coordinate reference system in one line:
+
+```{r}
+sp4$x <- runif(10); sp4$y <- runif(10) # dummy XY coordinates
+initSpatial(sp4, crs = "EPSG:4326") <- ~ x + y
+```
+
+This is new syntax introduced in aqp 2.0, the older syntax uses the `coordinates<-` and `proj4string<-` methods. 
 
 #### Extracting Site and Horizon Data
 
-The `SoilProfileCollection` is an S4 R object. S4 objects have [slots](https://stat.ethz.ch/R-manual/R-patched/library/methods/html/slot.html). Of primary importance, are the slots for site-level and horizon-level data.
-
-You can extract values from these slots using the `site()` and `horizons()` functions. These create `data.frame` objects that are separate from the `SoilProfileCollection`. 
+You can extract values from the collection's `@site` and `@horizon` slots using the `site()` and `horizons()` functions. These create `data.frame` objects that are separate from the `SoilProfileCollection`. 
 
 ```{r, eval=TRUE}
 # extract site data from SPC into new data.frame 's'
@@ -440,12 +440,21 @@ If you understand the basic object types involved, you will see that the `SoilPr
 All of the above together means that more time and energy can be put towards to solving _soil_ problems, rather than computer problems. 
 -->
 
-### Exercise: Assemble a `SoilProfileCollection` from several CSV files
+## Exercise: Assemble a `SoilProfileCollection` from several CSV files {-}
 
 [Link to exercise R code](https://github.com/ncss-tech/stats_for_soil_survey/blob/master/exercise_ideas/SPC-from-CSV-files.R)
 
 ![](static-figures/ch2-SPC-from-CSV-exercise.jpg)  
 
+**Questions:**
+
+Run the code in the linked R file and answer these questions.
+
+1. How many profiles (sites) and horizons are in the `granite` SoilProfileCollection? How many in `andesite`? See `length()` and `nrow()` functions for SoilProfileCollection objects.
+
+2. Which profile (and which horizon in that profile) has the highest ratio of oxalate-extractable Fe to dithionite-citrate-extractable Fe (`Fe_o_to_Fe_d`)?
+
+Send the results of questions (and any code you used) to your mentor.
 
 ## Using the `soilDB` Package
 
@@ -461,9 +470,9 @@ For now, we will start with the `fetch` functions and others that will get you a
 
 ### Open Database Connectivity (ODBC) Connection to NASIS
 
-After setting up an ODBC connection, you can use R to access data from a selected set defined in your local NASIS database. 
+After setting up an ODBC connection, as you did as part of the pre-course, you can use R to access data from a selected set defined in your local NASIS database. 
 
-[**How to Create an ODBC Connection to local NASIS database for R**](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html).
+ - [**How to Create an ODBC Connection to local NASIS database for R**](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html).
  
 _Does NASIS need to be open and running to query data using soilDB?_
 
@@ -867,7 +876,7 @@ Quick check: _Compare or run these commands with some code, and review the docum
   - https://regex101.com/ & https://regexr.com/ - Online regular expression testers
   
   - http://www.regular-expressions.info/quickstart.html - One-page regular expression quick start guide
-  
+
 ### Filtering
 
 A variety of methods are available to subset or "filter" R data objects, from a simple `data.frame` or vector, to something more complex like a `Spatial` object or a `SoilProfileCollection`.
@@ -876,7 +885,7 @@ You can index many R objects using numeric or logical expressions as above. Ther
 
 The base R method for this is `subset()` and it works on `data.frame` objects. It is nice because you can specify column names without explicitly referencing the data set, since subset uses non-standard evaluation of expressions passed as arguments.
 
-#### Filtering with `aqp::subset`
+#### Filtering with `aqp::subset()`
 
 We use the `SoilProfileCollection` `subset` method, where we first specify a data (`pedons`) object then we can write expressions for the columns that exist in that object.
 
@@ -946,17 +955,23 @@ Tools for totally ordered indexed observations -- especially irregular time seri
  - [`tsibble`](https://github.com/tidyverts/tsibble) package provides a data structure for tidy temporal data and models.
 -->
 
+## Exercise: Generalized Horizons with Loafercreek {-}
+
+Here we will introduce the concept of using regular expressions to apply "Generalized Horizon Labels" based on the field soil description horizon designations.
+
+This demonstrates one way of grouping horizon data for determining the Range in Characteristics of layers within a Soil Series or a SSURGO component.
+
+ - [Generalized Horizon Labels with Loafercreek](http://ncss-tech.github.io/stats_for_soil_survey/chapters/2_data/genhz_homework.html)
+
+For the exercise during class, we will give you some time to read over the materials and apply the process to the sample `loafercreek` data. The code to apply the process to `loafercreek` is given.
+
+Then we ask that you apply a similar process to your own data, adjusting your generalized horizon patterns as needed for your local soils. This may take more time than we have during class itself, so you should follow up as needed with your mentor to complete. Chapter 3 Exploratory Data Analysis will get deeper into some of the topics that are referenced in the `loafercreek` code, such as summary statistics on grouped data. You will send a table and profile plots to your mentor when you are done.
+
 ## `fetchNASIS` data checks
 
 `fetchNASIS` does a lot of the hard work for you by pulling out a variety of child tables and joining them to site/horizon tables
 
 This results in a `SoilProfileCollection` object that has many of the NASIS data columns. In order to do this, a variety of processes are run. Output is generated that you should look at. We will walk through the most common parts.
-
-_Analysis of Site Coordinate Data for pedons from `MT647`_
-
-```
-multiple horizontal datums present, consider using WGS84 coordinates (x_std, y_std)
-```
 
 _Mixing of multiple colors (for "default" moist and dry colors for many:1 case)_
 
@@ -1048,7 +1063,7 @@ head(get('bad.horizons', envir=soilDB.env))
 
 The `aqp` package has several functions that do logic checks on `SoilProfileCollection` objects. 
 
-The main method that does this in `aqp` is `checkHzDepthLogic` which returns a data.frame of results of running four logic tests on the horizon data from each profile.
+The main method that does this in `aqp` is `checkHzDepthLogic()` which returns a data.frame of results of running four logic tests on the horizon data from each profile.
 
 Checks for:
 
@@ -1317,13 +1332,7 @@ diagnosticPropertyPlot(
 )
 ```
 
-### Comparing Horizon Data with Diagnostic "Intervals"
-
-Here is a demo of using Soil Data Access and the `soilDB` function `fetchSDA` to inspect the horizon data / properties in portions of the profile corresponding to diagnostic features:
-
- -  [Glacierpoint `glom()` demo - finding sandy "cambic" horizons](http://ncss-tech.github.io/AQP/demos/glom/glacierpoint.html)
-
-#### Follow along with your own data
+## Exercise: Diagnostic Horizons in Your Own Data
 
 Use the following script to generate a diagnostic-feature diagram for the pedon data you've loaded from your NASIS selected set.
 
@@ -1365,14 +1374,35 @@ For more information on generating diagnostic feature diagrams, see the followin
 
  - [**Diagnostic Feature Property Plots**](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html).
  
+**Questions:**
+
+Use the results of `site()`, `horizons()`, `diagnostic_hz()` to answer the following questions about your own data. These functions return data.frame objects from a SoilProfileCollection derived from your local NASIS data. 
+
+ 1. How many pedons do you have in your selected set? Check the number of rows in the site portion of the SoilProfileCollection with `nrow()`, or use the method `length()` on the collection.
  
+ 2. How many diagnostic features do you have for those pedons? How many different `"featkind"`? You can calculate the number of unique values with with `length()` and `unique()`
+ 
+ 3. Interpret: What diagnostic features did you choose to plot? Did you notice any patterns in the diagnostic features that tend to occur together?
+
+Send your mentor a copy of your results and the commands you used.
+
 ## Custom Queries to Local NASIS Database
 
 `fetchNASIS` and related convenience functions are wrappers around commonly used chunks of SQL (Structured Query Language). Queries of the NASIS local database can be written in [T-SQL](https://en.wikipedia.org/wiki/Transact-SQL) which is the dialect of [SQL](https://en.wikipedia.org/wiki/SQL) used to communicate with Microsoft SQL Server. This is the connection that you set for the pre-course. 
 
+To create a `DBIConnection` object that can access the NASIS local database, use `dbConnectNASIS()` or simply `NASIS()`. This will look for an ODBC connection of the name `"nasis_local"` and will authenticate with the read-only credentials.
+
+You can also pass an existing `DBIConnection` or path to SQLite file as the `dsn` argument to connect to an alternate source. The default driver type used for NASIS connections is `OdbcConnection` from the `odbc` package.
+
+To query or execute SQL commands on a connection you created, you can use `dbGetQuery(connection, query)`, where `connection` is your `DBIConnection` object and `query` is the SQL to execute.
+
+The soilDB package also includes a helper function `dbQueryNASIS()`, which functions just like `dbGetQuery()` except the default is to close the connection after returning the result. This can be convenient for interactive use or cases where a function needs to only execute a single query, as it will prevent you from leaving connections open accidentally.
+
+### Example: Site Soil Temperature Data from CA792 (Sequoia-Kings Canyon National Park)
+
 The following example will return all records in your selected set `sitesoiltemp` table, along with a couple of fields from the `site`, `siteobs`, and `pedon` tables. This is a convenient way to collect all of the field-based soil temperature data associated with the pedons in your selected set for further analysis.
 
-You can use the CA792 (Sequoia-Kings Canyon National Park) pedons as an example. Use a query that searches user pedon ID for the following pattern `%ca792%` to download and populate a selected set in the NASIS client.
+You can use the CA792 (Sequoia-Kings Canyon National Park) pedons as an example. Use a query that searches user pedon ID for the following pattern `%CA792%` to download and populate a selected set in the NASIS client.
 
 ```{r, fig.width=7, fig.height=4, eval=FALSE}
 library(soilDB)
@@ -1386,8 +1416,8 @@ q <- "SELECT siteiid as siteiid, peiid, usiteid as site_id,
        LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref
       ORDER BY obs_date, siteiid;"
 
-# setup connection local NASIS
-channel <- dbConnectNASIS()
+# setup connection to local NASIS
+channel <- NASIS()
 
 # exec query
 d <- dbQueryNASIS(channel, q)
@@ -1459,22 +1489,7 @@ boxplot(d$doy, at = 26, horizontal = TRUE, add = TRUE, lty = 1, width = 1, col =
 ```
 
 ![](static-figures/CA792-soil-temperature-example.png)
-
-
-
-Alternatively, use a circular histogram. Days of the year progress clockwise from 0.
-```{r, eval =  FALSE}
-library(circular)
-
-d.circ <- circular(d$doy, type = 'angles', units = 'degrees', rotation = 'clock', zero = pi/2)
-par(mar = c(0, 0, 0, 0))
-plot.circular(d.circ, stack = TRUE, bg = 'royalblue', pch = 21, sep = 0.04, shrink = 1.5)
-```
-
-
-
-
-
++
 
 ```{r, echo=FALSE}
 rm(list = ls(all = TRUE))
