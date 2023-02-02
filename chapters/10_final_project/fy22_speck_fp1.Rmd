@@ -1,0 +1,533 @@
+---
+title: "Final Project STAT1010"
+author: "Kian Speck"
+date: "2/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+setwd('C:\\workspace2\\projects\\STAT1010')
+```
+# Introduction
+
+#### Required libraries for this project
+
+```{r, message=FALSE}
+# data management
+library(soilDB)
+library(aqp)
+library(dplyr)
+library(sf)
+library(viridis)
+library(broom)
+library(sharpshootR)
+# plotting
+library(ggmap)
+library(raster)
+library(cowplot)
+
+```
+
+### Project Area
+
+Latah County is an important agricultural area with a topographically diverse landscape. Located in north-central Idaho, this county provides important agricultural goods, such as wheat and barley, to the rest of the state. It is for this reason that soils are treated as an especially valuable resource in this region. Soils are so important, in fact, that Latah county was home to Idaho's first soil conservation district.
+
+Additionally, Latah county has a diverse range of topography. The western portion of the region contains the rolling hills of the Palouse prairie, and to the south the Potlatch river forms deep canyons as it cuts through loess-covered hills. Elevations in the area range from 1,000 to almost 5,000 feet as a result. Topography is a major soil-forming factor (Jenny 1994) and therefore variation in soils tend to follow gradients of topography in parts of the region. For example, changes in slope along these topographic gradients modulate the intensity of processes like erosion and water movement. Soil properties such as clay content and depth vary along these gradients as a result.
+
+Regional soil scientists have a vast knowledge of many of these soil-landscape relationships. However, explicitly researching and documenting the range of soil characteristics along a topographic transect (also known as a toposequence) is often not done in regional Soil Survey offices. The purpose of this project is to gather greater detail on a specific toposequence important to this region in order to provide evidence for conventional wisdom relating to soil-landscape models.
+
+```{r, message=FALSE, warning=FALSE, fig.align='left', fig.width= 8, out.width='100%', fig.cap= 'Figure 1: Soil map of Latah County with inset map of Idaho as reference to geographic location'}
+# load idaho counties and latah county shapefiles
+idaho <- read_sf("C:\\ArcGIS\\SHAPEFILE\\IdahoCounties.shp")
+latah_sm <- read_sf("C:\\ArcGIS\\BASE\\ID057\\spatial\\soilmu_a_id057.shp")
+
+# simplify and convert Latah to tidy object for plotting 
+lsimple <- rmapshaper::ms_simplify(latah_sm)
+l_tidy <- tidy(as(lsimple, "Spatial"), region = "MUSYM")
+
+# create tidy object from idaho sf for plotting
+ID_tidy <- tidy(as(idaho, "Spatial"), region = 'NAME')
+
+# create bounding box for latah
+bb <- sf::st_bbox(lsimple)
+bb <- make_bbox(lon = bb[c(3, 1)], lat = bb[c(2, 4)])
+
+# create bounding box for idaho
+bb2 <- sf::st_bbox(idaho)
+bb2 <- make_bbox(lon = bb2[c(3, 1)], lat = bb2[c(2, 4)])
+
+# create second bounding box for latah
+bb.l <- as(extent(lsimple), 'SpatialPolygons')
+# define coordinates
+proj4string(bb.l) <- CRS('+proj=longlat +datum=WGS84 +no_defs')
+#transform into dataframe
+bb.l.df <- fortify(bb.l)
+
+## create maps
+# larger latah map
+gmap <- get_map(bb, maptype = "terrain", source = "osm")
+
+latah_gg <- ggmap(gmap) +
+  geom_path(data = l_tidy, aes(x = long, y = lat, group = group)) +
+  ggtitle('Latah County')
+
+#smalle idaho map with latah bounding box
+gmap2 <- get_map(bb2, maptype = "watercolor", source = "osm")
+
+idaho_gg <- ggmap(gmap2) +
+  geom_path(data = ID_tidy, aes(x = long, y = lat, group = group)) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x =  element_blank(),
+    axis.text.y = element_blank()
+  ) +
+  geom_polygon(
+    data = bb.l,
+    aes(x = long, y = lat, group = group),
+    colour = 'red',
+    fill = NA,
+    size = 2
+  )
+
+#combine latah and idaho map into one plot
+gg_inset <- ggdraw()+
+  draw_plot(latah_gg)+
+  draw_plot(idaho_gg, x = 0.72, y = 0.05, width = 0.3, height = 0.3)+
+  theme(plot.margin = unit(c(0,0,0,0), 'cm'))
+
+# plot
+gg_inset
+
+```
+
+## Objectives
+
+The objectives of this project are:
+
+1.  Compare the the typical soil profiles for three series: **Threebear**, **Norwidge**, and **Porrett**.
+2.  Compare the average geomorphic positions of the series and create a toposequence.
+3.  Utilize descriptive statistics to examine clay content and average depth along the toposequence.
+
+# Results
+### Objective 1: Comparing series morpholgies
+
+Compare plots of the OSD pedons
+
+```{r, out.width = '110%', fig.align='center', fig.cap= 'Figure 2: Plot of OSD pedons for Norwidge, Porrett and Threebear with horizon topography represented.'}
+# fetch OSD's for series of interest
+soi <- c('norwidge','porrett','threebear')
+osdp <- fetchOSD(soi)
+
+# encode horizon boundary distinctness
+osdp$hd <- hzDistinctnessCodeToOffset(osdp$distinctness,
+                                      codes = c('very abrupt', 'abrupt', 'clear', 'gradual', 'diffuse'))
+
+# encode horizon boundary topography
+osdp$hzto <- hzTopographyCodeToOffset(osdp$topography,
+                                      codes = c('smooth', 'wavy', 'irregular', 'broken'))
+
+# also encode horizon boundary topography las line type
+osdp$hzto.lty <- hzTopographyCodeToLineType(osdp$topography,
+                                            codes = c('smooth', 'wavy', 'irregular', 'broken'))
+
+
+# concise representation of hz bnd distinctness and topography
+# # similar to field notes
+osdp$bnd.code <- sprintf("%s%s",
+                         substr(osdp$distinctness, 1, 1),
+                         substr(osdp$topography, 1, 1))
+
+# remove NA
+osdp$bnd.code <- gsub('NANA', '', osdp$bnd.code)
+
+# plot
+par(mar = c(0, 0, 0, 1), bg = 'white', fg = 'black')
+
+plotSPC(
+  osdp,
+  width = 0.3,
+  name.style = 'center-center',
+  cex.names = 0.8,
+  plot.depth.axis = FALSE,
+  hz.depths = FALSE,
+  shrink = TRUE,
+  hz.distinctness.offset = 'hd',
+  hz.topography.offset = 'hzto',
+  hz.boundary.lty = 'hzto.lty'
+)
+
+# add legend
+legend(
+  'bottomright',
+  horiz = TRUE,
+  legend = c('Smooth', 'Wavy', 'Irregular', 'Broken'),
+  lty = 1:4,
+  inset = 0.05,
+  bty = 'n',
+  cex = 0.85
+)
+
+
+```
+
+These soils range from a fragipan in Threebear to fragic properties in Norwidge and then finally a strong argillic in Porrett. There are also significant color differences along with differences in horizon topography. Porrett has the smoothest horizon boundaries compared to the wavy boundaries of the other two series. Furthermore, Porrett has a large section of eluviation, whereas the other series have very little, and Threebear has some interfingering of E into the Bt horizons.
+
+### Objective 2: Create toposequence
+
+The first step is to get the average geomorphic positions of each series.
+
+```{r, fig.align='center', message=FALSE, warning=FALSE, fig.width=8, fig.cap= ' Figure 3: Plot showing the proportions of pedons in each series found on five different hillslope positions.'}
+# fetch OSDs with extended data
+s <- fetchOSD(soi, extended = TRUE)
+# gather hillslope positions
+res <- vizHillslopePosition(s$hillpos)
+# plot
+print(res$fig)
+
+```
+
+Then, plot a dendogram using the catenary sorting.
+
+```{r, fig.align='center', message=FALSE, warning=FALSE,fig.width=8, fig.cap='Figure 4: Plot showing the representative pedons for each series in order of cantenary position, starting with summit on the left to toeslope on the right. Branches represent taxonomic relationships and distance between the three series.'}
+#order of dominant position from summit to toeslope
+s$hillpos
+labs <- c(2,1,3)
+
+# plot
+par(mar=c(0,0,1,1))
+SoilTaxonomyDendrogram(s$SPC, rotationOrder = labs, width=0.25)
+mtext('approx. catenary sorting', side = 2, line=-1, font=3, cex=1.25)
+```
+
+The series, ordered from summit to toeslope, are Threebear, Norwidge, and Porrett. While Threebear is dominantly found in the summit position, there is some overlap with Norwidge as they both occur on the backslope, footslope, and summit. Porrett, on the other hand, is only found in the toeslope position. There is also a relationship between the taxonomic classes along the catenary sequence. The Udivitrands are on the upper parts of the slope and go from an Oxyaquic subgroup to a Alfic subgroup, which may be evidence of the varying hydrological processes along the topographic gradient. Finally, at the toeslope position Porrett is the farthest away taxonomically as an Aquandic Epiaqualf. The shift from Andisols to an Alfisol also indicates that topographic position is modulating the presence of volcanic ash in the soil.
+
+### Objective 3:
+
+To get a better understanding of soil morphology in relation to topography, two soil properties are of interest: clay content, and average depth class. These two properties were chosen because they are present in most of the NASIS pedon data and are assumed to be affected by topographic position in this region.
+
+To properly analyze the data in a meaningful way, horizons were generalized for all soil series.
+
+Note: only the code for the Norwidge series is shown here in order to streamline this document.
+
+#### Clay content summary statistics
+
+```{r, warning=FALSE, message=FALSE}
+
+# grab the Threebear, Norwidge, and Porrett pedons from selected set
+
+#p <- fetchNASIS(from = 'pedons')
+
+# alternatively, load a previously saved object of pedons
+load('final_proj_ped.Rdata')
+
+# generate depth classes for later analysis
+site(p) <- aqp::getSoilDepthClass(p)
+
+# subset Norwidge series from data
+norwidge <- subset(p, grepl('Norwidge', taxonname))
+
+# tabulate horizan names
+table(norwidge$hzname)
+
+# look at unique horizon designations
+unique(norwidge$hzname)
+
+#examine what is used in OSD
+l <- fetchOSD('norwidge')
+l$hzname
+
+# create 5 GHLs: A, cambic, elluvial, illuvial, and fragic
+prototype.labels <- c('A',
+                      'Bw',
+                      'E',
+                      'Bt',
+                      'Btx')
+# REGEX rules describing mapping from field data to prototype.labels
+patterns.to.match <- c('^A',
+                       '^B.*w|^2B*w',
+                       '^E.|^2E|^2B/|^B/|2BE',
+                       '^B.*t|^2B*t|^3B*t',
+                       '^2B.*tx|^3B.*tx')
+
+# apply prototype labels `new` to horizons matching `pat`
+norwidge$newgenhz <-
+  generalize.hz(x = norwidge$hzname,
+                new = prototype.labels,
+                pat = patterns.to.match)
+
+# get the horizon data frame out of the SPC
+hzdata <- horizons(norwidge)
+
+#summarize clay content
+res_df <- hzdata %>% 
+  group_by(newgenhz) %>%
+  summarize(clay_mean = mean(clay, na.rm = TRUE),
+            clay_sd = sd(clay, na.rm = TRUE),
+            clay_min = min(clay, na.rm = TRUE),
+            clay_max = max(clay, na.rm = TRUE),
+            clay_Q05 = quantile(clay, probs = 0.05, na.rm = TRUE),
+            clay_Q50 = quantile(clay, probs = 0.5, na.rm = TRUE),
+            clay_Q95 = quantile(clay, probs = 0.95, na.rm = TRUE))
+
+
+
+```
+
+```{r, echo = FALSE}
+
+knitr::kable(res_df, caption = 'Table 1: Summary statistics for clay content of each generalized horizon for the Norwidge series. Shown here from left to right are the mean, standard deviation, minimum value, maximum value, and the 5th, 50th, and 90th quartiles.')
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Porrett
+porrett <- subset(p, grepl('Porrett', taxonname))
+
+l <- fetchOSD('porrett')
+
+# create 5 GHLs: A, elluvial, illuvial, and parent material
+prototype.labels <- c('A.',
+                      'E',
+                      'Bt',
+                      'C')
+# REGEX rules describing mapping from field data to prototype.labels
+patterns.to.match <- c('^A',
+                       '^E',
+                       '^B',
+                       '^C')
+
+# apply prototype labels `new` to horizons matching `pat`
+porrett$newgenhz <-
+  generalize.hz(x = porrett$hzname,
+                new = prototype.labels,
+                pat = patterns.to.match)
+
+
+# get the horizon data frame out of the SPC
+hzdata <- horizons(porrett)
+
+res_df3 <- hzdata %>% 
+  group_by(newgenhz) %>%
+  summarize(clay_mean = mean(clay, na.rm = TRUE),
+            clay_sd = sd(clay, na.rm = TRUE),
+            clay_min = min(clay, na.rm = TRUE),
+            clay_max = max(clay, na.rm = TRUE),
+            clay_Q05 = quantile(clay, probs = 0.05, na.rm = TRUE),
+            clay_Q50 = quantile(clay, probs = 0.5, na.rm = TRUE),
+            clay_Q95 = quantile(clay, probs = 0.95, na.rm = TRUE))
+
+```
+
+```{r, echo = FALSE}
+
+knitr::kable(res_df3, caption = 'Table 2: Summary statistics for clay content of each generalized horizon for the Porrett series. Shown here from left to right are the mean, standard deviation, minimum value, maximum value, and the 5th, 50th, and 90th quartiles.')
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#Threebear
+threebear <- subset(p, grepl('Threebear', taxonname))
+
+l <- fetchOSD('threebear')
+
+# create 5 GHLs: A, cambic, elluvial, illuvial, and fragic
+prototype.labels <- c('A',
+                      'Bw',
+                      'E',
+                      'Bt',
+                      'Btx')
+# REGEX rules describing mapping from field data to prototype.labels
+patterns.to.match <- c('^A',
+                       '^B.*w|^2B*w|^BA',
+                       '^E.|^2E|^2B/|^B/|2BE',
+                       '^B.*t|^2B*t|^3B*t',
+                       '^2B.*tx|^3B.*tx')
+
+# apply prototype labels `new` to horizons matching `pat`
+threebear$newgenhz <-
+  generalize.hz(x = threebear$hzname,
+                new = prototype.labels,
+                pat = patterns.to.match)
+
+
+# get the horizon data frame out of the SPC
+hzdata <- horizons(threebear)
+
+res_df2 <- hzdata %>% 
+  group_by(newgenhz) %>%
+  summarize(clay_mean = mean(clay, na.rm = TRUE),
+            clay_sd = sd(clay, na.rm = TRUE),
+            clay_min = min(clay, na.rm = TRUE),
+            clay_max = max(clay, na.rm = TRUE),
+            clay_Q05 = quantile(clay, probs = 0.05, na.rm = TRUE),
+            clay_Q50 = quantile(clay, probs = 0.5, na.rm = TRUE),
+            clay_Q95 = quantile(clay, probs = 0.95, na.rm = TRUE))
+
+```
+
+```{r, echo = FALSE}
+
+knitr::kable(res_df2, caption = 'Table 3: Summary statistics for clay content of each generalized horizon for the Threebear series. Shown here from left to right are the mean, standard deviation, minimum value, maximum value, and the 5th, 50th, and 90th quartiles.')
+
+```
+
+##### Represented graphically
+Examining only the Bt horizons because that is shared among the three series.
+
+```{r, fig.align='center', fig.cap= 'Figure 5: Bar plot showing the average clay percentage of each series ordered by catenary sorting. Error bars represent standard deviation.'}
+# create new dataframe with only Bts
+df1 <- subset(res_df, grepl('^Bt$', newgenhz))
+df2 <- subset(res_df2, grepl('^Bt$', newgenhz))
+df3 <- subset(res_df3, grepl('^Bt$', newgenhz))
+
+# create separate ids for each series
+df1$id <- 'norwidge'
+df2$id <- 'threebear'
+df3$id <- 'porrett'
+
+df_Bts <- rbind(df1,df2,df3)
+
+#sort by increasing clay, which follows the catenary sorting as well
+df_Bts$id <- factor(df_Bts$id,
+                  levels = df_Bts$id[order(df_Bts$clay_mean)])
+
+#create error bars
+min <- df_Bts$clay_mean - df_Bts$clay_sd
+max <- df_Bts$clay_mean + df_Bts$clay_sd
+
+# plot
+cp <-
+  ggplot(
+    data = df_Bts,
+    aes(x = id, y = clay_mean))+
+  geom_bar(stat = 'identity',
+           fill = c('#ff6f69','#88d8b0','#ffcc5c' )) +
+  geom_errorbar(aes(ymin = min, ymax = max), width = 0.2) +
+  geom_point(size = 2) +
+  ylab('Average Clay Content') +
+  xlab('Series')
+
+cp
+
+```
+
+#### Depth Summary Statistics
+
+Again here the only code shown is that for Norwidge, as it is identical for the other series
+
+```{r}
+#norwidge
+nor_s <- site(norwidge)
+
+dep_df <- nor_s %>% 
+  summarize(depth_mean = mean(depth, na.rm = TRUE),
+            depth_sd = sd(depth, na.rm = TRUE),
+            depth_min = min(depth, na.rm = TRUE),
+            depth_max = max(depth, na.rm = TRUE),
+            depth_Q05 = quantile(depth, probs = 0.05, na.rm = TRUE),
+            depth_Q50 = quantile(depth, probs = 0.5, na.rm = TRUE),
+            depth_Q95 = quantile(depth, probs = 0.95, na.rm = TRUE))
+```
+
+```{r, echo = FALSE}
+
+knitr::kable(dep_df, caption = 'Table 4: Summary statistics for total depth of the Norwidge series. Shown here from left to right are the mean, standard deviation, minimum value, maximum value, and the 5th, 50th, and 90th quartiles.')
+
+```
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE}
+#porrett
+por_s <- site(porrett)
+
+dep_df2 <- por_s %>% 
+  summarize(depth_mean = mean(depth, na.rm = TRUE),
+            depth_sd = sd(depth, na.rm = TRUE),
+            depth_min = min(depth, na.rm = TRUE),
+            depth_max = max(depth, na.rm = TRUE),
+            depth_Q05 = quantile(depth, probs = 0.05, na.rm = TRUE),
+            depth_Q50 = quantile(depth, probs = 0.5, na.rm = TRUE),
+            depth_Q95 = quantile(depth, probs = 0.95, na.rm = TRUE))
+
+# threebear
+thr_s <- site(threebear)
+
+dep_df3 <- thr_s %>% 
+  summarize(depth_mean = mean(depth, na.rm = TRUE),
+            depth_sd = sd(depth, na.rm = TRUE),
+            depth_min = min(depth, na.rm = TRUE),
+            depth_max = max(depth, na.rm = TRUE),
+            depth_Q05 = quantile(depth, probs = 0.05, na.rm = TRUE),
+            depth_Q50 = quantile(depth, probs = 0.5, na.rm = TRUE),
+            depth_Q95 = quantile(depth, probs = 0.95, na.rm = TRUE))
+
+```
+
+```{r, echo = FALSE}
+
+knitr::kable(dep_df2, caption = 'Table 5: Summary statistics for total depth of the Porrett series. Shown here from left to right are the mean, standard deviation, minimum value, maximum value, and the 5th, 50th, and 90th quartiles.')
+```
+
+```{r, echo=FALSE}
+
+knitr::kable(dep_df3, caption = 'Table 6: Summary statistics for total depth of the Threebear series. Shown here from left to right are the mean, standard deviation, minimum value, maximum value, and the 5th, 50th, and 90th quartiles.')
+
+```
+
+##### Represented Graphically
+
+```{r, fig.align='center', fig.cap= 'Figure 6: Bar plot showing the average depth in cm of each series ordered by catenary sorting. Error bars represent standard deviation.'}
+
+dep_df$id <- 'norwidge'
+dep_df2$id <- 'porrett'
+dep_df3$id <- 'threebear'
+
+df_depths <- rbind(dep_df, dep_df2, dep_df3)
+
+#create order that follows catenary sorting
+positions <- c('threebear','norwidge','porrett')
+
+#create error bars
+min_d <- df_depths$depth_mean - df_depths$depth_sd
+max_d <- df_depths$depth_mean + df_depths$depth_sd
+
+# plot
+dp <-
+  ggplot(
+    data = df_depths,
+    aes(x = id, y = depth_mean))+
+  geom_bar(stat = 'identity',
+           fill = c('#ff6f69', '#ffcc5c', '#88d8b0')) +
+  geom_errorbar(aes(ymin = min_d, ymax = max_d), width = 0.2) +
+  geom_point(size = 2) +
+  ylab('Average Depth (cm)') +
+  xlab('Series')+
+  scale_x_discrete(limits = positions)
+
+dp
+
+```
+
+# Discussion
+
+Understanding the role of topography on soil development and morphology is an important factor as it relates to managing local erosion and hydrology. Furthermore, a detailed perspective on the influence of topography can assist soil scientists in summarizing soil-landscape models and generating map units. Here, I examined three important soil series that form a toposequence from summit to backslope to toeslope. These series are Threebear, Norwidge, and Porrett (fig. 4). I found that along the topographic gradient from summit to toeslope there is an increase in both clay content in the illuvial horizon (fig. 5) as well as an increase in average soil depth (fig. 6). This suggests that field observations validate certain assumptions about soil development and provide evidence to support current soil-landscape models. However, topography does not fully explain the development of other soil properties, such as fragipans and fragic properties in the summit and back slope positions.
+
+Clay content increasing from summit to toe slope positions has been documented in previous studies (Dessalegn *et al*., 2014), and the observation is generally accredited to hydrological processes transporting clay down slope. Furthermore, *in situ* clay translocation and development occurs at a greater rate at more moderate slopes. However, this does not explain why the fragic properties do not follow a similar trend. The hypothesis for this pattern is that the fragic properties here are more related to parent material than slope positions. Fragipans in Latah county are purely clay and lack other cementing agents (such as iron). It may be that these clays were formed in the Tertiary aged alluvial deposits, and when loess was later deposited on top, perched water gradually compacted and oriented the clays over time to create fragic properties. This did not happen in the Porrett series possibly due to alluvial action mixing the two distinct parent materials.
+
+Depth also followed an increasing trend from summit to toeslope. This also reflects what is often found in field observations. Similar to the process that governs clay transport, sediment also follows a downhill trajectory. Upslope soils therefore experience a net loss in material as erosion out paces soil development. Alternatively, soil in the toe slope position receives sediment from upslope in additon to *in situ* soil development. However, I would have originally expected deeper soil in the summit positions because the slope there tends to be flat. One explanation for why Threebear does not have a greater average depth is because many of the Threebear observations in NASIS are from a Dynamic Soil Properties study, and as such many of the pits only went to 50cm (table 6).
+
+In summary, this project examines a local toposequence and validates current soil-landscape assumptions with previous field observations. I show that clay content and average soil depth increase along the toposequence, and that this is likely due to several processes related to slope, such as erosion and water movement. Furthermore, I found that topography, while it does seem to explain a portion of observed soil properties, does not explain everything. Fragic properties found in this region are likely a result of some other soil-forming factor, and gaps in pedon data limit conclusions that can be made about these series. Therefore, this project would have benefited from a more complete data set, and this points to the continual need to update NASIS data. Future projects should focus on modelling soil properties using topographic derivatives such as Topographic Wetness Index (TWI) or Digital Elevation Models (DEM) in order to further test assumptions. As well, studies should examine a more diverse array of soils with fragic properties along toposequences. 
+
+
+
+
+## References
+
+
+Dessalegn, D., Beyene, S., Ram, N., Walley, F. and Gala, T.S., 2014. Effects of topography and land use on soil characteristics along the toposequence of Ele watershed in southern Ethiopia. Catena, 115, pp.47-54.
+
+Jenny, H., 1994. Factors of soil formation: a system of quantitative pedology. Courier Corporation.
