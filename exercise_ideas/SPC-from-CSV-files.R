@@ -5,9 +5,9 @@ granite <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-da
 
 ## load parallel Merhten formation transect from CSV
 # note that there are two files
-andesite <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/rasmussen-andisitic-lahar.csv', stringsAsFactors = FALSE)
+andesite <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/rasmussen-andesitic-lahar.csv', stringsAsFactors = FALSE)
 
-andesites.site <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/rasmussen-andisitic-lahar-site.csv', stringsAsFactors = FALSE)
+andesites.site <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/rasmussen-andesitic-lahar-site.csv', stringsAsFactors = FALSE)
 
 # note: these are data.frame objects
 class(granite)
@@ -45,7 +45,8 @@ site(andesite)$transect <- 'Andesite'
 g <- c(granite, andesite)
 
 ## init spatial data from coordinates (aqp 2.0+)
-initSpatial(g, crs = "OGC:CRS84") <- ~ x + y
+# GCS NAD83
+initSpatial(g, crs = "EPSG:4269") <- ~ x + y
 
 ## alternately: init spatial data from coordinates (aqp <2.0; warnings on aqp 2.0+)
 # coordinates(g) <- ~ x + y
@@ -98,3 +99,4 @@ g$transect <- factor(g$transect, levels = c('Granite', 'Andesite'))
 # note we can use the same arguments to plotSPC
 par(mar = c(0, 0, 0, 1))
 groupedProfilePlot(g, groups = 'transect', group.name.offset = -15, name.style = 'center-center', cex.names = 0.55, width = 0.3, shrink = TRUE)
+
