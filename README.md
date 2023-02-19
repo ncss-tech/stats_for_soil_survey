@@ -24,7 +24,7 @@
 
 -   #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/2a_tabular_data/2a_tabular_data.html)
 
--   #### [Generalized Horizons w/ Loafercreek](http://ncss-tech.github.io/stats_for_soil_survey/exercise_ideas/genhz_homework.html)
+-   #### [Generalized Horizons w/ Loafercreek](http://ncss-tech.github.io/stats_for_soil_survey/exercises/genhz_homework.html)
 
 ### [**Chapter 3:** *Exploratory Data Analysis*](http://ncss-tech.github.io/stats_for_soil_survey/book/eda.html)
 
