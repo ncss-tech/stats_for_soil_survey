@@ -71,7 +71,7 @@
 
 ### [**Chapter 4:** *Linear Regression*](http://ncss-tech.github.io/stats_for_soil_survey/book2/linear-regression.html)
 
--   #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/6_linear_models/linear_regression_pres.html)
+-   #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/6_linear_regression/linear_regression_pres.html)
 
 ### [**Chapter 5:** *Generalized Linear Models*](http://ncss-tech.github.io/stats_for_soil_survey/book2/glm.html)
 
