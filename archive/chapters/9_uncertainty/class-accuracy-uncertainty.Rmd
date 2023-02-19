@@ -1,0 +1,347 @@
+---
+title: "Accuracy and Uncertainty for Categorical Predictions"
+date: "`r Sys.Date()`"
+author: D.E. Beaudette
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: no
+    smart: no
+bibliography: bibliography.bib
+---
+  
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE, fig.align='center', echo=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+```{r data-prep-and-function}
+library(igraph)
+library(latticeExtra)
+library(plyr)
+library(reshape2)
+library(wesanderson)
+library(grid)
+library(aqp)
+
+# functions specific to this document
+source('local-functions.R')
+```
+
+```{r simulate-data}
+s <- list()
+n <- 1000
+
+alpha.1 <- c(4,10,5,15,16)
+s[['Case 1']] <- simulatePredictions(n=n, alpha=alpha.1)
+
+alpha.2 <- c(3,4,5,6,12)
+s[['Case 2']] <- simulatePredictions(n=n, alpha=alpha.2)
+
+alpha.3 <- c(2,2,2,2,40)
+s[['Case 3']] <- simulatePredictions(n=n, alpha=alpha.3)
+```
+
+```{r make-figures}
+## class probabilities
+ss <- ldply(s, function(i) i$predictions.long)
+names(ss)[1] <- 'example'
+ss$example <- factor(ss$example)
+
+cols <- brewer.pal(9, 'Set1')
+tps <- list(superpose.line=list(col=cols, lwd=1, alpha=0.85))
+
+p.1 <- densityplot( ~ value | example, groups=variable, data=ss, as.table=TRUE, layout=c(3,1),
+pch=NA, xlim=c(-0.1, 1.1), scales=list(alternating=3, x=list(tick.number=5)), xlab='Class Probability',
+strip=strip.custom(bg=grey(0.85)), auto.key=list(columns=5, lines=TRUE, points=FALSE),
+par.settings=tps, panel=function(...) {
+  gs <- seq(0,1, by=0.1)
+  panel.abline(v=gs, lty=3, col='grey')
+  panel.densityplot(...)
+})
+
+
+## distribution of stats
+ss <- ldply(s, function(i) i$stats.long)
+names(ss)[1] <- 'example'
+ss$example <- factor(ss$example)
+
+
+# uncertainty metrics
+cols <- wes_palette("Zissou1")[c(1, 5)]
+tps <- list(superpose.line=list(col=cols, lwd=2, alpha=0.85))
+
+p.2 <- densityplot( ~ data | example, groups=which, data=ss, as.table=TRUE, layout=c(3,1), pch=NA, auto.key=list(columns=2, lines=TRUE, points=FALSE), strip=strip.custom(bg=grey(0.85)), scales=list(alternating=3, y=list(rot=0), x=list(tick.number=5)), xlab='', par.settings=tps, panel=function(...) {
+  gs <- seq(0, 2.5, by=0.25)
+  panel.abline(v=gs, lty=3, col='grey')
+  panel.densityplot(...)
+})
+
+
+## scatter plot of H vs. CI
+ss <- ldply(s, function(i) i$stats)
+names(ss)[1] <- 'example'
+ss$example <- factor(ss$example)
+
+# xlim=c(-0.1, 1.1), ylim=c(-0.1, 1.1),
+
+# how do these two compare in general?
+p.3 <- xyplot(Shannon.H ~ CI | example, data=ss, auto.key = list(columns=3, lines=FALSE, points=TRUE), as.table=TRUE, layout=c(3,1),
+scales=list(alternating=1),  xlab='Confusion Index', ylab='Shannon H',
+strip=strip.custom(bg=grey(0.85)), par.settings=list(plot.symbol=list(col='royalblue', pch=16, cex=0.85, alpha=0.25)), 
+panel=function(x, y, subscripts=subscripts, ...) {
+  panel.grid(-1, -1, lty=3, col='grey')
+  l <- lm(y ~ x)
+  med.H <- round(median(y), 2)
+  med.CI <- round(median(x), 2)
+  iqr.H <- round(IQR(y), 2)
+  iqr.CI <- round(IQR(x), 2)
+  cor.xy <- round(cor(x, y, method = 'spearman'), 2)
+  ann <- paste0('H: ', med.H, ' (', iqr.H, ')\n', 
+                'CI: ', med.CI, ' (', iqr.CI, ')\n',
+                'cor: ', cor.xy)
+  
+  panel.points(ss$CI, ss$Shannon.H, col=grey(0.85), alpha=0.1)
+  panel.xyplot(x, y, subscripts=subscripts, ...)
+  panel.abline(l, col='black', lwd=1.5, ...)
+  panel.abline(0, 1, lty=2)
+  grid.text(ann, x = unit(0.05, 'npc'), unit(0.95, 'npc'), just = c('left', 'top'), gp = gpar(cex=0.75, font=2))
+})
+
+```
+
+
+# Background
+
+This document is [an abbreviated attempt](https://ncss-tech.github.io/misc/accuracy/accuracy-uncertainty-soil-class-prediction.html) at addressing some of the issues related to accuracy and uncertainty that I have brought up over discussion of raster (soil class) mapping standards. As such, the following is a combination of soap box moments, demonstrations of methods, todo items for my future self, and references. Honestly, before going any further be sure to read the recent paper by @Rossiter2017.
+
+This [article](http://www.fharrell.com/post/classification/) does a fine job of summarizing the major differences between *classification* and *prediction*. Most of the modeling frameworks we will be using or evaluating generate predictions in the form of probabilities (prediction). At some point the stack of probabilities will be converted into a single map depicting the most likely class at each pixel (classification). The iterative assessment of model performance (e.g. accuracy and uncertainty) should happen as part of the *prediction* phase via metrics such as the Brier score and Shannon entropy. An evaluation of the final *classification* is helpful for communicating accuracy to a wider audience (e.g. percent correctly classified) but should not be the primary means of optimizing model performance.
+
+![](prediction-classification.png)
+
+## Status Quo
+The "Digital Soil Mapping" chapter (5) from the latest Soil Survey Manual describes two commonly used metrics for the description of accuracy and uncertainty: overall accuracy / percent correctly classified (PCC) and the confusion index (CI) of @Burrough1997. These methods are widely used and implementation is simple.
+
+Given the complex nature of class mapping results (e.g. stack of class probabilities) and inherent (likely quantifiable) similarity of soil classes, I think that we should explore options for a more robust suite of accuracy and uncertainty metrics. Furthermore, it is my opinion that any evaluation of probabilistic predictions should be integrated over *all* classes. 
+
+
+## Theses
+
+  * The $\tau$ statistic of [@Rossiter2017] is a more reliable and nuanced representation of accuracy vs. PCC.
+
+  * The $\tau$ statistic can be *upgraded* with additional *knowledge* given the availability of 1) prior understanding of class proportions, and/or, 2) meaningful parameterization of pair-wise class distances.
+  
+  * There can be consensus on formulation of *approximate* pair-wise distances, within a given modeling domain. Pair-wise distances may not necessarily be the same across modeling domains or projects.
+  
+  * Brier scores are option for an even more nuanced representation of accuracy as they integrate all predicted probabilities.
+
+  * The confusion index of @Burrough1997 is an *unstable* metric when the number of predicted classes is large and when the most likely classes are associated with low probabilities.
+   
+  * Shannon entropy (log base 2) is a more reliable representation of uncertainty than the confusion index, especially when the number of possible classes varies by project. The importance of a universally reliable representation of uncertainty is even more important when several methods are used concurrently.
+  
+  * There *should be* a way to integrate pair-wise distances into the Shannon entropy (or related method) and Brier scores; maybe we will discover those here.
+  
+
+  
+
+## Soap Box Time
+Our current QC/QA process is based on many forms of evaluation, accumulates some degree of subjectivity and relies heavily on qualitative forms of information (field experience, institutional knowledge, etc.).  On the opposite side of the spectrum, the validation of raster mapping is often claimed to be free of subjective interference and entirely quantitative. Those are "good things" that we should always strive for, however, the simplicity of calculating a "percent correctly classified" can interfere with a more nuanced evaluation of accuracy. As I mentioned on the phone (and implicitly volunteered for) a validation "score" might be more meaningful than any single validation metrics. 
+
+One such score might include:
+
+  * agreement between predicted probabilities and observed class (e.g. Brier scores)
+  * agreement between the most likely class and observed class, accounting for class similarities (e.g. weighted $\tau$)
+  * distribution of class-wise Shannon entropy values
+  * calibration vs. predicted vs. validation proportion of classes
+  * some kind of metric that integrates spatial connectivity of predictions / observations, for example: cross-tabulate calibration / prediction / validation classes with geomorphon classes
+
+I strongly believe that we need a robust suite of metrics primarily for internal discussion and evaluation of raster mapping products; even more so when complex modeling frameworks such as randomForest or neural nets are used.
+
+Accuracy and uncertainty metrics are primarily vehicles for understanding, re-calibrating (as needed), and communicating statistical models as part of the development and QA/QC process.
+
+
+
+# Concept Demonstration via Simulated Data
+
+Consider a supervised classification that generates predictions for 5 possible soil classes. Suites of predicted probabilities fall into 3 general cases:
+
+   * "Case 1": classes **D** and **E** are nearly tied for the most likely class, but their respective probabilities are generally < 0.5
+   * "Case 2": class **E** is almost always the most likely class, but classes **B**, **C**, and **D** are tied for second place
+   * "Case 3": class **E** is always the most likely class, all other classes have probabilities < 0.2
+
+```{r, fig.width=10, fig.height=4, fig.cap='Probability distributions of predictions.'}
+# examples of three cases
+print(p.1)
+```
+
+Even though these are simulated data, the three cases above demonstrate common modeling scenarios where classification uncertainty ranges from very low ("Case 3") in some areas to quite high ("Case 1") in others. These three cases could easily be associated with real situations:
+
+  * "Case 1": predictions for soil classes represent a hillslope complex that isn't quite disentangled by the model
+  * "Case 2": predictions for soil classes represent limited success in partitioning between a single water shedding (**E**) vs. multiple water collecting positions (**A**-**D**)
+  * "Case 3": predictions for soil classes represent a successful partitioning between Holocene age deposits (**E**) vs. older alluvial terraces (**A**-**D**)
+
+
+
+
+
+# Accuracy
+
+## Confusion Matrix / Area Under ROC
+
+See [Chapter 9](http://ncss-tech.github.io/stats_for_soil_survey/chapters/9_uncertainty/Uncert_val.html).
+
+Review some of the [commentary]((http://www.fharrell.com/post/mlconfusion/)) on the use of *only* the confusion matrix and AUROC for rating predictions in the medical field.
+
+*The confusion matrix and associated statistics are a useful starting point but not the most effective means for comparing performance.*
+
+## Brier Scores
+
+Brier scores [@Brier1950, @Harrell2001] quantify agreement between observed classes and predicted probabilities:
+$$ B = \frac{1}{n} \sum_{i=1}^{n}{ ( p_{i} - y_{i} )^{2}  }  $$
+where $B$ is an index of agreement between predicted probabilities, $\mathbf{p}$, and class labels, $\mathbf{y}$. Larger values suggest less agreement between probabilities and observed class labels.
+
+Follow-up:
+
+   * https://en.wikipedia.org/wiki/Brier_score
+   * https://stats.stackexchange.com/questions/112250/understanding-the-rank-probability-score
+   * http://empslocal.ex.ac.uk/people/staff/dbs202/publications/2008/stephenson-brier.pdf
+   * http://iopscience.iop.org/article/10.1088/1748-9326/7/4/044019
+
+
+*What about a weighted version of this score, based on a re-statement of the distance matrix?*
+
+
+## Tau and Weighted Tau (class-similarity)
+
+[@Rossiter2017] implemented in `aqp::tauw()`. This paper contains some discussion on a weighted version of Shannon Entropy using the subset of similarities between predicted classes and the *actual* class.
+
+
+### Commentary from DGR
+
+   * Prior class probabilities. Commentary from DGR:
+      + That depends on the mapping method. In LDA we can set the priors, then we'd use these in tau. But for an automatic DSM procedure the priors are all equal (Foody's modified kappa). If judging a manual mapper, the priors can be their overall probabilities for an area.  E.g., in one county we have a pretty good idea that it is half Vertisols, so the mapper is prejudiced (in the good sense) about this.
+   
+   * Class similarity
+      + The weighting is quite tricky since obviously it can be used to manipulate results. I really like the 'error loss' method if there is some numerical value put on each difference -- as I did with the NC site index. In CA you have the Storie index, you could use that difference for mis-mappings of series.  Numerical taxonomy measures could also be used but you'd need to agree on which properties to use. If the purpose of the map is e.g. to estimate C stocks, then the difference between the mean C stocks  between classes from NASIS might be used. Coming up with a transparent and accepted weighting can be tricky.
+
+
+
+# Uncertainty
+
+## Shanon Entropy
+
+$$ H = -\sum_{i=1}^{n}{p_{i} * log_{2}(p_{i})}  $$
+
+where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. Smaller values imply less entropy (more information). Given equal class probabilities, H will increas as the number of classes increases.
+
+
+@Kempen2009 described a normalized version of Shannon entropy that is constrained to values between 0 and 1:
+
+$$ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  $$
+where $H$ is an index of uncertainty associated with predicted probabilities, $\mathbf{p}$, of encountering classes $i$ through $n$. This representation may be conveniently contained within the range of $[0,1]$, however, it cannot be used to compare uncertainty from models using different numbers of classes.
+
+It is my recommendation that the $log_{2}$ version of Shannon H be used as our *primary* metric of uncertainty for predictive soil class mapping.
+
+*Shannon entropy does not take into account similarity among classes.*
+
+
+
+# Review
+
+```{r, fig.width=10, fig.height=4}
+# examples of three cases
+print(p.1)
+```
+```{r}
+pp <- ldply(s, performance)
+names(pp)[1] <- 'example'
+
+kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
+```
+
+```{r}
+ex <- ldply(s, extractExample, n=1)
+names(ex)[1] <- 'example'
+ex$CI <- NULL
+ex$actual <- NULL
+
+add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE), header=c(" " = 1, "Class Probabilities" = 5, "Uncertainty" = 1))
+```
+
+
+# Example Implementation
+
+The `aqp` package has an implementation of Shannon entropy and Brier score; there are many other implementations but these are convenient for soil survey work. Consider the following table of predicted probabilities (classes A,B,C,D,E) and observed class (actual).
+
+```{r echo=TRUE}
+library(aqp)
+
+# example data
+d <- structure(list(A = c(0.0897243494322252, 0.0537087411977284, 
+0.0643087579284512, 0.0582791533521884, 0.0655491726966812, 0.0878056947034425, 
+0.0550727743006022, 0.10724015754623, 0.0332599961787985, 0.0555131608754956
+), B = c(0.191110141078936, 0.187244044389649, 0.119214057525671, 
+0.198461646003737, 0.161851348940294, 0.172157251906694, 0.113611770097243, 
+0.178697159594029, 0.194607795787689, 0.188977055949146), C = c(0.121941735763077, 
+0.0770539012535731, 0.0977753159795662, 0.0774293724263895, 0.072198187957068, 
+0.0366921003115242, 0.151033286139089, 0.0974443429098862, 0.124876574685048, 
+0.0864142563046045), D = c(0.351108807309283, 0.322120077305279, 
+0.440632731639948, 0.401063395801608, 0.312647702445919, 0.304193047630158, 
+0.270239142407351, 0.258895264130713, 0.422747316475851, 0.252724366285052
+), E = c(0.246114966416479, 0.359873235853771, 0.278069136926363, 
+0.264766432416077, 0.387753587960038, 0.399151905448182, 0.410043027055715, 
+0.357723075819142, 0.224508316872614, 0.416371160585702), id = c("1", 
+"10", "100", "1000", "101", "102", "103", "104", "105", "106"
+), actual = c("D", "B", "D", "E", "D", "D", "E", "E", "D", "E"
+)), .Names = c("A", "B", "C", "D", "E", "id", "actual"), row.names = c(NA, 
+10L), class = "data.frame")
+
+# check it out
+# predictions, and actual, observed class
+head(d)
+```
+
+Brier scores (accuracy) are computed over all predictions and associated observed classes.
+```{r echo=TRUE}
+# compute Brier score from all predictions
+brierScore(d, classLabels = c('A', 'B', 'C', 'D', 'E'), actual = 'actual')
+```
+
+
+Shannon entropy (uncertainty) is computed from each vector of predicted probabilities.
+```{r echo=TRUE}
+# shannon entropy for first row, could be a single pixel or obs. point
+shannonEntropy(d[1, c('A', 'B', 'C', 'D', 'E')])
+
+# compute shannon entropy for all rows
+apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
+```
+
+
+
+
+# Resources
+ 
+## Evaluating Accuracy of Categorical / Probabilistic Predictions
+ 
+ * [Commentary on the use of confusion matrix and AUROC](http://www.fharrell.com/post/mlconfusion/)
+ * [What is  the AUC / AUROC?](https://stats.stackexchange.com/questions/132777/what-does-auc-stand-for-and-what-is-it/193333#193333)
+ * [Commentary on C-index / AUROC](https://stats.stackexchange.com/questions/1241/what-do-roc-curves-tell-you-that-traditional-inference-wouldnt)
+ * [AUROC](https://stats.stackexchange.com/questions/90659/why-is-auc-higher-for-a-classifier-that-is-less-accurate-than-for-one-that-is-mo/90705#90705)
+ * [Scoring Rules](https://en.wikipedia.org/wiki/Scoring_rule)
+ * [Frank Harrel's Website + links](http://biostat.mc.vanderbilt.edu/wiki/Main/RmS)
+ * [Classification vs. Prediction](http://www.fharrell.com/post/classification/)
+
+## Sampling and Stability of Estimates
+  
+  * [Gridded Data: Sample vs. Population](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html)
+  * [Demonstration of sampling density vs. stability of median](http://ncss-tech.github.io/AQP/sharpshootR/sampling-stability-demo.html)
+
+
+
+# References
+ 
+
+

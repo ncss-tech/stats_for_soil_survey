@@ -2,8 +2,6 @@
 
 <img src="book/static-figures/logo.jpg" width="100%">
 
-### Tom D’Avello, Stephen Roecker, Dylan Beaudette, Skye Wills, Katy Yoast, Jay Skovlin, Phil Roberts, John Hammerly, and Andrew Brown
-
 #### 2023-01-30
 
 ### **[Precourse Assignment](http://ncss-tech.github.io/stats_for_soil_survey/book/index.html)**

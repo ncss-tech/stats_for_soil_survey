@@ -1,0 +1,303 @@
+---
+title: "Examples Using the rms Package"
+author: "D.E. Beaudette"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+  mathjax: null
+jquery: null
+smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+# setup
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', fig.retina=2, dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+
+
+# CA790 MAST Model
+
+yosemite-mast-model.png: Predicted mean annual soil temperatures at 50cm depth, Yosemite Valley, CA; warmer colors are higher values, cooler colors are lower values. Predictions are based on 39 long-term soil temperature sensor installations. This model explains 81% of the variance in mean annual soil temperature observations.
+
+yosemite-mast-model-effects.png: Effect sizes (model coefficients) associated with the Yosemite mean annual soil temperature model can be interpreted as: 
+
+  1. an approximate decrease in MAST of 5 deg. C moving from 1500m to 2400m elevation 
+  2. an approximate increase in MAST of 0.5 deg. C by moving from an "average" cool slope to warm slope
+  3. an approximate decrease in MAST of 3 deg. C moving into cold-air drainage zones
+  4. an approximate decrease in MAST by adding 5cm of O horizon material to a site that would otherwise have no O horizon.
+
+
+**TODO**
+
+  * compare sampled vs. exhaustive GIS data
+  * check for redundancy
+  * more documentation of model
+  * compare multiple models
+
+
+## Load and prep data for model-fitting
+```{r load-prep-data, results='hide'}
+library(car)
+library(rms)
+library(Hmisc)
+library(RColorBrewer)
+library(latticeExtra)
+library(stringr)
+library(sp)
+library(corrplot)
+library(visreg)
+
+# default colors
+cols <- brewer.pal(n=8, name='Set1')
+
+## re-make cached data
+# source('prepare-data.R')
+
+# load cached data
+load('cached-data.rda')
+
+# down-grade to data.frame
+m <- as.data.frame(s)
+
+# add factor for O horizon presence
+m$o.hz <- factor((m$o.hz.thick > 1))
+
+# important !! reset row names
+row.names(m) <- 1:nrow(m)
+```
+
+
+## Initial Data Exploration
+```{r data-exploration, fig.height=8, fig.width=8}
+vars <- c('MAST', 'Winter', 'Summer', 'elev', 'solar', 'tci', 'o.hz.thick')
+
+# univariate summaries
+summary(m[, vars])
+
+# scatter plot matrix
+scatterplotMatrix(m[, vars], col='black', 
+                  regLine = list(col='orange'), 
+                  smooth = list(col.spread='royalblue', col.smooth='royalblue', lwd.smooth=2, lty.smooth=1, lty.spread=3, lwd.spread=1)
+                  )
+
+# Spearman Rank correlation matrix
+cor.mat <- round(cor(m[, vars], use='complete', method = 'spearman'), 2)
+
+corrplot.mixed(cor.mat)
+```
+
+```{r fig.height=5, fig.width=6}
+vc <- varclus(as.matrix(m[, vars]), similarity = 'spearman', method='complete')
+
+par(mar=c(1,4.5,1,1), las=1)
+plot(vc)
+```
+
+```{r, fig.width=6, fig.height=3}
+# O horizon presence vs. other vars
+bwplot(o.hz ~ elev, data=m, par.settings=tactile::tactile.theme())
+bwplot(o.hz ~ solar, data=m, par.settings=tactile::tactile.theme())
+bwplot(o.hz ~ tci, data=m, par.settings=tactile::tactile.theme())
+```
+
+
+## Investigate Influencial Obs
+```{r find-outliers, fig.height=8, fig.width=8}
+
+# build prelim model, plot diagnostics
+l <- lm(MAST ~ elev + solar + tci + o.hz, data=m)
+summary(l)
+
+leveragePlots(l, las=1)
+
+# standardized dfbeta
+dfbetasPlots(l, id.n=2, las=1)
+
+# ID outliers based on common metrics, and remove
+out.row.names <- as.integer(attr(outlierTest(l, cutoff=0.05)$rstudent, 'names'))
+# row names are not the same as row indexes in the presence of missing data!
+out.idx <- which(row.names(m) %in% out.row.names)
+
+# manully mark for removal from model
+# out.idx <- c(18, 22)
+
+# check
+m[out.idx, ]
+
+# save a copy and leave them out from original data
+m.outliers <- m[out.idx, ]
+m.sub <- m[-out.idx, ]
+```
+
+## Fit Model
+```{r fit-model, fig.height=4, fig.width=14}
+# setup labels for RMS plotting functions
+label(m.sub$elev) <- 'Elevation (m)'
+label(m.sub$solar) <- 'Ann. Beam Radiance (MJ/sq.m)'
+label(m.sub$tci) <- 'Saga Wetness Index'
+label(m.sub$o.hz.thick) <- 'O horizon thickness (cm)'
+label(m.sub$o.hz) <- 'O horizon thickness > 1 cm'
+label(m.sub$MAST) <- 'Mean Annual Soil Temperature (deg. C)'
+
+# model with rms functions
+dd <- datadist(m.sub)
+options(datadist="dd")
+
+# fit model, MAST is in deg C
+(l <- ols(MAST ~ rcs(elev, 3) + solar + o.hz + tci, data=m.sub, x=TRUE, y=TRUE, weights = m.sub$complete.yrs / max(m.sub$complete.yrs)))
+
+# visual check: partial effects make sense
+plot(Predict(l), as.table=TRUE, layout=c(4,1))
+
+# better visualization of partial effects + residuals
+par(mfcol=c(1, 4))
+visreg(l)
+
+## see 
+# Hmisc:::Function(l.ols)
+```
+
+## Examination of Residuals and Influential Observations
+From the `residuals.ols` manual page:
+
+ * "ordinary" refers to the usual residual
+ * "score" is the matrix of score residuals (contributions to first derivative of log likelihood). 
+ * "dfbeta" and "dfbetas" mean respectively the raw and normalized matrix of changes in regression coefficients after deleting in turn each observation. The coefficients are normalized by their standard errors. 
+ * "hat" contains the leverages, diagonals of the "hat" matrix. 
+ * dffit and dffits contain respectively the difference and normalized difference in predicted values when each observation is omitted. The S lm.influence function is used. 
+ * "hscore": the ordinary residuals are divided by one minus the corresponding hat matrix diagonal element to make residuals have equal variance.
+  
+```{r}
+
+# assumption of homogenaity: constant variance
+r <- residuals(l, type = 'ordinary')
+plot(r ~ fitted(l), las=1)
+abline(h=0, lty=2, col='red')
+
+
+# cutoff: change of x-fraction standard errors after removal of an observation
+show.influence(which.influence(l, cutoff = 0.5), m.sub)
+
+# how can I interpret these?
+dffits <- residuals(l, type = 'dffit')
+hist(dffits)
+
+# dfbetas: then what?
+dfb <- residuals(l, type = 'dfbetas')
+head(dfb)
+
+# from section 7.4 Checking Distributional Assumptions (Harrell, 2001)
+# whats up with the axis labels?
+r <- resid(l)
+xYplot(r ~ fitted(l), method='quantile')
+
+# QQ plots stratified...
+qqmath(~ r | m.sub$o.hz)
+
+```
+
+
+
+## Visual Evaluation of Model Fit
+```{r vis-eval-model, fig.height=8, fig.width=8}
+# view slices of elevation partial effect at several O horizon thickness
+plot(Predict(l, elev=NA, o.hz=c('FALSE', 'TRUE')))
+
+plot(Predict(l, elev=NA, tci=c(4, 6, 15)))
+
+plot(Predict(l, elev=NA, solar=c(63000, 74450)))
+```
+
+```{r vis-eval-model-2, fig.height=5, fig.width=10}
+# view effects over each IQR
+plot(
+  summary(l, vnames='labels', 
+          elev=c(1500, 2400), 
+          solar=c(63000, 74450), 
+          tci=c(9, 15), 
+          o.hz=c('FALSE', 'TRUE')
+  ), 
+  cex=1, main='Effect sizes, over specified ranges, adjusted to median values.'
+)
+
+
+# cross-validation
+
+# diagnostics:
+anova(l)
+# since we are using both the rms and car packages, need to specify which vif()
+rms::vif(l) 
+
+# eval mean-absolute-error (original units of data set)
+(mast.MAE <- round(mean(abs(m.sub$MAST - predict(l, m.sub)), na.rm=TRUE), 2))
+
+# save fitted / residuals to point data
+m.sub$resid <- resid(l)
+m.sub$fitted <- fitted(l)
+m.sub$r_f <- with(m.sub, abs(resid)/fitted)
+
+# # prepare point data spatial output with model diagnostics
+# s <- h
+# s@data <- s@data[, 'site_name', drop=FALSE]
+# s@data <- join(s@data, m, by='site_name', type='left')
+```
+
+
+```{r eval-model, fig.height=6, fig.width=6}
+plot(predict(l, m.sub) ~ m.sub$MAST, ylab='Predicted MAST (deg C)', xlab='Measured MAST (deg C)', xlim=c(0,20), ylim=c(0,20), las=1, cex=sqrt(m.sub$complete.yrs/2), sub='Symbol Size Proportional to Weight')
+points(predict(l, m.outliers) ~ m.outliers$MAST, col='red', pch=16)
+text(m.outliers$MAST, predict(l, m.outliers), labels=m.outliers$name, pos=3, cex=0.75)
+abline(0, 1, col='blue')
+abline(v=c(8, 15), h=c(8, 15), lty=2, col='grey')
+legend('topleft', legend=c('1:1 Line', 'Outliers'), lty=c(1, NA), pch=c(NA, 16), col=c('blue', 'red'), bty='n')
+legend('bottomright', legend=paste('mean abs. error:', mast.MAE, 'deg. C'), cex=0.75, bty='n', inset=0.01)
+```
+
+
+## Estimate MAST at Each Grid Cell 
+```{r apply-model, results='hide', eval=FALSE}
+# model SE requires a helper function
+predfun <- function(model, data) { cbind(se=predict(model, data, se.fit=TRUE)$se.fit) }
+
+# since we don't have a raster depicting O horizon thickness, we will have to simulate it
+# simplest approach is to make several predictions at fixed O hz thickness
+
+# iterate over possible set of O hz thickness: from summary stats
+o.hz.thick <- c(0, 2, 4)
+for(i in o.hz.thick) {
+  # make a fake O horizon thickness raster
+  r.o.hz <- raster(r.stack)
+  r.o.hz <- setValues(r.o.hz, values = i)
+  names(r.o.hz) <- 'o.hz.thick'
+  # make new stack
+  r.stack.pred <- stack(r.stack, r.o.hz)
+  
+  # make file names
+  f.pred <- paste0('spatial_data/mast-model-', i)
+  f.pred.se <- paste0('spatial_data/mast-model-se-', i)
+  
+  # MAST model: estimates and SE
+  predict(r.stack.pred, l, progress='text', filename=f.pred, datatype='FLT4S', format='GTiff', overwrite=TRUE)
+  predict(r.stack.pred, l, fun=predfun, progress='text', filename=f.pred.se, datatype='FLT4S', format='GTiff', overwrite=TRUE)
+}
+
+# save model diagnostics as SHP
+# can't convert labeled columns, have to do manually
+s$elev <- as.numeric(s$elev)
+s$solar <- as.numeric(s$solar)
+s$tci <- as.numeric(s$tci)
+s$o.hz.thick <- as.numeric(s$o.hz.thick)
+s$MAST <- as.numeric(s$MAST)
+s$resid <- as.numeric(s$resid)
+s$fitted <- as.numeric(s$fitted)
+s$r_f <- as.numeric(s$r_f)
+writeOGR(s, dsn='spatial_data', layer='point-data', driver='ESRI Shapefile', overwrite_layer=TRUE)
+```
+
+
+
+

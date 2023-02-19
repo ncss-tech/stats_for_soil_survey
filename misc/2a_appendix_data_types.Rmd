@@ -1,0 +1,286 @@
+---
+title: Chapter 2, Appendix - R Objects and Data Types
+author: Jay Skovlin, Dylan Beaudette, Stephen Roecker
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    keep_md: no
+    number_sections: yes
+    toc: no
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+        
+        
+# R Fundamentals
+        
+The following examples are meant to be copied from this document and pasted into **R,** where they can run interactively. Comments (green text with a "#" sign at left) briefly describe the function of the code in each line. Further documentation on objects and functions from the `aqp` package can be accessed by typing `help(soilDB)` or `help(aqp)` at the R console. The general form for a help request is `?function_name`. 
+      
+## Classes of Objects Used in R
+      
+One of the most versatile things about R is that it can manipulate and work with data in many ways.  Below are examples of ways to create and reference information in several data types that are commonly used with soil data. Within the R session, *objects* contain information that is loaded from files, extracted from NASIS, created on the fly, or calculated by some function. If none of the base classes are sufficient for a task, it is possible to define custom classes. The `SoilProfileCollection` is one such example.
+      
+Objects in R are analogous to nouns in a spoken language. They are labels for things we encounter in life. While the meaning of a noun in a spoken language generally doesn't change (e.g., the meaning of the word "apple" doesn't randomly change), the contents of objects in R can be modified or re-assigned at any time by using the assignment operator (`<-`).
+
+### Vectors
+Vectors are a fundamental object in the R language. They represent a set of 1 or more numbers, characters (commonly called strings), or Boolean (true/false) values.
+```{r datatype1, eval=TRUE, collapse=FALSE}
+# implicit vector creation from a sequence from 1:10
+1:10
+
+# numeric vector example: clay percent values
+clay <- c(10, 12, 15, 26, 30)
+
+# 'c()' is the concatenate function
+# values are concatenated into an object we've called 'clay' by assigning the concatenate result to 'clay' using '<-' or '='
+# print the values of 'clay' by typing it into the R console followed by enter
+clay
+
+# character vector: taxonomic subgroup
+subgroup <- c("typic haplocryepts","andic haplocryepts","typic dystrocryepts")  
+subgroup
+
+# logical vector: diagnostic feature presence/absence
+# note that TRUE and FALSE must be capitalized
+andic <- c(FALSE,TRUE,FALSE) 
+andic
+```
+
+#### Referencing elements of a vector
+Specific elements from a vector are accessed with square brackets, e.g., `clay[i]`. Note that the examples below use vectors to reference elements of another vector.
+```{r datatype1.1, eval=TRUE}
+# 2nd and 4th elements of vector 'clay' from above
+clay[c(2, 4)] 
+
+# 1st and 3rd elements of vector 'subgroup' from above
+subgroup[c(1, 3)]
+
+# everything but the first element of vector 'andic'
+andic[-1]
+
+# re-order clay values using a sequence from 5 to 1
+clay[5:1]
+```
+
+So what's the deal with the square bracket notation? 
+
+* Access elements `i` from vector `x`: `x[i]`. 
+
+* Exclude elements `i` from vector `x`: `x[-i]`.
+
+
+#### Vectorized evaluation: Implicit looping
+Most functions in R are "vectorized." This means that operations such as addition (the `+` function) on vectors will automatically iterate through every element. Following are some examples to demonstrate these concepts.
+```{r datatype1.2, eval=TRUE}
+# clay values from above
+# divide by 100, notice that iteration is over all the elements of 'clay' in the result
+clay / 100
+
+# search for the text 'dyst' in elements of 'subgroup'...more on this pattern matching process in chapter 2a!
+grepl('dyst', subgroup)
+
+# multiply two vectors of the same length
+c(5, 5) * c(1, 2)
+
+# be careful, operations on vectors of different length results in "recycling"!
+# this is helpful at times, but can be a common source of confusion
+10 * c(1, 2)
+c(1, 10, 100) + c(1, 2)
+
+# what is actually happening here in this recycling of vectors?
+# taking the following elements from above, first+first, second+second, third+first
+# 1+1=2, 10+2=12, 100+1=101
+```
+
+### Dataframes
+
+Dataframes are central to most work in R. They describe rectangular data, which can be thought of as a spreadsheet with rows and columns. Each column in the dataframe is constrained to a single data type: numeric, date-time, character, Boolean, and so on. Note that each column of a dataframe is a vector, and all column vectors must be the same length (hence the adjective "rectangular").
+
+```{r datatype2, eval=TRUE}
+# Take our two character and logical vectors we created above and convert them into a more useful dataframe.
+# we'll use the data.frame() function to glue these two vectors together into object 'd'
+d <- data.frame(subgroup, andic)
+d
+``` 
+You can see that the dataframe was created and it worked, but the vector names are not very informative. A couple of useful functions for working with column names are `names()`, which renames columns in a dataframe and `colnames()`, which creates a vector of column names.
+
+```{r datatype2.1, eval=TRUE}  
+# get the column names of a dataframe
+names(d)
+# we can use 'names()' and 'c()' to rename the columns in a dataframe
+names(d) <- c('tax_subgroup', 'andic.soil.properties')
+d
+```
+
+#### Referencing within dataframes
+Note in dataframe `d` that each row has an index number in front of it.  Using the square brackets notation, you can reference any part of a dataframe: rows or columns or specific row- and column-selections.  Here are some examples:
+  
+```{r datatype2a, eval=TRUE}
+# format: dataframe_name[rows, columns]
+d[1, ] # first row of dataframe
+d[, 1] # first column of dataframe
+d[2, 2] # second row, second column
+
+# In dataframes we can also use the '$' symbol to reference vector columns within a specific dataframe object
+# format: dataframe_name$column_name
+d$tax_subgroup
+
+# Other useful functions for checking objects and working with dataframes
+# the 'str()' function will show you the structure of an object and the data types of the vectors within it
+str(d)
+# 'class()' will tell you the object type or data type
+class(d)
+class(d$tax_subgroup)
+# use 'colnames()' to get a vector of column names from a dataframe
+colnames(d)
+# ncol and nrow provide column and row dimensions
+ncol(d)
+nrow(d)
+
+# building on what we've learned above, we can use the square bracket notation on a dataframe to re-order columns
+d <- d[ ,c('andic.soil.properties', 'tax_subgroup')]
+d
+# another way we could do this is to use the column indexes within the concatenate function
+# although the column indexes are not visible each column has an index number assigned to it
+d <- d[ , c(2,1)]
+``` 
+
+How would you remove a vector or column from a dataframe?
+
+`d$tax_subgroup <- NULL` will remove this column from the dataframe.
+
+
+### Factors
+Factors are an extension of the character class, designed for encoding group labels. This object (and some possible issues that it can create) are described in a later section.
+```{r factors, eval=TRUE}
+# generate a factor representation of the characters contained in the word 'pedology'
+# also setting the range of possibilities to the letters of the alphabet
+x <- factor(substring("pedology", 1:8, 1:8), levels = letters)
+# note that the object 'x' knows that there are 26 possible levels
+x
+# another way to do the same thing - the substring() is parsing the string 'pedology' for us in the above example
+#x <- factor(c('p', 'e', 'd', 'o', 'l', 'o', 'g', 'y'), levels=letters)
+
+# what happens when the levels are not specified?
+factor(substring("mississippi", 1:11, 1:11))
+# the string collapses to repeating levels only
+```
+
+### Lists
+Lists are similar to the dataframe class but without limitations on the length of each element. Lists are commonly used to store tree-like data structures or "ragged" data: elements with varying length. List elements can contain just about anything, making them one of the most flexible objects in R. Let's look at some examples.
+
+```{r datatype3, eval=TRUE}
+# make a list with named elements
+l <- list('favorite shovels'=c('sharpshooter', 'gibbs digger', 'auger', 'rock bar', 'backhoe!'),
+          'food'=c('apples', 'bread', 'cheese', 'vienna sausages', 'lutefisk'),
+          'numbers I like'=c(12, 1, 5, 16, 25, 68),
+          'chips I like' =c('plantain', 'tortilla', 'potato', '10YR 3/2'),
+          'email messages deleted'=c(TRUE, FALSE, FALSE, FALSE, TRUE, TRUE))
+# check the list
+l
+
+# access the first element of the list, note the double square brackets
+l[[1]]
+
+# access the a specific element of the list, note the double square brackets denote which element in the list plus additional single brackets for the position within the element
+l[[1]][4]
+
+# access the element by name, for example 'food'
+l[['food']]
+
+# convert a dataframe into a list
+as.list(d)
+
+# a list of lists
+list.of.lists <- list('pedon_1'=list('top'=c(0,10,25,55), 'bottom'=c(10,25,55,76), 'pH'=c(6.8,6.6,6.5,6.4)))
+list.of.lists
+
+# convert list of elements with equal length into a data.frame
+as.data.frame(list.of.lists)
+```
+How would you change the column names on the dataframe above?
+
+`names(...dataframe_object_name...) <- c('depth_top', 'depth_bottom', 'field_pH')`
+
+Use the names() function on the dataframe and supply the concatenated new names.
+
+### Matrix
+The matrix object is used to describe rectangular data of a single datatype: numbers, characters, Boolean values, and so on.
+```{r datatype4, eval=TRUE}
+# make a 5x5 matrix of 0's
+m <- matrix(0, nrow=5, ncol=5)
+m
+
+# operations by scalar (single value) are vectorized
+m <- m + 1
+m * 5
+
+# notice that the result of m * 5 is displayed but because the output wasn't assigned to 'm' it remains unchanged from m + 1
+m
+
+# now use the square bracket notation to get / set values within the matrix: m[row, col]
+# set row 1, col 1 to 0
+m[1,1] <- 0
+m
+
+# access diagonal and upper/lower triangles, useful for chapter 5
+m[upper.tri(m)] <- 'U'
+m[lower.tri(m)] <- 'L'
+diag(m) <- 'D'
+m
+
+# many functions return matrix objects
+# create a matrix of the sequences 1:10 and 1:10, then multiply every combination by applying a function
+outer(1:10, 1:10, FUN='*')
+``` 
+
+## Review of Common Data Type Definitions
+
+### Measurement Scales
+
+Refers to the measurement scale used. Four measurement scales, in order of decreasing precision are recognized:
+
+**Ratio** - Measurements having a constant interval size and a true zero point. Examples include measurements of length, weight, volume, rates, length of time, counts of items and temperature in Kelvin
+
+**Interval** - Measurements having a constant interval size but no true zero point. Examples include Temperature (excluding Kelvin), direction (e.g. slope aspect), time of day. Specific statistical procedures are available to handle circular data like slop aspect
+
+**Ordinal** - Members of a set are differentiated by rank. Examples include Soil interpretation classes (e.g., slight, moderate, severe), soil structure grade (e.g.,structureless, weak, moderate, strong)
+
+**Nominal** (Categorical) - Members of a set are differentiated by kind. Examples include Vegetation classes, soil map units, geologic units
+
+The data type controls the type of statistical operation that can be performed (Stevens), 1946.
+
+
+### Continuous and Discrete Data
+
+**Continuous Data** - Any measured value. Data with a possible value between any observed range. For example, the depth of an Ap horizon could range from 20cm to 30cm, with an infinite number of values between, limited only by the precision of the measurement device
+
+**Discrete Data** - Data with exact values. For example, the number of Quercus alba seedlings observed in a square meter plot, the number of legs on a dog, the presence/absence of a feature or phenomenon
+
+
+### Accuracy and Precision
+
+**Accuracy** is the closeness of a number to its actual value
+
+**Precision** is the closeness of repeated measurements to each other
+
+
+### Significant Figures
+
+The digits in a number that define the accuracy of a measurement. The value of 6 cm has one significant digit. The implied range is 1 cm. The true value lies between 5.50 and 6.49. The value of 6.2 cm has two significant digits. The implied range is 0.1 cm. The true value lies between 6.150 and 6.249. The implied accuracy is greater for the number 6.0 cm than 6 cm.
+
+
+## Additional Resources
+
+ * [**R Spatial, Chapter 1: Introduction**](http://www.rspatial.org/intr/index.html)
+ * [**Quick R website**](http://www.statmethods.net/)
+ * [**Simple R tutorial**](http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf)
+ 
+Venables, W.N., D.M. Smith, and the R Core Team. 2015. Introduction to R, Notes on R: A programming environment for data analysis and graphics, version (3.2.3, 2015-12-10). [https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf).
+
+Wickham, H. 2014. Advanced R. CRC Press, New York. [http://adv-r.had.co.nz/](http://adv-r.had.co.nz/).
+
+
+----------------------------
