@@ -81,8 +81,8 @@
 
 -   #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/8_tree_models/Presentation_Tree_Models2021.pptx)
 
--   #### [Exercise Worksheet](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/exercise_ideas/tree-models/Exercise_Tree_Models2021.pdf)
+-   #### [Exercise Worksheet](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/exercises/tree-models/Exercise_Tree_Models2021.pdf)
 
--   #### [Exercise Script](https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercise_ideas/tree-models/Exercise_Tree_Models2021.R)
+-   #### [Exercise Script](https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/tree-models/Exercise_Tree_Models2021.R)
 
 ------------------------------------------------------------------------
