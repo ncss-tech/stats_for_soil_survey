@@ -23,7 +23,7 @@ library(raster)   # raster data analysis tools
 
 
 # Part 1 - Explore data ----
-## Get Data from West Virginia and plot ----
+# Get Data from West Virginia and plot
 url <- 'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 download.file(url, "soildata.csv")
 soildata <- read.csv("soildata.csv", header=TRUE, sep = ",")
@@ -481,3 +481,89 @@ write.csv(attrib, "LC.class_rat.csv")
 
 # Question -----
 # 1. Use the data to make a landcover map and attach a screenshot to the project worksheet
+
+
+# Part 7 - Feature selection using the Boruta R package ----
+
+library(Boruta)
+
+yvar  <- "depth_cm"
+xvars <-  c("rainfall", "geology", "aachn", "dem10m", "downslpgra", "eastness", "greenrefl", "landsatb1", "landsatb2", "landsatb3", "landsatb7", "maxc100", "maxent", "minc100", "mirref", "ndvi", "northeastn", "northness", "northwestn", "planc100", "proc100", "protection", "relpos11", "slp50", "solar", "tanc75")
+
+# run the Boruta algorithm
+fs_bor <- Boruta(y = soildata$depth_cm, x = soildata[, xvars], maxRuns = 35, doTrace = 1)
+
+# plot variable importance and selected features
+plot(fs_bor)
+
+# plot evolution of the feature selection
+plotImpHistory(fs_bor)
+
+# extract the selected feature variables
+vars <- getSelectedAttributes(fs_bor)
+
+# view summary of the results
+View(attStats(fs_bor))
+
+
+
+# Part 8 - Cross-validation of Random Forests ----
+
+tc <- trainControl(
+  method = "cv", number = 10, returnResamp = "all",
+  savePredictions = TRUE,
+  search = "random",
+  verboseIter = FALSE
+)
+
+tg = expand.grid(
+  min.node.size = 5,
+  splitrule     = "variance",
+  mtry          = 5
+  )
+
+# fit model, automatically tune, and cross-validate
+dep_tr <- train(y = soildata$depth_cm, x = soildata[, xvars],
+                method = "ranger",
+                importance = "permutation",
+                trControl = tc
+)
+
+
+# fit model, automatically tune, and cross-validate on Boruta variables
+dep_tr_bor <- train(y = soildata$depth_cm, x = soildata[, vars],
+                    method = "ranger",
+                    importance = "permutation",
+                    trControl = tc
+)
+
+
+# view summary of results
+dep_tr
+dep_tr_bor
+
+
+# extract final models
+dep_tr$finalModel
+dep_tr_bor$finalModel
+
+
+
+# Part 9 - Plot the Partial Effects ----
+
+library(pdp)
+
+test <- ranger(depth_cm ~., 
+               data = soildata[c(yvar, vars)], 
+               min.node.size = 8, mtry = 1, splitrule = "maxstat"
+               )
+
+# plot effect of relpos11
+partial(test, pred.var = "relpos11", plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
+
+# plot effect of slp50
+partial(test, pred.var = "slp50",    plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
+
+# plot the combined effect of relpos11 and slp50
+partial(test, pred.var = c("relpos11", "slp50"), plot = TRUE, rug = TRUE)
+
