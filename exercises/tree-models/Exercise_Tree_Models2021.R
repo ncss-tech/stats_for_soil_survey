@@ -216,8 +216,8 @@ soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
 
 
 # wrangle the training data
-soildata$spodint <- as.factor(soildata$spodint)
-soildata$spodint <- ordered(soildata$spodint)
+soildata$spodint  <- as.factor(soildata$spodint)
+soildata$spodint  <- ordered(soildata$spodint)
 soildata$tipmound <- as.factor(soildata$tipmound)
 soildata$tipmound <- ordered(soildata$tipmound)
 
@@ -483,6 +483,7 @@ write.csv(attrib, "LC.class_rat.csv")
 # 1. Use the data to make a landcover map and attach a screenshot to the project worksheet
 
 
+
 # Part 7 - Feature selection using the Boruta R package ----
 
 library(Boruta)
@@ -508,6 +509,8 @@ View(attStats(fs_bor))
 
 
 # Part 8 - Cross-validation of Random Forests ----
+
+library(caret)
 
 tc <- trainControl(
   method = "cv", number = 10, returnResamp = "all",
@@ -559,11 +562,33 @@ test <- ranger(depth_cm ~.,
                )
 
 # plot effect of relpos11
-partial(test, pred.var = "relpos11", plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
+partial(test, pred.var = "relpos11",    plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
+
+partial(test, pred.var = "relpos11", plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20, plot.engine = "ggplot2") +
+geom_point(data = soildata, aes(x = relpos11, y = depth_cm))
 
 # plot effect of slp50
 partial(test, pred.var = "slp50",    plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
 
 # plot the combined effect of relpos11 and slp50
 partial(test, pred.var = c("relpos11", "slp50"), plot = TRUE, rug = TRUE)
+
+
+# Part 10 - Plot model fit and residuals ----
+
+# 1 to 1 line vs regression line
+soildata$pred <- predict(test, data = soildata)$predictions
+
+ggplot(soildata, aes(x = pred, y = depth_cm)) +
+  geom_point() +
+  geom_abline() +
+  geom_smooth(method = "lm")
+
+
+# residuals
+soildata$res <- soildata$depth_cm - soildata$pred
+
+ggplot(soildata, aes(x = pred, y = res)) +
+  geom_point() +
+  geom_hline(aes(yintercept = 0))
 
