@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Chapter 2 Uncertainty | Statistics for Soil Survey - Part 2</title>
   <meta name="description" content="Web-based course content for Statistics for Soil Survey - Part 2 made with bookdown::gitbook." />
-  <meta name="generator" content="bookdown 0.28 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.32 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Chapter 2 Uncertainty | Statistics for Soil Survey - Part 2" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2022-08-23" />
+<meta name="date" content="2023-02-22" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -189,10 +189,11 @@ div.csl-indent {
 <li class="chapter" data-level="2.4.3" data-path="uncertainty.html"><a href="uncertainty.html#categorical"><i class="fa fa-check"></i><b>2.4.3</b> Categorical</a></li>
 <li class="chapter" data-level="2.4.4" data-path="uncertainty.html"><a href="uncertainty.html#exercise-3"><i class="fa fa-check"></i><b>2.4.4</b> Exercise 3</a></li>
 </ul></li>
-<li class="chapter" data-level="2.5" data-path="uncertainty.html"><a href="uncertainty.html#validation"><i class="fa fa-check"></i><b>2.5</b> Validation</a>
+<li class="chapter" data-level="2.5" data-path="uncertainty.html"><a href="uncertainty.html#stratified-randomareal-adjustment"><i class="fa fa-check"></i><b>2.5</b> Stratified-random/areal-adjustment</a></li>
+<li class="chapter" data-level="2.6" data-path="uncertainty.html"><a href="uncertainty.html#validation"><i class="fa fa-check"></i><b>2.6</b> Validation</a>
 <ul>
-<li class="chapter" data-level="2.5.1" data-path="uncertainty.html"><a href="uncertainty.html#internal-validation"><i class="fa fa-check"></i><b>2.5.1</b> Internal Validation</a></li>
-<li class="chapter" data-level="2.5.2" data-path="uncertainty.html"><a href="uncertainty.html#external-validation"><i class="fa fa-check"></i><b>2.5.2</b> External Validation</a></li>
+<li class="chapter" data-level="2.6.1" data-path="uncertainty.html"><a href="uncertainty.html#internal-validation"><i class="fa fa-check"></i><b>2.6.1</b> Internal Validation</a></li>
+<li class="chapter" data-level="2.6.2" data-path="uncertainty.html"><a href="uncertainty.html#external-validation"><i class="fa fa-check"></i><b>2.6.2</b> External Validation</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="3" data-path="numerical-tax.html"><a href="numerical-tax.html"><i class="fa fa-check"></i><b>3</b> Numerical Taxonomy and Ordination</a>
@@ -407,35 +408,40 @@ div.csl-indent {
 <span id="cb1-2"><a href="uncertainty.html#cb1-2" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv&quot;</span></span>
 <span id="cb1-3"><a href="uncertainty.html#cb1-3" aria-hidden="true" tabindex="-1"></a>sas <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(url)</span>
 <span id="cb1-4"><a href="uncertainty.html#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="uncertainty.html#cb1-5" aria-hidden="true" tabindex="-1"></a>n   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(sas)</span>
+<span id="cb1-5"><a href="uncertainty.html#cb1-5" aria-hidden="true" tabindex="-1"></a>N   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(sas)</span>
 <span id="cb1-6"><a href="uncertainty.html#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-7"><a href="uncertainty.html#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="uncertainty.html#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># take a random sample of 100</span></span>
-<span id="cb1-9"><a href="uncertainty.html#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb1-10"><a href="uncertainty.html#cb1-10" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>n, <span class="dv">100</span>)</span>
-<span id="cb1-11"><a href="uncertainty.html#cb1-11" aria-hidden="true" tabindex="-1"></a>sas_n100 <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">n =</span> <span class="st">&quot;100&quot;</span>, sas[idx, ])</span>
-<span id="cb1-12"><a href="uncertainty.html#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="uncertainty.html#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="uncertainty.html#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># take a random sample of 1000</span></span>
-<span id="cb1-15"><a href="uncertainty.html#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb1-16"><a href="uncertainty.html#cb1-16" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>n, <span class="dv">1000</span>)</span>
-<span id="cb1-17"><a href="uncertainty.html#cb1-17" aria-hidden="true" tabindex="-1"></a>sas_n1000 <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">n =</span> <span class="st">&quot;1000&quot;</span>, sas[idx, ])</span>
-<span id="cb1-18"><a href="uncertainty.html#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="uncertainty.html#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># create 50 random pH samples of 10, 30, 60, and 100</span></span>
+<span id="cb1-9"><a href="uncertainty.html#cb1-9" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">100</span>)</span>
+<span id="cb1-10"><a href="uncertainty.html#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="uncertainty.html#cb1-11" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, n) {</span>
+<span id="cb1-12"><a href="uncertainty.html#cb1-12" aria-hidden="true" tabindex="-1"></a>  idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>N, n)</span>
+<span id="cb1-13"><a href="uncertainty.html#cb1-13" aria-hidden="true" tabindex="-1"></a>  tmp <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">idx =</span> <span class="fu">factor</span>(x, <span class="at">levels =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>), <span class="at">n =</span> <span class="fu">factor</span>(n, <span class="at">levels =</span> y), sas[idx, ])</span>
+<span id="cb1-14"><a href="uncertainty.html#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(tmp)</span>
+<span id="cb1-15"><a href="uncertainty.html#cb1-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-16"><a href="uncertainty.html#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="uncertainty.html#cb1-17" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">mapply</span>(<span class="at">FUN =</span> f, <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>, <span class="at">times =</span> <span class="dv">4</span>), <span class="fu">rep</span>(y, <span class="at">each =</span> <span class="dv">50</span>), <span class="at">SIMPLIFY =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-18"><a href="uncertainty.html#cb1-18" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">do.call</span>(<span class="st">&quot;rbind&quot;</span>, test)</span>
 <span id="cb1-19"><a href="uncertainty.html#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="uncertainty.html#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># combine d1 and d2</span></span>
-<span id="cb1-21"><a href="uncertainty.html#cb1-21" aria-hidden="true" tabindex="-1"></a>sas_sub <span class="ot">&lt;-</span> <span class="fu">rbind</span>(sas_n100, sas_n1000)</span>
-<span id="cb1-22"><a href="uncertainty.html#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="uncertainty.html#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n, <span class="at">data =</span> sas_sub, quantile)</span></code></pre></div>
-<pre><code>##      n pH_0.30_obs.0% pH_0.30_obs.25% pH_0.30_obs.50% pH_0.30_obs.75%
-## 1  100       4.021620        5.214799        5.742846        6.500468
-## 2 1000       2.370782        5.252397        5.957984        6.836619
+<span id="cb1-20"><a href="uncertainty.html#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="uncertainty.html#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># examine summary statistics</span></span>
+<span id="cb1-22"><a href="uncertainty.html#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n <span class="sc">+</span> idx, <span class="at">data =</span> test, quantile, <span class="at">subset =</span> idx <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div>
+<pre><code>##     n idx pH_0.30_obs.0% pH_0.30_obs.25% pH_0.30_obs.50% pH_0.30_obs.75%
+## 1  10   1       4.638386        6.000250        6.290010        6.690767
+## 2  30   1       3.959768        4.836668        5.762341        6.318036
+## 3  60   1       4.306998        4.992175        5.844734        6.971334
+## 4 100   1       3.431035        5.134910        5.966998        6.827820
 ##   pH_0.30_obs.100%
-## 1         8.854437
-## 2         9.865657</code></pre>
+## 1         7.617060
+## 2         9.216473
+## 3         8.070870
+## 4         9.862923</code></pre>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="uncertainty.html#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># examine box plots</span></span>
 <span id="cb3-2"><a href="uncertainty.html#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
 <span id="cb3-3"><a href="uncertainty.html#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="uncertainty.html#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sas_sub, <span class="fu">aes</span>(<span class="at">x =</span> pH_0<span class="fl">.30</span>_obs, <span class="at">y =</span> n)) <span class="sc">+</span> <span class="fu">geom_boxplot</span>()</span></code></pre></div>
+<span id="cb3-4"><a href="uncertainty.html#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(test, <span class="fu">aes</span>(<span class="at">y =</span> pH_0<span class="fl">.30</span>_obs, <span class="at">x =</span> idx)) <span class="sc">+</span></span>
+<span id="cb3-5"><a href="uncertainty.html#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb3-6"><a href="uncertainty.html#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> n, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code></pre></div>
 <p><img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
 <p>Dispersion or variance is a characteristic of the population being evaluated. While more or better sample collection might give you better precision of those estimates, we would not expect them to change the dispersion calculated. Conversely, measures of certainty of the central tendency (how sure are you of the typical value reported) depends both on the characteristic dispersion/variance and the number of samples collected.</p>
 </div>
@@ -455,17 +461,21 @@ div.csl-indent {
 <span id="cb4-11"><a href="uncertainty.html#cb4-11" aria-hidden="true" tabindex="-1"></a>SS <span class="sc">/</span> (<span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(sas<span class="sc">$</span>pH_0<span class="fl">.30</span>_obs)) <span class="sc">-</span> <span class="dv">1</span>)</span></code></pre></div>
 <pre><code>## [1] 1.143514</code></pre>
 <p>Note the differences in range and variance calculated for pH in both examples (100 samples vs. 1000)</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="uncertainty.html#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n, <span class="at">data =</span> sas_sub, var)</span></code></pre></div>
-<pre><code>##      n pH_0.30_obs
-## 1  100    1.047552
-## 2 1000    1.138315</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="uncertainty.html#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n <span class="sc">+</span> idx, <span class="at">data =</span> test, var, <span class="at">subset =</span> idx <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div>
+<pre><code>##     n idx pH_0.30_obs
+## 1  10   1   0.9236185
+## 2  30   1   1.6567764
+## 3  60   1   1.3418158
+## 4 100   1   1.3370314</code></pre>
 <p>Now Compare Standard Error (standard deviation / square root of n)</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="uncertainty.html#cb8-1" aria-hidden="true" tabindex="-1"></a>SE <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">sd</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(x)))</span>
 <span id="cb8-2"><a href="uncertainty.html#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="uncertainty.html#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n, <span class="at">data =</span> sas_sub, SE)</span></code></pre></div>
-<pre><code>##      n pH_0.30_obs
-## 1  100  0.11101414
-## 2 1000  0.03827549</code></pre>
+<span id="cb8-3"><a href="uncertainty.html#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n <span class="sc">+</span> idx, <span class="at">data =</span> test, SE, <span class="at">subset =</span> idx <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div>
+<pre><code>##     n idx pH_0.30_obs
+## 1  10   1   0.3397827
+## 2  30   1   0.2683911
+## 3  60   1   0.1746305
+## 4 100   1   0.1412646</code></pre>
 <p>Why are the standard errors different?</p>
 </div>
 </div>
@@ -513,7 +523,7 @@ div.csl-indent {
 <span id="cb10-24"><a href="uncertainty.html#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-25"><a href="uncertainty.html#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(boot_stats<span class="sc">$</span>vars)</span></code></pre></div>
 <pre><code>##        0%       25%       50%       75%      100% 
-## 0.9002976 1.0326038 1.1305090 1.2524690 1.4563505</code></pre>
+## 0.9283366 1.0974087 1.1601052 1.2596333 1.5745767</code></pre>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="uncertainty.html#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stripchart</span>(boot_stats<span class="sc">$</span>vars)</span></code></pre></div>
 <p><img src="002-uncertainty_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="uncertainty.html#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Traditional Approach</span></span>
@@ -527,7 +537,7 @@ div.csl-indent {
 <span id="cb13-9"><a href="uncertainty.html#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare Bootstrap to Confidence Interval</span></span>
 <span id="cb13-10"><a href="uncertainty.html#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(boot_stats<span class="sc">$</span>means, <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>))</span></code></pre></div>
 <pre><code>##     2.5%    97.5% 
-## 5.888672 6.197441</code></pre>
+## 5.831802 6.201848</code></pre>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="uncertainty.html#cb15-1" aria-hidden="true" tabindex="-1"></a>ci</span></code></pre></div>
 <pre><code>##        l        u 
 ## 5.804082 6.223267</code></pre>
@@ -616,7 +626,7 @@ div.csl-indent {
 <li>Shannon entropy (<code>aqp::shannonEntropy()</code>)</li>
 <li>Confusion index (<code>aqp::confusionIndex()</code>)</li>
 </ul>
-<p><strong>Class-based metrics</strong> are derivatives of the confusion matrix <a href="%60caret::confusionMatrix()%60"><span class="citation">Kuhn and Johnson (<a href="#ref-kuhn2013" role="doc-biblioref">2013</a>)</span>; <span class="citation">Zumel and Mount (<a href="#ref-zumel2014" role="doc-biblioref">2014</a>)</span>; <span class="citation">Congalton and Green (<a href="#ref-congalton2019" role="doc-biblioref">2019</a>)</span>; <span class="citation">James et al. (<a href="#ref-james2021" role="doc-biblioref">2021</a>)</span></a></p>
+<p><strong>Class-based metrics</strong> are derivatives of the confusion matrix <a href="%60caret::confusionMatrix()%60"><span class="citation">Kuhn and Johnson (<a href="#ref-kuhn2013" role="doc-biblioref">2013</a>)</span>; <span class="citation">Zumel and Mount (<a href="#ref-zumel2014" role="doc-biblioref">2014</a>)</span>; <span class="citation">Congalton and Green (<a href="#ref-congalton2019" role="doc-biblioref">2019a</a>)</span>; <span class="citation">James et al. (<a href="#ref-james2021" role="doc-biblioref">2021</a>)</span></a></p>
 <table>
 <colgroup>
 <col width="25%" />
@@ -812,8 +822,48 @@ div.csl-indent {
 </ol>
 </div>
 </div>
-<div id="validation" class="section level2 hasAnchor" number="2.5">
-<h2><span class="header-section-number">2.5</span> Validation<a href="uncertainty.html#validation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="stratified-randomareal-adjustment" class="section level2 hasAnchor" number="2.5">
+<h2><span class="header-section-number">2.5</span> Stratified-random/areal-adjustment<a href="uncertainty.html#stratified-randomareal-adjustment" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors <span class="citation">(<a href="#ref-brus_sampling_2011" role="doc-biblioref">Brus, Kempen, and Heuvelink 2011</a>; <a href="#ref-congalton_basic_2019" role="doc-biblioref">Congalton and Green 2019b</a>; <a href="#ref-stehman_key_2019" role="doc-biblioref">Stehman and Foody 2019</a>)</span>. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it’s true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the <a href="https://github.com/e-sensing/sits"><code>sits</code></a> and <a href="https://github.com/mayer79/MetricsWeighted"><code>MetricsWeighted</code></a> R package.</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="uncertainty.html#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># weights</span></span>
+<span id="cb41-2"><a href="uncertainty.html#cb41-2" aria-hidden="true" tabindex="-1"></a>wt <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.95</span>, <span class="fl">0.05</span>)</span>
+<span id="cb41-3"><a href="uncertainty.html#cb41-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-4"><a href="uncertainty.html#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="co"># confusion matrix</span></span>
+<span id="cb41-5"><a href="uncertainty.html#cb41-5" aria-hidden="true" tabindex="-1"></a>cm <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">pred =</span> bs<span class="sc">$</span>BS2_pred <span class="sc">&gt;</span> <span class="fl">0.5</span>, <span class="at">obs =</span> bs<span class="sc">$</span>BS2_obs)</span>
+<span id="cb41-6"><a href="uncertainty.html#cb41-6" aria-hidden="true" tabindex="-1"></a>cm</span></code></pre></div>
+<pre><code>##        obs
+## pred    FALSE  TRUE
+##   FALSE 28788   979
+##   TRUE    411  2696</code></pre>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="uncertainty.html#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># apply weights</span></span>
+<span id="cb43-2"><a href="uncertainty.html#cb43-2" aria-hidden="true" tabindex="-1"></a>cm_wt <span class="ot">&lt;-</span> wt <span class="sc">*</span> cm<span class="sc">/</span><span class="fu">rowSums</span>(cm)</span>
+<span id="cb43-3"><a href="uncertainty.html#cb43-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-4"><a href="uncertainty.html#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="co"># optional transformation to original totals</span></span>
+<span id="cb43-5"><a href="uncertainty.html#cb43-5" aria-hidden="true" tabindex="-1"></a>cm_wt2 <span class="ot">&lt;-</span> cm_wt<span class="sc">/</span><span class="fu">sum</span>(cm_wt) <span class="sc">*</span> <span class="fu">sum</span>(cm)</span>
+<span id="cb43-6"><a href="uncertainty.html#cb43-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-7"><a href="uncertainty.html#cb43-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-8"><a href="uncertainty.html#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="co"># compare weighted and unweighted confusion matrices</span></span>
+<span id="cb43-9"><a href="uncertainty.html#cb43-9" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(cm,    <span class="at">positive =</span> <span class="st">&quot;TRUE&quot;</span>)<span class="sc">$</span>byClass</span></code></pre></div>
+<pre><code>##          Sensitivity          Specificity       Pos Pred Value 
+##           0.73360544           0.98592418           0.86771806 
+##       Neg Pred Value            Precision               Recall 
+##           0.96711123           0.86771806           0.73360544 
+##                   F1           Prevalence       Detection Rate 
+##           0.79504571           0.11179047           0.08201010 
+## Detection Prevalence    Balanced Accuracy 
+##           0.09451238           0.85976481</code></pre>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="uncertainty.html#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(cm_wt2, <span class="at">positive =</span> <span class="st">&quot;TRUE&quot;</span>)<span class="sc">$</span>byClass</span></code></pre></div>
+<pre><code>##          Sensitivity          Specificity       Pos Pred Value 
+##           0.58134486           0.99285248           0.86771806 
+##       Neg Pred Value            Precision               Recall 
+##           0.96711123           0.86771806           0.58134486 
+##                   F1           Prevalence       Detection Rate 
+##           0.69623400           0.07463023           0.04338590 
+## Detection Prevalence    Balanced Accuracy 
+##           0.05000000           0.78709867</code></pre>
+</div>
+<div id="validation" class="section level2 hasAnchor" number="2.6">
+<h2><span class="header-section-number">2.6</span> Validation<a href="uncertainty.html#validation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>Validation refers to the process and the result of a process where the validity of a model is tested. That is, how well does the model represent reality? There are varying degrees of formality and thoroughness that can be used in validation. While multiple stages of the modeling process can be validated, usually it’s the output of the model that is investigated and reported. You can group initial validation into three broad groups: Expert evaluation, Theoretical Analysis and Prediction Accuracy.</p>
 <p><strong>Expert Evaluation:</strong> In this case, the model output is inspected by an expert user. The first evaluator will be you (the developer), but ideally an outside expert will be utilized. This is often a step in an iterative process. Evaluate the model output, does it make sense, do you see things that need to be improved? Then make changes to the model to improve the output.</p>
 <p><strong>Theoretical Analysis:</strong> compare the results of the model to what is theoretically possible. In systems modeling, this might include diagnostics statistics including residual analysis, cross-correlation of variables and outputs, sensitivity analysis and model analysis such as Akaike Information Criterion (AIC). This can also include simple comparison of output to known possible values. This is especially important for linear regression where the slope of the model is assumed to be steady no matter the values of the dependent variables.</p>
@@ -833,10 +883,10 @@ div.csl-indent {
 <!--     - Heteroscedasticity -->
 <!--     - Normality -->
 <!--     - Spatial distribution (auto-correlation) -->
-<div id="internal-validation" class="section level3 hasAnchor" number="2.5.1">
-<h3><span class="header-section-number">2.5.1</span> Internal Validation<a href="uncertainty.html#internal-validation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div id="split-sample---a-single-partition-of-the-data-into-a-learning-and-a-calibration-set." class="section level4 hasAnchor" number="2.5.1.1">
-<h4><span class="header-section-number">2.5.1.1</span> Split-sample - A single partition of the data into a learning and a calibration set.<a href="uncertainty.html#split-sample---a-single-partition-of-the-data-into-a-learning-and-a-calibration-set." class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="internal-validation" class="section level3 hasAnchor" number="2.6.1">
+<h3><span class="header-section-number">2.6.1</span> Internal Validation<a href="uncertainty.html#internal-validation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="split-sample---a-single-partition-of-the-data-into-a-learning-and-a-calibration-set." class="section level4 hasAnchor" number="2.6.1.1">
+<h4><span class="header-section-number">2.6.1.1</span> Split-sample - A single partition of the data into a learning and a calibration set.<a href="uncertainty.html#split-sample---a-single-partition-of-the-data-into-a-learning-and-a-calibration-set." class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <ul>
 <li>Achieve an independent validation by partitioning the samples into calibration or training and validation data-sets (70% of the samples available are recommended for calibration)
 <ul>
@@ -847,8 +897,8 @@ div.csl-indent {
 <li>This method is relatively simple (conceptually and computationally). Results depend on having an adequate sample size to both develop and test the model.</li>
 </ul>
 </div>
-<div id="cross-validation---alternate-development-and-validation" class="section level4 hasAnchor" number="2.5.1.2">
-<h4><span class="header-section-number">2.5.1.2</span> Cross-validation - Alternate development and validation<a href="uncertainty.html#cross-validation---alternate-development-and-validation" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="cross-validation---alternate-development-and-validation" class="section level4 hasAnchor" number="2.6.1.2">
+<h4><span class="header-section-number">2.6.1.2</span> Cross-validation - Alternate development and validation<a href="uncertainty.html#cross-validation---alternate-development-and-validation" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p><strong>Leave-One-Out Cross-Validation (LOOCV)</strong></p>
 <ul>
 <li>One observation is used for testing and all others are used to develop model</li>
@@ -864,37 +914,37 @@ div.csl-indent {
 <li>Less computationally intensive than LOOCV, but it is more robust and can be done with smaller sample sizes than a simple split.</li>
 <li>Several R packages have tools to cross-validate predictions, including: <code>DAAG</code> and <code>boot</code> for <code>lm()</code> and <code>glm()</code> objects, <code>caret</code>, <code>rms</code>,</li>
 </ul>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="uncertainty.html#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Linear model example</span></span>
-<span id="cb41-2"><a href="uncertainty.html#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create folds</span></span>
-<span id="cb41-3"><a href="uncertainty.html#cb41-3" aria-hidden="true" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="fu">createFolds</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(sas), <span class="at">k =</span> <span class="dv">10</span>)</span>
-<span id="cb41-4"><a href="uncertainty.html#cb41-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-5"><a href="uncertainty.html#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Cross validate</span></span>
-<span id="cb41-6"><a href="uncertainty.html#cb41-6" aria-hidden="true" tabindex="-1"></a>lm_cv <span class="ot">&lt;-</span> <span class="fu">lapply</span>(folds, <span class="cf">function</span>(x) {</span>
-<span id="cb41-7"><a href="uncertainty.html#cb41-7" aria-hidden="true" tabindex="-1"></a>  train <span class="ot">=</span> sas[<span class="sc">-</span>x,]</span>
-<span id="cb41-8"><a href="uncertainty.html#cb41-8" aria-hidden="true" tabindex="-1"></a>  test  <span class="ot">=</span> sas[x,]</span>
-<span id="cb41-9"><a href="uncertainty.html#cb41-9" aria-hidden="true" tabindex="-1"></a>  obs   <span class="ot">=</span> test<span class="sc">$</span>pH_0<span class="fl">.30</span>_obs</span>
-<span id="cb41-10"><a href="uncertainty.html#cb41-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># predict = predict(model, test)</span></span>
-<span id="cb41-11"><a href="uncertainty.html#cb41-11" aria-hidden="true" tabindex="-1"></a>  pred  <span class="ot">=</span> test<span class="sc">$</span>pH_0<span class="fl">.30</span>_pred</span>
-<span id="cb41-12"><a href="uncertainty.html#cb41-12" aria-hidden="true" tabindex="-1"></a>  RMSE  <span class="ot">=</span> <span class="fu">RMSE</span>(pred, obs, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb41-13"><a href="uncertainty.html#cb41-13" aria-hidden="true" tabindex="-1"></a>  R2    <span class="ot">=</span> <span class="fu">R2</span>(pred, obs, <span class="at">formula =</span> <span class="st">&quot;traditional&quot;</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb41-14"><a href="uncertainty.html#cb41-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">c</span>(<span class="at">RMSE =</span> RMSE, <span class="at">R2 =</span> R2))</span>
-<span id="cb41-15"><a href="uncertainty.html#cb41-15" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb41-16"><a href="uncertainty.html#cb41-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-17"><a href="uncertainty.html#cb41-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to a data.frame</span></span>
-<span id="cb41-18"><a href="uncertainty.html#cb41-18" aria-hidden="true" tabindex="-1"></a>lm_cv <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, lm_cv)</span>
-<span id="cb41-19"><a href="uncertainty.html#cb41-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-20"><a href="uncertainty.html#cb41-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize results</span></span>
-<span id="cb41-21"><a href="uncertainty.html#cb41-21" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lm_cv)</span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="uncertainty.html#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Linear model example</span></span>
+<span id="cb47-2"><a href="uncertainty.html#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create folds</span></span>
+<span id="cb47-3"><a href="uncertainty.html#cb47-3" aria-hidden="true" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="fu">createFolds</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(sas), <span class="at">k =</span> <span class="dv">10</span>)</span>
+<span id="cb47-4"><a href="uncertainty.html#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-5"><a href="uncertainty.html#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Cross validate</span></span>
+<span id="cb47-6"><a href="uncertainty.html#cb47-6" aria-hidden="true" tabindex="-1"></a>lm_cv <span class="ot">&lt;-</span> <span class="fu">lapply</span>(folds, <span class="cf">function</span>(x) {</span>
+<span id="cb47-7"><a href="uncertainty.html#cb47-7" aria-hidden="true" tabindex="-1"></a>  train <span class="ot">=</span> sas[<span class="sc">-</span>x,]</span>
+<span id="cb47-8"><a href="uncertainty.html#cb47-8" aria-hidden="true" tabindex="-1"></a>  test  <span class="ot">=</span> sas[x,]</span>
+<span id="cb47-9"><a href="uncertainty.html#cb47-9" aria-hidden="true" tabindex="-1"></a>  obs   <span class="ot">=</span> test<span class="sc">$</span>pH_0<span class="fl">.30</span>_obs</span>
+<span id="cb47-10"><a href="uncertainty.html#cb47-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># predict = predict(model, test)</span></span>
+<span id="cb47-11"><a href="uncertainty.html#cb47-11" aria-hidden="true" tabindex="-1"></a>  pred  <span class="ot">=</span> test<span class="sc">$</span>pH_0<span class="fl">.30</span>_pred</span>
+<span id="cb47-12"><a href="uncertainty.html#cb47-12" aria-hidden="true" tabindex="-1"></a>  RMSE  <span class="ot">=</span> <span class="fu">RMSE</span>(pred, obs, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb47-13"><a href="uncertainty.html#cb47-13" aria-hidden="true" tabindex="-1"></a>  R2    <span class="ot">=</span> <span class="fu">R2</span>(pred, obs, <span class="at">formula =</span> <span class="st">&quot;traditional&quot;</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb47-14"><a href="uncertainty.html#cb47-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">c</span>(<span class="at">RMSE =</span> RMSE, <span class="at">R2 =</span> R2))</span>
+<span id="cb47-15"><a href="uncertainty.html#cb47-15" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb47-16"><a href="uncertainty.html#cb47-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-17"><a href="uncertainty.html#cb47-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to a data.frame</span></span>
+<span id="cb47-18"><a href="uncertainty.html#cb47-18" aria-hidden="true" tabindex="-1"></a>lm_cv <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, lm_cv)</span>
+<span id="cb47-19"><a href="uncertainty.html#cb47-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-20"><a href="uncertainty.html#cb47-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize results</span></span>
+<span id="cb47-21"><a href="uncertainty.html#cb47-21" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lm_cv)</span></code></pre></div>
 <pre><code>##       RMSE              R2        
-##  Min.   :0.4508   Min.   :0.8394  
-##  1st Qu.:0.4613   1st Qu.:0.8482  
-##  Median :0.4690   Median :0.8542  
+##  Min.   :0.4542   Min.   :0.8455  
+##  1st Qu.:0.4673   1st Qu.:0.8493  
+##  Median :0.4686   Median :0.8535  
 ##  Mean   :0.4689   Mean   :0.8526  
-##  3rd Qu.:0.4740   3rd Qu.:0.8567  
-##  Max.   :0.4934   Max.   :0.8651</code></pre>
+##  3rd Qu.:0.4736   3rd Qu.:0.8548  
+##  Max.   :0.4830   Max.   :0.8614</code></pre>
 </div>
-<div id="subsample-resampling-or-sample-simulation" class="section level4 hasAnchor" number="2.5.1.3">
-<h4><span class="header-section-number">2.5.1.3</span> Subsample (Resampling or sample simulation)<a href="uncertainty.html#subsample-resampling-or-sample-simulation" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="subsample-resampling-or-sample-simulation" class="section level4 hasAnchor" number="2.6.1.3">
+<h4><span class="header-section-number">2.6.1.3</span> Subsample (Resampling or sample simulation)<a href="uncertainty.html#subsample-resampling-or-sample-simulation" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>In this method, the ‘leave-out’ method can be random (Bootstrap) or observation selection can use a more sophisticated method to select observations to represent the population including Monte Carlo (Molarino, 2005) and .632+bootstrap of Efron &amp; Tibshirani (1997). The details of those aren’t important, except to know that they can give you a better idea of the robustness of your model.</p>
 <ul>
 <li>As with re-sampling for uncertainty estimation, observations are repeatedly sampled
@@ -909,8 +959,8 @@ div.csl-indent {
 <p><strong>NOTE:</strong> The BEST model should not be assumed to be the one that makes the ‘truest’ predictions. Beware of over-fitting. When a model is over-fit, it predicts due to very specific “quirks” in the calibration data set and not due to explanatory relationships that will apply to validation and independent data-sets. One strategy to avoid this situation is to build models with as few variables as possible. Parsimonious models (those that use the least amount of information possible to obtain the same result or convey the same meaning) often have higher predicative validity. The use of metrics such as Akaike’s Information Criterion (AIC) can be helpful for balancing error and parameter minimization.</p>
 </div>
 </div>
-<div id="external-validation" class="section level3 hasAnchor" number="2.5.2">
-<h3><span class="header-section-number">2.5.2</span> External Validation<a href="uncertainty.html#external-validation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="external-validation" class="section level3 hasAnchor" number="2.6.2">
+<h3><span class="header-section-number">2.6.2</span> External Validation<a href="uncertainty.html#external-validation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>In this case, an independent data-set is used as the test case.</p>
 <ul>
 <li>Independent observations predicted with model</li>
@@ -932,8 +982,14 @@ div.csl-indent {
 </div>
 <h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-brus_sampling_2011" class="csl-entry">
+Brus, D. J., B. Kempen, and G. B. M. Heuvelink. 2011. <span>“Sampling for Validation of Digital Soil Maps.”</span> <em>European Journal of Soil Science</em> 62 (3): 394–407. <a href="https://doi.org/10.1111/j.1365-2389.2011.01364.x">https://doi.org/10.1111/j.1365-2389.2011.01364.x</a>.
+</div>
 <div id="ref-congalton2019" class="csl-entry">
-Congalton, Russell G., and Kass Green. 2019. <em>Assessing the <span>Accuracy</span> of <span>Remotely</span> <span>Sensed</span> <span>Data</span>: <span>Principles</span> and <span>Practices</span>, <span>Third</span> <span>Edition</span></em>. 3rd ed. CRC Press. <a href="https://doi.org/10.1201/9780429052729">https://doi.org/10.1201/9780429052729</a>.
+Congalton, Russell G., and Kass Green. 2019a. <em>Assessing the <span>Accuracy</span> of <span>Remotely</span> <span>Sensed</span> <span>Data</span>: <span>Principles</span> and <span>Practices</span>, <span>Third</span> <span>Edition</span></em>. 3rd ed. CRC Press. <a href="https://doi.org/10.1201/9780429052729">https://doi.org/10.1201/9780429052729</a>.
+</div>
+<div id="ref-congalton_basic_2019" class="csl-entry">
+———. 2019b. <span>“Basic <span>Analysis</span> <span>Techniques</span>.”</span> In <em>Assessing the <span>Accuracy</span> of <span>Remotely</span> <span>Sensed</span> <span>Data</span></em>, 3rd ed., 127–44. CRC Press. <a href="https://doi.org/10.1201/9780429052729-6">https://doi.org/10.1201/9780429052729-6</a>.
 </div>
 <div id="ref-good2013" class="csl-entry">
 Good, Phillip I. 2013. <em>Introduction to <span>Statistics</span> <span>Through</span> <span>Resampling</span> <span>Methods</span> and <span>R</span></em>. Hoboken, NJ, USA: John Wiley &amp; Sons, Inc. <a href="https://doi.org/10.1002/9781118497593">https://doi.org/10.1002/9781118497593</a>.
@@ -943,6 +999,9 @@ James, Gareth, Daniela Witten, Trevor Hastie, and Robert Tibshirani. 2021. <em>A
 </div>
 <div id="ref-kuhn2013" class="csl-entry">
 Kuhn, Max, and Kjell Johnson. 2013. <em>Applied <span>Predictive</span> <span>Modeling</span></em>. New York, NY: Springer New York. <a href="https://doi.org/10.1007/978-1-4614-6849-3">https://doi.org/10.1007/978-1-4614-6849-3</a>.
+</div>
+<div id="ref-stehman_key_2019" class="csl-entry">
+Stehman, Stephen V., and Giles M. Foody. 2019. <span>“Key Issues in Rigorous Accuracy Assessment of Land Cover Products.”</span> <em>Remote Sensing of Environment</em> 231 (September): 111199. <a href="https://doi.org/10.1016/j.rse.2019.05.018">https://doi.org/10.1016/j.rse.2019.05.018</a>.
 </div>
 <div id="ref-zumel2014" class="csl-entry">
 Zumel, Nina, and John Mount. 2014. <em>Practical Data Science with <span>R</span></em>. 1st ed. Shelter Island, NY: Manning Publications Co. <a href="https://www.manning.com/books/practical-data-science-with-r">https://www.manning.com/books/practical-data-science-with-r</a>.

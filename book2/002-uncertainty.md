@@ -50,41 +50,46 @@ Errors are simply the difference between reality and our representation of reali
 url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
 sas <- read.csv(url)
 
-n   <- nrow(sas)
+N   <- nrow(sas)
 
 
-# take a random sample of 100
-set.seed(42)
-idx <- sample(1:n, 100)
-sas_n100 <- cbind(n = "100", sas[idx, ])
+# create 50 random pH samples of 10, 30, 60, and 100
+y <- c(10, 30, 60, 100)
+
+f <- function(x, n) {
+  idx <- sample(1:N, n)
+  tmp <- cbind(idx = factor(x, levels = 1:50), n = factor(n, levels = y), sas[idx, ])
+  return(tmp)
+}
+
+test <- mapply(FUN = f, rep(1:50, times = 4), rep(y, each = 50), SIMPLIFY = FALSE)
+test <- do.call("rbind", test)
 
 
-# take a random sample of 1000
-set.seed(42)
-idx <- sample(1:n, 1000)
-sas_n1000 <- cbind(n = "1000", sas[idx, ])
-
-
-# combine d1 and d2
-sas_sub <- rbind(sas_n100, sas_n1000)
-
-aggregate(pH_0.30_obs ~ n, data = sas_sub, quantile)
+# examine summary statistics
+aggregate(pH_0.30_obs ~ n + idx, data = test, quantile, subset = idx == 1)
 ```
 
 ```
-##      n pH_0.30_obs.0% pH_0.30_obs.25% pH_0.30_obs.50% pH_0.30_obs.75%
-## 1  100       4.021620        5.214799        5.742846        6.500468
-## 2 1000       2.370782        5.252397        5.957984        6.836619
+##     n idx pH_0.30_obs.0% pH_0.30_obs.25% pH_0.30_obs.50% pH_0.30_obs.75%
+## 1  10   1       4.638386        6.000250        6.290010        6.690767
+## 2  30   1       3.959768        4.836668        5.762341        6.318036
+## 3  60   1       4.306998        4.992175        5.844734        6.971334
+## 4 100   1       3.431035        5.134910        5.966998        6.827820
 ##   pH_0.30_obs.100%
-## 1         8.854437
-## 2         9.865657
+## 1         7.617060
+## 2         9.216473
+## 3         8.070870
+## 4         9.862923
 ```
 
 ```r
 # examine box plots
 library(ggplot2)
 
-ggplot(sas_sub, aes(x = pH_0.30_obs, y = n)) + geom_boxplot()
+ggplot(test, aes(y = pH_0.30_obs, x = idx)) +
+  geom_boxplot() +
+  facet_wrap(~ n, ncol = 1)
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="672" />
@@ -119,13 +124,15 @@ Note the differences in range and variance calculated for pH in both examples (1
 
 
 ```r
-aggregate(pH_0.30_obs ~ n, data = sas_sub, var)
+aggregate(pH_0.30_obs ~ n + idx, data = test, var, subset = idx == 1)
 ```
 
 ```
-##      n pH_0.30_obs
-## 1  100    1.047552
-## 2 1000    1.138315
+##     n idx pH_0.30_obs
+## 1  10   1   0.9236185
+## 2  30   1   1.6567764
+## 3  60   1   1.3418158
+## 4 100   1   1.3370314
 ```
 
 Now Compare Standard Error (standard deviation / square root of n)
@@ -134,13 +141,15 @@ Now Compare Standard Error (standard deviation / square root of n)
 ```r
 SE <- function(x) sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x)))
 
-aggregate(pH_0.30_obs ~ n, data = sas_sub, SE)
+aggregate(pH_0.30_obs ~ n + idx, data = test, SE, subset = idx == 1)
 ```
 
 ```
-##      n pH_0.30_obs
-## 1  100  0.11101414
-## 2 1000  0.03827549
+##     n idx pH_0.30_obs
+## 1  10   1   0.3397827
+## 2  30   1   0.2683911
+## 3  60   1   0.1746305
+## 4 100   1   0.1412646
 ```
 
 Why are the standard errors different?
@@ -204,7 +213,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.9002976 1.0326038 1.1305090 1.2524690 1.4563505
+## 0.9283366 1.0974087 1.1601052 1.2596333 1.5745767
 ```
 
 ```r
@@ -228,7 +237,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.888672 6.197441
+## 5.831802 6.201848
 ```
 
 ```r
@@ -562,6 +571,68 @@ sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 6. Forward you R script your instructor.
 
 
+
+## Stratified-random/areal-adjustment
+
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
+
+
+```r
+# weights
+wt <- c(0.95, 0.05)
+
+# confusion matrix
+cm <- table(pred = bs$BS2_pred > 0.5, obs = bs$BS2_obs)
+cm
+```
+
+```
+##        obs
+## pred    FALSE  TRUE
+##   FALSE 28788   979
+##   TRUE    411  2696
+```
+
+```r
+# apply weights
+cm_wt <- wt * cm/rowSums(cm)
+
+# optional transformation to original totals
+cm_wt2 <- cm_wt/sum(cm_wt) * sum(cm)
+
+
+# compare weighted and unweighted confusion matrices
+confusionMatrix(cm,    positive = "TRUE")$byClass
+```
+
+```
+##          Sensitivity          Specificity       Pos Pred Value 
+##           0.73360544           0.98592418           0.86771806 
+##       Neg Pred Value            Precision               Recall 
+##           0.96711123           0.86771806           0.73360544 
+##                   F1           Prevalence       Detection Rate 
+##           0.79504571           0.11179047           0.08201010 
+## Detection Prevalence    Balanced Accuracy 
+##           0.09451238           0.85976481
+```
+
+```r
+confusionMatrix(cm_wt2, positive = "TRUE")$byClass
+```
+
+```
+##          Sensitivity          Specificity       Pos Pred Value 
+##           0.58134486           0.99285248           0.86771806 
+##       Neg Pred Value            Precision               Recall 
+##           0.96711123           0.86771806           0.58134486 
+##                   F1           Prevalence       Detection Rate 
+##           0.69623400           0.07463023           0.04338590 
+## Detection Prevalence    Balanced Accuracy 
+##           0.05000000           0.78709867
+```
+
+
+
 ## Validation
   
 Validation refers to the process and the result of a process where the validity of a model is tested. That is, how well does the model represent reality? There are varying degrees of formality and thoroughness that can be used in validation. While multiple stages of the modeling process can be validated, usually it's the output of the model that is investigated and reported. You can group initial validation into three broad groups: Expert evaluation, Theoretical Analysis and Prediction Accuracy.  
@@ -646,12 +717,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4508   Min.   :0.8394  
-##  1st Qu.:0.4613   1st Qu.:0.8482  
-##  Median :0.4690   Median :0.8542  
+##  Min.   :0.4542   Min.   :0.8455  
+##  1st Qu.:0.4673   1st Qu.:0.8493  
+##  Median :0.4686   Median :0.8535  
 ##  Mean   :0.4689   Mean   :0.8526  
-##  3rd Qu.:0.4740   3rd Qu.:0.8567  
-##  Max.   :0.4934   Max.   :0.8651
+##  3rd Qu.:0.4736   3rd Qu.:0.8548  
+##  Max.   :0.4830   Max.   :0.8614
 ```
 
   
@@ -679,6 +750,7 @@ In this case, an independent data-set is used as the test case.
 - Some exploratory analysis can be helpful to diagnose and explain model performance.
   
 The use of validation will be demonstrated as part of each modeling section. The size of the data-set used, understanding of the variables involved and the nature of the statistical models and algorithms used all influence which validation techniques are most convenient and appropriate.
+
 
 
 <!-- ## Additional reading -->

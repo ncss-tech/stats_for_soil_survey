@@ -463,6 +463,34 @@ caret::confusionMatrix(cm)
 6. Forward you R script your instructor.
 
 
+
+## Stratified-random/areal-adjustment
+
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
+
+```{r}
+# weights
+wt <- c(0.95, 0.05)
+
+# confusion matrix
+cm <- table(pred = bs$BS2_pred > 0.5, obs = bs$BS2_obs)
+cm
+
+# apply weights
+cm_wt <- wt * cm/rowSums(cm)
+
+# optional transformation to original totals
+cm_wt2 <- cm_wt/sum(cm_wt) * sum(cm)
+
+
+# compare weighted and unweighted confusion matrices
+confusionMatrix(cm,    positive = "TRUE")$byClass
+confusionMatrix(cm_wt2, positive = "TRUE")$byClass
+
+```
+
+
+
 ## Validation
   
 Validation refers to the process and the result of a process where the validity of a model is tested. That is, how well does the model represent reality? There are varying degrees of formality and thoroughness that can be used in validation. While multiple stages of the modeling process can be validated, usually it's the output of the model that is investigated and reported. You can group initial validation into three broad groups: Expert evaluation, Theoretical Analysis and Prediction Accuracy.  
@@ -569,6 +597,7 @@ In this case, an independent data-set is used as the test case.
 - Some exploratory analysis can be helpful to diagnose and explain model performance.
   
 The use of validation will be demonstrated as part of each modeling section. The size of the data-set used, understanding of the variables involved and the nature of the statistical models and algorithms used all influence which validation techniques are most convenient and appropriate.
+
 
 
 <!-- ## Additional reading -->

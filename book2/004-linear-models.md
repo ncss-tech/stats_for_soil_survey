@@ -58,10 +58,10 @@ subset(prj, projectname == "MLRA 30 - Soil Climate Study - Soil Temperature")
 ```
 
 ```
-##   mlrassoarea nonmlrassaarea mlraarea projecttypename fiscalyear
-## 4       8-VIC           <NA>       30            MLRA       2015
-##   fiscalyear_goaled projectiid                        uprojectid
-## 4              2015      95689 0000-VIC-Soil Climate Studies-001
+##   mlrassoarea nonmlrassaarea mlraarea projecttypename projectsubtypename
+## 4       8-VIC           <NA>       30            MLRA               <NA>
+##   fiscalyear fiscalyear_goaled projectiid                        uprojectid
+## 4       2015              2015      95689 0000-VIC-Soil Climate Studies-001
 ##                                       projectname projectapprovedflag
 ## 4 MLRA 30 - Soil Climate Study - Soil Temperature                TRUE
 ##   projectconcerntypename
@@ -74,8 +74,10 @@ subset(prj, projectname == "MLRA 30 - Soil Climate Study - Soil Temperature")
 ## 4    <NA>          <NA>             <NA>            <NA>            <NA>
 ##        pl_username qa_username muacres acre_landcat acre_goal acre_progress
 ## 4 Ballmer, Matthew        <NA>      NA           NA         0             0
-##   pct_progress
-## 4           NA
+##   pct_progress muacres_water acre_water acre_prog_water acre_federal
+## 4           NA            NA         NA              NA           NA
+##   acre_prog_federal acre_private acre_prog_private acre_native acre_prog_native
+## 4                NA           NA                NA          NA               NA
 ```
 
 In addition to the 11-IND MAST modeling efforts there has also been two published studies on the Mojave. The first was by @schmidlin1983 who examined both the Great Basin and Mojave Deserts in Nevada. The second was by @bai2010 who examined the Mojave Desert in California. Both studies developed regression models using elevation, but @schmidlin1983 also incorporated latitude. The results from @bai2010 displayed considerably larger areas of hyperthermic soils than @schmidlin1983. This made be due to the unconventional method used by @bai2010 to measure MAST.
@@ -140,7 +142,7 @@ ms_df %>%
 ```
 
 ```
-## Warning: Removed 649 row(s) containing missing values (geom_path).
+## Warning: Removed 649 rows containing missing values (`geom_line()`).
 ```
 
 <img src="004-linear-models_files/figure-html/unnamed-chunk-3-1.png" width="672" />
@@ -241,11 +243,15 @@ library(raster)
 ```
 
 ```
-## Warning: package 'raster' was built under R version 4.2.1
+## Warning: package 'raster' was built under R version 4.2.2
 ```
 
 ```
 ## Loading required package: sp
+```
+
+```
+## Warning: package 'sp' was built under R version 4.2.2
 ```
 
 ```
@@ -391,7 +397,7 @@ ggplot(geodata_l, aes(x = value, fill = source)) +
 ```
 
 ```
-## Warning: Removed 1266 rows containing non-finite values (stat_density).
+## Warning: Removed 1266 rows containing non-finite values (`stat_density()`).
 ```
 
 <img src="004-linear-models_files/figure-html/unnamed-chunk-9-1.png" width="672" />
@@ -630,29 +636,28 @@ final_ols
 
 ```
 ## Linear Regression Model
-##  
-##  ols(formula = mast ~ elev + solarcv + tc_1 + tc_2, data = data, 
-##      weights = data$numDays, x = TRUE, y = TRUE)
-##  
-##                   Model Likelihood    Discrimination    
-##                         Ratio Test           Indexes    
-##  Obs       68    LR chi2    177.01    R2       0.926    
-##  sigma73.3628    d.f.            4    R2 adj   0.921    
-##  d.f.      63    Pr(> chi2) 0.0000    g        5.720    
-##  
-##  Residuals
-##  
-##      Min      1Q  Median      3Q     Max 
-##  -3.7912 -0.8006 -0.1218  0.7401  4.0016 
-##  
-##  
-##            Coef    S.E.   t      Pr(>|t|)
-##  Intercept 49.9906 3.7439  13.35 <0.0001 
-##  elev      -0.0066 0.0006 -11.82 <0.0001 
-##  solarcv   -0.2421 0.0526  -4.60 <0.0001 
-##  tc_1      -0.0535 0.0113  -4.75 <0.0001 
-##  tc_2      -0.1469 0.0362  -4.06 0.0001  
 ## 
+## ols(formula = mast ~ elev + solarcv + tc_1 + tc_2, data = data, 
+##     weights = data$numDays, x = TRUE, y = TRUE)
+## 
+##                  Model Likelihood    Discrimination    
+##                        Ratio Test           Indexes    
+## Obs       68    LR chi2    177.01    R2       0.926    
+## sigma73.3628    d.f.            4    R2 adj   0.921    
+## d.f.      63    Pr(> chi2) 0.0000    g        5.720    
+## 
+## Residuals
+## 
+##     Min      1Q  Median      3Q     Max 
+## -3.7912 -0.8006 -0.1218  0.7401  4.0016 
+## 
+## 
+##           Coef    S.E.   t      Pr(>|t|)
+## Intercept 49.9906 3.7439  13.35 <0.0001 
+## elev      -0.0066 0.0006 -11.82 <0.0001 
+## solarcv   -0.2421 0.0526  -4.60 <0.0001 
+## tc_1      -0.0535 0.0113  -4.75 <0.0001 
+## tc_2      -0.1469 0.0362  -4.06 0.0001
 ```
 
 ```r
@@ -709,7 +714,7 @@ ggplot(data, aes(x = mast, y = pred)) +
 ```
 
 ```
-## `geom_smooth()` using formula 'y ~ x'
+## `geom_smooth()` using formula = 'y ~ x'
 ```
 
 <img src="004-linear-models_files/figure-html/final-model-1.png" width="672" />
@@ -726,29 +731,28 @@ final_ols
 
 ```
 ## Linear Regression Model
-##  
-##  ols(formula = mast ~ elev + solarcv + tc_1 + tc_2, data = data, 
-##      weights = data$numDays, x = TRUE, y = TRUE)
-##  
-##                   Model Likelihood    Discrimination    
-##                         Ratio Test           Indexes    
-##  Obs       68    LR chi2    177.01    R2       0.926    
-##  sigma73.3628    d.f.            4    R2 adj   0.921    
-##  d.f.      63    Pr(> chi2) 0.0000    g        5.720    
-##  
-##  Residuals
-##  
-##      Min      1Q  Median      3Q     Max 
-##  -3.7912 -0.8006 -0.1218  0.7401  4.0016 
-##  
-##  
-##            Coef    S.E.   t      Pr(>|t|)
-##  Intercept 49.9906 3.7439  13.35 <0.0001 
-##  elev      -0.0066 0.0006 -11.82 <0.0001 
-##  solarcv   -0.2421 0.0526  -4.60 <0.0001 
-##  tc_1      -0.0535 0.0113  -4.75 <0.0001 
-##  tc_2      -0.1469 0.0362  -4.06 0.0001  
 ## 
+## ols(formula = mast ~ elev + solarcv + tc_1 + tc_2, data = data, 
+##     weights = data$numDays, x = TRUE, y = TRUE)
+## 
+##                  Model Likelihood    Discrimination    
+##                        Ratio Test           Indexes    
+## Obs       68    LR chi2    177.01    R2       0.926    
+## sigma73.3628    d.f.            4    R2 adj   0.921    
+## d.f.      63    Pr(> chi2) 0.0000    g        5.720    
+## 
+## Residuals
+## 
+##     Min      1Q  Median      3Q     Max 
+## -3.7912 -0.8006 -0.1218  0.7401  4.0016 
+## 
+## 
+##           Coef    S.E.   t      Pr(>|t|)
+## Intercept 49.9906 3.7439  13.35 <0.0001 
+## elev      -0.0066 0.0006 -11.82 <0.0001 
+## solarcv   -0.2421 0.0526  -4.60 <0.0001 
+## tc_1      -0.0535 0.0113  -4.75 <0.0001 
+## tc_2      -0.1469 0.0362  -4.06 0.0001
 ```
 
 ```r
@@ -826,7 +830,7 @@ plot(mast_r)
 
 
 ```r
-url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/chapters/6_linear_models/yosemite-example/henry_CA790_data.csv"
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/yosemite-example/henry_CA790_data.csv"
 mast2 <- read.csv(url)
 ```
 
