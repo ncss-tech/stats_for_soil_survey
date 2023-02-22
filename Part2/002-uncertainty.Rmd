@@ -53,31 +53,33 @@ Errors are simply the difference between reality and our representation of reali
 url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
 sas <- read.csv(url)
 
-n   <- nrow(sas)
+N   <- nrow(sas)
 
 
-# take a random sample of 100
-set.seed(42)
-idx <- sample(1:n, 100)
-sas_n100 <- cbind(n = "100", sas[idx, ])
+# create 50 random pH samples of 10, 30, 60, and 100
+y <- c(10, 30, 60, 100)
+
+f <- function(x, n) {
+  idx <- sample(1:N, n)
+  tmp <- cbind(idx = factor(x, levels = 1:50), n = factor(n, levels = y), sas[idx, ])
+  return(tmp)
+}
+
+test <- mapply(FUN = f, rep(1:50, times = 4), rep(y, each = 50), SIMPLIFY = FALSE)
+test <- do.call("rbind", test)
 
 
-# take a random sample of 1000
-set.seed(42)
-idx <- sample(1:n, 1000)
-sas_n1000 <- cbind(n = "1000", sas[idx, ])
-
-
-# combine d1 and d2
-sas_sub <- rbind(sas_n100, sas_n1000)
-
-aggregate(pH_0.30_obs ~ n, data = sas_sub, quantile)
+# examine summary statistics
+aggregate(pH_0.30_obs ~ n + idx, data = test, quantile, subset = idx == 1)
 
 
 # examine box plots
 library(ggplot2)
 
-ggplot(sas_sub, aes(x = pH_0.30_obs, y = n)) + geom_boxplot()
+ggplot(test, aes(y = pH_0.30_obs, x = idx)) +
+  geom_boxplot() +
+  facet_wrap(~ n, ncol = 1)
+
 ```
 
 Dispersion or variance is a characteristic of the population being evaluated. While more or better sample collection might give you better precision of those estimates, we would not expect them to change the dispersion calculated. Conversely, measures of certainty of the central tendency (how sure are you of the typical value reported) depends both on the characteristic dispersion/variance and the number of samples collected.
@@ -105,7 +107,7 @@ SS / (sum(!is.na(sas$pH_0.30_obs)) - 1)
 Note the differences in range and variance calculated for pH in both examples (100 samples vs. 1000)
 
 ```{r eval = TRUE}
-aggregate(pH_0.30_obs ~ n, data = sas_sub, var)
+aggregate(pH_0.30_obs ~ n + idx, data = test, var, subset = idx == 1)
 ```
 
 Now Compare Standard Error (standard deviation / square root of n)
@@ -113,7 +115,8 @@ Now Compare Standard Error (standard deviation / square root of n)
 ```{r eval = TRUE}
 SE <- function(x) sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x)))
 
-aggregate(pH_0.30_obs ~ n, data = sas_sub, SE)
+aggregate(pH_0.30_obs ~ n + idx, data = test, SE, subset = idx == 1)
+
 ```
 
 Why are the standard errors different?

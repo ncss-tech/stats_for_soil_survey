@@ -488,11 +488,11 @@ write.csv(attrib, "LC.class_rat.csv")
 
 library(Boruta)
 
-yvar  <- "depth_cm"
+yvar  <- "Otot"
 xvars <-  c("rainfall", "geology", "aachn", "dem10m", "downslpgra", "eastness", "greenrefl", "landsatb1", "landsatb2", "landsatb3", "landsatb7", "maxc100", "maxent", "minc100", "mirref", "ndvi", "northeastn", "northness", "northwestn", "planc100", "proc100", "protection", "relpos11", "slp50", "solar", "tanc75")
 
 # run the Boruta algorithm
-fs_bor <- Boruta(y = soildata$depth_cm, x = soildata[, xvars], maxRuns = 35, doTrace = 1)
+fs_bor <- Boruta(y = soildata$Otot, x = soildata[, xvars], maxRuns = 35, doTrace = 1)
 
 # plot variable importance and selected features
 plot(fs_bor)
@@ -515,7 +515,7 @@ library(caret)
 tc <- trainControl(
   method = "cv", number = 10, returnResamp = "all",
   savePredictions = TRUE,
-  search = "random",
+  search = "grid",
   verboseIter = FALSE
 )
 
@@ -525,8 +525,9 @@ tg = expand.grid(
   mtry          = 5
   )
 
+
 # fit model, automatically tune, and cross-validate
-dep_tr <- train(y = soildata$depth_cm, x = soildata[, xvars],
+dep_tr <- train(y = soildata$Otot, x = soildata[, xvars],
                 method = "ranger",
                 importance = "permutation",
                 trControl = tc
@@ -534,7 +535,7 @@ dep_tr <- train(y = soildata$depth_cm, x = soildata[, xvars],
 
 
 # fit model, automatically tune, and cross-validate on Boruta variables
-dep_tr_bor <- train(y = soildata$depth_cm, x = soildata[, vars],
+dep_tr_bor <- train(y = soildata$Otot, x = soildata[, vars],
                     method = "ranger",
                     importance = "permutation",
                     trControl = tc
@@ -546,9 +547,20 @@ dep_tr
 dep_tr_bor
 
 
+
+
 # extract final models
 dep_tr$finalModel
 dep_tr_bor$finalModel
+
+dep_cv <- subset(dep_tr_bor$resample, mtry == 2 & splitrule == "extratrees")
+
+summary(dep_cv)
+
+tidyr::pivot_longer(dep_cv, cols = c("RMSE", "Rsquared", "MAE")) |>
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 5) +
+  facet_wrap(~ name, scales = "free_x")
 
 
 
@@ -556,22 +568,23 @@ dep_tr_bor$finalModel
 
 library(pdp)
 
-test <- ranger(depth_cm ~., 
+test <- ranger(Otot ~., 
                data = soildata[c(yvar, vars)], 
-               min.node.size = 8, mtry = 1, splitrule = "maxstat"
+               min.node.size = 5, mtry = 2, splitrule = "extratrees"
                )
 
-# plot effect of relpos11
-partial(test, pred.var = "relpos11",    plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
+# plot effect of landsatb7
+partial(test, pred.var = "landsatb7",    plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
 
-partial(test, pred.var = "relpos11", plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20, plot.engine = "ggplot2") +
-geom_point(data = soildata, aes(x = relpos11, y = depth_cm))
+partial(test, pred.var = "landsatb7", plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20, plot.engine = "ggplot2") +
+geom_point(data = soildata, aes(x = landsatb7, y = Otot))
 
-# plot effect of slp50
-partial(test, pred.var = "slp50",    plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
+# plot effect of maxent
+partial(test, pred.var = "maxent",    plot = TRUE, rug = TRUE, smooth = TRUE, grid.resolution = 20)
 
-# plot the combined effect of relpos11 and slp50
-partial(test, pred.var = c("relpos11", "slp50"), plot = TRUE, rug = TRUE)
+# plot the combined effect of landsatb7 and maxent
+partial(test, pred.var = c("landsatb7", "maxent"), plot = TRUE, rug = TRUE)
+
 
 
 # Part 10 - Plot model fit and residuals ----
@@ -579,16 +592,25 @@ partial(test, pred.var = c("relpos11", "slp50"), plot = TRUE, rug = TRUE)
 # 1 to 1 line vs regression line
 soildata$pred <- predict(test, data = soildata)$predictions
 
-ggplot(soildata, aes(x = pred, y = depth_cm)) +
+ggplot(soildata, aes(x = pred, y = Otot)) +
   geom_point() +
   geom_abline() +
   geom_smooth(method = "lm")
 
 
 # residuals
-soildata$res <- soildata$depth_cm - soildata$pred
+soildata$res <- soildata$Otot - soildata$pred
 
 ggplot(soildata, aes(x = pred, y = res)) +
   geom_point() +
-  geom_hline(aes(yintercept = 0))
+  geom_hline(aes(yintercept = 0)) +
+  geom_smooth()
 
+ggplot(soildata, aes(x = pred, y = sqrt(res))) +
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) +
+  geom_smooth()
+
+ggplot(soildata, aes(sample = res)) +
+  geom_qq() +
+  geom_qq_line()
