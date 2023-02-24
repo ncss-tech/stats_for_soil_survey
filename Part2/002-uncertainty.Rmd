@@ -10,40 +10,37 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 options(timeout = 600)
 ```
 
-
 ![](static-figures/logo.jpg)
 
 ## Introduction
- 
-Validating and assessing the uncertainty of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:  
 
-- Measurement errors
-- Interpretation errors
-- Digitization errors
-- Classification errors
-- Generalization errors
-- Interpolation errors
-- Semantic errors
+Validating and assessing the uncertainty of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
+
+-   Measurement errors
+-   Interpretation errors
+-   Digitization errors
+-   Classification errors
+-   Generalization errors
+-   Interpolation errors
+-   Semantic errors
 
 Errors are simply the difference between reality and our representation of reality. Assessing the data structure with simple statistical measures such as mean, median and mode can be useful for understanding the central tendency of the data, but more complicated calculations are needed to get at dispersion or the variation of a property within a population to further assess error and uncertainty (Zar, 1999).
 
 **Measure of Dispersion**
 
-- Range: The difference between the highest and lowest values measured or observed. Not always reliable because it can include outliers, error, or misclassified data. 
-- Quantiles: These refer to 25% increments in the rank of observations. Typically, the 25th and 75th quantiles are used to represent the spread of the most typical values around the central tendency.
+-   Range: The difference between the highest and lowest values measured or observed. Not always reliable because it can include outliers, error, or misclassified data.
+-   Quantiles: These refer to 25% increments in the rank of observations. Typically, the 25th and 75th quantiles are used to represent the spread of the most typical values around the central tendency.
 
-**Measure of Variation**
-  * Variance: The deviation of from the mean is calculated as sum of squares (SS) to use absolute deviation (eliminate any distinction between negative and positive correlation). $variance (sample) = \frac{SS}{n-1}$
-  
-- $SS = \sum{(X - x)^2}$
-- Standard deviation: Used to return variance to the original units $sd = \sqrt{\frac{SS}{n-1}}$
-- Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared $CV = \frac{SD}{x}$
+**Measure of Variation** \* Variance: The deviation of from the mean is calculated as sum of squares (SS) to use absolute deviation (eliminate any distinction between negative and positive correlation). $variance (sample) = \frac{SS}{n-1}$
+
+-   $SS = \sum{(X - x)^2}$
+-   Standard deviation: Used to return variance to the original units $sd = \sqrt{\frac{SS}{n-1}}$
+-   Coefficient of variation: Scale standard deviation with mean so that multiple properties can be compared $CV = \frac{SD}{x}$
 
 **Measures of Certainty**
 
-- Standard Error: represents the variance of the mean that would be found with repeated sampling. Estimated by dividing standard deviation by the square root of n. The concept of standard error is important for hypothesis testing.
-- Confidence interval: Interval in which you are confident that a given percentage (known as the confidence limit 95, 80, 75%) of the population lie. If a normal distribution is assumed, for a 95% confidence interval, it can be estimated that the value is 95% likely to fall between as SD * 1.96 +/- mean.   
-
+-   Standard Error: represents the variance of the mean that would be found with repeated sampling. Estimated by dividing standard deviation by the square root of n. The concept of standard error is important for hypothesis testing.
+-   Confidence interval: Interval in which you are confident that a given percentage (known as the confidence limit 95, 80, 75%) of the population lie. If a normal distribution is assumed, for a 95% confidence interval, it can be estimated that the value is 95% likely to fall between as SD \* 1.96 +/- mean.
 
 ### Examples - Dispersion
 
@@ -92,9 +89,8 @@ ggplot(test, aes(x = iteration, y = pH)) +
 
 ```
 
-The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be "uncertain" of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different. 
+The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be "uncertain" of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different.
 
-  
 ### Examples - Variation and Certainty
 
 Demonstration of how to calculate variance.
@@ -122,9 +118,9 @@ test %>%
   summarize(var = var(pH)) %>%
   group_by(sd, n) %>%
   summarize(across(var, list(min = min, mean = mean, max = max)))
-``` 
+```
 
-Now Compare Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
+Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
 
 ```{r eval = TRUE}
 SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
@@ -137,19 +133,17 @@ test %>%
 
 ```
 
-
-
 ## Theory of Uncertainty
-  
+
 At it's most basic level, uncertainty is simply a lack of certainty. In soil survey, uncertainty encompasses both of these aspects:
 
-1. you've gathered multiple observations and you need to describe them in relation to one another, and 
-2. you must predict a property or characteristic at unobserved locations. 
+1.  you've gathered multiple observations and you need to describe them in relation to one another, and
+2.  you must predict a property or characteristic at unobserved locations.
 
 It is difficult to quantify the knowledge we have about data and information uncertainty. While we may have good data of the accuracy of our GPS, how likely are we to include that in our estimates of model error? How important is it? In other disciplines, they spend a lot of time quantifying and tracking measurement error. In soil science, we tend to treat measurement as having an exact known location and value. Given the unknowns in mapping and predicting soil properties, this is a reasonable treatment of relatively small levels of error.
 
 When using secondary information as data (or data that is actually a prior prediction or result of a model, including soil components), considering incorporated error can be crucial. One way to deal with this is through re-sampling an alternate way is to through error propagation theory. The most common way to deal with this in soil survey and digital soil mapping is to assess error through model validation.
-	
+
 **Explanatory vs. Predictive Modelling**
 
 While explanatory and predictive modeling can use the same types of models, data and even questions, the errors and uncertainty are important for different reasons
@@ -157,14 +151,12 @@ While explanatory and predictive modeling can use the same types of models, data
 **Explanatory or Descriptive** - data are collected and analyzed in order to test causal hypothesis and observe correlations and relationships between data element. Often used at the beginning phases of soil-landscape exploration. How does the soil relate to each of the soil forming factors?
 
 **Predictive** - applying a model or algorithm to data for the purpose of making a prediction (in new or unknown locations) (Shueli, 2010).
-  
-  
+
 ## Resampling to Estimate Uncertainty
-  
-When calculating many basic statistical parameters, the assumption is that the data is parametric. That implies that the data is continuous (ratio or interval) and normally distributed. This is rarely the case with soil data. Soil properties are often not normally distributed (you cannot have less that 0% organic matter, for instance) and often we are trying to predict soil taxa or other nominal classes. 
 
-Re-sampling is a general term that defines any procedure to repeatedly draw samples form a given data-set. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Re-sampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation [@good2013].  
+When calculating many basic statistical parameters, the assumption is that the data is parametric. That implies that the data is continuous (ratio or interval) and normally distributed. This is rarely the case with soil data. Soil properties are often not normally distributed (you cannot have less that 0% organic matter, for instance) and often we are trying to predict soil taxa or other nominal classes.
 
+Re-sampling is a general term that defines any procedure to repeatedly draw samples form a given data-set. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Re-sampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation [@good2013].
 
 ```{r eval = TRUE}
 # this bootstrap is estimating the uncertainty associated with the variance of sas$pH_0.30_obs
@@ -217,11 +209,11 @@ quantile(boot_stats$means, c(0.025, 0.975))
 ci
 ```
 
-
 ### Exercise 1
 
-1. Create a new R script.
-2. Calculate a bootstrapped median, 10th percentile, and 90th percentile for `EC_0.30_obs`.
+1.  Create a new R script.
+2.  Calculate a bootstrapped median, 10th percentile, and 90th percentile for `EC_0.30_obs`.
+
 ```{r, eval=FALSE, echo=FALSE}
 url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
 sas <- read.csv(url)
@@ -247,7 +239,9 @@ for (i in 1:k) {
 }
 quantile(boot_stats$means, c(0.1, 0.9), na.rm = TRUE)
 ```
-3. Calculate a traditional confidence interval for `EC_0.30_obs`.
+
+3.  Calculate a traditional confidence interval for `EC_0.30_obs`.
+
 ```{r, eval=FALSE, echo=FALSE}
 c(# lower 5th
   l = mean(EC) - 1.96 * sd(EC) / sqrt(n),
@@ -255,12 +249,16 @@ c(# lower 5th
   u = mean(EC) + 1.96 * sd(EC) / sqrt(n)
 )
 ```
-4. What is wrong with the traditional confidence interval?
+
+4.  What is wrong with the traditional confidence interval?
+
 ```{r, eval=FALSE, echo=FALSE}
 # if not transformed it returns negative values
 ```
-5. Forward you R script your instructor.
 
+
+
+5.  Forward you R script your instructor.
 
 ## Performance Metrics
 
@@ -268,17 +266,58 @@ c(# lower 5th
 
 Accuracy:
 
-- Coefficient of variation ($R^2$): % of variance explained (`caret::R2(formula = "traditional)`); beware alternative definitions refer to this as correlation coefficient squared (`caret::R2()`), however this version does not assess the accuracy; see [http://mng.bz/ndYf](http://mng.bz/ndYf) for when the two terms overlap
-- Mean Error (ME): average error
-- Mean Absolute Error (MAE): average absolute error
-- Root Mean Square Error (RMSE): average residual
+-   Mean Error (ME)/Prediction Error/Bias:
+    -   Description: average error
+    -   Pro: In the same use as the original values
+-   Mean Square Error (MSE):
+    -   Description: Estimate of the model variance
+-   Root Mean Square Error (RMSE):
+    -   Description: average residual or estimate of the model standard deviation
+    -   Pro: In the same units as the original values
+- Coefficient of variation ($R^2$):
+    -   Description: of variance explained;
+    -   Pro: Values range from \>-1 to 1
+    -   Con: Often confused with the correlation coefficient squared (`caret::R2()`), which does not assess the accuracy; see <http://mng.bz/ndYf> for when the two terms overlap
+
 
 Precision:
 
 - Standard error (SE)
-- Prediction intervals (percentiles)
+    - Description: quantifies uncertainty in model parameters (e.g. coefficients, overall prediction)
+- Confidence intervals (CI)
+    - Description: expansion of the SE to cover an interval according to a given probability
+- Prediction intervals (PI)
+    - Description: quantifies uncertainty in the individual predicted values; wider than the CI
 - Distance
 
+```{r, echo=FALSE}
+x <- rnorm(15, mean = 7)
+y <- x + rnorm(15)
+df <- data.frame(x, y)
+i <- range(df$y)
+new <- data.frame(x = seq(i[1], i[2], length.out = 15))
+
+df_lm <- lm(y ~ x, df)
+
+df$pred <- predict(df_lm)
+pi <- predict(df_lm, new, interval = "prediction")
+ci <- predict(df_lm, new, interval = "confidence")
+
+i <- rbind(
+  data.frame(Interval = "PI", pi, new), 
+  data.frame(Interval = "CI", ci, new)
+  )
+
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  # geom_line(aes(x = x, y = pred)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_line(data = i, aes(x = x, y = lwr, lty = Interval)) +
+  geom_line(data = i, aes(x = x, y = upr, lty = Interval)) +
+  xlab("predicted") + ylab("observed") +
+  ggtitle("Confidence Interval vs Prediction Inteval")
+
+```
 
 ```{r eval = TRUE}
 
@@ -318,23 +357,27 @@ ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
 
 ```
 
-
 ### Exercise 2
 
-1. Append the following exercises to your previous R script.
-2. Compare the traditional $R^2$ to the alternative $R^2$ for `EC_0.30_obs` vs `EC_0.30_pred`?
+1.  Append the following exercises to your previous R script.
+2.  Compare the traditional $R^2$ to the alternative $R^2$ for `EC_0.30_obs` vs `EC_0.30_pred`?
+
 ```{r, eval=FALSE, echo=FALSE}
 library(caret)
 
 R2(pred = sas$EC_0.30_pred, obs = sas$EC_0.30_obs, formula = "traditional", na.rm = TRUE)
 R2(pred = sas$EC_0.30_pred, obs = sas$EC_0.30_obs, na.rm = TRUE)
 ```
-3. Calculate the `RMSE()` and `MAE()`for `EC_0.30_obs` vs `EC_0.30_pred`?
+
+3.  Calculate the `RMSE()` and `MAE()`for `EC_0.30_obs` vs `EC_0.30_pred`?
+
 ```{r, eval=FALSE, echo=FALSE}
 RMSE(pred = sas$EC_0.30_pred, obs = sas$EC_0.30_obs, na.rm = TRUE)
 MAE(pred = sas$EC_0.30_pred, obs = sas$EC_0.30_obs, na.rm = TRUE)
 ```
-4. Plot a hex bin scatterplot of `EC_0.30_obs` vs `EC_0.30_pred` with a linear smoother.
+
+4.  Plot a hex bin scatterplot of `EC_0.30_obs` vs `EC_0.30_pred` with a linear smoother.
+
 ```{r, eval=FALSE, echo=FALSE}
 ggplot(sas, aes(x = EC_0.30_obs, y = EC_0.30_pred)) +
   geom_hex() +
@@ -342,58 +385,52 @@ ggplot(sas, aes(x = EC_0.30_obs, y = EC_0.30_pred)) +
   geom_smooth() +
   geom_smooth(method = "lm")
 ```
-5. Forward you R script your instructor.
 
+5.  Forward you R script your instructor.
 
-
-### Categorical 
+### Categorical
 
 **Probability-based metrics** (threshold-independent)
 
-Beware the $D^2$ and Tjur's D only apply to binary classes.
+Beware the $D^2$ and Tjur's D only apply to binary classes. Also, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
 
 Accuracy:
 
-- Brier score: equivalent to the mean square error (`aqp::brierScore()`)
-- Deviance squared ($D^2$): % of devariance explained $R^2$ (`modEvA::Dsquared()`)
-- Coefficient of discrimination (or Tjur's D)(`modEvA::RsqGLM()`)
+-   Brier score: equivalent to the mean square error (`aqp::brierScore()`)
+-   Deviance squared ($D^2$): % of devariance explained $R^2$ (`modEvA::Dsquared()`)
+-   Coefficient of discrimination (or Tjur's D)(`modEvA::RsqGLM()`)
 
 Precision:
 
-- Shannon entropy (`aqp::shannonEntropy()`)
-- Confusion index (`aqp::confusionIndex()`)
+-   Shannon entropy: index of information content; higher values equal more uncertainty (`aqp::shannonEntropy()`)
+-   Confusion index: index of confusion; ranges from 0 to 1 (`aqp::confusionIndex()`)
 
+**Class-based metrics** are derivatives of the confusion matrix [@kuhn2013; @zumel2014; @congalton2019; @james2021] (`caret::confusionMatrix()`)
 
-**Class-based metrics** are derivatives of the confusion matrix [@kuhn2013; @zumel2014; @congalton2019; @james2021](`caret::confusionMatrix()`)
+| Confusion Matrix    | Observed             |                       | Metric         |
+|------------------|------------------|------------------|------------------|
+| **Predicted**       | No                   | Yes                   | UA             |
+| No                  | True Negative (TN)   | False Negative (FN)   | UA             |
+| Yes                 | False Positive (FP)  | True Positive (TP)    | Precision / UA |
+| ------------------- | -------------------- | --------------------- | -------------- |
+| Metric              | Specificity / PA     | Sensitivity / PA      | Overall        |
 
-
-Confusion Matrix   | Observed           |                     |Metric                     |
--------------------|--------------------|---------------------|--------------|
-**Predicted**      | No                 | Yes                 |            UA|
-No                 | True Negative (TN) | False Negative (FN) |            UA|
-Yes                | False Positive (FP)| True Positive (TP)  |Precision / UA|
--------------------|--------------------|---------------------|--------------|
-Metric             |Specificity / PA    |Sensitivity / PA     |Overall       |
- 
-                   
-
-- Overall Accuracy: % of observations that were correctly classified, for all classes
-- Specificity:
-    - TN / (TN + FP)
-    - errors of commission (Type I)
-- Sensitivity (also known as Recall or True Positive Rate):
-    - TP / (TP + FN)
-    - errors of omission (Type II))
-    - % of predictions that were correctly classified, for an individual class
-- Precision:
-    - TP / (TP + FP)
-    - % of observations that were correctly classified, for an individual class
-- User's Accuracy (UA):
-    - diagonal values / predicted values
-- Producer's Accuracy (PA):
-    - diagonal values (TN & TP) / observed values
-- Tau index (`aqp::tauW()`)
-
+-   Overall Accuracy: % of observations that were correctly classified, for all classes
+-   Specificity (aka True Negative Rate:
+    -   TN / (TN + FP)
+    -   errors of commission (Type I)
+-   Sensitivity (aka Recall or True Positive Rate):
+    -   TP / (TP + FN)
+    -   errors of omission (Type II))
+    -   \% of predictions that were correctly classified, for an individual class
+-   Precision:
+    -   TP / (TP + FP)
+    -   \% of observations that were correctly classified, for an individual class
+-   User's Accuracy (UA):
+    -   diagonal values / predicted values
+-   Producer's Accuracy (PA):
+    -   diagonal values (TN & TP) / observed values
+-   Tau index: An index of accuracy that accounts for agreement by chance--- effectively a replacement for Cohen's Kappa (`aqp::tauW()`)
 
 ```{r eval = TRUE}
 
@@ -451,24 +488,27 @@ table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
 
 ```
 
-
 ### Exercise 3
 
-1. Append the following exercises to your previous R script.
-2. Calculate the Brier score, $D^2$ and Shannon Entropy for the `BS1` class from the `bs` dataset.
+1.  Append the following exercises to your previous R script.
+2.  Calculate the Brier score, $D^2$ and Shannon Entropy for the `BS1` class from the `bs` dataset.
+
 ```{r, eval=FALSE, echo=FALSE}
 aqp::brierScore(bs[c("BS1_obs", "BS1_pred")], "BS1_pred", "BS1_obs")
 modEvA::RsqGLM(obs = bs$BS1_obs, pred = bs$BS1_pred, plot = FALSE)
 summary(apply(bs[c("BS1_obs", "BS1_pred")], 1, aqp::shannonEntropy))
 ```
-3. What probably threshold creates the best split for the `BS1` class.
+
+3.  What probably threshold creates the best split for the `BS1` class.
+
 ```{r, eval=FALSE, echo=FALSE}
 ggplot(bs, aes(x = BS1_pred, fill = BS1_obs)) +
   geom_density(alpha = 0.5) +
   xlab("BS2 Probability")
 table(predicted = bs$BS2_pred > 0.25, observed = bs$BS2_obs)
 ```
-4. Calculate a confusion matrix for `sas30_obs` vs `sas30_pred` from the `sas` dataset. Be sure to manually set the factor levels as shown below.
+
+4.  Calculate a confusion matrix for `sas30_obs` vs `sas30_pred` from the `sas` dataset. Be sure to manually set the factor levels as shown below.
 
 ```{r, echo=TRUE, eval=FALSE}
 lev <- unique(c(sas$sas030_obs, sas$sas030_pred))
@@ -476,17 +516,19 @@ lev <- lev[c(1, 4, 8, 9, 12, 5, 3, 6, 7, 11)]
 sas$sas030_obs  <- factor(sas$sas030_obs,  levels = lev)
 sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 ```
+
 ```{r, eval=FALSE, echo=FALSE}
 cm <- table(pred = sas$sas030_pred, obs = sas$sas030_obs)
 caret::confusionMatrix(cm)
 ```
-5. Why can't you calculate a Brier score and Shannon entropy for the `SAS` classes from the `sas` dataset?
+
+5.  Why can't you calculate a Brier score and Shannon entropy for the `SAS` classes from the `sas` dataset?
+
 ```{r, eval=FALSE, echo=FALSE}
 # SAS calculated from 3 properties, so their is no estimate of probability
 ```
-6. Forward you R script your instructor.
 
-
+6.  Forward you R script your instructor.
 
 ## Stratified-random/areal-adjustment
 
@@ -513,15 +555,13 @@ confusionMatrix(cm_wt2, positive = "TRUE")$byClass
 
 ```
 
-
-
 ## Validation
-  
-Validation refers to the process and the result of a process where the validity of a model is tested. That is, how well does the model represent reality? There are varying degrees of formality and thoroughness that can be used in validation. While multiple stages of the modeling process can be validated, usually it's the output of the model that is investigated and reported. You can group initial validation into three broad groups: Expert evaluation, Theoretical Analysis and Prediction Accuracy.  
 
-**Expert Evaluation:**  In this case, the model output is inspected by an expert user. The first evaluator will be you (the developer), but ideally an outside expert will be utilized. This is often a step in an iterative process. Evaluate the model output, does it make sense, do you see things that need to be improved? Then make changes to the model to improve the output.  
+Validation refers to the process and the result of a process where the validity of a model is tested. That is, how well does the model represent reality? There are varying degrees of formality and thoroughness that can be used in validation. While multiple stages of the modeling process can be validated, usually it's the output of the model that is investigated and reported. You can group initial validation into three broad groups: Expert evaluation, Theoretical Analysis and Prediction Accuracy.
 
-**Theoretical Analysis:** compare the results of the model to what is theoretically possible. In systems modeling, this might include diagnostics statistics including residual analysis, cross-correlation of variables and outputs, sensitivity analysis and model analysis such as Akaike Information Criterion (AIC). This can also include simple comparison of output to known possible values. This is especially important for linear regression where the slope of the model is assumed to be steady no matter the values of the dependent variables.  
+**Expert Evaluation:** In this case, the model output is inspected by an expert user. The first evaluator will be you (the developer), but ideally an outside expert will be utilized. This is often a step in an iterative process. Evaluate the model output, does it make sense, do you see things that need to be improved? Then make changes to the model to improve the output.
+
+**Theoretical Analysis:** compare the results of the model to what is theoretically possible. In systems modeling, this might include diagnostics statistics including residual analysis, cross-correlation of variables and outputs, sensitivity analysis and model analysis such as Akaike Information Criterion (AIC). This can also include simple comparison of output to known possible values. This is especially important for linear regression where the slope of the model is assumed to be steady no matter the values of the dependent variables.
 
 **Prediction Accuracy**: The correctness of the parameter being predicted by the model (soil taxa, property etc.). Ideally this is done with an independent set of data.
 
@@ -529,48 +569,53 @@ In soil science, we typically use the term model validation to refer to a statis
 
 **Three types of validation used in the course**
 
-- Internal - Performance on population underlying the sample
-- External - Performance on related (similar/adjacent) but independent population
-
+-   Internal - Performance on population underlying the sample
+-   External - Performance on related (similar/adjacent) but independent population
 
 <!-- ## Apparent Validation -->
 
 <!-- In this exploratory and explanatory phase you are looking for relationships that can be used later for predictive purposes. -->
 
 <!-- - Use Goodness of fit tests on all the data in your sample -->
+
 <!--     - Correlation (R2, rho, etc.) -->
+
 <!--     - P-values (test questions about individual or combinations of variables) -->
+
 <!-- - Analyze Residuals (distribution of model errors) to diagnose modeling problems. One or more of these issues indicate that one or more important variables was omitted from the model or that an incorrect functional form was used (linear when the function should be non-linear) -->
+
 <!--     - Heteroscedasticity -->
+
 <!--     - Normality -->
+
 <!--     - Spatial distribution (auto-correlation) -->
 
-### Internal Validation 
+### Internal Validation
 
 #### Split-sample - A single partition of the data into a learning and a calibration set.
 
-- Achieve an independent validation by partitioning the samples into calibration or training and validation data-sets (70% of the samples available are recommended for calibration)
-    - Build model on calibration (training) data-set
-    - Test model on validation (test) data-set
-    - Report accuracy on the validation data-set
-- This method is relatively simple (conceptually and computationally). Results depend on having an adequate sample size to both develop and test the model.
+-   Achieve an independent validation by partitioning the samples into calibration or training and validation data-sets (70% of the samples available are recommended for calibration)
+    -   Build model on calibration (training) data-set
+    -   Test model on validation (test) data-set
+    -   Report accuracy on the validation data-set
+-   This method is relatively simple (conceptually and computationally). Results depend on having an adequate sample size to both develop and test the model.
 
 #### Cross-validation - Alternate development and validation
 
 **Leave-One-Out Cross-Validation (LOOCV)**
 
-- One observation is used for testing and all others are used to develop model
-- Repeat n (total number of observations) times
-- Average error over n
-- The mean of the accuracy is the expected accuracy of the model (this assumes that new data is from the same population) (Efron, 1983)
+-   One observation is used for testing and all others are used to develop model
+-   Repeat n (total number of observations) times
+-   Average error over n
+-   The mean of the accuracy is the expected accuracy of the model (this assumes that new data is from the same population) (Efron, 1983)
 
 **k-fold Cross-Validation (k-fold) CV**
 
-- Randomly divide observations into calibration and validation sets.
-- Repeat k times, each time one k group is used for error estimates
-- Average error of k
-- Less computationally intensive than LOOCV, but it is more robust and can be done with smaller sample sizes than a simple split.
-- Several R packages have tools to cross-validate predictions, including: `DAAG` and `boot` for `lm()` and `glm()` objects, `caret`, `rms`,
+-   Randomly divide observations into calibration and validation sets.
+-   Repeat k times, each time one k group is used for error estimates
+-   Average error of k
+-   Less computationally intensive than LOOCV, but it is more robust and can be done with smaller sample sizes than a simple split.
+-   Several R packages have tools to cross-validate predictions, including: `DAAG` and `boot` for `lm()` and `glm()` objects, `caret`, `rms`,
 
 ```{r cv, eval=TRUE}
 ### Linear model example
@@ -596,33 +641,28 @@ lm_cv <- do.call(rbind, lm_cv)
 summary(lm_cv)
 ```
 
-  
 #### Subsample (Resampling or sample simulation)
 
 In this method, the 'leave-out' method can be random (Bootstrap) or observation selection can use a more sophisticated method to select observations to represent the population including Monte Carlo (Molarino, 2005) and .632+bootstrap of Efron & Tibshirani (1997). The details of those aren't important, except to know that they can give you a better idea of the robustness of your model.
 
-- As with re-sampling for uncertainty estimation, observations are repeatedly sampled
-    - Select a number of samples (Randomly or from known distribution).
-    - Develop the model
-    - Estimate model accuracy on unselected samples
-    - Repeat the process (with independent sample) a large number of times, 500 - 5,000. 
-    - The expected model accuracy is then the mean of the estimates. 
+-   As with re-sampling for uncertainty estimation, observations are repeatedly sampled
+    -   Select a number of samples (Randomly or from known distribution).
+    -   Develop the model
+    -   Estimate model accuracy on unselected samples
+    -   Repeat the process (with independent sample) a large number of times, 500 - 5,000.
+    -   The expected model accuracy is then the mean of the estimates.
 
-	
 **NOTE:** The BEST model should not be assumed to be the one that makes the 'truest' predictions. Beware of over-fitting. When a model is over-fit, it predicts due to very specific "quirks" in the calibration data set and not due to explanatory relationships that will apply to validation and independent data-sets. One strategy to avoid this situation is to build models with as few variables as possible. Parsimonious models (those that use the least amount of information possible to obtain the same result or convey the same meaning) often have higher predicative validity. The use of metrics such as Akaike's Information Criterion (AIC) can be helpful for balancing error and parameter minimization.
 
+### External Validation
 
-### External Validation  
+In this case, an independent data-set is used as the test case.
 
-In this case, an independent data-set is used as the test case.  
+-   Independent observations predicted with model
+-   Errors (ME, RMSE) calculated on predicted vs. actual
+-   Some exploratory analysis can be helpful to diagnose and explain model performance.
 
-- Independent observations predicted with model
-- Errors (ME, RMSE) calculated on predicted vs. actual
-- Some exploratory analysis can be helpful to diagnose and explain model performance.
-  
 The use of validation will be demonstrated as part of each modeling section. The size of the data-set used, understanding of the variables involved and the nature of the statistical models and algorithms used all influence which validation techniques are most convenient and appropriate.
-
-
 
 <!-- ## Additional reading -->
 
@@ -637,8 +677,3 @@ The use of validation will be demonstrated as part of each modeling section. The
 <!-- Zar, J.H., 1999. Biostatistical analysis. Pearson Education India. -->
 
 <!-- references automatically added here  -->
-
-
-
-
-  

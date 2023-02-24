@@ -519,7 +519,7 @@ tc <- trainControl(
   verboseIter = FALSE
 )
 
-tg = expand.grid(
+tg <- expand.grid(
   min.node.size = 5,
   splitrule     = "variance",
   mtry          = 5
