@@ -44,115 +44,148 @@ Errors are simply the difference between reality and our representation of reali
 
 ### Examples - Dispersion
 
+Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
+
 
 ```r
-# load the GSP Salt Affected Soil dataset
-url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
-sas <- read.csv(url)
-
-N   <- nrow(sas)
+library(dplyr)
+library(ggplot2)
 
 
 # create 50 random pH samples of 10, 30, 60, and 100
-y <- c(10, 30, 60, 100)
+y   <- c(10, 30, 60, 100)
+lab <- paste0("n = ", y)
 
-f <- function(x, n) {
-  idx <- sample(1:N, n)
-  tmp <- cbind(idx = factor(x, levels = 1:50), n = factor(n, levels = y), sas[idx, ])
+
+f <- function(x, n, sd) {
+  idx <- rnorm(n, mean = 7, sd = sd)
+  tmp <- data.frame(iteration = factor(x, levels = 1:30), n = factor(n, levels = y, labels = lab), sd = paste0("sd = ", sd), pH = idx)
   return(tmp)
 }
 
-test <- mapply(FUN = f, rep(1:50, times = 4), rep(y, each = 50), SIMPLIFY = FALSE)
+# standard deviation of 1
+test <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 1, SIMPLIFY = FALSE)
 test <- do.call("rbind", test)
+
+# standard deviation of 1
+test2 <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 2, SIMPLIFY = FALSE)
+test2 <- do.call("rbind", test2)
+
+test <- rbind(test, test2)
 
 
 # examine summary statistics
-aggregate(pH_0.30_obs ~ n + idx, data = test, quantile, subset = idx == 1)
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(med = median(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(med, list(min = min, mean = mean, max = max)))
 ```
 
 ```
-##     n idx pH_0.30_obs.0% pH_0.30_obs.25% pH_0.30_obs.50% pH_0.30_obs.75%
-## 1  10   1       4.638386        6.000250        6.290010        6.690767
-## 2  30   1       3.959768        4.836668        5.762341        6.318036
-## 3  60   1       4.306998        4.992175        5.844734        6.971334
-## 4 100   1       3.431035        5.134910        5.966998        6.827820
-##   pH_0.30_obs.100%
-## 1         7.617060
-## 2         9.216473
-## 3         8.070870
-## 4         9.862923
+## # A tibble: 8 × 5
+## # Groups:   sd [2]
+##   sd     n       med_min med_mean med_max
+##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
+## 1 sd = 1 n = 10     6.14     7.09    7.72
+## 2 sd = 1 n = 30     6.52     7.04    7.42
+## 3 sd = 1 n = 60     6.69     6.99    7.25
+## 4 sd = 1 n = 100    6.72     6.96    7.13
+## 5 sd = 2 n = 10     5.66     7.15    9.09
+## 6 sd = 2 n = 30     6.19     6.84    7.99
+## 7 sd = 2 n = 60     6.52     7.02    7.61
+## 8 sd = 2 n = 100    6.26     7.04    7.59
 ```
 
 ```r
 # examine box plots
-library(ggplot2)
-
-ggplot(test, aes(y = pH_0.30_obs, x = idx)) +
+ggplot(test, aes(x = iteration, y = pH)) +
   geom_boxplot() +
-  facet_wrap(~ n, ncol = 1)
+  facet_wrap(~ n + sd, ncol = 2, )
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="672" />
 
-Dispersion or variance is a characteristic of the population being evaluated. While more or better sample collection might give you better precision of those estimates, we would not expect them to change the dispersion calculated. Conversely, measures of certainty of the central tendency (how sure are you of the typical value reported) depends both on the characteristic dispersion/variance and the number of samples collected.
+The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be "uncertain" of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different. 
 
   
 ### Examples - Variation and Certainty
 
-Create an example data-set and and evaluate variation and certainty.
+Demonstration of how to calculate variance.
 
 
 ```r
 # calculate the mean
-mu <- mean(sas$pH_0.30_obs, na.rm = TRUE)
+mu <- mean(test$pH)
 
 # subtract mean from each value and square (i.e. residuals)
-sas$S <- (sas$pH_0.30_obs - mu)^2
+test$S <- (test$pH - mu)^2
 
 # calculate overall sum of squares
-SS <- sum(sas$S, na.rm = TRUE)
+SS <- sum(test$S)
 
 # calculate sample variance (length gives us the total number of sample/observations)
-SS / (sum(!is.na(sas$pH_0.30_obs)) - 1)
+SS / (length(test$pH) - 1)
 ```
 
 ```
-## [1] 1.143514
+## [1] 2.567515
 ```
 
-Note the differences in range and variance calculated for pH in both examples (100 samples vs. 1000)
+Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
 
 
 ```r
-aggregate(pH_0.30_obs ~ n + idx, data = test, var, subset = idx == 1)
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(var = var(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(var, list(min = min, mean = mean, max = max)))
 ```
 
 ```
-##     n idx pH_0.30_obs
-## 1  10   1   0.9236185
-## 2  30   1   1.6567764
-## 3  60   1   1.3418158
-## 4 100   1   1.3370314
+## # A tibble: 8 × 5
+## # Groups:   sd [2]
+##   sd     n       var_min var_mean var_max
+##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
+## 1 sd = 1 n = 10    0.231    0.965    2.32
+## 2 sd = 1 n = 30    0.565    0.947    1.59
+## 3 sd = 1 n = 60    0.671    1.04     1.48
+## 4 sd = 1 n = 100   0.799    1.04     1.34
+## 5 sd = 2 n = 10    0.583    4.72    14.2 
+## 6 sd = 2 n = 30    2.55     3.89     5.56
+## 7 sd = 2 n = 60    2.73     4.16     5.98
+## 8 sd = 2 n = 100   2.88     4.13     5.50
 ```
 
-Now Compare Standard Error (standard deviation / square root of n)
+Now Compare Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
 
 
 ```r
-SE <- function(x) sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x)))
+SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
 
-aggregate(pH_0.30_obs ~ n + idx, data = test, SE, subset = idx == 1)
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(SE = SE(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(SE, list(min = min, mean = mean, max = max)))
 ```
 
 ```
-##     n idx pH_0.30_obs
-## 1  10   1   0.3397827
-## 2  30   1   0.2683911
-## 3  60   1   0.1746305
-## 4 100   1   0.1412646
+## # A tibble: 8 × 5
+## # Groups:   sd [2]
+##   sd     n       SE_min SE_mean SE_max
+##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
+## 1 sd = 1 n = 10  0.152    0.300  0.481
+## 2 sd = 1 n = 30  0.137    0.176  0.230
+## 3 sd = 1 n = 60  0.106    0.131  0.157
+## 4 sd = 1 n = 100 0.0894   0.102  0.116
+## 5 sd = 2 n = 10  0.241    0.662  1.19 
+## 6 sd = 2 n = 30  0.291    0.359  0.431
+## 7 sd = 2 n = 60  0.213    0.262  0.316
+## 8 sd = 2 n = 100 0.170    0.203  0.234
 ```
 
-Why are the standard errors different?
 
 
 ## Theory of Uncertainty
@@ -187,6 +220,13 @@ Re-sampling is a general term that defines any procedure to repeatedly draw samp
 # this bootstrap is estimating the uncertainty associated with the variance of sas$pH_0.30_obs
 # an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
 
+# load the GSP Salt Affected Soil dataset
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
+sas <- read.csv(url)
+
+N   <- nrow(sas)
+
+
 # abbreviate our data to simply the commands
 ph <- na.exclude(sas$pH_0.30_obs)
 n <- 100
@@ -212,8 +252,8 @@ quantile(boot_stats$vars)
 ```
 
 ```
-##        0%       25%       50%       75%      100% 
-## 0.9283366 1.0974087 1.1601052 1.2596333 1.5745767
+##       0%      25%      50%      75%     100% 
+## 0.942929 1.049814 1.132754 1.232709 1.591579
 ```
 
 ```r
@@ -237,7 +277,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.831802 6.201848
+## 5.839581 6.161552
 ```
 
 ```r
@@ -717,12 +757,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4542   Min.   :0.8455  
-##  1st Qu.:0.4673   1st Qu.:0.8493  
-##  Median :0.4686   Median :0.8535  
+##  Min.   :0.4537   Min.   :0.8434  
+##  1st Qu.:0.4591   1st Qu.:0.8481  
+##  Median :0.4699   Median :0.8508  
 ##  Mean   :0.4689   Mean   :0.8526  
-##  3rd Qu.:0.4736   3rd Qu.:0.8548  
-##  Max.   :0.4830   Max.   :0.8614
+##  3rd Qu.:0.4767   3rd Qu.:0.8583  
+##  Max.   :0.4825   Max.   :0.8637
 ```
 
   

@@ -23,7 +23,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2023-02-22" />
+<meta name="date" content="2023-02-24" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -404,79 +404,111 @@ div.csl-indent {
 </ul>
 <div id="examples---dispersion" class="section level3 hasAnchor" number="2.1.1">
 <h3><span class="header-section-number">2.1.1</span> Examples - Dispersion<a href="uncertainty.html#examples---dispersion" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="uncertainty.html#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load the GSP Salt Affected Soil dataset</span></span>
-<span id="cb1-2"><a href="uncertainty.html#cb1-2" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv&quot;</span></span>
-<span id="cb1-3"><a href="uncertainty.html#cb1-3" aria-hidden="true" tabindex="-1"></a>sas <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(url)</span>
+<p>Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="uncertainty.html#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-2"><a href="uncertainty.html#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-3"><a href="uncertainty.html#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="uncertainty.html#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="uncertainty.html#cb1-5" aria-hidden="true" tabindex="-1"></a>N   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(sas)</span>
-<span id="cb1-6"><a href="uncertainty.html#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="uncertainty.html#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="uncertainty.html#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># create 50 random pH samples of 10, 30, 60, and 100</span></span>
-<span id="cb1-9"><a href="uncertainty.html#cb1-9" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">100</span>)</span>
-<span id="cb1-10"><a href="uncertainty.html#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="uncertainty.html#cb1-11" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, n) {</span>
-<span id="cb1-12"><a href="uncertainty.html#cb1-12" aria-hidden="true" tabindex="-1"></a>  idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>N, n)</span>
-<span id="cb1-13"><a href="uncertainty.html#cb1-13" aria-hidden="true" tabindex="-1"></a>  tmp <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">idx =</span> <span class="fu">factor</span>(x, <span class="at">levels =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>), <span class="at">n =</span> <span class="fu">factor</span>(n, <span class="at">levels =</span> y), sas[idx, ])</span>
-<span id="cb1-14"><a href="uncertainty.html#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(tmp)</span>
-<span id="cb1-15"><a href="uncertainty.html#cb1-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-16"><a href="uncertainty.html#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="uncertainty.html#cb1-17" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">mapply</span>(<span class="at">FUN =</span> f, <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>, <span class="at">times =</span> <span class="dv">4</span>), <span class="fu">rep</span>(y, <span class="at">each =</span> <span class="dv">50</span>), <span class="at">SIMPLIFY =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-5"><a href="uncertainty.html#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># create 50 random pH samples of 10, 30, 60, and 100</span></span>
+<span id="cb1-6"><a href="uncertainty.html#cb1-6" aria-hidden="true" tabindex="-1"></a>y   <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">100</span>)</span>
+<span id="cb1-7"><a href="uncertainty.html#cb1-7" aria-hidden="true" tabindex="-1"></a>lab <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;n = &quot;</span>, y)</span>
+<span id="cb1-8"><a href="uncertainty.html#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="uncertainty.html#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="uncertainty.html#cb1-10" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(x, n, sd) {</span>
+<span id="cb1-11"><a href="uncertainty.html#cb1-11" aria-hidden="true" tabindex="-1"></a>  idx <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n, <span class="at">mean =</span> <span class="dv">7</span>, <span class="at">sd =</span> sd)</span>
+<span id="cb1-12"><a href="uncertainty.html#cb1-12" aria-hidden="true" tabindex="-1"></a>  tmp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">iteration =</span> <span class="fu">factor</span>(x, <span class="at">levels =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>), <span class="at">n =</span> <span class="fu">factor</span>(n, <span class="at">levels =</span> y, <span class="at">labels =</span> lab), <span class="at">sd =</span> <span class="fu">paste0</span>(<span class="st">&quot;sd = &quot;</span>, sd), <span class="at">pH =</span> idx)</span>
+<span id="cb1-13"><a href="uncertainty.html#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(tmp)</span>
+<span id="cb1-14"><a href="uncertainty.html#cb1-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-15"><a href="uncertainty.html#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="uncertainty.html#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># standard deviation of 1</span></span>
+<span id="cb1-17"><a href="uncertainty.html#cb1-17" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">mapply</span>(<span class="at">FUN =</span> f, <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">times =</span> <span class="dv">4</span>), <span class="fu">rep</span>(y, <span class="at">each =</span> <span class="dv">30</span>), <span class="at">sd =</span> <span class="dv">1</span>, <span class="at">SIMPLIFY =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-18"><a href="uncertainty.html#cb1-18" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">do.call</span>(<span class="st">&quot;rbind&quot;</span>, test)</span>
 <span id="cb1-19"><a href="uncertainty.html#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="uncertainty.html#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="uncertainty.html#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># examine summary statistics</span></span>
-<span id="cb1-22"><a href="uncertainty.html#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n <span class="sc">+</span> idx, <span class="at">data =</span> test, quantile, <span class="at">subset =</span> idx <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div>
-<pre><code>##     n idx pH_0.30_obs.0% pH_0.30_obs.25% pH_0.30_obs.50% pH_0.30_obs.75%
-## 1  10   1       4.638386        6.000250        6.290010        6.690767
-## 2  30   1       3.959768        4.836668        5.762341        6.318036
-## 3  60   1       4.306998        4.992175        5.844734        6.971334
-## 4 100   1       3.431035        5.134910        5.966998        6.827820
-##   pH_0.30_obs.100%
-## 1         7.617060
-## 2         9.216473
-## 3         8.070870
-## 4         9.862923</code></pre>
+<span id="cb1-20"><a href="uncertainty.html#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># standard deviation of 1</span></span>
+<span id="cb1-21"><a href="uncertainty.html#cb1-21" aria-hidden="true" tabindex="-1"></a>test2 <span class="ot">&lt;-</span> <span class="fu">mapply</span>(<span class="at">FUN =</span> f, <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">times =</span> <span class="dv">4</span>), <span class="fu">rep</span>(y, <span class="at">each =</span> <span class="dv">30</span>), <span class="at">sd =</span> <span class="dv">2</span>, <span class="at">SIMPLIFY =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-22"><a href="uncertainty.html#cb1-22" aria-hidden="true" tabindex="-1"></a>test2 <span class="ot">&lt;-</span> <span class="fu">do.call</span>(<span class="st">&quot;rbind&quot;</span>, test2)</span>
+<span id="cb1-23"><a href="uncertainty.html#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="uncertainty.html#cb1-24" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">rbind</span>(test, test2)</span>
+<span id="cb1-25"><a href="uncertainty.html#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="uncertainty.html#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="uncertainty.html#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># examine summary statistics</span></span>
+<span id="cb1-28"><a href="uncertainty.html#cb1-28" aria-hidden="true" tabindex="-1"></a>test <span class="sc">%&gt;%</span></span>
+<span id="cb1-29"><a href="uncertainty.html#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iteration, n, sd) <span class="sc">%&gt;%</span></span>
+<span id="cb1-30"><a href="uncertainty.html#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">med =</span> <span class="fu">median</span>(pH)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-31"><a href="uncertainty.html#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sd, n) <span class="sc">%&gt;%</span></span>
+<span id="cb1-32"><a href="uncertainty.html#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(med, <span class="fu">list</span>(<span class="at">min =</span> min, <span class="at">mean =</span> mean, <span class="at">max =</span> max)))</span></code></pre></div>
+<pre><code>## # A tibble: 8 × 5
+## # Groups:   sd [2]
+##   sd     n       med_min med_mean med_max
+##   &lt;chr&gt;  &lt;fct&gt;     &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;
+## 1 sd = 1 n = 10     6.14     7.09    7.72
+## 2 sd = 1 n = 30     6.52     7.04    7.42
+## 3 sd = 1 n = 60     6.69     6.99    7.25
+## 4 sd = 1 n = 100    6.72     6.96    7.13
+## 5 sd = 2 n = 10     5.66     7.15    9.09
+## 6 sd = 2 n = 30     6.19     6.84    7.99
+## 7 sd = 2 n = 60     6.52     7.02    7.61
+## 8 sd = 2 n = 100    6.26     7.04    7.59</code></pre>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="uncertainty.html#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># examine box plots</span></span>
-<span id="cb3-2"><a href="uncertainty.html#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb3-3"><a href="uncertainty.html#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="uncertainty.html#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(test, <span class="fu">aes</span>(<span class="at">y =</span> pH_0<span class="fl">.30</span>_obs, <span class="at">x =</span> idx)) <span class="sc">+</span></span>
-<span id="cb3-5"><a href="uncertainty.html#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
-<span id="cb3-6"><a href="uncertainty.html#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> n, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code></pre></div>
+<span id="cb3-2"><a href="uncertainty.html#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(test, <span class="fu">aes</span>(<span class="at">x =</span> iteration, <span class="at">y =</span> pH)) <span class="sc">+</span></span>
+<span id="cb3-3"><a href="uncertainty.html#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb3-4"><a href="uncertainty.html#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> n <span class="sc">+</span> sd, <span class="at">ncol =</span> <span class="dv">2</span>, )</span></code></pre></div>
 <p><img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
-<p>Dispersion or variance is a characteristic of the population being evaluated. While more or better sample collection might give you better precision of those estimates, we would not expect them to change the dispersion calculated. Conversely, measures of certainty of the central tendency (how sure are you of the typical value reported) depends both on the characteristic dispersion/variance and the number of samples collected.</p>
+<p>The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be “uncertain” of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different.</p>
 </div>
 <div id="examples---variation-and-certainty" class="section level3 hasAnchor" number="2.1.2">
 <h3><span class="header-section-number">2.1.2</span> Examples - Variation and Certainty<a href="uncertainty.html#examples---variation-and-certainty" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Create an example data-set and and evaluate variation and certainty.</p>
+<p>Demonstration of how to calculate variance.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="uncertainty.html#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate the mean</span></span>
-<span id="cb4-2"><a href="uncertainty.html#cb4-2" aria-hidden="true" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="fu">mean</span>(sas<span class="sc">$</span>pH_0<span class="fl">.30</span>_obs, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-2"><a href="uncertainty.html#cb4-2" aria-hidden="true" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="fu">mean</span>(test<span class="sc">$</span>pH)</span>
 <span id="cb4-3"><a href="uncertainty.html#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-4"><a href="uncertainty.html#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># subtract mean from each value and square (i.e. residuals)</span></span>
-<span id="cb4-5"><a href="uncertainty.html#cb4-5" aria-hidden="true" tabindex="-1"></a>sas<span class="sc">$</span>S <span class="ot">&lt;-</span> (sas<span class="sc">$</span>pH_0<span class="fl">.30</span>_obs <span class="sc">-</span> mu)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb4-5"><a href="uncertainty.html#cb4-5" aria-hidden="true" tabindex="-1"></a>test<span class="sc">$</span>S <span class="ot">&lt;-</span> (test<span class="sc">$</span>pH <span class="sc">-</span> mu)<span class="sc">^</span><span class="dv">2</span></span>
 <span id="cb4-6"><a href="uncertainty.html#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-7"><a href="uncertainty.html#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate overall sum of squares</span></span>
-<span id="cb4-8"><a href="uncertainty.html#cb4-8" aria-hidden="true" tabindex="-1"></a>SS <span class="ot">&lt;-</span> <span class="fu">sum</span>(sas<span class="sc">$</span>S, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-8"><a href="uncertainty.html#cb4-8" aria-hidden="true" tabindex="-1"></a>SS <span class="ot">&lt;-</span> <span class="fu">sum</span>(test<span class="sc">$</span>S)</span>
 <span id="cb4-9"><a href="uncertainty.html#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-10"><a href="uncertainty.html#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate sample variance (length gives us the total number of sample/observations)</span></span>
-<span id="cb4-11"><a href="uncertainty.html#cb4-11" aria-hidden="true" tabindex="-1"></a>SS <span class="sc">/</span> (<span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(sas<span class="sc">$</span>pH_0<span class="fl">.30</span>_obs)) <span class="sc">-</span> <span class="dv">1</span>)</span></code></pre></div>
-<pre><code>## [1] 1.143514</code></pre>
-<p>Note the differences in range and variance calculated for pH in both examples (100 samples vs. 1000)</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="uncertainty.html#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n <span class="sc">+</span> idx, <span class="at">data =</span> test, var, <span class="at">subset =</span> idx <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div>
-<pre><code>##     n idx pH_0.30_obs
-## 1  10   1   0.9236185
-## 2  30   1   1.6567764
-## 3  60   1   1.3418158
-## 4 100   1   1.3370314</code></pre>
-<p>Now Compare Standard Error (standard deviation / square root of n)</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="uncertainty.html#cb8-1" aria-hidden="true" tabindex="-1"></a>SE <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">sd</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(x)))</span>
+<span id="cb4-11"><a href="uncertainty.html#cb4-11" aria-hidden="true" tabindex="-1"></a>SS <span class="sc">/</span> (<span class="fu">length</span>(test<span class="sc">$</span>pH) <span class="sc">-</span> <span class="dv">1</span>)</span></code></pre></div>
+<pre><code>## [1] 2.567515</code></pre>
+<p>Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="uncertainty.html#cb6-1" aria-hidden="true" tabindex="-1"></a>test <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="uncertainty.html#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iteration, n, sd) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="uncertainty.html#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">var =</span> <span class="fu">var</span>(pH)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="uncertainty.html#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sd, n) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="uncertainty.html#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(var, <span class="fu">list</span>(<span class="at">min =</span> min, <span class="at">mean =</span> mean, <span class="at">max =</span> max)))</span></code></pre></div>
+<pre><code>## # A tibble: 8 × 5
+## # Groups:   sd [2]
+##   sd     n       var_min var_mean var_max
+##   &lt;chr&gt;  &lt;fct&gt;     &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;
+## 1 sd = 1 n = 10    0.231    0.965    2.32
+## 2 sd = 1 n = 30    0.565    0.947    1.59
+## 3 sd = 1 n = 60    0.671    1.04     1.48
+## 4 sd = 1 n = 100   0.799    1.04     1.34
+## 5 sd = 2 n = 10    0.583    4.72    14.2 
+## 6 sd = 2 n = 30    2.55     3.89     5.56
+## 7 sd = 2 n = 60    2.73     4.16     5.98
+## 8 sd = 2 n = 100   2.88     4.13     5.50</code></pre>
+<p>Now Compare Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="uncertainty.html#cb8-1" aria-hidden="true" tabindex="-1"></a>SE <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">sd</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="fu">length</span>(<span class="sc">!</span><span class="fu">is.na</span>(x)))</span>
 <span id="cb8-2"><a href="uncertainty.html#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="uncertainty.html#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">aggregate</span>(pH_0<span class="fl">.30</span>_obs <span class="sc">~</span> n <span class="sc">+</span> idx, <span class="at">data =</span> test, SE, <span class="at">subset =</span> idx <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div>
-<pre><code>##     n idx pH_0.30_obs
-## 1  10   1   0.3397827
-## 2  30   1   0.2683911
-## 3  60   1   0.1746305
-## 4 100   1   0.1412646</code></pre>
-<p>Why are the standard errors different?</p>
+<span id="cb8-3"><a href="uncertainty.html#cb8-3" aria-hidden="true" tabindex="-1"></a>test <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="uncertainty.html#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iteration, n, sd) <span class="sc">%&gt;%</span></span>
+<span id="cb8-5"><a href="uncertainty.html#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">SE =</span> <span class="fu">SE</span>(pH)) <span class="sc">%&gt;%</span></span>
+<span id="cb8-6"><a href="uncertainty.html#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sd, n) <span class="sc">%&gt;%</span></span>
+<span id="cb8-7"><a href="uncertainty.html#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(SE, <span class="fu">list</span>(<span class="at">min =</span> min, <span class="at">mean =</span> mean, <span class="at">max =</span> max)))</span></code></pre></div>
+<pre><code>## # A tibble: 8 × 5
+## # Groups:   sd [2]
+##   sd     n       SE_min SE_mean SE_max
+##   &lt;chr&gt;  &lt;fct&gt;    &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;
+## 1 sd = 1 n = 10  0.152    0.300  0.481
+## 2 sd = 1 n = 30  0.137    0.176  0.230
+## 3 sd = 1 n = 60  0.106    0.131  0.157
+## 4 sd = 1 n = 100 0.0894   0.102  0.116
+## 5 sd = 2 n = 10  0.241    0.662  1.19 
+## 6 sd = 2 n = 30  0.291    0.359  0.431
+## 7 sd = 2 n = 60  0.213    0.262  0.316
+## 8 sd = 2 n = 100 0.170    0.203  0.234</code></pre>
 </div>
 </div>
 <div id="theory-of-uncertainty" class="section level2 hasAnchor" number="2.2">
@@ -500,30 +532,37 @@ div.csl-indent {
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="uncertainty.html#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># this bootstrap is estimating the uncertainty associated with the variance of sas$pH_0.30_obs</span></span>
 <span id="cb10-2"><a href="uncertainty.html#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)</span></span>
 <span id="cb10-3"><a href="uncertainty.html#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-4"><a href="uncertainty.html#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># abbreviate our data to simply the commands</span></span>
-<span id="cb10-5"><a href="uncertainty.html#cb10-5" aria-hidden="true" tabindex="-1"></a>ph <span class="ot">&lt;-</span> <span class="fu">na.exclude</span>(sas<span class="sc">$</span>pH_0<span class="fl">.30</span>_obs)</span>
-<span id="cb10-6"><a href="uncertainty.html#cb10-6" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb10-4"><a href="uncertainty.html#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># load the GSP Salt Affected Soil dataset</span></span>
+<span id="cb10-5"><a href="uncertainty.html#cb10-5" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv&quot;</span></span>
+<span id="cb10-6"><a href="uncertainty.html#cb10-6" aria-hidden="true" tabindex="-1"></a>sas <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(url)</span>
 <span id="cb10-7"><a href="uncertainty.html#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="uncertainty.html#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># set number of iterations</span></span>
-<span id="cb10-9"><a href="uncertainty.html#cb10-9" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb10-8"><a href="uncertainty.html#cb10-8" aria-hidden="true" tabindex="-1"></a>N   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(sas)</span>
+<span id="cb10-9"><a href="uncertainty.html#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-10"><a href="uncertainty.html#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-11"><a href="uncertainty.html#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># create a data frame to store the results</span></span>
-<span id="cb10-12"><a href="uncertainty.html#cb10-12" aria-hidden="true" tabindex="-1"></a>boot_stats <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb10-13"><a href="uncertainty.html#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">numeric</span>(k),</span>
-<span id="cb10-14"><a href="uncertainty.html#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">means =</span> <span class="fu">numeric</span>(k)</span>
-<span id="cb10-15"><a href="uncertainty.html#cb10-15" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb10-16"><a href="uncertainty.html#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-17"><a href="uncertainty.html#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co"># for each instance (i) in the set from 1 to N (50 in this case)</span></span>
-<span id="cb10-18"><a href="uncertainty.html#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>k) {</span>
-<span id="cb10-19"><a href="uncertainty.html#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create a new variable dB from each bootstrap sample of d</span></span>
-<span id="cb10-20"><a href="uncertainty.html#cb10-20" aria-hidden="true" tabindex="-1"></a>  boot.sample <span class="ot">=</span> <span class="fu">sample</span>(ph, n, <span class="at">replace =</span> <span class="cn">TRUE</span>) </span>
-<span id="cb10-21"><a href="uncertainty.html#cb10-21" aria-hidden="true" tabindex="-1"></a>  boot_stats<span class="sc">$</span>means[i] <span class="ot">=</span> <span class="fu">mean</span>(boot.sample)</span>
-<span id="cb10-22"><a href="uncertainty.html#cb10-22" aria-hidden="true" tabindex="-1"></a>  boot_stats<span class="sc">$</span>vars[i]  <span class="ot">=</span> <span class="fu">var</span>(boot.sample)</span>
-<span id="cb10-23"><a href="uncertainty.html#cb10-23" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb10-24"><a href="uncertainty.html#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-25"><a href="uncertainty.html#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(boot_stats<span class="sc">$</span>vars)</span></code></pre></div>
-<pre><code>##        0%       25%       50%       75%      100% 
-## 0.9283366 1.0974087 1.1601052 1.2596333 1.5745767</code></pre>
+<span id="cb10-11"><a href="uncertainty.html#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># abbreviate our data to simply the commands</span></span>
+<span id="cb10-12"><a href="uncertainty.html#cb10-12" aria-hidden="true" tabindex="-1"></a>ph <span class="ot">&lt;-</span> <span class="fu">na.exclude</span>(sas<span class="sc">$</span>pH_0<span class="fl">.30</span>_obs)</span>
+<span id="cb10-13"><a href="uncertainty.html#cb10-13" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb10-14"><a href="uncertainty.html#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="uncertainty.html#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># set number of iterations</span></span>
+<span id="cb10-16"><a href="uncertainty.html#cb10-16" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb10-17"><a href="uncertainty.html#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="uncertainty.html#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co"># create a data frame to store the results</span></span>
+<span id="cb10-19"><a href="uncertainty.html#cb10-19" aria-hidden="true" tabindex="-1"></a>boot_stats <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-20"><a href="uncertainty.html#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">vars =</span> <span class="fu">numeric</span>(k),</span>
+<span id="cb10-21"><a href="uncertainty.html#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">means =</span> <span class="fu">numeric</span>(k)</span>
+<span id="cb10-22"><a href="uncertainty.html#cb10-22" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-23"><a href="uncertainty.html#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="uncertainty.html#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co"># for each instance (i) in the set from 1 to N (50 in this case)</span></span>
+<span id="cb10-25"><a href="uncertainty.html#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>k) {</span>
+<span id="cb10-26"><a href="uncertainty.html#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create a new variable dB from each bootstrap sample of d</span></span>
+<span id="cb10-27"><a href="uncertainty.html#cb10-27" aria-hidden="true" tabindex="-1"></a>  boot.sample <span class="ot">=</span> <span class="fu">sample</span>(ph, n, <span class="at">replace =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb10-28"><a href="uncertainty.html#cb10-28" aria-hidden="true" tabindex="-1"></a>  boot_stats<span class="sc">$</span>means[i] <span class="ot">=</span> <span class="fu">mean</span>(boot.sample)</span>
+<span id="cb10-29"><a href="uncertainty.html#cb10-29" aria-hidden="true" tabindex="-1"></a>  boot_stats<span class="sc">$</span>vars[i]  <span class="ot">=</span> <span class="fu">var</span>(boot.sample)</span>
+<span id="cb10-30"><a href="uncertainty.html#cb10-30" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-31"><a href="uncertainty.html#cb10-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-32"><a href="uncertainty.html#cb10-32" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(boot_stats<span class="sc">$</span>vars)</span></code></pre></div>
+<pre><code>##       0%      25%      50%      75%     100% 
+## 0.942929 1.049814 1.132754 1.232709 1.591579</code></pre>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="uncertainty.html#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stripchart</span>(boot_stats<span class="sc">$</span>vars)</span></code></pre></div>
 <p><img src="002-uncertainty_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="uncertainty.html#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Traditional Approach</span></span>
@@ -537,7 +576,7 @@ div.csl-indent {
 <span id="cb13-9"><a href="uncertainty.html#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare Bootstrap to Confidence Interval</span></span>
 <span id="cb13-10"><a href="uncertainty.html#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(boot_stats<span class="sc">$</span>means, <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>))</span></code></pre></div>
 <pre><code>##     2.5%    97.5% 
-## 5.831802 6.201848</code></pre>
+## 5.839581 6.161552</code></pre>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="uncertainty.html#cb15-1" aria-hidden="true" tabindex="-1"></a>ci</span></code></pre></div>
 <pre><code>##        l        u 
 ## 5.804082 6.223267</code></pre>
@@ -936,12 +975,12 @@ div.csl-indent {
 <span id="cb47-20"><a href="uncertainty.html#cb47-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarize results</span></span>
 <span id="cb47-21"><a href="uncertainty.html#cb47-21" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lm_cv)</span></code></pre></div>
 <pre><code>##       RMSE              R2        
-##  Min.   :0.4542   Min.   :0.8455  
-##  1st Qu.:0.4673   1st Qu.:0.8493  
-##  Median :0.4686   Median :0.8535  
+##  Min.   :0.4537   Min.   :0.8434  
+##  1st Qu.:0.4591   1st Qu.:0.8481  
+##  Median :0.4699   Median :0.8508  
 ##  Mean   :0.4689   Mean   :0.8526  
-##  3rd Qu.:0.4736   3rd Qu.:0.8548  
-##  Max.   :0.4830   Max.   :0.8614</code></pre>
+##  3rd Qu.:0.4767   3rd Qu.:0.8583  
+##  Max.   :0.4825   Max.   :0.8637</code></pre>
 </div>
 <div id="subsample-resampling-or-sample-simulation" class="section level4 hasAnchor" number="2.6.1.3">
 <h4><span class="header-section-number">2.6.1.3</span> Subsample (Resampling or sample simulation)<a href="uncertainty.html#subsample-resampling-or-sample-simulation" class="anchor-section" aria-label="Anchor link to header"></a></h4>
@@ -989,7 +1028,7 @@ Brus, D. J., B. Kempen, and G. B. M. Heuvelink. 2011. <span>“Sampling for Vali
 Congalton, Russell G., and Kass Green. 2019a. <em>Assessing the <span>Accuracy</span> of <span>Remotely</span> <span>Sensed</span> <span>Data</span>: <span>Principles</span> and <span>Practices</span>, <span>Third</span> <span>Edition</span></em>. 3rd ed. CRC Press. <a href="https://doi.org/10.1201/9780429052729">https://doi.org/10.1201/9780429052729</a>.
 </div>
 <div id="ref-congalton_basic_2019" class="csl-entry">
-———. 2019b. <span>“Basic <span>Analysis</span> <span>Techniques</span>.”</span> In <em>Assessing the <span>Accuracy</span> of <span>Remotely</span> <span>Sensed</span> <span>Data</span></em>, 3rd ed., 127–44. CRC Press. <a href="https://doi.org/10.1201/9780429052729-6">https://doi.org/10.1201/9780429052729-6</a>.
+———. 2019b. <span>“Basic <span>Analysis</span> <span>Techniques</span>.”</span> In <em>Assessing the <span>Accuracy</span> of <span>Remotely</span> <span>Sensed</span> <span>Data</span></em>, 3rd ed., 127–44. CRC Press. <a href="https://doi.org/10.1201/9780429052729-8">https://doi.org/10.1201/9780429052729-8</a>.
 </div>
 <div id="ref-good2013" class="csl-entry">
 Good, Phillip I. 2013. <em>Introduction to <span>Statistics</span> <span>Through</span> <span>Resampling</span> <span>Methods</span> and <span>R</span></em>. Hoboken, NJ, USA: John Wiley &amp; Sons, Inc. <a href="https://doi.org/10.1002/9781118497593">https://doi.org/10.1002/9781118497593</a>.
