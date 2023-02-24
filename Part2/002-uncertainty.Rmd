@@ -47,42 +47,52 @@ Errors are simply the difference between reality and our representation of reali
 
 ### Examples - Dispersion
 
+Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
+
 ```{r eval = TRUE}
 
-# load the GSP Salt Affected Soil dataset
-url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
-sas <- read.csv(url)
-
-N   <- nrow(sas)
+library(dplyr)
+library(ggplot2)
 
 
 # create 50 random pH samples of 10, 30, 60, and 100
-y <- c(10, 30, 60, 100)
+y   <- c(10, 30, 60, 100)
+lab <- paste0("n = ", y)
 
-f <- function(x, n) {
-  idx <- sample(1:N, n)
-  tmp <- cbind(idx = factor(x, levels = 1:50), n = factor(n, levels = y), sas[idx, ])
+
+f <- function(x, n, sd) {
+  idx <- rnorm(n, mean = 7, sd = sd)
+  tmp <- data.frame(iteration = factor(x, levels = 1:30), n = factor(n, levels = y, labels = lab), sd = paste0("sd = ", sd), pH = idx)
   return(tmp)
 }
 
-test <- mapply(FUN = f, rep(1:50, times = 4), rep(y, each = 50), SIMPLIFY = FALSE)
+# standard deviation of 1
+test <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 1, SIMPLIFY = FALSE)
 test <- do.call("rbind", test)
+
+# standard deviation of 1
+test2 <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 2, SIMPLIFY = FALSE)
+test2 <- do.call("rbind", test2)
+
+test <- rbind(test, test2)
 
 
 # examine summary statistics
-aggregate(pH_0.30_obs ~ n + idx, data = test, quantile, subset = idx == 1)
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(med = median(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(med, list(min = min, mean = mean, max = max)))
 
 
 # examine box plots
-library(ggplot2)
-
-ggplot(test, aes(y = pH_0.30_obs, x = idx)) +
+ggplot(test, aes(x = iteration, y = pH)) +
   geom_boxplot() +
-  facet_wrap(~ n, ncol = 1)
+  facet_wrap(~ n + sd, ncol = 2, )
 
 ```
 
-Dispersion or variance is a characteristic of the population being evaluated. While more or better sample collection might give you better precision of those estimates, we would not expect them to change the dispersion calculated. Conversely, measures of certainty of the central tendency (how sure are you of the typical value reported) depends both on the characteristic dispersion/variance and the number of samples collected.
+The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be "uncertain" of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different. 
 
   
 ### Examples - Variation and Certainty
@@ -92,30 +102,38 @@ Create an example data-set and and evaluate variation and certainty.
 ```{r eval = TRUE}
 
 # calculate the mean
-mu <- mean(sas$pH_0.30_obs, na.rm = TRUE)
+mu <- mean(test$pH)
 
 # subtract mean from each value and square (i.e. residuals)
-sas$S <- (sas$pH_0.30_obs - mu)^2
+test$S <- (test$pH - mu)^2
 
 # calculate overall sum of squares
-SS <- sum(sas$S, na.rm = TRUE)
+SS <- sum(test$S)
 
 # calculate sample variance (length gives us the total number of sample/observations)
-SS / (sum(!is.na(sas$pH_0.30_obs)) - 1)
+SS / (length(test$pH) - 1)
 ```
 
-Note the differences in range and variance calculated for pH in both examples (100 samples vs. 1000)
+Note the differences in range and variance calculated for pH in both examples (10 samples vs. 100)
 
 ```{r eval = TRUE}
-aggregate(pH_0.30_obs ~ n + idx, data = test, var, subset = idx == 1)
-```
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(var = var(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(var, list(min = min, mean = mean, max = max)))
+``` 
 
 Now Compare Standard Error (standard deviation / square root of n)
 
 ```{r eval = TRUE}
-SE <- function(x) sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x)))
+SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
 
-aggregate(pH_0.30_obs ~ n + idx, data = test, SE, subset = idx == 1)
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(SE = SE(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(SE, list(min = min, mean = mean, max = max)))
 
 ```
 
@@ -152,6 +170,13 @@ Re-sampling is a general term that defines any procedure to repeatedly draw samp
 ```{r eval = TRUE}
 # this bootstrap is estimating the uncertainty associated with the variance of sas$pH_0.30_obs
 # an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
+
+# load the GSP Salt Affected Soil dataset
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_sas.csv"
+sas <- read.csv(url)
+
+N   <- nrow(sas)
+
 
 # abbreviate our data to simply the commands
 ph <- na.exclude(sas$pH_0.30_obs)
