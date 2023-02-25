@@ -84,14 +84,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.32     6.99    7.55
-## 2 sd = 1 n = 30     6.38     7.07    7.52
-## 3 sd = 1 n = 60     6.86     7.07    7.38
-## 4 sd = 1 n = 100    6.80     7.03    7.26
-## 5 sd = 2 n = 10     5.69     7.17    9.54
-## 6 sd = 2 n = 30     6.17     6.90    7.98
-## 7 sd = 2 n = 60     6.44     7.03    7.66
-## 8 sd = 2 n = 100    6.40     6.96    7.56
+## 1 sd = 1 n = 10     6.23     7.00    7.78
+## 2 sd = 1 n = 30     6.55     7.02    7.50
+## 3 sd = 1 n = 60     6.69     7.03    7.42
+## 4 sd = 1 n = 100    6.79     7.02    7.26
+## 5 sd = 2 n = 10     5.84     6.95    8.41
+## 6 sd = 2 n = 30     6.39     7.16    7.94
+## 7 sd = 2 n = 60     6.12     7.01    7.62
+## 8 sd = 2 n = 100    6.46     7.07    7.85
 ```
 
 ```r
@@ -125,7 +125,7 @@ SS / (length(test$pH) - 1)
 ```
 
 ```
-## [1] 2.476856
+## [1] 2.548376
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -144,14 +144,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       var_min var_mean var_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.224    1.07     2.60
-## 2 sd = 1 n = 30    0.491    0.960    1.74
-## 3 sd = 1 n = 60    0.732    0.984    1.34
-## 4 sd = 1 n = 100   0.734    0.959    1.23
-## 5 sd = 2 n = 10    0.691    4.60    10.5 
-## 6 sd = 2 n = 30    2.20     3.68     5.80
-## 7 sd = 2 n = 60    2.84     4.10     5.58
-## 8 sd = 2 n = 100   2.99     3.96     5.20
+## 1 sd = 1 n = 10    0.406    0.947    1.81
+## 2 sd = 1 n = 30    0.591    1.04     1.72
+## 3 sd = 1 n = 60    0.656    1.00     1.39
+## 4 sd = 1 n = 100   0.724    0.995    1.25
+## 5 sd = 2 n = 10    1.21     3.65    11.9 
+## 6 sd = 2 n = 30    2.03     3.95     6.28
+## 7 sd = 2 n = 60    2.78     4.08     5.57
+## 8 sd = 2 n = 100   2.86     4.11     5.80
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -172,14 +172,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.150   0.317   0.510
-## 2 sd = 1 n = 30  0.128   0.177   0.241
-## 3 sd = 1 n = 60  0.110   0.128   0.149
-## 4 sd = 1 n = 100 0.0857  0.0977  0.111
-## 5 sd = 2 n = 10  0.263   0.662   1.02 
-## 6 sd = 2 n = 30  0.271   0.347   0.440
-## 7 sd = 2 n = 60  0.218   0.260   0.305
-## 8 sd = 2 n = 100 0.173   0.199   0.228
+## 1 sd = 1 n = 10  0.202   0.303   0.426
+## 2 sd = 1 n = 30  0.140   0.184   0.240
+## 3 sd = 1 n = 60  0.105   0.129   0.152
+## 4 sd = 1 n = 100 0.0851  0.0995  0.112
+## 5 sd = 2 n = 10  0.348   0.579   1.09 
+## 6 sd = 2 n = 30  0.260   0.360   0.457
+## 7 sd = 2 n = 60  0.215   0.260   0.305
+## 8 sd = 2 n = 100 0.169   0.202   0.241
 ```
 
 ## Theory of Uncertainty
@@ -245,7 +245,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.8883815 1.0535106 1.1422808 1.2589186 1.5199002
+## 0.9071562 1.0749006 1.1750622 1.2640883 1.5303392
 ```
 
 ```r
@@ -269,7 +269,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.814472 6.194792
+## 5.849535 6.258995
 ```
 
 ```r
@@ -411,7 +411,7 @@ ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
 
 **Probability-based metrics** (threshold-independent)
 
-Beware the $D^2$ and Tjur's D only apply to binary classes. Also, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
+Beware the $D^2$ and Tjur's D only apply to binary classes. Also, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
 
 Accuracy:
 
@@ -424,16 +424,19 @@ Precision:
 -   Shannon entropy: index of information content; higher values equal more uncertainty (`aqp::shannonEntropy()`)
 -   Confusion index: index of confusion; ranges from 0 to 1 (`aqp::confusionIndex()`)
 
-**Class-based metrics** are derivatives of the confusion matrix [@kuhn2013; @zumel2014; @congalton2019; @james2021] (`caret::confusionMatrix()`)
 
-| Confusion Matrix    | Observed             |                       | Metric         |
-|------------------|------------------|------------------|------------------|
-| **Predicted**       | No                   | Yes                   | UA             |
-| No                  | True Negative (TN)   | False Negative (FN)   | UA             |
-| Yes                 | False Positive (FP)  | True Positive (TP)    | Precision / UA |
-| ------------------- | -------------------- | --------------------- | -------------- |
-| Metric              | Specificity / PA     | Sensitivity / PA      | Overall        |
+**Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
 
+
+Confusion Matrix   | Observed           |                     |Metric                     |
+-------------------|--------------------|---------------------|--------------|
+**Predicted**      | No                 | Yes                 |            UA|
+No                 | True Negative (TN) | False Negative (FN) |            UA|
+Yes                | False Positive (FP)| True Positive (TP)  |Precision / UA|
+-------------------|--------------------|---------------------|--------------|
+Metric             |Specificity / PA    |Sensitivity / PA     |Overall       |
+ 
+                   
 -   Overall Accuracy: % of observations that were correctly classified, for all classes
 -   Specificity (aka True Negative Rate:
     -   TN / (TN + FP)
@@ -629,7 +632,7 @@ sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 
 ## Stratified-random/areal-adjustment
 
-In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @campbell_introduction_2023; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
 
 
 ```r
@@ -775,12 +778,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4547   Min.   :0.8390  
-##  1st Qu.:0.4614   1st Qu.:0.8504  
-##  Median :0.4663   Median :0.8525  
-##  Mean   :0.4689   Mean   :0.8525  
-##  3rd Qu.:0.4728   3rd Qu.:0.8582  
-##  Max.   :0.4884   Max.   :0.8645
+##  Min.   :0.4529   Min.   :0.8459  
+##  1st Qu.:0.4643   1st Qu.:0.8491  
+##  Median :0.4684   Median :0.8509  
+##  Mean   :0.4689   Mean   :0.8526  
+##  3rd Qu.:0.4758   3rd Qu.:0.8566  
+##  Max.   :0.4833   Max.   :0.8636
 ```
 
 #### Subsample (Resampling or sample simulation)

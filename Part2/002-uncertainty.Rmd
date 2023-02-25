@@ -392,7 +392,7 @@ ggplot(sas, aes(x = EC_0.30_obs, y = EC_0.30_pred)) +
 
 **Probability-based metrics** (threshold-independent)
 
-Beware the $D^2$ and Tjur's D only apply to binary classes. Also, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
+Beware the $D^2$ and Tjur's D only apply to binary classes. Also, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
 
 Accuracy:
 
@@ -405,18 +405,21 @@ Precision:
 -   Shannon entropy: index of information content; higher values equal more uncertainty (`aqp::shannonEntropy()`)
 -   Confusion index: index of confusion; ranges from 0 to 1 (`aqp::confusionIndex()`)
 
-**Class-based metrics** are derivatives of the confusion matrix [@kuhn2013; @zumel2014; @congalton2019; @james2021] (`caret::confusionMatrix()`)
 
-| Confusion Matrix    | Observed             |                       | Metric         |
-|------------------|------------------|------------------|------------------|
-| **Predicted**       | No                   | Yes                   | UA             |
-| No                  | True Negative (TN)   | False Negative (FN)   | UA             |
-| Yes                 | False Positive (FP)  | True Positive (TP)    | Precision / UA |
-| ------------------- | -------------------- | --------------------- | -------------- |
-| Metric              | Specificity / PA     | Sensitivity / PA      | Overall        |
+**Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
 
+
+Confusion Matrix   | Observed           |                     |Metric                     |
+-------------------|--------------------|---------------------|--------------|
+**Predicted**      | No                 | Yes                 |            UA|
+No                 | True Negative (TN) | False Negative (FN) |            UA|
+Yes                | False Positive (FP)| True Positive (TP)  |Precision / UA|
+-------------------|--------------------|---------------------|--------------|
+Metric             |Specificity / PA    |Sensitivity / PA     |Overall       |
+ 
+                   
 -   Overall Accuracy: % of observations that were correctly classified, for all classes
--   Specificity (aka True Negative Rate:
+-   Specificity (aka True Negative Rate):
     -   TN / (TN + FP)
     -   errors of commission (Type I)
 -   Sensitivity (aka Recall or True Positive Rate):
@@ -532,7 +535,7 @@ caret::confusionMatrix(cm)
 
 ## Stratified-random/areal-adjustment
 
-In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @campbell_introduction_2023; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
 
 ```{r}
 # weights
