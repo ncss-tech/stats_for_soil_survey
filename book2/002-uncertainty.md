@@ -84,14 +84,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.23     7.00    7.78
-## 2 sd = 1 n = 30     6.55     7.02    7.50
-## 3 sd = 1 n = 60     6.69     7.03    7.42
-## 4 sd = 1 n = 100    6.79     7.02    7.26
-## 5 sd = 2 n = 10     5.84     6.95    8.41
-## 6 sd = 2 n = 30     6.39     7.16    7.94
-## 7 sd = 2 n = 60     6.12     7.01    7.62
-## 8 sd = 2 n = 100    6.46     7.07    7.85
+## 1 sd = 1 n = 10     6.28     6.99    7.67
+## 2 sd = 1 n = 30     6.73     7.09    7.56
+## 3 sd = 1 n = 60     6.66     6.99    7.32
+## 4 sd = 1 n = 100    6.77     7.00    7.24
+## 5 sd = 2 n = 10     4.99     6.93    8.58
+## 6 sd = 2 n = 30     6.36     7.04    7.90
+## 7 sd = 2 n = 60     6.51     6.96    7.78
+## 8 sd = 2 n = 100    6.63     6.94    7.27
 ```
 
 ```r
@@ -125,7 +125,7 @@ SS / (length(test$pH) - 1)
 ```
 
 ```
-## [1] 2.548376
+## [1] 2.48811
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -144,14 +144,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       var_min var_mean var_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.406    0.947    1.81
-## 2 sd = 1 n = 30    0.591    1.04     1.72
-## 3 sd = 1 n = 60    0.656    1.00     1.39
-## 4 sd = 1 n = 100   0.724    0.995    1.25
-## 5 sd = 2 n = 10    1.21     3.65    11.9 
-## 6 sd = 2 n = 30    2.03     3.95     6.28
-## 7 sd = 2 n = 60    2.78     4.08     5.57
-## 8 sd = 2 n = 100   2.86     4.11     5.80
+## 1 sd = 1 n = 10    0.314    0.947    2.81
+## 2 sd = 1 n = 30    0.654    1.02     1.55
+## 3 sd = 1 n = 60    0.689    0.985    1.35
+## 4 sd = 1 n = 100   0.789    0.981    1.38
+## 5 sd = 2 n = 10    1.42     4.19     7.70
+## 6 sd = 2 n = 30    2.80     4.12     6.07
+## 7 sd = 2 n = 60    2.93     4.19     5.47
+## 8 sd = 2 n = 100   2.77     3.82     5.32
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -172,14 +172,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.202   0.303   0.426
-## 2 sd = 1 n = 30  0.140   0.184   0.240
-## 3 sd = 1 n = 60  0.105   0.129   0.152
-## 4 sd = 1 n = 100 0.0851  0.0995  0.112
-## 5 sd = 2 n = 10  0.348   0.579   1.09 
-## 6 sd = 2 n = 30  0.260   0.360   0.457
-## 7 sd = 2 n = 60  0.215   0.260   0.305
-## 8 sd = 2 n = 100 0.169   0.202   0.241
+## 1 sd = 1 n = 10  0.177   0.295   0.530
+## 2 sd = 1 n = 30  0.148   0.183   0.227
+## 3 sd = 1 n = 60  0.107   0.128   0.150
+## 4 sd = 1 n = 100 0.0888  0.0988  0.117
+## 5 sd = 2 n = 10  0.377   0.636   0.877
+## 6 sd = 2 n = 30  0.306   0.369   0.450
+## 7 sd = 2 n = 60  0.221   0.263   0.302
+## 8 sd = 2 n = 100 0.166   0.195   0.231
 ```
 
 ## Theory of Uncertainty
@@ -245,7 +245,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.9071562 1.0749006 1.1750622 1.2640883 1.5303392
+## 0.8711523 1.0938246 1.1479461 1.2456118 1.4493263
 ```
 
 ```r
@@ -269,7 +269,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.849535 6.258995
+## 5.890838 6.267164
 ```
 
 ```r
@@ -425,33 +425,42 @@ Precision:
 -   Confusion index: index of confusion; ranges from 0 to 1 (`aqp::confusionIndex()`)
 
 
-**Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
+**Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @james2021; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
 
+| Confusion Matrix    | Observed             |                       | Metric              |
+|---------------------|----------------------|-----------------------|-------------------- |
+| **Predicted**       | No                   | Yes                   | UA                  |
+| No                  | True Negative (TN)   | False Negative (FN)   | NPV/ UA             |
+| Yes                 | False Positive (FP)  | True Positive (TP)    | PPV/ Precision / UA |
+| ------------------- | -------------------- | --------------------- | ------------------- |
+| Metric              | Specificity / PA     | Sensitivity / PA      | Overall             |
 
-Confusion Matrix   | Observed           |                     |Metric                     |
--------------------|--------------------|---------------------|--------------|
-**Predicted**      | No                 | Yes                 |            UA|
-No                 | True Negative (TN) | False Negative (FN) |            UA|
-Yes                | False Positive (FP)| True Positive (TP)  |Precision / UA|
--------------------|--------------------|---------------------|--------------|
-Metric             |Specificity / PA    |Sensitivity / PA     |Overall       |
- 
-                   
+-   Prevalence (P): % of class occurrence in the population, usually this is estimated from the sample
 -   Overall Accuracy: % of observations that were correctly classified, for all classes
--   Specificity (aka True Negative Rate:
+-   Sensitivity (SN) (aka Recall or True Positive Rate):
+    -   TP / (TP + FN)
+    -   \% of TRUE predictions that were correctly classified, for an individual class
+-   Specificity (SP) (aka True Negative Rate):
     -   TN / (TN + FP)
     -   errors of commission (Type I)
--   Sensitivity (aka Recall or True Positive Rate):
-    -   TP / (TP + FN)
-    -   errors of omission (Type II))
-    -   \% of predictions that were correctly classified, for an individual class
--   Precision:
+-   \% of FALSE observations that were correctly classified, for an individual class
+    -   Precision:
     -   TP / (TP + FP)
-    -   \% of observations that were correctly classified, for an individual class
--   User's Accuracy (UA):
-    -   diagonal values / predicted values
+    -   \% of TRUE observations that were classified as a class, that actually were that class
+-   Positive Preditive Value (PPV):
+    -   if prevalence  = 50 then TP / (TP + FP)
+    -   if prevalence != 50 then SN * P / (SN * P) + ((1 - SP) * (1 - P))
+    -   \% of TRUE observations that were classified as a class, that actually were that class
+-   Negative Predictive Value (NPV):
+    -   if prevalence  = 50 then TN / (TN + FN)
+    -   if prevalence != 50 then SP * (1 - P) / (P * (1 - SN)) + (SP * (1 - P))
+    -   \% of FALSE observations that were classified as a class, that actually were that   class
 -   Producer's Accuracy (PA):
     -   diagonal values (TN & TP) / observed values
+    -   \% of predictions that were correctly classified, for an individual class
+-   User's Accuracy (UA):
+    -   diagonal values / predicted values
+    -   \% of FALSE observations that were classified as a class, that actually were that class
 -   Tau index: An index of accuracy that accounts for agreement by chance--- effectively a replacement for Cohen's Kappa (`aqp::tauW()`)
 
 
@@ -778,12 +787,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4529   Min.   :0.8459  
-##  1st Qu.:0.4643   1st Qu.:0.8491  
-##  Median :0.4684   Median :0.8509  
-##  Mean   :0.4689   Mean   :0.8526  
-##  3rd Qu.:0.4758   3rd Qu.:0.8566  
-##  Max.   :0.4833   Max.   :0.8636
+##  Min.   :0.4587   Min.   :0.8438  
+##  1st Qu.:0.4619   1st Qu.:0.8495  
+##  Median :0.4701   Median :0.8531  
+##  Mean   :0.4689   Mean   :0.8527  
+##  3rd Qu.:0.4728   3rd Qu.:0.8561  
+##  Max.   :0.4857   Max.   :0.8607
 ```
 
 #### Subsample (Resampling or sample simulation)

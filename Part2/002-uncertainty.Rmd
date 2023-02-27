@@ -406,33 +406,42 @@ Precision:
 -   Confusion index: index of confusion; ranges from 0 to 1 (`aqp::confusionIndex()`)
 
 
-**Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
+**Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @james2021; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
 
+| Confusion Matrix    | Observed             |                       | Metric              |
+|---------------------|----------------------|-----------------------|-------------------- |
+| **Predicted**       | No                   | Yes                   | UA                  |
+| No                  | True Negative (TN)   | False Negative (FN)   | NPV/ UA             |
+| Yes                 | False Positive (FP)  | True Positive (TP)    | PPV/ Precision / UA |
+| ------------------- | -------------------- | --------------------- | ------------------- |
+| Metric              | Specificity / PA     | Sensitivity / PA      | Overall             |
 
-Confusion Matrix   | Observed           |                     |Metric                     |
--------------------|--------------------|---------------------|--------------|
-**Predicted**      | No                 | Yes                 |            UA|
-No                 | True Negative (TN) | False Negative (FN) |            UA|
-Yes                | False Positive (FP)| True Positive (TP)  |Precision / UA|
--------------------|--------------------|---------------------|--------------|
-Metric             |Specificity / PA    |Sensitivity / PA     |Overall       |
- 
-                   
+-   Prevalence (P): % of class occurrence in the population, usually this is estimated from the sample
 -   Overall Accuracy: % of observations that were correctly classified, for all classes
--   Specificity (aka True Negative Rate):
+-   Sensitivity (SN) (aka Recall or True Positive Rate):
+    -   TP / (TP + FN)
+    -   \% of TRUE predictions that were correctly classified, for an individual class
+-   Specificity (SP) (aka True Negative Rate):
     -   TN / (TN + FP)
     -   errors of commission (Type I)
--   Sensitivity (aka Recall or True Positive Rate):
-    -   TP / (TP + FN)
-    -   errors of omission (Type II))
-    -   \% of predictions that were correctly classified, for an individual class
--   Precision:
+-   \% of FALSE observations that were correctly classified, for an individual class
+    -   Precision:
     -   TP / (TP + FP)
-    -   \% of observations that were correctly classified, for an individual class
--   User's Accuracy (UA):
-    -   diagonal values / predicted values
+    -   \% of TRUE observations that were classified as a class, that actually were that class
+-   Positive Preditive Value (PPV):
+    -   if prevalence  = 50 then TP / (TP + FP)
+    -   if prevalence != 50 then SN * P / (SN * P) + ((1 - SP) * (1 - P))
+    -   \% of TRUE observations that were classified as a class, that actually were that class
+-   Negative Predictive Value (NPV):
+    -   if prevalence  = 50 then TN / (TN + FN)
+    -   if prevalence != 50 then SP * (1 - P) / (P * (1 - SN)) + (SP * (1 - P))
+    -   \% of FALSE observations that were classified as a class, that actually were that   class
 -   Producer's Accuracy (PA):
     -   diagonal values (TN & TP) / observed values
+    -   \% of predictions that were correctly classified, for an individual class
+-   User's Accuracy (UA):
+    -   diagonal values / predicted values
+    -   \% of FALSE observations that were classified as a class, that actually were that class
 -   Tau index: An index of accuracy that accounts for agreement by chance--- effectively a replacement for Cohen's Kappa (`aqp::tauW()`)
 
 ```{r eval = TRUE}
