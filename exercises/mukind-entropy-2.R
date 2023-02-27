@@ -26,6 +26,8 @@ download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/dat
 
 all.H <- readRDS(tf)
 
+head(all.H)
+
 
 # tabulate map unit kinds for all SSURGO map unit keys
 sort(
