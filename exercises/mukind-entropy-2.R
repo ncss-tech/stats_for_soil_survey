@@ -58,6 +58,7 @@ bwplot(
 
 
 
+
 # using ggplot style visualization
 
 library(ggdist)
@@ -154,7 +155,7 @@ head(x)
 plan(multisession)
 
 # ~ 4.5 minutes
-system.time(all.H <- future_map(x$areasymbol, safely(getH), .progress=TRUE))
+system.time(all.H <- future_map(x$areasymbol, safely(getH), .progress = TRUE))
 
 # stop back-ends
 plan(sequential)
@@ -165,7 +166,9 @@ plan(sequential)
 all.H <- map(all.H, pluck, 'result')
 all.H <- do.call('rbind', all.H)
 
-# FY22: 318,671 map unit keys
+## map unit keys:
+# FY22: 318,671 
+# FY23: 319,998
 nrow(all.H)
 
 ## save to a local file for later use

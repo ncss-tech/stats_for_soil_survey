@@ -169,7 +169,7 @@ z[z$mukey == '2374651', ]
 x[x$mukey == '1540935', ]
 z[z$mukey == '1540935', ]
 
-# single component!?
+# consociation
 x[x$mukey == '2537554', ]
 z[z$mukey == '2537554', ]
 
