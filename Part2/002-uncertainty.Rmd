@@ -46,7 +46,7 @@ Errors are simply the difference between reality and our representation of reali
 
 Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
 
-```{r eval = TRUE}
+```{r eval = TRUE, fig.height=7}
 
 library(dplyr)
 library(ggplot2)
@@ -198,9 +198,9 @@ stripchart(boot_stats$vars)
 # Traditional Approach
 ci <- c(
   # lower 5th
-  l = mean(ph) - 1.96 * sd(ph) / sqrt(n),
+  l = mean(ph) - 1.96 * sd(ph) / sqrt(N),
   # upper 95th
-  u = mean(ph) + 1.96 * sd(ph) / sqrt(n)
+  u = mean(ph) + 1.96 * sd(ph) / sqrt(N)
   )
 
 # Compare Bootstrap to Confidence Interval
@@ -244,16 +244,17 @@ quantile(boot_stats$means, c(0.1, 0.9), na.rm = TRUE)
 
 ```{r, eval=FALSE, echo=FALSE}
 c(# lower 5th
-  l = mean(EC) - 1.96 * sd(EC) / sqrt(n),
+  l = mean(EC) - 1.96 * sd(EC) / sqrt(N),
   # upper 95th
-  u = mean(EC) + 1.96 * sd(EC) / sqrt(n)
+  u = mean(EC) + 1.96 * sd(EC) / sqrt(N)
 )
 ```
 
-4.  What is wrong with the traditional confidence interval?
+4.  Why is the traditional confidence interval so much narrower?
 
 ```{r, eval=FALSE, echo=FALSE}
-# if not transformed it returns negative values
+# it's based on >38K vs 100 samples
+# if not transformed it could return negative values is the sample size is 100
 ```
 
 
@@ -341,7 +342,7 @@ RMSE(pred = sas$pH_0.30_pred, obs = sas$pH_0.30_obs, na.rm = TRUE)
 
 idx <- sample(1:nrow(sas), 100)
 
-ggplot(sas[idx, ], aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
+ggplot(sas[idx, ], aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
   geom_point() +
   # draw a 1 to 1 line
   geom_abline() +
@@ -349,7 +350,7 @@ ggplot(sas[idx, ], aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
   geom_smooth(method = "lm")
 
 
-ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
+ggplot(sas, aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
   # use if too many points overlap
   geom_hex() +
   geom_abline() +

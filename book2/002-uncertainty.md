@@ -84,14 +84,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.28     6.99    7.67
-## 2 sd = 1 n = 30     6.73     7.09    7.56
-## 3 sd = 1 n = 60     6.66     6.99    7.32
-## 4 sd = 1 n = 100    6.77     7.00    7.24
-## 5 sd = 2 n = 10     4.99     6.93    8.58
-## 6 sd = 2 n = 30     6.36     7.04    7.90
-## 7 sd = 2 n = 60     6.51     6.96    7.78
-## 8 sd = 2 n = 100    6.63     6.94    7.27
+## 1 sd = 1 n = 10     6.29     6.93    7.59
+## 2 sd = 1 n = 30     6.55     6.98    7.39
+## 3 sd = 1 n = 60     6.65     7.01    7.38
+## 4 sd = 1 n = 100    6.81     6.98    7.21
+## 5 sd = 2 n = 10     5.72     6.97    8.91
+## 6 sd = 2 n = 30     5.80     6.91    7.92
+## 7 sd = 2 n = 60     6.05     6.98    7.53
+## 8 sd = 2 n = 100    6.30     7.01    7.47
 ```
 
 ```r
@@ -125,7 +125,7 @@ SS / (length(test$pH) - 1)
 ```
 
 ```
-## [1] 2.48811
+## [1] 2.5137
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -144,14 +144,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       var_min var_mean var_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.314    0.947    2.81
-## 2 sd = 1 n = 30    0.654    1.02     1.55
-## 3 sd = 1 n = 60    0.689    0.985    1.35
-## 4 sd = 1 n = 100   0.789    0.981    1.38
-## 5 sd = 2 n = 10    1.42     4.19     7.70
-## 6 sd = 2 n = 30    2.80     4.12     6.07
-## 7 sd = 2 n = 60    2.93     4.19     5.47
-## 8 sd = 2 n = 100   2.77     3.82     5.32
+## 1 sd = 1 n = 10    0.398    1.02     1.88
+## 2 sd = 1 n = 30    0.488    0.968    1.57
+## 3 sd = 1 n = 60    0.722    1.01     1.69
+## 4 sd = 1 n = 100   0.732    1.02     1.39
+## 5 sd = 2 n = 10    0.492    4.17     7.64
+## 6 sd = 2 n = 30    1.99     4.19     6.37
+## 7 sd = 2 n = 60    3.17     4.03     5.47
+## 8 sd = 2 n = 100   3.06     3.94     4.85
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -172,14 +172,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.177   0.295   0.530
-## 2 sd = 1 n = 30  0.148   0.183   0.227
-## 3 sd = 1 n = 60  0.107   0.128   0.150
-## 4 sd = 1 n = 100 0.0888  0.0988  0.117
-## 5 sd = 2 n = 10  0.377   0.636   0.877
-## 6 sd = 2 n = 30  0.306   0.369   0.450
-## 7 sd = 2 n = 60  0.221   0.263   0.302
-## 8 sd = 2 n = 100 0.166   0.195   0.231
+## 1 sd = 1 n = 10  0.199    0.314  0.433
+## 2 sd = 1 n = 30  0.127    0.178  0.229
+## 3 sd = 1 n = 60  0.110    0.129  0.168
+## 4 sd = 1 n = 100 0.0855   0.101  0.118
+## 5 sd = 2 n = 10  0.222    0.626  0.874
+## 6 sd = 2 n = 30  0.258    0.370  0.461
+## 7 sd = 2 n = 60  0.230    0.259  0.302
+## 8 sd = 2 n = 100 0.175    0.198  0.220
 ```
 
 ## Theory of Uncertainty
@@ -245,7 +245,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.8711523 1.0938246 1.1479461 1.2456118 1.4493263
+## 0.9107443 1.0303026 1.1051217 1.2100743 1.4244804
 ```
 
 ```r
@@ -258,9 +258,9 @@ stripchart(boot_stats$vars)
 # Traditional Approach
 ci <- c(
   # lower 5th
-  l = mean(ph) - 1.96 * sd(ph) / sqrt(n),
+  l = mean(ph) - 1.96 * sd(ph) / sqrt(N),
   # upper 95th
-  u = mean(ph) + 1.96 * sd(ph) / sqrt(n)
+  u = mean(ph) + 1.96 * sd(ph) / sqrt(N)
   )
 
 # Compare Bootstrap to Confidence Interval
@@ -269,7 +269,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.890838 6.267164
+## 5.788471 6.213160
 ```
 
 ```r
@@ -278,7 +278,7 @@ ci
 
 ```
 ##        l        u 
-## 5.804082 6.223267
+## 6.002983 6.024366
 ```
 
 ### Exercise 1
@@ -292,7 +292,7 @@ ci
 
 
 
-4.  What is wrong with the traditional confidence interval?
+4.  Why is the traditional confidence interval so much narrower?
 
 
 
@@ -370,7 +370,7 @@ RMSE(pred = sas$pH_0.30_pred, obs = sas$pH_0.30_obs, na.rm = TRUE)
 
 idx <- sample(1:nrow(sas), 100)
 
-ggplot(sas[idx, ], aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
+ggplot(sas[idx, ], aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
   geom_point() +
   # draw a 1 to 1 line
   geom_abline() +
@@ -381,7 +381,7 @@ ggplot(sas[idx, ], aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-11-1.png" width="672" />
 
 ```r
-ggplot(sas, aes(x = pH_0.30_obs, y = pH_0.30_pred)) +
+ggplot(sas, aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
   # use if too many points overlap
   geom_hex() +
   geom_abline() +
@@ -787,12 +787,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4587   Min.   :0.8438  
-##  1st Qu.:0.4619   1st Qu.:0.8495  
-##  Median :0.4701   Median :0.8531  
-##  Mean   :0.4689   Mean   :0.8527  
-##  3rd Qu.:0.4728   3rd Qu.:0.8561  
-##  Max.   :0.4857   Max.   :0.8607
+##  Min.   :0.4524   Min.   :0.8414  
+##  1st Qu.:0.4658   1st Qu.:0.8490  
+##  Median :0.4703   Median :0.8530  
+##  Mean   :0.4689   Mean   :0.8526  
+##  3rd Qu.:0.4742   3rd Qu.:0.8568  
+##  Max.   :0.4791   Max.   :0.8597
 ```
 
 #### Subsample (Resampling or sample simulation)
