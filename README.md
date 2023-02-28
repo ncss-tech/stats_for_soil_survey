@@ -65,7 +65,7 @@
 
 -   #### [Modeling Frameworks](http://ncss-tech.github.io/stats_for_soil_survey/book2/commentary-selecting-a-modeling-framework.html)
 
-### [**Chapter 3:** *Numerical Taxonomy and Ordination*](http://ncss-tech.github.io/stats_for_soil_survey/book3/numerical-tax.html)
+### [**Chapter 3:** *Numerical Taxonomy and Ordination*](http://ncss-tech.github.io/stats_for_soil_survey/book2/numerical-tax.html)
 
 -   #### [Assignment 1](http://ncss-tech.github.io/stats_for_soil_survey/exercise_ideas/numerical-taxonomy/assignment-1.html)
 
