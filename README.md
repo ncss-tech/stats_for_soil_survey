@@ -67,7 +67,7 @@
 
 ### [**Chapter 3:** *Numerical Taxonomy and Ordination*](http://ncss-tech.github.io/stats_for_soil_survey/book2/numerical-tax.html)
 
--   #### [Assignment 1](http://ncss-tech.github.io/stats_for_soil_survey/exercise_ideas/numerical-taxonomy/assignment-1.html)
+-   #### [Assignment 1](http://ncss-tech.github.io/stats_for_soil_survey/exercises/numerical-taxonomy/assignment-1.html)
 
 ### [**Chapter 4:** *Linear Regression*](http://ncss-tech.github.io/stats_for_soil_survey/book2/linear-regression.html)
 
