@@ -46,7 +46,7 @@ Errors are simply the difference between reality and our representation of reali
 
 Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
 
-```{r eval = TRUE, fig.height=7}
+```{r eval = TRUE, fig.height=8, fig.width=6}
 
 library(dplyr)
 library(ggplot2)
@@ -393,7 +393,7 @@ ggplot(sas, aes(x = EC_0.30_obs, y = EC_0.30_pred)) +
 
 **Probability-based metrics** (threshold-independent)
 
-Beware the $D^2$ and Tjur's D only apply to binary classes. Also, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
+Beware the $D^2$ and Tjur's D only apply to binary classes. 
 
 Accuracy:
 
@@ -408,6 +408,8 @@ Precision:
 
 
 **Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @james2021; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
+
+Beware, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
 
 | Confusion Matrix    | Observed             |                       | Metric              |
 |---------------------|----------------------|-----------------------|-------------------- |
@@ -481,6 +483,7 @@ summary(
 
 ## Confusion matrix ----
 # beware conf_mat prefers factors with equal numbers of levels
+# also if your table only has 2 classes, you need to specify which is 'positive'
 cm1 <- table(pred = as.factor(bs$BS2_pred > 0.5), obs = as.factor(bs$BS2_obs))
 cm1
 
@@ -493,6 +496,7 @@ cm2
 ## Examine thresholds ----
 ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
   geom_density(alpha = 0.5) +
+  geom_vline(xintercept = 0.5, linetype = "dashed") +
   xlab("BS2 Probability")
 
 
@@ -509,7 +513,7 @@ table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
 ```{r, eval=FALSE, echo=FALSE}
 aqp::brierScore(bs[c("BS1_obs", "BS1_pred")], "BS1_pred", "BS1_obs")
 modEvA::RsqGLM(obs = bs$BS1_obs, pred = bs$BS1_pred, plot = FALSE)
-summary(apply(bs[c("BS1_obs", "BS1_pred")], 1, aqp::shannonEntropy))
+summary(apply(data.frame(bs$BS1_pred, 1 - bs$BS1_pred), 1, aqp::shannonEntropy))
 ```
 
 3.  What probably threshold creates the best split for the `BS1` class.
@@ -517,6 +521,7 @@ summary(apply(bs[c("BS1_obs", "BS1_pred")], 1, aqp::shannonEntropy))
 ```{r, eval=FALSE, echo=FALSE}
 ggplot(bs, aes(x = BS1_pred, fill = BS1_obs)) +
   geom_density(alpha = 0.5) +
+  geom_vline(xintercept = 0.5) +
   xlab("BS2 Probability")
 table(predicted = bs$BS2_pred > 0.25, observed = bs$BS2_obs)
 ```
@@ -549,7 +554,7 @@ In the case of stratified-random samples or non-probability samples, it is neces
 
 ```{r}
 # weights
-wt <- c(0.95, 0.05)
+wt <- c(`FALSE` = 0.95, `TRUE` = 0.05)
 
 # confusion matrix
 cm <- table(pred = bs$BS2_pred > 0.5, obs = bs$BS2_obs)
@@ -563,7 +568,7 @@ cm_wt2 <- cm_wt/sum(cm_wt) * sum(cm)
 
 
 # compare weighted and unweighted confusion matrices
-confusionMatrix(cm,    positive = "TRUE")$byClass
+confusionMatrix(cm,     positive = "TRUE")$byClass
 confusionMatrix(cm_wt2, positive = "TRUE")$byClass
 
 ```

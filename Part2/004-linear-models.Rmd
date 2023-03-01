@@ -304,7 +304,7 @@ fit_ols <- ols(mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3
 
 #### Residual plots
 
-Once we have a model we need to assess residuals for linearity, normality, and homoscedastivity (or constant variance). Oddly this is one area were the rms R package does not offer convient functions for plotting residuals, therefore we'll simply access the results of `lm()`.
+Once we have a model we need to assess residuals for linearity, normality, and homoscedastivity (or constant variance). Oddly this is one area were the rms R package does not offer convenient functions for plotting residuals, therefore we'll simply access the results of `lm()`.
 
 ```{r residuals, eval = TRUE, echo=TRUE}
 par(mfcol = c(2, 2))
@@ -361,9 +361,9 @@ The values above indicate we have several colinear variables in the model, which
 
 ### Variable selection & model validation
 
-Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models typically less automated. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongist the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
+Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models are typically less automated. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
 
-Both the rms and caret packages offer methods for variable selection and cross-validation. In this instance the rms approach is a bit more convenient, with the one line call to `validate()`.
+Both the `rms` and `caret` packages offer methods for variable selection and cross-validation. In this instance the `rms` approach is a bit more convenient, with the one line call to `validate()`.
 
 ```{r, eval = TRUE}
 
@@ -377,12 +377,12 @@ validate(fit_ols, bw = TRUE)
 
 ```
 
-The results for `validate()` above show which variables were retained and deleted. Above we can see a dot matrix of which variables were retained during each of the 10 iterations of from cross validation. In addition, we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
+The results for `validate()` above show which variables were retained and deleted. Above we can see a dot matrix of which variables were retained during each of the iterations from bootstrapping. In addition, we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
 
 
 ### Final model & accuracy assessment
 
-Once we have a model we are 'happy' with we can fit the final model, and call `validate()` again which gives performace metrics such as `R$2` and the mean square error (MSE). If we want the root mean square error (RMSE), which is in the original units of our measurements we can take the square root of MSE using `sqrt()`. 
+Once we have a model we are 'happy' with we can fit the final model, and call `validate()` again which gives performance metrics such as `R$2` and the mean square error (MSE). If we want the root mean square error (RMSE), which is in the original units of our measurements we can take the square root of MSE using `sqrt()`.
 
 ```{r final-model, eval = TRUE}
 
@@ -397,7 +397,7 @@ data$pred <- predict(final_ols)
 
 
 # RMSE
-sqrt((MSE = 1.7218))
+sqrt((MSE = 2.3332))
 caret::RMSE(pred = data$pred, obs = data$mast)
 
 # R2
@@ -406,7 +406,7 @@ caret::R2(pred = data$pred, obs = data$mast, formula = "traditional")
 
 # plot model fit
 
-ggplot(data, aes(x = mast, y = pred)) +
+ggplot(data, aes(x = pred, y = mast)) +
   geom_point() +
   geom_abline() + 
   geom_smooth(method = "lm") +
@@ -418,20 +418,32 @@ ggplot(data, aes(x = mast, y = pred)) +
 
 ### Model Interpretation
 
+A nice feature of linear models are that they are easy to interpret. If we examine the model coefficients we can see how what we're trying to predict (i.e. the response variable) varies as a function of the GIS variables (i.e. predictor variables). So looking at the `elev` variable below we can see that `mast` decreasing at a rate of `-0.066` for every change in elevation.
+
 ```{r, eval = TRUE}
 
 # Model accuracy, residuals, and slopes (e.g. coefficents)
 final_ols
+```
 
+We can examine how much each variable contributes to the model by examining the results of `anova`. From the summary below we can that the majority of partial sum of squares are captured by `elev`, with progressively less by the remaining variables.
 
+```{r, eval = TRUE}
 # Anova
 anova(final_ols)
+plot(anova(final_ols), what = "partial R2")
+```
 
+Another way to visualize the contribution of each variable is to plot their partial effects, which summarize how much each variable effects the model if we hold all the other variables constant at their median values and vary the variable of interest over it's 25th and 75th percentiles. This is a useful way to compare the impact of each variable side by side in the units of the response variable. In this case we can see below that again `elev` has the biggest impact, with range of approximately -6 to -4.5 degrees. The effect of `solarcv` is smallest compared to the other tasseled cap variables.
 
+```{r, eval = TRUE}
 # Model Effects
 plot(summary(final_ols))
+```
 
+The partial effects can also be visualized as regression lines with their confidence intervals, which illustrates the slope of the predictor variables in relation to `mast`. 
 
+```{r, eval = TRUE}
 # Plot Effects
 ggplot(Predict(final_ols),
        addlayer = geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
@@ -469,7 +481,7 @@ names(mast_r) <- c("MAST", "SE")
 ```{r tmap, eval = FALSE}
 
 # mast
-plot(mast_r)
+plot(mast_r, col = viridis::viridis(10))
 
 ```
 
