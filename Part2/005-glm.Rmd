@@ -599,18 +599,27 @@ ggplot(Predict(final_lrm, fun = plogis))
 
 ```{r prediction, eval=TRUE, results='hide'}
 # Custom function to return the predictions and their standard errors
-
 library(raster)
 
+# wrapper function, to help with prediction at each grid cell
 predfun <- function(model, data) {
+  
+  # predict presence of argillic horizon (outcome = TRUE)
+  # result is vector of probabilities
   prob <- predict(model, data, type = "fitted")
-  H    <- apply(cbind(prob, 1 - prob), 1, shannonEntropy)
-  cbind(prob, H)
+  
+  # compute Shannon entropy from both (FALSE | TRUE) probabilities
+  H <- apply(cbind(prob, 1 - prob), 1, shannonEntropy)
+  
+  # combine Pr(Argillic == TRUE) and Shannon entropy
+  res <- cbind(prob, H)
+  
+  # return to calling function
+  return(res)
   }
   
 # Generate spatial predictions
 r <- predict(geodata_r, final_lrm, fun = predfun, index = 1:2, progress = "text")
-
 ```
 
 ```{r eval=TRUE}
