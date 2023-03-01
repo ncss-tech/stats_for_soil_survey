@@ -618,10 +618,10 @@ r <- predict(geodata_r, final_lrm, fun = predfun, index = 1:2, progress = "text"
 library(raster)
 
 # argillic probability
-plot(r[[1]], )
+plot(r[[1]], col = viridis::viridis(10))
 
 # argillic Shannon Entropy
-plot(r[[2]])
+plot(r[[2]], col = viridis::viridis(10))
 
 ```
 
@@ -630,12 +630,18 @@ plot(r[[2]])
 
 1. Construct a dataset of shallow soils as shown below.
 
-```{r, message=FALSE}
+```{r, message=FALSE, eval=FALSE}
+URL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/ch7_data.Rdata")
+load(URL)
+
 train2 <- allocate(pedons, to = "ST Diagnostic Features")
-train2$shallow <- grepl("contact", train2$featkind) & train2$featdept < 50
-train2 <- left_join(data, train2, by = "peiid")
-train2$shallow[is.na(train2$shallow)] <- FALSE
-train2 <- select(train2, z:mast, pc_1:u, ndvi:gsi, shallow)
+train2 <- train2 %>%
+  mutate(shallow = grepl("contact", train2$featkind) & train2$featdept) %>%
+  arrange(peiid, -shallow, featdept) %>%
+  filter(shallow == TRUE & ! duplicated(peiid)) %>%
+  right_join(data, by = "peiid") %>%
+  mutate(shallow = ifelse(is.na(shallow), FALSE, shallow)) %>%
+  select(z:mast, pc_1:u, ndvi:gsi, shallow)
 ```
 
 2. Fit a GLM
@@ -668,6 +674,7 @@ validate(fit, bw = TRUE)
     - How do the train vs test accuracies compare?
 ```{r, eval=FALSE, echo=FALSE}
 fit_final <- lrm(shallow ~ z + pc_1 + ch + mrrtf + mrvbf, data = train2, x = TRUE, y = TRUE)
+fit_final <- lrm(shallow ~ z + slp + twi_sc + ch + mrvbf + pc_5 + tc_3, data = train2, x = TRUE, y = TRUE)
 validate(fit_final)
 
 train2$pred <- predict(fit_final, train2, type = "fitted")

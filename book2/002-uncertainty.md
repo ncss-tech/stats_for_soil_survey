@@ -84,14 +84,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.30     6.95    7.71
-## 2 sd = 1 n = 30     6.46     7.01    7.52
-## 3 sd = 1 n = 60     6.51     7.01    7.28
-## 4 sd = 1 n = 100    6.72     6.98    7.19
-## 5 sd = 2 n = 10     5.34     7.00    8.89
-## 6 sd = 2 n = 30     6.13     6.98    8.36
-## 7 sd = 2 n = 60     6.31     6.95    7.42
-## 8 sd = 2 n = 100    6.28     6.96    7.89
+## 1 sd = 1 n = 10     6.36     6.98    7.69
+## 2 sd = 1 n = 30     6.36     6.95    7.50
+## 3 sd = 1 n = 60     6.65     6.97    7.35
+## 4 sd = 1 n = 100    6.84     7.02    7.43
+## 5 sd = 2 n = 10     5.59     7.02    8.17
+## 6 sd = 2 n = 30     5.94     7.00    7.91
+## 7 sd = 2 n = 60     6.33     6.95    7.41
+## 8 sd = 2 n = 100    6.63     7.03    7.49
 ```
 
 ```r
@@ -101,7 +101,7 @@ ggplot(test, aes(x = iteration, y = pH)) +
   facet_wrap(~ n + sd, ncol = 2, )
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="576" />
 
 The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be "uncertain" of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different.
 
@@ -125,7 +125,7 @@ SS / (length(test$pH) - 1)
 ```
 
 ```
-## [1] 2.440991
+## [1] 2.450551
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -144,14 +144,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       var_min var_mean var_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.336    0.885    1.70
-## 2 sd = 1 n = 30    0.665    1.02     1.63
-## 3 sd = 1 n = 60    0.575    1.01     1.47
-## 4 sd = 1 n = 100   0.739    0.996    1.24
-## 5 sd = 2 n = 10    1.05     3.75     7.88
-## 6 sd = 2 n = 30    2.23     3.85     5.64
-## 7 sd = 2 n = 60    2.50     3.86     5.08
-## 8 sd = 2 n = 100   3.11     3.87     4.64
+## 1 sd = 1 n = 10    0.353     1.16    2.67
+## 2 sd = 1 n = 30    0.340     1.02    1.43
+## 3 sd = 1 n = 60    0.787     1.07    1.43
+## 4 sd = 1 n = 100   0.701     1.01    1.22
+## 5 sd = 2 n = 10    1.38      3.42    6.81
+## 6 sd = 2 n = 30    1.92      3.87    6.07
+## 7 sd = 2 n = 60    2.89      4.06    5.65
+## 8 sd = 2 n = 100   2.72      3.82    5.59
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -172,14 +172,14 @@ test %>%
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.183   0.293   0.412
-## 2 sd = 1 n = 30  0.149   0.184   0.233
-## 3 sd = 1 n = 60  0.0979  0.129   0.156
-## 4 sd = 1 n = 100 0.0860  0.0996  0.111
-## 5 sd = 2 n = 10  0.324   0.599   0.888
-## 6 sd = 2 n = 30  0.273   0.356   0.434
-## 7 sd = 2 n = 60  0.204   0.253   0.291
-## 8 sd = 2 n = 100 0.176   0.196   0.215
+## 1 sd = 1 n = 10  0.188    0.332  0.517
+## 2 sd = 1 n = 30  0.106    0.183  0.218
+## 3 sd = 1 n = 60  0.115    0.133  0.155
+## 4 sd = 1 n = 100 0.0837   0.100  0.110
+## 5 sd = 2 n = 10  0.372    0.576  0.825
+## 6 sd = 2 n = 30  0.253    0.356  0.450
+## 7 sd = 2 n = 60  0.220    0.259  0.307
+## 8 sd = 2 n = 100 0.165    0.195  0.237
 ```
 
 ## Theory of Uncertainty
@@ -245,7 +245,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.9080949 1.0362711 1.0931600 1.2259077 1.3824346
+## 0.8803804 1.0646086 1.1567143 1.2202912 1.5309573
 ```
 
 ```r
@@ -269,7 +269,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.822108 6.186114
+## 5.852064 6.123911
 ```
 
 ```r
@@ -411,7 +411,7 @@ ggplot(sas, aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
 
 **Probability-based metrics** (threshold-independent)
 
-Beware the $D^2$ and Tjur's D only apply to binary classes. Also, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
+Beware the $D^2$ and Tjur's D only apply to binary classes. 
 
 Accuracy:
 
@@ -426,6 +426,8 @@ Precision:
 
 
 **Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @james2021; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
+
+Beware, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
 
 | Confusion Matrix    | Observed             |                       | Metric              |
 |---------------------|----------------------|-----------------------|-------------------- |
@@ -541,6 +543,7 @@ summary(
 
 ## Confusion matrix ----
 # beware conf_mat prefers factors with equal numbers of levels
+# also if your table only has 2 classes, you need to specify which is 'positive'
 cm1 <- table(pred = as.factor(bs$BS2_pred > 0.5), obs = as.factor(bs$BS2_obs))
 cm1
 ```
@@ -593,6 +596,7 @@ cm2
 ## Examine thresholds ----
 ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
   geom_density(alpha = 0.5) +
+  geom_vline(xintercept = 0.5, linetype = "dashed") +
   xlab("BS2 Probability")
 ```
 
@@ -646,7 +650,7 @@ In the case of stratified-random samples or non-probability samples, it is neces
 
 ```r
 # weights
-wt <- c(0.95, 0.05)
+wt <- c(`FALSE` = 0.95, `TRUE` = 0.05)
 
 # confusion matrix
 cm <- table(pred = bs$BS2_pred > 0.5, obs = bs$BS2_obs)
@@ -669,7 +673,7 @@ cm_wt2 <- cm_wt/sum(cm_wt) * sum(cm)
 
 
 # compare weighted and unweighted confusion matrices
-confusionMatrix(cm,    positive = "TRUE")$byClass
+confusionMatrix(cm,     positive = "TRUE")$byClass
 ```
 
 ```
@@ -787,12 +791,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4496   Min.   :0.8390  
-##  1st Qu.:0.4620   1st Qu.:0.8483  
-##  Median :0.4657   Median :0.8545  
-##  Mean   :0.4688   Mean   :0.8527  
-##  3rd Qu.:0.4754   3rd Qu.:0.8586  
-##  Max.   :0.4894   Max.   :0.8600
+##  Min.   :0.4539   Min.   :0.8468  
+##  1st Qu.:0.4627   1st Qu.:0.8501  
+##  Median :0.4672   Median :0.8539  
+##  Mean   :0.4690   Mean   :0.8527  
+##  3rd Qu.:0.4779   3rd Qu.:0.8557  
+##  Max.   :0.4811   Max.   :0.8571
 ```
 
 #### Subsample (Resampling or sample simulation)
