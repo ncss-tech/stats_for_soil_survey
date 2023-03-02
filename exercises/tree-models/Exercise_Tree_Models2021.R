@@ -236,7 +236,7 @@ soildata$spo_index <- as.factor(soildata$spo_index)
 
 
 # Splitting into cal/val with 15% split
-idx <- createDataParition(soildata$spo_index, p = 0.85, list = FALSE)
+idx <- createDataPartition(soildata$spo_index, p = 0.85, list = FALSE)
 val <- soildata[idx * -1, ]
 cal <- soildata[idx, ]
 nrow(cal)
