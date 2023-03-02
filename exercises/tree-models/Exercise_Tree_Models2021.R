@@ -91,7 +91,7 @@ corrplot(cormatrix, method = "circle")
 
 
 ## Questions ----
-# 1. What does the correlation matrix tell you about the enironmental convariate data?
+# 1. What does the correlation matrix tell you about the environmental covariate data?
 # 2. Which predictors are highly correlated?
 
 
@@ -127,7 +127,6 @@ plotcp(tree_reg_model)
 
 
 # prune model based on the best CP value
-tree_prune <- prune(tree_reg_model, cp = 0.08561859)
 
 printcp(tree_prune)
 prp(tree_prune, type = 1, extra = 1, branch = 1)
@@ -547,6 +546,9 @@ dep_tr
 dep_tr_bor
 
 
+# variable importance plots
+vip::vip(dep_tr)
+vip::vip(dep_tr_bor)
 
 
 # extract final models
