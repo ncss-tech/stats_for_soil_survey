@@ -1,0 +1,289 @@
+---
+title: "Clustering of Image Colors"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    mathjax: null
+    jquery: null
+    smart: no
+---
+
+```{r setup, echo=FALSE, results='hide', warning=FALSE}
+library(knitr, quietly=TRUE)
+library(kableExtra, quietly=TRUE)
+opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='center', dev='png', tidy=FALSE, verbose=FALSE)
+options(width=100, stringsAsFactors=FALSE)
+```
+
+## Objectives
+
+In this example we will apply ideas from [Numerical Taxonomy / Ordination](http://ncss-tech.github.io/stats_for_soil_survey/book2/numerical-tax.html) module to a photograph. These methods can also be applied to a stack of terrain/climate derivatives for the purposes of initial or update soil survey work. The basic work-flow looks something like this:
+
+  * load stack of conformal grids: same coordinate reference system, grid size, grid extent
+  * exhaustive sampling of grids (random, regular, etc.) at points
+  * sub-sample points via cLHS
+  * compute distance matrix
+  * apply clustering algorithms
+  * visualize: dendrogram (if possible), nMDS, etc.
+  * fit simple model (LDA, etc.) to predict cluster ID at every pixel in the stack
+  * make predictions, could be class membership or most-likely class
+  * visualize predictions as an image
+  * evaluate class-wise uncertainty with Shannon entropy
+
+
+## Setup
+
+Load packages that we will be using.
+```{r}
+library(aqp)
+library(terra)
+library(cluster)
+library(ape)
+library(farver)
+library(MASS)
+library(colorspace)
+library(viridisLite)
+library(clhs)
+```
+
+Use an image with well-defined colors to demonstrate methods / syntax.
+```{r}
+# I like airplanes
+# URL to example image, you can swap out for any image you like
+url <- 'https://github.com/ncss-tech/stats_for_soil_survey/raw/master/exercises/numerical-taxonomy/photo.jpg'
+tf <- tempfile(fileext = '.jpg')
+
+# download, this may fail if you are on the VPN
+download.file(url, destfile = tf, mode = 'wb')
+
+# load as 3-band SpatRast object
+# bands: red, green, blue (sRGB color space)
+r <- rast(tf)
+
+# optionally, use your own image or stack of GIS data
+# r <- rast(...)
+```
+
+Inspect the resulting `SpatRast` object.
+```{r}
+# re-name bands for access later
+names(r) <- c('r', 'g', 'b')
+
+# object properties
+print(r)
+```
+
+
+Display 3-band stack as RGB image.
+```{r dev = 'jpeg'}
+plotRGB(r)
+```
+
+
+## Color Conversion
+
+Convert to [CIELAB](https://en.wikipedia.org/wiki/CIELAB_color_space) color space, much more useful for analysis of color. I'll abbreviate CIELAB as LAB for simplicity.
+```{r dev = 'jpeg'}
+# copy SpatRast / update with LAB color coordinates
+r.lab <- r
+
+# simple trick to directly access / replace values of a SpatRast
+values(r.lab) <- convert_colour(values(r), from = 'rgb', to = 'lab', white_from = 'D65')
+names(r.lab) <- c('l', 'a', 'b')
+
+# check
+# bands are L, A, B color space coordinates
+# positive "A" coordinates are "red"
+plot(r.lab, col = mako(25), axes = FALSE)
+```
+
+
+## Sampling
+
+Exhaustive sampling, extracting LAB color coordinates.
+```{r}
+s <- spatSample(r.lab, size = 5000, method = 'regular', as.points = TRUE)
+```
+
+Sub-sample using cLHS algorithm. Much easier to compute distance matrix from a small, representative sample.
+```{r}
+# note temporary conversion to sf object
+# required by clhs()
+# result is an integer index to samples
+idx <- clhs(sf::st_as_sf(s), size = 250)
+```
+
+Visual check on cLHS-selected samples (blue).
+```{r dev = 'jpeg'}
+plotRGB(r, axes = FALSE)
+# points(s, pch = 3, col = 'white', cex = 0.25)
+points(s[idx, ], pch = 1, col = 'blue', cex = 1.5)
+```
+
+Visualize LAB data.
+```{r fig.width=7, fig.height=7}
+# keep only the cLHS samples
+s <- s[idx, ]
+
+# convert SpatVect -> data.frame
+s.lab <- as.data.frame(s)
+
+## convert CIE LAB values extracted at smples -> sRGB
+s.rgb <- convert_colour(s.lab[, c('l', 'a', 'b')], from = 'lab', to = 'rgb', white_from = 'D65')
+
+# convert to R colors, hex notation
+s.cols <- rgb(s.rgb, maxColorValue = 255)
+
+# 3-variable scatter plot matrix
+# CIELAB color space coordinates
+# colors are from sRGB color coordinates
+pairs(s.lab[, c('l', 'a', 'b')], pch = 16, col = s.cols)
+```
+
+
+
+## Distance Matrix
+
+Compute pair-wise distances via $\Delta{E_{00}}$ [color contrast metric](https://en.wikipedia.org/wiki/Color_difference).
+```{r}
+## compute pair-wise distances
+# using the CIE2000 color contrast metric
+# perceptual (avg. human vision) vs. Euclidean distance
+d <- compare_colour(from = s.lab[, c('l', 'a', 'b')], to = s.lab[, c('l', 'a', 'b')],, from_space = 'lab', method = 'CIE2000')
+
+# convert full-matrix form to simpler 'dist' representation
+d <- as.dist(d)
+
+# check for 0 distances, can cause problems for nMDS
+summary(d)
+
+# if there are any, set those to a small value
+d[which(d == 0)] <- quantile(d[which(d > 0)], prob = 0.001, na.rm = TRUE)
+```
+
+## Ordination by nMDS
+```{r fig.width=7, fig.height=7}
+## perform nMDS (ordination) on distance matrix
+mds <- sammon(d)
+str(mds)
+
+# simple visualization of nMDS ordination
+# colors from sRGB color coordinates, converted to hex notation
+par(mar = c(2, 2, 1, 1))
+plot(mds$points, pch = 16, col = s.cols, cex = 2, axes = FALSE)
+# add horizontal / vertical lines to see "origin" of nMDS coordinates
+abline(h = 0, v = 0, lty = 3)
+box()
+mtext('nMDS Axis 1', side = 1, line = 0.5, font = 2)
+mtext('nMDS Axis 2', side = 2, line = 0.5, font = 2)
+```
+
+
+
+## Cluster Analysis
+
+### Divisive Hierarchical Clustering
+```{r fig.width=6, fig.height=6, dpi=100}
+dd <- diana(d)
+h <- as.phylo(as.hclust(dd))
+plot(h, no.margin = TRUE, show.tip.label = FALSE, direct = 'down', type = 'fan')
+tiplabels(pch = 15, col = s.cols)
+```
+
+### K-medoids Clustering
+
+```{r fig.width=6, fig.height=6}
+# partitioning around medoids
+# using the distance matrix vs. data martrix (diss = TRUE)
+set.seed(42)
+cl <- pam(d, k = 4, diss = TRUE)
+
+# save clustering vector, these are integers
+# interpret as categories
+s.lab$cl <- factor(cl$clustering)
+
+# plot method for partioning-style clustering (cluster package)
+clusplot(cl, col.p = s.cols, plotchar = FALSE, col.clus = 'black')
+```
+
+Extract medoid colors in sRGB color space (for viewing on the screen).
+```{r fig.width=6, fig.height=2}
+# cl$medoids is an index to the original data matrix
+# will use these later
+medoid.cols <- rgb(s.rgb[cl$medoids, ], maxColorValue = 255)
+
+# quick check on medoid colors
+par(mar = c(0, 0, 0, 0))
+swatchplot(medoid.cols)
+```
+
+
+## Supervised Classification
+Supervised classification to interpolate between point samples, using linear discriminant analysis.
+```{r}
+# linear discriminant analysis (LDA) model works well here
+# simple and efficient
+m <- lda(cl ~ l + a + b, data = s.lab)
+```
+
+Wrapper functions around predict method used by LDA models.
+```{r}
+# only keep the most-likely class
+# could also retain class probabilities
+pred.class <- function(model, data) {
+  predict(model, data)$class
+}
+
+pred.pr <- function(model, data) {
+  predict(model, data)$posterior
+}
+```
+
+Predict over entire stack (3-band) of LAB color coordinates.
+```{r}
+# most-likely cluster
+p.class <- predict(r.lab, m, fun = pred.class)
+
+# cluster probabilities
+p.pr <- predict(r.lab, m, fun = pred.pr)
+```
+
+## Cluster Images (Maps)
+
+Most-likely cluster, for each pixel.
+```{r dev = 'jpeg'}
+plot(p.class, col = medoid.cols, axes = FALSE)
+```
+
+Cluster probabilities.
+```{r}
+par(mfrow = c(2, 2))
+
+for(i in 1:4) {
+  
+  # smooth color ramp
+  cr <- colorRampPalette(c('white', medoid.cols[i]), space = 'Lab')
+  
+  plot(
+    p.pr[[i]], 
+    col = cr(10), 
+    axes = FALSE, 
+    main = sprintf("Cluster %s", i)
+  )
+}
+```
+
+Shannon entropy.
+```{r dev = 'jpeg'}
+# apply aqp::shannonEntropy() function at each stack of pixels
+# stack represents predicted class-wise probability
+H <- app(p.pr, shannonEntropy)
+
+plot(H, col = viridis(25), axes = FALSE, main = 'Shannon Entropy (log base 2)')
+```
+
+
+
+
+
+
