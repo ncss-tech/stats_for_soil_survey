@@ -17,7 +17,7 @@ options(width=100, stringsAsFactors=FALSE)
 
 ## Objectives
 
-In this example we will apply ideas from [Numerical Taxonomy / Ordination](http://ncss-tech.github.io/stats_for_soil_survey/book2/numerical-tax.html) module to a photograph. These methods can also be applied to a stack of terrain/climate derivatives for the purposes of initial or update soil survey work. The basic work-flow looks something like this:
+In this example we will apply ideas from the [Numerical Taxonomy / Ordination](http://ncss-tech.github.io/stats_for_soil_survey/book2/numerical-tax.html) module to a photograph. These methods can also be applied to a stack of terrain/climate derivatives for the purposes of initial or update soil survey work. The basic work-flow looks something like this:
 
   * load stack of conformal grids: same coordinate reference system, grid size, grid extent
   * exhaustive sampling of grids (random, regular, etc.) at points
@@ -30,6 +30,15 @@ In this example we will apply ideas from [Numerical Taxonomy / Ordination](http:
   * visualize predictions as an image
   * evaluate class-wise uncertainty with Shannon entropy
 
+
+
+Several parts of this demonstration depend on functions that have a non-deterministic outcome: 
+
+  * cLHS-sampling via `clhs::clhs()`
+  * nMDS via `MASS::sammon()`
+  * partitioning around medoids clustering via `cluster::pam()`
+  
+In order to create repeatable results, the following examples use the `set.seed()` function to control randomness. This can be a useful trick when it is neccessary to generate the same output each time a report or analysis is run. However, one should not use `set.seed()` when a truly random outcome is required.
 
 ## Setup
 
@@ -110,6 +119,7 @@ Sub-sample using cLHS algorithm. Much easier to compute distance matrix from a s
 # note temporary conversion to sf object
 # required by clhs()
 # result is an integer index to samples
+set.seed(42)
 idx <- clhs(sf::st_as_sf(s), size = 250)
 ```
 
@@ -149,7 +159,12 @@ Compute pair-wise distances via $\Delta{E_{00}}$ [color contrast metric](https:/
 ## compute pair-wise distances
 # using the CIE2000 color contrast metric
 # perceptual (avg. human vision) vs. Euclidean distance
-d <- compare_colour(from = s.lab[, c('l', 'a', 'b')], to = s.lab[, c('l', 'a', 'b')],, from_space = 'lab', method = 'CIE2000')
+d <- compare_colour(
+  from = s.lab[, c('l', 'a', 'b')], 
+  to = s.lab[, c('l', 'a', 'b')], 
+  from_space = 'lab', 
+  method = 'CIE2000'
+)
 
 # convert full-matrix form to simpler 'dist' representation
 d <- as.dist(d)
@@ -163,7 +178,9 @@ d[which(d == 0)] <- quantile(d[which(d > 0)], prob = 0.001, na.rm = TRUE)
 
 ## Ordination by nMDS
 ```{r fig.width=7, fig.height=7}
-## perform nMDS (ordination) on distance matrix
+# "fixed" randomness, 
+# only important when you want the same result every time
+set.seed(42)
 mds <- sammon(d)
 str(mds)
 
@@ -183,18 +200,45 @@ mtext('nMDS Axis 2', side = 2, line = 0.5, font = 2)
 ## Cluster Analysis
 
 ### Divisive Hierarchical Clustering
-```{r fig.width=6, fig.height=6, dpi=100}
+Note that the `hclust` object is often used as a common format when converting from one object class to another. For example, converting the divisive hierarchical clustering object created by `diana()` to `phylo` class requires a trip through the `hclust` format.
+
+```{r}
+# divisive hierarchical clustering of distance matrix
 dd <- diana(d)
+
+# convert cluster pkg object -> hclust obj. -> phylo obj.
 h <- as.phylo(as.hclust(dd))
-plot(h, no.margin = TRUE, show.tip.label = FALSE, direct = 'down', type = 'fan')
-tiplabels(pch = 15, col = s.cols)
+
+# attempt rotation of the dendrogram leaves
+# using rank-order from the first nMDS axis above
+h <- rotateConstr(h, constraint = order(mds$points[, 1]))
+```
+
+Using the `plot` method for `phylo` class objects, as provided by the ape package.
+```{r fig.width = 9, fig.height = 3.5, dpi= 100}
+par(mar = c(0, 0, 2, 0))
+
+plot(
+  h, 
+  show.tip.label = FALSE, 
+  direct = 'down', 
+  type = 'phylogram', 
+  y.lim = c(0, 50),
+  main = sprintf("Divisive Coef: %s", round(dd$dc, 2))
+)
+
+# make a block of tip label colors
+# using repeated calls, varying vertical offsets
+tiplabels(pch = 15, col = s.cols, offset = 1.5)
+tiplabels(pch = 15, col = s.cols, offset = 2.5)
+tiplabels(pch = 15, col = s.cols, offset = 3.5)
 ```
 
 ### K-medoids Clustering
 
 ```{r fig.width=6, fig.height=6}
 # partitioning around medoids
-# using the distance matrix vs. data martrix (diss = TRUE)
+# using the distance matrix vs. data matrix (diss = TRUE)
 set.seed(42)
 cl <- pam(d, k = 4, diss = TRUE)
 
@@ -262,6 +306,7 @@ par(mfrow = c(2, 2))
 for(i in 1:4) {
   
   # smooth color ramp
+  # from white -> medoid color i
   cr <- colorRampPalette(c('white', medoid.cols[i]), space = 'Lab')
   
   plot(
@@ -282,6 +327,44 @@ H <- app(p.pr, shannonEntropy)
 plot(H, col = viridis(25), axes = FALSE, main = 'Shannon Entropy (log base 2)')
 ```
 
+
+## nMDS Images (Maps)
+Using multiple linear regression, we can estimate the nMDS scores for all pixels in the 3-band image.
+```{r}
+# row-order is preserved
+# transfer nMDS scores to source data
+# 250 sub-samples
+s.lab$mds1 <- mds$points[, 1]
+s.lab$mds2 <- mds$points[, 2]
+
+# multiple linear regression of nMDS scores
+# via CIE LAB color coordinates
+lm.mds1 <- lm(mds1 ~ l + a + b, data = s.lab)
+lm.mds2 <- lm(mds2 ~ l + a + b, data = s.lab)
+
+# internal validation metrics, looks OK
+summary(lm.mds1)
+summary(lm.mds2)
+
+# spatial prediction
+p.mds1 <- predict(r.lab, lm.mds1)
+p.mds2 <- predict(r.lab, lm.mds2)
+```
+
+Attempt a simple interpretation of nMDS scores (axes).
+```{r fig.width=7.5, fig.height=4, dev = 'jpeg'}
+# colors
+mds1.cols <- colorRampPalette(c('red', 'green'), space = 'Lab')(25)
+mds2.cols <- rev(grey.colors(25))
+
+# maps
+par(mfcol = c(1, 2))
+plot(p.mds1, col = mds1.cols, axes = FALSE, main = 'nMDS Axis 1', mar = c(2, 1, 2, 3))
+mtext(text = '"red \U2192 green"', side = 1, line = 0.5)
+
+plot(p.mds2, col = mds2.cols, axes = FALSE, main = 'nMDS Axis 2', mar = c(2, 1, 2, 3))
+mtext(text = '"light \U2192 dark"', side = 1, line = 0.5)
+```
 
 
 
