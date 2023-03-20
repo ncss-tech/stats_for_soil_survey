@@ -270,14 +270,34 @@ Supervised classification to interpolate between point samples, using linear dis
 m <- lda(cl ~ l + a + b, data = s.lab)
 ```
 
-Wrapper functions around predict method used by LDA models.
+Demonstrate prediction output from `lda` object using some of the training data. The result is a `list`:
+
+  * `class` is the most likely class, as a factor
+  * `posterior` are the class-wise probabilities, as a matrix
+  * `x` are the LDA "scores" (not used here)
+
 ```{r}
-# only keep the most-likely class
-# could also retain class probabilities
+# use only the first 6 rows of data
+p <- predict(m, newdata = s.lab[1:6, ])
+
+p$class
+
+round(p$posterior, 3)
+```
+
+Linear discriminant function scatter plot matrix.
+```{r fig.width=6, fig.height=6}
+plot(m, col = s.cols)
+```
+
+Wrapper functions around `predict` method used by LDA models, as applied to multi-band `spatRaster` objects.
+```{r}
+# prediction for most-likely class
 pred.class <- function(model, data) {
   predict(model, data)$class
 }
 
+# class probabilities
 pred.pr <- function(model, data) {
   predict(model, data)$posterior
 }
@@ -291,6 +311,8 @@ p.class <- predict(r.lab, m, fun = pred.class)
 # cluster probabilities
 p.pr <- predict(r.lab, m, fun = pred.pr)
 ```
+
+
 
 ## Cluster Images (Maps)
 
