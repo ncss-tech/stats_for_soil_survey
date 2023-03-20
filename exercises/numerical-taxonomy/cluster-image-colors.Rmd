@@ -19,25 +19,25 @@ options(width=100, stringsAsFactors=FALSE)
 
 In this example we will apply ideas from the [Numerical Taxonomy / Ordination](http://ncss-tech.github.io/stats_for_soil_survey/book2/numerical-tax.html) module to a photograph. These methods can also be applied to a stack of terrain/climate derivatives for the purposes of initial or update soil survey work. The basic work-flow looks something like this:
 
-  * load stack of conformal grids: same coordinate reference system, grid size, grid extent
-  * exhaustive sampling of grids (random, regular, etc.) at points
-  * sub-sample points via cLHS
-  * compute distance matrix
-  * apply clustering algorithms
-  * visualize: dendrogram (if possible), nMDS, etc.
-  * fit simple model (LDA, etc.) to predict cluster ID at every pixel in the stack
-  * make predictions, could be class membership or most-likely class
-  * visualize predictions as an image
-  * evaluate class-wise uncertainty with Shannon entropy
+* load stack of conformal grids: same coordinate reference system, grid size, grid extent
+* exhaustive sampling of grids (random, regular, etc.) at points
+* sub-sample points via cLHS
+* compute distance matrix
+* apply clustering algorithms
+* visualize: dendrogram (if possible), nMDS, etc.
+* fit simple model (LDA, etc.) to predict cluster ID at every pixel in the stack
+* make predictions, could be class membership or most-likely class
+* visualize predictions as an image
+* evaluate class-wise uncertainty with Shannon entropy
 
 
 
 Several parts of this demonstration depend on functions that have a non-deterministic outcome: 
 
-  * cLHS-sampling via `clhs::clhs()`
-  * nMDS via `MASS::sammon()`
-  * partitioning around medoids clustering via `cluster::pam()`
-  
+* cLHS-sampling via `clhs::clhs()`
+* nMDS via `MASS::sammon()`
+* partitioning around medoids clustering via `cluster::pam()`
+
 In order to create repeatable results, the following examples use the `set.seed()` function to control randomness. This can be a useful trick when it is neccessary to generate the same output each time a report or analysis is run. However, one should not use `set.seed()` when a truly random outcome is required.
 
 ## Setup
@@ -64,6 +64,9 @@ tf <- tempfile(fileext = '.jpg')
 
 # download, this may fail if you are on the VPN
 download.file(url, destfile = tf, mode = 'wb')
+
+# or, point to local file that can be read by GDAL:
+# tf <- 'photo.jpg'
 
 # load as 3-band SpatRast object
 # bands: red, green, blue (sRGB color space)
@@ -177,13 +180,37 @@ d[which(d == 0)] <- quantile(d[which(d > 0)], prob = 0.001, na.rm = TRUE)
 ```
 
 ## Ordination by nMDS
-```{r fig.width=7, fig.height=7}
+
+There are many implementations of non-metric multidimensional scaling; [Sammon's Non-Linear Mapping](https://en.wikipedia.org/wiki/Sammon_mapping) is a good place to start.
+
+Recall that an ordination is a projection of the high-dimensionality distance matrix to a small number of dimensions, usually 2 or 3. This projection incurrs a loss of fidelity. A [scree plot](https://en.wikipedia.org/wiki/Scree_plot) is a qualitative way to visually determine a reasonable number of dimensions required for a given distance matrix. Look for the "elbow" in the scree plot for a reasonable starting point.
+
+```{r, results='hide', fig.width=6, fig.height=4}
+.seq <- 1:6
+.stress <- sapply(.seq, function(i) {
+  .res <- sammon(d, k = i)$stress
+})
+
+plot(x = .seq, y = .stress, type = "b", las = 1, ylab = "Stress", xlab = 'Number of Dimensions', main = "Sammon's Non-Linear Mapping (nMDS)")
+```
+
+In this case, it would appear that 2 dimensions are sufficient.
+
+
+Generate an nMDS solution for our distance matrix. Output is always slightly different, unless controlling the randomness via `set.seed()`.
+```{r}
 # "fixed" randomness, 
 # only important when you want the same result every time
 set.seed(42)
-mds <- sammon(d)
-str(mds)
 
+mds <- sammon(d)
+
+# check resulting structure
+str(mds)
+```
+
+A scatter plot of nMDS scores, with symbols defined by the original image colors at sample points. Dashed lines show nMDS solution origin at $(0,0)$.
+```{r fig.width=7, fig.height=7}
 # simple visualization of nMDS ordination
 # colors from sRGB color coordinates, converted to hex notation
 par(mar = c(2, 2, 1, 1))
@@ -194,6 +221,17 @@ box()
 mtext('nMDS Axis 1', side = 1, line = 0.5, font = 2)
 mtext('nMDS Axis 2', side = 2, line = 0.5, font = 2)
 ```
+
+
+A . For more options, see related functions from the [vegan package](https://rdrr.io/rforge/vegan/man/goodness.metaMDS.html).
+```{r fig.width=5, fig.width=5}
+# generate data for Shepard Diagram
+shep <- Shepard(d, mds$points) 
+
+plot(shep, pch = ".", asp = 1, xlab = 'Original Distance', ylab = 'nMDS Distance', main = 'Shepard Diagram\n2 dimensions', las = 1)
+lines(shep$x, shep$yf, type = "S", col = 2, lwd = 2)
+```
+
 
 
 
@@ -236,11 +274,25 @@ tiplabels(pch = 15, col = s.cols, offset = 3.5)
 
 ### K-medoids Clustering
 
+Look for the "elbow" in the scree plot of average sill width vs. number of clusters. Search for the lowests possible average sill width and number of clusters.
+```{r, results='hide', fig.width=6, fig.height=4}
+# sequence of candidate clusters
+.seq <- 2:8
+# iterate over requested clusters
+# retain avg. sill width metric
+.silwidth <- sapply(.seq, function(i) {
+  pam(d, k = i, diss = TRUE)$silinfo$avg.width
+})
+
+plot(x = .seq, y = .silwidth, type = "b", las = 1, ylab = "Average Sill Width", xlab = 'Number of Clusters', main = "Partitioning Around Medoids")
+```
+
+Five clusters seems about right.
 ```{r fig.width=6, fig.height=6}
 # partitioning around medoids
 # using the distance matrix vs. data matrix (diss = TRUE)
 set.seed(42)
-cl <- pam(d, k = 4, diss = TRUE)
+cl <- pam(d, k = 5, diss = TRUE)
 
 # save clustering vector, these are integers
 # interpret as categories
@@ -272,9 +324,9 @@ m <- lda(cl ~ l + a + b, data = s.lab)
 
 Demonstrate prediction output from `lda` object using some of the training data. The result is a `list`:
 
-  * `class` is the most likely class, as a factor
-  * `posterior` are the class-wise probabilities, as a matrix
-  * `x` are the LDA "scores" (not used here)
+* `class` is the most likely class, as a factor
+* `posterior` are the class-wise probabilities, as a matrix
+* `x` are the LDA "scores" (not used here)
 
 ```{r}
 # use only the first 6 rows of data
@@ -316,16 +368,14 @@ p.pr <- predict(r.lab, m, fun = pred.pr)
 
 ## Cluster Images (Maps)
 
-Most-likely cluster, for each pixel.
-```{r dev = 'jpeg'}
-plot(p.class, col = medoid.cols, axes = FALSE)
-```
+Most-likely cluster (by pixel), followed by individual cluster probabilities.
+```{r fig.width=8, fig.height=5}
+par(mfrow = c(2, 3))
 
-Cluster probabilities.
-```{r}
-par(mfrow = c(2, 2))
+# most-likely cluster
+plot(p.class, col = medoid.cols, axes = FALSE, main = 'Most-likely Cluster ', mar = c(0.5, 0.1, 2.5, 2))
 
-for(i in 1:4) {
+for(i in 1:5) {
   
   # smooth color ramp
   # from white -> medoid color i
@@ -335,12 +385,13 @@ for(i in 1:4) {
     p.pr[[i]], 
     col = cr(10), 
     axes = FALSE, 
+    mar = c(0.5, 0.1, 2.5, 2),
     main = sprintf("Cluster %s", i)
   )
 }
 ```
 
-Shannon entropy.
+Shannon entropy (by pixel). Higher values suggest more uncertainty within predictions.
 ```{r dev = 'jpeg'}
 # apply aqp::shannonEntropy() function at each stack of pixels
 # stack represents predicted class-wise probability
