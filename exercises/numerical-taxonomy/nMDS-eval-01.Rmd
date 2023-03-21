@@ -16,7 +16,7 @@ options(width=100, stringsAsFactors=FALSE)
 ```
 
 # Introduction
-
+Compare the ordination by nMDS of two simulated data sets using scree plots of "stress" and the Shepard Diagram. Data matrix `X1` represents high-rank (10 dimensions) noise, a poor candidate for ordination in 2 dimensions. Data matrix `X2` represents lower rank (4 dimensions) data with some natural clustering, a good candidate for ordination in 2 dimensions.
 
 
 Simulate data.
@@ -26,11 +26,11 @@ library(MASS)
 # number of individuals 
 .n <- 100
 
-# completely unstructured data = noise
+# completely unstructured, 10-dimensional data = noise
 set.seed(42)
 x1 <- matrix(rnorm(.n * 10, mean = 0, sd = 0.1), ncol = 10)
 
-# data with some structure, still noisy
+# data with some structure, 4-dimensions, still noisy
 set.seed(42)
 x2 <- rbind(
   matrix(rnorm(.n, mean = 0, sd = 1), ncol = 4),
@@ -57,7 +57,7 @@ d2 <- dist(x2)
 })
 ```
 
-Stress plots.
+Scree plots of stress. Three dimensions seems like a reasonable target.
 ```{r fig.width = 5, fig.height = 5}
 plot(x = .seq, y = .stress1, type = "b", las = 1, lwd = 2, ylab = "Stress", xlab = 'Number of Dimensions', main = "Sammon's Non-Linear Mapping (nMDS)", ylim = c(0, max(c(.stress1, .stress2))))
 
@@ -66,10 +66,11 @@ lines(x = .seq, y = .stress2, type = 'b', col = 2, lwd = 2)
 legend('topright', legend = c('X1', 'X2'), lwd = 2, col = 1:2, bty = 'n')
 ```
 
+Attempt nMDS along 3 axes (dimensions).
 ```{r results='hide'}
 # nMDS
 set.seed(42)
-mds1 <- sammon(d1, k = 2)
+mds1 <- sammon(d1, k = 3)
 
 set.seed(42)
 mds2 <- sammon(d2, k = 3)
@@ -79,22 +80,22 @@ shep1 <- Shepard(d1, mds1$points)
 shep2 <- Shepard(d2, mds2$points) 
 ```
 
-nMDS scores.
+nMDS scores, first two axes.
 ```{r fig.width = 8.5, fig.height = 5}
 par(mfcol = c(1, 2))
-plot(mds1$points, pch = 16, asp = 1, xlab = 'nMDS Axis 1', ylab = 'nMDS Axis 2', main = 'X1', las = 1, cex = 0.66)
+plot(mds1$points[, 1:2], pch = 16, asp = 1, xlab = 'nMDS Axis 1', ylab = 'nMDS Axis 2', main = 'X1', las = 1, cex = 0.66)
 
-plot(mds2$points, pch = 16, asp = 1, xlab = 'nMDS Axis 1', ylab = 'nMDS Axis 2', main = 'X2', las = 1, cex = 0.66)
+plot(mds2$points[, 1:2], pch = 16, asp = 1, xlab = 'nMDS Axis 1', ylab = 'nMDS Axis 2', main = 'X2', las = 1, cex = 0.66)
 ```
 
-Shepard plots.
+The poor nMDS solution for `X1` is clearly indicated by the general lack of fit in the Shepard diagrams. In other words, the pair-wise distances within the reduced set of ordination axes do not reliably describe the pair-wise distances of the original data-space.
 ```{r fig.width = 8.5, fig.height = 5}
 par(mfcol = c(1, 2))
-plot(shep1, pch = ".", asp = 1, xlab = 'Original Distance', ylab = 'nMDS Distance', main = 'X1: Shepard Diagram\n2 dimensions', las = 1)
+plot(shep1, pch = ".", asp = 1, xlab = 'Original Distance', ylab = 'nMDS Distance', main = 'X1: Shepard Diagram', las = 1)
 lines(shep1$x, shep1$yf, type = "S", col = 2, lwd = 2)
 abline(0, 1, col = 4, lwd = 2, lty = 2)
 
-plot(shep2, pch = ".", asp = 1, xlab = 'Original Distance', ylab = 'nMDS Distance', main = 'X2: Shepard Diagram\n2 dimensions', las = 1)
+plot(shep2, pch = ".", asp = 1, xlab = 'Original Distance', ylab = 'nMDS Distance', main = 'X2: Shepard Diagram', las = 1)
 lines(shep2$x, shep2$yf, type = "S", col = 2, lwd = 2)
 abline(0, 1, col = 4, lwd = 2, lty = 2)
 ```

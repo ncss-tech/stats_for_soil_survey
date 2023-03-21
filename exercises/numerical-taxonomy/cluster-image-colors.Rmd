@@ -15,6 +15,22 @@ opts_chunk$set(message=FALSE, warning=FALSE, background='#F7F7F7', fig.align='ce
 options(width=100, stringsAsFactors=FALSE)
 ```
 
+## Background
+
+Paraphrased from *Numerical Taxonomy (Sneath and Sokal, 1973)*.
+
+  1. What is a good classification?
+  
+  2. Is classification "A" better than classification "B"?
+  
+  3. How similar are two classifications?
+  
+  4. Is there significant structure in a set of operational taxonomic units (pixels, soil profiles, climate stations, etc.)?
+  
+  5. Do two or more clusters, delineated by prior procedure, differ in their newly observed properties?
+  
+  6. Do two or more clusters, delineated by numerical taxonomy, differ in any of the properties on which they were clustered?
+
 ## Objectives
 
 In this example we will apply ideas from the [Numerical Taxonomy / Ordination](http://ncss-tech.github.io/stats_for_soil_survey/book2/numerical-tax.html) module to a photograph. These methods can also be applied to a stack of terrain/climate derivatives for the purposes of initial or update soil survey work. The basic work-flow looks something like this:
@@ -25,10 +41,13 @@ In this example we will apply ideas from the [Numerical Taxonomy / Ordination](h
 * compute distance matrix
 * apply clustering algorithms
 * visualize: dendrogram (if possible), nMDS, etc.
+* evaluate optimal number of clusters for PAM-style clustering (silhouette width scree plot)
+* evaluate goodness of nMDS solution (stress scree plot and Shepard diagram)
 * fit simple model (LDA, etc.) to predict cluster ID at every pixel in the stack
-* make predictions, could be class membership or most-likely class
+* make predictions: class membership and most-likely class
 * visualize predictions as an image
 * evaluate class-wise uncertainty with Shannon entropy
+* estimate nMDS scores for each pixel of the example image
 
 
 
@@ -86,8 +105,8 @@ print(r)
 ```
 
 
-Display 3-band stack as RGB image.
-```{r dev = 'jpeg'}
+Display 3-band stack as an RGB image.
+```{r dev='jpeg', fig.alt='Example image, a red model airplane leaning on the propellor, against a background of patchy green and light green grass.', fig.cap='Example image, a red model airplane leaning on the propellor, against a background of patchy green and light green grass.'}
 plotRGB(r)
 ```
 
@@ -95,7 +114,7 @@ plotRGB(r)
 ## Color Conversion
 
 Convert to [CIELAB](https://en.wikipedia.org/wiki/CIELAB_color_space) color space, much more useful for analysis of color. I'll abbreviate CIELAB as LAB for simplicity.
-```{r dev = 'jpeg'}
+```{r dev = 'jpeg', fig.width=8, fig.height=7, fig.alt='Example image split into CIELAB color coordinates.', fig.cap='Example image split into CIELAB color coordinates.'}
 # copy SpatRast / update with LAB color coordinates
 r.lab <- r
 
@@ -127,14 +146,17 @@ idx <- clhs(sf::st_as_sf(s), size = 250)
 ```
 
 Visual check on cLHS-selected samples (blue).
-```{r dev = 'jpeg'}
+```{r dev = 'jpeg', fig.alt='Example image, with clhs-defined sampling points.', fig.cap='Example image, with clhs-defined sampling points.'}
 plotRGB(r, axes = FALSE)
 # points(s, pch = 3, col = 'white', cex = 0.25)
 points(s[idx, ], pch = 1, col = 'blue', cex = 1.5)
 ```
 
-Visualize LAB data.
-```{r fig.width=7, fig.height=7}
+Note that that there are very few samples covering the (black) windows and wheels.
+
+
+Visualize color space coordinates.
+```{r fig.width=8, fig.height=8, fig.alt='Scatter plot matrix of CIELAB and sRGB color space coordinates, at sampling points, symbolized using image colors. Pearson correlation coefficients are printed in the upper triangle of the matrix.', fig.cap='Scatter plot matrix of CIELAB and sRGB color space coordinates, at sampling points, symbolized using image colors. Pearson correlation coefficients are printed in the upper triangle of the matrix.'}
 # keep only the cLHS samples
 s <- s[idx, ]
 
@@ -147,10 +169,32 @@ s.rgb <- convert_colour(s.lab[, c('l', 'a', 'b')], from = 'lab', to = 'rgb', whi
 # convert to R colors, hex notation
 s.cols <- rgb(s.rgb, maxColorValue = 255)
 
-# 3-variable scatter plot matrix
+
+# helper function for paired scatterplot,
+# see ?pairs for further examples
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) {
+    par(usr = c(0, 1, 0, 1))
+    r <- abs(cor(x, y))
+    txt <- format(c(r, 0.123456789), digits = digits)[1]
+    txt <- paste0(prefix, txt)
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+# 6-variable scatter plot matrix
 # CIELAB color space coordinates
-# colors are from sRGB color coordinates
-pairs(s.lab[, c('l', 'a', 'b')], pch = 16, col = s.cols)
+# sRGB color space coordinates
+pairs(
+  cbind(
+    s.lab[, c('l', 'a', 'b')],
+    s.rgb[, c('r', 'g', 'b')]
+  ),
+  pch = 16, 
+  col = s.cols,
+  labels = c('CIE L', 'CIE A', 'CIE B', 'sRGB red', 'sRGB green', 'sRGB blue'),
+  upper.panel = panel.cor,
+  gap = 0
+)
 ```
 
 
@@ -183,9 +227,9 @@ d[which(d == 0)] <- quantile(d[which(d > 0)], prob = 0.001, na.rm = TRUE)
 
 There are many implementations of non-metric multidimensional scaling; [Sammon's Non-Linear Mapping](https://en.wikipedia.org/wiki/Sammon_mapping) is a good place to start.
 
-Recall that an ordination is a projection of the high-dimensionality distance matrix to a small number of dimensions, usually 2 or 3. This projection incurrs a loss of fidelity. A [scree plot](https://en.wikipedia.org/wiki/Scree_plot) is a qualitative way to visually determine a reasonable number of dimensions required for a given distance matrix. Look for the "elbow" in the scree plot for a reasonable starting point.
+Recall that an ordination is a projection of the high-dimensionality distance matrix to a small number of dimensions, usually 2 or 3. This projection incurs a loss of fidelity. A [scree plot](https://en.wikipedia.org/wiki/Scree_plot) is a qualitative way to visually determine a reasonable number of dimensions required for a given distance matrix. Look for the "elbow" in the scree plot for a reasonable starting point.
 
-```{r, results='hide', fig.width=6, fig.height=4}
+```{r, results='hide', fig.width=6, fig.height=4, fig.alt='Scree plot of nMDS stress values as a function of ordination rank.', fig.cap='Scree plot of nMDS stress values as a function of ordination rank.'}
 .seq <- 1:6
 .stress <- sapply(.seq, function(i) {
   .res <- sammon(d, k = i)$stress
@@ -210,7 +254,7 @@ str(mds)
 ```
 
 A scatter plot of nMDS scores, with symbols defined by the original image colors at sample points. Dashed lines show nMDS solution origin at $(0,0)$.
-```{r fig.width=7, fig.height=7}
+```{r fig.width=7, fig.height=7, fig.alt='Ordination by nMDS.', fig.cap='Ordination by nMDS.'}
 # simple visualization of nMDS ordination
 # colors from sRGB color coordinates, converted to hex notation
 par(mar = c(2, 2, 1, 1))
@@ -224,12 +268,13 @@ mtext('nMDS Axis 2', side = 2, line = 0.5, font = 2)
 
 
 Shepard plot. For more options, see related functions from the [vegan package](https://rdrr.io/rforge/vegan/man/goodness.metaMDS.html).
-```{r fig.width=5, fig.width=5}
+```{r fig.width=5, fig.width=5, fig.alt='Shepard plot for ordination above. Values close to the 1:1 line (dashed blue line) indicate a reasonable ordination solution.', fig.cap='Shepard plot for ordination above. Values close to the 1:1 line (dashed blue line) indicate a reasonable ordination solution.'}
 # generate data for Shepard Diagram
 shep <- Shepard(d, mds$points) 
 
 plot(shep, pch = ".", asp = 1, xlab = 'Original Distance', ylab = 'nMDS Distance', main = 'Shepard Diagram\n2 dimensions', las = 1)
 lines(shep$x, shep$yf, type = "S", col = 2, lwd = 2)
+abline(0, 1, col = 4, lty = 2, lwd = 2)
 ```
 
 See [nMDS-eval-01](nMDS-eval-01.html) for additional examples.
@@ -254,7 +299,7 @@ h <- rotateConstr(h, constraint = order(mds$points[, 1]))
 ```
 
 Using the `plot` method for `phylo` class objects, as provided by the ape package.
-```{r fig.width = 9, fig.height = 3.5, dpi= 100}
+```{r fig.width = 9, fig.height = 3.5, dpi= 100, fig.alt='Dendrogram representation of pair-wise distances, after divisive hierarchical clustering.', fig.cap='Dendrogram representation of pair-wise distances, after divisive hierarchical clustering.'}
 par(mar = c(0, 0, 2, 0))
 
 plot(
@@ -275,8 +320,8 @@ tiplabels(pch = 15, col = s.cols, offset = 3.5)
 
 ### K-medoids Clustering
 
-Look for the "elbow" in the scree plot of average sill width vs. number of clusters. Search for the lowests possible average sill width and number of clusters.
-```{r, results='hide', fig.width=6, fig.height=4}
+Look for the "elbow" in the scree plot of average sill width vs. number of clusters. Search for the lowest possible average sill width and number of clusters.
+```{r, results='hide', fig.width=6, fig.height=4, fig.alt='Scree plot of average sill width vs. number of clusters.', fig.cap='Scree plot of average sill width vs. number of clusters.'}
 # sequence of candidate clusters
 .seq <- 2:8
 # iterate over requested clusters
@@ -289,7 +334,7 @@ plot(x = .seq, y = .silwidth, type = "b", las = 1, ylab = "Average Sill Width", 
 ```
 
 Five clusters seems about right.
-```{r fig.width=6, fig.height=6}
+```{r fig.width=6, fig.height=6, fig.alt='Cluster arrangement as visualized on axes of first and second principal components.', fig.cap='Cluster arrangement as visualized on axes of first and second principal components.'}
 # partitioning around medoids
 # using the distance matrix vs. data matrix (diss = TRUE)
 set.seed(42)
@@ -304,7 +349,7 @@ clusplot(cl, col.p = s.cols, plotchar = FALSE, col.clus = 'black')
 ```
 
 Extract medoid colors in sRGB color space (for viewing on the screen).
-```{r fig.width=6, fig.height=2}
+```{r fig.width=6, fig.height=2, fig.alt='Color swatches of medoid colors.', fig.cap='Color swatches of medoid colors.'}
 # cl$medoids is an index to the original data matrix
 # will use these later
 medoid.cols <- rgb(s.rgb[cl$medoids, ], maxColorValue = 255)
@@ -340,7 +385,7 @@ round(p$posterior, 3)
 
 Linear discriminant function scatter plot matrix.
 ```{r fig.width=6, fig.height=6}
-plot(m, col = s.cols)
+plot(m, col = s.cols, fig.alt='Scatter plot matrix of linear discriminant scores.', fig.cap='Scatter plot matrix of linear discriminant scores.')
 ```
 
 Wrapper functions around `predict` method used by LDA models, as applied to multi-band `spatRaster` objects.
@@ -370,7 +415,7 @@ p.pr <- predict(r.lab, m, fun = pred.pr)
 ## Cluster Images (Maps)
 
 Most-likely cluster (by pixel), followed by individual cluster probabilities.
-```{r fig.width=8, fig.height=5}
+```{r fig.width=8, fig.height=5, fig.alt='Clustering vector and class-wise probabilities for all pixels of the example image (a red airplane).', fig.cap='Clustering vector and class-wise probabilities for all pixels of the example image.'}
 par(mfrow = c(2, 3))
 
 # most-likely cluster
@@ -393,7 +438,7 @@ for(i in 1:5) {
 ```
 
 Shannon entropy (by pixel). Higher values suggest more uncertainty within predictions.
-```{r dev = 'jpeg'}
+```{r dev = 'jpeg', fig.alt='A map of Shannon entropy values.', fig.cap=''}
 # apply aqp::shannonEntropy() function at each stack of pixels
 # stack represents predicted class-wise probability
 H <- app(p.pr, shannonEntropy)
@@ -426,7 +471,7 @@ p.mds2 <- predict(r.lab, lm.mds2)
 ```
 
 Attempt a simple interpretation of nMDS scores (axes).
-```{r fig.width=7.5, fig.height=4, dev = 'jpeg'}
+```{r fig.width=7.5, fig.height=4, dev = 'jpeg', fig.alt='Images of nMDS scores, estimated at each pixel of the example image.', fig.cap='Images of nMDS scores, estimated at each pixel of the example image.'}
 # colors
 mds1.cols <- colorRampPalette(c('red', 'green'), space = 'Lab')(25)
 mds2.cols <- rev(grey.colors(25))
