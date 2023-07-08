@@ -7,7 +7,7 @@ granite <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-da
 # note that there are two files
 andesite <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/rasmussen-andesitic-lahar.csv', stringsAsFactors = FALSE)
 
-andesites.site <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/rasmussen-andesitic-lahar-site.csv', stringsAsFactors = FALSE)
+andesite.site <- read.csv('https://github.com/ncss-tech/aqp/raw/master/misc/example-data/sierra-transect/rasmussen-andesitic-lahar-site.csv', stringsAsFactors = FALSE)
 
 # note: these are data.frame objects
 class(granite)
@@ -32,7 +32,7 @@ depths(andesite) <- id ~ top + bottom
 site(andesite) <- ~ elev + precip + MAP + MAT + veg + Fe_d_to_Fe_t
 
 # join coordinates + notes via `id`
-site(andesite) <- andesites.site
+site(andesite) <- andesite.site
 
 
 ## label transects via site-level attribute
@@ -65,7 +65,7 @@ plotSPC(g, width = 0.3, color = 'clay')
 
 # fancy plot
 par(mar = c(0, 0, 0, 0))
-plotSPC(g, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, fixLabelCollisions = TRUE, cex.names = 0.66, width = 0.3, shrink = TRUE)
+plotSPC(g, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, hz.depths.offset = 0.05, cex.names = 0.66, width = 0.3, shrink = TRUE)
 
 # see ?plotSPC for documentation on all function arguments
 # expanded discussion of arguments + examples:
