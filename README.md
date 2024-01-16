@@ -2,7 +2,7 @@
 
 <img src="book/static-figures/logo.jpg" width="100%">
 
-#### 2023-01-30
+#### 2024-01-16
 
 ### **[Precourse Assignment](http://ncss-tech.github.io/stats_for_soil_survey/book/index.html)**
 
@@ -28,7 +28,7 @@
 
 ### [**Chapter 3:** *Exploratory Data Analysis*](http://ncss-tech.github.io/stats_for_soil_survey/book/eda.html)
 
--   #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/4_exploratory_analysis/ch4_prez.pptx)
+-   #### [Presentation](https://ncss-tech.github.io/stats_for_soil_survey/presentations/4_exploratory_data_analysis/ch4_prez.html)
 
 -   #### [Shiny Apps](http://ncss-tech.github.io/stats_for_soil_survey/presentations/4_exploratory_data_analysis/shiny_app_pres.html)
 
