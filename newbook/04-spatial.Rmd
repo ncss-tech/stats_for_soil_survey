@@ -32,9 +32,6 @@ library(sf)
 # superseded by sf -- spatial object classes e.g. SpatialPoints/SpatialPolygons
 library(sp)
 
-# superseded by sf and terra -- bindings for PROJ & GDAL libraries
-library(rgdal)
-
 # gridded data management / analysis
 library(terra)
 
@@ -280,9 +277,7 @@ You can the following `sf` package vignettes for details, sample data sets and u
 
 7. [Spherical geometry in sf using s2geometry](https://r-spatial.github.io/sf/articles/sf7.html)
 
-### The `sp` and `rgdal` Packages 
-
- > Please note that rgdal will be retired by the end of 2023, plan transition to sf/stars/terra functions using GDAL and PROJ at your earliest convenience.
+### The `sp` Package
 
 The data structures ("classes") and functions provided by the [`sp`](https://cran.r-project.org/web/packages/sp/index.html) package have served a foundational role in the handling of spatial data in R for years. 
 
@@ -297,11 +292,9 @@ Objects of these classes maintain linkages between all of the components of spat
 
 ### Converting `sp` and `sf`
 
-`sp` provides access to the same compiled code libraries (PROJ, GDAL, GEOS) as `sf`, but mostly via the interfaces in the separate `rgdal` package. 
+`sp` provides access to the same compiled code libraries (PROJ, GDAL, GEOS) through `sf` package.
 
-For certain applications, such as some packages we demonstrate below, there are no `sp` "interfaces" to the methods -- only `sf`, or vice-versa. In the future, all R spatial code using `sp` will have to migrate to `sf`/`stars` or `terra` functions.
-
-For now the different package object types are interchangeable, and you may find yourself having to do this for a variety of reasons. You can convert between object types as neede using `sf::as_Spatial()` or `sf::st_as_sf`. 
+For now the different package object types are interchangeable, and you may find yourself having to do this for a variety of reasons. You can convert between object types as needed using `sf::as_Spatial()` or `sf::st_as_sf`. 
 
 Check the documentation (`?functionname`) to figure out what object types different methods need as input; and check an input object's class with `class()` or `inherits()`.
 
@@ -325,19 +318,11 @@ sf::st_write(x, dsn = 'E:/gis_data/ca630/pedon_locations.shp')
 sf::write_sf(x, dsn = 'E:/gis_data/ca630/pedon_locations.shp')
 ```
 
-#### `sp` / `rgdal` 
+#### `sp`
 
-Export object `x` to shapefile. 
+Export object `x` to shapefile using the `sf` syntax. `rgdal` is no longer available on CRAN.
 
-```{r eval=FALSE}
-x <- rgdal::readOGR(dsn = 'E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer = 'ca630_a')
-```
-
-```{r eval=FALSE}
-rgdal::writeOGR(x, dsn = 'E:/gis_data/ca630/pedon_locations.shp', driver = 'ESRI Shapefile')
-```
-
-The `st_read()` / `read_sf()` / `st_write()` / `write_sf()` and `readOGR()`, `writeOGR()`, `readGDAL()`, `writeGDAL()` (used for SpatialGridDataFrame) functions have many arguments, so it is worth spending some time reviewing the associated manual pages.
+The `sf` `st_read()` / `read_sf()` / `st_write()` / `write_sf()` functions have many arguments, so it is worth spending some time reviewing the associated manual pages.
 
 ### Interactive mapping with `mapview` and `leaflet`
 
@@ -514,7 +499,7 @@ Returning to the example from above, lets **assign** a CRS to our series extent 
 s <- seriesExtent('san joaquin')
 ```
 
-The following are equivalent `sf` versus `sp` vs. `rgdal` syntax. 
+The following sections give equivalent `sf` versus `sp` syntax.
 
 #### `sf`
 
@@ -541,7 +526,7 @@ s.utm <- st_transform(x = s, crs = 26910)
 s.nad27 <- st_transform(x = s, crs = st_crs(4267))
 ```
 
-#### `sp` and `rgdal`
+#### `sp` 
 
 You can do the same thing several different ways with `sp` objects. An equivalent EPSG, OGC and PROJ.4 can be set or get using `proj4string<-`/`proj4string` and either a `sp` `CRS` object or a PROJ.4 string for `Spatial` objects.
 
@@ -661,7 +646,7 @@ It is wise to manually specify an output `datatype` that will "just fit" the req
 
 For example, if you have generated a `RasterLayer` that warrants integer precision and ranges from 0 to 100, then the `INT1U` data type would provide enough precision to store all possible values *and* the NODATA value. Raster data stored as integers will always be smaller (sometimes 10-100x) than those stored as floating point, especially when internal compression is enabled.
 
-```{eval = FALSE}
+```{r eval = FALSE}
 # integer grid with a range of 0-100
 # maybe soil texture classes
 raster::writeRaster(r, filename = 'r.tif', datatype = 'INT1U')
