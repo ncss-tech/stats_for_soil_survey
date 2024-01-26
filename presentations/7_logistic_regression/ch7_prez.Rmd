@@ -196,7 +196,7 @@ rbind(RsqGLM(spod.glm))
 
 ```{r cm, echo=TRUE}
 library(caret)
-cm <- table(observed = wv$spod, predicted = predict(spod.glm, type = "response") > 0.5)
+cm <- table(predicted = predict(spod.glm, type = "response") > 0.5, observed = wv$spod)
 confusionMatrix(cm, positive = "TRUE")
 
 ```
@@ -205,7 +205,7 @@ confusionMatrix(cm, positive = "TRUE")
 ## Accuracy - Probability Threshold
 
 ```{r thres}
-wv$pred <- predict(spod.glm, type = "response")
+wv$pred <- predict(spod.lrm, type = "fitted")
 
 ggplot(wv, aes(x = pred, fill = spod)) +
   geom_density(alpha = 0.5) +
@@ -217,26 +217,25 @@ ggplot(wv, aes(x = pred, fill = spod)) +
 ## Interpreting the Coefficients
 
 ```{r coef1, echo=TRUE}
-# extract coefficient, stored in log(odds)
-coef(spod.glm)
+# extract coefficient, stored in log(odds ratio)
+coef(spod.lrm)
 
-# convert coefficient to odds
-exp(coef(spod.glm))
+# convert coefficient to odds ratio
+exp(coef(spod.lrm))
 ```
 
 
 ## Interpreting the Coefficients - Partial Effect Plots
 
 ```{r coef2, echo=TRUE}
-library(visreg); par(mfcol = c(2, 2))
-visreg(spod.glm, scale = "response", ylab = "spodic probability")
+ggplot(Predict(spod.lrm, fun = plogis), ylab = "probability")
 ```
 
 
 ## Interpreting the Coeficiencts - Deviance Explained
 
 ```{r dev1, echo=TRUE}
-anova(spod.glm)
+anova(spod.lrm)
 ```
 
 

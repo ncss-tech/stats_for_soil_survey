@@ -285,7 +285,11 @@ R has several functions for fitting linear models. The most common is arguably t
 ```{r lm-ols, eval = TRUE, warning=FALSE, message=FALSE}
 
 # stats
-fit_lm <- lm(mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, weights = data$numDays)
+fit_lm <- lm(
+  formula = mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, 
+  data = data, 
+  weights = data$numDays
+  )
 
 
 # rms R package
@@ -359,9 +363,14 @@ sqrt(vif(fit_ols)) > 3
 The values above indicate we have several colinear variables in the model, which you might have noticed already from the scatter plot matrix.
 
 
-### Variable selection & model validation
+### Variable selection/reduction
 
 Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models are typically less automated. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
+
+- Step-wise selection (`step()`, `rms::validate()`)
+- Principal component analysis (`princomp()`)
+- Shrinkage methods (e.g. Lasso)
+- Randomized wrapper (e.g. Boruta)(`Boruta::Boruta()`)
 
 Both the `rms` and `caret` packages offer methods for variable selection and cross-validation. In this instance the `rms` approach is a bit more convenient, with the one line call to `validate()`.
 
@@ -375,6 +384,21 @@ set.seed(42)
 ## stepwise selection
 validate(fit_ols, bw = TRUE)
 
+```
+
+```{r, eval=FALSE, echo=FALSE}
+train.control <- trainControl(method = "cv", number = 10, savePredictions = TRUE, returnData = TRUE)
+## stepwise selection and validation
+step_caret <- train(mast ~ elev + solar + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + log(precip) + temp^2, 
+                    data = data,
+                    weights = data$numDays,
+                    method = "lmStepAIC",
+                    trace = FALSE,
+                    trControl = train.control,
+                    na.action = na.exclude
+)
+## test accuracy and error
+summary(step_caret$resample)
 ```
 
 The results for `validate()` above show which variables were retained and deleted. Above we can see a dot matrix of which variables were retained during each of the iterations from bootstrapping. In addition, we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
@@ -511,13 +535,13 @@ vars <- c("MAST", "Winter", "Summer", "STR", "elev", "solar", "tci", "o.hz.thick
 dd <- datadist(mast2[vars])
 options(datadist = "dd")
 
-fit_ols <- ols(Winter ~ elev + solar + tci + o.hz.thick, data = mast2, x = TRUE, y = TRUE, weights = mast2$days.of.data)
+fit_ols <- ols(MAST ~ elev + solar + tci + o.hz.thick, data = mast2, x = TRUE, y = TRUE, weights = mast2$days.of.data)
 ```
 3. Examine the residuals and check for multi-collinearity.
     - Are their any outliers?
 ```{r, eval=FALSE, echo=FALSE}
 plot(fit_lm)
-termplot(fit_lm3, partial.resid = TRUE)
+termplot(fit_lm, partial.resid = TRUE)
 ```
 4. Perform a variable selection.
     - Does the automatic selection make sense?
@@ -539,7 +563,7 @@ coefficients(fit_ols)
 
 # - Which variable has the greatest effect?
 plot(summary(fit_ols))
-plot(Predict(fit_ols, elev = NA, solar = c()))
+plot(Predict(fit_ols))
 plot(Predict(fit_ols, elev = NA, solar = c(33962, 68700, 85701)))
 
 # - Which variable explains the most variance?
