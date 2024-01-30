@@ -682,11 +682,11 @@ These `get()` calls access variables stored in the package environment `soilDB.e
 
 Now that you've loaded some data, you can look at additional ways to summarize and interact with data elements.
 
-#### `table()`
+#### `table()` and Cross Tabulation
 
 The base R `table()` function is very useful for quick summary operations. It returns a named vector with the amount of each unique level of the a given vector.
 
-The numeric vector of "counts" is commonly combined with other functions such as `sort()`, `order()`, `prop.table()`, `is.na()` or `!is.na()` (is not NA) to identify abundance, proportions, or missing data (`NA`).
+The numeric vector of "counts" is commonly combined with other functions such as `sort()`, `order()`, `prop.table()`, `is.na()` to identify abundance, proportions, or missing data (`NA`).
 
 ```{r, eval=TRUE}
 # load required packages
@@ -695,21 +695,49 @@ library(soilDB)
 
 data("gopheridge", package = "soilDB")
 
-# for these examples, we use the gopheridge dataset as our "selected set"
+# for these examples, we use the gopheridge object as our "selected set"
 pedons <- gopheridge 
-# NOTE: you can use fetchNASIS to load your own data, like this:
+
+## you can use fetchNASIS to load your own data, like this:
 # pedons <- fetchNASIS()
 
 # summarize which soil taxa we have loaded
 table(pedons$taxonname)
 
-# sort results in descending order
+# sort taxonomic names in descending order
 sort(table(pedons$taxonname), decreasing = TRUE)
 
 # could do the same thing for taxonomic subgroups 
-# or any column of the SPC at the site or horizon levels
 table(pedons$taxsubgrp)
 sort(table(pedons$taxsubgrp), decreasing = TRUE)
+```
+
+We can convert counts in the `table()` result into proportions with `prop.table()`:
+
+```{r, eval=TRUE}
+prop.table(table(pedons$taxsubgrp))
+```
+
+`table()` can be used to get counts over multiple dimensions of factor levels.
+
+We call this process _cross tabulation_. 
+
+For instance, let's cross tabulate taxonomic subgroup (`taxsubgrp`) and the particle size family class (`taxpartsize`) for `pedons`
+
+```{r, eval=TRUE}
+table(pedons$taxsubgrp, pedons$taxpartsize)
+```
+
+As expected `gopheridge` the vast majority of pedons are _Loamy-skeletal Ultic Haploxeralfs_.
+
+Since `pedons` contains site and horizon level data, when cross-tabulating we need to be sure pair a column from the site data with other site-level columns, and the same for horizon-level. This is because all arguments to `table()` must have the same length.
+
+For example, let's cross-tabulate horizon designation (`hzname`) with horizon texture class (`texcl`). 
+
+We can use the `addmargins()` function to add the row and column sums to the margins of the table for easier interpretation when there are many rows/columns in the result.
+
+```{r, eval=TRUE}
+addmargins(table(pedons$hzname, pedons$texcl))
 ```
 
 <!-- #### `dput()` -->

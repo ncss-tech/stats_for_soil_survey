@@ -46,7 +46,7 @@ Alternately, you may do the entire assignment in a _.Rmd_ file (R Markdown) and 
 
 You will need to move the code from the _.R_ file to a _.Rmd_ yourself. You can create a basic .Rmd from RStudio using _File >> New File >> R Markdown..._ Here is a cheatsheet for basic R Markdown syntax: [RStudio R Markdown Cheat Sheet](https://raw.githubusercontent.com/rstudio/cheatsheets/main/rmarkdown.pdf)
 
-If you do the _.Rmd_ file, include both the _.Rmd_ and the knitted HTML result. If you use an R script, include the R script and PDF or screenshots of Results #1 and #2. 
+If you create an _.Rmd_ file, include both the _.Rmd_ and the knitted HTML result. If you use an R script, include the R script and PDF or screenshots of Results #1 and #2. 
 
 **NOTE:** There are some __Exercise Tips__ at the end of the document to help you get going on modifications for your own analyses.
 
@@ -54,9 +54,9 @@ Send the results to your mentor with your first and last name in the file names.
 
 # Instructions
 
-1. Query NASIS database to __load your selected set__ with some pedons. Replace the call to `data("loafercreek")` and the subsetting of `pedons` (`loafercreek[1:20,]`) with a routine that brings in your own data (e.g. using `fetchNASIS()`). [fetchNASIS](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html#fetchnasis). If you want to get the pedons associated with a particular taxon name (such as a series), try NASIS query: _NSSC_Pangaea_: _POINT - Pedon/Site/NCSSlabdata by taxonname_. 
+1. Query NASIS database to __load your selected set__ with some pedons. Replace the call to `data("loafercreek")` and the subsetting of `pedons` (`loafercreek[1:20,]`) with a routine that brings in your own data (e.g. using `fetchNASIS()`). [fetchNASIS](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html#fetchnasis). If you want to get the pedons associated with a particular taxon name, try the NASIS query: _NSSC_Pangaea_: _POINT - Pedon/Site/NCSSlabdata by taxonname_. 
 
-2. __Create a _subset_ (in R)__ of soils to summarize (call it `pedons`). You should have about `n = 20` for a manageable demo that fits nicely in a SoilProfileCollection plot, but you are welcome to try the same routines on larger sets. [STAT 1010: Chapter 2a, Section 4.2: Filtering](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html#filtering)
+2. __Create a _subset_ (in R)__ of soils to summarize (call it `pedons`). You should have about `n = 20` for a manageable demo that fits nicely in a SoilProfileCollection plot, but you are welcome to try the same routines on larger sets. [STAT 1010: Chapter 2 -  Filtering](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html#filtering)
 
 3. __Inspect the field horizon designations__ (look at the pedons in R or NASIS, if needed). Think about which field horizon designation(s) should correlate to each "prototype" horizon.
 
@@ -64,13 +64,13 @@ Send the results to your mentor with your first and last name in the file names.
 
 5. __Write a set of regular expressions (REGEX patterns)__ (you'll need _one pattern per generalized horizon_) to do the correlations you thought about in *#4*. Test and learn more about regular expressions here: [https://regexr.com/](https://regexr.com/)
 
-6. __Cross-tabulate__ your GHLs against the field horizon designations. This will show a table of the mapping from "old" to "new" ("field" to "correlated").
+6. __Cross tabulate__ your GHLs against the field horizon designations. This will show a table of the mapping from "old" to "new" ("field" to "correlated"). Use the `table()` function covered in Chapter 2.
 
 7. __Check if any horizon designations were _NOT_ assigned a label__ (have label "not-used"). At a minimum you should be able to answer the question: "_Which horizons were not assigned?_" Bonus points if you can answer "_Why [those horizons] weren't assigned?_"
 
 8. __Repeat steps 3 through 7__ as needed. You don't need to get the patterns _perfect_ but we want you to think about how you could/would "improve" them, especially if they don't work as intended. 
 
-9. __Do a statistical summary on your horizon groups to produce a range in characteristics.__ You can use the example given below for `loafercreek` (mean/sd/min/max clay content) or do something else of interest to you. 
+9. __Do a statistical summary on your horizon groups to produce a range in characteristics.__ You can use the example given below for `loafercreek` (mean/sd/min/max clay content). Alternately you do something else of interest, such as summarizing the range in thickness of "B" horizons, or the range in depth to bedrock; or tabulating texture classes or colors used by horizon.
 
 _Be prepared to discuss issues you had with your mentor. In particular, what "decisions" did you have to make that might have influenced your final correlations and range in characteristics?_
 
@@ -82,44 +82,48 @@ This document takes you through a demo of the exercise using a subset of the `lo
 
 After reviewing this workflow, and with the help of your mentor, you should be able to apply this technique to your own data.
  
-This assignment integrates several R/data analysis skills as well as brings on the "Great Unknown" of NASIS data inputs from across the country. With this type of uncharted territory, there is a lot of room for learning _new_ things ... and dealing with _new problems_. If your code does not work at first, do not be discouraged. Feel free to contact Andrew Brown (_andrew.g.brown@usda.gov_), or your assigned mentor, if you have questions, issues or comments.
+This assignment integrates several R/data analysis skills as well as brings on the "Great Unknown" of NASIS data inputs from across the country. With this type of uncharted territory, there is a lot of room for learning _new_ things and dealing with _new problems_. 
+
+If your code does not work at first do not be discouraged. 
+
+Feel free to contact Andrew Brown (_andrew.g.brown@usda.gov_), or your assigned mentor, if you have questions, issues or comments.
  
 # Getting started (with Loafercreek)
 
-First, you will read over and run all the code in this document using the first 20 pedons from `loafercreek` as a demonstration. This will help you get comfortable with the process. Then you will apply the same strategy to NASIS pedons from your area of responsibility, adjusting patterns and summaries as needed. 
+First read over and run the code in this document using the first 20 pedons from `loafercreek` as a demonstration. This will help you get comfortable with the process.
 
-**Here is a link to a mini-tutorial on using `fetchNASIS()`:**
+Then apply the same strategy to NASIS pedons from your area of responsibility, adjusting patterns and summaries as needed. 
 
- * [http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html)
+**For your exercise, replace the next block of code with code to get your own data.** 
 
-**When it comes time, you will replace this next block of code with code to get your own data.** If you use `fetchNASIS()`, note that it produces QC output that may be relevant to your analysis. [2.7: fetchNASIS data checks](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html#fetchnasis-data-checks)
+If you use `fetchNASIS()` please note that it produces QC output that may be relevant to your analysis. [2.7: fetchNASIS data checks](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html#fetchnasis-data-checks)
 
 ```{r, message=FALSE, warning=FALSE, fig.width=8.5, fig.height=5}
 library(aqp, warn.conflicts = FALSE)
 library(soilDB)
 
-## STEP 1
+## STEP 1 ----
 
 # load sample `loafercreek` data from the soilDB package
 data("loafercreek")
 
-## STEP 2
+## STEP 2  ----
 # keep only the first 20 pedons
 pedons <- loafercreek[1:20, ]
 
 # plot profile sketches
-par(mar=c(0,0,2,1))
-plot(pedons, name='hzname', print.id=FALSE)
+par(mar = c(0, 0, 2, 1))
+plot(pedons, name = 'hzname', print.id = FALSE)
 ```
 
 In order to help your mentor debug any issues you may be having, it is helpful to also provide them with an RData file containing the SoilProfileCollection of pedons, as below. 
-
-That way they won't have to re-create your selected set to inspect your data.
 
 ```{r}
 # after loading your data as a SoilProfileCollection, save it
 save(pedons, file = "my_pedons.Rda")
 ```
+
+That way your mentor won't have to re-create your selected set in NASIS to inspect your data.
 
 # _Generalized Horizon Labels_
 
@@ -144,7 +148,7 @@ Maybe we could use all the _unique_ horizon designations in the data?
 And then create a summary for each group?
 
 ```{r}
-## STEP 3
+## STEP 3 ----
 
 # tabulate hzname
 table(pedons$hzname)
@@ -159,37 +163,41 @@ Here we have `r length(unique(pedons$hzname))` different horizon designations. N
 
 Depending on things like depth class or the nature of the parent material, the number of horizon RICs provided in a series or component will vary. 
 
-Many series concepts provide RICs for only a couple _very_ generalized horizons (say, just an A and a Bt in a very deep soil) and avoided providing ranges for transitional horizons/vertical subdivisions. Other descriptions might have more layers broken out.
+Many series concepts provide RICs for only a couple generalized horizons (say, just an A and a Bt in a very deep soil) and avoid providing ranges for transitional horizons/vertical subdivisions. Other descriptions may have more layers and properties broken out.
 
-The great thing about the GHL approach is that you can "test" the effect of adding/removing groups. Then you can decide if it adds interpretive value (i.e. a layer with "significantly" different properties) to have more or less groups based on the data you have.
+The great thing about the GHL approach is that you can "test" the effect of adding/removing groups. This doesn't have to be a formal test, necessarily, but you can see how the inclusion of more groups, or different rules affects the way your data are partitioned. Then you can decide if it adds interpretive value (i.e. a layer with "significantly" different properties) to have more or less groups based on the data you have.
 
-## Micro-correlation
+## "Micro-correlation"
 
-First, you will need your the general labels that are appropriate for the soil you are studying. This the list of horizon labels that occurs in your hypothetical, idealized, "typical" soil; for instance, the horizons that occur in the OSD/TUD/component pedon or some generalization of them. 
+First, you will need some general labels appropriate for the soil you are studying. This the list of horizon labels  occurs in your hypothetical, idealized, "typical" soil. For instance, the horizons that occur in the OSD/TUD/component pedon or some generalization of them would be a good start.
 
-For this exercise we will try to produce a set of REGEX patterns that correlate the field-observed horizon designations to your prototype horizons. Let's take a look at the horizon designations from the Loafercreek OSD for inspiration.
+For this exercise we will try to produce a set of REGEX patterns that correlate the field-observed horizon designations to your prototype horizons. 
+
+Let's take a look at the horizon designations from the Loafercreek OSD for inspiration. If you are trying this on a series of your own, you will need to replace the series name argument (must be in quotes). 
 
 ```{r}
 l <- fetchOSD('loafercreek')
 l$hzname
 ```
 
-There are quite a few horizons. We might not be able to produce a unique RIC for each of those subdivisions of the Bt. And we probably don't want to, even if we could. So we will have to generalize. 
+There are quite a few horizons in the OSD pedon. We might not be able to produce a unique RIC for each subdivision of the Bt. And we probably don't want to, even if we could. So we will have to generalize. 
 
-With generalized horizon labels (GHLs), correlation decisions are being made on a horizon basis (in addition to at the pedon level), so we call it a "micro-correlation." In this process, we are determine what data from each pedon contributes to each Range in Characteristics. This has always been a part of Soil Correlation--we are just making it _explicit_ and _reproducible_ by using R to track our "decisions" at the horizon level. 
+With generalized horizon labels (GHLs), correlation decisions are being made on a horizon basis (in addition to at the pedon level), so we call it a "micro-correlation." 
+
+In this process, we are determine what data from each pedon contributes to each Range in Characteristics. This has always been a part of Soil Correlation--we are just making it _explicit_ and _reproducible_ by using R to track our "decisions" at the horizon level. 
  
-A simple micro-correlation might be: "this transitional AB horizon has 'A' as the first designation so it is be more like an 'A' than a 'Bt' horizon". More complex decisions take place when multiple properties are coming into consideration.
+A simple micro-correlation might be: "this transitional AB horizon has 'A' as the first designation so it is be more like an 'A' than a 'Bt' horizon". More complex decisions take into account multiple properties beyond the horizon designation (such as clay content, color, or texture class).
 
 Grouping horizon observations by horizon designation is an excellent way to _begin_ to explore the properties of a set of profiles. There are patterns and connotations in the way we are trained to designate soil horizons that will often yield useful groupings.
 
-That said, you can (and should) look at more than just horizon designation. Often unusual data sneak through the cracks, either getting in a group they shouldn't, or not getting matched at all--these need to be addressed with specific patterns or manual adjustment.
+You can (and should) look at more than just horizon designation. Often unusual data sneak through the cracks, either getting in a group they shouldn't, or not getting matched at all--these need to be addressed with specific patterns or manual adjustments.
 
-Here is an example of a prototype for horizonation for Loafercreek. It is a broad generalization of the labels we found in the Loafercreek OSD layers. 
+Here is an example of a prototype for horizonation for Loafercreek. It is a broad generalization of the labels we found in the Loafercreek OSD pedon horizons above.
 
-Our prototype labels include an A horizon, upper transitional horizon, argillic horizon, and a bedrock contact:
+Our prototype labels include an surface horizon ("A"), upper transitional horizon ("BA"), argillic horizon ("Bt"), and a bedrock contact ("Cr"):
 
 ```{r}
-## STEP 4
+## STEP 4 ----
 
 # create 4 GHLs: A, upper transitional, argillic and bedrock
 prototype.labels <- c('A',
@@ -198,7 +206,7 @@ prototype.labels <- c('A',
                       'Cr')
 ```
 
-Having just a single group for the argillic horizon (Bt) versus splitting out upper and lower (BAt/Bt1/Bt2), for instance, would be a great analysis to evaluate for your own extensions of this demo. We are deliberately keeping the example _very_ general.
+Evaluating the pros and cons of  a single group for the argillic horizon (Bt) versus splitting out upper and lower (Bt1/Bt2), for instance, would be a great analysis to evaluate for your own extensions of this demo. We are deliberately keeping the example _very_ general.
 
 ## Regular Expressions
 
@@ -207,24 +215,24 @@ The vector `prototype.labels` has `r length(prototype.labels)` values in it. The
 Define the paired patterns for each `prototype.label`
 
 ```{r}
-## STEP 5
+## STEP 5 ----
 
 # REGEX rules describing mapping from field data to prototype.labels
 patterns.to.match <- c('^A',
-                      '^B[^Ct]*$',
-                      'B.*t',
-                      'Cr|R')
+                       '^B[^Ct]*$',
+                       'B.*t',
+                       'Cr|R')
 ```
 
 Here is a brief explanation of the function of each of the 4 patterns:
 
- 1. If the horizon designation starts with A, it goes in the "A" label
+ 1. If the horizon designation starts with `"A"`, it goes in the "A" generalized horizon group
  
- 2. If the horizon designation starts with B, but does not contain "C" or "t", it goes in the "BA" label
+ 2. If the horizon designation starts with `"B"`, and does not contain "C" or `"t"` after `"B"`, it goes in the `"BA"` generalized horizon group
  
- 3. If the horizon designation contains "B" and "t", it goes in the "Bt" label
+ 3. If the horizon designation contains `"B"` followed by anything, and then `"t"`, it goes in the `"Bt"` generalized horizon group
  
- 4. If the horizon contains "R" or "Cr", it goes in the "Cr"/bedrock label
+ 4. If the horizon contains `"R"` or `"Cr"`, it goes in the `"Cr"` generalized horizon group
  
 **More tips:** 
 
@@ -263,7 +271,7 @@ Since we don't want to overwrite the data that came out of NASIS at this point, 
 pedons$newgenhz <- generalize.hz(x = pedons$hzname, new = prototype.labels, pat = patterns.to.match)
 ```
 
-## Cross-tabulate Results
+## Cross Tabulate Results
 
 That's it. We have generalized the horizons. Let's take a look at how our patterns did. 
 
@@ -272,7 +280,7 @@ We "cross-tabulate" the results of `generalize.hz()` with the input data to see 
 In particular we want to see if any horizons in the input data got "missed" by our patterns or if horizons are getting correlated to labels we did not expect.
 
 ```{r}
-## STEP 6
+## STEP 6 ----
 # cross-tabulate results
 oldvsnew <- addmargins(table(pedons$newgenhz, pedons$hzname))
 oldvsnew
@@ -287,6 +295,7 @@ The numbers in each cell show how many observations (horizons) have that combina
 Note that the 'not-used' class is the default result when _none of the patterns match_. You can set alternate values for no-match case with `generalize.hz(..., non.matching.code = 'alternate-not-used-code').`
 
 ```{r}
+## STEP 7 ----
 # find which columns are greater than zero in row 'not-used'
 col.idx.not.used <- which(oldvsnew['not-used',] > 0)
 
@@ -322,7 +331,7 @@ For a new `BC` label pattern we match all horizons that contain `C` and have zer
 Because of the ordering of patterns, `Cr` will be matched by patterns 4 and 5, but only the label for pattern 5 (`Cr`) will be assigned. Let's assign the new labels:
 
 ```{r}
-## REPEAT STEPS 4 AND 5
+## REPEAT STEPS 4 AND 5 ----
 
 # create 5 generalized horizons: A, upper transitional, argillic, lower-transitional and bedrock
 prototype.labels.v2 <- c('A',
@@ -348,7 +357,7 @@ pedons$newgenhz2 <- generalize.hz(x = pedons$hzname,
 Now we cross-tabulate again, showing only `not-used` data.
 
 ```{r}
-## REPEAT STEP 6
+## REPEAT STEP 6 ----
 
 # create a second cross-tabulation, using the updated genhz
 oldvsnew2 <- addmargins(table(pedons$newgenhz2, pedons$hzname))
@@ -379,8 +388,11 @@ Compare the coloring (based on `pedons$newgenhz2`) with the field horizon design
 ## RESULT #1
 
 # plot profile sketches - first 20 profiles; color by gen hz.
-par(mar=c(0,0,3,1))
-plotSPC(pedons, name = 'hzname', color = 'newgenhz2', print.id = FALSE)
+par(mar = c(0, 0, 3, 1))
+plotSPC(pedons,
+        name = 'hzname',
+        color = 'newgenhz2',
+        print.id = FALSE)
 ```
 
 Here are a few things that are evident for the Loafercreek example:
@@ -406,12 +418,12 @@ Let's look at how we can generate RICs based on the labels we assigned (and subs
 
 ## Summaries by Generalized Horizon
 
-Here we use `dplyr`  to produce statistical summaries for each of our generalized horizons. 
+Here we use `dplyr` to produce statistical summaries for each of our generalized horizons. 
 
-We group our horizon data into sub-`data.frame`s using the _GHLs_ we assigned in (`pedons$newgenhz2`) as the grouping variable. Then we do some statistics on each "piece" (using `summarize`) and combine the results for review.
+We group the horizon data into sub-`data.frame`s using the _GHLs_ we assigned in (`pedons$newgenhz2`) as the grouping variable. Then we do some statistics on each "piece" (using `summarize`) and combine the results for review.
 
 ```{r, warning = FALSE}
-## STEP 9
+## STEP 9 ----
 
 # get the horizon data frame out of the SPC
 hzdata <- horizons(pedons)
@@ -522,7 +534,7 @@ You can also store temporary results in RData files.
 
 ```{r}
 # after updating genhz, save a new copy of the data
-save(pedons, file="my_pedons_genhz.Rda")
+save(pedons, file = "my_pedons_genhz.Rda")
 ```
 
 # Exercise Tips
