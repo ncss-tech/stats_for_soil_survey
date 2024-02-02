@@ -31,6 +31,8 @@ The question of how many samples are required is complex. As per usual, the answ
 The first 3 methods use formulas for their corresponding statistics to solve for the sample size, each results in progressively higher sample size requirements. The `PracTools` R package [@valliant2022] offers several functions for the 1st and 2nd methods. The `pwr` [@champely2020] and `WebPower` [@zhang2021] R packages offer several functions for the 3rd method, based on a variety of statistical models. @gelman2020 provides a nice graphical illustration of the variables involved with these methods.  
 
 ```{r ci, echo=FALSE}
+library(ggplot2)
+
 set.seed(42)
 df <- rbind(
   data.frame(n = 10,  mu = 16, clay = rnorm(10,  mean = 16, sd = 2)),
@@ -251,46 +253,6 @@ ggplot() +
 ```
 
 
-### Spatial Coverage Sampling
-
-```{r spcosa, fig.width=4, fig.height=4, eval=TRUE}
-# spcosa ----
-library(spcosa)
-
-grd2 <- st_crs(grd, NA)
-grd_sp <- as(grd, "Spatial")
-
-strata <- stratify(grd_sp, nStrata = 16) 
-
-pts    <- spsample(strata)
-plot(strata, pts) + 
-  ggtitle("Spatial Coverage")
-
-```
-
-<!-- ### Cluster -->
-
-<!-- In cluster sampling, a cluster or group of points is selected at one or more sites. The transect is an example of this strategy, although other shapes are possible (e.g., square, triangle, or cross shapes). It is common to orient the transect in the direction of greatest variability. -->
-
-<!-- **Advantages** -->
-
-<!--  - Greater efficiency -->
-<!--  - Lower cost    -->
-
-<!-- **Disadvantages** -->
-
-<!--  - Lower precision   -->
-
-<!-- ```{r clustered, fig.width=4, fig.height=4, eval=TRUE}  -->
-<!-- plot(polys, main = "Clustered (n = 3) random sample") -->
-
-<!-- # Generate cluster random sample -->
-<!-- test <- spsample(polys, nclusters = 3, type = "clustered") -->
-<!-- points(test, pch = 19) -->
-<!-- ``` -->
-
-
-
 ### Stratified Random
 
 In stratified random sampling, the sampling region is spatially subset into different strata, and random sampling is applied to each strata. If prior information is available about the study area, it can be used to develop the strata. Strata may be sampled equally or in proportion to area; however, if the target of interest is rare in the population, it may be preferable to sample the strata equally @franklin2009].
@@ -363,6 +325,138 @@ ggplot() +
 ```
 
 
+### Spatial Coverage Sampling (e.g. k-means clustering)
+
+```{r spcosa, fig.width=4, fig.height=4, eval=TRUE}
+# spcosa ----
+library(spcosa)
+
+grd2 <- st_crs(grd, NA)
+grd_sp <- as(grd, "Spatial")
+
+strata <- stratify(grd_sp, nStrata = 16) 
+
+pts    <- spsample(strata)
+plot(strata, pts) + 
+  ggtitle("Spatial Coverage")
+
+```
+
+<!-- ### Cluster -->
+
+<!-- In cluster sampling, a cluster or group of points is selected at one or more sites. The transect is an example of this strategy, although other shapes are possible (e.g., square, triangle, or cross shapes). It is common to orient the transect in the direction of greatest variability. -->
+
+<!-- **Advantages** -->
+
+<!--  - Greater efficiency -->
+<!--  - Lower cost    -->
+
+<!-- **Disadvantages** -->
+
+<!--  - Lower precision   -->
+
+<!-- ```{r clustered, fig.width=4, fig.height=4, eval=TRUE}  -->
+<!-- plot(polys, main = "Clustered (n = 3) random sample") -->
+
+<!-- # Generate cluster random sample -->
+<!-- test <- spsample(polys, nclusters = 3, type = "clustered") -->
+<!-- points(test, pch = 19) -->
+<!-- ``` -->
+
+
+### Covariate space coverage sampling (e.g. k-means clustering)
+
+Covariate space coverage sampling is a stratified sampling technique to obtain representative samples from feature (attribute) space [@brus2022]. 
+
+**Advantages**
+
+ - Maximumly stratifies the predictors
+ - Automated sample selection
+ - Can incorporates cost constraints
+ - Ideal for developing map unit concepts (puts points in central landscape positions)
+ - Can incorporate legacy points
+ - Easily scales to multiple GIS layers
+
+**Disadvantages**
+
+ - Not ideal for map validation (non – probability sample)
+ - Inefficient with large GIS layers
+
+
+```{r, echo=FALSE, eval=TRUE}
+library(terra)
+source("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/fcsc.R")
+
+# import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau
+data("volcano")
+volcano_r <- rast(
+  volcano[87:1, 61:1], 
+  crs = crs("+init=epsg:27200"), 
+  extent = c(
+    xmin = 2667405, xmax = 2667405 + 61 * 10,
+    ymin = 6478705, ymax = 6478705 + 87 * 10
+    )
+)
+names(volcano_r) <- "elev"
+
+# calculate slope from the DEM
+slope_r <- terrain(volcano_r, v = "slope", unit = "degrees")
+
+
+# Stack Elevation and Slope
+rs  <- c(volcano_r, slope_r)
+
+x <- seq(0.5, 3.5)
+df <- expand.grid(x = x, y = x)
+fs <- cscs(df, vars = c("x", "y"), n =  15)
+fs_sf <- st_as_sf(fs, coords = c("x", "y"))
+
+ggplot() + 
+  geom_sf(data = grd) +
+  geom_sf(data = fs_sf) +
+  ggtitle("CSCSC")
+
+```
+
+```{r, eval=TRUE}
+
+library(terra)
+source("C:/workspace2/github/ncss-tech/stats_for_soil_survey/exercises/fcsc.R")
+
+# import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau
+data("volcano")
+volcano_r <- rast(
+  volcano[87:1, 61:1], 
+  crs = crs("+init=epsg:27200"), 
+  extent = c(
+    xmin = 2667405, xmax = 2667405 + 61 * 10,
+    ymin = 6478705, ymax = 6478705 + 87 * 10
+    )
+)
+names(volcano_r) <- "elev"
+
+# calculate slope from the DEM
+slope_r <- terrain(volcano_r, v = "slope", unit = "degrees")
+
+
+# Stack Elevation and Slope
+rs  <- c(volcano_r, slope_r)
+
+
+# Covariate Space Coverage Sampling
+source("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/fcsc.R")
+fs <- cscs(rs, vars = c("elev", "slope"), n = 20)
+
+fs_sf <- st_as_sf(fs, coords = c("x", "y"), crs = crs(rs))
+
+# Plot CSCS Samples
+plot(volcano_r, axes=FALSE)
+points(fs_sf)
+
+```
+
+
+
 ### Conditioned Latin Hypercube (cLHS)
 
 Conditioned Latin hypercube sampling is a stratified random sampling technique to obtain representative samples from feature (attribute) space [@minasny2006]. 
@@ -394,25 +488,12 @@ The cLHS procedure iteratively selects samples from the strata variables such th
 To perform cLHS using R, you can use the clhs package [@roudier2011].
 
 ```{r clhs, fig.width=4, fig.height=4, eval=TRUE}
+rs2 <- raster::stack(rs)
+
 library(clhs)
-library(raster)
-
-# import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau
-data(volcano)
-volcano_r <- raster(as.matrix(volcano[87:1, 61:1]), 
-                    crs = CRS("+init=epsg:27200"), 
-                    xmn = 2667405, xmx = 2667405 + 61 * 10, 
-                    ymn = 6478705, ymx = 6478705 + 87 * 10)
-names(volcano_r) <- "elev"
-
-# calculate slope from the DEM
-slope_r <- terrain(volcano_r, opt = "slope", unit = "degrees")
-
-# Stack Elevation and Slope
-rs <- stack(volcano_r, slope_r)
 
 # generate cLHS design
-cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
 
 # Plot cLHS Samples
 par(mar=c(1,1,1,4))
@@ -423,16 +504,18 @@ points(cs$sampled_data)
 summary(cs$sampled_data)$data
 
 # Summary of raster objects
-cbind(summary(volcano_r), summary(slope_r))
+cbind(summary(volcano_r), summary(slope_r)[1:6])
 ```
 
 Although the above example works well on our small volcano dataset, the clhs package is inefficient if you are working with large raster datasets. To overcome this limitation, you can first take a large random sample and then subsample it using cLHS.
 
 ```{r clhs_sub, eval=FALSE}
-sub_s <- sampleRandom(volcano_r, size = 200, sp = TRUE) # random sample function from the raster package
+sub_s <- spatSample(rs, size = 200, as.points = TRUE) |>
+  st_as_sf() # random sample function from the raster package
 
 s <- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)
 ```
+
 
 
 ## Evaluating a Sampling Strategy
@@ -446,21 +529,24 @@ The simple example below demonstrates how to compare several sampling strategies
 set.seed(1234)
 
 # create a polygon from the spatial extent of the volcano dataset
-test <- st_make_grid(extent(volcano_r), n = 1)
+test <- st_make_grid(ext(volcano_r), n = 1)
 
 # take a large random sample
 sr400 <- st_sample(test, size = 400, type = "random")
 
 # take a small random sample
 sr  <- st_sample(test, size = 20, type = "random")
-sr2 <- sampleRandom(volcano_r, size = 20)
+sr2 <- spatSample(volcano_r, size = 20)
 
 # take a small systematic random sample
 sys  <- st_sample(test, size = 20, type = "regular")
-sys2 <- sampleRegular(volcano_r, size = 20)
+sys2 <- spatSample(volcano_r, size = 20)
 
 # take a cLHS sample
-cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
+cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
+
+# take a CSCS sample
+fs <- cscs(rs, vars = c("elev", "slope"), n = 20)
 
 # Combind and Extract Samples
 s <- rbind(data.frame(method = "Simple Random 400",
@@ -470,7 +556,10 @@ s <- rbind(data.frame(method = "Simple Random 400",
            data.frame(method = "Systematic Random",
                       extract(rs, st_coordinates(sys))),
            data.frame(method = "cLHS",
-                      slot(cs$sampled_data, 'data'))
+                      slot(cs$sampled_data, 'data')),
+           data.frame(method = "CSCS",
+                      fs[c("elev", "slope")]
+                      )
 )
 
 # Summarize the sample values
@@ -482,10 +571,8 @@ ggplot(s, aes(x = slope, col = method)) +
 ```
 
 ```{r fig.width=8.25, fig.height=3.5, eval=TRUE}
-volcano_r2 <- as(volcano_r, "SpatialPixelsDataFrame")
-
 # plot the spatial locations            
-par(mfrow = c(1, 3), mar=c(1,2,4,5))
+par(mfrow = c(2, 2), mar=c(1,2,4,5))
 plot(volcano_r, main = "Simple random", cex.main = 2, axes=FALSE)
 points(st_coordinates(sr), pch = 3, cex = 1.2)
 
@@ -494,6 +581,9 @@ points(st_coordinates(sys), pch = 3, cex = 1.2)
 
 plot(volcano_r, main = "cLHS", cex.main = 2, axes=FALSE)
 points(cs$sampled_data, pch = 3, cex = 1.2)
+
+plot(volcano_r, main = "CSCS", cex.main = 2, axes=FALSE)
+points(fs_sf, pch = 3, cex = 1.2)
 ```
 
 The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs. 
