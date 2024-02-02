@@ -532,15 +532,13 @@ set.seed(1234)
 test <- st_make_grid(ext(volcano_r), n = 1)
 
 # take a large random sample
-sr400 <- st_sample(test, size = 400, type = "random")
+sr400 <- spatSample(rs, size = 1000, method = "random", as.points = TRUE)
 
 # take a small random sample
-sr  <- st_sample(test, size = 20, type = "random")
-sr2 <- spatSample(volcano_r, size = 20)
+sr <- spatSample(rs, size = 20, method = "random", as.points = TRUE)
 
 # take a small systematic random sample
-sys  <- st_sample(test, size = 20, type = "regular")
-sys2 <- spatSample(volcano_r, size = 20)
+sys <- spatSample(rs, size = 20, method = "regular", as.points = TRUE)
 
 # take a cLHS sample
 cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
@@ -549,21 +547,17 @@ cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
 fs <- cscs(rs, vars = c("elev", "slope"), n = 20)
 
 # Combind and Extract Samples
-s <- rbind(data.frame(method = "Simple Random 400",
-                      extract(rs, st_coordinates(sr400))),
-           data.frame(method = "Simple Random",
-                      extract(rs, st_coordinates(sr))),
-           data.frame(method = "Systematic Random",
-                      extract(rs, st_coordinates(sys))),
-           data.frame(method = "cLHS",
-                      slot(cs$sampled_data, 'data')),
-           data.frame(method = "CSCS",
-                      fs[c("elev", "slope")]
-                      )
+s <- rbind(
+  data.frame(method = "Simple Random 400", as.data.frame(sr400)),
+  data.frame(method = "Simple Random",     as.data.frame(sr)),
+  data.frame(method = "Systematic Random", as.data.frame(sys)),
+  data.frame(method = "cLHS",              slot(cs$sampled_data, 'data')),
+  data.frame(method = "CSCS",              fs[c("elev", "slope")])
 )
 
 # Summarize the sample values
 aggregate(slope ~ method, data = s, function(x) round(summary(x)))
+
 
 # Plot overlapping density plots to compare the distributions between the large and small samples
 ggplot(s, aes(x = slope, col = method)) + 
@@ -572,12 +566,12 @@ ggplot(s, aes(x = slope, col = method)) +
 
 ```{r fig.width=8.25, fig.height=3.5, eval=TRUE}
 # plot the spatial locations            
-par(mfrow = c(2, 2), mar=c(1,2,4,5))
+par(mfrow = c(2, 2), mar = c(1,2,4,5))
 plot(volcano_r, main = "Simple random", cex.main = 2, axes=FALSE)
-points(st_coordinates(sr), pch = 3, cex = 1.2)
+points(sr, pch = 3, cex = 1.2)
 
 plot(volcano_r, main = "Systematic random", cex.main = 2, axes=FALSE)
-points(st_coordinates(sys), pch = 3, cex = 1.2)
+points(sys, pch = 3, cex = 1.2)
 
 plot(volcano_r, main = "cLHS", cex.main = 2, axes=FALSE)
 points(cs$sampled_data, pch = 3, cex = 1.2)
