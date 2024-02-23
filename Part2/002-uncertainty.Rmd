@@ -3,7 +3,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Uncertainty {#uncertainty}
+# Model Evaluation
 
 ```{r echo = FALSE}
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
@@ -257,56 +257,135 @@ c(# lower 5th
 # if not transformed it could return negative values is the sample size is 100
 ```
 
-
-
 5.  Forward you R script your instructor.
 
 ## Performance Metrics
 
-### Numerical
+When evaluating a model, we need to estimate both it's accuracy and precision. **Accuracy** estimates the ability of a measurement or prediction to match the actual or reference value of the quantity being measured. **Precision** in contrast estimates our ability to reproduce a measurement or prediction consistently. Typically people will refer to **uncertainty**, which is the inverse of precision. 
 
-Accuracy:
+Below is a summary of the various measures used to quantify accuracy and precision. The choice of metric depends on whether we are measuring or modeling continuous or categorical variables. In general, all models that estimate continuous variables are referred to as **regression** models. Sometimes regression models are referred too as *quantitative*, while categorical models are referred too as *qualitative*.
 
--   Mean Error (ME)/Prediction Error/Bias:
-    -   Description: average error
-    -   Pro: In the same use as the original values
--   Mean Square Error (MSE):
-    -   Description: Estimate of the model variance
--   Root Mean Square Error (RMSE):
-    -   Description: average residual or estimate of the model standard deviation
-    -   Pro: In the same units as the original values
-- Coefficient of variation ($R^2$):
-    -   Description: of variance explained;
-    -   Pro: Values range from \>-1 to 1
-    -   Con: Often confused with the correlation coefficient squared (`caret::R2()`), which does not assess the accuracy; see <http://mng.bz/ndYf> for when the two terms overlap
+![](static-figures/accuracy_vs_precision.png)
+
+### Regression Metrics
+
+**Bias:**
+
+- **Mean Error (ME)/Prediction Error/Bias:**
+  - Description: Quantifies whether the overall error is *systematically* positive or negative; the closer to 0, the better. 
+  - Pro: In the same use as the original values
 
 
-Precision:
+**Accuracy:**
 
-- Standard error (SE)
-    - Description: quantifies uncertainty in model parameters (e.g. coefficients, overall prediction)
-- Confidence intervals (CI)
-    - Description: expansion of the SE to cover an interval according to a given probability
-- Prediction intervals (PI)
-    - Description: quantifies uncertainty in the individual predicted values; wider than the CI
-- Distance
-
-```{r, echo=FALSE}
-x <- rnorm(15, mean = 7)
-y <- x + rnorm(15)
-df <- data.frame(x, y)
-i <- range(df$y)
-new <- data.frame(x = seq(i[1], i[2], length.out = 15))
+- **Mean Square Error (MSE):**
+  - Description: Squared estimate of the average error size. 
+  - Con: Not in the same units as the original values.
+- **Root Mean Square Error (RMSE):**
+  - Description: Positive estimate of the average error size; the smaller, the better. 
+  - Pro: In the same units as the original values.
+- **Coefficient of Determination (R2):**
+  - Description: Represents the proportion of variance explained by the model. 
+  - Pro: Values range between 0 and 1. Values \< 0 can occur if the prediction is worse than simply predicting the average value. 
+  - Con: Over-optimistic when extreme values or skewed distributions are present. Often confused with the squared Pearson's correlation coefficient (r2).
+  - References: Kutner et al. 2004; [Zumel and Mount 2020](http://mng.bz/ndYf) 
+  
+```{r, eval=TRUE, echo=FALSE}
+ref <- 7
+y <- ref + rnorm(100, mean = 0.01)
+x <- y + rnorm(100, 5, 0.5)
+df <- data.frame(ref, y, x)
 
 df_lm <- lm(y ~ x, df)
 
-df$pred <- predict(df_lm)
-pi <- predict(df_lm, new, interval = "prediction")
-ci <- predict(df_lm, new, interval = "confidence")
+df <- within(df, {
+  pred = predict(df_lm)
+  res  = residuals(df_lm)
+  avg  = mean(y)
+})
+
+rmse <- caret::RMSE(pred = df$pred, obs = df$y)
+me   <- mean(df$pred - df$y)
+
+ggplot() +
+  geom_point(data = df, aes(x = x, y = avg + sqrt(res^2))) +
+  geom_line(aes(y = df$ref,             x = x, lty = "Reference")) +
+  geom_line(aes(y = df$avg + rmse,      x = x, lty = "RMSE")) +
+  geom_line(aes(y = df$avg, x = x, lty = "Bias")) +
+  scale_linetype_manual(values = c("Reference"="solid", "RMSE"="dashed", "Bias"="dotted"), name = NULL) +
+  ylab("y") +
+  ggtitle("Example of RMSE & Bias")
+
+
+# ggplot() +
+#   geom_density(aes(x = df$avg[1] + sqrt(df$error^2), fill = "errors"), alpha = 0.5) +
+#   geom_vline(aes(xintercept = df$avg[1], lty = "Reference")) +
+#   geom_vline(aes(xintercept = df$avg[1] + rmse, lty = "RMSE")) +
+#   xlim(5, 10)
+
+data("anscombe")
+aq <- anscombe
+
+df2 <- rbind(
+  cbind(x = aq$x1, y = aq$y1, i = 1),
+  cbind(x = aq$x2, y = aq$y2, i = 2),
+  cbind(x = aq$x3, y = aq$y3, i = 3),
+  cbind(x = aq$x4, y = aq$y4, i = 4)
+) |>
+  as.data.frame()
+
+df_R2 <- {
+  split(df2, df2$i) ->.;
+  lapply(., function(x) {
+    caret::R2(x$x, x$y)
+  })
+} |>
+  unlist()
+
+test <- data.frame(
+  y = rep(5, 4), 
+  x = rep(16, 4), 
+  R2 = paste0("R2 = ", round(df_R2, 2)), 
+  i = 1:4
+  )
+
+ggplot(df2, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_text(data = test, aes(x, y, label = R2)) +
+  facet_wrap(~ i) +
+  ggtitle("Example of R2 with Anscombe's Quartet")
+
+```
+
+
+**Precision/Uncertainty:**
+
+- **Standard Error (SE):**
+  - Description: Error in the model parameters (e.g., coefficients or overall prediction).
+- **Confidence Interval (CI):**
+  - Description: Conversion of the SE to an interval according to a given probability (e.g., 95 percent); its range is narrower than the prediction interval.
+  - Con: Assumes a normal distribution, unless transformed or bootstrapped.
+  - References: Webster (2001)
+- **Prediction Interval (PI):**
+  - Description: Interval designed to capture the range in values of a prediction according to a given probability.
+- **Relative Prediction Interval (RPI):**
+  - Description: Ratio of the 95 percent prediction interval range to the 95 percent observed inter-quantile range in values. Can use different probability values (e.g., 90 percent PI to 90 percent inter-quantile range). 
+  Pro: Typically ranges between 0 and 1; values larger than 1 indicate very high model uncertainty. No distribution assumptions.
+  References: Nauman and Duniway (2019)
+
+
+
+```{r, echo=FALSE, eval=TRUE}
+i <- range(df$x)
+new <- data.frame(x = seq(i[1], i[2], length.out = 15))
+
+pi <- predict(df_lm, df, interval = "prediction")
+ci <- predict(df_lm, df, interval = "confidence")
 
 i <- rbind(
-  data.frame(Interval = "PI", pi, new), 
-  data.frame(Interval = "CI", ci, new)
+  data.frame(Interval = "PI", pi, x = df$x), 
+  data.frame(Interval = "CI", ci, x = df$x)
   )
 
 ggplot(df, aes(x = x, y = y)) +
@@ -324,18 +403,44 @@ ggplot(df, aes(x = x, y = y)) +
 
 library(caret)
 
-# Numeric error metrics----
+# Numeric accuracy metrics----
 
 # R2 ----
-R2(pred = sas$pH_0.30_pred, obs = sas$pH_0.30_obs, formula = "traditional", na.rm = TRUE)
+caret::R2(
+  pred = sas$pH_0.30_pred, 
+  obs  = sas$pH_0.30_obs, 
+  formula = "traditional", 
+  na.rm = TRUE
+  )
 
 
 # RMSE ----
-sqrt(mean((sas$pH_0.30_pred - sas$pH_0.30_obs)^2, na.rm = TRUE))
+caret::RMSE(
+  pred = sas$pH_0.30_pred, 
+  obs  = sas$pH_0.30_obs, 
+  na.rm = TRUE
+  )
 
-# or
 
-RMSE(pred = sas$pH_0.30_pred, obs = sas$pH_0.30_obs, na.rm = TRUE)
+# Numeric precision/uncertainty metrics----
+# R2 confidence interval
+vars <- c("pH_0.30_pred", "pH_0.30_obs")
+MBESS::ci.R2(
+  R2 = 0.85, 
+  N  = sum(complete.cases(sas[vars])), 
+  K  = 1, 
+  conf.level = 0.975
+  )
+
+
+# RMSE confidence interval
+## Standard Error
+n  <- sum(complete.cases(sas[vars]))
+SE <- qnorm(0.975) * sqrt(var((sas$pH_0.30_obs - sas$pH_0.30_pred)^2, na.rm = TRUE) / n)
+
+## Confidence Interval
+0.47 + c(-1 * SE, SE)
+
 
 
 # plot errors
@@ -351,7 +456,7 @@ ggplot(sas[idx, ], aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
 
 
 ggplot(sas, aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
-  # use if too many points overlap
+  # use a hex geom if there are too many points and they overlap
   geom_hex() +
   geom_abline() +
   geom_smooth()
@@ -391,61 +496,129 @@ ggplot(sas, aes(x = EC_0.30_obs, y = EC_0.30_pred)) +
 
 ### Categorical
 
-**Probability-based metrics** (threshold-independent)
+#### Probability-based metrics (threshold-independent)
 
-Beware the $D^2$ and Tjur's D only apply to binary classes. 
+Beware the $D^2$, Tjur's D, and AUC (or c-statistic) only apply to binary classes.
 
-Accuracy:
+**Accuracy:**
 
--   Brier score: equivalent to the mean square error (`aqp::brierScore()`)
--   Deviance squared ($D^2$): % of devariance explained $R^2$ (`modEvA::Dsquared()`)
--   Coefficient of discrimination (or Tjur's D)(`modEvA::RsqGLM()`)
+- **Brier Score (BS):**
+  - Description: In the case of binary outcomes (e.g., 1 vs. 0), it is equivalent to the Mean Square Error, where a positive outcome equals 1 minus the predicted probability. For multinomial outcomes, the squared error is averaged for all classes. Lower values denote higher accuracy. 
+  - Pro: Integrates more information about predictions (all probabilities) vs. the most likely class used by overall accuracy or tau index.
+  - Con: Does not incorporate prior knowledge of class proportions. Does not incorporate class similarity.
+  - References: Brier (1950); Harrell (2015); Steyerberg (2019)
+- **Deviance Squared (D2) or Pseudo R2:**
+  - Description: The proportion of deviance explained.
+  - Pro: Values range between 0 and 1. Values \< 0 can occur if the prediction is worse than simply predicting the average value. 
+  - Con: Over-optimistic when extreme values or skewed distributions are present.
+- **Coefficient of Discrimination (or Tjur's D):**
+  - Description: Difference in average probability of true positives and true negatives. It is another alternative version of D2 or Pseudo R2.
+  - Pro: Values range between 0 and 1. 
+  - References: Tjur (2013)
+- **Concordance (c) Statistic or Area Under the Curve (AUC):**
+  - Description: Probability that a binary classifier does better than random chance. The area under the receiver operator characteristic curve.
+  - Pro: Values range between 0.5 and 1. 
+  - Con: Less sensitive than D2.
+  - References: Hand (2012); Harrell (2015)
 
-Precision:
 
--   Shannon entropy: index of information content; higher values equal more uncertainty (`aqp::shannonEntropy()`)
--   Confusion index: index of confusion; ranges from 0 to 1 (`aqp::confusionIndex()`)
+**Precision/Uncertainty:**
+
+- **Shannon entropy:**
+  - Description: Quantitative measure of “information,” “complexity,” “certainty,” or “diversity” contained within a vector of probabilities. Larger values denote less information, higher complexity, less certainty, and greater diversity.
+  - Pro: Integrates “confusion” over all probabilities. Entropy values from different models (e.g., differing numbers of classes) can be directly compared.
+  - Con: Does not incorporate the similarity between classes.
+  - References: Shannon (1948)
+- **Normalized Shannon Entropy:**
+  - Description: An alternate version of Shannon Entropy that is constrained to the interval [0,1].
+  - Pro: Integrates “confusion” over all probabilities. Constrained to [0,1].
+  - Con: Cannot be used to compare models with differing numbers of classes. May not be implemented in all software packages. 
+  - References: Kempen et al. (2009)
+- **Confusion Index:**
+  - Description: An index of confusion among the top two most likely classes.
+  - Pro: Simple calculation and constrained to [0,1].
+  - Con: Cannot be used to compare models with differing numbers of classes.  Only describes uncertainty of top two classes. May not be implemented in all software packages.
+  - References: Burrough et al. (1997)
 
 
-**Class-based metrics** are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @james2021; @kuhn2013; @stehman_selecting_1997] (`caret::confusionMatrix()`)
+#### Class-based metrics
 
-Beware, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations. 
+These metrics are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @james2021; @kuhn2013] (`caret::confusionMatrix()`)
+
+
+**Accuracy:**
+
+- **Overall Accuracy:**
+  - Description: The proportion of correctly classified observations as tabulated in the confusion matrix.
+  - Pro: Simple to calculate and interpret, based entirely on the confusion matrix.
+  - Con: Does not account for mistakes due to chance. Does not incorporate prior knowledge of class proportions. Does not incorporate class similarity.  Does not incorporate information contained within vector of predicted probabilities. 
+  - References: Story and Congalton 1986
+- **Kappa Coefficient:**
+  - Description: An index that represents the agreement between predicted and observed values and accounts for chance agreement.
+  - Pro: Easily calculated from the confusion matrix. Generated by most software packages along with the confusion matrix. 
+  - Con: Interpretation of Kappa values between 0 and 1 is largely arbitrary. A value of < 0 indicates no agreement, and a value of 1 indicates perfect agreement. Recommended to use Kappa along with other measures of accuracy. Numerous authors now question the utility and assumptions of Kappa.
+  References: Congalton and Mead (1983); Foody (2020)
+- **Tau Index:**
+  - Description: An index of agreement that accounts for agreement by chance—effectively a replacement for Kappa.
+  - Pro: The index is more informative when appropriate class proportions are supplied. Index values can be referenced to concepts such as “better” or “worse” than random allocation. 
+  - Con: Appropriate prior class proportions are method dependent. Interpretation requires some training.
+  - References: Ma & Remond (1995)
+- **Weighted Tau Index:**
+  - Description: Alternative version of the tau index that accommodates class similarity. 
+  - Pro: The index is more informative when appropriate class proportions are supplied. Class similarity down-weights mistakes between similar classes.
+  - Con: Appropriate prior class proportions are method dependent. There is no universal method for estimating class similarity weights. Interpretation requires some training.
+  - References: Rossiter (2017)
+
+
+**Precision/Uncertainty:**
+
+- **Standard Error (SE):**
+  - Description: Error in the model parameters (e.g., coefficients or overall prediction).
+- **Confidence Interval (CI):**
+  - Description: Conversion of the SE to an interval according to a given probability (e.g., 95 percent); its range is narrower than the prediction interval.
+  - Con: Assumes a normal distribution, unless transformed or bootstrapped.
+  - References: 
+  
+  
+Beware, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations.
+
 
 | Confusion Matrix    | Observed             |                       | Metric              |
-|---------------------|----------------------|-----------------------|-------------------- |
+|---------------------|----------------------|-----------------------|---------------------|
 | **Predicted**       | No                   | Yes                   | UA                  |
 | No                  | True Negative (TN)   | False Negative (FN)   | NPV/ UA             |
 | Yes                 | False Positive (FP)  | True Positive (TP)    | PPV/ Precision / UA |
 | ------------------- | -------------------- | --------------------- | ------------------- |
 | Metric              | Specificity / PA     | Sensitivity / PA      | Overall             |
 
--   Prevalence (P): % of class occurrence in the population, usually this is estimated from the sample
+- **Prevalence (P):** % of class occurrence in the population, usually this is estimated from the sample
 -   Overall Accuracy: % of observations that were correctly classified, for all classes
--   Sensitivity (SN) (aka Recall or True Positive Rate):
+-   **Sensitivity (SN) (aka Recall or True Positive Rate):**
     -   TP / (TP + FN)
     -   \% of TRUE predictions that were correctly classified, for an individual class
--   Specificity (SP) (aka True Negative Rate):
+- **Specificity (SP) (aka True Negative Rate):**
     -   TN / (TN + FP)
     -   errors of commission (Type I)
--   \% of FALSE observations that were correctly classified, for an individual class
-    -   Precision:
+    - \% of FALSE observations that were correctly classified, for an individual class
+- **Precision:**
     -   TP / (TP + FP)
     -   \% of TRUE observations that were classified as a class, that actually were that class
--   Positive Preditive Value (PPV):
-    -   if prevalence  = 50 then TP / (TP + FP)
-    -   if prevalence != 50 then SN * P / (SN * P) + ((1 - SP) * (1 - P))
+- **Positive Preditive Value (PPV):**
+    -   if prevalence = 50 then TP / (TP + FP)
+    -   if prevalence != 50 then SN \* P / (SN \* P) + ((1 - SP) \* (1 - P))
     -   \% of TRUE observations that were classified as a class, that actually were that class
--   Negative Predictive Value (NPV):
-    -   if prevalence  = 50 then TN / (TN + FN)
-    -   if prevalence != 50 then SP * (1 - P) / (P * (1 - SN)) + (SP * (1 - P))
-    -   \% of FALSE observations that were classified as a class, that actually were that   class
--   Producer's Accuracy (PA):
+- **Negative Predictive Value (NPV):**
+    -   if prevalence = 50 then TN / (TN + FN)
+    -   if prevalence != 50 then SP \* (1 - P) / (P \* (1 - SN)) + (SP \* (1 - P))
+    -   \% of FALSE observations that were classified as a class, that actually were that class
+- **Producer's Accuracy (PA):**
     -   diagonal values (TN & TP) / observed values
     -   \% of predictions that were correctly classified, for an individual class
--   User's Accuracy (UA):
+- **User's Accuracy (UA):**
     -   diagonal values / predicted values
     -   \% of FALSE observations that were classified as a class, that actually were that class
--   Tau index: An index of accuracy that accounts for agreement by chance--- effectively a replacement for Cohen's Kappa (`aqp::tauW()`)
+- **Tau index:** 
+  - An index of accuracy that accounts for agreement by chance--- effectively a replacement for Cohen's Kappa (`aqp::tauW()`)
 
 ```{r eval = TRUE}
 
@@ -458,7 +631,12 @@ bs <- subset(bs, complete.cases(BS1_obs, BS2_obs))
 
 ## Brier score ----
 vars <- c("BS2_pred", "BS2_obs")
-aqp::brierScore(bs[vars], "BS2_pred", actual = "BS2_obs")
+aqp::brierScore(
+  bs[vars], 
+  classLabels = "BS2_pred", 
+  actual = "BS2_obs"
+  )
+
 
 ## D2 & Tjur D2----
 modEvA::RsqGLM(obs = bs$BS2_obs, pred = bs$BS2_pred, plot = FALSE)
@@ -489,9 +667,8 @@ cm1
 
 # or
 
-cm2 <- confusionMatrix(cm1, positive = "TRUE")
+cm2 <- caret::confusionMatrix(cm1, positive = "TRUE")
 cm2
-
 
 ## Examine thresholds ----
 ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
@@ -548,7 +725,8 @@ caret::confusionMatrix(cm)
 
 6.  Forward you R script your instructor.
 
-## Stratified-random/areal-adjustment
+
+#### Stratified-random/areal-adjustment
 
 In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @campbell_introduction_2023; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
 

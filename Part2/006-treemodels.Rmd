@@ -46,29 +46,27 @@ soildata <- st_as_sf(
 
 ```
 
-```{r, eval=FALSE}
+```{r, eval=F}
 mapview(soildata)
 ```
 
 ```{r, echo=FALSE, messages=FALSE}
-library(ggmap)
+library(ggspatial)
 
 # build bound box and get base map via ggmap
-bb <- st_bbox(soildata) %>%
-  st_make_grid() %>%
-  st_as_sf() %>%
-  st_transform(crs = 5070) %>%
-  st_buffer(dist = 100 * 1000) %>%
-  st_transform(crs = 4326) %>%
-  st_bbox()
-bb <- make_bbox(lon = bb[c(3, 1)], lat = bb[c(2, 4)])
-gmap <- get_map(bb, sourse = "stamen", maptype = "watercolor")
+bb <- st_make_grid(soildata, n = 1) |>
+  st_as_sf() |>
+  st_transform(crs = st_crs(soildata)) |>
+  st_buffer(dist = 100 * 100)
+# bb <- make_bbox(lon = bb[c(3, 1)], lat = bb[c(2, 4)])
 
 soildata2 <- read.csv(url)
 
 # Lines
-ggmap(gmap) +
-  geom_point(data = soildata2, aes(x = x, y = y))
+ggplot() +
+  geom_sf(data = bb)  +
+  annotation_map_tile() +
+  geom_sf(data = soildata)
 
 ```
 

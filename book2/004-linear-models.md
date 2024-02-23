@@ -243,15 +243,7 @@ library(raster)
 ```
 
 ```
-## Warning: package 'raster' was built under R version 4.2.2
-```
-
-```
 ## Loading required package: sp
-```
-
-```
-## Warning: package 'sp' was built under R version 4.2.2
 ```
 
 ```
@@ -412,7 +404,11 @@ R has several functions for fitting linear models. The most common is arguably t
 
 ```r
 # stats
-fit_lm <- lm(mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, data = data, weights = data$numDays)
+fit_lm <- lm(
+  formula = mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, 
+  data = data, 
+  weights = data$numDays
+  )
 
 
 # rms R package
@@ -519,9 +515,14 @@ sqrt(vif(fit_ols)) > 3
 The values above indicate we have several colinear variables in the model, which you might have noticed already from the scatter plot matrix.
 
 
-### Variable selection & model validation
+### Variable selection/reduction
 
 Modeling is an iterative process that cycles between fitting and evaluating alternative models. Compared to tree and forest models, linear and generalized models are typically less automated. Automated model selection procedures are available, but should not be taken at face value because they may result in complex and unstable models. This is in part due to correlation amongst the predictive variables that can confuse the model. Also, the order in which the variables are included or excluded from the model effects the significance of the other variables, and thus several weak predictors might mask the effect of one strong predictor. Regardless of the approach used, variable selection is probably the most controversial aspect of linear modeling.
+
+- Step-wise selection (`step()`, `rms::validate()`)
+- Principal component analysis (`princomp()`)
+- Shrinkage methods (e.g. Lasso)
+- Randomized wrapper (e.g. Boruta)(`Boruta::Boruta()`)
 
 Both the `rms` and `caret` packages offer methods for variable selection and cross-validation. In this instance the `rms` approach is a bit more convenient, with the one line call to `validate()`.
 
@@ -619,6 +620,8 @@ validate(fit_ols, bw = TRUE)
 ##  2  3  4  5  6 
 ##  2  2 31  4  1
 ```
+
+
 
 The results for `validate()` above show which variables were retained and deleted. Above we can see a dot matrix of which variables were retained during each of the iterations from bootstrapping. In addition, we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
 
@@ -781,7 +784,7 @@ anova(final_ols)
 plot(anova(final_ols), what = "partial R2")
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-15-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-16-1.png" width="672" />
 
 Another way to visualize the contribution of each variable is to plot their partial effects, which summarize how much each variable effects the model if we hold all the other variables constant at their median values and vary the variable of interest over it's 25th and 75th percentiles. This is a useful way to compare the impact of each variable side by side in the units of the response variable. In this case we can see below that again `elev` has the biggest impact, with range of approximately -6 to -4.5 degrees. The effect of `solarcv` is smallest compared to the other tasseled cap variables.
 
@@ -791,7 +794,7 @@ Another way to visualize the contribution of each variable is to plot their part
 plot(summary(final_ols))
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-16-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-17-1.png" width="672" />
 
 The partial effects can also be visualized as regression lines with their confidence intervals, which illustrates the slope of the predictor variables in relation to `mast`. 
 
@@ -804,7 +807,7 @@ ggplot(Predict(final_ols),
        )
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-17-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-18-1.png" width="672" />
 
 ```r
 # Vary solarcv (North = 23; Flat = 33; South = 55)
@@ -813,7 +816,7 @@ ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
   scale_y_continuous(breaks = c(8, 15, 22))
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-17-2.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-18-2.png" width="672" />
 
 
 
@@ -874,4 +877,4 @@ mast2 <- read.csv(url)
 
 The proper use and misuse of regression in soil science has been described by [@webster1997]. @james2021 provide a useful introduction to linear regression. For more discussion of extending regression to incorporate spatial trends in the residuals see @hengl2009.
 
-
+Frank Harrel's [Regression Modeling Strategies](https://hbiostat.org/rmsc/) book and website offer detailed commentary on the entire process of selecting an appropriate model form, model calibration, model validation, and interpretation.
