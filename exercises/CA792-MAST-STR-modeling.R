@@ -189,25 +189,27 @@ entropy <- function(i, na.rm=TRUE) {
 }
 
 
-## predictions
+
+
+## predictions -- save for later in the class, project, etc. 
 
 # `rs` is a raster stack containing rasters with the same names as predictors using in model fit
 
-# predicts probabilities for the 4 possible classes fit by model
-seki.str <- predict(rs, orm.fit, index=1:4, fun=pred.fun, progress='text', filename='results.tif', datatype='INT1U', overwrite=TRUE)
-
-
-
-## most-likely STR
-seki.str.ml <- stackApply(seki.str, indices=rep(1, times=nlayers(seki.str)), fun = most.likely.layer)
-
-# convert to factor
-seki.str.ml <- ratify(seki.str.ml)
-
-# init RAT
-rat <- levels(seki.str.ml)[[1]]
-rat$STR <- c('cryic', 'frigid', 'mesic', 'thermic')
-levels(seki.str.ml) <- rat
-
+# # predicts probabilities for the 4 possible classes fit by model
+# seki.str <- predict(rs, orm.fit, index=1:4, fun=pred.fun, progress='text', filename='results.tif', datatype='INT1U', overwrite=TRUE)
+# 
+# 
+# 
+# ## most-likely STR
+# seki.str.ml <- stackApply(seki.str, indices=rep(1, times=nlayers(seki.str)), fun = most.likely.layer)
+# 
+# # convert to factor
+# seki.str.ml <- ratify(seki.str.ml)
+# 
+# # init RAT
+# rat <- levels(seki.str.ml)[[1]]
+# rat$STR <- c('cryic', 'frigid', 'mesic', 'thermic')
+# levels(seki.str.ml) <- rat
+# 
 
 

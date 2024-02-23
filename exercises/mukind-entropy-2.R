@@ -149,8 +149,6 @@ head(x)
 
 
 ## sequential processing with progress display
-# library(pbapply)
-# all.H <- pblapply(x$areasymbol[1:10], safely(getH))
 
 ## parallel processing
 # init parallel processing, works on macos and windows
@@ -171,10 +169,11 @@ all.H <- do.call('rbind', all.H)
 ## map unit keys:
 # FY22: 318,671 
 # FY23: 319,998
+# FY24: 321,973
 nrow(all.H)
 
 ## save to a local file for later use
-saveRDS(all.H, file = '../data/mukind-entropy-calc.rds')
+saveRDS(all.H, file = 'data/mukind-entropy-calc.rds')
 
 
 
