@@ -64,7 +64,7 @@ fitAndPlot <- function(node.size) {
   
 }
 
-# animate over nodesize values
+# animate over nodesize argument
 .animate <- function() {
   for(i in c(100:1)) {
     fitAndPlot(i)
@@ -75,6 +75,8 @@ fitAndPlot <- function(node.size) {
 # check
 fitAndPlot(1)
 fitAndPlot(5)
+fitAndPlot(25)
+
 
 # output file
 f <- 'randomForest-nodesize-animation.mp4'
