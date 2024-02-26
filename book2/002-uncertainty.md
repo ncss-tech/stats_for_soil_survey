@@ -45,59 +45,19 @@ Below is a simulated example demonstrating the affect of sample size and standar
 
 <!-- I wonder if there is a more clear representation of what is going on here. For example  -->
 
-```r
-library(dplyr)
-library(ggplot2)
-
-# create 50 random pH samples of 10, 30, 60, and 100
-y   <- c(10, 30, 60, 100)
-lab <- paste0("n = ", y)
-
-f <- function(x, n, sd) {
-  idx <- rnorm(n, mean = 7, sd = sd)
-  tmp <- data.frame(iteration = factor(x, levels = 1:30), n = factor(n, levels = y, labels = lab), sd = paste0("sd = ", sd), pH = idx)
-  return(tmp)
-}
-
-# standard deviation of 1
-test <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 1, SIMPLIFY = FALSE)
-test <- do.call("rbind", test)
-
-# standard deviation of 1
-test2 <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 2, SIMPLIFY = FALSE)
-test2 <- do.call("rbind", test2)
-
-test <- rbind(test, test2)
-
-
-# examine summary statistics
-test %>%
-  group_by(iteration, n, sd) %>%
-  summarize(med = median(pH)) %>%
-  group_by(sd, n) %>%
-  summarize(across(med, list(min = min, mean = mean, max = max)))
-```
-
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.40     6.99    7.71
-## 2 sd = 1 n = 30     6.64     7.02    7.52
-## 3 sd = 1 n = 60     6.59     7.01    7.39
-## 4 sd = 1 n = 100    6.81     7.02    7.24
-## 5 sd = 2 n = 10     4.73     6.91    9.02
-## 6 sd = 2 n = 30     6.21     7.07    8.69
-## 7 sd = 2 n = 60     6.54     6.97    7.41
-## 8 sd = 2 n = 100    6.40     6.99    7.51
-```
-
-```r
-# examine box plots
-ggplot(test, aes(x = iteration, y = pH)) +
-  geom_boxplot() +
-  facet_wrap(~ n + sd, ncol = 2, )
+## 1 sd = 1 n = 10     6.12     6.92    7.74
+## 2 sd = 1 n = 30     6.67     7.02    7.41
+## 3 sd = 1 n = 60     6.67     6.96    7.37
+## 4 sd = 1 n = 100    6.75     7.00    7.17
+## 5 sd = 2 n = 10     4.66     6.95    8.07
+## 6 sd = 2 n = 30     5.63     6.79    7.67
+## 7 sd = 2 n = 60     6.44     7.03    7.67
+## 8 sd = 2 n = 100    6.54     7.02    7.63
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="768" />
@@ -119,66 +79,48 @@ test$S <- (test$pH - mu)^2
 # calculate overall sum of squares
 SS <- sum(test$S)
 
-# calculate sample variance (length gives us the total number of sample/observations)
-SS / (length(test$pH) - 1)
+# calculate standard deviation (length gives us the total number of sample/observations)
+sqrt(SS / (length(test$pH) - 1))
 ```
 
 ```
-## [1] 2.562981
+## [1] 1.569779
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
 
 
-```r
-test %>%
-  group_by(iteration, n, sd) %>%
-  summarize(var = var(pH)) %>%
-  group_by(sd, n) %>%
-  summarize(across(var, list(min = min, mean = mean, max = max)))
-```
-
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
-##   sd     n       var_min var_mean var_max
+##   sd     n       sd2_min sd2_mean sd2_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.272     1.10    2.12
-## 2 sd = 1 n = 30    0.571     1.00    1.90
-## 3 sd = 1 n = 60    0.678     1.09    1.54
-## 4 sd = 1 n = 100   0.800     1.04    1.28
-## 5 sd = 2 n = 10    1.25      3.86    8.82
-## 6 sd = 2 n = 30    1.93      4.07    7.38
-## 7 sd = 2 n = 60    2.29      3.94    5.91
-## 8 sd = 2 n = 100   3.29      4.15    5.16
+## 1 sd = 1 n = 10    0.604    1.00     1.59
+## 2 sd = 1 n = 30    0.736    0.970    1.34
+## 3 sd = 1 n = 60    0.763    1.00     1.17
+## 4 sd = 1 n = 100   0.876    0.994    1.09
+## 5 sd = 2 n = 10    1.19     1.94     2.98
+## 6 sd = 2 n = 30    1.61     2.06     2.58
+## 7 sd = 2 n = 60    1.52     1.93     2.21
+## 8 sd = 2 n = 100   1.75     1.98     2.38
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
 
-
-```r
-SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
-
-test %>%
-  group_by(iteration, n, sd) %>%
-  summarize(SE = SE(pH)) %>%
-  group_by(sd, n) %>%
-  summarize(across(SE, list(min = min, mean = mean, max = max)))
-```
 
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.165    0.324  0.461
-## 2 sd = 1 n = 30  0.138    0.181  0.252
-## 3 sd = 1 n = 60  0.106    0.134  0.160
-## 4 sd = 1 n = 100 0.0895   0.102  0.113
-## 5 sd = 2 n = 10  0.353    0.609  0.939
-## 6 sd = 2 n = 30  0.254    0.364  0.496
-## 7 sd = 2 n = 60  0.196    0.255  0.314
-## 8 sd = 2 n = 100 0.181    0.204  0.227
+## 1 sd = 1 n = 10  0.191   0.317   0.502
+## 2 sd = 1 n = 30  0.134   0.177   0.244
+## 3 sd = 1 n = 60  0.0985  0.129   0.151
+## 4 sd = 1 n = 100 0.0876  0.0994  0.109
+## 5 sd = 2 n = 10  0.376   0.614   0.942
+## 6 sd = 2 n = 30  0.294   0.376   0.471
+## 7 sd = 2 n = 60  0.197   0.249   0.285
+## 8 sd = 2 n = 100 0.175   0.198   0.238
 ```
 
 ## Theory of Uncertainty
@@ -244,7 +186,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.8275478 1.0378832 1.1479694 1.2571935 1.5796813
+## 0.8815688 1.0457885 1.1422593 1.2261761 1.5571980
 ```
 
 ```r
@@ -268,7 +210,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.830171 6.228177
+## 5.792807 6.178015
 ```
 
 ```r
@@ -922,12 +864,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4526   Min.   :0.8455  
-##  1st Qu.:0.4669   1st Qu.:0.8483  
-##  Median :0.4702   Median :0.8517  
+##  Min.   :0.4551   Min.   :0.8453  
+##  1st Qu.:0.4630   1st Qu.:0.8485  
+##  Median :0.4662   Median :0.8531  
 ##  Mean   :0.4690   Mean   :0.8527  
-##  3rd Qu.:0.4763   3rd Qu.:0.8565  
-##  Max.   :0.4788   Max.   :0.8616
+##  3rd Qu.:0.4753   3rd Qu.:0.8556  
+##  Max.   :0.4847   Max.   :0.8620
 ```
 
 #### Subsample (Resampling or sample simulation)
