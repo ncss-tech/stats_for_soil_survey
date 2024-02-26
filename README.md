@@ -57,7 +57,7 @@
 
 -   #### [Final Project](http://ncss-tech.github.io/stats_for_soil_survey/misc/10_final_project/10_final_project.html)
 
-### [**Chapter 2:** *Uncertainity*](http://ncss-tech.github.io/stats_for_soil_survey/book2/uncertainty.html)
+### [**Chapter 2:** *Uncertainity*](http://ncss-tech.github.io/stats_for_soil_survey/book2/model-evaluation.html)
 
 -   #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/9_uncert_validation/9.%20Uncertainty_and_Validation_Beaudette.pptx)
 
