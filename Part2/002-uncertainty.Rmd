@@ -14,7 +14,7 @@ options(timeout = 600)
 
 ## Introduction
 
-Validating and assessing the uncertainty of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
+Validating and assessing the quality of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
 
 -   Measurement errors
 -   Interpretation errors
@@ -46,7 +46,7 @@ Errors are simply the difference between reality and our representation of reali
 
 Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
 
-```{r eval = TRUE, fig.height=8, fig.width=6}
+```{r eval = TRUE, echo=FALSE, fig.height=8, fig.width=6}
 
 library(dplyr)
 library(ggplot2)
@@ -95,7 +95,7 @@ The results show that quantile estimates are more variable with smaller sample s
 
 Demonstration of how to calculate variance.
 
-```{r eval = TRUE}
+```{r eval=TRUE}
 
 # calculate the mean
 mu <- mean(test$pH)
@@ -110,19 +110,19 @@ SS <- sum(test$S)
 SS / (length(test$pH) - 1)
 ```
 
-Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
+Note below how our estimate of the standard deviation can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
 
-```{r eval = TRUE}
+```{r eval = TRUE, echo=FALSE}
 test %>%
   group_by(iteration, n, sd) %>%
-  summarize(var = var(pH)) %>%
+  summarize(sd2 = sd(pH)) %>%
   group_by(sd, n) %>%
-  summarize(across(var, list(min = min, mean = mean, max = max)))
+  summarize(across(sd2, list(min = min, mean = mean, max = max)))
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
 
-```{r eval = TRUE}
+```{r eval=TRUE, echo=FALSE}
 SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
 
 test %>%
@@ -308,11 +308,13 @@ rmse <- caret::RMSE(pred = df$pred, obs = df$y)
 me   <- mean(df$pred - df$y)
 
 ggplot() +
-  geom_point(data = df, aes(x = x, y = avg + sqrt(res^2))) +
-  geom_line(aes(y = df$ref,             x = x, lty = "Reference")) +
-  geom_line(aes(y = df$avg + rmse,      x = x, lty = "RMSE")) +
-  geom_line(aes(y = df$avg, x = x, lty = "Bias")) +
-  scale_linetype_manual(values = c("Reference"="solid", "RMSE"="dashed", "Bias"="dotted"), name = NULL) +
+  geom_point(data = df, aes(x = x, y = avg + sqrt(res^2), shape = "squared errors")) +
+  geom_line(aes(y = df$ref,        x = x, lty = "Reference")) +
+  # geom_line(aes(y = df$avg,        x = x, lty = "Mean")) +
+  geom_line(aes(y = df$avg + rmse, x = x, lty = "RMSE")) +
+  geom_line(aes(y = df$avg,   x = x, lty = "Bias/Mean")) +
+  scale_linetype_manual(values = c("Reference"="solid", "RMSE"="dashed", "Bias/Mean"="dotted"), name = NULL) +
+  scale_shape_manual(name = NULL, values = c("squared errors"="circle")) +
   ylab("y") +
   ggtitle("Example of RMSE & Bias")
 

@@ -11,7 +11,7 @@ editor_options:
 
 ## Introduction
 
-Validating and assessing the uncertainty of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
+Validating and assessing the quality of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
 
 -   Measurement errors
 -   Interpretation errors
@@ -44,61 +44,19 @@ Errors are simply the difference between reality and our representation of reali
 Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
 
 
-```r
-library(dplyr)
-library(ggplot2)
-
-
-# create 50 random pH samples of 10, 30, 60, and 100
-y   <- c(10, 30, 60, 100)
-lab <- paste0("n = ", y)
-
-
-f <- function(x, n, sd) {
-  idx <- rnorm(n, mean = 7, sd = sd)
-  tmp <- data.frame(iteration = factor(x, levels = 1:30), n = factor(n, levels = y, labels = lab), sd = paste0("sd = ", sd), pH = idx)
-  return(tmp)
-}
-
-# standard deviation of 1
-test <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 1, SIMPLIFY = FALSE)
-test <- do.call("rbind", test)
-
-# standard deviation of 1
-test2 <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 2, SIMPLIFY = FALSE)
-test2 <- do.call("rbind", test2)
-
-test <- rbind(test, test2)
-
-
-# examine summary statistics
-test %>%
-  group_by(iteration, n, sd) %>%
-  summarize(med = median(pH)) %>%
-  group_by(sd, n) %>%
-  summarize(across(med, list(min = min, mean = mean, max = max)))
-```
-
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.04     7.05    8.22
-## 2 sd = 1 n = 30     6.59     6.98    7.36
-## 3 sd = 1 n = 60     6.59     6.97    7.19
-## 4 sd = 1 n = 100    6.79     7.00    7.20
-## 5 sd = 2 n = 10     5.18     7.06    8.46
-## 6 sd = 2 n = 30     6.39     7.06    8.17
-## 7 sd = 2 n = 60     6.29     6.88    7.63
-## 8 sd = 2 n = 100    6.61     7.04    7.74
-```
-
-```r
-# examine box plots
-ggplot(test, aes(x = iteration, y = pH)) +
-  geom_boxplot() +
-  facet_wrap(~ n + sd, ncol = 2, )
+## 1 sd = 1 n = 10     6.34     6.92    7.91
+## 2 sd = 1 n = 30     6.64     7.03    7.46
+## 3 sd = 1 n = 60     6.65     7.00    7.42
+## 4 sd = 1 n = 100    6.74     7.02    7.17
+## 5 sd = 2 n = 10     4.31     6.80    8.49
+## 6 sd = 2 n = 30     6.20     7.18    8.32
+## 7 sd = 2 n = 60     6.44     7.05    7.78
+## 8 sd = 2 n = 100    6.51     6.95    7.43
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="576" />
@@ -125,61 +83,43 @@ SS / (length(test$pH) - 1)
 ```
 
 ```
-## [1] 2.469614
+## [1] 2.467228
 ```
 
-Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
+Note below how our estimate of the standard deviation can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
 
-
-```r
-test %>%
-  group_by(iteration, n, sd) %>%
-  summarize(var = var(pH)) %>%
-  group_by(sd, n) %>%
-  summarize(across(var, list(min = min, mean = mean, max = max)))
-```
 
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
-##   sd     n       var_min var_mean var_max
+##   sd     n       sd2_min sd2_mean sd2_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.272     1.17    3.06
-## 2 sd = 1 n = 30    0.585     1.04    1.62
-## 3 sd = 1 n = 60    0.609     1.07    1.61
-## 4 sd = 1 n = 100   0.685     1.01    1.45
-## 5 sd = 2 n = 10    1.37      4.23    8.88
-## 6 sd = 2 n = 30    1.89      3.81    8.06
-## 7 sd = 2 n = 60    3.16      3.99    6.11
-## 8 sd = 2 n = 100   2.38      3.84    4.87
+## 1 sd = 1 n = 10    0.462    0.993    1.46
+## 2 sd = 1 n = 30    0.769    0.977    1.31
+## 3 sd = 1 n = 60    0.812    1.00     1.16
+## 4 sd = 1 n = 100   0.893    1.01     1.09
+## 5 sd = 2 n = 10    0.974    1.90     3.01
+## 6 sd = 2 n = 30    1.42     2.00     2.40
+## 7 sd = 2 n = 60    1.45     1.94     2.34
+## 8 sd = 2 n = 100   1.61     1.97     2.33
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
 
-
-```r
-SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
-
-test %>%
-  group_by(iteration, n, sd) %>%
-  summarize(SE = SE(pH)) %>%
-  group_by(sd, n) %>%
-  summarize(across(SE, list(min = min, mean = mean, max = max)))
-```
 
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.165    0.331  0.553
-## 2 sd = 1 n = 30  0.140    0.184  0.232
-## 3 sd = 1 n = 60  0.101    0.133  0.164
-## 4 sd = 1 n = 100 0.0828   0.100  0.120
-## 5 sd = 2 n = 10  0.370    0.639  0.942
-## 6 sd = 2 n = 30  0.251    0.351  0.518
-## 7 sd = 2 n = 60  0.229    0.257  0.319
-## 8 sd = 2 n = 100 0.154    0.195  0.221
+## 1 sd = 1 n = 10  0.146    0.314  0.461
+## 2 sd = 1 n = 30  0.140    0.178  0.239
+## 3 sd = 1 n = 60  0.105    0.129  0.150
+## 4 sd = 1 n = 100 0.0893   0.101  0.109
+## 5 sd = 2 n = 10  0.308    0.602  0.951
+## 6 sd = 2 n = 30  0.259    0.365  0.439
+## 7 sd = 2 n = 60  0.188    0.251  0.302
+## 8 sd = 2 n = 100 0.161    0.197  0.233
 ```
 
 ## Theory of Uncertainty
@@ -245,7 +185,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.8839985 1.0410593 1.1611743 1.2177991 1.4668006
+## 0.9041693 1.0841079 1.1818292 1.2763245 1.4321164
 ```
 
 ```r
@@ -269,7 +209,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.848724 6.207920
+## 5.881817 6.253894
 ```
 
 ```r
@@ -922,12 +862,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4581   Min.   :0.8422  
-##  1st Qu.:0.4659   1st Qu.:0.8505  
-##  Median :0.4681   Median :0.8533  
+##  Min.   :0.4496   Min.   :0.8447  
+##  1st Qu.:0.4672   1st Qu.:0.8483  
+##  Median :0.4697   Median :0.8538  
 ##  Mean   :0.4690   Mean   :0.8526  
-##  3rd Qu.:0.4720   3rd Qu.:0.8548  
-##  Max.   :0.4820   Max.   :0.8588
+##  3rd Qu.:0.4739   3rd Qu.:0.8561  
+##  Max.   :0.4774   Max.   :0.8599
 ```
 
 #### Subsample (Resampling or sample simulation)
