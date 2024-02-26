@@ -76,7 +76,7 @@ fitAndPlot <- function(node.size) {
 fitAndPlot(1)
 fitAndPlot(5)
 fitAndPlot(25)
-
+fitAndPlot(60)
 
 # output file
 f <- 'randomForest-nodesize-animation.mp4'

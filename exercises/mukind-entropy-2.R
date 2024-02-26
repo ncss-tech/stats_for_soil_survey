@@ -17,17 +17,20 @@
 
 
 
+
 library(lattice)
 library(tactile)
 
 ## previously computed Shannon H by map unit, for all of SSURGO
+## FY24: 321,973 MU
+
 tf <- tempfile()
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/mukind-entropy-calc.rds', destfile = tf)
 
 all.H <- readRDS(tf)
 
 head(all.H)
-
+nrow(all.H)
 
 # tabulate map unit kinds for all SSURGO map unit keys
 sort(
@@ -48,7 +51,7 @@ bwplot(
   data = all.H, 
   par.settings = tactile.theme(), 
   varwidth = TRUE,
-  main = 'All SSURGO All SSURGO Map Units',
+  main = 'All SSURGO Map Units',
   xlab = 'Shannon Entropy (base 2)',
   ylab = '',
   scales = list(x = list(tick.number = 10)),
