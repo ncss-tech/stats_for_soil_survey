@@ -47,7 +47,7 @@ Errors are simply the difference between reality and our representation of reali
 Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
 
 <!-- I wonder if there is a more clear representation of what is going on here. For example  -->
-```{r eval = TRUE, fig.height=8, fig.width=8}
+```{r eval = TRUE, echo=FALSE, fig.height=8, fig.width=8}
 library(dplyr)
 library(ggplot2)
 
@@ -103,23 +103,23 @@ test$S <- (test$pH - mu)^2
 # calculate overall sum of squares
 SS <- sum(test$S)
 
-# calculate sample variance (length gives us the total number of sample/observations)
-SS / (length(test$pH) - 1)
+# calculate standard deviation (length gives us the total number of sample/observations)
+sqrt(SS / (length(test$pH) - 1))
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
 
-```{r eval = TRUE}
+```{r eval = TRUE, echo=FALSE}
 test %>%
   group_by(iteration, n, sd) %>%
-  summarize(var = var(pH)) %>%
+  summarize(sd2 = sd(pH)) %>%
   group_by(sd, n) %>%
-  summarize(across(var, list(min = min, mean = mean, max = max)))
+  summarize(across(sd2, list(min = min, mean = mean, max = max)))
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
 
-```{r eval = TRUE}
+```{r eval = TRUE, echo=FALSE}
 SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
 
 test %>%
@@ -306,12 +306,12 @@ rmse <- caret::RMSE(pred = df$pred, obs = df$y)
 me   <- mean(df$pred - df$y)
 
 ggplot() +
-  geom_point(data = df, aes(x = x, y = avg + sqrt(res^2))) +
+  geom_point(data = df, aes(x = x, y = avg + sqrt(res^2), shape = "Squared Errors")) +
   geom_line(aes(y = df$ref,             x = x, lty = "Reference")) +
   geom_line(aes(y = df$avg + rmse,      x = x, lty = "RMSE")) +
-  geom_line(aes(y = df$avg, x = x, lty = "Bias")) +
-  scale_linetype_manual(values = c("Reference"="solid", "RMSE"="dashed", "Bias"="dotted"), name = NULL) +
-  ylab("y") +
+  geom_line(aes(y = df$avg, x = x, lty = "Bias/Mean")) +
+  scale_shape_manual(values = c("Squared Errors"="circle"), name = NULL) +
+  scale_linetype_manual(values = c("Reference"="solid", "RMSE"="dashed", "Bias/Mean"="dotted"), name = NULL) +ylab("y") +
   ggtitle("Example of RMSE & Bias")
 
 
