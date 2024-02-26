@@ -50,13 +50,13 @@ plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.
 plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05)
 
 
-png(filename = 'figure.png', width = 1200, height = 900)
+# png(filename = 'figure.png', width = 1200, height = 900)
 
 # pdf(file = 'poster.pdf', width = 96, height = 42)
 
 plotSPC(osds, id.style = 'top', width = 0.3, name.style = 'center-center', plot.depth.axis = FALSE, hz.depths = TRUE, cex.names = 0.66, cex.id = 0.5, fixLabelCollisions = TRUE, hz.depths.offset = 0.05, shrink = TRUE)
 
-dev.off()
+# dev.off()
 
 
 

@@ -14,7 +14,7 @@ options(timeout = 600)
 
 ## Introduction
 
-Validating and assessing the quality of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
+Validating and assessing the uncertainty of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
 
 -   Measurement errors
 -   Interpretation errors
@@ -46,16 +46,14 @@ Errors are simply the difference between reality and our representation of reali
 
 Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
 
-```{r eval = TRUE, echo=FALSE, fig.height=8, fig.width=6}
-
+<!-- I wonder if there is a more clear representation of what is going on here. For example  -->
+```{r eval = TRUE, fig.height=8, fig.width=8}
 library(dplyr)
 library(ggplot2)
-
 
 # create 50 random pH samples of 10, 30, 60, and 100
 y   <- c(10, 30, 60, 100)
 lab <- paste0("n = ", y)
-
 
 f <- function(x, n, sd) {
   idx <- rnorm(n, mean = 7, sd = sd)
@@ -86,7 +84,6 @@ test %>%
 ggplot(test, aes(x = iteration, y = pH)) +
   geom_boxplot() +
   facet_wrap(~ n + sd, ncol = 2, )
-
 ```
 
 The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be "uncertain" of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different.
@@ -95,7 +92,7 @@ The results show that quantile estimates are more variable with smaller sample s
 
 Demonstration of how to calculate variance.
 
-```{r eval=TRUE}
+```{r eval = TRUE}
 
 # calculate the mean
 mu <- mean(test$pH)
@@ -110,19 +107,19 @@ SS <- sum(test$S)
 SS / (length(test$pH) - 1)
 ```
 
-Note below how our estimate of the standard deviation can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
+Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
 
-```{r eval = TRUE, echo=FALSE}
+```{r eval = TRUE}
 test %>%
   group_by(iteration, n, sd) %>%
-  summarize(sd2 = sd(pH)) %>%
+  summarize(var = var(pH)) %>%
   group_by(sd, n) %>%
-  summarize(across(sd2, list(min = min, mean = mean, max = max)))
+  summarize(across(var, list(min = min, mean = mean, max = max)))
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
 
-```{r eval=TRUE, echo=FALSE}
+```{r eval = TRUE}
 SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
 
 test %>%
@@ -289,7 +286,8 @@ Below is a summary of the various measures used to quantify accuracy and precisi
   - Pro: Values range between 0 and 1. Values \< 0 can occur if the prediction is worse than simply predicting the average value. 
   - Con: Over-optimistic when extreme values or skewed distributions are present. Often confused with the squared Pearson's correlation coefficient (r2).
   - References: Kutner et al. 2004; [Zumel and Mount 2020](http://mng.bz/ndYf) 
-  
+
+<!-- The RMSE and bias figure is hard to understand without further explanation. Can we use colors in addition to line type? -->
 ```{r, eval=TRUE, echo=FALSE}
 ref <- 7
 y <- ref + rnorm(100, mean = 0.01)
@@ -308,13 +306,11 @@ rmse <- caret::RMSE(pred = df$pred, obs = df$y)
 me   <- mean(df$pred - df$y)
 
 ggplot() +
-  geom_point(data = df, aes(x = x, y = avg + sqrt(res^2), shape = "squared errors")) +
-  geom_line(aes(y = df$ref,        x = x, lty = "Reference")) +
-  # geom_line(aes(y = df$avg,        x = x, lty = "Mean")) +
-  geom_line(aes(y = df$avg + rmse, x = x, lty = "RMSE")) +
-  geom_line(aes(y = df$avg,   x = x, lty = "Bias/Mean")) +
-  scale_linetype_manual(values = c("Reference"="solid", "RMSE"="dashed", "Bias/Mean"="dotted"), name = NULL) +
-  scale_shape_manual(name = NULL, values = c("squared errors"="circle")) +
+  geom_point(data = df, aes(x = x, y = avg + sqrt(res^2))) +
+  geom_line(aes(y = df$ref,             x = x, lty = "Reference")) +
+  geom_line(aes(y = df$avg + rmse,      x = x, lty = "RMSE")) +
+  geom_line(aes(y = df$avg, x = x, lty = "Bias")) +
+  scale_linetype_manual(values = c("Reference"="solid", "RMSE"="dashed", "Bias"="dotted"), name = NULL) +
   ylab("y") +
   ggtitle("Example of RMSE & Bias")
 

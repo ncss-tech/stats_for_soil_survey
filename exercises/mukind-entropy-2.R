@@ -17,17 +17,20 @@
 
 
 
+
 library(lattice)
 library(tactile)
 
 ## previously computed Shannon H by map unit, for all of SSURGO
+## FY24: 321,973 MU
+
 tf <- tempfile()
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/mukind-entropy-calc.rds', destfile = tf)
 
 all.H <- readRDS(tf)
 
 head(all.H)
-
+nrow(all.H)
 
 # tabulate map unit kinds for all SSURGO map unit keys
 sort(
@@ -48,7 +51,7 @@ bwplot(
   data = all.H, 
   par.settings = tactile.theme(), 
   varwidth = TRUE,
-  main = 'All SSURGO All SSURGO Map Units',
+  main = 'All SSURGO Map Units',
   xlab = 'Shannon Entropy (base 2)',
   ylab = '',
   scales = list(x = list(tick.number = 10)),
@@ -149,8 +152,6 @@ head(x)
 
 
 ## sequential processing with progress display
-# library(pbapply)
-# all.H <- pblapply(x$areasymbol[1:10], safely(getH))
 
 ## parallel processing
 # init parallel processing, works on macos and windows
@@ -171,10 +172,11 @@ all.H <- do.call('rbind', all.H)
 ## map unit keys:
 # FY22: 318,671 
 # FY23: 319,998
+# FY24: 321,973
 nrow(all.H)
 
 ## save to a local file for later use
-saveRDS(all.H, file = '../data/mukind-entropy-calc.rds')
+saveRDS(all.H, file = 'data/mukind-entropy-calc.rds')
 
 
 

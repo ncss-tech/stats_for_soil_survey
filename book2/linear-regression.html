@@ -23,7 +23,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2024-02-23" />
+<meta name="date" content="2024-02-24" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -523,38 +523,40 @@ div.csl-indent {
 <p>Prior to any spatial analysis or modeling, you will need to develop a suite of geodata files that can be intersected with your field data locations. This is, in and of itself a difficult task and should be facilitated by your Regional GIS Specialist. The geodata files typically used would consist of derivatives from a DEM or satellite imagery, and a ‘good’ geology map. Prior to any prediction it is also necessary to ensure the geodata files have the same projection, extent, and cell size. Once we have the necessary files we can construct a list in R of the file names and paths, read the geodata into R, and then extract the geodata values where they intersect with field data.</p>
 <p>As you can see below their are numerous variables we could inspect.</p>
 <div class="sourceCode" id="cb133"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb133-1"><a href="linear-regression.html#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(raster)</span></code></pre></div>
+<pre><code>## Warning: package &#39;raster&#39; was built under R version 4.3.2</code></pre>
 <pre><code>## Loading required package: sp</code></pre>
+<pre><code>## Warning: package &#39;sp&#39; was built under R version 4.3.2</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;raster&#39;</code></pre>
 <pre><code>## The following object is masked from &#39;package:dplyr&#39;:
 ## 
 ##     select</code></pre>
-<div class="sourceCode" id="cb137"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb137-1"><a href="linear-regression.html#cb137-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
-<span id="cb137-2"><a href="linear-regression.html#cb137-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb137-3"><a href="linear-regression.html#cb137-3" aria-hidden="true" tabindex="-1"></a><span class="co"># load raster stack from GitHub</span></span>
-<span id="cb137-4"><a href="linear-regression.html#cb137-4" aria-hidden="true" tabindex="-1"></a>githubURL <span class="ot">&lt;-</span> <span class="fu">url</span>(<span class="st">&quot;https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave_rs.rds&quot;</span>)</span>
-<span id="cb137-5"><a href="linear-regression.html#cb137-5" aria-hidden="true" tabindex="-1"></a>geodata_r <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(githubURL)</span>
-<span id="cb137-6"><a href="linear-regression.html#cb137-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb137-7"><a href="linear-regression.html#cb137-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb137-8"><a href="linear-regression.html#cb137-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the geodata and add to a data frame</span></span>
-<span id="cb137-9"><a href="linear-regression.html#cb137-9" aria-hidden="true" tabindex="-1"></a>mast_sf <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(mast_sf, <span class="at">crs =</span> <span class="dv">5070</span>)</span>
-<span id="cb137-10"><a href="linear-regression.html#cb137-10" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> raster<span class="sc">::</span><span class="fu">extract</span>(geodata_r, <span class="fu">st_coordinates</span>(mast_sf))</span>
-<span id="cb137-11"><a href="linear-regression.html#cb137-11" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">st_drop_geometry</span>(mast_sf), data)</span>
-<span id="cb137-12"><a href="linear-regression.html#cb137-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb137-13"><a href="linear-regression.html#cb137-13" aria-hidden="true" tabindex="-1"></a><span class="co"># convert aspect</span></span>
-<span id="cb137-14"><a href="linear-regression.html#cb137-14" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>northness <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="dv">180</span> <span class="sc">-</span> data<span class="sc">$</span>aspect)</span>
-<span id="cb137-15"><a href="linear-regression.html#cb137-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb137-16"><a href="linear-regression.html#cb137-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb137-17"><a href="linear-regression.html#cb137-17" aria-hidden="true" tabindex="-1"></a><span class="co"># random sample</span></span>
-<span id="cb137-18"><a href="linear-regression.html#cb137-18" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;elev&quot;</span>, <span class="st">&quot;temp&quot;</span>, <span class="st">&quot;precip&quot;</span>, <span class="st">&quot;solar&quot;</span>, <span class="st">&quot;tc_1&quot;</span>, <span class="st">&quot;twi&quot;</span>)</span>
-<span id="cb137-19"><a href="linear-regression.html#cb137-19" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">names</span>(geodata_r) <span class="sc">%in%</span> vars)</span>
-<span id="cb137-20"><a href="linear-regression.html#cb137-20" aria-hidden="true" tabindex="-1"></a>geodata_s <span class="ot">&lt;-</span> <span class="fu">sampleRegular</span>(geodata_r[[idx]], <span class="at">size =</span> <span class="dv">1000</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb139"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb139-1"><a href="linear-regression.html#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb139-2"><a href="linear-regression.html#cb139-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-3"><a href="linear-regression.html#cb139-3" aria-hidden="true" tabindex="-1"></a><span class="co"># load raster stack from GitHub</span></span>
+<span id="cb139-4"><a href="linear-regression.html#cb139-4" aria-hidden="true" tabindex="-1"></a>githubURL <span class="ot">&lt;-</span> <span class="fu">url</span>(<span class="st">&quot;https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave_rs.rds&quot;</span>)</span>
+<span id="cb139-5"><a href="linear-regression.html#cb139-5" aria-hidden="true" tabindex="-1"></a>geodata_r <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(githubURL)</span>
+<span id="cb139-6"><a href="linear-regression.html#cb139-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-7"><a href="linear-regression.html#cb139-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-8"><a href="linear-regression.html#cb139-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the geodata and add to a data frame</span></span>
+<span id="cb139-9"><a href="linear-regression.html#cb139-9" aria-hidden="true" tabindex="-1"></a>mast_sf <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(mast_sf, <span class="at">crs =</span> <span class="dv">5070</span>)</span>
+<span id="cb139-10"><a href="linear-regression.html#cb139-10" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> raster<span class="sc">::</span><span class="fu">extract</span>(geodata_r, <span class="fu">st_coordinates</span>(mast_sf))</span>
+<span id="cb139-11"><a href="linear-regression.html#cb139-11" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">st_drop_geometry</span>(mast_sf), data)</span>
+<span id="cb139-12"><a href="linear-regression.html#cb139-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-13"><a href="linear-regression.html#cb139-13" aria-hidden="true" tabindex="-1"></a><span class="co"># convert aspect</span></span>
+<span id="cb139-14"><a href="linear-regression.html#cb139-14" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>northness <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="dv">180</span> <span class="sc">-</span> data<span class="sc">$</span>aspect)</span>
+<span id="cb139-15"><a href="linear-regression.html#cb139-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-16"><a href="linear-regression.html#cb139-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-17"><a href="linear-regression.html#cb139-17" aria-hidden="true" tabindex="-1"></a><span class="co"># random sample</span></span>
+<span id="cb139-18"><a href="linear-regression.html#cb139-18" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;elev&quot;</span>, <span class="st">&quot;temp&quot;</span>, <span class="st">&quot;precip&quot;</span>, <span class="st">&quot;solar&quot;</span>, <span class="st">&quot;tc_1&quot;</span>, <span class="st">&quot;twi&quot;</span>)</span>
+<span id="cb139-19"><a href="linear-regression.html#cb139-19" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">names</span>(geodata_r) <span class="sc">%in%</span> vars)</span>
+<span id="cb139-20"><a href="linear-regression.html#cb139-20" aria-hidden="true" tabindex="-1"></a>geodata_s <span class="ot">&lt;-</span> <span class="fu">sampleRegular</span>(geodata_r[[idx]], <span class="at">size =</span> <span class="dv">1000</span>)</span></code></pre></div>
 </div>
 </div>
 <div id="exploratory-data-analysis-eda" class="section level2 hasAnchor" number="4.5">
 <h2><span class="header-section-number">4.5</span> Exploratory Data Analysis (EDA)<a href="linear-regression.html#exploratory-data-analysis-eda" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify peculiarities in the data is to plot it.</p>
-<div class="sourceCode" id="cb138"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb138-1"><a href="linear-regression.html#cb138-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(data)</span></code></pre></div>
+<div class="sourceCode" id="cb140"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb140-1"><a href="linear-regression.html#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(data)</span></code></pre></div>
 <pre><code>##        siteid        mast          numDays          elev            slope      
 ##  Cheme01  : 1   Min.   : 3.10   Min.   : 363   Min.   :   0.0   Min.   : 0.00  
 ##  Clark01  : 1   1st Qu.:18.50   1st Qu.:1831   1st Qu.: 699.2   1st Qu.: 2.00  
@@ -588,41 +590,41 @@ div.csl-indent {
 ##  Max.   :31.00   Max.   :174.00  
 ## </code></pre>
 <p>You may recall from discussion of EDA that QQ plots are a visual way to inspect the normality of a variable. If the variable is normally distributed, the points (e.g. soil observations) should line up along the straight line.</p>
-<div class="sourceCode" id="cb140"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb140-1"><a href="linear-regression.html#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="co"># QQ plot</span></span>
-<span id="cb140-2"><a href="linear-regression.html#cb140-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb140-3"><a href="linear-regression.html#cb140-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(<span class="at">sample =</span> mast)) <span class="sc">+</span></span>
-<span id="cb140-4"><a href="linear-regression.html#cb140-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_qq</span>() <span class="sc">+</span></span>
-<span id="cb140-5"><a href="linear-regression.html#cb140-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_qq_line</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb142"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb142-1"><a href="linear-regression.html#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="co"># QQ plot</span></span>
+<span id="cb142-2"><a href="linear-regression.html#cb142-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb142-3"><a href="linear-regression.html#cb142-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(<span class="at">sample =</span> mast)) <span class="sc">+</span></span>
+<span id="cb142-4"><a href="linear-regression.html#cb142-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_qq</span>() <span class="sc">+</span></span>
+<span id="cb142-5"><a href="linear-regression.html#cb142-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_qq_line</span>()</span></code></pre></div>
 <p><img src="004-linear-models_files/figure-html/qq-plot-1.png" width="672" /></p>
 <p>By examining the correlations between some of the predictors we can also determine whether they are <em>collinear</em> (e.g. &gt; 0.6). This is common for similar variables such as Landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In addition, collinearity will make it difficult to estimate our regression coefficients.</p>
-<div class="sourceCode" id="cb141"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb141-1"><a href="linear-regression.html#cb141-1" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;mast&quot;</span>, <span class="st">&quot;elev&quot;</span>, <span class="st">&quot;temp&quot;</span>, <span class="st">&quot;precip&quot;</span>, <span class="st">&quot;tc_2&quot;</span>, <span class="st">&quot;tc_1&quot;</span>, <span class="st">&quot;tc_3&quot;</span>)</span>
-<span id="cb141-2"><a href="linear-regression.html#cb141-2" aria-hidden="true" tabindex="-1"></a>GGally<span class="sc">::</span><span class="fu">ggpairs</span>(data[vars])</span></code></pre></div>
+<div class="sourceCode" id="cb143"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb143-1"><a href="linear-regression.html#cb143-1" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;mast&quot;</span>, <span class="st">&quot;elev&quot;</span>, <span class="st">&quot;temp&quot;</span>, <span class="st">&quot;precip&quot;</span>, <span class="st">&quot;tc_2&quot;</span>, <span class="st">&quot;tc_1&quot;</span>, <span class="st">&quot;tc_3&quot;</span>)</span>
+<span id="cb143-2"><a href="linear-regression.html#cb143-2" aria-hidden="true" tabindex="-1"></a>GGally<span class="sc">::</span><span class="fu">ggpairs</span>(data[vars])</span></code></pre></div>
 <pre><code>## Registered S3 method overwritten by &#39;GGally&#39;:
 ##   method from   
 ##   +.gg   ggplot2</code></pre>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-<div class="sourceCode" id="cb143"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb143-1"><a href="linear-regression.html#cb143-1" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;mast&quot;</span>, <span class="st">&quot;slope&quot;</span>, <span class="st">&quot;twi&quot;</span>, <span class="st">&quot;northness&quot;</span>, <span class="st">&quot;solar&quot;</span>, <span class="st">&quot;solarcv&quot;</span>)</span>
-<span id="cb143-2"><a href="linear-regression.html#cb143-2" aria-hidden="true" tabindex="-1"></a>GGally<span class="sc">::</span><span class="fu">ggpairs</span>(data[vars])</span></code></pre></div>
+<div class="sourceCode" id="cb145"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb145-1"><a href="linear-regression.html#cb145-1" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;mast&quot;</span>, <span class="st">&quot;slope&quot;</span>, <span class="st">&quot;twi&quot;</span>, <span class="st">&quot;northness&quot;</span>, <span class="st">&quot;solar&quot;</span>, <span class="st">&quot;solarcv&quot;</span>)</span>
+<span id="cb145-2"><a href="linear-regression.html#cb145-2" aria-hidden="true" tabindex="-1"></a>GGally<span class="sc">::</span><span class="fu">ggpairs</span>(data[vars])</span></code></pre></div>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
 <p>The correlation matrices and scatter plots above show that that MAST has moderate correlations with some of the variables, particularly the elevation and the climatic variables.</p>
 <p>Examining the density plots on the diagonal axis of the scatter plots we can also see that some variables are skewed.</p>
 <div id="compare-samples-vs-population" class="section level3 hasAnchor" number="4.5.1">
 <h3><span class="header-section-number">4.5.1</span> Compare Samples vs Population<a href="linear-regression.html#compare-samples-vs-population" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Since our data was not randomly sampled, we had better check the distribution of our samples vs the population. We can accomplish this by overlaying the sample distribution of predictor variables vs a large random sample.</p>
-<div class="sourceCode" id="cb144"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb144-1"><a href="linear-regression.html#cb144-1" aria-hidden="true" tabindex="-1"></a>geodata_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(geodata_s)</span>
-<span id="cb144-2"><a href="linear-regression.html#cb144-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb144-3"><a href="linear-regression.html#cb144-3" aria-hidden="true" tabindex="-1"></a>geodata_df <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
-<span id="cb144-4"><a href="linear-regression.html#cb144-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">source =</span> <span class="st">&quot;sample&quot;</span>,     data[<span class="fu">names</span>(geodata_df)]),</span>
-<span id="cb144-5"><a href="linear-regression.html#cb144-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">source =</span> <span class="st">&quot;population&quot;</span>, geodata_df)</span>
-<span id="cb144-6"><a href="linear-regression.html#cb144-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb144-7"><a href="linear-regression.html#cb144-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb144-8"><a href="linear-regression.html#cb144-8" aria-hidden="true" tabindex="-1"></a>geodata_l <span class="ot">&lt;-</span> <span class="fu">pivot_longer</span>(geodata_df,</span>
-<span id="cb144-9"><a href="linear-regression.html#cb144-9" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cols =</span> <span class="sc">-</span>source)</span>
-<span id="cb144-10"><a href="linear-regression.html#cb144-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb144-11"><a href="linear-regression.html#cb144-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(geodata_l, <span class="fu">aes</span>(<span class="at">x =</span> value, <span class="at">fill =</span> source)) <span class="sc">+</span></span>
-<span id="cb144-12"><a href="linear-regression.html#cb144-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb144-13"><a href="linear-regression.html#cb144-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> name, <span class="at">scales =</span> <span class="st">&quot;free&quot;</span>) <span class="sc">+</span></span>
-<span id="cb144-14"><a href="linear-regression.html#cb144-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Evaluation of Sample Representativeness&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb146"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb146-1"><a href="linear-regression.html#cb146-1" aria-hidden="true" tabindex="-1"></a>geodata_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(geodata_s)</span>
+<span id="cb146-2"><a href="linear-regression.html#cb146-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb146-3"><a href="linear-regression.html#cb146-3" aria-hidden="true" tabindex="-1"></a>geodata_df <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb146-4"><a href="linear-regression.html#cb146-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">source =</span> <span class="st">&quot;sample&quot;</span>,     data[<span class="fu">names</span>(geodata_df)]),</span>
+<span id="cb146-5"><a href="linear-regression.html#cb146-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">source =</span> <span class="st">&quot;population&quot;</span>, geodata_df)</span>
+<span id="cb146-6"><a href="linear-regression.html#cb146-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb146-7"><a href="linear-regression.html#cb146-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb146-8"><a href="linear-regression.html#cb146-8" aria-hidden="true" tabindex="-1"></a>geodata_l <span class="ot">&lt;-</span> <span class="fu">pivot_longer</span>(geodata_df,</span>
+<span id="cb146-9"><a href="linear-regression.html#cb146-9" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cols =</span> <span class="sc">-</span>source)</span>
+<span id="cb146-10"><a href="linear-regression.html#cb146-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb146-11"><a href="linear-regression.html#cb146-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(geodata_l, <span class="fu">aes</span>(<span class="at">x =</span> value, <span class="at">fill =</span> source)) <span class="sc">+</span></span>
+<span id="cb146-12"><a href="linear-regression.html#cb146-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb146-13"><a href="linear-regression.html#cb146-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> name, <span class="at">scales =</span> <span class="st">&quot;free&quot;</span>) <span class="sc">+</span></span>
+<span id="cb146-14"><a href="linear-regression.html#cb146-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Evaluation of Sample Representativeness&quot;</span>)</span></code></pre></div>
 <pre><code>## Warning: Removed 1266 rows containing non-finite values (`stat_density()`).</code></pre>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>The overlap between our sample and the population appear satisfactory.</p>
@@ -631,64 +633,64 @@ div.csl-indent {
 <div id="linear-modeling" class="section level2 hasAnchor" number="4.6">
 <h2><span class="header-section-number">4.6</span> Linear modeling<a href="linear-regression.html#linear-modeling" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>R has several functions for fitting linear models. The most common is arguably the <code>lm()</code> function from the stats R package, which is loaded by default. The <code>lm()</code> function is also extended through the use of several additional packages such as the car and caret R packages. Another noteworthy R package for linear modeling is rms, which offers the <code>ols()</code> function for linear modeling. The rms R package <span class="citation">(<a href="#ref-harrell2015" role="doc-biblioref">Harrell 2015</a>)</span> offers an ‘almost’ comprehensive alternative to `lm()’ and it’s accessory function. Each function offers useful features, therefore for the we will demonstrate elements of both. Look for comments (i.e. #) below referring to rms or stats.</p>
-<div class="sourceCode" id="cb146"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb146-1"><a href="linear-regression.html#cb146-1" aria-hidden="true" tabindex="-1"></a><span class="co"># stats</span></span>
-<span id="cb146-2"><a href="linear-regression.html#cb146-2" aria-hidden="true" tabindex="-1"></a>fit_lm <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
-<span id="cb146-3"><a href="linear-regression.html#cb146-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> mast <span class="sc">~</span> elev <span class="sc">+</span> aspect <span class="sc">+</span> twi <span class="sc">+</span> solar <span class="sc">+</span> solarcv <span class="sc">+</span> tc_1 <span class="sc">+</span> tc_2 <span class="sc">+</span> tc_3 <span class="sc">+</span> precip <span class="sc">+</span> temp, </span>
-<span id="cb146-4"><a href="linear-regression.html#cb146-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data, </span>
-<span id="cb146-5"><a href="linear-regression.html#cb146-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> data<span class="sc">$</span>numDays</span>
-<span id="cb146-6"><a href="linear-regression.html#cb146-6" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb146-7"><a href="linear-regression.html#cb146-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb146-8"><a href="linear-regression.html#cb146-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb146-9"><a href="linear-regression.html#cb146-9" aria-hidden="true" tabindex="-1"></a><span class="co"># rms R package</span></span>
-<span id="cb146-10"><a href="linear-regression.html#cb146-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb146-11"><a href="linear-regression.html#cb146-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rms)</span>
-<span id="cb146-12"><a href="linear-regression.html#cb146-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb146-13"><a href="linear-regression.html#cb146-13" aria-hidden="true" tabindex="-1"></a>dd <span class="ot">&lt;-</span> <span class="fu">datadist</span>(data)</span>
-<span id="cb146-14"><a href="linear-regression.html#cb146-14" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">datadist =</span> <span class="st">&quot;dd&quot;</span>)</span>
-<span id="cb146-15"><a href="linear-regression.html#cb146-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb146-16"><a href="linear-regression.html#cb146-16" aria-hidden="true" tabindex="-1"></a>fit_ols <span class="ot">&lt;-</span> <span class="fu">ols</span>(mast <span class="sc">~</span> elev <span class="sc">+</span> aspect <span class="sc">+</span> twi <span class="sc">+</span> solar <span class="sc">+</span> solarcv <span class="sc">+</span> tc_1 <span class="sc">+</span> tc_2 <span class="sc">+</span> tc_3 <span class="sc">+</span> precip <span class="sc">+</span> temp, <span class="at">data =</span> data, <span class="at">x =</span> <span class="cn">TRUE</span>, <span class="at">y =</span> <span class="cn">TRUE</span>, <span class="at">weights =</span> data<span class="sc">$</span>numDays)</span></code></pre></div>
+<div class="sourceCode" id="cb148"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb148-1"><a href="linear-regression.html#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="co"># stats</span></span>
+<span id="cb148-2"><a href="linear-regression.html#cb148-2" aria-hidden="true" tabindex="-1"></a>fit_lm <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
+<span id="cb148-3"><a href="linear-regression.html#cb148-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> mast <span class="sc">~</span> elev <span class="sc">+</span> aspect <span class="sc">+</span> twi <span class="sc">+</span> solar <span class="sc">+</span> solarcv <span class="sc">+</span> tc_1 <span class="sc">+</span> tc_2 <span class="sc">+</span> tc_3 <span class="sc">+</span> precip <span class="sc">+</span> temp, </span>
+<span id="cb148-4"><a href="linear-regression.html#cb148-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data, </span>
+<span id="cb148-5"><a href="linear-regression.html#cb148-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> data<span class="sc">$</span>numDays</span>
+<span id="cb148-6"><a href="linear-regression.html#cb148-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb148-7"><a href="linear-regression.html#cb148-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb148-8"><a href="linear-regression.html#cb148-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb148-9"><a href="linear-regression.html#cb148-9" aria-hidden="true" tabindex="-1"></a><span class="co"># rms R package</span></span>
+<span id="cb148-10"><a href="linear-regression.html#cb148-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb148-11"><a href="linear-regression.html#cb148-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rms)</span>
+<span id="cb148-12"><a href="linear-regression.html#cb148-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb148-13"><a href="linear-regression.html#cb148-13" aria-hidden="true" tabindex="-1"></a>dd <span class="ot">&lt;-</span> <span class="fu">datadist</span>(data)</span>
+<span id="cb148-14"><a href="linear-regression.html#cb148-14" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">datadist =</span> <span class="st">&quot;dd&quot;</span>)</span>
+<span id="cb148-15"><a href="linear-regression.html#cb148-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb148-16"><a href="linear-regression.html#cb148-16" aria-hidden="true" tabindex="-1"></a>fit_ols <span class="ot">&lt;-</span> <span class="fu">ols</span>(mast <span class="sc">~</span> elev <span class="sc">+</span> aspect <span class="sc">+</span> twi <span class="sc">+</span> solar <span class="sc">+</span> solarcv <span class="sc">+</span> tc_1 <span class="sc">+</span> tc_2 <span class="sc">+</span> tc_3 <span class="sc">+</span> precip <span class="sc">+</span> temp, <span class="at">data =</span> data, <span class="at">x =</span> <span class="cn">TRUE</span>, <span class="at">y =</span> <span class="cn">TRUE</span>, <span class="at">weights =</span> data<span class="sc">$</span>numDays)</span></code></pre></div>
 <div id="diagnostics" class="section level3 hasAnchor" number="4.6.1">
 <h3><span class="header-section-number">4.6.1</span> Diagnostics<a href="linear-regression.html#diagnostics" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div id="residual-plots" class="section level4 hasAnchor" number="4.6.1.1">
 <h4><span class="header-section-number">4.6.1.1</span> Residual plots<a href="linear-regression.html#residual-plots" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>Once we have a model we need to assess residuals for linearity, normality, and homoscedastivity (or constant variance). Oddly this is one area were the rms R package does not offer convenient functions for plotting residuals, therefore we’ll simply access the results of <code>lm()</code>.</p>
-<div class="sourceCode" id="cb147"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb147-1"><a href="linear-regression.html#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfcol =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>))</span></code></pre></div>
-<div class="sourceCode" id="cb148"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb148-1"><a href="linear-regression.html#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="co"># residual</span></span>
-<span id="cb148-2"><a href="linear-regression.html#cb148-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fit_lm)</span></code></pre></div>
+<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb149-1"><a href="linear-regression.html#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfcol =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb150"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb150-1"><a href="linear-regression.html#cb150-1" aria-hidden="true" tabindex="-1"></a><span class="co"># residual</span></span>
+<span id="cb150-2"><a href="linear-regression.html#cb150-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fit_lm)</span></code></pre></div>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-10-1.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-2.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-3.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-4.png" width="672" /></p>
-<div class="sourceCode" id="cb149"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb149-1"><a href="linear-regression.html#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="co"># partial residuals</span></span>
-<span id="cb149-2"><a href="linear-regression.html#cb149-2" aria-hidden="true" tabindex="-1"></a><span class="fu">termplot</span>(fit_lm, <span class="at">partial.resid =</span> <span class="cn">TRUE</span>, <span class="at">col.res =</span> <span class="st">&quot;black&quot;</span>, <span class="at">pch =</span> <span class="dv">16</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb151"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb151-1"><a href="linear-regression.html#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="co"># partial residuals</span></span>
+<span id="cb151-2"><a href="linear-regression.html#cb151-2" aria-hidden="true" tabindex="-1"></a><span class="fu">termplot</span>(fit_lm, <span class="at">partial.resid =</span> <span class="cn">TRUE</span>, <span class="at">col.res =</span> <span class="st">&quot;black&quot;</span>, <span class="at">pch =</span> <span class="dv">16</span>)</span></code></pre></div>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-10-5.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-6.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-7.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-8.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-9.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-10.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-11.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-12.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-13.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-14.png" width="672" /></p>
 <p>Remember the residuals are simply just the observed values minus the predicted values, which are easy enough to calculate. Alternatively we can simply extract them from the fitted model object.</p>
-<div class="sourceCode" id="cb150"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb150-1"><a href="linear-regression.html#cb150-1" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_lm, data)</span>
-<span id="cb150-2"><a href="linear-regression.html#cb150-2" aria-hidden="true" tabindex="-1"></a>res  <span class="ot">&lt;-</span> data<span class="sc">$</span>mast <span class="sc">-</span> pred</span>
-<span id="cb150-3"><a href="linear-regression.html#cb150-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(res)</span></code></pre></div>
+<div class="sourceCode" id="cb152"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb152-1"><a href="linear-regression.html#cb152-1" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_lm, data)</span>
+<span id="cb152-2"><a href="linear-regression.html#cb152-2" aria-hidden="true" tabindex="-1"></a>res  <span class="ot">&lt;-</span> data<span class="sc">$</span>mast <span class="sc">-</span> pred</span>
+<span id="cb152-3"><a href="linear-regression.html#cb152-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(res)</span></code></pre></div>
 <pre><code>##          1          2          3          4          5          6 
 ## -1.3182498 -0.4111067  0.1231537  1.4750626 -0.1719747 -0.1036808</code></pre>
-<div class="sourceCode" id="cb152"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb152-1"><a href="linear-regression.html#cb152-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or </span></span>
-<span id="cb152-2"><a href="linear-regression.html#cb152-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb152-3"><a href="linear-regression.html#cb152-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">residuals</span>(fit_lm))</span></code></pre></div>
+<div class="sourceCode" id="cb154"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb154-1"><a href="linear-regression.html#cb154-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or </span></span>
+<span id="cb154-2"><a href="linear-regression.html#cb154-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb154-3"><a href="linear-regression.html#cb154-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">residuals</span>(fit_lm))</span></code></pre></div>
 <pre><code>##          1          2          3          4          5          6 
 ## -1.3182498 -0.4111067  0.1231537  1.4750626 -0.1719747 -0.1036808</code></pre>
-<div class="sourceCode" id="cb154"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb154-1"><a href="linear-regression.html#cb154-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Manually plot the residuals</span></span>
-<span id="cb154-2"><a href="linear-regression.html#cb154-2" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(res, pred)</span>
-<span id="cb154-3"><a href="linear-regression.html#cb154-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb154-4"><a href="linear-regression.html#cb154-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(res, <span class="fu">aes</span>(<span class="at">x =</span> pred, <span class="at">y =</span> res)) <span class="sc">+</span> </span>
-<span id="cb154-5"><a href="linear-regression.html#cb154-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span> </span>
-<span id="cb154-6"><a href="linear-regression.html#cb154-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb156"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb156-1"><a href="linear-regression.html#cb156-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Manually plot the residuals</span></span>
+<span id="cb156-2"><a href="linear-regression.html#cb156-2" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(res, pred)</span>
+<span id="cb156-3"><a href="linear-regression.html#cb156-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb156-4"><a href="linear-regression.html#cb156-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(res, <span class="fu">aes</span>(<span class="at">x =</span> pred, <span class="at">y =</span> res)) <span class="sc">+</span> </span>
+<span id="cb156-5"><a href="linear-regression.html#cb156-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span> </span>
+<span id="cb156-6"><a href="linear-regression.html#cb156-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>)</span></code></pre></div>
 </div>
 <div id="multicolinearity" class="section level4 hasAnchor" number="4.6.1.2">
 <h4><span class="header-section-number">4.6.1.2</span> Multicolinearity<a href="linear-regression.html#multicolinearity" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the <strong>variance inflation factor</strong> (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value <span class="citation">(<a href="#ref-faraway2004" role="doc-biblioref">Faraway 2004</a>)</span>.</p>
-<div class="sourceCode" id="cb155"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb155-1"><a href="linear-regression.html#cb155-1" aria-hidden="true" tabindex="-1"></a><span class="co"># vif() function from the rms or car packages</span></span>
-<span id="cb155-2"><a href="linear-regression.html#cb155-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span>(<span class="fu">vif</span>(fit_ols))</span></code></pre></div>
+<div class="sourceCode" id="cb157"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb157-1"><a href="linear-regression.html#cb157-1" aria-hidden="true" tabindex="-1"></a><span class="co"># vif() function from the rms or car packages</span></span>
+<span id="cb157-2"><a href="linear-regression.html#cb157-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span>(<span class="fu">vif</span>(fit_ols))</span></code></pre></div>
 <pre><code>##     elev   aspect      twi    solar  solarcv     tc_1     tc_2     tc_3 
 ## 8.851106 1.103580 2.056235 6.068831 5.787921 4.114079 3.009392 3.311669 
 ##   precip     temp 
 ## 2.274489 7.860236</code></pre>
-<div class="sourceCode" id="cb157"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb157-1"><a href="linear-regression.html#cb157-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or </span></span>
-<span id="cb157-2"><a href="linear-regression.html#cb157-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb157-3"><a href="linear-regression.html#cb157-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span>(<span class="fu">vif</span>(fit_ols)) <span class="sc">&gt;</span> <span class="dv">3</span></span></code></pre></div>
+<div class="sourceCode" id="cb159"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb159-1"><a href="linear-regression.html#cb159-1" aria-hidden="true" tabindex="-1"></a><span class="co"># or </span></span>
+<span id="cb159-2"><a href="linear-regression.html#cb159-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb159-3"><a href="linear-regression.html#cb159-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span>(<span class="fu">vif</span>(fit_ols)) <span class="sc">&gt;</span> <span class="dv">3</span></span></code></pre></div>
 <pre><code>##    elev  aspect     twi   solar solarcv    tc_1    tc_2    tc_3  precip    temp 
 ##    TRUE   FALSE   FALSE    TRUE    TRUE    TRUE    TRUE    TRUE   FALSE    TRUE</code></pre>
 <p>The values above indicate we have several colinear variables in the model, which you might have noticed already from the scatter plot matrix.</p>
@@ -704,13 +706,13 @@ div.csl-indent {
 <li>Randomized wrapper (e.g. Boruta)(<code>Boruta::Boruta()</code>)</li>
 </ul>
 <p>Both the <code>rms</code> and <code>caret</code> packages offer methods for variable selection and cross-validation. In this instance the <code>rms</code> approach is a bit more convenient, with the one line call to <code>validate()</code>.</p>
-<div class="sourceCode" id="cb159"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb159-1"><a href="linear-regression.html#cb159-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set seed for reproducibility</span></span>
-<span id="cb159-2"><a href="linear-regression.html#cb159-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb159-3"><a href="linear-regression.html#cb159-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb159-4"><a href="linear-regression.html#cb159-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb159-5"><a href="linear-regression.html#cb159-5" aria-hidden="true" tabindex="-1"></a><span class="co"># rms</span></span>
-<span id="cb159-6"><a href="linear-regression.html#cb159-6" aria-hidden="true" tabindex="-1"></a><span class="do">## stepwise selection</span></span>
-<span id="cb159-7"><a href="linear-regression.html#cb159-7" aria-hidden="true" tabindex="-1"></a><span class="fu">validate</span>(fit_ols, <span class="at">bw =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb161"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb161-1"><a href="linear-regression.html#cb161-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set seed for reproducibility</span></span>
+<span id="cb161-2"><a href="linear-regression.html#cb161-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb161-3"><a href="linear-regression.html#cb161-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb161-4"><a href="linear-regression.html#cb161-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb161-5"><a href="linear-regression.html#cb161-5" aria-hidden="true" tabindex="-1"></a><span class="co"># rms</span></span>
+<span id="cb161-6"><a href="linear-regression.html#cb161-6" aria-hidden="true" tabindex="-1"></a><span class="do">## stepwise selection</span></span>
+<span id="cb161-7"><a href="linear-regression.html#cb161-7" aria-hidden="true" tabindex="-1"></a><span class="fu">validate</span>(fit_ols, <span class="at">bw =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## 
 ##      Backwards Step-down - Original Model
 ## 
@@ -794,9 +796,9 @@ div.csl-indent {
 <div id="final-model-accuracy-assessment" class="section level3 hasAnchor" number="4.6.3">
 <h3><span class="header-section-number">4.6.3</span> Final model &amp; accuracy assessment<a href="linear-regression.html#final-model-accuracy-assessment" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Once we have a model we are ‘happy’ with we can fit the final model, and call <code>validate()</code> again which gives performance metrics such as <code>R$2</code> and the mean square error (MSE). If we want the root mean square error (RMSE), which is in the original units of our measurements we can take the square root of MSE using <code>sqrt()</code>.</p>
-<div class="sourceCode" id="cb162"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb162-1"><a href="linear-regression.html#cb162-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rms</span></span>
-<span id="cb162-2"><a href="linear-regression.html#cb162-2" aria-hidden="true" tabindex="-1"></a>final_ols <span class="ot">&lt;-</span> <span class="fu">ols</span>(mast <span class="sc">~</span> elev <span class="sc">+</span> solarcv <span class="sc">+</span> tc_1 <span class="sc">+</span> tc_2, <span class="at">data =</span> data, <span class="at">weights =</span> data<span class="sc">$</span>numDays, <span class="at">x =</span> <span class="cn">TRUE</span>, <span class="at">y =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb162-3"><a href="linear-regression.html#cb162-3" aria-hidden="true" tabindex="-1"></a>final_ols</span></code></pre></div>
+<div class="sourceCode" id="cb164"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb164-1"><a href="linear-regression.html#cb164-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rms</span></span>
+<span id="cb164-2"><a href="linear-regression.html#cb164-2" aria-hidden="true" tabindex="-1"></a>final_ols <span class="ot">&lt;-</span> <span class="fu">ols</span>(mast <span class="sc">~</span> elev <span class="sc">+</span> solarcv <span class="sc">+</span> tc_1 <span class="sc">+</span> tc_2, <span class="at">data =</span> data, <span class="at">weights =</span> data<span class="sc">$</span>numDays, <span class="at">x =</span> <span class="cn">TRUE</span>, <span class="at">y =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb164-3"><a href="linear-regression.html#cb164-3" aria-hidden="true" tabindex="-1"></a>final_ols</span></code></pre></div>
 <pre><code>## Linear Regression Model
 ## 
 ## ols(formula = mast ~ elev + solarcv + tc_1 + tc_2, data = data, 
@@ -820,40 +822,40 @@ div.csl-indent {
 ## solarcv   -0.2421 0.0526  -4.60 &lt;0.0001 
 ## tc_1      -0.0535 0.0113  -4.75 &lt;0.0001 
 ## tc_2      -0.1469 0.0362  -4.06 0.0001</code></pre>
-<div class="sourceCode" id="cb164"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb164-1"><a href="linear-regression.html#cb164-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb164-2"><a href="linear-regression.html#cb164-2" aria-hidden="true" tabindex="-1"></a><span class="fu">validate</span>(final_ols, <span class="at">method =</span> <span class="st">&quot;crossvalidation&quot;</span>, <span class="at">B =</span> <span class="dv">10</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb166"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb166-1"><a href="linear-regression.html#cb166-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb166-2"><a href="linear-regression.html#cb166-2" aria-hidden="true" tabindex="-1"></a><span class="fu">validate</span>(final_ols, <span class="at">method =</span> <span class="st">&quot;crossvalidation&quot;</span>, <span class="at">B =</span> <span class="dv">10</span>)</span></code></pre></div>
 <pre><code>##           index.orig training   test optimism index.corrected  n
 ## R-square      0.9209   0.9227 0.7896   0.1331          0.7878 10
 ## MSE           2.3332   2.2652 2.7234  -0.4582          2.7914 10
 ## g             5.7197   5.6658 5.4657   0.2001          5.5196 10
 ## Intercept     0.0000   0.0000 0.8853  -0.8853          0.8853 10
 ## Slope         1.0000   1.0000 0.9571   0.0429          0.9571 10</code></pre>
-<div class="sourceCode" id="cb166"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb166-1"><a href="linear-regression.html#cb166-1" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(final_ols)</span>
-<span id="cb166-2"><a href="linear-regression.html#cb166-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb166-3"><a href="linear-regression.html#cb166-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb166-4"><a href="linear-regression.html#cb166-4" aria-hidden="true" tabindex="-1"></a><span class="co"># RMSE</span></span>
-<span id="cb166-5"><a href="linear-regression.html#cb166-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span>((<span class="at">MSE =</span> <span class="fl">2.3332</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb168"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb168-1"><a href="linear-regression.html#cb168-1" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>pred <span class="ot">&lt;-</span> <span class="fu">predict</span>(final_ols)</span>
+<span id="cb168-2"><a href="linear-regression.html#cb168-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb168-3"><a href="linear-regression.html#cb168-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb168-4"><a href="linear-regression.html#cb168-4" aria-hidden="true" tabindex="-1"></a><span class="co"># RMSE</span></span>
+<span id="cb168-5"><a href="linear-regression.html#cb168-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span>((<span class="at">MSE =</span> <span class="fl">2.3332</span>))</span></code></pre></div>
 <pre><code>## [1] 1.527482</code></pre>
-<div class="sourceCode" id="cb168"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb168-1"><a href="linear-regression.html#cb168-1" aria-hidden="true" tabindex="-1"></a>caret<span class="sc">::</span><span class="fu">RMSE</span>(<span class="at">pred =</span> data<span class="sc">$</span>pred, <span class="at">obs =</span> data<span class="sc">$</span>mast)</span></code></pre></div>
+<div class="sourceCode" id="cb170"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb170-1"><a href="linear-regression.html#cb170-1" aria-hidden="true" tabindex="-1"></a>caret<span class="sc">::</span><span class="fu">RMSE</span>(<span class="at">pred =</span> data<span class="sc">$</span>pred, <span class="at">obs =</span> data<span class="sc">$</span>mast)</span></code></pre></div>
 <pre><code>## [1] 1.527477</code></pre>
-<div class="sourceCode" id="cb170"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb170-1"><a href="linear-regression.html#cb170-1" aria-hidden="true" tabindex="-1"></a><span class="co"># R2</span></span>
-<span id="cb170-2"><a href="linear-regression.html#cb170-2" aria-hidden="true" tabindex="-1"></a>caret<span class="sc">::</span><span class="fu">R2</span>(<span class="at">pred =</span> data<span class="sc">$</span>pred, <span class="at">obs =</span> data<span class="sc">$</span>mast, <span class="at">formula =</span> <span class="st">&quot;traditional&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb172"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb172-1"><a href="linear-regression.html#cb172-1" aria-hidden="true" tabindex="-1"></a><span class="co"># R2</span></span>
+<span id="cb172-2"><a href="linear-regression.html#cb172-2" aria-hidden="true" tabindex="-1"></a>caret<span class="sc">::</span><span class="fu">R2</span>(<span class="at">pred =</span> data<span class="sc">$</span>pred, <span class="at">obs =</span> data<span class="sc">$</span>mast, <span class="at">formula =</span> <span class="st">&quot;traditional&quot;</span>)</span></code></pre></div>
 <pre><code>## [1] 0.9208941</code></pre>
-<div class="sourceCode" id="cb172"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb172-1"><a href="linear-regression.html#cb172-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot model fit</span></span>
-<span id="cb172-2"><a href="linear-regression.html#cb172-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb172-3"><a href="linear-regression.html#cb172-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(<span class="at">x =</span> pred, <span class="at">y =</span> mast)) <span class="sc">+</span></span>
-<span id="cb172-4"><a href="linear-regression.html#cb172-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb172-5"><a href="linear-regression.html#cb172-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>() <span class="sc">+</span> </span>
-<span id="cb172-6"><a href="linear-regression.html#cb172-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">&quot;lm&quot;</span>) <span class="sc">+</span></span>
-<span id="cb172-7"><a href="linear-regression.html#cb172-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Model Fit&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb174"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb174-1"><a href="linear-regression.html#cb174-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot model fit</span></span>
+<span id="cb174-2"><a href="linear-regression.html#cb174-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb174-3"><a href="linear-regression.html#cb174-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(<span class="at">x =</span> pred, <span class="at">y =</span> mast)) <span class="sc">+</span></span>
+<span id="cb174-4"><a href="linear-regression.html#cb174-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb174-5"><a href="linear-regression.html#cb174-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>() <span class="sc">+</span> </span>
+<span id="cb174-6"><a href="linear-regression.html#cb174-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">&quot;lm&quot;</span>) <span class="sc">+</span></span>
+<span id="cb174-7"><a href="linear-regression.html#cb174-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Model Fit&quot;</span>)</span></code></pre></div>
 <pre><code>## `geom_smooth()` using formula = &#39;y ~ x&#39;</code></pre>
 <p><img src="004-linear-models_files/figure-html/final-model-1.png" width="672" /></p>
 </div>
 <div id="model-interpretation" class="section level3 hasAnchor" number="4.6.4">
 <h3><span class="header-section-number">4.6.4</span> Model Interpretation<a href="linear-regression.html#model-interpretation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>A nice feature of linear models are that they are easy to interpret. If we examine the model coefficients we can see how what we’re trying to predict (i.e. the response variable) varies as a function of the GIS variables (i.e. predictor variables). So looking at the <code>elev</code> variable below we can see that <code>mast</code> decreasing at a rate of <code>-0.066</code> for every change in elevation.</p>
-<div class="sourceCode" id="cb174"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb174-1"><a href="linear-regression.html#cb174-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Model accuracy, residuals, and slopes (e.g. coefficents)</span></span>
-<span id="cb174-2"><a href="linear-regression.html#cb174-2" aria-hidden="true" tabindex="-1"></a>final_ols</span></code></pre></div>
+<div class="sourceCode" id="cb176"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb176-1"><a href="linear-regression.html#cb176-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Model accuracy, residuals, and slopes (e.g. coefficents)</span></span>
+<span id="cb176-2"><a href="linear-regression.html#cb176-2" aria-hidden="true" tabindex="-1"></a>final_ols</span></code></pre></div>
 <pre><code>## Linear Regression Model
 ## 
 ## ols(formula = mast ~ elev + solarcv + tc_1 + tc_2, data = data, 
@@ -878,8 +880,8 @@ div.csl-indent {
 ## tc_1      -0.0535 0.0113  -4.75 &lt;0.0001 
 ## tc_2      -0.1469 0.0362  -4.06 0.0001</code></pre>
 <p>We can examine how much each variable contributes to the model by examining the results of <code>anova</code>. From the summary below we can that the majority of partial sum of squares are captured by <code>elev</code>, with progressively less by the remaining variables.</p>
-<div class="sourceCode" id="cb176"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb176-1"><a href="linear-regression.html#cb176-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Anova</span></span>
-<span id="cb176-2"><a href="linear-regression.html#cb176-2" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(final_ols)</span></code></pre></div>
+<div class="sourceCode" id="cb178"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb178-1"><a href="linear-regression.html#cb178-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Anova</span></span>
+<span id="cb178-2"><a href="linear-regression.html#cb178-2" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(final_ols)</span></code></pre></div>
 <pre><code>##                 Analysis of Variance          Response: mast 
 ## 
 ##  Factor     d.f. Partial SS MS          F      P     
@@ -889,49 +891,49 @@ div.csl-indent {
 ##  tc_2        1     88784.39   88784.388  16.50 1e-04 
 ##  REGRESSION  4   4240328.96 1060082.241 196.96 &lt;.0001
 ##  ERROR      63    339072.21    5382.099</code></pre>
-<div class="sourceCode" id="cb178"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb178-1"><a href="linear-regression.html#cb178-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">anova</span>(final_ols), <span class="at">what =</span> <span class="st">&quot;partial R2&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb180-1"><a href="linear-regression.html#cb180-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">anova</span>(final_ols), <span class="at">what =</span> <span class="st">&quot;partial R2&quot;</span>)</span></code></pre></div>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
 <p>Another way to visualize the contribution of each variable is to plot their partial effects, which summarize how much each variable effects the model if we hold all the other variables constant at their median values and vary the variable of interest over it’s 25th and 75th percentiles. This is a useful way to compare the impact of each variable side by side in the units of the response variable. In this case we can see below that again <code>elev</code> has the biggest impact, with range of approximately -6 to -4.5 degrees. The effect of <code>solarcv</code> is smallest compared to the other tasseled cap variables.</p>
-<div class="sourceCode" id="cb179"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb179-1"><a href="linear-regression.html#cb179-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Model Effects</span></span>
-<span id="cb179-2"><a href="linear-regression.html#cb179-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">summary</span>(final_ols))</span></code></pre></div>
+<div class="sourceCode" id="cb181"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb181-1"><a href="linear-regression.html#cb181-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Model Effects</span></span>
+<span id="cb181-2"><a href="linear-regression.html#cb181-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">summary</span>(final_ols))</span></code></pre></div>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
 <p>The partial effects can also be visualized as regression lines with their confidence intervals, which illustrates the slope of the predictor variables in relation to <code>mast</code>.</p>
-<div class="sourceCode" id="cb180"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb180-1"><a href="linear-regression.html#cb180-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Effects</span></span>
-<span id="cb180-2"><a href="linear-regression.html#cb180-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">Predict</span>(final_ols),</span>
-<span id="cb180-3"><a href="linear-regression.html#cb180-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">addlayer =</span> <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">22</span>), <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
-<span id="cb180-4"><a href="linear-regression.html#cb180-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">22</span>))</span>
-<span id="cb180-5"><a href="linear-regression.html#cb180-5" aria-hidden="true" tabindex="-1"></a>       )</span></code></pre></div>
+<div class="sourceCode" id="cb182"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb182-1"><a href="linear-regression.html#cb182-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Effects</span></span>
+<span id="cb182-2"><a href="linear-regression.html#cb182-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">Predict</span>(final_ols),</span>
+<span id="cb182-3"><a href="linear-regression.html#cb182-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">addlayer =</span> <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">22</span>), <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
+<span id="cb182-4"><a href="linear-regression.html#cb182-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">22</span>))</span>
+<span id="cb182-5"><a href="linear-regression.html#cb182-5" aria-hidden="true" tabindex="-1"></a>       )</span></code></pre></div>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
-<div class="sourceCode" id="cb181"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb181-1"><a href="linear-regression.html#cb181-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Vary solarcv (North = 23; Flat = 33; South = 55)</span></span>
-<span id="cb181-2"><a href="linear-regression.html#cb181-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">Predict</span>(final_ols, <span class="at">elev =</span> <span class="cn">NA</span>, <span class="at">solarcv =</span> <span class="fu">c</span>(<span class="dv">23</span>, <span class="dv">33</span>, <span class="dv">51</span>))) <span class="sc">+</span></span>
-<span id="cb181-3"><a href="linear-regression.html#cb181-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">22</span>), <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
-<span id="cb181-4"><a href="linear-regression.html#cb181-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">22</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb183"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb183-1"><a href="linear-regression.html#cb183-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Vary solarcv (North = 23; Flat = 33; South = 55)</span></span>
+<span id="cb183-2"><a href="linear-regression.html#cb183-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">Predict</span>(final_ols, <span class="at">elev =</span> <span class="cn">NA</span>, <span class="at">solarcv =</span> <span class="fu">c</span>(<span class="dv">23</span>, <span class="dv">33</span>, <span class="dv">51</span>))) <span class="sc">+</span></span>
+<span id="cb183-3"><a href="linear-regression.html#cb183-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">22</span>), <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
+<span id="cb183-4"><a href="linear-regression.html#cb183-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">15</span>, <span class="dv">22</span>))</span></code></pre></div>
 <p><img src="004-linear-models_files/figure-html/unnamed-chunk-18-2.png" width="672" /></p>
 </div>
 </div>
 <div id="generate-spatial-predictions" class="section level2 hasAnchor" number="4.7">
 <h2><span class="header-section-number">4.7</span> Generate spatial predictions<a href="linear-regression.html#generate-spatial-predictions" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div class="sourceCode" id="cb182"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb182-1"><a href="linear-regression.html#cb182-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict mast model</span></span>
-<span id="cb182-2"><a href="linear-regression.html#cb182-2" aria-hidden="true" tabindex="-1"></a>predfun <span class="ot">&lt;-</span> <span class="cf">function</span>(model, data) {</span>
-<span id="cb182-3"><a href="linear-regression.html#cb182-3" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, data, <span class="at">se.fit=</span><span class="cn">TRUE</span>)</span>
-<span id="cb182-4"><a href="linear-regression.html#cb182-4" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb182-5"><a href="linear-regression.html#cb182-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb182-6"><a href="linear-regression.html#cb182-6" aria-hidden="true" tabindex="-1"></a>mast_r <span class="ot">&lt;-</span> <span class="fu">predict</span>(geodata_r, final_ols, <span class="at">fun =</span> predfun, <span class="at">index =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">progress =</span> <span class="st">&#39;text&#39;</span>)</span>
-<span id="cb182-7"><a href="linear-regression.html#cb182-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb182-8"><a href="linear-regression.html#cb182-8" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(mast_r) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;MAST&quot;</span>, <span class="st">&quot;SE&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb184"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb184-1"><a href="linear-regression.html#cb184-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict mast model</span></span>
+<span id="cb184-2"><a href="linear-regression.html#cb184-2" aria-hidden="true" tabindex="-1"></a>predfun <span class="ot">&lt;-</span> <span class="cf">function</span>(model, data) {</span>
+<span id="cb184-3"><a href="linear-regression.html#cb184-3" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, data, <span class="at">se.fit=</span><span class="cn">TRUE</span>)</span>
+<span id="cb184-4"><a href="linear-regression.html#cb184-4" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb184-5"><a href="linear-regression.html#cb184-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb184-6"><a href="linear-regression.html#cb184-6" aria-hidden="true" tabindex="-1"></a>mast_r <span class="ot">&lt;-</span> <span class="fu">predict</span>(geodata_r, final_ols, <span class="at">fun =</span> predfun, <span class="at">index =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">progress =</span> <span class="st">&#39;text&#39;</span>)</span>
+<span id="cb184-7"><a href="linear-regression.html#cb184-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb184-8"><a href="linear-regression.html#cb184-8" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(mast_r) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;MAST&quot;</span>, <span class="st">&quot;SE&quot;</span>)</span></code></pre></div>
 </div>
 <div id="create-map" class="section level2 hasAnchor" number="4.8">
 <h2><span class="header-section-number">4.8</span> Create Map<a href="linear-regression.html#create-map" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div class="sourceCode" id="cb183"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb183-1"><a href="linear-regression.html#cb183-1" aria-hidden="true" tabindex="-1"></a><span class="co"># mast</span></span>
-<span id="cb183-2"><a href="linear-regression.html#cb183-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mast_r, <span class="at">col =</span> viridis<span class="sc">::</span><span class="fu">viridis</span>(<span class="dv">10</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb185"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb185-1"><a href="linear-regression.html#cb185-1" aria-hidden="true" tabindex="-1"></a><span class="co"># mast</span></span>
+<span id="cb185-2"><a href="linear-regression.html#cb185-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mast_r, <span class="at">col =</span> viridis<span class="sc">::</span><span class="fu">viridis</span>(<span class="dv">10</span>))</span></code></pre></div>
 </div>
 <div id="exercise" class="section level2 hasAnchor" number="4.9">
 <h2><span class="header-section-number">4.9</span> Exercise<a href="linear-regression.html#exercise" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ol style="list-style-type: decimal">
 <li>Load the CA790 MAST dataset.</li>
 </ol>
-<div class="sourceCode" id="cb184"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb184-1"><a href="linear-regression.html#cb184-1" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/yosemite-example/henry_CA790_data.csv&quot;</span></span>
-<span id="cb184-2"><a href="linear-regression.html#cb184-2" aria-hidden="true" tabindex="-1"></a>mast2 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(url)</span></code></pre></div>
+<div class="sourceCode" id="cb186"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb186-1"><a href="linear-regression.html#cb186-1" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/yosemite-example/henry_CA790_data.csv&quot;</span></span>
+<span id="cb186-2"><a href="linear-regression.html#cb186-2" aria-hidden="true" tabindex="-1"></a>mast2 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(url)</span></code></pre></div>
 <ol start="2" style="list-style-type: decimal">
 <li><p>Fit a linear model.</p></li>
 <li><p>Examine the residuals and check for multi-collinearity.</p>

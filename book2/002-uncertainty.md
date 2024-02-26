@@ -11,7 +11,7 @@ editor_options:
 
 ## Introduction
 
-Validating and assessing the quality of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
+Validating and assessing the uncertainty of a model is just as, if not more important, than generating the model itself. Validation quantifies the model's ability to explain variance in the data while uncertainty quantifies the confidence of model prediction. Uncertainty and validation assessments enable the end user to better understand model error, the nature and distribution of the input data, and the overall accuracy and spatial applicability of the model. Within a soil model, there are several sources of error:
 
 -   Measurement errors
 -   Interpretation errors
@@ -43,23 +43,64 @@ Errors are simply the difference between reality and our representation of reali
 
 Below is a simulated example demonstrating the affect of sample size and standard deviation on quantile estimates.
 
+<!-- I wonder if there is a more clear representation of what is going on here. For example  -->
+
+```r
+library(dplyr)
+library(ggplot2)
+
+# create 50 random pH samples of 10, 30, 60, and 100
+y   <- c(10, 30, 60, 100)
+lab <- paste0("n = ", y)
+
+f <- function(x, n, sd) {
+  idx <- rnorm(n, mean = 7, sd = sd)
+  tmp <- data.frame(iteration = factor(x, levels = 1:30), n = factor(n, levels = y, labels = lab), sd = paste0("sd = ", sd), pH = idx)
+  return(tmp)
+}
+
+# standard deviation of 1
+test <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 1, SIMPLIFY = FALSE)
+test <- do.call("rbind", test)
+
+# standard deviation of 1
+test2 <- mapply(FUN = f, rep(1:30, times = 4), rep(y, each = 30), sd = 2, SIMPLIFY = FALSE)
+test2 <- do.call("rbind", test2)
+
+test <- rbind(test, test2)
+
+
+# examine summary statistics
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(med = median(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(med, list(min = min, mean = mean, max = max)))
+```
 
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.34     6.92    7.91
-## 2 sd = 1 n = 30     6.64     7.03    7.46
-## 3 sd = 1 n = 60     6.65     7.00    7.42
-## 4 sd = 1 n = 100    6.74     7.02    7.17
-## 5 sd = 2 n = 10     4.31     6.80    8.49
-## 6 sd = 2 n = 30     6.20     7.18    8.32
-## 7 sd = 2 n = 60     6.44     7.05    7.78
-## 8 sd = 2 n = 100    6.51     6.95    7.43
+## 1 sd = 1 n = 10     6.40     6.99    7.71
+## 2 sd = 1 n = 30     6.64     7.02    7.52
+## 3 sd = 1 n = 60     6.59     7.01    7.39
+## 4 sd = 1 n = 100    6.81     7.02    7.24
+## 5 sd = 2 n = 10     4.73     6.91    9.02
+## 6 sd = 2 n = 30     6.21     7.07    8.69
+## 7 sd = 2 n = 60     6.54     6.97    7.41
+## 8 sd = 2 n = 100    6.40     6.99    7.51
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="576" />
+```r
+# examine box plots
+ggplot(test, aes(x = iteration, y = pH)) +
+  geom_boxplot() +
+  facet_wrap(~ n + sd, ncol = 2, )
+```
+
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="768" />
 
 The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be "uncertain" of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different.
 
@@ -83,43 +124,61 @@ SS / (length(test$pH) - 1)
 ```
 
 ```
-## [1] 2.467228
+## [1] 2.562981
 ```
 
-Note below how our estimate of the standard deviation can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
+Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
 
+
+```r
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(var = var(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(var, list(min = min, mean = mean, max = max)))
+```
 
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
-##   sd     n       sd2_min sd2_mean sd2_max
+##   sd     n       var_min var_mean var_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.462    0.993    1.46
-## 2 sd = 1 n = 30    0.769    0.977    1.31
-## 3 sd = 1 n = 60    0.812    1.00     1.16
-## 4 sd = 1 n = 100   0.893    1.01     1.09
-## 5 sd = 2 n = 10    0.974    1.90     3.01
-## 6 sd = 2 n = 30    1.42     2.00     2.40
-## 7 sd = 2 n = 60    1.45     1.94     2.34
-## 8 sd = 2 n = 100   1.61     1.97     2.33
+## 1 sd = 1 n = 10    0.272     1.10    2.12
+## 2 sd = 1 n = 30    0.571     1.00    1.90
+## 3 sd = 1 n = 60    0.678     1.09    1.54
+## 4 sd = 1 n = 100   0.800     1.04    1.28
+## 5 sd = 2 n = 10    1.25      3.86    8.82
+## 6 sd = 2 n = 30    1.93      4.07    7.38
+## 7 sd = 2 n = 60    2.29      3.94    5.91
+## 8 sd = 2 n = 100   3.29      4.15    5.16
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
 
+
+```r
+SE <- function(x) sd(x, na.rm = TRUE) / sqrt(length(!is.na(x)))
+
+test %>%
+  group_by(iteration, n, sd) %>%
+  summarize(SE = SE(pH)) %>%
+  group_by(sd, n) %>%
+  summarize(across(SE, list(min = min, mean = mean, max = max)))
+```
 
 ```
 ## # A tibble: 8 × 5
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.146    0.314  0.461
-## 2 sd = 1 n = 30  0.140    0.178  0.239
-## 3 sd = 1 n = 60  0.105    0.129  0.150
-## 4 sd = 1 n = 100 0.0893   0.101  0.109
-## 5 sd = 2 n = 10  0.308    0.602  0.951
-## 6 sd = 2 n = 30  0.259    0.365  0.439
-## 7 sd = 2 n = 60  0.188    0.251  0.302
-## 8 sd = 2 n = 100 0.161    0.197  0.233
+## 1 sd = 1 n = 10  0.165    0.324  0.461
+## 2 sd = 1 n = 30  0.138    0.181  0.252
+## 3 sd = 1 n = 60  0.106    0.134  0.160
+## 4 sd = 1 n = 100 0.0895   0.102  0.113
+## 5 sd = 2 n = 10  0.353    0.609  0.939
+## 6 sd = 2 n = 30  0.254    0.364  0.496
+## 7 sd = 2 n = 60  0.196    0.255  0.314
+## 8 sd = 2 n = 100 0.181    0.204  0.227
 ```
 
 ## Theory of Uncertainty
@@ -185,7 +244,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.9041693 1.0841079 1.1818292 1.2763245 1.4321164
+## 0.8275478 1.0378832 1.1479694 1.2571935 1.5796813
 ```
 
 ```r
@@ -209,7 +268,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.881817 6.253894
+## 5.830171 6.228177
 ```
 
 ```r
@@ -268,7 +327,8 @@ Below is a summary of the various measures used to quantify accuracy and precisi
   - Pro: Values range between 0 and 1. Values \< 0 can occur if the prediction is worse than simply predicting the average value. 
   - Con: Over-optimistic when extreme values or skewed distributions are present. Often confused with the squared Pearson's correlation coefficient (r2).
   - References: Kutner et al. 2004; [Zumel and Mount 2020](http://mng.bz/ndYf) 
-  
+
+<!-- The RMSE and bias figure is hard to understand without further explanation. Can we use colors in addition to line type? -->
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-10-1.png" width="672" /><img src="002-uncertainty_files/figure-html/unnamed-chunk-10-2.png" width="672" />
 
 
@@ -862,12 +922,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4496   Min.   :0.8447  
-##  1st Qu.:0.4672   1st Qu.:0.8483  
-##  Median :0.4697   Median :0.8538  
-##  Mean   :0.4690   Mean   :0.8526  
-##  3rd Qu.:0.4739   3rd Qu.:0.8561  
-##  Max.   :0.4774   Max.   :0.8599
+##  Min.   :0.4526   Min.   :0.8455  
+##  1st Qu.:0.4669   1st Qu.:0.8483  
+##  Median :0.4702   Median :0.8517  
+##  Mean   :0.4690   Mean   :0.8527  
+##  3rd Qu.:0.4763   3rd Qu.:0.8565  
+##  Max.   :0.4788   Max.   :0.8616
 ```
 
 #### Subsample (Resampling or sample simulation)
