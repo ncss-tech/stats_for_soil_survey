@@ -10,6 +10,37 @@
 
 ## TODO (DEB): consider placing this in sharpshootR
 
+# from 2023 NCSS poster on NCSP
+makeCP <- function(.dist, new.order = NULL, .cp = hcl.colors(n = 25, palette = 'Zissou 1'), mar = c(0.1, 0, 0.5, 0.8), order = 'original', ...) {
+  
+  # convert reduced distance matrix to matrix
+  .m <- as.matrix(.dist)
+  
+  # optionally re-order
+  if(!is.null(new.order)) {
+    .m <- .m[new.order, new.order]
+  }
+  
+  .res <- corrplot(
+    .m, 
+    col = .cp, 
+    is.corr = FALSE, 
+    diag = FALSE,
+    col.lim = c(0, 1), 
+    method = "color",
+    type = "upper", 
+    tl.pos = "td",
+    tl.cex = 0.8,
+    tl.col = 'black',
+    # cl.pos = "t",
+    order = order,
+    ...
+  ) 
+  
+  invisible(.res)
+}
+
+
 # compare pair-wise distances between 3 individuals
 distPlot <- function(ex, vars, individuals, id, scale.data=FALSE, show.distances=TRUE, ...) {
   par(mar=c(5,5,1,1))
