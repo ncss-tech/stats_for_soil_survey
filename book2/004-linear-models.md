@@ -142,8 +142,7 @@ ms_df %>%
 ```
 
 ```
-## Warning: Removed 649 rows containing missing values or values outside the scale range
-## (`geom_line()`).
+## Warning: Removed 649 rows containing missing values (`geom_line()`).
 ```
 
 <img src="004-linear-models_files/figure-html/unnamed-chunk-3-1.png" width="672" />
@@ -244,7 +243,15 @@ library(raster)
 ```
 
 ```
+## Warning: package 'raster' was built under R version 4.3.2
+```
+
+```
 ## Loading required package: sp
+```
+
+```
+## Warning: package 'sp' was built under R version 4.3.2
 ```
 
 ```
@@ -390,8 +397,7 @@ ggplot(geodata_l, aes(x = value, fill = source)) +
 ```
 
 ```
-## Warning: Removed 1266 rows containing non-finite outside the scale range
-## (`stat_density()`).
+## Warning: Removed 1266 rows containing non-finite values (`stat_density()`).
 ```
 
 <img src="004-linear-models_files/figure-html/unnamed-chunk-9-1.png" width="672" />

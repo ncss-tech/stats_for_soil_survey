@@ -3,6 +3,14 @@ library(soilDB)
 library(lattice)
 library(tactile)
 
+# more at: https://ncss-tech.github.io/AQP/soilDB/soil-series-query-functions.html
+
+soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'congaree')
+x <- fetchOSD(soils, extended = TRUE)
+
+knitr::kable(x$hillpos)
+
+
 ## Excerpt from Soil Survey Handbook
 #
 # Consociations
@@ -16,6 +24,19 @@ library(tactile)
 # Undifferentiated groups
 # 
 # Undifferentiated groups consist of two or more components that are not consistently associated geographically and, therefore, do not always occur together in the same map delineation.
+
+
+# 4, equal prob
+(x <- rep(1, times = 4) / 4)
+shannonEntropy(x)
+
+# 5, equal prob
+(x <- rep(1, times = 5) / 5)
+shannonEntropy(x)
+
+# normalized H
+x <- rep(1, times = 5) / 5
+shannonEntropy(x, b = length(x))
 
 
 # complex or association
@@ -34,17 +55,6 @@ shannonEntropy(x)
 shannonEntropy(x, b = length(x))
 
 
-# 4, equal prob
-x <- rep(1, times = 4) / 4
-shannonEntropy(x)
-
-# 5, equal prob
-x <- rep(1, times = 5) / 5
-shannonEntropy(x)
-
-# normalized H
-x <- rep(1, times = 5) / 5
-shannonEntropy(x, b = length(x))
 
 
 ## get component data from SDA

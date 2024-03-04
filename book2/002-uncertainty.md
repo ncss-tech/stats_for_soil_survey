@@ -50,14 +50,14 @@ Below is a simulated example demonstrating the affect of sample size and standar
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.12     6.92    7.74
-## 2 sd = 1 n = 30     6.67     7.02    7.41
-## 3 sd = 1 n = 60     6.67     6.96    7.37
-## 4 sd = 1 n = 100    6.75     7.00    7.17
-## 5 sd = 2 n = 10     4.66     6.95    8.07
-## 6 sd = 2 n = 30     5.63     6.79    7.67
-## 7 sd = 2 n = 60     6.44     7.03    7.67
-## 8 sd = 2 n = 100    6.54     7.02    7.63
+## 1 sd = 1 n = 10     5.56     7.00    8.04
+## 2 sd = 1 n = 30     6.58     7.02    7.50
+## 3 sd = 1 n = 60     6.60     6.97    7.40
+## 4 sd = 1 n = 100    6.75     6.99    7.21
+## 5 sd = 2 n = 10     5.90     7.13    8.60
+## 6 sd = 2 n = 30     5.97     7.03    7.99
+## 7 sd = 2 n = 60     5.96     6.98    7.61
+## 8 sd = 2 n = 100    6.71     7.07    7.59
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="768" />
@@ -84,7 +84,7 @@ sqrt(SS / (length(test$pH) - 1))
 ```
 
 ```
-## [1] 1.569779
+## [1] 1.581714
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -95,14 +95,14 @@ Note below how our estimate of the variance can vary widely, particularly for si
 ## # Groups:   sd [2]
 ##   sd     n       sd2_min sd2_mean sd2_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.604    1.00     1.59
-## 2 sd = 1 n = 30    0.736    0.970    1.34
-## 3 sd = 1 n = 60    0.763    1.00     1.17
-## 4 sd = 1 n = 100   0.876    0.994    1.09
-## 5 sd = 2 n = 10    1.19     1.94     2.98
-## 6 sd = 2 n = 30    1.61     2.06     2.58
-## 7 sd = 2 n = 60    1.52     1.93     2.21
-## 8 sd = 2 n = 100   1.75     1.98     2.38
+## 1 sd = 1 n = 10    0.526    1.04     1.64
+## 2 sd = 1 n = 30    0.669    0.992    1.27
+## 3 sd = 1 n = 60    0.856    1.01     1.17
+## 4 sd = 1 n = 100   0.857    0.994    1.15
+## 5 sd = 2 n = 10    0.938    1.85     3.31
+## 6 sd = 2 n = 30    1.50     1.95     2.41
+## 7 sd = 2 n = 60    1.41     1.98     2.33
+## 8 sd = 2 n = 100   1.76     2.01     2.34
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -113,14 +113,14 @@ Now let's see Standard Error (standard deviation / square root of n) below. The 
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.191   0.317   0.502
-## 2 sd = 1 n = 30  0.134   0.177   0.244
-## 3 sd = 1 n = 60  0.0985  0.129   0.151
-## 4 sd = 1 n = 100 0.0876  0.0994  0.109
-## 5 sd = 2 n = 10  0.376   0.614   0.942
-## 6 sd = 2 n = 30  0.294   0.376   0.471
-## 7 sd = 2 n = 60  0.197   0.249   0.285
-## 8 sd = 2 n = 100 0.175   0.198   0.238
+## 1 sd = 1 n = 10  0.166   0.329   0.520
+## 2 sd = 1 n = 30  0.122   0.181   0.231
+## 3 sd = 1 n = 60  0.111   0.131   0.151
+## 4 sd = 1 n = 100 0.0857  0.0994  0.115
+## 5 sd = 2 n = 10  0.297   0.584   1.05 
+## 6 sd = 2 n = 30  0.273   0.357   0.439
+## 7 sd = 2 n = 60  0.182   0.255   0.301
+## 8 sd = 2 n = 100 0.176   0.201   0.234
 ```
 
 ## Theory of Uncertainty
@@ -186,7 +186,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.8815688 1.0457885 1.1422593 1.2261761 1.5571980
+## 0.8651723 1.0760254 1.1567047 1.2473041 1.5686374
 ```
 
 ```r
@@ -210,7 +210,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.792807 6.178015
+## 5.817445 6.227386
 ```
 
 ```r
@@ -864,12 +864,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4551   Min.   :0.8453  
-##  1st Qu.:0.4630   1st Qu.:0.8485  
-##  Median :0.4662   Median :0.8531  
-##  Mean   :0.4690   Mean   :0.8527  
-##  3rd Qu.:0.4753   3rd Qu.:0.8556  
-##  Max.   :0.4847   Max.   :0.8620
+##  Min.   :0.4530   Min.   :0.8407  
+##  1st Qu.:0.4643   1st Qu.:0.8487  
+##  Median :0.4702   Median :0.8510  
+##  Mean   :0.4690   Mean   :0.8526  
+##  3rd Qu.:0.4753   3rd Qu.:0.8552  
+##  Max.   :0.4795   Max.   :0.8667
 ```
 
 #### Subsample (Resampling or sample simulation)
