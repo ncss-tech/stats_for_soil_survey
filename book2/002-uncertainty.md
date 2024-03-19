@@ -50,14 +50,14 @@ Below is a simulated example demonstrating the affect of sample size and standar
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.07     7.03    7.52
-## 2 sd = 1 n = 30     6.49     7.05    7.48
-## 3 sd = 1 n = 60     6.62     7.02    7.31
-## 4 sd = 1 n = 100    6.73     6.98    7.20
-## 5 sd = 2 n = 10     5.62     6.94    8.62
-## 6 sd = 2 n = 30     5.51     6.79    7.76
-## 7 sd = 2 n = 60     6.15     6.92    7.64
-## 8 sd = 2 n = 100    6.38     6.93    7.53
+## 1 sd = 1 n = 10     6.05     7.11    8.03
+## 2 sd = 1 n = 30     6.55     7.10    7.54
+## 3 sd = 1 n = 60     6.70     6.99    7.52
+## 4 sd = 1 n = 100    6.75     6.96    7.26
+## 5 sd = 2 n = 10     5.71     7.23    8.29
+## 6 sd = 2 n = 30     6.23     7.00    8.23
+## 7 sd = 2 n = 60     6.43     6.93    7.51
+## 8 sd = 2 n = 100    6.66     7.10    7.60
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="768" />
@@ -84,7 +84,7 @@ sqrt(SS / (length(test$pH) - 1))
 ```
 
 ```
-## [1] 1.575561
+## [1] 1.603604
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -95,14 +95,14 @@ Note below how our estimate of the variance can vary widely, particularly for si
 ## # Groups:   sd [2]
 ##   sd     n       sd2_min sd2_mean sd2_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.528    0.900    1.30
-## 2 sd = 1 n = 30    0.796    0.977    1.22
-## 3 sd = 1 n = 60    0.836    0.989    1.16
-## 4 sd = 1 n = 100   0.834    0.976    1.12
-## 5 sd = 2 n = 10    0.829    1.95     3.13
-## 6 sd = 2 n = 30    1.36     1.95     2.53
-## 7 sd = 2 n = 60    1.77     1.99     2.41
-## 8 sd = 2 n = 100   1.76     2.00     2.32
+## 1 sd = 1 n = 10    0.591    0.998    1.41
+## 2 sd = 1 n = 30    0.825    1.02     1.21
+## 3 sd = 1 n = 60    0.740    0.996    1.14
+## 4 sd = 1 n = 100   0.839    1.02     1.17
+## 5 sd = 2 n = 10    1.28     1.95     2.73
+## 6 sd = 2 n = 30    1.37     2.00     2.57
+## 7 sd = 2 n = 60    1.61     2.01     2.35
+## 8 sd = 2 n = 100   1.71     2.03     2.28
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -113,14 +113,14 @@ Now let's see Standard Error (standard deviation / square root of n) below. The 
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.167   0.285   0.411
-## 2 sd = 1 n = 30  0.145   0.178   0.223
-## 3 sd = 1 n = 60  0.108   0.128   0.149
-## 4 sd = 1 n = 100 0.0834  0.0976  0.112
-## 5 sd = 2 n = 10  0.262   0.615   0.990
-## 6 sd = 2 n = 30  0.248   0.356   0.462
-## 7 sd = 2 n = 60  0.228   0.257   0.311
-## 8 sd = 2 n = 100 0.176   0.200   0.232
+## 1 sd = 1 n = 10  0.187    0.315  0.446
+## 2 sd = 1 n = 30  0.151    0.186  0.221
+## 3 sd = 1 n = 60  0.0956   0.129  0.148
+## 4 sd = 1 n = 100 0.0839   0.102  0.117
+## 5 sd = 2 n = 10  0.405    0.615  0.864
+## 6 sd = 2 n = 30  0.250    0.366  0.470
+## 7 sd = 2 n = 60  0.208    0.260  0.303
+## 8 sd = 2 n = 100 0.171    0.203  0.228
 ```
 
 ## Theory of Uncertainty
@@ -189,7 +189,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.9028612 1.0589688 1.1566833 1.2306519 1.3793485
+## 0.7634962 1.0547631 1.1665651 1.2366764 1.4989880
 ```
 
 ```r
@@ -213,7 +213,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.798666 6.237090
+## 5.857434 6.166367
 ```
 
 ```r
@@ -781,7 +781,7 @@ sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 
 #### Stratified-random/areal-adjustment
 
-In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their known area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @stehman_estimating_2014; @campbell_introduction_2023; @congalton_basic_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. This even equal sampling is a good idea in order to adequately sample small but important soil classes (e.g. hydric soils), which will result in greater precision of resulting classes. Surprisingly few R functions to include adjustmentss for these unequal weights, with the exception of the [`yardstick`](https://yardstick.tidymodels.org/), [`mapac'](https://pages.cms.hu-berlin.de/pflugmad/mapac/), and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R packages. The [`survey`](http://r-survey.r-forge.r-project.org/survey/) R package also has numerous function to analyze design-based survey samples with varying sampling weights. Only the `mapac` R package provides estimates of the post stratified standard errors for the various confusion matrix derivatives. 
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their known area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @stehman_estimating_2014; @campbell_introduction_2023; @congalton_basic_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. This even equal sampling is a good idea in order to adequately sample small but important soil classes (e.g. hydric soils), which will result in greater precision of resulting classes. Surprisingly few R functions to include adjustmentss for these unequal weights, with the exception of the [`yardstick`](https://yardstick.tidymodels.org/), [`mapac`](https://pages.cms.hu-berlin.de/pflugmad/mapac/), and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R packages. The [`survey`](http://r-survey.r-forge.r-project.org/survey/) R package also has numerous function to analyze design-based survey samples with varying sampling weights. Only the `mapac` R package provides estimates of the post stratified standard errors for the various confusion matrix derivatives. 
 
 In the simplest case where the an existing soil class map is validated by an independent test dataset, it is only necessary to weight the confusion matrix using the prior probabilities of the original map.
 
@@ -1060,12 +1060,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4503   Min.   :0.8467  
-##  1st Qu.:0.4671   1st Qu.:0.8486  
-##  Median :0.4695   Median :0.8519  
-##  Mean   :0.4689   Mean   :0.8526  
-##  3rd Qu.:0.4733   3rd Qu.:0.8551  
-##  Max.   :0.4783   Max.   :0.8643
+##  Min.   :0.4602   Min.   :0.8440  
+##  1st Qu.:0.4642   1st Qu.:0.8495  
+##  Median :0.4687   Median :0.8525  
+##  Mean   :0.4690   Mean   :0.8526  
+##  3rd Qu.:0.4736   3rd Qu.:0.8566  
+##  Max.   :0.4806   Max.   :0.8591
 ```
 
 #### Subsample (Resampling or sample simulation)
