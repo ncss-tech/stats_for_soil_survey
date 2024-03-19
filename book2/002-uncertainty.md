@@ -50,14 +50,14 @@ Below is a simulated example demonstrating the affect of sample size and standar
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     5.56     7.00    8.04
-## 2 sd = 1 n = 30     6.58     7.02    7.50
-## 3 sd = 1 n = 60     6.60     6.97    7.40
-## 4 sd = 1 n = 100    6.75     6.99    7.21
-## 5 sd = 2 n = 10     5.90     7.13    8.60
-## 6 sd = 2 n = 30     5.97     7.03    7.99
-## 7 sd = 2 n = 60     5.96     6.98    7.61
-## 8 sd = 2 n = 100    6.71     7.07    7.59
+## 1 sd = 1 n = 10     6.07     7.03    7.52
+## 2 sd = 1 n = 30     6.49     7.05    7.48
+## 3 sd = 1 n = 60     6.62     7.02    7.31
+## 4 sd = 1 n = 100    6.73     6.98    7.20
+## 5 sd = 2 n = 10     5.62     6.94    8.62
+## 6 sd = 2 n = 30     5.51     6.79    7.76
+## 7 sd = 2 n = 60     6.15     6.92    7.64
+## 8 sd = 2 n = 100    6.38     6.93    7.53
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="768" />
@@ -84,7 +84,7 @@ sqrt(SS / (length(test$pH) - 1))
 ```
 
 ```
-## [1] 1.581714
+## [1] 1.575561
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -95,14 +95,14 @@ Note below how our estimate of the variance can vary widely, particularly for si
 ## # Groups:   sd [2]
 ##   sd     n       sd2_min sd2_mean sd2_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.526    1.04     1.64
-## 2 sd = 1 n = 30    0.669    0.992    1.27
-## 3 sd = 1 n = 60    0.856    1.01     1.17
-## 4 sd = 1 n = 100   0.857    0.994    1.15
-## 5 sd = 2 n = 10    0.938    1.85     3.31
-## 6 sd = 2 n = 30    1.50     1.95     2.41
-## 7 sd = 2 n = 60    1.41     1.98     2.33
-## 8 sd = 2 n = 100   1.76     2.01     2.34
+## 1 sd = 1 n = 10    0.528    0.900    1.30
+## 2 sd = 1 n = 30    0.796    0.977    1.22
+## 3 sd = 1 n = 60    0.836    0.989    1.16
+## 4 sd = 1 n = 100   0.834    0.976    1.12
+## 5 sd = 2 n = 10    0.829    1.95     3.13
+## 6 sd = 2 n = 30    1.36     1.95     2.53
+## 7 sd = 2 n = 60    1.77     1.99     2.41
+## 8 sd = 2 n = 100   1.76     2.00     2.32
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -113,14 +113,14 @@ Now let's see Standard Error (standard deviation / square root of n) below. The 
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.166   0.329   0.520
-## 2 sd = 1 n = 30  0.122   0.181   0.231
-## 3 sd = 1 n = 60  0.111   0.131   0.151
-## 4 sd = 1 n = 100 0.0857  0.0994  0.115
-## 5 sd = 2 n = 10  0.297   0.584   1.05 
-## 6 sd = 2 n = 30  0.273   0.357   0.439
-## 7 sd = 2 n = 60  0.182   0.255   0.301
-## 8 sd = 2 n = 100 0.176   0.201   0.234
+## 1 sd = 1 n = 10  0.167   0.285   0.411
+## 2 sd = 1 n = 30  0.145   0.178   0.223
+## 3 sd = 1 n = 60  0.108   0.128   0.149
+## 4 sd = 1 n = 100 0.0834  0.0976  0.112
+## 5 sd = 2 n = 10  0.262   0.615   0.990
+## 6 sd = 2 n = 30  0.248   0.356   0.462
+## 7 sd = 2 n = 60  0.228   0.257   0.311
+## 8 sd = 2 n = 100 0.176   0.200   0.232
 ```
 
 ## Theory of Uncertainty
@@ -147,6 +147,9 @@ While explanatory and predictive modeling can use the same types of models, data
 When calculating many basic statistical parameters, the assumption is that the data is parametric. That implies that the data is continuous (ratio or interval) and normally distributed. This is rarely the case with soil data. Soil properties are often not normally distributed (you cannot have less that 0% organic matter, for instance) and often we are trying to predict soil taxa or other nominal classes.
 
 Re-sampling is a general term that defines any procedure to repeatedly draw samples form a given data-set. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Re-sampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation [@good2013].
+
+
+### Examples - Confidence Intervals
 
 
 ```r
@@ -186,7 +189,7 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.8651723 1.0760254 1.1567047 1.2473041 1.5686374
+## 0.9028612 1.0589688 1.1566833 1.2306519 1.3793485
 ```
 
 ```r
@@ -210,7 +213,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.817445 6.227386
+## 5.798666 6.237090
 ```
 
 ```r
@@ -289,9 +292,10 @@ Below is a summary of the various measures used to quantify accuracy and precisi
   Pro: Typically ranges between 0 and 1; values larger than 1 indicate very high model uncertainty. No distribution assumptions.
   References: Nauman and Duniway (2019)
 
-
-
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+
+
+### Examples
 
 
 ```r
@@ -334,21 +338,14 @@ MBESS::ci.R2(
   N  = sum(complete.cases(sas[vars])), 
   K  = 1, 
   conf.level = 0.975
-  )
+  ) |> 
+  unlist() |>
+  _[c(1, 3)]
 ```
 
 ```
-## $Lower.Conf.Limit.R2
-## [1] 0.8462365
-## 
-## $Prob.Less.Lower
-## [1] 0.0125
-## 
-## $Upper.Conf.Limit.R2
-## [1] 0.8536713
-## 
-## $Prob.Greater.Upper
-## [1] 0.0125
+## Lower.Conf.Limit.R2 Upper.Conf.Limit.R2 
+##           0.8462365           0.8536713
 ```
 
 ```r
@@ -356,7 +353,14 @@ MBESS::ci.R2(
 ## Standard Error
 n  <- sum(complete.cases(sas[vars]))
 SE <- qnorm(0.975) * sqrt(var((sas$pH_0.30_obs - sas$pH_0.30_pred)^2, na.rm = TRUE) / n)
+SE
+```
 
+```
+## [1] 0.00541306
+```
+
+```r
 ## Confidence Interval
 0.47 + c(-1 * SE, SE)
 ```
@@ -456,7 +460,18 @@ Beware the $D^2$, Tjur's D, and AUC (or c-statistic) only apply to binary classe
 
 #### Class-based metrics
 
-These metrics are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @james2021; @kuhn2013] (`caret::confusionMatrix()`)
+These metrics are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @kuhn2013] (`caret::confusionMatrix()`)
+
+Beware, measures like overall accuracy and row-wise metrics of the confusion matrix (e.g. user accuracy) are dependent on the prevalence (i.e frequency) of observation in the surveyed area. For example, if dissimilar soils, such as hydric soils, are an inclusions (e.g. 5%) within a survey area, even a poor model could have a overall accuracy of 95%, because small classes by their vary nature don't contribute significantly to the overall model error. Row-wise metrics by comparison are similarly are impacted by the prevalence or areal extent of soils. Again, more prevalence classes by their vary nature are more likely to be found. The consequence of this is their values are relative to the survey area from which they're derived [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @eisenberg_accuracy_1995; @simon_sensitivity_1990]. If the model were extrapolated to an new area or the existing area were subdivided, and the underlying prevalence of classes changed, the row-wise metrics would also be affected. The same is not true for column-wise metrics, because they are conditional on the class being true. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations.
+
+
+| Confusion Matrix    | Observed             |                       | Metric              |
+|---------------------|----------------------|-----------------------|---------------------|
+| **Predicted**       | No                   | Yes                   |                     |
+| No                  | True Negative (TN)   | False Negative (FN)   | NPV/ UA             |
+| Yes                 | False Positive (FP)  | True Positive (TP)    | PPV/ Precision / UA |
+| ------------------- | -------------------- | --------------------- | ------------------- |
+| Metric              | Specificity / PA     | Sensitivity / PA      | Overall             |
 
 
 **Accuracy:**
@@ -472,38 +487,14 @@ These metrics are derivatives of the confusion matrix [@congalton2019; @fielding
   - Con: Interpretation of Kappa values between 0 and 1 is largely arbitrary. A value of < 0 indicates no agreement, and a value of 1 indicates perfect agreement. Recommended to use Kappa along with other measures of accuracy. Numerous authors now question the utility and assumptions of Kappa.
   References: Congalton and Mead (1983); Foody (2020)
 - **Tau Index:**
-  - Description: An index of agreement that accounts for agreement by chance—effectively a replacement for Kappa.
+  - Description: An index of agreement that accounts for agreement by chance—effectively a replacement for Kappa (`aqp::tauW()`).
   - Pro: The index is more informative when appropriate class proportions are supplied. Index values can be referenced to concepts such as “better” or “worse” than random allocation. 
   - Con: Appropriate prior class proportions are method dependent. Interpretation requires some training.
   - References: Ma & Remond (1995)
 - **Weighted Tau Index:**
-  - Description: Alternative version of the tau index that accommodates class similarity. 
-  - Pro: The index is more informative when appropriate class proportions are supplied. Class similarity down-weights mistakes between similar classes.
+  - Description: Alternative version of the tau index that accommodates class similarity.   - Pro: The index is more informative when appropriate class proportions are supplied. Class similarity down-weights mistakes between similar classes.
   - Con: Appropriate prior class proportions are method dependent. There is no universal method for estimating class similarity weights. Interpretation requires some training.
   - References: Rossiter (2017)
-
-
-**Precision/Uncertainty:**
-
-- **Standard Error (SE):**
-  - Description: Error in the model parameters (e.g., coefficients or overall prediction).
-- **Confidence Interval (CI):**
-  - Description: Conversion of the SE to an interval according to a given probability (e.g., 95 percent); its range is narrower than the prediction interval.
-  - Con: Assumes a normal distribution, unless transformed or bootstrapped.
-  - References: 
-  
-  
-Beware, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations.
-
-
-| Confusion Matrix    | Observed             |                       | Metric              |
-|---------------------|----------------------|-----------------------|---------------------|
-| **Predicted**       | No                   | Yes                   | UA                  |
-| No                  | True Negative (TN)   | False Negative (FN)   | NPV/ UA             |
-| Yes                 | False Positive (FP)  | True Positive (TP)    | PPV/ Precision / UA |
-| ------------------- | -------------------- | --------------------- | ------------------- |
-| Metric              | Specificity / PA     | Sensitivity / PA      | Overall             |
-
 - **Prevalence (P):** % of class occurrence in the population, usually this is estimated from the sample
 -   Overall Accuracy: % of observations that were correctly classified, for all classes
 -   **Sensitivity (SN) (aka Recall or True Positive Rate):**
@@ -516,7 +507,7 @@ Beware, measures like Overall Accuracy, Precision and User Accuracy are dependen
 - **Precision:**
     -   TP / (TP + FP)
     -   \% of TRUE observations that were classified as a class, that actually were that class
-- **Positive Preditive Value (PPV):**
+- **Positive Predictive Value (PPV):**
     -   if prevalence = 50 then TP / (TP + FP)
     -   if prevalence != 50 then SN \* P / (SN \* P) + ((1 - SP) \* (1 - P))
     -   \% of TRUE observations that were classified as a class, that actually were that class
@@ -530,14 +521,25 @@ Beware, measures like Overall Accuracy, Precision and User Accuracy are dependen
 - **User's Accuracy (UA):**
     -   diagonal values / predicted values
     -   \% of FALSE observations that were classified as a class, that actually were that class
-- **Tau index:** 
-  - An index of accuracy that accounts for agreement by chance--- effectively a replacement for Cohen's Kappa (`aqp::tauW()`)
+
+
+**Precision/Uncertainty:**
+
+- **Standard Error (SE):**
+  - Description: Error in the model parameters (e.g., coefficients or overall prediction).
+- **Confidence Interval (CI):**
+  - Description: Conversion of the SE to an interval according to a given probability (e.g., 95 percent); its range is narrower than the prediction interval.
+  - Con: Assumes a normal distribution, unless transformed or bootstrapped.
+  - References: 
+
+
+### Examples
 
 
 ```r
 url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_bs.csv"
 bs <- read.csv(url)
-bs <- subset(bs, complete.cases(BS1_obs, BS2_obs))
+bs <- subset(bs, complete.cases(BS2_obs, BS2_pred))
 
 
 # Probability metrics ----
@@ -552,29 +554,22 @@ aqp::brierScore(
 ```
 
 ```
-## [1] 0.04384271
+## [1] 0.04872617
 ```
 
 ```r
 ## D2 & Tjur D2----
-modEvA::RsqGLM(obs = bs$BS2_obs, pred = bs$BS2_pred, plot = FALSE)
+modEvA::RsqGLM(
+  obs = bs$BS2_obs, 
+  pred = bs$BS2_pred, 
+  plot = FALSE
+  ) |> 
+  unlist()
 ```
 
 ```
-## $CoxSnell
-## [1] 0.3957293
-## 
-## $Nagelkerke
-## [1] 0.7857143
-## 
-## $McFadden
-## [1] 0.7191203
-## 
-## $Tjur
-## [1] 0.4823267
-## 
-## $sqPearson
-## [1] 0.5992087
+##   CoxSnell Nagelkerke   McFadden       Tjur  sqPearson 
+##  0.4205557  0.7920635  0.7207848  0.4775784  0.6169488
 ```
 
 ```r
@@ -607,14 +602,14 @@ summary(
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  0.0000  0.2111  0.4327  0.4722  0.7418  1.0000
+##  0.0000  0.2462  0.4645  0.5033  0.7749  1.0000
 ```
 
 ```r
 # Class-based metrics -----
 
 ## Confusion matrix ----
-# beware conf_mat prefers factors with equal numbers of levels
+# beware caret::confusionMatrix() prefers factors with equal numbers of levels
 # also if your table only has 2 classes, you need to specify which is 'positive'
 cm1 <- table(pred = as.factor(bs$BS2_pred > 0.5), obs = as.factor(bs$BS2_obs))
 cm1
@@ -623,8 +618,8 @@ cm1
 ```
 ##        obs
 ## pred    FALSE  TRUE
-##   FALSE 28788   979
-##   TRUE    411  2696
+##   FALSE 28788  1173
+##   TRUE    411  3033
 ```
 
 ```r
@@ -639,26 +634,26 @@ cm2
 ## 
 ##        obs
 ## pred    FALSE  TRUE
-##   FALSE 28788   979
-##   TRUE    411  2696
+##   FALSE 28788  1173
+##   TRUE    411  3033
 ##                                           
-##                Accuracy : 0.9577          
-##                  95% CI : (0.9555, 0.9599)
-##     No Information Rate : 0.8882          
+##                Accuracy : 0.9526          
+##                  95% CI : (0.9502, 0.9548)
+##     No Information Rate : 0.8741          
 ##     P-Value [Acc > NIR] : < 2.2e-16       
 ##                                           
-##                   Kappa : 0.7717          
+##                   Kappa : 0.7665          
 ##                                           
 ##  Mcnemar's Test P-Value : < 2.2e-16       
 ##                                           
-##             Sensitivity : 0.73361         
+##             Sensitivity : 0.72111         
 ##             Specificity : 0.98592         
-##          Pos Pred Value : 0.86772         
-##          Neg Pred Value : 0.96711         
-##              Prevalence : 0.11179         
-##          Detection Rate : 0.08201         
-##    Detection Prevalence : 0.09451         
-##       Balanced Accuracy : 0.85976         
+##          Pos Pred Value : 0.88066         
+##          Neg Pred Value : 0.96085         
+##              Prevalence : 0.12591         
+##          Detection Rate : 0.09079         
+##    Detection Prevalence : 0.10310         
+##       Balanced Accuracy : 0.85352         
 ##                                           
 ##        'Positive' Class : TRUE            
 ## 
@@ -666,24 +661,92 @@ cm2
 
 ```r
 ## Examine thresholds ----
-ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
-  geom_density(alpha = 0.5) +
-  geom_vline(xintercept = 0.5, linetype = "dashed") +
-  xlab("BS2 Probability")
+
+library(ROCR)
+
+# generate an prediction object at all possible thresholds
+pred <- prediction(bs$BS2_pred, bs$BS2_obs)
+
+
+# save default plotting parameters
+p <- par()
+# override default plotting parameter
+par(mfrow = c(1, 3), pty = "s")
+
+perf <- performance(pred, "tpr", "fpr")
+plot(
+  perf, 
+  avg = "threshold", 
+  print.cutoffs.at = seq(0.1, 0.9, 0.1),
+  main = "TPR vs FPR"
+  )
+abline(0, 1)
+
+
+perf <- performance(pred, "sens", "spec")
+plot(
+  perf, 
+  avg = "threshold", 
+  print.cutoffs.at = seq(0.1, 0.9, 0.1),
+  main = "Sensitivity vs Specificity"
+  )
+abline(0, 1)
+
+
+perf <- performance(pred, "sens", "ppv")
+plot(
+  perf, 
+  avg = "threshold", 
+  print.cutoffs.at = seq(0.1, 0.9, 0.1),
+  main = "Sensitivity vs PPV"
+  )
+abline(0, 1)
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-16-1.png" width="672" />
 
 ```r
+# reset the plotting parameters
+par(p)
+
+
+## Examine overlapping histograms ----
+ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
+  geom_histogram(alpha = 0.5) +
+  geom_vline(xintercept = 0.50, linetype = "dashed") +
+  geom_vline(xintercept = 0.45, linetype = "dashed") +
+  geom_vline(xintercept = 0.33, linetype = "dashed") +
+  xlab("BS2 Probability")
+```
+
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-16-2.png" width="672" />
+
+```r
 ## Trade Precision for Sensitivity by Varying the Threshold 
-table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
+tb <- table(predicted = bs$BS2_pred > 0.45, observed = bs$BS2_obs)
+tb
 ```
 
 ```
 ##          observed
 ## predicted FALSE  TRUE
-##     FALSE 28788   979
-##     TRUE    411  2696
+##     FALSE 28519   767
+##     TRUE    680  3439
+```
+
+```r
+caret::confusionMatrix(tb)$byClass
+```
+
+```
+##          Sensitivity          Specificity       Pos Pred Value 
+##            0.9767115            0.8176415            0.9738100 
+##       Neg Pred Value            Precision               Recall 
+##            0.8349114            0.9738100            0.9767115 
+##                   F1           Prevalence       Detection Rate 
+##            0.9752586            0.8740907            0.8537345 
+## Detection Prevalence    Balanced Accuracy 
+##            0.8766951            0.8971765
 ```
 
 ### Exercise 3
@@ -718,7 +781,9 @@ sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 
 #### Stratified-random/areal-adjustment
 
-In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @campbell_introduction_2023; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their known area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @stehman_estimating_2014; @campbell_introduction_2023; @congalton_basic_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. This even equal sampling is a good idea in order to adequately sample small but important soil classes (e.g. hydric soils), which will result in greater precision of resulting classes. Surprisingly few R functions to include adjustmentss for these unequal weights, with the exception of the [`yardstick`](https://yardstick.tidymodels.org/), [`mapac'](https://pages.cms.hu-berlin.de/pflugmad/mapac/), and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R packages. The [`survey`](http://r-survey.r-forge.r-project.org/survey/) R package also has numerous function to analyze design-based survey samples with varying sampling weights. Only the `mapac` R package provides estimates of the post stratified standard errors for the various confusion matrix derivatives. 
+
+In the simplest case where the an existing soil class map is validated by an independent test dataset, it is only necessary to weight the confusion matrix using the prior probabilities of the original map.
 
 
 ```r
@@ -733,47 +798,178 @@ cm
 ```
 ##        obs
 ## pred    FALSE  TRUE
-##   FALSE 28788   979
-##   TRUE    411  2696
+##   FALSE 28788  1173
+##   TRUE    411  3033
 ```
 
 ```r
 # apply weights
 cm_wt <- wt * cm/rowSums(cm)
-
-# optional transformation to original totals
-cm_wt2 <- cm_wt/sum(cm_wt) * sum(cm)
-
-
-# compare weighted and unweighted confusion matrices
-confusionMatrix(cm,     positive = "TRUE")$byClass
+cm_wt |> round(3)
 ```
 
 ```
-##          Sensitivity          Specificity       Pos Pred Value 
-##           0.73360544           0.98592418           0.86771806 
-##       Neg Pred Value            Precision               Recall 
-##           0.96711123           0.86771806           0.73360544 
-##                   F1           Prevalence       Detection Rate 
-##           0.79504571           0.11179047           0.08201010 
-## Detection Prevalence    Balanced Accuracy 
-##           0.09451238           0.85976481
+##        obs
+## pred    FALSE  TRUE
+##   FALSE 0.913 0.037
+##   TRUE  0.006 0.044
 ```
 
 ```r
-confusionMatrix(cm_wt2, positive = "TRUE")$byClass
+# optional transformation to original totals
+cm_wt2 <- {cm_wt * sum(cm)} |> round()
+cm_wt2
+```
+
+```
+##        obs
+## pred    FALSE  TRUE
+##   FALSE 30492  1242
+##   TRUE    199  1471
+```
+
+```r
+# compare weighted and unweighted confusion matrices
+caret::confusionMatrix(cm,     positive = "TRUE")$byClass
 ```
 
 ```
 ##          Sensitivity          Specificity       Pos Pred Value 
-##           0.58134486           0.99285248           0.86771806 
+##           0.72111270           0.98592418           0.88066202 
 ##       Neg Pred Value            Precision               Recall 
-##           0.96711123           0.86771806           0.58134486 
+##           0.96084910           0.88066202           0.72111270 
 ##                   F1           Prevalence       Detection Rate 
-##           0.69623400           0.07463023           0.04338590 
+##           0.79294118           0.12590930           0.09079479 
 ## Detection Prevalence    Balanced Accuracy 
-##           0.05000000           0.78709867
+##           0.10309834           0.85351844
 ```
+
+```r
+caret::confusionMatrix(cm_wt2, positive = "TRUE")$byClass
+```
+
+```
+##          Sensitivity          Specificity       Pos Pred Value 
+##           0.54220420           0.99351601           0.88083832 
+##       Neg Pred Value            Precision               Recall 
+##           0.96086217           0.88083832           0.54220420 
+##                   F1           Prevalence       Detection Rate 
+##           0.67122975           0.08121782           0.04403664 
+## Detection Prevalence    Balanced Accuracy 
+##           0.04999401           0.76786011
+```
+
+
+However as is often the case, when the samples are stratified using environmental covariates the strata don't concidence with the resulting digital soil map, and therefore the accuracy and errors within each strata need to be estimate separately and then average using the strata sizes as weights [@brus_sampling_2011; @stehman_estimating_2014]. The sample weights will equal the total number of pixels each sample represents.
+
+
+```r
+library(mapac)
+library(survey)
+
+
+exdata <- aa_examples("stehman2014")
+
+# post stratified confusion matrix
+cm <- aa_stratified(
+  stratum   = exdata$stratum, 
+  reference = exdata$ref, 
+  map       = exdata$map, 
+  h         = exdata[["h"]], 
+  N_h       = exdata[["N_h"]]
+  )
+cm$cmp * sum(exdata$N_h)
+```
+
+```
+##       A     B    C    D
+## A 23000  4000 4000    0
+## B 12000 27000 8000    0
+## C     0  2000 6000 4000
+## D     0  1000 2000 7000
+```
+
+```r
+cm$stats
+```
+
+```
+##   class        ua     ua_se        pa     pa_se        f1      f1_se
+## 1     A 0.7419355 0.1645627 0.6571429 0.1477318 0.6969697 0.11034620
+## 2     B 0.5744681 0.1248023 0.7941176 0.1165671 0.6666667 0.09354009
+## 3     C 0.5000000 0.2151657 0.3000000 0.1504438 0.3750000 0.13219833
+## 4     D 0.7000000 0.1527525 0.6363636 0.1623242 0.6666667 0.11284328
+```
+
+```r
+# compute stratum weights
+W <- exdata$N_h / as.integer(table(exdata$stratum))
+names(W) <- exdata$h
+
+ex <- data.frame(exdata[1:3], stringsAsFactors = FALSE)
+ex[1:3] <- lapply(ex, as.factor)
+ex <- within(ex, {
+  w = W[match(stratum, names(W))]
+  ref_A = factor(ifelse(reference == "A", "yes", "no"))
+  map_A = factor(ifelse(map       == "A", "yes", "no"))
+})
+
+
+# weighted sensitivty from yardstick
+yardstick::sens(
+  ex, 
+  truth = ref_A, 
+  estimate = map_A, 
+  case_weights = w, 
+  event_level = "second"
+  )
+```
+
+```
+## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   <chr>   <chr>          <dbl>
+## 1 sens    binary         0.657
+```
+
+```r
+# weight the confusion matrix
+ex_svy <- svydesign(ids = ~1, weights = ~w, strata = ~stratum, data = ex, variables = ~map+reference)
+tb <- svytable(~map+reference, design = ex_svy)
+tb
+```
+
+```
+##    reference
+## map     A     B     C     D
+##   A 23000  4000  4000     0
+##   B 12000 27000  8000     0
+##   C     0  2000  6000  4000
+##   D     0  1000  2000  7000
+```
+
+```r
+caret::confusionMatrix(tb)$byClass
+```
+
+```
+##          Sensitivity Specificity Pos Pred Value Neg Pred Value Precision
+## Class: A   0.6571429   0.8769231      0.7419355      0.8260870 0.7419355
+## Class: B   0.7941176   0.6969697      0.5744681      0.8679245 0.5744681
+## Class: C   0.3000000   0.9250000      0.5000000      0.8409091 0.5000000
+## Class: D   0.6363636   0.9662921      0.7000000      0.9555556 0.7000000
+##             Recall        F1 Prevalence Detection Rate Detection Prevalence
+## Class: A 0.6571429 0.6969697       0.35           0.23                 0.31
+## Class: B 0.7941176 0.6666667       0.34           0.27                 0.47
+## Class: C 0.3000000 0.3750000       0.20           0.06                 0.12
+## Class: D 0.6363636 0.6666667       0.11           0.07                 0.10
+##          Balanced Accuracy
+## Class: A         0.7670330
+## Class: B         0.7455437
+## Class: C         0.6125000
+## Class: D         0.8013279
+```
+
 
 ## Validation
 
@@ -864,12 +1060,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4530   Min.   :0.8407  
-##  1st Qu.:0.4643   1st Qu.:0.8487  
-##  Median :0.4702   Median :0.8510  
-##  Mean   :0.4690   Mean   :0.8526  
-##  3rd Qu.:0.4753   3rd Qu.:0.8552  
-##  Max.   :0.4795   Max.   :0.8667
+##  Min.   :0.4503   Min.   :0.8467  
+##  1st Qu.:0.4671   1st Qu.:0.8486  
+##  Median :0.4695   Median :0.8519  
+##  Mean   :0.4689   Mean   :0.8526  
+##  3rd Qu.:0.4733   3rd Qu.:0.8551  
+##  Max.   :0.4783   Max.   :0.8643
 ```
 
 #### Subsample (Resampling or sample simulation)

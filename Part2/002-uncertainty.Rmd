@@ -155,6 +155,9 @@ When calculating many basic statistical parameters, the assumption is that the d
 
 Re-sampling is a general term that defines any procedure to repeatedly draw samples form a given data-set. You are essentially pretending to collect a series of separate samples from your sample set then calculating a statistic on that sample. Re-sampling techniques can be used on known and unknown data distributions for uncertainty estimation and validation [@good2013].
 
+
+### Examples - Confidence Intervals
+
 ```{r eval = TRUE}
 # this bootstrap is estimating the uncertainty associated with the variance of sas$pH_0.30_obs
 # an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
@@ -372,8 +375,6 @@ ggplot(df2, aes(x, y)) +
   Pro: Typically ranges between 0 and 1; values larger than 1 indicate very high model uncertainty. No distribution assumptions.
   References: Nauman and Duniway (2019)
 
-
-
 ```{r, echo=FALSE, eval=TRUE}
 i <- range(df$x)
 new <- data.frame(x = seq(i[1], i[2], length.out = 15))
@@ -396,6 +397,9 @@ ggplot(df, aes(x = x, y = y)) +
   ggtitle("Confidence Interval vs Prediction Inteval")
 
 ```
+
+
+### Examples
 
 ```{r eval = TRUE}
 
@@ -428,13 +432,16 @@ MBESS::ci.R2(
   N  = sum(complete.cases(sas[vars])), 
   K  = 1, 
   conf.level = 0.975
-  )
-
+  ) |> 
+  unlist() |>
+  _[c(1, 3)]
+ 
 
 # RMSE confidence interval
 ## Standard Error
 n  <- sum(complete.cases(sas[vars]))
 SE <- qnorm(0.975) * sqrt(var((sas$pH_0.30_obs - sas$pH_0.30_pred)^2, na.rm = TRUE) / n)
+SE
 
 ## Confidence Interval
 0.47 + c(-1 * SE, SE)
@@ -541,7 +548,18 @@ Beware the $D^2$, Tjur's D, and AUC (or c-statistic) only apply to binary classe
 
 #### Class-based metrics
 
-These metrics are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @james2021; @kuhn2013] (`caret::confusionMatrix()`)
+These metrics are derivatives of the confusion matrix [@congalton2019; @fielding_review_1997; @kuhn2013] (`caret::confusionMatrix()`)
+
+Beware, measures like overall accuracy and row-wise metrics of the confusion matrix (e.g. user accuracy) are dependent on the prevalence (i.e frequency) of observation in the surveyed area. For example, if dissimilar soils, such as hydric soils, are an inclusions (e.g. 5%) within a survey area, even a poor model could have a overall accuracy of 95%, because small classes by their vary nature don't contribute significantly to the overall model error. Row-wise metrics by comparison are similarly are impacted by the prevalence or areal extent of soils. Again, more prevalence classes by their vary nature are more likely to be found. The consequence of this is their values are relative to the survey area from which they're derived [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @eisenberg_accuracy_1995; @simon_sensitivity_1990]. If the model were extrapolated to an new area or the existing area were subdivided, and the underlying prevalence of classes changed, the row-wise metrics would also be affected. The same is not true for column-wise metrics, because they are conditional on the class being true. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations.
+
+
+| Confusion Matrix    | Observed             |                       | Metric              |
+|---------------------|----------------------|-----------------------|---------------------|
+| **Predicted**       | No                   | Yes                   |                     |
+| No                  | True Negative (TN)   | False Negative (FN)   | NPV/ UA             |
+| Yes                 | False Positive (FP)  | True Positive (TP)    | PPV/ Precision / UA |
+| ------------------- | -------------------- | --------------------- | ------------------- |
+| Metric              | Specificity / PA     | Sensitivity / PA      | Overall             |
 
 
 **Accuracy:**
@@ -557,38 +575,14 @@ These metrics are derivatives of the confusion matrix [@congalton2019; @fielding
   - Con: Interpretation of Kappa values between 0 and 1 is largely arbitrary. A value of < 0 indicates no agreement, and a value of 1 indicates perfect agreement. Recommended to use Kappa along with other measures of accuracy. Numerous authors now question the utility and assumptions of Kappa.
   References: Congalton and Mead (1983); Foody (2020)
 - **Tau Index:**
-  - Description: An index of agreement that accounts for agreement by chance—effectively a replacement for Kappa.
+  - Description: An index of agreement that accounts for agreement by chance—effectively a replacement for Kappa (`aqp::tauW()`).
   - Pro: The index is more informative when appropriate class proportions are supplied. Index values can be referenced to concepts such as “better” or “worse” than random allocation. 
   - Con: Appropriate prior class proportions are method dependent. Interpretation requires some training.
   - References: Ma & Remond (1995)
 - **Weighted Tau Index:**
-  - Description: Alternative version of the tau index that accommodates class similarity. 
-  - Pro: The index is more informative when appropriate class proportions are supplied. Class similarity down-weights mistakes between similar classes.
+  - Description: Alternative version of the tau index that accommodates class similarity.   - Pro: The index is more informative when appropriate class proportions are supplied. Class similarity down-weights mistakes between similar classes.
   - Con: Appropriate prior class proportions are method dependent. There is no universal method for estimating class similarity weights. Interpretation requires some training.
   - References: Rossiter (2017)
-
-
-**Precision/Uncertainty:**
-
-- **Standard Error (SE):**
-  - Description: Error in the model parameters (e.g., coefficients or overall prediction).
-- **Confidence Interval (CI):**
-  - Description: Conversion of the SE to an interval according to a given probability (e.g., 95 percent); its range is narrower than the prediction interval.
-  - Con: Assumes a normal distribution, unless transformed or bootstrapped.
-  - References: 
-  
-  
-Beware, measures like Overall Accuracy, Precision and User Accuracy are dependent on the prevalence (frequency) of observation, and thus shouldn't be use to compare classes with different sample sizes [@foody_assessing_2010; @kuhn2013; @kuhn_feature_2019; @monaghan_foundational_2021; @parikh_understanding_2008]. Alternative calculations exist for row-wise accuracy that corrects for prevalence, such as the positive predictive value (PPV) and negative predictive value (NPV), which are available via the `caret::confusionMatrix` function. Similar named functions exist in other R packages, but don't incorporate the prevalence corrected calculations.
-
-
-| Confusion Matrix    | Observed             |                       | Metric              |
-|---------------------|----------------------|-----------------------|---------------------|
-| **Predicted**       | No                   | Yes                   | UA                  |
-| No                  | True Negative (TN)   | False Negative (FN)   | NPV/ UA             |
-| Yes                 | False Positive (FP)  | True Positive (TP)    | PPV/ Precision / UA |
-| ------------------- | -------------------- | --------------------- | ------------------- |
-| Metric              | Specificity / PA     | Sensitivity / PA      | Overall             |
-
 - **Prevalence (P):** % of class occurrence in the population, usually this is estimated from the sample
 -   Overall Accuracy: % of observations that were correctly classified, for all classes
 -   **Sensitivity (SN) (aka Recall or True Positive Rate):**
@@ -601,7 +595,7 @@ Beware, measures like Overall Accuracy, Precision and User Accuracy are dependen
 - **Precision:**
     -   TP / (TP + FP)
     -   \% of TRUE observations that were classified as a class, that actually were that class
-- **Positive Preditive Value (PPV):**
+- **Positive Predictive Value (PPV):**
     -   if prevalence = 50 then TP / (TP + FP)
     -   if prevalence != 50 then SN \* P / (SN \* P) + ((1 - SP) \* (1 - P))
     -   \% of TRUE observations that were classified as a class, that actually were that class
@@ -615,14 +609,25 @@ Beware, measures like Overall Accuracy, Precision and User Accuracy are dependen
 - **User's Accuracy (UA):**
     -   diagonal values / predicted values
     -   \% of FALSE observations that were classified as a class, that actually were that class
-- **Tau index:** 
-  - An index of accuracy that accounts for agreement by chance--- effectively a replacement for Cohen's Kappa (`aqp::tauW()`)
+
+
+**Precision/Uncertainty:**
+
+- **Standard Error (SE):**
+  - Description: Error in the model parameters (e.g., coefficients or overall prediction).
+- **Confidence Interval (CI):**
+  - Description: Conversion of the SE to an interval according to a given probability (e.g., 95 percent); its range is narrower than the prediction interval.
+  - Con: Assumes a normal distribution, unless transformed or bootstrapped.
+  - References: 
+
+
+### Examples
 
 ```{r eval = TRUE}
 
 url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_bs.csv"
 bs <- read.csv(url)
-bs <- subset(bs, complete.cases(BS1_obs, BS2_obs))
+bs <- subset(bs, complete.cases(BS2_obs, BS2_pred))
 
 
 # Probability metrics ----
@@ -637,7 +642,12 @@ aqp::brierScore(
 
 
 ## D2 & Tjur D2----
-modEvA::RsqGLM(obs = bs$BS2_obs, pred = bs$BS2_pred, plot = FALSE)
+modEvA::RsqGLM(
+  obs = bs$BS2_obs, 
+  pred = bs$BS2_pred, 
+  plot = FALSE
+  ) |> 
+  unlist()
 
 
 # Shannon entropy ----
@@ -658,7 +668,7 @@ summary(
 # Class-based metrics -----
 
 ## Confusion matrix ----
-# beware conf_mat prefers factors with equal numbers of levels
+# beware caret::confusionMatrix() prefers factors with equal numbers of levels
 # also if your table only has 2 classes, you need to specify which is 'positive'
 cm1 <- table(pred = as.factor(bs$BS2_pred > 0.5), obs = as.factor(bs$BS2_obs))
 cm1
@@ -669,14 +679,64 @@ cm2 <- caret::confusionMatrix(cm1, positive = "TRUE")
 cm2
 
 ## Examine thresholds ----
+
+library(ROCR)
+
+# generate an prediction object at all possible thresholds
+pred <- prediction(bs$BS2_pred, bs$BS2_obs)
+
+
+# save default plotting parameters
+p <- par()
+# override default plotting parameter
+par(mfrow = c(1, 3), pty = "s")
+
+perf <- performance(pred, "tpr", "fpr")
+plot(
+  perf, 
+  avg = "threshold", 
+  print.cutoffs.at = seq(0.1, 0.9, 0.1),
+  main = "TPR vs FPR"
+  )
+abline(0, 1)
+
+
+perf <- performance(pred, "sens", "spec")
+plot(
+  perf, 
+  avg = "threshold", 
+  print.cutoffs.at = seq(0.1, 0.9, 0.1),
+  main = "Sensitivity vs Specificity"
+  )
+abline(0, 1)
+
+
+perf <- performance(pred, "sens", "ppv")
+plot(
+  perf, 
+  avg = "threshold", 
+  print.cutoffs.at = seq(0.1, 0.9, 0.1),
+  main = "Sensitivity vs PPV"
+  )
+abline(0, 1)
+
+# reset the plotting parameters
+par(p)
+
+
+## Examine overlapping histograms ----
 ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
-  geom_density(alpha = 0.5) +
-  geom_vline(xintercept = 0.5, linetype = "dashed") +
+  geom_histogram(alpha = 0.5) +
+  geom_vline(xintercept = 0.50, linetype = "dashed") +
+  geom_vline(xintercept = 0.45, linetype = "dashed") +
+  geom_vline(xintercept = 0.33, linetype = "dashed") +
   xlab("BS2 Probability")
 
 
 ## Trade Precision for Sensitivity by Varying the Threshold 
-table(predicted = bs$BS2_pred > 0.5, observed = bs$BS2_obs)
+tb <- table(predicted = bs$BS2_pred > 0.45, observed = bs$BS2_obs)
+tb
+caret::confusionMatrix(tb)$byClass
 
 ```
 
@@ -726,7 +786,9 @@ caret::confusionMatrix(cm)
 
 #### Stratified-random/areal-adjustment
 
-In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their assumed/estimated proportion or area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @campbell_introduction_2023; @congalton_basic_2019; @stehman_key_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. Surprisingly R functions to adjusts for these unequal weights is rare, with the exception of the [`sits`](https://github.com/e-sensing/sits) and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R package.
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their known area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @stehman_estimating_2014; @campbell_introduction_2023; @congalton_basic_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. This even equal sampling is a good idea in order to adequately sample small but important soil classes (e.g. hydric soils), which will result in greater precision of resulting classes. Surprisingly few R functions to include adjustmentss for these unequal weights, with the exception of the [`yardstick`](https://yardstick.tidymodels.org/), [`mapac'](https://pages.cms.hu-berlin.de/pflugmad/mapac/), and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R packages. The [`survey`](http://r-survey.r-forge.r-project.org/survey/) R package also has numerous function to analyze design-based survey samples with varying sampling weights. Only the `mapac` R package provides estimates of the post stratified standard errors for the various confusion matrix derivatives. 
+
+In the simplest case where the an existing soil class map is validated by an independent test dataset, it is only necessary to weight the confusion matrix using the prior probabilities of the original map.
 
 ```{r}
 # weights
@@ -738,16 +800,72 @@ cm
 
 # apply weights
 cm_wt <- wt * cm/rowSums(cm)
+cm_wt |> round(3)
 
 # optional transformation to original totals
-cm_wt2 <- cm_wt/sum(cm_wt) * sum(cm)
-
+cm_wt2 <- {cm_wt * sum(cm)} |> round()
+cm_wt2
 
 # compare weighted and unweighted confusion matrices
-confusionMatrix(cm,     positive = "TRUE")$byClass
-confusionMatrix(cm_wt2, positive = "TRUE")$byClass
+caret::confusionMatrix(cm,     positive = "TRUE")$byClass
+caret::confusionMatrix(cm_wt2, positive = "TRUE")$byClass
 
 ```
+
+
+However as is often the case, when the samples are stratified using environmental covariates the strata don't concidence with the resulting digital soil map, and therefore the accuracy and errors within each strata need to be estimate separately and then average using the strata sizes as weights [@brus_sampling_2011; @stehman_estimating_2014]. The sample weights will equal the total number of pixels each sample represents.
+
+```{r}
+
+library(mapac)
+library(survey)
+
+
+exdata <- aa_examples("stehman2014")
+
+# post stratified confusion matrix
+cm <- aa_stratified(
+  stratum   = exdata$stratum, 
+  reference = exdata$ref, 
+  map       = exdata$map, 
+  h         = exdata[["h"]], 
+  N_h       = exdata[["N_h"]]
+  )
+cm$cmp * sum(exdata$N_h)
+cm$stats
+
+
+# compute stratum weights
+W <- exdata$N_h / as.integer(table(exdata$stratum))
+names(W) <- exdata$h
+
+ex <- data.frame(exdata[1:3], stringsAsFactors = FALSE)
+ex[1:3] <- lapply(ex, as.factor)
+ex <- within(ex, {
+  w = W[match(stratum, names(W))]
+  ref_A = factor(ifelse(reference == "A", "yes", "no"))
+  map_A = factor(ifelse(map       == "A", "yes", "no"))
+})
+
+
+# weighted sensitivty from yardstick
+yardstick::sens(
+  ex, 
+  truth = ref_A, 
+  estimate = map_A, 
+  case_weights = w, 
+  event_level = "second"
+  )
+
+
+# weight the confusion matrix
+ex_svy <- svydesign(ids = ~1, weights = ~w, strata = ~stratum, data = ex, variables = ~map+reference)
+tb <- svytable(~map+reference, design = ex_svy)
+tb
+caret::confusionMatrix(tb)$byClass
+
+```
+
 
 ## Validation
 
