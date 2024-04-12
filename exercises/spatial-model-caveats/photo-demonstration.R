@@ -5,6 +5,8 @@ library(gstat)
 library(randomForest)
 library(clhs)
 library(rms)
+library(NLMR)
+
 
 r <- rast('ah.png')
 
@@ -69,9 +71,40 @@ ev <- extract(c(r, z), s.eval)
 sqrt(mean((ev$ah - ev$var1.pred)^2))
 
 
+## conditional simulation
+
+# interesting artistic possibilities
+
+# using the variogram model from above
+# beta is roughly the original mean value
+# nmax: use only a couple of neighbors, otherwise instability
+# setting block argument results in interesting results
+set.seed(101010)
+csim <- krige(
+  ah ~ 1, 
+  x, 
+  r.sp, 
+  model = m,
+  nmax = 2, 
+  beta = mean(s$ah), 
+  nsim = 3
+)
+
+csim <- c(r, rast(csim))
+# csim <- rast(csim)
+plot(csim, legend = FALSE, col = .cols, axes = FALSE, mar = c(0.1, 0.1, 0.1, 0.1), main = '')
 
 
 ## develop additional "covariates"
+
+# neutral landscapes
+rc <- nlm_percolation(
+  prob = 0.25,
+  ncol = ncol(r), nrow = nrow(r)
+)
+
+rc <- rast(rc)
+plot(rc)
 
 # coordinates
 .x <- r
@@ -91,8 +124,8 @@ values(.noise) <- runif(n = ncell(r), min = 0, max = 255)
 # .roughness <- terrain(r, v = 'roughness')
 
 
-a <- c(.x, .y, .noise, .flip)
-names(a) <- c('x', 'y', 'noise', 'flipped')
+a <- c(.x, .y, .noise, .flip, rc)
+names(a) <- c('x', 'y', 'noise', 'flipped', 'rc')
 
 # a <- aggregate(.mixed, fact = 3)
 
@@ -117,9 +150,9 @@ e <- na.omit(e)
 ## RF
 
 
-(m <- randomForest(ah ~ flipped + x + y + noise, data = e, nodesize = 15, ntree = 500))
+(m <- randomForest(ah ~ flipped + x + y + noise + rc, data = e, nodesize = 15, ntree = 500))
 
-# (m <- randomForest(ah ~ flipped + x + y + noise, data = e))
+(m <- randomForest(ah ~ flipped + x + y + noise, data = e, nodesize = 15, ntree = 500))
 
 # internal evaluation: 40
 sqrt(mean((e$ah - predict(m, newdata = e))^2))
@@ -148,7 +181,7 @@ sqrt(mean((ev$ah - ev$lyr1)^2))
 dd <- datadist(e)
 options(datadist = "dd")
 
-(m <- ols(ah ~ flipped + x + y + noise, data = e))
+(m <- ols(ah ~ flipped + x + y + noise + rc, data = e))
 
 # interpretation of partial effects is fraught with peril!
 plot(Predict(m))
