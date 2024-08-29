@@ -71,6 +71,26 @@ ev <- extract(c(r, z), s.eval)
 sqrt(mean((ev$ah - ev$var1.pred)^2))
 
 
+## block kriging
+z.b <- krige(formula = ah ~ 1, locations = x, newdata = r.sp, model = m, block = c(30, 30))
+
+# back to spatRast
+z.b <- rast(z.b)
+
+
+par(mfrow = c(1, 3))
+
+plot(r, legend = FALSE, col = .cols, axes = FALSE, main = 'Original', mar = c(1,1,1,1))
+points(s, col = 2, cex = 0.5, pch = 0)
+
+plot(z$var1.pred, legend = FALSE, col = .cols, axes = FALSE, main = 'Ordinary Kriging', mar = c(1,1,1,1))
+points(s, col = 2, cex = 0.5, pch = 0)
+
+plot(z.b$var1.pred, legend = FALSE, col = .cols, axes = FALSE, main = 'Block Kriging (30x30)', mar = c(1,1,1,1))
+points(s, col = 2, cex = 0.5, pch = 0)
+
+
+
 ## conditional simulation
 
 # interesting artistic possibilities
