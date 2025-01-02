@@ -76,7 +76,7 @@ Consider a supervised classification that generates predictions for 5 possible s
  * "Case 3": class **E** is always the most likely class, all other classes have probabilities < 0.2
 
 
-```r
+``` r
 # examples of three cases
 print(p.1)
 ```
@@ -161,14 +161,14 @@ It is my recommendation that the $log_{2}$ version of Shannon H be used as our *
 ## Review
 
 
-```r
+``` r
 # examples of three cases
 print(p.1)
 ```
 
 <img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-3-1.svg" width="960" />
 
-```r
+``` r
 pp <- ldply(s, performance)
 names(pp)[1] <- 'example'
 
@@ -190,28 +190,28 @@ kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_widt
    <td style="text-align:left;"> Case 1 </td>
    <td style="text-align:right;"> 0.74 </td>
    <td style="text-align:right;"> 0.19 </td>
-   <td style="text-align:right;"> 0.15 </td>
-   <td style="text-align:right;"> 0.36 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 0.35 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.71 </td>
-   <td style="text-align:right;"> 0.28 </td>
-   <td style="text-align:right;"> 0.22 </td>
-   <td style="text-align:right;"> 0.43 </td>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> 0.21 </td>
+   <td style="text-align:right;"> 0.41 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
-   <td style="text-align:right;"> 0.29 </td>
-   <td style="text-align:right;"> 0.80 </td>
-   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.28 </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 0.45 </td>
    <td style="text-align:right;"> 0.84 </td>
   </tr>
 </tbody>
 </table>
 
 
-```r
+``` r
 ex <- ldply(s, extractExample, n=1)
 names(ex)[1] <- 'example'
 ex$CI <- NULL
@@ -240,30 +240,30 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
-   <td style="text-align:right;"> 0.15 </td>
-   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.17 </td>
-   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> 0.06 </td>
    <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:right;"> 2.18 </td>
+   <td style="text-align:right;"> 0.32 </td>
+   <td style="text-align:right;"> 2.08 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:right;"> 0.20 </td>
+   <td style="text-align:right;"> 0.08 </td>
    <td style="text-align:right;"> 0.11 </td>
-   <td style="text-align:right;"> 0.11 </td>
-   <td style="text-align:right;"> 0.45 </td>
-   <td style="text-align:right;"> 0.28 </td>
-   <td style="text-align:right;"> 1.96 </td>
+   <td style="text-align:right;"> 0.27 </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 2.14 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
+   <td style="text-align:right;"> 0.01 </td>
    <td style="text-align:right;"> 0.02 </td>
-   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> 0.02 </td>
    <td style="text-align:right;"> 0.05 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 0.82 </td>
-   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 0.89 </td>
+   <td style="text-align:right;"> 0.71 </td>
   </tr>
 </tbody>
 </table>
@@ -274,7 +274,7 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 The `aqp` package has an implementation of Shannon entropy and Brier score; there are many other implementations but these are convenient for soil survey work. Consider the following table of predicted probabilities (classes A,B,C,D,E) and observed class (actual).
 
 
-```r
+``` r
 library(aqp)
 
 # example data
@@ -314,7 +314,7 @@ head(d)
 
 Brier scores (accuracy) are computed over all predictions and associated observed classes.
 
-```r
+``` r
 # compute Brier score from all predictions
 brierScore(d, classLabels = c('A', 'B', 'C', 'D', 'E'), actual = 'actual')
 ```
@@ -326,7 +326,7 @@ brierScore(d, classLabels = c('A', 'B', 'C', 'D', 'E'), actual = 'actual')
 
 Shannon entropy (uncertainty) is computed from each vector of predicted probabilities.
 
-```r
+``` r
 # shannon entropy for first row, could be a single pixel or obs. point
 shannonEntropy(d[1, c('A', 'B', 'C', 'D', 'E')])
 ```
@@ -335,7 +335,7 @@ shannonEntropy(d[1, c('A', 'B', 'C', 'D', 'E')])
 ## [1] 2.166525
 ```
 
-```r
+``` r
 # compute shannon entropy for all rows
 apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
 ```

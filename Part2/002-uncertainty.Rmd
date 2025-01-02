@@ -786,7 +786,7 @@ caret::confusionMatrix(cm)
 
 #### Stratified-random/areal-adjustment
 
-In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their known area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @stehman_estimating_2014; @campbell_introduction_2023; @congalton_basic_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. This even equal sampling is a good idea in order to adequately sample small but important soil classes (e.g. hydric soils), which will result in greater precision of resulting classes. Surprisingly few R functions to include adjustmentss for these unequal weights, with the exception of the [`yardstick`](https://yardstick.tidymodels.org/), [`mapac`](https://pages.cms.hu-berlin.de/pflugmad/mapac/), and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R packages. The [`survey`](http://r-survey.r-forge.r-project.org/survey/) R package also has numerous function to analyze design-based survey samples with varying sampling weights. Only the `mapac` R package provides estimates of the post stratified standard errors for the various confusion matrix derivatives. 
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their known area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @stehman_estimating_2014; @campbell_introduction_2023; @congalton_basic_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. This even equal sampling is a good idea in order to adequately sample small but important soil classes (e.g. hydric soils), which will result in greater precision of resulting classes. Surprisingly few R functions to include adjustments for these unequal weights, with the exception of the [`yardstick`](https://yardstick.tidymodels.org/), [`mapac`](https://pages.cms.hu-berlin.de/pflugmad/mapac/), and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R packages. The [`survey`](http://r-survey.r-forge.r-project.org/survey/) R package also has numerous function to analyze design-based survey samples with varying sampling weights. Only the `mapac` R package provides estimates of the post stratified standard errors for the various confusion matrix derivatives. 
 
 In the simplest case where the an existing soil class map is validated by an independent test dataset, it is only necessary to weight the confusion matrix using the prior probabilities of the original map.
 
@@ -813,7 +813,11 @@ caret::confusionMatrix(cm_wt2, positive = "TRUE")$byClass
 ```
 
 
-However as is often the case, when the samples are stratified using environmental covariates the strata don't concidence with the resulting digital soil map, and therefore the accuracy and errors within each strata need to be estimate separately and then average using the strata sizes as weights [@brus_sampling_2011; @stehman_estimating_2014]. The sample weights will equal the total number of pixels each sample represents.
+However as is often the case, when the samples are stratified using environmental covariates the strata don't coincide with the resulting digital soil map, and therefore the accuracy and errors within each strata need to be estimated separately and then averaged using the strata sizes as weights [@brus_sampling_2011; @stehman_estimating_2014]. The sample weights will equal the total number of pixels each sample represents.
+
+```{r eval=!("mapac" %in% installed.packages())}
+remotes::install_git("https://scm.cms.hu-berlin.de/pflugmad/mapac.git")
+```
 
 ```{r}
 

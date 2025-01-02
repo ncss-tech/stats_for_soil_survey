@@ -50,14 +50,14 @@ Below is a simulated example demonstrating the affect of sample size and standar
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.05     7.11    8.03
-## 2 sd = 1 n = 30     6.55     7.10    7.54
-## 3 sd = 1 n = 60     6.70     6.99    7.52
-## 4 sd = 1 n = 100    6.75     6.96    7.26
-## 5 sd = 2 n = 10     5.71     7.23    8.29
-## 6 sd = 2 n = 30     6.23     7.00    8.23
-## 7 sd = 2 n = 60     6.43     6.93    7.51
-## 8 sd = 2 n = 100    6.66     7.10    7.60
+## 1 sd = 1 n = 10     6.31     7.06    7.79
+## 2 sd = 1 n = 30     6.69     7.11    7.46
+## 3 sd = 1 n = 60     6.76     7.02    7.30
+## 4 sd = 1 n = 100    6.78     7.00    7.29
+## 5 sd = 2 n = 10     5.38     6.93    7.82
+## 6 sd = 2 n = 30     6.43     7.12    7.86
+## 7 sd = 2 n = 60     6.52     7.01    7.60
+## 8 sd = 2 n = 100    6.61     7.06    7.67
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="768" />
@@ -69,7 +69,7 @@ The results show that quantile estimates are more variable with smaller sample s
 Demonstration of how to calculate variance.
 
 
-```r
+``` r
 # calculate the mean
 mu <- mean(test$pH)
 
@@ -84,7 +84,7 @@ sqrt(SS / (length(test$pH) - 1))
 ```
 
 ```
-## [1] 1.603604
+## [1] 1.572971
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -95,14 +95,14 @@ Note below how our estimate of the variance can vary widely, particularly for si
 ## # Groups:   sd [2]
 ##   sd     n       sd2_min sd2_mean sd2_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.591    0.998    1.41
-## 2 sd = 1 n = 30    0.825    1.02     1.21
-## 3 sd = 1 n = 60    0.740    0.996    1.14
-## 4 sd = 1 n = 100   0.839    1.02     1.17
-## 5 sd = 2 n = 10    1.28     1.95     2.73
-## 6 sd = 2 n = 30    1.37     2.00     2.57
-## 7 sd = 2 n = 60    1.61     2.01     2.35
-## 8 sd = 2 n = 100   1.71     2.03     2.28
+## 1 sd = 1 n = 10    0.535    0.934    1.33
+## 2 sd = 1 n = 30    0.750    0.989    1.24
+## 3 sd = 1 n = 60    0.830    0.967    1.17
+## 4 sd = 1 n = 100   0.894    1.02     1.20
+## 5 sd = 2 n = 10    0.768    2.07     3.22
+## 6 sd = 2 n = 30    1.29     1.96     2.46
+## 7 sd = 2 n = 60    1.65     1.99     2.37
+## 8 sd = 2 n = 100   1.67     1.97     2.31
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -113,14 +113,14 @@ Now let's see Standard Error (standard deviation / square root of n) below. The 
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.187    0.315  0.446
-## 2 sd = 1 n = 30  0.151    0.186  0.221
-## 3 sd = 1 n = 60  0.0956   0.129  0.148
-## 4 sd = 1 n = 100 0.0839   0.102  0.117
-## 5 sd = 2 n = 10  0.405    0.615  0.864
-## 6 sd = 2 n = 30  0.250    0.366  0.470
-## 7 sd = 2 n = 60  0.208    0.260  0.303
-## 8 sd = 2 n = 100 0.171    0.203  0.228
+## 1 sd = 1 n = 10  0.169    0.295  0.420
+## 2 sd = 1 n = 30  0.137    0.181  0.226
+## 3 sd = 1 n = 60  0.107    0.125  0.150
+## 4 sd = 1 n = 100 0.0894   0.102  0.120
+## 5 sd = 2 n = 10  0.243    0.655  1.02 
+## 6 sd = 2 n = 30  0.235    0.359  0.449
+## 7 sd = 2 n = 60  0.213    0.257  0.306
+## 8 sd = 2 n = 100 0.167    0.197  0.231
 ```
 
 ## Theory of Uncertainty
@@ -152,7 +152,7 @@ Re-sampling is a general term that defines any procedure to repeatedly draw samp
 ### Examples - Confidence Intervals
 
 
-```r
+``` r
 # this bootstrap is estimating the uncertainty associated with the variance of sas$pH_0.30_obs
 # an example of getting a confidence interval through bootstrapping (no assumption of a normal distribution)
 
@@ -189,16 +189,16 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.7634962 1.0547631 1.1665651 1.2366764 1.4989880
+## 0.9108295 1.0228083 1.1424803 1.2628137 1.5688706
 ```
 
-```r
+``` r
 stripchart(boot_stats$vars)
 ```
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-6-1.png" width="672" />
 
-```r
+``` r
 # Traditional Approach
 ci <- c(
   # lower 5th
@@ -213,10 +213,10 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.857434 6.166367
+## 5.705315 6.236405
 ```
 
-```r
+``` r
 ci
 ```
 
@@ -298,7 +298,7 @@ Below is a summary of the various measures used to quantify accuracy and precisi
 ### Examples
 
 
-```r
+``` r
 library(caret)
 
 # Numeric accuracy metrics----
@@ -316,7 +316,7 @@ caret::R2(
 ## [1] 0.8526782
 ```
 
-```r
+``` r
 # RMSE ----
 caret::RMSE(
   pred = sas$pH_0.30_pred, 
@@ -329,7 +329,7 @@ caret::RMSE(
 ## [1] 0.4690274
 ```
 
-```r
+``` r
 # Numeric precision/uncertainty metrics----
 # R2 confidence interval
 vars <- c("pH_0.30_pred", "pH_0.30_obs")
@@ -348,7 +348,7 @@ MBESS::ci.R2(
 ##           0.8462365           0.8536713
 ```
 
-```r
+``` r
 # RMSE confidence interval
 ## Standard Error
 n  <- sum(complete.cases(sas[vars]))
@@ -360,7 +360,7 @@ SE
 ## [1] 0.00541306
 ```
 
-```r
+``` r
 ## Confidence Interval
 0.47 + c(-1 * SE, SE)
 ```
@@ -369,7 +369,7 @@ SE
 ## [1] 0.4645869 0.4754131
 ```
 
-```r
+``` r
 # plot errors
 
 idx <- sample(1:nrow(sas), 100)
@@ -384,7 +384,7 @@ ggplot(sas[idx, ], aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-12-1.png" width="672" />
 
-```r
+``` r
 ggplot(sas, aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
   # use a hex geom if there are too many points and they overlap
   geom_hex() +
@@ -536,7 +536,7 @@ Beware, measures like overall accuracy and row-wise metrics of the confusion mat
 ### Examples
 
 
-```r
+``` r
 url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/gsp_bs.csv"
 bs <- read.csv(url)
 bs <- subset(bs, complete.cases(BS2_obs, BS2_pred))
@@ -557,7 +557,7 @@ aqp::brierScore(
 ## [1] 0.04872617
 ```
 
-```r
+``` r
 ## D2 & Tjur D2----
 modEvA::RsqGLM(
   obs = bs$BS2_obs, 
@@ -572,7 +572,7 @@ modEvA::RsqGLM(
 ##  0.4205557  0.7920635  0.7207848  0.4775784  0.6169488
 ```
 
-```r
+``` r
 # Shannon entropy ----
 # fake example
 test <- seq(0, 0.5, 0.1)
@@ -593,7 +593,7 @@ cbind(
 ## 6 0.5  0.5 1.0000000
 ```
 
-```r
+``` r
 # bs example
 summary(
   apply(data.frame(bs$BS2_pred, 1 - bs$BS2_pred), 1, aqp::shannonEntropy)
@@ -605,7 +605,7 @@ summary(
 ##  0.0000  0.2462  0.4645  0.5033  0.7749  1.0000
 ```
 
-```r
+``` r
 # Class-based metrics -----
 
 ## Confusion matrix ----
@@ -622,7 +622,7 @@ cm1
 ##   TRUE    411  3033
 ```
 
-```r
+``` r
 # or
 
 cm2 <- caret::confusionMatrix(cm1, positive = "TRUE")
@@ -659,7 +659,7 @@ cm2
 ## 
 ```
 
-```r
+``` r
 ## Examine thresholds ----
 
 library(ROCR)
@@ -705,7 +705,7 @@ abline(0, 1)
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-16-1.png" width="672" />
 
-```r
+``` r
 # reset the plotting parameters
 par(p)
 
@@ -721,7 +721,7 @@ ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
 
 <img src="002-uncertainty_files/figure-html/unnamed-chunk-16-2.png" width="672" />
 
-```r
+``` r
 ## Trade Precision for Sensitivity by Varying the Threshold 
 tb <- table(predicted = bs$BS2_pred > 0.45, observed = bs$BS2_obs)
 tb
@@ -734,7 +734,7 @@ tb
 ##     TRUE    680  3439
 ```
 
-```r
+``` r
 caret::confusionMatrix(tb)$byClass
 ```
 
@@ -763,7 +763,7 @@ caret::confusionMatrix(tb)$byClass
 4.  Calculate a confusion matrix for `sas30_obs` vs `sas30_pred` from the `sas` dataset. Be sure to manually set the factor levels as shown below.
 
 
-```r
+``` r
 lev <- unique(c(sas$sas030_obs, sas$sas030_pred))
 lev <- lev[c(1, 4, 8, 9, 12, 5, 3, 6, 7, 11)]
 sas$sas030_obs  <- factor(sas$sas030_obs,  levels = lev)
@@ -781,12 +781,12 @@ sas$sas030_pred <- factor(sas$sas030_pred, levels = lev)
 
 #### Stratified-random/areal-adjustment
 
-In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their known area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @stehman_estimating_2014; @campbell_introduction_2023; @congalton_basic_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. This even equal sampling is a good idea in order to adequately sample small but important soil classes (e.g. hydric soils), which will result in greater precision of resulting classes. Surprisingly few R functions to include adjustmentss for these unequal weights, with the exception of the [`yardstick`](https://yardstick.tidymodels.org/), [`mapac`](https://pages.cms.hu-berlin.de/pflugmad/mapac/), and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R packages. The [`survey`](http://r-survey.r-forge.r-project.org/survey/) R package also has numerous function to analyze design-based survey samples with varying sampling weights. Only the `mapac` R package provides estimates of the post stratified standard errors for the various confusion matrix derivatives. 
+In the case of stratified-random samples or non-probability samples, it is necessary to adjust the class totals by their known area prior to calculating their accuracy or standard errors [@brus_sampling_2011; @stehman_estimating_2014; @campbell_introduction_2023; @congalton_basic_2019]. This is often the case when a minority class (e.g. minor component or small map unit) is sampled in excess of it's true proportion relative to the total sample set. This even equal sampling is a good idea in order to adequately sample small but important soil classes (e.g. hydric soils), which will result in greater precision of resulting classes. Surprisingly few R functions to include adjustments for these unequal weights, with the exception of the [`yardstick`](https://yardstick.tidymodels.org/), [`mapac`](https://pages.cms.hu-berlin.de/pflugmad/mapac/), and [`MetricsWeighted`](https://github.com/mayer79/MetricsWeighted) R packages. The [`survey`](http://r-survey.r-forge.r-project.org/survey/) R package also has numerous function to analyze design-based survey samples with varying sampling weights. Only the `mapac` R package provides estimates of the post stratified standard errors for the various confusion matrix derivatives. 
 
 In the simplest case where the an existing soil class map is validated by an independent test dataset, it is only necessary to weight the confusion matrix using the prior probabilities of the original map.
 
 
-```r
+``` r
 # weights
 wt <- c(`FALSE` = 0.95, `TRUE` = 0.05)
 
@@ -802,7 +802,7 @@ cm
 ##   TRUE    411  3033
 ```
 
-```r
+``` r
 # apply weights
 cm_wt <- wt * cm/rowSums(cm)
 cm_wt |> round(3)
@@ -815,7 +815,7 @@ cm_wt |> round(3)
 ##   TRUE  0.006 0.044
 ```
 
-```r
+``` r
 # optional transformation to original totals
 cm_wt2 <- {cm_wt * sum(cm)} |> round()
 cm_wt2
@@ -828,7 +828,7 @@ cm_wt2
 ##   TRUE    199  1471
 ```
 
-```r
+``` r
 # compare weighted and unweighted confusion matrices
 caret::confusionMatrix(cm,     positive = "TRUE")$byClass
 ```
@@ -844,7 +844,7 @@ caret::confusionMatrix(cm,     positive = "TRUE")$byClass
 ##           0.10309834           0.85351844
 ```
 
-```r
+``` r
 caret::confusionMatrix(cm_wt2, positive = "TRUE")$byClass
 ```
 
@@ -860,10 +860,15 @@ caret::confusionMatrix(cm_wt2, positive = "TRUE")$byClass
 ```
 
 
-However as is often the case, when the samples are stratified using environmental covariates the strata don't concidence with the resulting digital soil map, and therefore the accuracy and errors within each strata need to be estimate separately and then average using the strata sizes as weights [@brus_sampling_2011; @stehman_estimating_2014]. The sample weights will equal the total number of pixels each sample represents.
+However as is often the case, when the samples are stratified using environmental covariates the strata don't coincide with the resulting digital soil map, and therefore the accuracy and errors within each strata need to be estimated separately and then averaged using the strata sizes as weights [@brus_sampling_2011; @stehman_estimating_2014]. The sample weights will equal the total number of pixels each sample represents.
 
 
-```r
+``` r
+remotes::install_git("https://scm.cms.hu-berlin.de/pflugmad/mapac.git")
+```
+
+
+``` r
 library(mapac)
 library(survey)
 
@@ -889,7 +894,7 @@ cm$cmp * sum(exdata$N_h)
 ## D     0  1000 2000 7000
 ```
 
-```r
+``` r
 cm$stats
 ```
 
@@ -901,7 +906,7 @@ cm$stats
 ## 4     D 0.7000000 0.1527525 0.6363636 0.1623242 0.6666667 0.11284328
 ```
 
-```r
+``` r
 # compute stratum weights
 W <- exdata$N_h / as.integer(table(exdata$stratum))
 names(W) <- exdata$h
@@ -932,7 +937,7 @@ yardstick::sens(
 ## 1 sens    binary         0.657
 ```
 
-```r
+``` r
 # weight the confusion matrix
 ex_svy <- svydesign(ids = ~1, weights = ~w, strata = ~stratum, data = ex, variables = ~map+reference)
 tb <- svytable(~map+reference, design = ex_svy)
@@ -948,7 +953,7 @@ tb
 ##   D     0  1000  2000  7000
 ```
 
-```r
+``` r
 caret::confusionMatrix(tb)$byClass
 ```
 
@@ -1034,7 +1039,7 @@ In soil science, we typically use the term model validation to refer to a statis
 -   Several R packages have tools to cross-validate predictions, including: `DAAG` and `boot` for `lm()` and `glm()` objects, `caret`, `rms`,
 
 
-```r
+``` r
 ### Linear model example
 # Create folds
 folds <- createFolds(1:nrow(sas), k = 10)
@@ -1060,12 +1065,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4602   Min.   :0.8440  
-##  1st Qu.:0.4642   1st Qu.:0.8495  
-##  Median :0.4687   Median :0.8525  
-##  Mean   :0.4690   Mean   :0.8526  
-##  3rd Qu.:0.4736   3rd Qu.:0.8566  
-##  Max.   :0.4806   Max.   :0.8591
+##  Min.   :0.4498   Min.   :0.8392  
+##  1st Qu.:0.4593   1st Qu.:0.8475  
+##  Median :0.4717   Median :0.8517  
+##  Mean   :0.4689   Mean   :0.8526  
+##  3rd Qu.:0.4749   3rd Qu.:0.8594  
+##  Max.   :0.4843   Max.   :0.8650
 ```
 
 #### Subsample (Resampling or sample simulation)

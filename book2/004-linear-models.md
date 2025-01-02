@@ -43,23 +43,23 @@ For more details see the "MLRA 30 - Soil Climate Study - Soil Temperature" proje
 
 
 
-```r
+``` r
 library(soilDB)
 
-prj <- get_project_from_NASISWebReport(mlrassoarea = "8-VIC", fiscalyear = 2015)
+prj <- get_project_from_NASISWebReport(mlrassoarea = "SW-VIC", fiscalyear = 2015)
 ```
 
 ```
 ## Loading required namespace: rvest
 ```
 
-```r
+``` r
 subset(prj, projectname == "MLRA 30 - Soil Climate Study - Soil Temperature")
 ```
 
 ```
 ##   mlrassoarea nonmlrassaarea mlraarea projecttypename projectsubtypename
-## 4       8-VIC           <NA>       30            MLRA               <NA>
+## 4      SW-VIC           <NA>       30            MLRA               <NA>
 ##   fiscalyear fiscalyear_goaled projectiid                        uprojectid
 ## 4       2015              2015      95689 0000-VIC-Soil Climate Studies-001
 ##                                       projectname projectapprovedflag
@@ -90,7 +90,7 @@ In addition to the 11-IND MAST modeling efforts there has also been two publishe
 The Henry Mount Database already has 79 of the sites from the Mojave. However only 8 have temperature records.
 
 
-```r
+``` r
 f <- fetchHenry(sso = "8-VIC")
 
 length(unique(f$sensors$user_site_id))
@@ -111,7 +111,7 @@ length(unique(f$sensors$user_site_id))
 For our purposes the daily soil temperature measurements need to be aggregated to the mean annual soil temperature (MAST). However, depending data you query using, `fetchHenry()` maybe able to return pre-aggregated results using the `gran` function argument. 
 
 
-```r
+``` r
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -120,7 +120,7 @@ library(ggplot2)
 
 
 
-```r
+``` r
 # extract the site and sensor data frames from the list
 ms_df <- f$soiltemp
 s     <- f$sensors
@@ -148,7 +148,7 @@ ms_df %>%
 
 <img src="004-linear-models_files/figure-html/unnamed-chunk-3-1.png" width="672" />
 
-```r
+``` r
 # Aggregate by Year, Month, and Julian day (i.e. 1-365, 366 for leap years)
 # compute number of days per site
 ms_n_df <- ms_df %>%
@@ -164,7 +164,7 @@ ms_n_df <- ms_df %>%
 ## argument.
 ```
 
-```r
+``` r
 # compute mast per year
 ms_site_df <- ms_df %>%
   group_by(sid, Jday) %>%
@@ -179,7 +179,7 @@ ms_site_df <- ms_df %>%
 ## argument.
 ```
 
-```r
+``` r
 # merge mast & numDays
 mast_df <- as.data.frame(s) %>%
   select(name, sid, sensor_depth, geometry) %>%
@@ -208,7 +208,7 @@ Since the Henry Mount database is partially incomplete we will proceed with the 
 
 
 
-```r
+``` r
 # Read mast data
 githubURL <- url("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/mast_mojave.Rdata")
 
@@ -225,7 +225,7 @@ Where do our points plot? To start we need to convert them to a spatial object f
 
 
 
-```r
+``` r
 # plot
 mapview(mlra, alpha.region = 0, lwd = 2) +
   mapview(mast_sf)
@@ -239,7 +239,7 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 As you can see below their are numerous variables we could inspect.
 
 
-```r
+``` r
 library(raster)
 ```
 
@@ -258,7 +258,7 @@ library(raster)
 ##     select
 ```
 
-```r
+``` r
 library(sf)
 
 # load raster stack from GitHub
@@ -287,7 +287,7 @@ geodata_s <- sampleRegular(geodata_r[[idx]], size = 1000)
 Generally before we begin modeling it is good to explore the data. By examining a simple summary we can quickly see the breakdown of our data. It is important to look out for missing or improbable values. Probably the easiest way to identify peculiarities in the data is to plot it.
 
 
-```r
+``` r
 summary(data)
 ```
 
@@ -329,7 +329,7 @@ summary(data)
 You may recall from discussion of EDA that QQ plots are a visual way to inspect the normality of a variable. If the variable is normally distributed, the points (e.g. soil observations) should line up along the straight line.
 
 
-```r
+``` r
 # QQ plot
 
 ggplot(data, aes(sample = mast)) +
@@ -342,7 +342,7 @@ ggplot(data, aes(sample = mast)) +
 By examining the correlations between some of the predictors we can also determine whether they are *collinear* (e.g. > 0.6). This is common for similar variables such as Landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In addition, collinearity will make it difficult to estimate our regression coefficients. 
 
 
-```r
+``` r
 vars <- c("mast", "elev", "temp", "precip", "tc_2", "tc_1", "tc_3")
 GGally::ggpairs(data[vars])
 ```
@@ -355,7 +355,7 @@ GGally::ggpairs(data[vars])
 
 <img src="004-linear-models_files/figure-html/unnamed-chunk-8-1.png" width="672" />
 
-```r
+``` r
 vars <- c("mast", "slope", "twi", "northness", "solar", "solarcv")
 GGally::ggpairs(data[vars])
 ```
@@ -372,7 +372,7 @@ Examining the density plots on the diagonal axis of the scatter plots we can als
 Since our data was not randomly sampled, we had better check the distribution of our samples vs the population. We can accomplish this by overlaying the sample distribution of predictor variables vs a large random sample.
 
 
-```r
+``` r
 geodata_df <- as.data.frame(geodata_s)
 
 geodata_df <- rbind(
@@ -404,7 +404,7 @@ The overlap between our sample and the population appear satisfactory.
 R has several functions for fitting linear models. The most common is arguably the `lm()` function from the stats R package, which is loaded by default. The `lm()` function is also extended through the use of several additional packages such as the car and caret R packages. Another noteworthy R package for linear modeling is rms, which offers the `ols()` function for linear modeling. The rms R package [@harrell2015] offers an 'almost' comprehensive alternative to `lm()' and it's accessory function. Each function offers useful features, therefore for the we will demonstrate elements of both. Look for comments (i.e. #) below referring to rms or stats. 
 
 
-```r
+``` r
 # stats
 fit_lm <- lm(
   formula = mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3 + precip + temp, 
@@ -431,19 +431,19 @@ fit_ols <- ols(mast ~ elev + aspect + twi + solar + solarcv + tc_1 + tc_2 + tc_3
 Once we have a model we need to assess residuals for linearity, normality, and homoscedastivity (or constant variance). Oddly this is one area were the rms R package does not offer convenient functions for plotting residuals, therefore we'll simply access the results of `lm()`.
 
 
-```r
+``` r
 par(mfcol = c(2, 2))
 ```
 
 
-```r
+``` r
 # residual
 plot(fit_lm)
 ```
 
 <img src="004-linear-models_files/figure-html/unnamed-chunk-10-1.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-2.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-3.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-4.png" width="672" />
 
-```r
+``` r
 # partial residuals
 termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 ```
@@ -453,7 +453,7 @@ termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 Remember the residuals are simply just the observed values minus the predicted values, which are easy enough to calculate. Alternatively we can simply extract them from the fitted model object.
 
 
-```r
+``` r
 pred <- predict(fit_lm, data)
 res  <- data$mast - pred
 head(res)
@@ -464,7 +464,7 @@ head(res)
 ## -1.3182498 -0.4111067  0.1231537  1.4750626 -0.1719747 -0.1036808
 ```
 
-```r
+``` r
 # or 
 
 head(residuals(fit_lm))
@@ -476,7 +476,7 @@ head(residuals(fit_lm))
 ```
 
 
-```r
+``` r
 # Manually plot the residuals
 res <- data.frame(res, pred)
 
@@ -491,7 +491,7 @@ ggplot(res, aes(x = pred, y = res)) +
 As we mentioned earlier multicolinearity should be avoided. To assess a model for multicolinearity we can compute the **variance inflation factor** (VIF). Its square root indicates the amount of increase in the predictor coefficients standard error. A value greater than 3 indicates a doubling the standard error. Rules of thumb vary, but a square root of vif greater than 2 or 3 indicates an unacceptable value [@faraway2004].
 
 
-```r
+``` r
 # vif() function from the rms or car packages
 sqrt(vif(fit_ols))
 ```
@@ -503,7 +503,7 @@ sqrt(vif(fit_ols))
 ## 2.274489 7.860236
 ```
 
-```r
+``` r
 # or 
 
 sqrt(vif(fit_ols)) > 3
@@ -529,7 +529,7 @@ Modeling is an iterative process that cycles between fitting and evaluating alte
 Both the `rms` and `caret` packages offer methods for variable selection and cross-validation. In this instance the `rms` approach is a bit more convenient, with the one line call to `validate()`.
 
 
-```r
+``` r
 # Set seed for reproducibility
 set.seed(42)
 
@@ -633,7 +633,7 @@ The results for `validate()` above show which variables were retained and delete
 Once we have a model we are 'happy' with we can fit the final model, and call `validate()` again which gives performance metrics such as `R$2` and the mean square error (MSE). If we want the root mean square error (RMSE), which is in the original units of our measurements we can take the square root of MSE using `sqrt()`.
 
 
-```r
+``` r
 # rms
 final_ols <- ols(mast ~ elev + solarcv + tc_1 + tc_2, data = data, weights = data$numDays, x = TRUE, y = TRUE)
 final_ols
@@ -665,7 +665,7 @@ final_ols
 ## tc_2      -0.1469 0.0362  -4.06 0.0001
 ```
 
-```r
+``` r
 set.seed(42)
 validate(final_ols, method = "crossvalidation", B = 10)
 ```
@@ -679,7 +679,7 @@ validate(final_ols, method = "crossvalidation", B = 10)
 ## Slope         1.0000   1.0000 0.9571   0.0429          0.9571 10
 ```
 
-```r
+``` r
 data$pred <- predict(final_ols)
 
 
@@ -691,7 +691,7 @@ sqrt((MSE = 2.3332))
 ## [1] 1.527482
 ```
 
-```r
+``` r
 caret::RMSE(pred = data$pred, obs = data$mast)
 ```
 
@@ -699,7 +699,7 @@ caret::RMSE(pred = data$pred, obs = data$mast)
 ## [1] 1.527477
 ```
 
-```r
+``` r
 # R2
 caret::R2(pred = data$pred, obs = data$mast, formula = "traditional")
 ```
@@ -708,7 +708,7 @@ caret::R2(pred = data$pred, obs = data$mast, formula = "traditional")
 ## [1] 0.9208941
 ```
 
-```r
+``` r
 # plot model fit
 
 ggplot(data, aes(x = pred, y = mast)) +
@@ -731,7 +731,7 @@ ggplot(data, aes(x = pred, y = mast)) +
 A nice feature of linear models are that they are easy to interpret. If we examine the model coefficients we can see how what we're trying to predict (i.e. the response variable) varies as a function of the GIS variables (i.e. predictor variables). So looking at the `elev` variable below we can see that `mast` decreasing at a rate of `-0.066` for every change in elevation.
 
 
-```r
+``` r
 # Model accuracy, residuals, and slopes (e.g. coefficents)
 final_ols
 ```
@@ -765,7 +765,7 @@ final_ols
 We can examine how much each variable contributes to the model by examining the results of `anova`. From the summary below we can that the majority of partial sum of squares are captured by `elev`, with progressively less by the remaining variables.
 
 
-```r
+``` r
 # Anova
 anova(final_ols)
 ```
@@ -782,7 +782,7 @@ anova(final_ols)
 ##  ERROR      63    339072.21    5382.099
 ```
 
-```r
+``` r
 plot(anova(final_ols), what = "partial R2")
 ```
 
@@ -791,7 +791,7 @@ plot(anova(final_ols), what = "partial R2")
 Another way to visualize the contribution of each variable is to plot their partial effects, which summarize how much each variable effects the model if we hold all the other variables constant at their median values and vary the variable of interest over it's 25th and 75th percentiles. This is a useful way to compare the impact of each variable side by side in the units of the response variable. In this case we can see below that again `elev` has the biggest impact, with range of approximately -6 to -4.5 degrees. The effect of `solarcv` is smallest compared to the other tasseled cap variables.
 
 
-```r
+``` r
 # Model Effects
 plot(summary(final_ols))
 ```
@@ -801,7 +801,7 @@ plot(summary(final_ols))
 The partial effects can also be visualized as regression lines with their confidence intervals, which illustrates the slope of the predictor variables in relation to `mast`. 
 
 
-```r
+``` r
 # Plot Effects
 ggplot(Predict(final_ols),
        addlayer = geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
@@ -811,7 +811,7 @@ ggplot(Predict(final_ols),
 
 <img src="004-linear-models_files/figure-html/unnamed-chunk-18-1.png" width="672" />
 
-```r
+``` r
 # Vary solarcv (North = 23; Flat = 33; South = 55)
 ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
   geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
@@ -825,7 +825,7 @@ ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
 ## Generate spatial predictions
 
 
-```r
+``` r
 # Predict mast model
 predfun <- function(model, data) {
   v <- predict(model, data, se.fit=TRUE)
@@ -840,7 +840,7 @@ names(mast_r) <- c("MAST", "SE")
 ## Create Map
 
 
-```r
+``` r
 # mast
 plot(mast_r, col = viridis::viridis(10))
 ```
@@ -851,7 +851,7 @@ plot(mast_r, col = viridis::viridis(10))
 1. Load the CA790 MAST dataset.
 
 
-```r
+``` r
 url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/yosemite-example/henry_CA790_data.csv"
 mast2 <- read.csv(url)
 ```

@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>A Accuracy and Uncertainty for Categorical Predictions | Statistics for Soil Survey - Part 2</title>
   <meta name="description" content="Web-based course content for Statistics for Soil Survey - Part 2 made with bookdown::gitbook." />
-  <meta name="generator" content="bookdown 0.38 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.41 and GitBook 2.6.7" />
 
   <meta property="og:title" content="A Accuracy and Uncertainty for Categorical Predictions | Statistics for Soil Survey - Part 2" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2024-03-19" />
+<meta name="date" content="2025-01-02" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -58,7 +58,7 @@
 
 <style type="text/css">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -130,6 +130,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 div.csl-bib-body { }
 div.csl-entry {
   clear: both;
+  margin-bottom: 0em;
 }
 .hanging div.csl-entry {
   margin-left:2em;
@@ -378,22 +379,22 @@ div.csl-indent {
             <section class="normal" id="section-">
 <div id="acc-unc-categorical-data" class="section level1 hasAnchor" number="7">
 <h1><span class="header-section-number">A</span> Accuracy and Uncertainty for Categorical Predictions<a href="acc-unc-categorical-data.html#acc-unc-categorical-data" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<p>This document is <a href="https://ncss-tech.github.io/misc/accuracy/accuracy-uncertainty-soil-class-prediction.html">an abbreviated attempt</a> at addressing some of the issues related to accuracy and uncertainty that I have brought up over discussion of raster (soil class) mapping standards. As such, the following is a combination of soap box moments, demonstrations of methods, todo items for my future self, and references. Honestly, before going any further be sure to read the recent paper by <span class="citation">Rossiter, Zeng, and Zhang (<a href="#ref-Rossiter2017" role="doc-biblioref">2017</a>)</span>.</p>
+<p>This document is <a href="https://ncss-tech.github.io/misc/accuracy/accuracy-uncertainty-soil-class-prediction.html">an abbreviated attempt</a> at addressing some of the issues related to accuracy and uncertainty that I have brought up over discussion of raster (soil class) mapping standards. As such, the following is a combination of soap box moments, demonstrations of methods, todo items for my future self, and references. Honestly, before going any further be sure to read the recent paper by <span class="citation">Rossiter, Zeng, and Zhang (<a href="#ref-Rossiter2017">2017</a>)</span>.</p>
 <p>This <a href="http://www.fharrell.com/post/classification/">article</a> does a fine job of summarizing the major differences between <em>classification</em> and <em>prediction</em>. Most of the modeling frameworks we will be using or evaluating generate predictions in the form of probabilities (prediction). At some point the stack of probabilities will be converted into a single map depicting the most likely class at each pixel (classification). The iterative assessment of model performance (e.g. accuracy and uncertainty) should happen as part of the <em>prediction</em> phase via metrics such as the Brier score and Shannon entropy. An evaluation of the final <em>classification</em> is helpful for communicating accuracy to a wider audience (e.g. percent correctly classified) but should not be the primary means of optimizing model performance.</p>
 <p><img src="static-figures/prediction-classification.png" /></p>
 <div id="status-quo" class="section level2 hasAnchor" number="7.1">
 <h2><span class="header-section-number">A.1</span> Status Quo<a href="acc-unc-categorical-data.html#status-quo" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<p>The “Digital Soil Mapping” chapter (5) from the latest Soil Survey Manual describes two commonly used metrics for the description of accuracy and uncertainty: overall accuracy / percent correctly classified (PCC) and the confusion index (CI) of <span class="citation">Burrough, van Gaans, and Hootsmans (<a href="#ref-Burrough1997" role="doc-biblioref">1997</a>)</span>. These methods are widely used and implementation is simple.</p>
+<p>The “Digital Soil Mapping” chapter (5) from the latest Soil Survey Manual describes two commonly used metrics for the description of accuracy and uncertainty: overall accuracy / percent correctly classified (PCC) and the confusion index (CI) of <span class="citation">Burrough, van Gaans, and Hootsmans (<a href="#ref-Burrough1997">1997</a>)</span>. These methods are widely used and implementation is simple.</p>
 <p>Given the complex nature of class mapping results (e.g. stack of class probabilities) and inherent (likely quantifiable) similarity of soil classes, I think that we should explore options for a more robust suite of accuracy and uncertainty metrics. Furthermore, it is my opinion that any evaluation of probabilistic predictions should be integrated over <em>all</em> classes.</p>
 </div>
 <div id="theses" class="section level2 hasAnchor" number="7.2">
 <h2><span class="header-section-number">A.2</span> Theses<a href="acc-unc-categorical-data.html#theses" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ul>
-<li><p>The <span class="math inline">\(\tau\)</span> statistic of <span class="citation">(<a href="#ref-Rossiter2017" role="doc-biblioref">Rossiter, Zeng, and Zhang 2017</a>)</span> is a more reliable and nuanced representation of accuracy vs. PCC.</p></li>
+<li><p>The <span class="math inline">\(\tau\)</span> statistic of <span class="citation">(<a href="#ref-Rossiter2017">Rossiter, Zeng, and Zhang 2017</a>)</span> is a more reliable and nuanced representation of accuracy vs. PCC.</p></li>
 <li><p>The <span class="math inline">\(\tau\)</span> statistic can be <em>upgraded</em> with additional <em>knowledge</em> given the availability of 1) prior understanding of class proportions, and/or, 2) meaningful parameterization of pair-wise class distances.</p></li>
 <li><p>There can be consensus on formulation of <em>approximate</em> pair-wise distances, within a given modeling domain. Pair-wise distances may not necessarily be the same across modeling domains or projects.</p></li>
 <li><p>Brier scores are option for an even more nuanced representation of accuracy as they integrate all predicted probabilities.</p></li>
-<li><p>The confusion index of <span class="citation">Burrough, van Gaans, and Hootsmans (<a href="#ref-Burrough1997" role="doc-biblioref">1997</a>)</span> is an <em>unstable</em> metric when the number of predicted classes is large and when the most likely classes are associated with low probabilities.</p></li>
+<li><p>The confusion index of <span class="citation">Burrough, van Gaans, and Hootsmans (<a href="#ref-Burrough1997">1997</a>)</span> is an <em>unstable</em> metric when the number of predicted classes is large and when the most likely classes are associated with low probabilities.</p></li>
 <li><p>Shannon entropy (log base 2) is a more reliable representation of uncertainty than the confusion index, especially when the number of possible classes varies by project. The importance of a universally reliable representation of uncertainty is even more important when several methods are used concurrently.</p></li>
 <li><p>There <em>should be</em> a way to integrate pair-wise distances into the Shannon entropy (or related method) and Brier scores; maybe we will discover those here.</p></li>
 </ul>
@@ -420,8 +421,8 @@ div.csl-indent {
 <li>“Case 2”: class <strong>E</strong> is almost always the most likely class, but classes <strong>B</strong>, <strong>C</strong>, and <strong>D</strong> are tied for second place</li>
 <li>“Case 3”: class <strong>E</strong> is always the most likely class, all other classes have probabilities &lt; 0.2</li>
 </ul>
-<div class="sourceCode" id="cb308"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb308-1"><a href="acc-unc-categorical-data.html#cb308-1" aria-hidden="true" tabindex="-1"></a><span class="co"># examples of three cases</span></span>
-<span id="cb308-2"><a href="acc-unc-categorical-data.html#cb308-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(p<span class="fl">.1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb311"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb311-1"><a href="acc-unc-categorical-data.html#cb311-1" tabindex="-1"></a><span class="co"># examples of three cases</span></span>
+<span id="cb311-2"><a href="acc-unc-categorical-data.html#cb311-2" tabindex="-1"></a><span class="fu">print</span>(p<span class="fl">.1</span>)</span></code></pre></div>
 <div class="figure"><span style="display:block;" id="fig:unnamed-chunk-2"></span>
 <img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-2-1.svg" alt="Probability distributions of predictions." width="960" />
 <p class="caption">
@@ -445,7 +446,7 @@ Figure A.1: Probability distributions of predictions.
 </div>
 <div id="brier-scores" class="section level3 hasAnchor" number="7.5.2">
 <h3><span class="header-section-number">A.5.2</span> Brier Scores<a href="acc-unc-categorical-data.html#brier-scores" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Brier scores <span class="citation">Harrell (<a href="#ref-harrell2015" role="doc-biblioref">2015</a>)</span> quantify agreement between observed classes and predicted probabilities:
+<p>Brier scores <span class="citation">Harrell (<a href="#ref-harrell2015">2015</a>)</span> quantify agreement between observed classes and predicted probabilities:
 <span class="math display">\[ B = \frac{1}{n} \sum_{i=1}^{n}{ ( p_{i} - y_{i} )^{2}  }  \]</span>
 where <span class="math inline">\(B\)</span> is an index of agreement between predicted probabilities, <span class="math inline">\(\mathbf{p}\)</span>, and class labels, <span class="math inline">\(\mathbf{y}\)</span>. Larger values suggest less agreement between probabilities and observed class labels.</p>
 <p>Follow-up:</p>
@@ -459,7 +460,7 @@ where <span class="math inline">\(B\)</span> is an index of agreement between pr
 </div>
 <div id="tau-and-weighted-tau-class-similarity" class="section level3 hasAnchor" number="7.5.3">
 <h3><span class="header-section-number">A.5.3</span> Tau and Weighted Tau (class-similarity)<a href="acc-unc-categorical-data.html#tau-and-weighted-tau-class-similarity" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p><span class="citation">(<a href="#ref-Rossiter2017" role="doc-biblioref">Rossiter, Zeng, and Zhang 2017</a>)</span> implemented in <code>aqp::tauw()</code>. This paper contains some discussion on a weighted version of Shannon Entropy using the subset of similarities between predicted classes and the <em>actual</em> class.</p>
+<p><span class="citation">(<a href="#ref-Rossiter2017">Rossiter, Zeng, and Zhang 2017</a>)</span> implemented in <code>aqp::tauw()</code>. This paper contains some discussion on a weighted version of Shannon Entropy using the subset of similarities between predicted classes and the <em>actual</em> class.</p>
 <div id="commentary-from-dgr" class="section level4 hasAnchor" number="7.5.3.1">
 <h4><span class="header-section-number">A.5.3.1</span> Commentary from DGR<a href="acc-unc-categorical-data.html#commentary-from-dgr" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <ul>
@@ -481,7 +482,7 @@ where <span class="math inline">\(B\)</span> is an index of agreement between pr
 <h3><span class="header-section-number">A.6.1</span> Shanon Entropy<a href="acc-unc-categorical-data.html#shanon-entropy" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><span class="math display">\[ H = -\sum_{i=1}^{n}{p_{i} * log_{2}(p_{i})}  \]</span></p>
 <p>where <span class="math inline">\(H\)</span> is an index of uncertainty associated with predicted probabilities, <span class="math inline">\(\mathbf{p}\)</span>, of encountering classes <span class="math inline">\(i\)</span> through <span class="math inline">\(n\)</span>. Smaller values imply less entropy (more information). Given equal class probabilities, H will increas as the number of classes increases.</p>
-<p><span class="citation">Kempen et al. (<a href="#ref-Kempen2009" role="doc-biblioref">2009</a>)</span> described a normalized version of Shannon entropy that is constrained to values between 0 and 1:</p>
+<p><span class="citation">Kempen et al. (<a href="#ref-Kempen2009">2009</a>)</span> described a normalized version of Shannon entropy that is constrained to values between 0 and 1:</p>
 <p><span class="math display">\[ H = -\sum_{i=1}^{n}{p_{i} * log_{n}(p_{i})}  \]</span>
 where <span class="math inline">\(H\)</span> is an index of uncertainty associated with predicted probabilities, <span class="math inline">\(\mathbf{p}\)</span>, of encountering classes <span class="math inline">\(i\)</span> through <span class="math inline">\(n\)</span>. This representation may be conveniently contained within the range of <span class="math inline">\([0,1]\)</span>, however, it cannot be used to compare uncertainty from models using different numbers of classes.</p>
 <p>It is my recommendation that the <span class="math inline">\(log_{2}\)</span> version of Shannon H be used as our <em>primary</em> metric of uncertainty for predictive soil class mapping.</p>
@@ -490,13 +491,13 @@ where <span class="math inline">\(H\)</span> is an index of uncertainty associat
 </div>
 <div id="review" class="section level2 hasAnchor" number="7.7">
 <h2><span class="header-section-number">A.7</span> Review<a href="acc-unc-categorical-data.html#review" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div class="sourceCode" id="cb309"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb309-1"><a href="acc-unc-categorical-data.html#cb309-1" aria-hidden="true" tabindex="-1"></a><span class="co"># examples of three cases</span></span>
-<span id="cb309-2"><a href="acc-unc-categorical-data.html#cb309-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(p<span class="fl">.1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb312"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb312-1"><a href="acc-unc-categorical-data.html#cb312-1" tabindex="-1"></a><span class="co"># examples of three cases</span></span>
+<span id="cb312-2"><a href="acc-unc-categorical-data.html#cb312-2" tabindex="-1"></a><span class="fu">print</span>(p<span class="fl">.1</span>)</span></code></pre></div>
 <p><img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-3-1.svg" width="960" /></p>
-<div class="sourceCode" id="cb310"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb310-1"><a href="acc-unc-categorical-data.html#cb310-1" aria-hidden="true" tabindex="-1"></a>pp <span class="ot">&lt;-</span> <span class="fu">ldply</span>(s, performance)</span>
-<span id="cb310-2"><a href="acc-unc-categorical-data.html#cb310-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(pp)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&#39;example&#39;</span></span>
-<span id="cb310-3"><a href="acc-unc-categorical-data.html#cb310-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb310-4"><a href="acc-unc-categorical-data.html#cb310-4" aria-hidden="true" tabindex="-1"></a><span class="fu">kable_styling</span>(<span class="fu">kable</span>(pp, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format=</span><span class="st">&#39;html&#39;</span>), <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb313"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb313-1"><a href="acc-unc-categorical-data.html#cb313-1" tabindex="-1"></a>pp <span class="ot">&lt;-</span> <span class="fu">ldply</span>(s, performance)</span>
+<span id="cb313-2"><a href="acc-unc-categorical-data.html#cb313-2" tabindex="-1"></a><span class="fu">names</span>(pp)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&#39;example&#39;</span></span>
+<span id="cb313-3"><a href="acc-unc-categorical-data.html#cb313-3" tabindex="-1"></a></span>
+<span id="cb313-4"><a href="acc-unc-categorical-data.html#cb313-4" tabindex="-1"></a><span class="fu">kable_styling</span>(<span class="fu">kable</span>(pp, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format=</span><span class="st">&#39;html&#39;</span>), <span class="at">full_width =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -529,10 +530,10 @@ Case 1
 0.19
 </td>
 <td style="text-align:right;">
-0.15
+0.14
 </td>
 <td style="text-align:right;">
-0.36
+0.35
 </td>
 </tr>
 <tr>
@@ -540,16 +541,16 @@ Case 1
 Case 2
 </td>
 <td style="text-align:right;">
-0.71
+0.72
 </td>
 <td style="text-align:right;">
-0.28
+0.26
 </td>
 <td style="text-align:right;">
-0.22
+0.21
 </td>
 <td style="text-align:right;">
-0.43
+0.41
 </td>
 </tr>
 <tr>
@@ -557,13 +558,13 @@ Case 2
 Case 3
 </td>
 <td style="text-align:right;">
-0.29
+0.28
 </td>
 <td style="text-align:right;">
-0.80
+0.81
 </td>
 <td style="text-align:right;">
-0.44
+0.45
 </td>
 <td style="text-align:right;">
 0.84
@@ -571,12 +572,12 @@ Case 3
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb311"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb311-1"><a href="acc-unc-categorical-data.html#cb311-1" aria-hidden="true" tabindex="-1"></a>ex <span class="ot">&lt;-</span> <span class="fu">ldply</span>(s, extractExample, <span class="at">n=</span><span class="dv">1</span>)</span>
-<span id="cb311-2"><a href="acc-unc-categorical-data.html#cb311-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(ex)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&#39;example&#39;</span></span>
-<span id="cb311-3"><a href="acc-unc-categorical-data.html#cb311-3" aria-hidden="true" tabindex="-1"></a>ex<span class="sc">$</span>CI <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb311-4"><a href="acc-unc-categorical-data.html#cb311-4" aria-hidden="true" tabindex="-1"></a>ex<span class="sc">$</span>actual <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb311-5"><a href="acc-unc-categorical-data.html#cb311-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb311-6"><a href="acc-unc-categorical-data.html#cb311-6" aria-hidden="true" tabindex="-1"></a><span class="fu">add_header_above</span>(<span class="fu">kable_styling</span>(<span class="fu">kable</span>(ex, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format=</span><span class="st">&#39;html&#39;</span>), <span class="at">full_width =</span> <span class="cn">FALSE</span>), <span class="at">header=</span><span class="fu">c</span>(<span class="st">&quot; &quot;</span> <span class="ot">=</span> <span class="dv">1</span>, <span class="st">&quot;Class Probabilities&quot;</span> <span class="ot">=</span> <span class="dv">5</span>, <span class="st">&quot;Uncertainty&quot;</span> <span class="ot">=</span> <span class="dv">1</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb314"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb314-1"><a href="acc-unc-categorical-data.html#cb314-1" tabindex="-1"></a>ex <span class="ot">&lt;-</span> <span class="fu">ldply</span>(s, extractExample, <span class="at">n=</span><span class="dv">1</span>)</span>
+<span id="cb314-2"><a href="acc-unc-categorical-data.html#cb314-2" tabindex="-1"></a><span class="fu">names</span>(ex)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">&#39;example&#39;</span></span>
+<span id="cb314-3"><a href="acc-unc-categorical-data.html#cb314-3" tabindex="-1"></a>ex<span class="sc">$</span>CI <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb314-4"><a href="acc-unc-categorical-data.html#cb314-4" tabindex="-1"></a>ex<span class="sc">$</span>actual <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb314-5"><a href="acc-unc-categorical-data.html#cb314-5" tabindex="-1"></a></span>
+<span id="cb314-6"><a href="acc-unc-categorical-data.html#cb314-6" tabindex="-1"></a><span class="fu">add_header_above</span>(<span class="fu">kable_styling</span>(<span class="fu">kable</span>(ex, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format=</span><span class="st">&#39;html&#39;</span>), <span class="at">full_width =</span> <span class="cn">FALSE</span>), <span class="at">header=</span><span class="fu">c</span>(<span class="st">&quot; &quot;</span> <span class="ot">=</span> <span class="dv">1</span>, <span class="st">&quot;Class Probabilities&quot;</span> <span class="ot">=</span> <span class="dv">5</span>, <span class="st">&quot;Uncertainty&quot;</span> <span class="ot">=</span> <span class="dv">1</span>))</span></code></pre></div>
 <table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -623,22 +624,22 @@ Shannon.H
 Case 1
 </td>
 <td style="text-align:right;">
-0.15
-</td>
-<td style="text-align:right;">
-0.09
+0.11
 </td>
 <td style="text-align:right;">
 0.17
 </td>
 <td style="text-align:right;">
-0.26
+0.06
 </td>
 <td style="text-align:right;">
 0.34
 </td>
 <td style="text-align:right;">
-2.18
+0.32
+</td>
+<td style="text-align:right;">
+2.08
 </td>
 </tr>
 <tr>
@@ -646,22 +647,22 @@ Case 1
 Case 2
 </td>
 <td style="text-align:right;">
-0.05
+0.20
+</td>
+<td style="text-align:right;">
+0.08
 </td>
 <td style="text-align:right;">
 0.11
 </td>
 <td style="text-align:right;">
-0.11
+0.27
 </td>
 <td style="text-align:right;">
-0.45
+0.34
 </td>
 <td style="text-align:right;">
-0.28
-</td>
-<td style="text-align:right;">
-1.96
+2.14
 </td>
 </tr>
 <tr>
@@ -669,22 +670,22 @@ Case 2
 Case 3
 </td>
 <td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
 0.02
 </td>
 <td style="text-align:right;">
-0.03
+0.02
 </td>
 <td style="text-align:right;">
 0.05
 </td>
 <td style="text-align:right;">
-0.08
+0.89
 </td>
 <td style="text-align:right;">
-0.82
-</td>
-<td style="text-align:right;">
-0.98
+0.71
 </td>
 </tr>
 </tbody>
@@ -693,31 +694,31 @@ Case 3
 <div id="example-implementation" class="section level2 hasAnchor" number="7.8">
 <h2><span class="header-section-number">A.8</span> Example Implementation<a href="acc-unc-categorical-data.html#example-implementation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>The <code>aqp</code> package has an implementation of Shannon entropy and Brier score; there are many other implementations but these are convenient for soil survey work. Consider the following table of predicted probabilities (classes A,B,C,D,E) and observed class (actual).</p>
-<div class="sourceCode" id="cb312"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb312-1"><a href="acc-unc-categorical-data.html#cb312-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
-<span id="cb312-2"><a href="acc-unc-categorical-data.html#cb312-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb312-3"><a href="acc-unc-categorical-data.html#cb312-3" aria-hidden="true" tabindex="-1"></a><span class="co"># example data</span></span>
-<span id="cb312-4"><a href="acc-unc-categorical-data.html#cb312-4" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">structure</span>(<span class="fu">list</span>(<span class="at">A =</span> <span class="fu">c</span>(<span class="fl">0.0897243494322252</span>, <span class="fl">0.0537087411977284</span>, </span>
-<span id="cb312-5"><a href="acc-unc-categorical-data.html#cb312-5" aria-hidden="true" tabindex="-1"></a><span class="fl">0.0643087579284512</span>, <span class="fl">0.0582791533521884</span>, <span class="fl">0.0655491726966812</span>, <span class="fl">0.0878056947034425</span>, </span>
-<span id="cb312-6"><a href="acc-unc-categorical-data.html#cb312-6" aria-hidden="true" tabindex="-1"></a><span class="fl">0.0550727743006022</span>, <span class="fl">0.10724015754623</span>, <span class="fl">0.0332599961787985</span>, <span class="fl">0.0555131608754956</span></span>
-<span id="cb312-7"><a href="acc-unc-categorical-data.html#cb312-7" aria-hidden="true" tabindex="-1"></a>), <span class="at">B =</span> <span class="fu">c</span>(<span class="fl">0.191110141078936</span>, <span class="fl">0.187244044389649</span>, <span class="fl">0.119214057525671</span>, </span>
-<span id="cb312-8"><a href="acc-unc-categorical-data.html#cb312-8" aria-hidden="true" tabindex="-1"></a><span class="fl">0.198461646003737</span>, <span class="fl">0.161851348940294</span>, <span class="fl">0.172157251906694</span>, <span class="fl">0.113611770097243</span>, </span>
-<span id="cb312-9"><a href="acc-unc-categorical-data.html#cb312-9" aria-hidden="true" tabindex="-1"></a><span class="fl">0.178697159594029</span>, <span class="fl">0.194607795787689</span>, <span class="fl">0.188977055949146</span>), <span class="at">C =</span> <span class="fu">c</span>(<span class="fl">0.121941735763077</span>, </span>
-<span id="cb312-10"><a href="acc-unc-categorical-data.html#cb312-10" aria-hidden="true" tabindex="-1"></a><span class="fl">0.0770539012535731</span>, <span class="fl">0.0977753159795662</span>, <span class="fl">0.0774293724263895</span>, <span class="fl">0.072198187957068</span>, </span>
-<span id="cb312-11"><a href="acc-unc-categorical-data.html#cb312-11" aria-hidden="true" tabindex="-1"></a><span class="fl">0.0366921003115242</span>, <span class="fl">0.151033286139089</span>, <span class="fl">0.0974443429098862</span>, <span class="fl">0.124876574685048</span>, </span>
-<span id="cb312-12"><a href="acc-unc-categorical-data.html#cb312-12" aria-hidden="true" tabindex="-1"></a><span class="fl">0.0864142563046045</span>), <span class="at">D =</span> <span class="fu">c</span>(<span class="fl">0.351108807309283</span>, <span class="fl">0.322120077305279</span>, </span>
-<span id="cb312-13"><a href="acc-unc-categorical-data.html#cb312-13" aria-hidden="true" tabindex="-1"></a><span class="fl">0.440632731639948</span>, <span class="fl">0.401063395801608</span>, <span class="fl">0.312647702445919</span>, <span class="fl">0.304193047630158</span>, </span>
-<span id="cb312-14"><a href="acc-unc-categorical-data.html#cb312-14" aria-hidden="true" tabindex="-1"></a><span class="fl">0.270239142407351</span>, <span class="fl">0.258895264130713</span>, <span class="fl">0.422747316475851</span>, <span class="fl">0.252724366285052</span></span>
-<span id="cb312-15"><a href="acc-unc-categorical-data.html#cb312-15" aria-hidden="true" tabindex="-1"></a>), <span class="at">E =</span> <span class="fu">c</span>(<span class="fl">0.246114966416479</span>, <span class="fl">0.359873235853771</span>, <span class="fl">0.278069136926363</span>, </span>
-<span id="cb312-16"><a href="acc-unc-categorical-data.html#cb312-16" aria-hidden="true" tabindex="-1"></a><span class="fl">0.264766432416077</span>, <span class="fl">0.387753587960038</span>, <span class="fl">0.399151905448182</span>, <span class="fl">0.410043027055715</span>, </span>
-<span id="cb312-17"><a href="acc-unc-categorical-data.html#cb312-17" aria-hidden="true" tabindex="-1"></a><span class="fl">0.357723075819142</span>, <span class="fl">0.224508316872614</span>, <span class="fl">0.416371160585702</span>), <span class="at">id =</span> <span class="fu">c</span>(<span class="st">&quot;1&quot;</span>, </span>
-<span id="cb312-18"><a href="acc-unc-categorical-data.html#cb312-18" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;10&quot;</span>, <span class="st">&quot;100&quot;</span>, <span class="st">&quot;1000&quot;</span>, <span class="st">&quot;101&quot;</span>, <span class="st">&quot;102&quot;</span>, <span class="st">&quot;103&quot;</span>, <span class="st">&quot;104&quot;</span>, <span class="st">&quot;105&quot;</span>, <span class="st">&quot;106&quot;</span></span>
-<span id="cb312-19"><a href="acc-unc-categorical-data.html#cb312-19" aria-hidden="true" tabindex="-1"></a>), <span class="at">actual =</span> <span class="fu">c</span>(<span class="st">&quot;D&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;E&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;E&quot;</span>, <span class="st">&quot;E&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;E&quot;</span></span>
-<span id="cb312-20"><a href="acc-unc-categorical-data.html#cb312-20" aria-hidden="true" tabindex="-1"></a>)), <span class="at">.Names =</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;C&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;E&quot;</span>, <span class="st">&quot;id&quot;</span>, <span class="st">&quot;actual&quot;</span>), <span class="at">row.names =</span> <span class="fu">c</span>(<span class="cn">NA</span>, </span>
-<span id="cb312-21"><a href="acc-unc-categorical-data.html#cb312-21" aria-hidden="true" tabindex="-1"></a>10L), <span class="at">class =</span> <span class="st">&quot;data.frame&quot;</span>)</span>
-<span id="cb312-22"><a href="acc-unc-categorical-data.html#cb312-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb312-23"><a href="acc-unc-categorical-data.html#cb312-23" aria-hidden="true" tabindex="-1"></a><span class="co"># check it out</span></span>
-<span id="cb312-24"><a href="acc-unc-categorical-data.html#cb312-24" aria-hidden="true" tabindex="-1"></a><span class="co"># predictions, and actual, observed class</span></span>
-<span id="cb312-25"><a href="acc-unc-categorical-data.html#cb312-25" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(d)</span></code></pre></div>
+<div class="sourceCode" id="cb315"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb315-1"><a href="acc-unc-categorical-data.html#cb315-1" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
+<span id="cb315-2"><a href="acc-unc-categorical-data.html#cb315-2" tabindex="-1"></a></span>
+<span id="cb315-3"><a href="acc-unc-categorical-data.html#cb315-3" tabindex="-1"></a><span class="co"># example data</span></span>
+<span id="cb315-4"><a href="acc-unc-categorical-data.html#cb315-4" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">structure</span>(<span class="fu">list</span>(<span class="at">A =</span> <span class="fu">c</span>(<span class="fl">0.0897243494322252</span>, <span class="fl">0.0537087411977284</span>, </span>
+<span id="cb315-5"><a href="acc-unc-categorical-data.html#cb315-5" tabindex="-1"></a><span class="fl">0.0643087579284512</span>, <span class="fl">0.0582791533521884</span>, <span class="fl">0.0655491726966812</span>, <span class="fl">0.0878056947034425</span>, </span>
+<span id="cb315-6"><a href="acc-unc-categorical-data.html#cb315-6" tabindex="-1"></a><span class="fl">0.0550727743006022</span>, <span class="fl">0.10724015754623</span>, <span class="fl">0.0332599961787985</span>, <span class="fl">0.0555131608754956</span></span>
+<span id="cb315-7"><a href="acc-unc-categorical-data.html#cb315-7" tabindex="-1"></a>), <span class="at">B =</span> <span class="fu">c</span>(<span class="fl">0.191110141078936</span>, <span class="fl">0.187244044389649</span>, <span class="fl">0.119214057525671</span>, </span>
+<span id="cb315-8"><a href="acc-unc-categorical-data.html#cb315-8" tabindex="-1"></a><span class="fl">0.198461646003737</span>, <span class="fl">0.161851348940294</span>, <span class="fl">0.172157251906694</span>, <span class="fl">0.113611770097243</span>, </span>
+<span id="cb315-9"><a href="acc-unc-categorical-data.html#cb315-9" tabindex="-1"></a><span class="fl">0.178697159594029</span>, <span class="fl">0.194607795787689</span>, <span class="fl">0.188977055949146</span>), <span class="at">C =</span> <span class="fu">c</span>(<span class="fl">0.121941735763077</span>, </span>
+<span id="cb315-10"><a href="acc-unc-categorical-data.html#cb315-10" tabindex="-1"></a><span class="fl">0.0770539012535731</span>, <span class="fl">0.0977753159795662</span>, <span class="fl">0.0774293724263895</span>, <span class="fl">0.072198187957068</span>, </span>
+<span id="cb315-11"><a href="acc-unc-categorical-data.html#cb315-11" tabindex="-1"></a><span class="fl">0.0366921003115242</span>, <span class="fl">0.151033286139089</span>, <span class="fl">0.0974443429098862</span>, <span class="fl">0.124876574685048</span>, </span>
+<span id="cb315-12"><a href="acc-unc-categorical-data.html#cb315-12" tabindex="-1"></a><span class="fl">0.0864142563046045</span>), <span class="at">D =</span> <span class="fu">c</span>(<span class="fl">0.351108807309283</span>, <span class="fl">0.322120077305279</span>, </span>
+<span id="cb315-13"><a href="acc-unc-categorical-data.html#cb315-13" tabindex="-1"></a><span class="fl">0.440632731639948</span>, <span class="fl">0.401063395801608</span>, <span class="fl">0.312647702445919</span>, <span class="fl">0.304193047630158</span>, </span>
+<span id="cb315-14"><a href="acc-unc-categorical-data.html#cb315-14" tabindex="-1"></a><span class="fl">0.270239142407351</span>, <span class="fl">0.258895264130713</span>, <span class="fl">0.422747316475851</span>, <span class="fl">0.252724366285052</span></span>
+<span id="cb315-15"><a href="acc-unc-categorical-data.html#cb315-15" tabindex="-1"></a>), <span class="at">E =</span> <span class="fu">c</span>(<span class="fl">0.246114966416479</span>, <span class="fl">0.359873235853771</span>, <span class="fl">0.278069136926363</span>, </span>
+<span id="cb315-16"><a href="acc-unc-categorical-data.html#cb315-16" tabindex="-1"></a><span class="fl">0.264766432416077</span>, <span class="fl">0.387753587960038</span>, <span class="fl">0.399151905448182</span>, <span class="fl">0.410043027055715</span>, </span>
+<span id="cb315-17"><a href="acc-unc-categorical-data.html#cb315-17" tabindex="-1"></a><span class="fl">0.357723075819142</span>, <span class="fl">0.224508316872614</span>, <span class="fl">0.416371160585702</span>), <span class="at">id =</span> <span class="fu">c</span>(<span class="st">&quot;1&quot;</span>, </span>
+<span id="cb315-18"><a href="acc-unc-categorical-data.html#cb315-18" tabindex="-1"></a><span class="st">&quot;10&quot;</span>, <span class="st">&quot;100&quot;</span>, <span class="st">&quot;1000&quot;</span>, <span class="st">&quot;101&quot;</span>, <span class="st">&quot;102&quot;</span>, <span class="st">&quot;103&quot;</span>, <span class="st">&quot;104&quot;</span>, <span class="st">&quot;105&quot;</span>, <span class="st">&quot;106&quot;</span></span>
+<span id="cb315-19"><a href="acc-unc-categorical-data.html#cb315-19" tabindex="-1"></a>), <span class="at">actual =</span> <span class="fu">c</span>(<span class="st">&quot;D&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;E&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;E&quot;</span>, <span class="st">&quot;E&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;E&quot;</span></span>
+<span id="cb315-20"><a href="acc-unc-categorical-data.html#cb315-20" tabindex="-1"></a>)), <span class="at">.Names =</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;C&quot;</span>, <span class="st">&quot;D&quot;</span>, <span class="st">&quot;E&quot;</span>, <span class="st">&quot;id&quot;</span>, <span class="st">&quot;actual&quot;</span>), <span class="at">row.names =</span> <span class="fu">c</span>(<span class="cn">NA</span>, </span>
+<span id="cb315-21"><a href="acc-unc-categorical-data.html#cb315-21" tabindex="-1"></a><span class="dv">10</span><span class="dt">L</span>), <span class="at">class =</span> <span class="st">&quot;data.frame&quot;</span>)</span>
+<span id="cb315-22"><a href="acc-unc-categorical-data.html#cb315-22" tabindex="-1"></a></span>
+<span id="cb315-23"><a href="acc-unc-categorical-data.html#cb315-23" tabindex="-1"></a><span class="co"># check it out</span></span>
+<span id="cb315-24"><a href="acc-unc-categorical-data.html#cb315-24" tabindex="-1"></a><span class="co"># predictions, and actual, observed class</span></span>
+<span id="cb315-25"><a href="acc-unc-categorical-data.html#cb315-25" tabindex="-1"></a><span class="fu">head</span>(d)</span></code></pre></div>
 <pre><code>##            A         B          C         D         E   id actual
 ## 1 0.08972435 0.1911101 0.12194174 0.3511088 0.2461150    1      D
 ## 2 0.05370874 0.1872440 0.07705390 0.3221201 0.3598732   10      B
@@ -726,15 +727,15 @@ Case 3
 ## 5 0.06554917 0.1618513 0.07219819 0.3126477 0.3877536  101      D
 ## 6 0.08780569 0.1721573 0.03669210 0.3041930 0.3991519  102      D</code></pre>
 <p>Brier scores (accuracy) are computed over all predictions and associated observed classes.</p>
-<div class="sourceCode" id="cb314"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb314-1"><a href="acc-unc-categorical-data.html#cb314-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute Brier score from all predictions</span></span>
-<span id="cb314-2"><a href="acc-unc-categorical-data.html#cb314-2" aria-hidden="true" tabindex="-1"></a><span class="fu">brierScore</span>(d, <span class="at">classLabels =</span> <span class="fu">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>, <span class="st">&#39;C&#39;</span>, <span class="st">&#39;D&#39;</span>, <span class="st">&#39;E&#39;</span>), <span class="at">actual =</span> <span class="st">&#39;actual&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb317"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb317-1"><a href="acc-unc-categorical-data.html#cb317-1" tabindex="-1"></a><span class="co"># compute Brier score from all predictions</span></span>
+<span id="cb317-2"><a href="acc-unc-categorical-data.html#cb317-2" tabindex="-1"></a><span class="fu">brierScore</span>(d, <span class="at">classLabels =</span> <span class="fu">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>, <span class="st">&#39;C&#39;</span>, <span class="st">&#39;D&#39;</span>, <span class="st">&#39;E&#39;</span>), <span class="at">actual =</span> <span class="st">&#39;actual&#39;</span>)</span></code></pre></div>
 <pre><code>## [1] 0.5833992</code></pre>
 <p>Shannon entropy (uncertainty) is computed from each vector of predicted probabilities.</p>
-<div class="sourceCode" id="cb316"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb316-1"><a href="acc-unc-categorical-data.html#cb316-1" aria-hidden="true" tabindex="-1"></a><span class="co"># shannon entropy for first row, could be a single pixel or obs. point</span></span>
-<span id="cb316-2"><a href="acc-unc-categorical-data.html#cb316-2" aria-hidden="true" tabindex="-1"></a><span class="fu">shannonEntropy</span>(d[<span class="dv">1</span>, <span class="fu">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>, <span class="st">&#39;C&#39;</span>, <span class="st">&#39;D&#39;</span>, <span class="st">&#39;E&#39;</span>)])</span></code></pre></div>
+<div class="sourceCode" id="cb319"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb319-1"><a href="acc-unc-categorical-data.html#cb319-1" tabindex="-1"></a><span class="co"># shannon entropy for first row, could be a single pixel or obs. point</span></span>
+<span id="cb319-2"><a href="acc-unc-categorical-data.html#cb319-2" tabindex="-1"></a><span class="fu">shannonEntropy</span>(d[<span class="dv">1</span>, <span class="fu">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>, <span class="st">&#39;C&#39;</span>, <span class="st">&#39;D&#39;</span>, <span class="st">&#39;E&#39;</span>)])</span></code></pre></div>
 <pre><code>## [1] 2.166525</code></pre>
-<div class="sourceCode" id="cb318"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb318-1"><a href="acc-unc-categorical-data.html#cb318-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute shannon entropy for all rows</span></span>
-<span id="cb318-2"><a href="acc-unc-categorical-data.html#cb318-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(d[, <span class="fu">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>, <span class="st">&#39;C&#39;</span>, <span class="st">&#39;D&#39;</span>, <span class="st">&#39;E&#39;</span>)], <span class="dv">1</span>, shannonEntropy)</span></code></pre></div>
+<div class="sourceCode" id="cb321"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb321-1"><a href="acc-unc-categorical-data.html#cb321-1" tabindex="-1"></a><span class="co"># compute shannon entropy for all rows</span></span>
+<span id="cb321-2"><a href="acc-unc-categorical-data.html#cb321-2" tabindex="-1"></a><span class="fu">apply</span>(d[, <span class="fu">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>, <span class="st">&#39;C&#39;</span>, <span class="st">&#39;D&#39;</span>, <span class="st">&#39;E&#39;</span>)], <span class="dv">1</span>, shannonEntropy)</span></code></pre></div>
 <pre><code>##        1        2        3        4        5        6        7        8 
 ## 2.166525 2.021157 1.982791 2.024063 2.011094 1.971243 2.036219 2.151995 
 ##        9       10 
@@ -765,7 +766,7 @@ Case 3
 </div>
 </div>
 <h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-Burrough1997" class="csl-entry">
 Burrough, P. A., P. F. M. van Gaans, and R. Hootsmans. 1997. <span>“Continuous Classification in Soil Survey: Spatial Correlation, Confusion and Boundaries.”</span> <em>Geoderma</em> 77: 115–35. <a href="https://doi.org/10.1016/S0016-7061(97)00018-9">https://doi.org/10.1016/S0016-7061(97)00018-9</a>.
 </div>

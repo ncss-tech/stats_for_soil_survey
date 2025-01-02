@@ -24,7 +24,7 @@ The data that we will be working with in this chapter were collected in support 
 Before we dive in to model building, let's first import and plot the dataset in R. 
 
 
-```r
+``` r
 library(dplyr)    # data manipulation
 library(ggplot2)  # graphing
 library(sf)       # spatial data
@@ -41,15 +41,20 @@ soildata <- st_as_sf(
 ```
 
 
-```r
+``` r
 mapview(soildata)
+```
+
+
+```
+##   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%
 ```
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-4-1.png" width="672" />
 
 
 
-```r
+``` r
 # convert soildata into a shapefile
 # edit DSN path accordingly
 write_sf(soildata, dsn = "C:/workspace/soildata.shp") 
@@ -61,7 +66,7 @@ Conveniently, environmental covariate values were previously extracted for all o
 ### Examining Data in R
 
 
-```r
+``` r
 #since we converted the `soildata` `data.frame` to a spatial object to export as an ESRI shapefile, we will need to convert it back to a `data.frame` to plot and further examine the data in R
 
 #re-importing the data and overwriting the soildata object is just one way to achieve this
@@ -130,7 +135,7 @@ str(soildata) #examine the internal data structure
 The example dataset, **soildata**, consists of 250 observations and 58 variables that were collected in the field or derived from geospatial data to identify spodic soil properties in West Virginia. Of particular interest is determining best splits for spodic intensity (relative spodicity index). As you can see in the data structure, R interpreted the spodint field as numeric. Since spodint is an index, it will need to be changed to a factor and then to an ordered factor. The same will need to be done for tipmound (a tip and mound microtopography index).
 
 
-```r
+``` r
 set.seed(250)
 soildata <- mutate(soildata,
                    spodint  = factor(spodint,  ordered = TRUE),
@@ -141,7 +146,7 @@ soildata <- mutate(soildata,
 Next, let's explore the tabular data:
 
 
-```r
+``` r
 # does solar radiation affect spodic intensity?
 ggplot(soildata, aes(x = spodint, y = solar)) +
   geom_boxplot() +
@@ -150,7 +155,7 @@ ggplot(soildata, aes(x = spodint, y = solar)) +
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-8-1.png" width="672" />
 
-```r
+``` r
 #how about aspect?
 ggplot(soildata, aes(x = spodint, y = northwestn)) +
   geom_boxplot() +
@@ -159,7 +164,7 @@ ggplot(soildata, aes(x = spodint, y = northwestn)) +
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-8-2.png" width="672" />
 
-```r
+``` r
 #distribution of O horizon thickness among soil orders
 ggplot(soildata, aes(x = Otot)) +
   geom_density() +
@@ -168,7 +173,7 @@ ggplot(soildata, aes(x = Otot)) +
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-8-3.png" width="672" />
 
-```r
+``` r
 # combine numeric columns into a new data frame
 numeric <- soildata[, c(8, 25, 27:50)] 
 names(numeric) 
@@ -183,7 +188,7 @@ names(numeric)
 ## [26] "tanc75"
 ```
 
-```r
+``` r
 # calculate correlation matrix
 cormatrix <- cor(numeric) 
 
@@ -204,7 +209,7 @@ The basic form for all CART models is (y ~ x), where y is the dependent variable
 Assuming that the rpart and randomForest packages are already installed on your machine, simply load the packages using the `library()` function.
 
 
-```r
+``` r
 library(rpart)        # CART models
 library(randomForest) # random forest
 library(rpart.plot)   # rpart plot graphics
@@ -215,7 +220,7 @@ library(caret)        # confusion matrix
 If you wanted to create a classification tree for spodint using all of the variables, you would simply type: `rpart(spodint ~ ., data=soildata)`. Since our goal is to generate a spatial prediction model, we only want to use the variables for which we have spatial coverage--our environmental covariate rasters. 
 
 
-```r
+``` r
 spodintmodel <- rpart(
   spodint ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, 
   data   = soildata, 
@@ -262,7 +267,7 @@ spodintmodel
 ##        15) maxent>=9.5806 47  13 2 (0.085 0.043 0.15 0 0.72) *
 ```
 
-```r
+``` r
 plot(spodintmodel)
 text(spodintmodel, cex = 0.8) #cex is text size
 ```
@@ -270,7 +275,7 @@ text(spodintmodel, cex = 0.8) #cex is text size
 <img src="006-treemodels_files/figure-html/unnamed-chunk-10-1.png" width="672" />
 
 
-```r
+``` r
 #if you are having trouble viewing the text in the plot window, click zoom to open a bigger window
 #you may also need to adjust the plot margins or text size; for this example, try:
 par(mar = c(3, 6, 3, 6)) 
@@ -280,21 +285,21 @@ text(spodintmodel, cex = 0.6)
 
 For more plot customization, use the rpart.plot package. 
 
-```r
+``` r
 # extra=3 displays the misclassification rate at the node, expressed as the number of incorrect classifications divided by the total observations in the node; there are many options under the extra setting for classification models
 rpart.plot(spodintmodel, extra = 3) 
 ```
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-12-1.png" width="576" />
 
-```r
+``` r
 # adding 100 to the extra setting displays the percentage observations in the node
 rpart.plot(spodintmodel, extra = 103) 
 ```
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-12-2.png" width="576" />
 
-```r
+``` r
 # prp is another function in the rpart.plot package that has numerous plot customization options
 prp(spodintmodel, type = 1, extra = 1, branch = 1) 
 ```
@@ -308,7 +313,7 @@ Could we treat spodic intesity (an ordered factor) as numeric, ranging from 0 to
 What if we considered everything with a spodic intensity of <= 0.5 to be non-spodic and everything >0.5 to be spodic? A binary probability approach to predicting spodic morphology, similar to Nauman et al., 2015.
 
 
-```r
+``` r
 # index for lookup table
 index  <- c(0, 0.5, 1, 1.5, 2) 
 
@@ -355,7 +360,7 @@ spodintmodel2
 ##       15) landsatb7< 0.0440802 66   7 spodic (0.1060606 0.8939394) *
 ```
 
-```r
+``` r
 plot(spodintmodel2)
 text(spodintmodel2, cex = 0.8)
 ```
@@ -365,7 +370,7 @@ text(spodintmodel2, cex = 0.8)
 Notice that several of the splits changed. Which model performed better? One way to compare the two models is to use the function `printcp()`:
 
 
-```r
+``` r
 printcp(spodintmodel)
 ```
 
@@ -397,7 +402,7 @@ printcp(spodintmodel)
 ## 7 0.010000     14   0.53086 1.01235 0.046365
 ```
 
-```r
+``` r
 printcp(spodintmodel2)
 ```
 
@@ -429,13 +434,13 @@ printcp(spodintmodel2)
 The `printcp()` funtion generates a cost complexity parameter table that provides the complexity parameter value (CP), relative model error (1 - relative error = ~variance explained), error estimated from a 10-fold cross validation (xerror), and the standard error of the xerror (xstd). The CP values control the size of the tree; the greater the CP value, the fewer the number of splits in the tree. To determine the optimal CP value, rpart automatically performs a 10-fold cross validation. The optimal size of the tree is generally the row in the CP table that minimizes all error with the fewest branches. Another way to determine the optimal tree size is to use the `plotcp()` function. This will plot the xerror versus cp value and tree size. 
 
 
-```r
+``` r
 plotcp(spodintmodel)
 ```
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-15-1.png" width="672" />
 
-```r
+``` r
 plotcp(spodintmodel2)
 ```
 
@@ -444,7 +449,7 @@ plotcp(spodintmodel2)
 The optimal CP value is 0.029321 for spodintmodel and 0.050459 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
 
 
-```r
+``` r
 pruned <- prune(spodintmodel, cp = 0.029321)
 printcp(pruned)
 ```
@@ -472,13 +477,13 @@ printcp(pruned)
 ## 3 0.029321      2   0.79012 1.03704 0.045822
 ```
 
-```r
+``` r
 rpart.plot(pruned, extra = 3)
 ```
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-16-1.png" width="288" />
 
-```r
+``` r
 pruned2 <- prune(spodintmodel2, cp = 0.050459)
 printcp(pruned2)
 ```
@@ -505,7 +510,7 @@ printcp(pruned2)
 ## 2 0.050459      1   0.74312 0.81651 0.069456
 ```
 
-```r
+``` r
 rpart.plot(pruned2, extra = 3)
 ```
 
@@ -516,7 +521,7 @@ The misclassification rate (in cross-validation) for the spodintmodel was 57% (r
 Let's compute an internal validation using a confusion matrix to further examine differences in these models. In order to do this, we will need to split our data into a training and test set.
 
 
-```r
+``` r
 ## splits 70% of the data selected randomly into training set and the remaining 30% sample into test set
 datasplit <- sample(nrow(soildata), nrow(soildata) * 0.7) 
 train <- soildata[datasplit,]
@@ -557,7 +562,7 @@ printcp(spodintmodel)
 ## 6 0.010000      7   0.53571 0.86607 0.058708
 ```
 
-```r
+``` r
 pruned <- prune(spodintmodel, cp = 0.070175)
 
 # predicting class test data using the pruned model
@@ -603,7 +608,7 @@ confusionMatrix(pred, test$spodint)
 ## Balanced Accuracy      0.5900       0.50  0.51058    0.50000   0.6521
 ```
 
-```r
+``` r
 spodintmodel2 <- rpart(
   newcolumn ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75, 
   data   = train, 
@@ -640,7 +645,7 @@ printcp(spodintmodel2)
 ## 6 0.010000     10   0.35897 0.93590 0.083627
 ```
 
-```r
+``` r
 pruned2 <- prune(spodintmodel2, cp=0.050459)
 
 # predicting class of test data using the pruned model
@@ -701,7 +706,7 @@ The randomForest algorithm fits hundreds to thousands of CART models to random s
 Going back to the **soildata** dataset, let's generate a random forest regression model for total O horizon thickness and compare it to the one we just generated in rpart. Just like rpart, randomForest has the same basic model function: (y ~ x).
 
 
-```r
+``` r
 # importance = TRUE will allow the generation of a variable importance plot
 rf <- randomForest(
   Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl + landsatb1 + landsatb2 + landsatb3 +landsatb7 + maxc100 + maxent + minc100 + mirref + ndvi+ northeastn + northness + northwestn + planc100 + proc100 + protection + relpos11 + slp50 + solar + tanc75,
@@ -727,7 +732,7 @@ rf
 ##                     % Var explained: 21.6
 ```
 
-```r
+``` r
 # out of bag (OOB) error rate versus number of trees; this will help us tune the ntree parameter
 plot(rf)
 ```
@@ -738,7 +743,7 @@ The rf model, generated using the default number of trees and number of variable
 
 Recall that the **soildata** dataset had one Histosol observation:
 
-```r
+``` r
 hist(soildata$Otot)
 ```
 
@@ -747,7 +752,7 @@ hist(soildata$Otot)
 
 Let's remove that observation to see how it impacted our model. 
 
-```r
+``` r
 # file <- 'https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv'
 # download.file(file, destfile = "soildata.csv")
 # soildata <- read.csv("soildata.csv", header=TRUE, sep=",")
@@ -785,13 +790,13 @@ The defaults for the number of trees (`ntree`) and number of variables tried at 
 Another way to assess the rf model is to look at the variable importance plot. 
 
 
-```r
+``` r
 varImpPlot(rf2)
 ```
 
 <img src="006-treemodels_files/figure-html/unnamed-chunk-21-1.png" width="672" />
 
-```r
+``` r
 # sorted tabular summary
 importance(rf2) %>%
   as.data.frame() %>%
@@ -839,7 +844,7 @@ In the rf2 model, it is apparent that landsatb7 is the most important variable u
 Using the **soildata** dataset, construct a randomForest model to predict the probability of a folistic epipedon. Be sure to tweak the ntree and mtry parameters to capture the most variability. Use the following code to combine ochric and umbric into a new category called nonfolistic. 
 
 
-```r
+``` r
 soildata$epipedon2 <- ifelse(soildata$epipedon %in% c("ochric", "umbric"), "nonfolistic", soildata$epipedon)
 ```
 
@@ -855,7 +860,7 @@ soildata$epipedon2 <- ifelse(soildata$epipedon %in% c("ochric", "umbric"), "nonf
 As with any modeling technique, tree-based models can be used for prediction and can be spatially interpolated using environmental covariates. In order to interpolate a model, R requires that all raster images have a common datum, common cell resolution, are coregistered, and are preferably .img files. The function `stack()` combines all of the rasters into a "raster stack." The `predict()` function is then used in the form of: `predict(rasterstack, fittedmodel, type="")`. Follow along through the example below to interpolate the rpart total O horizon thickness model:
 
 
-```r
+``` r
 library(raster)
 
 # combine rasters with a .img file extension stored in the working directory
@@ -881,7 +886,7 @@ The output raster "rfpredict.img" can be added and viewed in ArcMap.
 
 You can also view the interpolated model in R:
 
-```r
+``` r
 rfpredict <- raster("rfpredict.img")
 plot(rfpredict, xlab = "Easting (m)", ylab = "Northing (m)", main = "Total O Horizon Thickness (cm)")
 ```
