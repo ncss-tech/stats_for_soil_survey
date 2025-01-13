@@ -1,3 +1,10 @@
+
+## NLMR not on CRAN
+# remotes::install_github("cran/RandomFieldsUtils")
+# remotes::install_github("cran/RandomFields")
+# remotes::install_github("ropensci/NLMR")
+
+
 library(terra)
 library(raster)
 library(sf)
@@ -8,7 +15,16 @@ library(rms)
 library(NLMR)
 
 
+# example image
+
+# portrait of a famous actor
 r <- rast('ah.png')
+
+# an RC airplane
+# r <- rast('scout.png')
+
+# init standardized layer name
+names(r) <- 'var'
 
 # remove color table
 coltab(r) <- NULL
@@ -21,12 +37,18 @@ s <- spatSample(r, 250, method = 'random', as.points = TRUE, na.rm = TRUE)
 s.eval <- spatSample(r, 100, method = 'regular', as.points = TRUE, na.rm = TRUE)
 
 # colors for thematic map
-.cols <- hcl.colors(255, palette = 'mako')
+.cols <- hcl.colors(n = 25, palette = 'roma')
 
 # source data + samples
 plot(r, col = .cols, axes = FALSE)
-points(s, col = 2, cex = 0.5, pch = 0)
-points(s.eval, col = 3, cex = 0.5, pch = 5)
+points(s, col = 1, cex = 1, pch = 16)
+points(s.eval, col = 1, cex = 1, pch = 15)
+
+
+## evaluation of sampled data-space
+s
+
+
 
 
 ## ordinary kriging
@@ -34,7 +56,8 @@ points(s.eval, col = 3, cex = 0.5, pch = 5)
 # annoying spatVect -> SPDF
 x <- as(s, 'Spatial')
 
-v <- variogram(ah ~ 1, x)
+# 
+v <- variogram(var ~ 1, x)
 m <- fit.variogram(v, vgm(psill = 12000, model = "Sph", range = 80, nugget = 100))
 
 plot(v, model = m)
@@ -47,7 +70,7 @@ plot(v, model = m)
 # annoying spatRast -> SPixDF
 r.sp <- as(raster(r), 'SpatialPixelsDataFrame')
 
-z <- krige(formula = ah ~ 1, locations = x, newdata = r.sp, model = m)
+z <- krige(formula = var ~ 1, locations = x, newdata = r.sp, model = m)
 
 # back to spatRast
 z <- rast(z)
@@ -67,12 +90,12 @@ points(s, col = 2, cex = 0.5, pch = 0)
 # external evaluation
 ev <- extract(c(r, z), s.eval)
 
-# RMSE: 35
-sqrt(mean((ev$ah - ev$var1.pred)^2))
+# RMSE
+sqrt(mean((ev$var - ev$var1.pred)^2))
 
 
 ## block kriging
-z.b <- krige(formula = ah ~ 1, locations = x, newdata = r.sp, model = m, block = c(30, 30))
+z.b <- krige(formula = var ~ 1, locations = x, newdata = r.sp, model = m, block = c(30, 30))
 
 # back to spatRast
 z.b <- rast(z.b)
@@ -101,17 +124,16 @@ points(s, col = 2, cex = 0.5, pch = 0)
 # setting block argument results in interesting results
 set.seed(101010)
 csim <- krige(
-  ah ~ 1, 
+  var ~ 1, 
   x, 
   r.sp, 
   model = m,
   nmax = 2, 
-  beta = mean(s$ah), 
+  beta = mean(s$var), 
   nsim = 3
 )
 
 csim <- c(r, rast(csim))
-# csim <- rast(csim)
 plot(csim, legend = FALSE, col = .cols, axes = FALSE, mar = c(0.1, 0.1, 0.1, 0.1), main = '')
 
 
@@ -157,7 +179,7 @@ plot(a, legend = FALSE, axes = FALSE, col = .cols)
 s2 <- s
 
 e <- extract(a, s2)
-e$ah <- s2$ah
+e$var <- s2$var
 
 e <- na.omit(e)
 
@@ -170,12 +192,12 @@ e <- na.omit(e)
 ## RF
 
 
-(m <- randomForest(ah ~ flipped + x + y + noise + rc, data = e, nodesize = 15, ntree = 500))
+(m <- randomForest(var ~ flipped + x + y + noise + rc, data = e, nodesize = 15, ntree = 500))
 
-(m <- randomForest(ah ~ flipped + x + y + noise, data = e, nodesize = 15, ntree = 500))
+(m <- randomForest(var ~ flipped + x + y + noise, data = e, nodesize = 15, ntree = 500))
 
 # internal evaluation: 40
-sqrt(mean((e$ah - predict(m, newdata = e))^2))
+sqrt(mean((e$var - predict(m, newdata = e))^2))
 
 
 rf.pred <- predict(a, m)
@@ -192,8 +214,8 @@ points(s, col = 2, cex = 0.5, pch = 0)
 # external evaluation
 ev <- extract(c(r, rf.pred), s.eval)
 
-# RMSE: 54
-sqrt(mean((ev$ah - ev$lyr1)^2))
+# RMSE
+sqrt(mean((ev$var - ev$lyr1)^2))
 
 
 
@@ -201,7 +223,7 @@ sqrt(mean((ev$ah - ev$lyr1)^2))
 dd <- datadist(e)
 options(datadist = "dd")
 
-(m <- ols(ah ~ flipped + x + y + noise + rc, data = e))
+(m <- ols(var ~ flipped + x + y + noise + rc, data = e))
 
 # interpretation of partial effects is fraught with peril!
 plot(Predict(m))
@@ -221,7 +243,7 @@ points(s, col = 2, cex = 0.5, pch = 0)
 # external evaluation
 ev <- extract(c(r, ols.pred), s.eval)
 
-# RMSE: 84
-sqrt(mean((ev$ah - ev$lyr1)^2))
+# RMSE
+sqrt(mean((ev$var - ev$lyr1)^2))
 
 
