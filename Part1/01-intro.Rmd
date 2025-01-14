@@ -253,7 +253,7 @@ RStudio is an integrated development environment (IDE) that allows you to intera
 ![](static-figures/ch1_rstudio2.png)
 
 | RStudio Windows / Tabs | Location    | Description                                                  |
-|------------------------|-------------|--------------------------------------------------------------|
+|-------------------|----------------|-------------------------------------|
 | Console Window         | lower-left  | location were commands are entered and the output is printed |
 | Source Tabs            | upper-left  | built-in text editor                                         |
 | Environment Tab        | upper-right | interactive list of loaded R objects                         |
@@ -497,16 +497,6 @@ Here is what a typical Project drop-down menu looks like:
 
 -   Any projects you have created/used recently will show up in the "Project List"
 
-```{=html}
-<!-- Too much for first chapter...
-### More RStudio Project Features
-
-Another neat thing about using Projects is that RStudio will provide additional tabs depending on the contents of your working directory. 
-
-For example, if your project folder contains a Git repository (_.git_ hidden directory), a Git tab (_below image, left_) is available for version control. Also, if the directory contains source code for an R package, the "Build" tab  (_below image, right_) provides commands from the `devtools` package. 
-
-![RStudio Projects - Git Repository and Build Tabs](static-figures/rstudio_projecttabs.png) -->
-```
 ## Saving your work
 
 In R, you can save several types of files to keep track of the work you do. The file types include: workspace, script, history, and graphics. It is important to save often because R, like any other software, may crash periodically.
@@ -514,21 +504,20 @@ In R, you can save several types of files to keep track of the work you do. The 
 Such problems are especially likely when working with large files. You can save your workspace in R via the command line or the File menu.
 
 ```{r, purl=FALSE, echo=FALSE}
-
 rfiles <- data.frame(
   'File Type' = c("R Script", "R Markdown", "R Workspace", "R History"),
   'File Extension' = c(".R", ".Rmd", ".RData", ".RHistory"),
-  Description = c("text file of R commands",
-                  "text file of R commands formatted in Markdown",
-                  "copy R objects from your workspace",
-                  "copy all of commands sumbitted to the R Console"
-                  ),
+  Description = c(
+    "text file of R commands",
+    "text file of R commands formatted in Markdown",
+    "copy R objects from your workspace",
+    "copy all of commands sumbitted to the R Console"
+  ),
   check.names = FALSE,
   stringsAsFactors = FALSE
-  )
+)
 
 knitr::kable(rfiles)
-
 ```
 
 #### R script (.R)
@@ -562,29 +551,6 @@ You can use the `word_document` Rmarkdown template to automatically "Knit" `.doc
 R Markdown (.Rmd) documents contain information for the reproducible combination of narrative text and code to produce elegantly formatted output. You can use multiple languages in .Rmd documents including R, Python, and SQL. You can easily "knit" visually appealing and high-quality documents into rich HTML, PDF or Word documents from the RStudio interface.
 
 This document is made in bookdown, a variant of rmarkdown used for book templates involving multiple chapters. You can make blogs and websites for your R packages with blogdown and pkgdown. These are all tools based off of the powerful "pandoc" engine and the tools in the R Markdown ecosystem.
-
-````{=html}
-<!--
-## This is not something we should encourage people to do. Not reproducible. We tell them to turn off this "feature" in the pre-course and I sure hope they do because it is a monstrous waste of their and our debugging time. 
-## History is the only thing they should save, unless they explicitly are selecting the objects to save and using e.g. save(), saveRDS() / load() etc. -AGB
-
-#### Workspace (.Rdata)  
-
-The R workspace consists of all the data objects you've created or loaded during your R session. When you quit R by either typing `q()` or exiting out of the application window, R will prompt you to save your workspace.
-
-If you choose yes, R saves a file named .RData to your working directory. The next time you open R and reload your .Rdata workspace, all of your data objects will be available in R and all of the commands that you've typed will be accessible by using the up-arrow and down-arrow keys on your keyboard. 
-
-You can also save or load your workspace at any time during your R session from the menu by clicking **Session>Save Workspace As..**, or the save button on the **Environment Tab**.   
-
-![](static-figures/ch1_save_workspace.png)    
-
-The R command for saving your workspace is:
-
-```{r, purl=FALSE}
-save.image(file="workspace.RData")
-```
--->
-````
 
 #### R history (.Rhistory)
 
@@ -638,7 +604,7 @@ dev.off()
 
 The first line of this command creates a blank file named sand with a JPEG extension. The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the JPEG file we are creating). The third line closes the graphics device.
 
-## Exercise 1
+## Exercise 1: R packages and Functions
 
 Using the examples discussed thus far as a guide, demonstrate your mastery of the material by performing the following tasks.
 
@@ -693,9 +659,9 @@ NASIS provides a plethora of reports, many of which can be read into R for analy
 library(soilDB)
 
 # get projects
-prj <- get_project_from_NASISWebReport(mlrassoarea = "11-IND", fiscalyear = 2020)
+prj <- get_project_from_NASISWebReport(mlrassoarea = "NE-IND", fiscalyear = 2020)
 
-# get legends
+l# get legends
 leg <- get_legend_from_NASISWebReport(mlraoffice = "Indi%", areasymbol = "%")
 
 # get map units
@@ -704,7 +670,7 @@ mu  <- get_mapunit_from_NASISWebReport(areasymbol = c("IN001", "IN11%"))
 
 ## Data manipulation
 
-Before we can do any sort of analysis, analysis, our data often needs to be manipulated one way or another. Estimates vary, but an analyst typically spend 80% of their time manipulating data, and only 20% actually analyzing or modeling. Tasks generally involve filtering, transforming, merging, aggregating, and reshaping data.
+Before we can do any sort of analysis, our data often needs to be manipulated one way or another. Estimates vary, but an analyst typically spend 80% of their time manipulating data, and only 20% actually analyzing or modeling. Tasks generally involve filtering, transforming, merging, aggregating, and reshaping data.
 
 R has many functions and packages for manipulating data frames, but within the past several years a family of packages, known as the `tidyverse`, have been developed to simplify interacting with data frames (or tibbles). Within the `tidyverse` the most commonly used packages are `dplyr` and `tidyr`. Many of the tidyverse function names are patterned after SQL syntax.
 
@@ -730,6 +696,7 @@ Additionally you can use the following functions to view your data in R.
 | `str()`   | shows the data structure of an R object             |
 | `names()` | lists the column names (i.e., headers) of your data |
 | `ls()`    | lists all the R objects in your workspace directory |
+| `dput()`  | print code to re-create an R object                 |
 
 Try entering the following commands to view the `mu` dataset in R:
 
@@ -741,6 +708,8 @@ names(mu)
 head(mu)
 
 ls()
+
+dput(mu[1, ])
 ```
 
 A data object is anything you've created or imported and assigned a name to in R. The Environment tab allows you to see what data objects are in your R session and expand their structure. Right now sand should be the only data object listed. If you wanted to delete all data objects from your R session, you could **click the broom icon** from the Environments tab. Otherwise you could type:
@@ -764,13 +733,13 @@ Data frames can be filtered by both columns and rows, using either **names**, **
 \*\*Filtering with names and numerical indices
 
 ```{r}
-# Filtering with names
+# Filtering with names (character values)
 mu$areasymbol                             # select column names using $
 mu[, c("areasymbol", "musym")]            # select column names using []
 mu[c("1", "2"), ]                         # select row names using []
 mu[c("1", "2"), c("areasymbol", "musym")] # select column and row names using []
 
-# Filtering by position
+# Filtering by position (integer values)
 mu[1, ]          # select first row
 mu[, 1]          # select first column
 mu[2, 2]         # select second row and second column
@@ -780,19 +749,19 @@ mu[c(-1, -2), ]  # drop multiple rows
 
 **Logical Operators**
 
--   `==` R uses a double equal sign as "equal-to" in SQL
+-   `==` Equal To (NOTE: R uses a double equal sign)
 
--   `!=` "Not-equal-to"
+-   `!=` Not Equal To
 
 -   `<, >, <=, >=` Less than, greater than, less than or equal to, and greater than or equal
 
--   `&` Equivalent to `AND` in SQL and Soil Taxonomy, must match both conditions
+-   `&` Equivalent to `AND` must match both conditions
 
--   `|` Equivalent to `OR` in SQL and Soil Taxonomy, must match at least one condition
+-   `|` Equivalent to `OR` must match at least one condition
 
--   `%in%` Equivalent to `IN ()` in SQL (e.g. `mu$areasymbol %in% c("IN001", "IN111"`)
+-   `%in%` equivalent to `IN ()` in SQL (e.g. `mu$areasymbol %in% c("IN001", "IN111"`)
 
--   `grepl()` equivalent to `LIKE` in SQL (e.g. `grepl("IN%", mu$areasymbol)`)
+-   `grepl()` similar to `LIKE` in SQL (e.g. `grepl("IN%", mu$areasymbol)`)
 
 **Filtering with logicals**
 
@@ -865,14 +834,14 @@ The "pipe" is something that occurs in many programming languages and computing 
 ```{r piping}
 # non-piping example 1
 mu_sub <- filter(mu, areasymbol == "IN001")
-mu_sub <- mutate(mu_sub, pct_100less = pct_component < 100) 
+mu_sub <- mutate(mu_sub, pct_100less = pct_component < 100)
 
 # non-piping example 2
 mu_sub <- mutate(filter(mu, areasymbol == "IN001"), pct_100less = pct_component < 100)
 
 # piping
-mu_sub <- mu %>% 
-  filter(areasymbol == "IN001") %>% 
+mu_sub <- mu %>%
+  filter(areasymbol == "IN001") %>%
   mutate(pct_100less = pct_component < 100)
 ```
 
@@ -898,7 +867,6 @@ leg_mu <- right_join(leg, mu, by = "liid")
 If your tables have the same structure (e.g. columns), or length and order you may simply combine them. For example, if you have two different mapunit tables.
 
 ```{r, eval=FALSE}
-
 # combine rows
 rbind(mu, mu)
 rbind(mu, leg) # won't work
@@ -908,7 +876,6 @@ rbind(mu, leg) # won't work
 cbind(mu, mu)  # beware combine tables with duplicate column names
 cbind(mu, areasymbol_2 = mu$areasymbol)
 cbind(mu, leg) # won't work
-
 ```
 
 ### Aggregating or Grouping Data
@@ -918,13 +885,10 @@ Because soil data has multiple dimensions (e.g. properties and depths) and level
 The `group_by` function defines the groups over which we wish to `summarize` the data.
 
 ```{r aggregating}
-
-mu_agg <- mu %>% 
+mu_agg <- mu %>%
   group_by(grpname, areasymbol) %>%
-  summarize(sum_muacres = sum(muacres),
-            n_musym     = length(musym)
-            )
-
+  summarize(sum_muacres = sum(muacres), 
+            n_musym = length(musym))
 ```
 
 ### Reshaping Data
@@ -961,13 +925,13 @@ library(foreign)
 write.dbf(as.data.frame(mu_agg), file = "mu_agg.dbf")
 ```
 
-## Exercise 2
+## Exercise 2: Data Manipulation
 
 1.  Create a new R script file.
 
 2.  To get information from the NASIS legend table for the state of Wisconsin use the soilDB function `get_legend_from_NASISWebReport()` for `mlraoffice = "%"` and `areasymbol = "WI%"`
 
-3.  Filter the legend table for rows where the `ssastatus == "Out-of-date"` to find the soil survey areas that need update. Inspect the result to find the `areasymbol` values.
+3.  Filter the legend table for rows where `areaacres` is less than 200,000. Inspect the result to find the `areasymbol` values.
 
 4.  Load the mapunit table, using soilDB `get_mapunit_from_NASISWebReport()` using the area symbols you identified in step 3.
 
@@ -981,7 +945,7 @@ write.dbf(as.data.frame(mu_agg), file = "mu_agg.dbf")
 
 9.  Answer the following questions:
 
-    -   What soil survey areas need update in Wisconsin?
+    -   What Wisconsin soil survey areas are less than 200,000 acres?
 
     -   What proportion of those soil survey areas are hydric soils?
 
@@ -1021,7 +985,7 @@ Given what you now know about R, try to answer the following questions:
     -   [aqp and soilDB tutorials](http://ncss-tech.github.io/AQP/)
     -   [ISRIC World Soil Information Example Training Courses](https://www.isric.org/utilise/capacity-building/training-courses#examplecourses)
     -   [ISRIC World Soil Information YouTube Channel](https://www.youtube.com/channel/UCNi1XYjdXWF9eAjvG40KqWg)
-    -   [OpenGeoHub Courses](https://opengeohub.org/course)
+    -   [OpenGeoHub Trainings](https://opengeohub.org/trainings/)
     -   [OpenGeoHub YouTube Channel](https://www.youtube.com/channel/UC6HFFFYiV4zEYJlQMIXemWA/featured)
     -   [David Rossiter's Cornell Homepage](http://www.css.cornell.edu/faculty/dgr2/)
     -   [Pierre Roudier](https://pierreroudier.github.io/teaching/index.html)

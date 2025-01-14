@@ -1,4 +1,3 @@
-
 # Exploratory Data Analysis {#eda}
 
 ![](static-figures/logo.jpg)
@@ -123,7 +122,7 @@ h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 
 Typo errors such as these are a common problem with old pedon data in NASIS.
 
-## Exercise 1: fetch and inspect
+## Exercise 1: Fetch and Inspect
 
 1.  Create a new R script
 2.  Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset
@@ -485,7 +484,6 @@ ggplot(h, aes(y = clay)) +
   ggtitle("Boxplot Components")
 
 ```
-
 
 ```{r boxplots, eval=TRUE}
 ggplot(h, aes(x = genhz, y = clay)) +
@@ -917,7 +915,7 @@ Methods for Use
 -   Online
 -   Locally
 
-::: {.notes}
+::: notes
 The shiny package, created by RStudio, enables users to not only use interactive applications created by others, but to build them as well.
 :::
 
@@ -929,7 +927,7 @@ Easiest Method
 -   Open a web browser
 -   Navigate to a URL
 
-::: {.notes}
+::: notes
 The ability to use a shiny app online is one of the most useful features of the package. All of the R code is executed on a remote computer which sends the results over a live http connection. Very little is required of the user in order to obtain results.
 :::
 
@@ -1042,8 +1040,6 @@ Shiny apps consist of a *ui* and a *server*. The ui is the part of the shiny app
 
 3.  If an error occurs while using the Region 11 Web App, what should you do?
 
-4.  Poll: A shiny app consists of:
-
 ### Examples
 
 #### NASIS Reports
@@ -1092,7 +1088,7 @@ Enter an office symbol to generate a long range plan report.
 
 Enter the national mapunit symbol to plot all available interpretations for the mapunit from SDA.
 
-### Work on your Own
+## Exercise 4: Using the North Central Region Web App
 
 #### Project Report
 
@@ -1104,11 +1100,11 @@ Map an extent of a project. How many layers are available to choose from as a ba
 
 #### Long Range Plan
 
-Choose an office to generate a long range plan. What is the highest acreage project for 2025? \#\# Soil Reports
-
-One of the strengths of NASIS is that it that has many queries and reports to access the complex data. This makes it easy for the average user to load their data, process it and run numerous reports.
+Choose an office to generate a long range plan. What is the highest acreage project for 2025?
 
 ## soilReports
+
+One of the strengths of NASIS is that it that has many queries and reports to access the complex data. This makes it easy for the average user to load their data, process it, and run numerous reports.
 
 The `soilReports` R package is essentially just a collection of R Markdown (*.Rmd*) documents.
 
@@ -1141,120 +1137,11 @@ Each report in `soilReports` has a "manifest" that describes any dependencies, c
 
 The *.Rmd* file allows R code and text with Markdown markup to be mingled in the same document and then "executed" like an R script.
 
-### Exercise: Run Shiny Pedon Summary
-
-The `region2/shiny-pedon-summary` report is an interactive Shiny-based report that uses `flexdashboard` to help the user subset and summarize NASIS pedons from a graphical interface.
-
--   You can try a ShinyApps.io demo [here](https://brownag.shinyapps.io/ShinyPedonSummary/)
-
-The "Shiny Pedon Summary" allows one to rapidly generate reports from a large set of pedons in their NASIS selected set.
-
-The left INPUT sidebar has numerous options for subsetting pedon data. Specifically, you can change REGEX patterns for *mapunit symbol*, *taxon name*, *local phase*, and *User Pedon ID*. Also, you can use the drop down boxes to filter on *taxon kind* or compare different "modal"/RV pedons.
-
-![Example: Analyzing the Loafercreek Taxadjuncts](https://ncss-tech.github.io/soilReports/docs/shiny-pedon-summary/shiny-pedon_loafercreek-taxadjuncts.PNG)
-
-1.  **Create an instance of the `region2/shiny-pedon-summary` report with `soilReports`**:
-
-```{r eval=FALSE}
-# create new instance of reports 
-library(soilReports)
-
-# set path for shiny-pedon-summary report instance
-shinyped.path <- "C:/workspace2/chapter3/shiny-pedon"
-
-# create directories (if needed)
-if(!dir.exists(shinyped.path))
-  dir.create(shinyped.path, recursive = TRUE)
-
-# get report dependencies
-reportSetup('region2/shiny-pedon-summary')
-
-# copy report contents to target path
-copyReport('region2/shiny-pedon-summary', outputDir = shinyped.path, overwrite = TRUE)
-```
-
-2.  **Update the `config.R` file**
-
-You can update the `config.R` file in "C:/workspace2/chapter3/shiny-pedon" (or wherever you installed the report) to use the `soilDB` datasets `loafercreek` and `gopheridge` by setting `demo_mode <- TRUE`. This is the *simplest* way to demonstrate how this report works. Alternately, when `demo_mode <- FALSE`, pedons will be loaded from your NASIS selected set.
-
-`config.R` also allows you to specify a shapefile for overlaying the points on -- to determine mapunit symbol -- as well as several raster data sources whose values will be extracted at point locations and summarized. The demo dataset does not use either of these by default, due to large file sizes.
-
-Furthermore, a default (very general) set of REGEX generalized horizon patterns is provided to assign generalized horizon labels for provisional grouping. These provided patterns are unlikely to cover ALL cases, and *always* need to be modified for final correlation. That said, they do a decent job of making a first-pass correlation for diverse types of soils.
-
-The default `config.R` settings use the general patterns: `use_regex_ghz <- TRUE`. You are welcome to modify the defaults. If you want to use the values you have populated in NASIS *Pedon Horizon Component Layer ID*, set `use_regex_ghz <- FALSE`.
-
-3.  **Run the report via `shiny.Rmd`**
-
-This report uses the Shiny `flexdashboard` interface. Open up `shiny.Rmd` and click the "Run Document" button to start the report. This will load the pedon and spatial data specified in `config.R`.
-
-**NOTE:** *If a Viewer Window does not pop-up right away, click the gear icon to the right of the "Run Document" button. Be sure the option "Preview in Window" is checked, then click "Run Document" again.*
-
-4.  All of the subset parameters are in the left-hand sidebar. Play around with all of these options -- the graphs and plots in the tabs to the right will automatically update as you make changes.
-
-5.  When you like what you have, you can export a non-interactive HTML file for your records. To do this, first, set the "Report name:" box to something informative -- this will be your report output file name. Then, scroll down to the bottom of the INPUT sidebar and click "Export Report" button. Check the "output" folder (subdirectory of where you installed the report) for your results.
-
-### Exercise: Run Mapunit Comparison
-
-Another popular report in `soilReports` is the `region2/mu-comparison` report.
-
-This report uses constant density sampling (`sharpshootR::constantDensitySampling()`) to extract numeric and categorical values from multiple raster data sources that overlap a set of user-supplied polygons.
-
-In this example, we clip a small portion of SSURGO polygons from the CA630 soil survey area extent. We then select a small set of mapunit symbols (5012, 3046, 7083, 7085, 7088) that occur within the clipping extent. These mapunits have soil forming factors we expect to contrast with one another in several ways. You can inspect other mapunit symbols by changing `mu.set` in `config.R`.
-
-1.  **Download the demo data**:
-
-```{r eval=TRUE}
-# set up ch4 path and path for report
-mucomp.path <- "C:/workspace2/chapter3/mucomp"
-
-# create any directories that may be missing
-if(!dir.exists(mucomp.path)) {
-  dir.create(mucomp.path, recursive = TRUE)
-}
-
-mucomp.zip <- file.path(mucomp.path, 'mucomp-data.zip')
-
-# download raster data, SSURGO clip from CA630, and sample script for clipping your own raster data 
-download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_3-mucomp-data/mucomp-data.zip', mucomp.zip)
-
-unzip(mucomp.zip, exdir = mucomp.path, overwrite = TRUE)
-```
-
-2.  **Create an instance of the `region2/mu-comparison` report with `soilReports`**:
-
-```{r eval=FALSE}
-# create new instance of reports 
-library(soilReports)
-
-# get report dependencies
-reportSetup('region2/mu-comparison')
-
-# create report instance
-copyReport('region2/mu-comparison', outputDir = mucomp.path, overwrite = TRUE)
-```
-
-If you want, you can now set up the default `config.R` that is created by `copyReport()` to work with your own data. OR you can use the "sample" `config.R` file (called `new_config.R`) in the ZIP file downloaded above.
-
-3.  **Run this code to replace the default `config.R` with the sample data `config.R`**:
-
-```{r eval=FALSE}
-# copy config file containing relative paths to rasters downloaded above
-file.copy(from = file.path(mucomp.path, "new_config.R"), 
-          to = file.path(mucomp.path, "config.R"), 
-          overwrite = TRUE)
-```
-
-4.  **Open `report.Rmd` in the `C:/workspace2/chapter3/mucomp` folder and click the "Knit" button at the top of the RStudio source pane to run the report.**
-
-5.  **Inspect the report output HTML file, as well as the spatial and tabular data output in the `output` folder.**
-
-*Question: What differences can you see between the five mapunit symbols that were analyzed?*
-
-### Exercise: Run Lab Summary By Taxon Name Soil Report
+## Exercise 5: Run Lab Summary By Taxon Name Soil Report
 
 For another exercise you can use the `region11/lab_summary_by_taxonname` report report to summarize laboratory data for a soil series. This report requires you to get some data from the Pedon "NCSS Lab" tables in NASIS.
 
-#### Requirements
+### Requirements
 
 -   Data are properly populated, otherwise the report may fail. Common examples include:
 
@@ -1265,7 +1152,7 @@ For another exercise you can use the `region11/lab_summary_by_taxonname` report 
 
 -   Beware each report has a unique configuration file that may need to be edited.
 
-#### Instructions
+### Instructions
 
 1.  **Load** your NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by upedonid and Taxon Name" from the Region 11 report folder to load your selected set. Be sure to target both the site, pedon and lab layer tables. **Remove** from your selected set the pedons and sites you wish to exclude from the report.
 
@@ -1338,6 +1225,114 @@ Also, beware when opening the .html file with Internet Explorer -- be sure to cl
 -   Run the `lab_summary_by_taxonname.Rmd` report on a soil series of your choice.
 -   Show your work and submit the results to your mentor.
 
+## Exercise 6: Run Shiny Pedon Summary
+
+The `region2/shiny-pedon-summary` report is an interactive Shiny-based report that uses `flexdashboard` to help the user subset and summarize NASIS pedons from a graphical interface.
+
+-   You can try a ShinyApps.io demo [here](https://brownag.shinyapps.io/ShinyPedonSummary/)
+
+The "Shiny Pedon Summary" allows one to rapidly generate reports from a large set of pedons in their NASIS selected set.
+
+The left INPUT sidebar has numerous options for subsetting pedon data. Specifically, you can change REGEX patterns for *mapunit symbol*, *taxon name*, *local phase*, and *User Pedon ID*. Also, you can use the drop down boxes to filter on *taxon kind* or compare different "modal"/RV pedons.
+
+![Example: Analyzing the Loafercreek Taxadjuncts](https://ncss-tech.github.io/soilReports/docs/shiny-pedon-summary/shiny-pedon_loafercreek-taxadjuncts.PNG)
+
+1.  **Create an instance of the `region2/shiny-pedon-summary` report with `soilReports`**:
+
+```{r eval=FALSE}
+# create new instance of reports 
+library(soilReports)
+
+# set path for shiny-pedon-summary report instance
+shinyped.path <- "C:/workspace2/chapter3/shiny-pedon"
+
+# create directories (if needed)
+if(!dir.exists(shinyped.path))
+  dir.create(shinyped.path, recursive = TRUE)
+
+# get report dependencies
+reportSetup('region2/shiny-pedon-summary')
+
+# copy report contents to target path
+copyReport('region2/shiny-pedon-summary', outputDir = shinyped.path, overwrite = TRUE)
+```
+
+2.  **Update the `config.R` file**
+
+You can update the `config.R` file in "C:/workspace2/chapter3/shiny-pedon" (or wherever you installed the report) to use the `soilDB` datasets `loafercreek` and `gopheridge` by setting `demo_mode <- TRUE`. This is the *simplest* way to demonstrate how this report works. Alternately, when `demo_mode <- FALSE`, pedons will be loaded from your NASIS selected set.
+
+`config.R` also allows you to specify a shapefile for overlaying the points on -- to determine mapunit symbol -- as well as several raster data sources whose values will be extracted at point locations and summarized. The demo dataset does not use either of these by default, due to large file sizes.
+
+Furthermore, a default (very general) set of REGEX generalized horizon patterns is provided to assign generalized horizon labels for provisional grouping. These provided patterns are unlikely to cover ALL cases, and *always* need to be modified for final correlation. That said, they do a decent job of making a first-pass correlation for diverse types of soils.
+
+The default `config.R` settings use the general patterns: `use_regex_ghz <- TRUE`. You are welcome to modify the defaults. If you want to use the values you have populated in NASIS *Pedon Horizon Component Layer ID*, set `use_regex_ghz <- FALSE`.
+
+3.  **Run the report via `shiny.Rmd`**
+
+This report uses the Shiny `flexdashboard` interface. Open up `shiny.Rmd` and click the "Run Document" button to start the report. This will load the pedon and spatial data specified in `config.R`.
+
+**NOTE:** *If a Viewer Window does not pop-up right away, click the gear icon to the right of the "Run Document" button. Be sure the option "Preview in Window" is checked, then click "Run Document" again.*
+
+4.  All of the subset parameters are in the left-hand sidebar. Play around with all of these options -- the graphs and plots in the tabs to the right will automatically update as you make changes.
+
+5.  When you like what you have, you can export a non-interactive HTML file for your records. To do this, first, set the "Report name:" box to something informative -- this will be your report output file name. Then, scroll down to the bottom of the INPUT sidebar and click "Export Report" button. Check the "output" folder (subdirectory of where you installed the report) for your results.
+
+## Exercise 7: Run Mapunit Comparison
+
+Another popular report in `soilReports` is the `region2/mu-comparison` report.
+
+This report uses constant density sampling (`sharpshootR::constantDensitySampling()`) to extract numeric and categorical values from multiple raster data sources that overlap a set of user-supplied polygons.
+
+In this example, we clip a small portion of SSURGO polygons from the CA630 soil survey area extent. We then select a small set of mapunit symbols (5012, 3046, 7083, 7085, 7088) that occur within the clipping extent. These mapunits have soil forming factors we expect to contrast with one another in several ways. You can inspect other mapunit symbols by changing `mu.set` in `config.R`.
+
+1.  **Download the demo data**:
+
+```{r eval=TRUE}
+# set up ch4 path and path for report
+mucomp.path <- "C:/workspace2/chapter3/mucomp"
+
+# create any directories that may be missing
+if(!dir.exists(mucomp.path)) {
+  dir.create(mucomp.path, recursive = TRUE)
+}
+
+mucomp.zip <- file.path(mucomp.path, 'mucomp-data.zip')
+
+# download raster data, SSURGO clip from CA630, and sample script for clipping your own raster data 
+download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/chapter_3-mucomp-data/mucomp-data.zip', mucomp.zip)
+
+unzip(mucomp.zip, exdir = mucomp.path, overwrite = TRUE)
+```
+
+2.  **Create an instance of the `region2/mu-comparison` report with `soilReports`**:
+
+```{r eval=FALSE}
+# create new instance of reports 
+library(soilReports)
+
+# get report dependencies
+reportSetup('region2/mu-comparison')
+
+# create report instance
+copyReport('region2/mu-comparison', outputDir = mucomp.path, overwrite = TRUE)
+```
+
+If you want, you can now set up the default `config.R` that is created by `copyReport()` to work with your own data. OR you can use the "sample" `config.R` file (called `new_config.R`) in the ZIP file downloaded above.
+
+3.  **Run this code to replace the default `config.R` with the sample data `config.R`**:
+
+```{r eval=FALSE}
+# copy config file containing relative paths to rasters downloaded above
+file.copy(from = file.path(mucomp.path, "new_config.R"), 
+          to = file.path(mucomp.path, "config.R"), 
+          overwrite = TRUE)
+```
+
+4.  **Open `report.Rmd` in the `C:/workspace2/chapter3/mucomp` folder and click the "Knit" button at the top of the RStudio source pane to run the report.**
+
+5.  **Inspect the report output HTML file, as well as the spatial and tabular data output in the `output` folder.**
+
+*Question: What differences can you see between the five mapunit symbols that were analyzed?*
 
 ## Additional Reading (Exploratory Data Analysis)
 
