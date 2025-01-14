@@ -1,9 +1,9 @@
 library(aqp)
 library(soilDB)
-# use _PedonPC_Plus_DataDump_select (MLRA04 Bozeman)
+# use _PedonPC_Plus_DataDump_select (SSRO_Northwest)
 #  User Site ID: 2015MT663%
-#  NASIS Site: MLRA04%
-#  NASIS Group: 4-MIS Pedons
+#  NASIS Site: SSRO_Northwest
+#  NASIS Group: NW-MIS Point Data
 #  
 mt663 <- fetchNASIS(rmHzErrors = TRUE)
 
