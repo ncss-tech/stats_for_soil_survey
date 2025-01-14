@@ -6,18 +6,19 @@ editor_options:
 
 # Spatial Data in R {#spatial}
 
-![](static-figures/logo.jpg)  
+![](static-figures/logo.jpg)
 
-This chapter is a brief demonstration of possible ways to process spatial data in R. 
+This chapter is a brief demonstration of possible ways to process spatial data in R. This will help you to develop a strategy for selecting spatial data processing methods.
 
 ## Objectives (Spatial Data)
 
-* Gain experience with creating, editing, and exporting spatial data objects in R.
-* Learn about making maps with R
-* Learn the basics of `sf` and `sp` representation of vector data
-* Learn the basics of `terra` classes and functions
-* Learn about some interfaces to NCSS spatial data sources
-* Develop a strategy for navigating the many possible spatial data processing methods
+-   Gain experience creating, editing, and exporting spatial data objects in R.
+
+    -   Learn the basics of `sf` package for vector (points, lines, polygons) data
+    -   Learn the basics of `terra` classes and functions for vector and raster data
+    -   Learn about some interfaces to NCSS spatial data sources
+
+-   Create maps with R
 
 The next sections will require loading these libraries into the R session.
 
@@ -36,85 +37,79 @@ library(sp)
 library(terra)
 
 # superseded by terra
-library(raster)
+# library(raster)
 
 # interactive maps with leaflet
 library(mapview)
 ```
 
-
 There are [many packages](https://cran.r-project.org/web/views/Spatial.html) available for working with spatial data, however we only have time to cover introducing a few common libraries.
 
 A couple resources are linked here for 5 packages that provide different ways displaying spatial data graphically:
 
- - [`tmap`](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
- - [`ggplot2`](https://ggplot2.tidyverse.org/), [`ggmap`](https://github.com/dkahle/ggmap)  
- - [`mapview`](https://r-spatial.github.io/mapview/)
- - [`mapdeck`](https://symbolixau.github.io/mapdeck/articles/mapdeck.html) 
- - [`leaflet`](https://rstudio.github.io/leaflet/)
-  
+-   [`tmap`](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
+-   [`ggplot2`](https://ggplot2.tidyverse.org/), [`ggmap`](https://github.com/dkahle/ggmap)\
+-   [`mapview`](https://r-spatial.github.io/mapview/)
+-   [`mapdeck`](https://symbolixau.github.io/mapdeck/articles/mapdeck.html)
+-   [`leaflet`](https://rstudio.github.io/leaflet/)
+
 ## Making Maps with R
 
 ![](static-figures/WSS-AOI-density.png)
 
 R has become a powerful tool for visualization and interaction with spatial data. There are many tools available for making maps with R! It is not all geostatistics and coordinate reference system transformations. There are powerful ways to automate your GIS workflow from beginning to end--from creating terrain derivatives from a source DEM, to high-quality, publication-ready maps and interactive HTML/JavaScript widgets.
 
- - [Making Maps with R (Nico Hahn)](https://bookdown.org/nicohahn/making_maps_with_r5/docs/introduction.html). 
+An excellent resource for making maps with R is the chapter in "Geocomputation with R"
 
- - [geocompr: Chapter 8 - Making maps with R](https://geocompr.robinlovelace.net/adv-map.html)
- 
+-   [geocompr: Making maps with R](https://r.geocompx.org/adv-map.html)
+
 ## Spatial Data Sources
 
 Spatial data sources: "raster" and "vector"
-  
-  * Raster data sources (grids/images): GeoTIFF, ERDAS, BIL, ASCII grid, WMS, ...
-  * Vector data sources (points/lines/polygons): Shape File, ESRI File Geodatabase, KML, GeoJSON, GML, WFS, ...
 
-Conventional data sources that can be *upgraded* to spatial data:
-  
-  * NASIS/LIMS reports: typically point coordinates
-  * Web pages: [GeoJSON](http://geojson.org/), [WKT](https://en.wikipedia.org/wiki/Well-known_text), or point coordinates
-  * Excel file: typically point coordinates
-  * CSV files: typically point coordinates
-  * Photo EXIF information: typically point coordinates
-  
+-   Raster data sources (grids/images): GeoTIFF, ERDAS, BIL, ASCII grid, WMS, ...
+-   Vector data sources (points/lines/polygons): Shape File, ESRI File Geodatabase, KML, GeoJSON, GML, WFS, ...
+
+Conventional data sources that can be *upgraded* to be spatial data because they contain [GeoJSON](http://geojson.org/), [WKT](https://en.wikipedia.org/wiki/Well-known_text), or point coordinates include:
+
+-   NASIS/LIMS reports
+-   Web pages and Web Services
+-   Excel and CSV files
+-   Photo EXIF information
+
 Here are some R-based interfaces to NCSS data sources via [`soilDB`](https://cran.r-project.org/web/packages/soilDB/index.html) package.
-  
-* Functions that return _tabular data_ which can be *upgraded* to spatial data:
 
-  + [`fetchNASIS()`](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html): NASIS "site" data contain x,y,
-  
-  + [`fetchLDM()`](http://ncss-tech.github.io/soilDB/reference/fetchLDM.html): KSSL "site" data from Lab Data Mart contain x,y coordinates
+-   Functions that return *tabular data* which can be *upgraded* to spatial data:
 
-  + [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html): KSSL "site" data from SoilWeb contain x,y coordinates
- coordinates
+    -   [`fetchNASIS()`](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html): NASIS "site" data contain longitude, latitude
 
-* Functions that _return_ spatial data:
+    -   [`fetchLDM()`](http://ncss-tech.github.io/soilDB/reference/fetchLDM.html): KSSL "site" data from Lab Data Mart contain longitude, latitude coordinates
 
-  + [`fetchSDA_spatial()`](http://ncss-tech.github.io/soilDB/reference/fetchSDA_spatial.html): polygon, bounding box and centroid data from SSURGO, STATSGO and the `sapolygon` (Soil Survey Area Polygon) from Soil Data Access (SDA)
-  
-  + [`fetchHenry()`](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html): sensor / weather station locations as points
-  
-  + [`SDA_query()`](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html): SSURGO data as points, lines, polygons (via SDA)
-  
-  + [`SDA_spatialQuery()`](http://ncss-tech.github.io/soilDB/reference/SDA_spatialQuery.html): use points or polygons as a "query" to SDA
-  
-  + [`seriesExtent()`](http://ncss-tech.github.io/soilDB/reference/seriesExtent.html) and [`taxaExtent()`](http://ncss-tech.github.io/soilDB/reference/taxaExtent.html): extent of series and taxonomic classes derived from SSURGO (SoilWeb) in vector and raster format (800m resolution). The vector output is identical to series extents reported by [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/)
-  
-  + [`mukey.wcs()`](http://ncss-tech.github.io/soilDB/reference/mukey.wcs.html) and [`ISSR800.wcs()`](http://ncss-tech.github.io/soilDB/reference/ISSR800.wcs.html) provide an interface to [gSSURGO (mukey), gNATSGO (mukey), and the ISSR-800 (gridded soil property) data](https://ncss-tech.github.io/soilDB/articles/wcs-ssurgo.html).
-  
+    -   [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html): KSSL "site" data from SoilWeb contain longitude, latitude coordinates coordinates
 
+-   Functions that *return* spatial data:
+
+    -   [`fetchSDA_spatial()`](http://ncss-tech.github.io/soilDB/reference/fetchSDA_spatial.html): polygon, bounding box and centroid data from SSURGO, STATSGO and the `sapolygon` (Soil Survey Area Polygon) from Soil Data Access (SDA)
+
+    -   [`fetchHenry()`](http://ncss-tech.github.io/AQP/soilDB/Henry-demo.html): sensor / weather station locations as points
+
+    -   [`SDA_query()`](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html): SSURGO data as points, lines, polygons (via SDA)
+
+    -   [`SDA_spatialQuery()`](http://ncss-tech.github.io/soilDB/reference/SDA_spatialQuery.html): use points or polygons as a "query" to SDA
+
+    -   [`seriesExtent()`](http://ncss-tech.github.io/soilDB/reference/seriesExtent.html) and [`taxaExtent()`](http://ncss-tech.github.io/soilDB/reference/taxaExtent.html): extent of series and taxonomic classes derived from SSURGO (SoilWeb) in vector and raster format (800m resolution). The vector output is identical to series extents reported by [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/)
+
+    -   [`mukey.wcs()`](http://ncss-tech.github.io/soilDB/reference/mukey.wcs.html) and [`ISSR800.wcs()`](http://ncss-tech.github.io/soilDB/reference/ISSR800.wcs.html) provide an interface to [gSSURGO (mukey), gNATSGO (mukey), and the ISSR-800 (gridded soil property) data](https://ncss-tech.github.io/soilDB/articles/wcs-ssurgo.html).
 
 ## Viewing Pedon Locations
 
-( _Introducing the_ `sf` _package_ with `mapview`)
+In this section we will introuduce the `sf` package with `mapview`.
 
+### Plotting Geographic Data
 
-### Plotting Geographic Data 
+Making maps of data gives you some idea how data look spatially and whether their distribution is what you expect.
 
-Plotting the data as an R graphic can give you some idea of how data look spatially and whether their distribution is what you expect.
-
-Typos are relatively common when coordinates are manually entered. Viewing the data spatially is a quick way to see if any points plot far outside of the geographic area of interest and therefore clearly have an error.
+Typos are relatively common when coordinates are manually entered. Viewing the data spatially is a quick way to see if any points plot far outside of the expected geographic area of interest.
 
 ```{r eval = TRUE}
 # plot the locations of the gopheridge pedons with R
@@ -140,7 +135,7 @@ data("gopheridge", package = "soilDB")
 # st_crs(): set EPSG:4326 Coordinate Reference System (CRS) as Well-Known Text (WKT)
 gopher.locations <- st_as_sf(
   site(gopheridge), 
-  coords = c('x_std','y_std'),
+  coords = c('longstddecimaldegrees','latstddecimaldegrees'),
   crs = st_crs(4326)
 )
 
@@ -149,14 +144,14 @@ gopher.locations <- st_as_sf(
 mapview(gopher.locations, label = gopher.locations$site_id)
 ```
 
-### Exercise 1: Spatial Intro
+## Exercise 1: Pedon Locations
 
 In this exercise, you will create an interactive map with the pedons in your selected set. Then you will export them to a shapefile. Modify the code snippets below to make an R plot and a shapefile of pedon data loaded from your NASIS selected set. You will plot pedon locations using the standard WGS84 longitude/latitude decimal degrees fields from Site table of NASIS. In some cases, these data might be incomplete; you need to handle this possibility.
 
-In this exercise you will create a subset SoilProfileCollection for the pedons that are not missing spatial data (`x_std` and `y_std`).
+In this exercise you will create a subset SoilProfileCollection for the pedons that are not missing spatial data (`longstddecimaldegrees` and `latstddecimaldegrees`).
 
- 1. Make a new R script, load the `aqp`, `soilDB`, `sf` and `mapview` packages and some pedons via `fetchNASIS()` (or similar source). 
- 
+1.  Make a new R script, load the `aqp`, `soilDB`, `sf` and `mapview` packages and some pedons via `fetchNASIS()` (or similar source).
+
 ```{r r_plot_pedons, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
 library(aqp)
 library(soilDB)
@@ -167,8 +162,9 @@ library(mapview)
 pedons <- fetchNASIS(from = 'pedons')
 ```
 
- 2. Use the base R `subset()` function to create a subset of your SoilProfileCollection using `is.na()`
-  - `x_std` and `y_std` variables contain WGS84 longitude and latitude in decimal degrees. This is the standard format for location information used in NASIS.
+2.  Use the base R `subset()` function to create a subset of your SoilProfileCollection using `is.na()`
+
+-   `longstddecimaldegrees` and `latstddecimaldegrees` variables contain WGS84 longitude and latitude in decimal degrees. This is the standard format for location information used in NASIS.
 
 ```{r, eval=FALSE}
 # modify this code (replace ...) to create a subset
@@ -177,15 +173,15 @@ pedons.sp  <- aqp::subset(pedons, ...)
 
 ```{r, eval=FALSE, include=FALSE, echo=FALSE}
 # answer 
-pedons.sp  <- aqp::subset(pedons, !is.na(x_std) & !is.na(y_std))
+pedons.sp  <- aqp::subset(pedons, !is.na(longstddecimaldegrees) & !is.na(latstddecimaldegrees))
 ```
 
- 3. Create a `sf` data.frame from the site data in the SoilProfileCollection object `pedons.sp` using `aqp::site()`. Replace the `...` in the following code. Promoting a data.frame to sf POINT geometry requires that the X and Y columns be specified.
- 
+3.  Create a `sf` data.frame from the site data in the SoilProfileCollection object `pedons.sp` using `aqp::site()`. Replace the `...` in the following code. Promoting a data.frame to sf POINT geometry requires that the X and Y columns be specified.
+
 ```{r, eval=FALSE}
 pedon.locations <- sf::st_as_sf(
   ..., 
-  coords = c('x_std', 'y_std'),
+  coords = c('longstddecimaldegrees', 'latstddecimaldegrees'),
   crs = sf::st_crs(4326) #WGS84 GCS
 )
 ```
@@ -194,13 +190,13 @@ pedon.locations <- sf::st_as_sf(
 # answer 
 pedon.locations <- sf::st_as_sf(
   aqp::site(pedons.sp), 
-  coords = c('x_std','y_std'),
+  coords = c('longstddecimaldegrees','latstddecimaldegrees'),
   crs = sf::st_crs(4326) #WGS84 GCS
 )
 ```
 
- 4. View your `sf` object `pedon.locations` interactively with `mapview::mapview()`, and change the `map.types` argument to `'Esri.WorldImagery'`. Use the `pedon.locations` column named `site_id` for the `label` argument.
- 
+4.  View your `sf` object `pedon.locations` interactively with `mapview::mapview()`, and change the `map.types` argument to `'Esri.WorldImagery'`. Use the `pedon.locations` column named `site_id` for the `label` argument.
+
 ```{r}
 # plot an interactive map
 mapview(pedon.locations, 
@@ -217,22 +213,23 @@ mapview(pedon.locations,
         label = pedon.locations$site_id)
 ```
 
- 5. Create a subset `sf` data.frame with only the following "site data" columns: `pedlabsampnum`, `pedon_id`, `taxonname`, `hillslopeprof`, `elev_field`, `slope_field`, `aspect_field`, `plantassocnm`, `bedrckdepth`, `bedrckkind`, `pmkind`, `pmorigin`. Select the target columns with `dplyr::select()` (or another method) by replacing the `...` in the following code.
- 
+5.  Create a subset `sf` data.frame with only the following "site data" columns: `pedlabsampnum`, `upedonid`, `taxonname`, `hillslopeprof`, `elev_field`, `slope_field`, `aspect_field`, `plantassocnm`, `bedrckdepth`, `bedrckkind`, `pmkind`, `pmorigin`. Select the target columns with `dplyr::select()` (or another method) by replacing the `...` in the following code.
+
 ```{r, eval=FALSE}
 pedon.locations_sub <- dplyr::select(pedon.locations, ...) 
 # see also base::subset(x, select=...)
 ```
 
- 6. Export the spatial information in `pedon.locations_sub` to a shape file (.shp) with `sf::st_write()`
+6.  Export the spatial information in `pedon.locations_sub` to a shape file (.shp) with `sf::st_write()`
 
 ```{r, eval=FALSE}
 # write to SHP; output CRS is geographic coordinate system WGS84
 sf::st_write(pedon.locations_sub, "./NASIS-pedons.shp")
 ```
 
-For an example of exporting data to shapefile with the `sp` package, see this tutorial: [**Export Pedons to Shapefile with `sp`**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html).
-<!--
+7.  Send a screenshot of your interactive map, and your R script, to your mentor.
+
+For an example of exporting data to shapefile with the `sp` package, see this tutorial: [**Export Pedons to Shapefile with `sp`**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html). <!--
 <!-- Requires 'rgdal', not on CRAN
 #### Export for Google Earth (_.kml_)
 
@@ -243,11 +240,11 @@ Using the [plotKML](https://cran.r-project.org/web/packages/plotKML/plotKML.pdf)
 See the related material in this tutorial: [**Export Pedons to Google Earth**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html). 
 -->
 
-## Many Packages, Many Spatial Representations
+## Packages for Vector Data
 
 ### The `sf` package
 
-[Simple Features Access](https://www.ogc.org/standards/sfa) is a set of standards that specify a common storage and access model of geographic features. It is used mostly for two-dimensional geometries such as point, line, polygon, multi-point, multi-line, etc. 
+[Simple Features Access](https://www.ogc.org/standards/sfa) is a set of standards that specify a common storage and access model of geographic features. It is used mostly for two-dimensional geometries such as point, line, polygon, multi-point, multi-line, etc.
 
 This is one of many ways of modeling the geometry of shapes in the real world. This model happens to be widely adopted in the **R** ecosystem via the `sf` package, and very convenient for typical data encountered by soil survey operations.
 
@@ -257,52 +254,52 @@ Most of the sf package functions start with the prefix `st_`, such as: `st_crs()
 
 #### `sf` vignettes
 
-You can the following `sf` package vignettes for details, sample data sets and usage of `sf` objects. 
+You can the following `sf` package vignettes for details, sample data sets and usage of `sf` objects.
 
-1. [Simple Features for R](https://r-spatial.github.io/sf/articles/sf1.html)
+1.  [Simple Features for R](https://r-spatial.github.io/sf/articles/sf1.html)
 
-2. [Reading, Writing and Converting Simple Features](https://r-spatial.github.io/sf/articles/sf2.html)
+2.  [Reading, Writing and Converting Simple Features](https://r-spatial.github.io/sf/articles/sf2.html)
 
-3. [Manipulating Simple Feature Geometries](https://r-spatial.github.io/sf/articles/sf3.html)
+3.  [Manipulating Simple Feature Geometries](https://r-spatial.github.io/sf/articles/sf3.html)
 
-4. [Manipulating Simple Features](https://r-spatial.github.io/sf/articles/sf4.html)
+4.  [Manipulating Simple Features](https://r-spatial.github.io/sf/articles/sf4.html)
 
-5. [Plotting Simple Features](https://r-spatial.github.io/sf/articles/sf5.html)
+5.  [Plotting Simple Features](https://r-spatial.github.io/sf/articles/sf5.html)
 
-6. [Miscellaneous](https://r-spatial.github.io/sf/articles/sf6.html)
+6.  [Miscellaneous](https://r-spatial.github.io/sf/articles/sf6.html)
 
-7. [Spherical geometry in sf using s2geometry](https://r-spatial.github.io/sf/articles/sf7.html)
+7.  [Spherical geometry in sf using s2geometry](https://r-spatial.github.io/sf/articles/sf7.html)
 
 ### The `sp` Package
 
-The data structures ("classes") and functions provided by the [`sp`](https://cran.r-project.org/web/packages/sp/index.html) package have served a foundational role in the handling of spatial data in R for years. 
+The data structures ("classes") and functions provided by the [`sp`](https://cran.r-project.org/web/packages/sp/index.html) package have served a foundational role in the handling of spatial data in R for years.
 
-Many of the following examples will reference names such as `SpatialPoints`, `SpatialPointsDataFrame`, and `SpatialPolygonsDataFrame`. These are specialized (S4) classes implemented by the `sp` package. 
+Many of the following examples will reference names such as `SpatialPoints`, `SpatialPointsDataFrame`, and `SpatialPolygonsDataFrame`. These are specialized (S4) classes implemented by the `sp` package.
 
 Objects of these classes maintain linkages between all of the components of spatial data. For example, a point, line, or polygon feature will typically be associated with:
-  
-* coordinate geometry
-* bounding box
-* coordinate reference system
-* attribute table
+
+-   coordinate geometry
+-   bounding box
+-   coordinate reference system
+-   attribute table
 
 ### Converting `sp` and `sf`
 
 `sp` provides access to the same compiled code libraries (PROJ, GDAL, GEOS) through `sf` package.
 
-For now the different package object types are interchangeable, and you may find yourself having to do this for a variety of reasons. You can convert between object types as needed using `sf::as_Spatial()` or `sf::st_as_sf()`. 
+For now the different package object types are interchangeable, and you may find yourself having to do this for a variety of reasons. You can convert between object types as needed using `sf::as_Spatial()` or `sf::st_as_sf()`.
 
 Check the documentation (`?functionname`) to figure out what object types different methods need as input; and check an input object's class with `class()` or `inherits()`.
 
 ### Importing / Exporting Vector Data
 
-Import a feature class from a ESRI File Geodatabase or shape file. 
+Import a feature class from a ESRI File Geodatabase or shape file.
 
-If you have a _.shp_ file, you can specify the whole path, including the file extension in the `dsn` argument, or just the folder. 
+If you have a *.shp* file, you can specify the whole path, including the file extension in the `dsn` argument, or just the folder.
 
 For a Geodatabase, you should specify the feature class using the `layer` argument. Note that a trailing "/" is omitted from the `dsn` (data source name) and the ".shp" suffix is omitted from the `layer`.
 
-#### `sf` 
+#### `sf`
 
 ```{r eval=FALSE}
 x <- sf::st_read(dsn = 'E:/gis_data/ca630/FG_CA630_OFFICIAL.gdb', layer = 'ca630_a')
@@ -324,14 +321,14 @@ The `sf` `st_read()` / `read_sf()` / `st_write()` / `write_sf()` functions have 
 
 The `mapview` and `leaflet` packages make it possible to display interactive maps of `sf` objects in RStudio viewer pane, or within an HTML document generated via R Markdown (e.g. this document).
 
-* [`mapview` package](https://github.com/r-spatial/mapview)
-   - [Basics](https://r-spatial.github.io/mapview/articles/mapview_01-basics.html)
-   - [Advanced Features](https://r-spatial.github.io/mapview/articles/mapview_02-advanced.html)
-   - See other "Articles" in this series, you can make [complex, interactive maps](https://r-spatial.github.io/mapview/articles/mapview_05-extras.html) using the `mapview` package.
-* [`leaflet` package](https://rstudio.github.io/leaflet/)
-* [`leafem`: 'leaflet' Extensions for 'mapview'](https://cran.r-project.org/web/packages/leafem/index.html)
+-   [`mapview` package](https://github.com/r-spatial/mapview)
+    -   [Basics](https://r-spatial.github.io/mapview/articles/mapview_01-basics.html)
+    -   [Advanced Features](https://r-spatial.github.io/mapview/articles/mapview_02-advanced.html)
+    -   See other "Articles" in this series, you can make [complex, interactive maps](https://r-spatial.github.io/mapview/articles/mapview_05-extras.html) using the `mapview` package.
+-   [`leaflet` package](https://rstudio.github.io/leaflet/)
+-   [`leafem`: 'leaflet' Extensions for 'mapview'](https://cran.r-project.org/web/packages/leafem/index.html)
 
-### Exercise 2: Map your favorite soil series extents
+## Exercise 2: Map your favorite soil series extents
 
 The `seriesExtent` function in `soilDB` returns an `sf` object showing generalized extent polygons for a given soil series.
 
@@ -358,7 +355,7 @@ cols <- c('royalblue', 'firebrick')
 mapview(s, zcol = 'series', col.regions = cols, legend = TRUE)
 ```
 
-The following code demonstrates how to fetch / convert / map soil series extents, using a vector of soil series names. 
+The following code demonstrates how to fetch / convert / map soil series extents, using a vector of soil series names.
 
 Results appear in the RStudio "Viewer" pane. Be sure to try the "Export" and "show in window" (next to the broom icon) buttons.
 
@@ -389,22 +386,37 @@ cols <- RColorBrewer::brewer.pal(n = length(series.names), name = 'Set1')
 mapview(s, zcol = 'series', col.regions = cols, legend = TRUE)
 ```
 
-__Question: What do you notice about the areas where the extent polygons occur? Share your thoughts with your peers or mentor__
+**Question: What do you notice about the areas where the extent polygons occur? Share your thoughts with your peers or mentor**
+
+## Packages for Raster Data
 
 ### The `terra` Package
 
 The [`terra` package](https://cran.r-project.org/web/packages/terra/index.html) package provides most of the commonly used grid and vector processing functionality that one might find in a conventional GIS. It provides high-level data structures and functions for the GDAL (Geospatial Data Abstraction Library).
-  
- * re-sampling / interpolation
- * projection and warping (coordinate system transformations of gridded data)
- * cropping, mosaicing, masking
- * local and focal functions
- * raster algebra
- * contouring
- * raster/vector conversions
- * terrain analysis
- * model-based prediction (more on this in Part 2)
-#### Importing / Exporting Rasters
+
+-   resampling ([`terra::resample()`](https://rspatial.github.io/terra/reference/resample.html))
+
+-   projection and warping ([`terra::project()`](https://rspatial.github.io/terra/reference/project.html)`)`
+
+-   cropping, mosaicing, masking ([`terra::crop()`](https://rspatial.github.io/terra/reference/crop.html), [`terra::mosaic()`](https://rspatial.github.io/terra/reference/mosaic.html), [`terra::merge()`](https://rspatial.github.io/terra/reference/merge.html), [`terra::mask()`](https://rspatial.github.io/terra/reference/mask.html))
+
+-   local and focal functions ([`terra::local()`](https://rspatial.github.io/terra/reference/local.html), [`terra::focal()`](https://rspatial.github.io/terra/reference/focal.html))
+
+-   raster algebra (arithmetic operators, [`terra::xapp()`](https://rspatial.github.io/terra/reference/xapp.html))
+
+-   sampling ([`terra::spatSample()`](https://rspatial.github.io/terra/reference/spatSample.html)`)`
+
+-   contouring ([`terra::contour()`](https://rspatial.github.io/terra/reference/contour.html)`)`
+
+-   raster/vector conversions ([`terra::rasterize()`](https://rspatial.github.io/terra/reference/rasterize.html), [`terra::as.polygons()`](https://rspatial.github.io/terra/reference/as.polygons.html))
+
+-   terrain analysis ([`terra::terrain()`](https://rspatial.github.io/terra/reference/terrain.html))
+
+-   model-based prediction and interpolation ([`terra::predict()`](https://rspatial.github.io/terra/reference/predict.html), [`terra::interpolate()`](https://rspatial.github.io/terra/reference/interpolate.html); more on this in [Part 2](https://ncss-tech.github.io/stats_for_soil_survey/book2/index.html))
+
+#### Terra Example
+
+This is a brief demonstration using sample data files with terra.
 
 ```{r fig.width=6, fig.height=6, eval=TRUE}
 # use an example from the terra package
@@ -419,14 +431,9 @@ r
 v <- terra::vect(g)
 v
 
-# convert r to a RasterLayer object
-r2 <- raster::raster(f)
 
 # show SpatRaster details
 print(r)
-
-# show RasterLayer details
-print(r2) 
 
 # default plot method
 plot(r)
@@ -446,30 +453,39 @@ The R object only stores a reference to the data until they are needed to be loa
 
 A more complete background on the capabilities of the `raster` package, and the replacement [`terra`](https://rspatial.org/terra/index.html), are described in the [*Spatial Data Science with R*](http://rspatial.org/) online book.
 
-[*Introduction to the raster package*](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf) vignette 
+```{r, eval = TRUE}
+# convert r to a RasterLayer object
+r2 <- raster::raster(f)
+
+# show RasterLayer details
+print(r2) 
+```
+
+[*Introduction to the raster package*](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf) vignette
 
 ##### `stars`
 
-There is also a package called [`stars`](https://r-spatial.github.io/stars/) (Spatiotemporal Arrays: Raster and Vector Datacubes) that is the `sf`-centric way of dealing with higher dimensional raster and vector "datacubes." Data cubes have dimensions related to time, spectral band, and sensor. The `stars` data structures are often used for processing satellite data sources.
-  
+There is also a package called [`stars`](https://r-spatial.github.io/stars/) (Spatiotemporal Arrays: Raster and Vector Datacubes) that is the `sf`-centric way of dealing with higher dimensional raster and vector "datacubes." Data cubes have additional dimensions related to time, spectral band, or sensor type. The `stars` data structures are often used for processing spectral data sources from satellites.
+
 #### Related Links
 
-   * [`sf` package website](https://r-spatial.github.io/sf/)
-   * [rspatial.org - Spatial Data Science with R](https://rspatial.org/)
-   * [Goodbye PROJ.4 strings! How to specify a coordinate reference system in R?](https://inbo.github.io/tutorials/tutorials/spatial_crs_coding/)
-   
+-   [`sf` package website](https://r-spatial.github.io/sf/)
+-   [rspatial.org - Spatial Data Science with R](https://rspatial.org/)
+-   [Goodbye PROJ.4 strings! How to specify a coordinate reference system in R?](https://inbo.github.io/tutorials/tutorials/spatial_crs_coding/)
+
 ### Converting Vector to Raster
 
 #### [`terra::rasterize()`](https://rspatial.github.io/terra/reference/rasterize.html)
 
-#### [`raster::rasterize()`](https://rspatial.github.io/raster/reference/rasterize.html)
-
 #### [`fasterize::fasterize()`](https://cran.r-project.org/web/packages/fasterize/vignettes/using-fasterize.html)
 
+### Converting Raster to Vector
+
+#### [`terra::as.polygons()`](https://rspatial.github.io/terra/reference/as.polygons.html)
 
 ## Coordinate Reference Systems (CRS)
 
-Spatial data aren't all that useful without an accurate description of the Coordinate Reference System (CRS). This type of information is typically stored within the ".prj" component of a shapefile, or in the header of a GeoTIFF. 
+Spatial data aren't all that useful without an accurate description of the Coordinate Reference System (CRS). This type of information is typically stored within the ".prj" component of a shapefile, or in the header of a GeoTIFF.
 
 Without a CRS it is not possible to perform coordinate transformations (e.g. conversion of geographic coordinates to projected coordinates), spatial overlay (e.g. intersection), or geometric calculations (e.g. distance or area).
 
@@ -477,36 +493,41 @@ The "old" way (PROJ.4) of specifying coordinate reference systems is using chara
 
 Some common examples of coordinate system "EPSG" codes and their legacy "PROJ.4" strings. 4
 
- - "EPSG" stands for European Petroleum Survey Group. The "EPSG Geodetic Parameter Dataset" is a public registry of geodetic datums, spatial reference systems, Earth ellipsoids, coordinate transformations and related units of measurement. 
- 
- - "OGC" refers to the Open Geospatial Consortium, which is an example of another important `authority:code`. "ESRI" (company that develops ArcGIS) also defines many CRS codes. 
- 
- - "PROJ" is the software responsible for transforming coordinates from one CRS to another. The current version of PROJ available is 9, and in PROJ > 6 major changes were made to the way that coordinate reference systems are defined and transformed led to the "PROJ.4" syntax falling out of favor.
+-   "EPSG" stands for European Petroleum Survey Group. The "EPSG Geodetic Parameter Dataset" is a public registry of geodetic datums, spatial reference systems, Earth ellipsoids, coordinate transformations and related units of measurement.
 
- * _EPSG_: [`4326`](https://epsg.io/4326) / _PROJ.4_:`+proj=longlat +datum=WGS84` - geographic, WGS84 datum (NASIS Standard)
- * _OGC_:[`CRS84`](http://defs.opengis.net/vocprez/object?uri=http://www.opengis.net/def/ogc/CRS84) - geographic, WGS84 datum (same as above but explicit longitude, latitude XY order)
- * _EPSG_: [`4269`](https://epsg.io/4269) / _PROJ.4_:`+proj=longlat +datum=NAD83` - geographic, NAD83 datum
- * _EPSG_: [`4267`](https://epsg.io/4267) / _PROJ.4_:`+proj=longlat +datum=NAD27` - geographic, NAD27 datum
- * _EPSG_: [`26910`](https://epsg.io/26910) / _PROJ.4_:`+proj=utm +zone=10 +datum=NAD83` - projected (UTM zone 10), NAD83 datum
- * _EPSG_: [`5070`](https://epsg.io/5070) / _PROJ.4_: `+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23.0 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs` - Albers Equal Area CONUS (gSSURGO)
- 
- - More on the EPSG codes and specifics of CRS definitions:
- 
-   - https://spatialreference.org/ref/epsg/
-   
-   - https://epsg.io/
- 
+-   "OGC" refers to the Open Geospatial Consortium, which is an example of another important `authority:code`. "ESRI" (company that develops ArcGIS) also defines many CRS codes.
+
+-   "PROJ" is the software responsible for transforming coordinates from one CRS to another. The current version of PROJ available is 9, and in PROJ \> 6 major changes were made to the way that coordinate reference systems are defined and transformed led to the "PROJ.4" syntax falling out of favor.
+
+-   *EPSG*: [`4326`](https://epsg.io/4326) / *PROJ.4*:`+proj=longlat +datum=WGS84` - geographic, WGS84 datum (NASIS Standard)
+
+-   *OGC*:[`CRS84`](http://defs.opengis.net/vocprez/object?uri=http://www.opengis.net/def/ogc/CRS84) - geographic, WGS84 datum (same as above but explicit longitude, latitude XY order)
+
+-   *EPSG*: [`4269`](https://epsg.io/4269) / *PROJ.4*:`+proj=longlat +datum=NAD83` - geographic, NAD83 datum
+
+-   *EPSG*: [`4267`](https://epsg.io/4267) / *PROJ.4*:`+proj=longlat +datum=NAD27` - geographic, NAD27 datum
+
+-   *EPSG*: [`26910`](https://epsg.io/26910) / *PROJ.4*:`+proj=utm +zone=10 +datum=NAD83` - projected (UTM zone 10), NAD83 datum
+
+-   *EPSG*: [`5070`](https://epsg.io/5070) / *PROJ.4*: `+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23.0 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs` - Albers Equal Area CONUS (gSSURGO)
+
+-   More on the EPSG codes and specifics of CRS definitions:
+
+    -   <https://spatialreference.org/ref/epsg/>
+
+    -   <https://epsg.io/>
+
 While you may encounter PROJ.4 strings, these are no longer considered the preferred method of referencing Coordinate Reference Systems -- and, in general, newer methods are "easier."
 
-Well-known text (WKT) is a human- machine-readable standard format for geometry, so storing the Coordinate Reference System information in a similar format makes sense. This format is returned by the `sf::st_crs()` method. 
+Well-known text (WKT) is a human- machine-readable standard format for geometry, so storing the Coordinate Reference System information in a similar format makes sense. This format is returned by the `sf::st_crs()` method.
 
-For example: the WKT representation of `EPSG:4326`: 
+For example: the WKT representation of `EPSG:4326`:
 
 ```{r, eval=TRUE}
 st_crs(4326)
 ```
 
-This is using the [OGC WKT CRS standard](https://www.ogc.org/standards/wkt-crs). Adoption of this standard caused some significant changes in packages in the R ecosystem. 
+This is using the [OGC WKT CRS standard](https://www.ogc.org/standards/wkt-crs). Adoption of this standard caused some significant changes in packages in the R ecosystem.
 
 So you can get familiar, what follows are several examples of doing the same thing: setting the CRS of spatial objects with WGS84 longitude/latitude geographic coordinates. If you have another target coordinate system, it is just a matter of using the correct codes to identify it.
 
@@ -542,7 +563,7 @@ s.utm <- st_transform(x = s, crs = 26910)
 s.nad27 <- st_transform(x = s, crs = st_crs(4267))
 ```
 
-#### `sp` 
+#### `sp`
 
 You can do the same thing several different ways with `sp` objects. An equivalent EPSG, OGC and PROJ.4 can be set or get using `proj4string<-`/`proj4string` and either a `sp` `CRS` object or a PROJ.4 string for `Spatial` objects.
 
@@ -581,20 +602,20 @@ terra::crs(r)
 terra::crs(r) <- terra::crs("OGC:CRS84")
 ```
 
-"Transforming" or "warping" a raster is a different from with a vector as it requires interpolation of pixels to a target resolution and CRS. 
+"Transforming" or "warping" a raster is a different from with a vector as it requires interpolation of pixels to a target resolution and CRS.
 
-The method provided by `terra` is `project()` and in `raster` it is `projectRaster()`. 
+The method provided by `terra` is `project()` and in `raster` it is `projectRaster()`.
 
-It works the same as the above "transform" methods in that you specify an object to transform, and the target reference system or a template for the object. 
+It works the same as the above "transform" methods in that you specify an object to transform, and the target reference system or a template for the object.
 
 ```{r, eval=FALSE}
 t.wgs84 <- terra::project(r, terra::crs("+proj=igh"))
 r.wgs84 <- raster::projectRaster(raster::raster(r), crs = CRS("+proj=igh"))
 ```
 
-Note that the default warping of raster uses _bilinear interpolation_ (`method='bilinear'`), which is appropriate for _continuous variables_. 
+Note that the default warping of raster uses *bilinear interpolation* (`method='bilinear'`), which is appropriate for *continuous variables*.
 
-You also have the option of using nearest-neighbor (`method='ngb'`) for _categorical variables_ (class maps) where interpolation would not make sense.
+You also have the option of using nearest-neighbor (`method='ngb'`) for *categorical variables* (class maps) where interpolation would not make sense.
 
 If we want to save this transformed raster to file, we can use something like this for `terra`
 
@@ -656,11 +677,11 @@ unzip(
 
 ## Load Example MLRA Data
 
-We will be using polygons associated with MLRA 15 and 18 as part of this demonstration. 
+We will be using polygons associated with MLRA 15 and 18 as part of this demonstration.
 
-Import these data  with `sf::st_read()`.
+Import these data with `sf::st_read()`.
 
-```{r results='hide', eval=TRUE} 
+```{r results='hide', eval=TRUE}
 # load MLRA polygons
 mlra <- sf::st_read(file.path(ch4.data.path, 'mlra-18-15-AEA.shp'))
 
@@ -670,7 +691,7 @@ mlra <- sf::st_read(file.path(ch4.data.path, 'mlra-18-15-AEA.shp'))
 
 We will load the sample MLRA 15 and 18 (California) raster data (PRISM derived) using `terra::rast()`. If using your own MLRA, you will need to update file paths to use your own rasters.
 
-```{r results='hide', eval=TRUE} 
+```{r results='hide', eval=TRUE}
 # mean annual air temperature, Deg C
 maat <- terra::rast(file.path(ch4.data.path, 'MAAT.tif'))
 
@@ -702,88 +723,6 @@ rs
 plot(rs)
 ```
 
-
-## Raster data
-
-### Object Properties
-
-`SpatRaster` and `RasterLayer` objects are similar to `sf`, `sp` and other R spatial objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of raster objects should be performed using functions such as:
-  
-* `terra::NAflag(r)` / `raster::NAvalue(r)`: get / set the NODATA value
-* `terra::crs(r)` / `raster::wkt(r)` : get / set the coordinate reference system
-* `terra::res(r)` / `raster::res(r)`: get / set the resolution
-* `terra::ext(r)` / `raster::extent(r)`: get / set the extent
-* `terra::datatype(r)` / `raster::dataType(r)`: get / set the data type
-* ... many more, see the [`raster`](https://rspatial.github.io/raster/) and [`terra`](https://rspatial.github.io/terra/) package manuals
-
-### Rasters "In Memory" v.s. "File-Based"
-
-Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory. The `terra` package handles basically all of the logic delegating in v.s. out of memory processing internally--so it is rare that any adjustments to defaults are required.
-
-With the `raster` package, the initial file/disk-based reference can be converted to an in-memory `RasterLayer` with the `readAll()` function. You can achieve a similar effect in `terra` by doing `set.values(object)`.
-
-### Writing Rasters to File
-
-Exporting data requires consideration of the output format, datatype, encoding of NODATA, and other options such as compression. 
-
-With terra, "LZW" compression is used by default when writing GeoTIFF files. Using the `gdal` argument e.g.: `terra::writeRaster(..., gdal=)` is equivalent to specifying `option` argument to `raster::writeRaster()`.
-
-```{r eval=FALSE}
-# using previous example data set
-terra::writeRaster(t.wgs84, filename = 't.wgs84.tif')
-```
-
-For example, a `RasterLayer`  object that you wanted to save to disk as an internally-compressed GeoTIFF:
-  
-```{r eval=FALSE}
-# using previous example data set
-raster::writeRaster(r.wgs84, filename = 'r.tif', options = c("COMPRESS=LZW"))
-```
-
-### Data Types
-
-Commonly used raster `datatype` include: "unsigned integer", "signed integer", and "floating point" of variable precision.
-
- * `INT1U`: integers from 0 to 255
- * `INT2U`: integers from 0 to 65,534
- * `INT2S`: integers from -32,767 to 32,767
- * `INT4S`: integers from -2,147,483,647 to 2,147,483,647
- * `FLT4S`: floating point from -3.4e+38 to 3.4e+38
- * `FLT8S`: floating point from -1.7e+308 to 1.7e+308
-
-It is wise to manually specify an output `datatype` that will "just fit" the required precision. 
-
-For example, if you have generated a `RasterLayer` that warrants integer precision and ranges from 0 to 100, then the `INT1U` data type would provide enough precision to store all possible values *and* the NODATA value. Raster data stored as integers will always be smaller (sometimes 10-100x) than those stored as floating point, especially when internal compression is enabled.
-
-```{r eval = FALSE}
-# integer grid with a range of 0-100
-# maybe soil texture classes
-raster::writeRaster(r, filename = 'r.tif', datatype = 'INT1U')
-
-# floating point grid with very wide range
-# maybe DSM soil property model output
-terra::writeRaster(t.wgs84, filename = 'r.tif', datatype = 'FLT4S')
-```
-
-#### Notes on Compression
-
-It is often a good idea to create internally-compressed raster data. 
-
-The [GeoTiff format](https://gdal.org/drivers/raster/gtiff.html) can accommodate many different compression algorithms, including lossy (JPEG) compression. Usually, the default "LZW" or "DEFLATE" compression will result in significant savings, especially for data encoded as integers. 
-
-For example, the CONUS gSSURGO map unit key grid at 30m resolution is about 55Gb (GeoTiff, no compression) vs. 2.4Gb after LZW compression.
-
-```{r eval = FALSE}
-# reasonable compression using LZW is the default, compare to 
-
-raster::writeRaster(r, filename='r.tif', options=c("COMPRESS=NONE"))
-
-# takes longer to write the file, but better compression
-terra::writeRaster(t.wgs84, filename='r.tif', gdal=c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9")
-```
-
-See [this article](https://kokoalberti.com/articles/geotiff-compression-optimization-guide/) for some ideas on optimization of file read/write times and associated compressed file sizes.  
-
 ## Vector Data
 
 ### `sf`
@@ -803,6 +742,7 @@ st_intersection(p.aea, mlra)
 ```
 
 ### `terra`
+
 ```{r, eval=TRUE}
 p <- terra::vect(data.frame(x = -120, y = 37.5),
                  geom = c("x", "y"),
@@ -833,6 +773,86 @@ p.aea <- spTransform(p, proj4string(mlra.sp))
 over(p.aea, mlra.sp)
 ```
 
+## Raster Data
+
+### Object Properties
+
+`SpatRaster` and `RasterLayer` objects are similar to `sf`, `sp` and other R spatial objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of raster objects should be performed using functions such as:
+
+-   `terra::NAflag(r)` / `raster::NAvalue(r)`: get / set the NODATA value
+-   `terra::crs(r)` / `raster::wkt(r)` : get / set the coordinate reference system
+-   `terra::res(r)` / `raster::res(r)`: get / set the resolution
+-   `terra::ext(r)` / `raster::extent(r)`: get / set the extent
+-   `terra::datatype(r)` / `raster::dataType(r)`: get / set the data type
+-   ... many more, see the [`raster`](https://rspatial.github.io/raster/) and [`terra`](https://rspatial.github.io/terra/) package manuals
+
+### Rasters "In Memory" v.s. "File-Based"
+
+Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory. The `terra` package handles basically all of the logic delegating in v.s. out of memory processing internally--so it is rare that any adjustments to defaults are required.
+
+With the `raster` package, the initial file/disk-based reference can be converted to an in-memory `RasterLayer` with the `readAll()` function. You can achieve a similar effect in `terra` by doing `set.values(object)`.
+
+### Writing Rasters to File
+
+Exporting data requires consideration of the output format, datatype, encoding of NODATA, and other options such as compression.
+
+With terra, "LZW" compression is used by default when writing GeoTIFF files. Using the `gdal` argument e.g.: `terra::writeRaster(..., gdal=)` is equivalent to specifying `option` argument to `raster::writeRaster()`.
+
+```{r eval=FALSE}
+# using previous example data set
+terra::writeRaster(t.wgs84, filename = 't.wgs84.tif')
+```
+
+For example, a `RasterLayer` object that you wanted to save to disk as an internally-compressed GeoTIFF:
+
+```{r eval=FALSE}
+# using previous example data set
+raster::writeRaster(r.wgs84, filename = 'r.tif', options = c("COMPRESS=LZW"))
+```
+
+### Data Types
+
+Commonly used raster `datatype` include: "unsigned integer", "signed integer", and "floating point" of variable precision.
+
+-   `INT1U`: integers from 0 to 255
+-   `INT2U`: integers from 0 to 65,534
+-   `INT2S`: integers from -32,767 to 32,767
+-   `INT4S`: integers from -2,147,483,647 to 2,147,483,647
+-   `FLT4S`: floating point from -3.4e+38 to 3.4e+38
+-   `FLT8S`: floating point from -1.7e+308 to 1.7e+308
+
+It is wise to manually specify an output `datatype` that will "just fit" the required precision.
+
+For example, if you have generated a `RasterLayer` that warrants integer precision and ranges from 0 to 100, then the `INT1U` data type would provide enough precision to store all possible values *and* the NODATA value. Raster data stored as integers will always be smaller (sometimes 10-100x) than those stored as floating point, especially when internal compression is enabled.
+
+```{r eval = FALSE}
+# integer grid with a range of 0-100
+# maybe soil texture classes
+raster::writeRaster(r, filename = 'r.tif', datatype = 'INT1U')
+
+# floating point grid with very wide range
+# maybe DSM soil property model output
+terra::writeRaster(t.wgs84, filename = 'r.tif', datatype = 'FLT4S')
+```
+
+#### Notes on Compression
+
+It is often a good idea to create internally-compressed raster data.
+
+The [GeoTiff format](https://gdal.org/drivers/raster/gtiff.html) can accommodate many different compression algorithms, including lossy (JPEG) compression. Usually, the default "LZW" or "DEFLATE" compression will result in significant savings, especially for data encoded as integers.
+
+For example, the CONUS gSSURGO map unit key grid at 30m resolution is about 55Gb (GeoTiff, no compression) vs. 2.4Gb after LZW compression.
+
+```{r eval = FALSE}
+# reasonable compression using LZW is the default, compare to 
+
+raster::writeRaster(r, filename='r.tif', options=c("COMPRESS=NONE"))
+
+# takes longer to write the file, but better compression
+terra::writeRaster(t.wgs84, filename='r.tif', gdal=c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL=9")
+```
+
+See [this article](https://kokoalberti.com/articles/geotiff-compression-optimization-guide/) for some ideas on optimization of file read/write times and associated compressed file sizes.
 
 ## Spatial Operations
 
@@ -841,18 +861,18 @@ Spatial data are lot more useful when "related" (overlay, intersect, spatial que
 ### Working with Vector and Raster Data
 
 Typically, spatial queries of raster data by geometry features (point, line, polygon) are performed in two ways:
-  
- 1. For each geometry, collect all pixels that overlap (`exactextractr` approach)
- 
- 2. For each geometry, collect a sample of pixels defined by [sampling points](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html)
 
-The first method ensures that all data are included in the analysis, however, processing can be slow for multiple/detailed rasters, and the results may not fit into memory. 
+1.  For each geometry, collect all pixels that overlap (`exactextractr` approach)
 
-The second method is more efficient (10-100x faster), requires less memory, and can remain statistically sound--as long as a reasonable sampling strategy is applied. Sampling may also help you avoid low-acreage "anomalies" in the raster product. More on sampling methods in the next chapter. 
+2.  For each geometry, collect a sample of pixels defined by [sampling points](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html)
+
+The first method ensures that all data are included in the analysis, however, processing can be slow for multiple/detailed rasters, and the results may not fit into memory.
+
+The second method is more efficient (10-100x faster), requires less memory, and can remain statistically sound--as long as a reasonable sampling strategy is applied. Sampling may also help you avoid low-acreage "anomalies" in the raster product. More on sampling methods in the next chapter.
 
 The `extract()` function can perform several operations in one call, such as buffering (in projected units) with `buffer` argument. See the manual page for an extensive listing of optional arguments and what they do.
 
-Sampling and extraction with `terra` the results in a `SpatVector` object. Sampling and extraction with `raster` methods results in a `matrix` object. 
+Sampling and extraction with `terra` the results in a `SpatVector` object. Sampling and extraction with `raster` methods results in a `matrix` object.
 
 ```{r, eval=TRUE}
 # sampling single layer SpatRaster
@@ -861,7 +881,6 @@ terra::spatSample(maat, size = 10)
 # sampling SpatRaster
 terra::spatSample(rs, size = 10)
 ```
-
 
 ```{r fig.width=8, fig.height=5, eval=TRUE}
 par(mfcol = c(1, 2), mar = c(1, 1, 3, 1))
@@ -915,7 +934,7 @@ mean(x.regular$MAAT, na.rm = TRUE)
 mean(x.random$MAAT, na.rm = TRUE)
 ```
 
-Just how much variation can we expect when collecting 100, randomly-located samples over such a large area? 
+Just how much variation can we expect when collecting 100, randomly-located samples over such a large area?
 
 ```{r}
 # 10 replications of samples of n=100
@@ -947,11 +966,11 @@ plot(maat, main = 'PRISM Mean Annual Air Temperature (deg C)')
 plot(sf::st_geometry(mlra.gcs), main = 'MLRA 15 and 18', add = TRUE)
 ```
 
-### Exercise 3: Extracting Raster Data
+## Exercise 3: Extracting Raster Data
 
-#### Raster Summary By Point: NASIS Pedon Locations
+### Raster Summary By Point: NASIS Pedon Locations
 
-Extract PRISM data at the coordinates associated with NASIS pedons that have been correlated to the [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series. 
+Extract PRISM data at the coordinates associated with NASIS pedons that have been correlated to the [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series.
 
 We will use the sample dataset `loafercreek` from the `soilDB` package to get NASIS data. This example can be easily adapted to your own pedon data extracted from NASIS using [`fetchNASIS()`](http://ncss-tech.github.io/soilDB/reference/fetchNASIS.html), but if your points are not in California, you will need to supply your own raster data.
 
@@ -968,7 +987,7 @@ pedons <- loafercreek
 
 # extract site data
 s <-  sf::st_as_sf(aqp::site(pedons),
-                   coords = c("x_std", "y_std"),
+                   coords = c("longstddecimaldegrees", "latstddecimaldegrees"),
                    crs = 4326,
                    na.fail = FALSE)
 ```
@@ -987,7 +1006,7 @@ e <- terra::extract(rs, s2, df = TRUE)
 summary(e[, -1])
 ```
 
-Join the extracted PRISM data with the original `SoilProfileCollection` object. 
+Join the extracted PRISM data with the original `SoilProfileCollection` object.
 
 ```{r, eval=TRUE}
 # combine site data (sf) with extracted raster values (data.frame), row-order is identical, result is sf
@@ -995,7 +1014,7 @@ res <- cbind(s, e)
 
 # extract unique IDs and PRISM data
 # dplyr verbs work with sf data.frames
-res2 <- dplyr::select(res, pedon_id, MAAT, MAP, FFD, GDD, rain_fraction, effective_precipitation)
+res2 <- dplyr::select(res, upedonid, MAAT, MAP, FFD, GDD, rain_fraction, effective_precipitation)
 
 # join with original SoilProfileCollection object via pedon_key
 site(pedons) <- res2
@@ -1012,7 +1031,7 @@ my_rv_function <- function(x) median(x, na.rm = TRUE)
 my_high_function <- function(x) quantile(x, probs = 0.95, na.rm = TRUE)
 
 site(pedons) |> 
-  dplyr::select(pedon_id, MAAT, MAP, FFD, GDD,
+  dplyr::select(upedonid, MAAT, MAP, FFD, GDD,
                 rain_fraction, effective_precipitation) |> 
   dplyr::summarize(dplyr::across(
     MAAT:effective_precipitation,
@@ -1022,10 +1041,9 @@ site(pedons) |>
   ))
 ```
 
-#### Raster Summary By Polygon: Series Extent
+### Raster Summary By Polygon: Series Extent
 
-The [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) function from the `soilDB` package provides a simple interface to [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/) data files. 
-Note that these series extents have been generalized for rapid display at regional to continental scales. A more precise representation of "series extent" can be generated from SSURGO polygons and queried from [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html).
+The [`seriesExtent()`](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) function from the `soilDB` package provides a simple interface to [Series Extent Explorer](https://casoilresource.lawr.ucdavis.edu/see/) data files. Note that these series extents have been generalized for rapid display at regional to continental scales. A more precise representation of "series extent" can be generated from SSURGO polygons and queried from [SDA](http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html).
 
 Get an approximate extent for the [Loafercreek](http://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) soil series from [SEE](https://casoilresource.lawr.ucdavis.edu/see/#amador). See the `seriesExtent` [tutorial](http://ncss-tech.github.io/AQP/soilDB/series-extent.html) and [manual page](http://ncss-tech.github.io/soilDB/reference/seriesExtent.html) for additional options and related functions.
 
@@ -1101,7 +1119,7 @@ summary(e[,-1])
 knitr::kable(cor(e[,-1]), digits = 2)
 ```
 
-Quickly compare the two sets of samples. 
+Quickly compare the two sets of samples.
 
 ```{r fig.width=6, fig.height=4, eval=TRUE}
 # compile results into a list
@@ -1129,16 +1147,16 @@ boxplot(
 
 Basic climate summaries from a standardized source (e.g. PRISM) might be a useful addition to an OSD, or checking the ranges reported in mapunits.
 
-#### Raster Summary By Polygon: MLRA 
+### Raster Summary By Polygon: MLRA
 
 The following example is a simplified version of what is available in the [`soilReports`](https://github.com/ncss-tech/soilReports) package, reports on the [ncss-tech](https://github.com/ncss-tech/soil-pit/tree/master/reports) GitHub repository.
 
 Efficient summary of large raster data sources can be accomplished using:
 
-  * internally-compressed raster data sources, stored on a local disk, can be in any coordinate system
-  * polygons stored in an equal-area or UTM coordinate system, with CRS units of meters
-  * [fixed-density sampling](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html) of polygons
-  * estimation of quantiles from collected raster samples
+-   internally-compressed raster data sources, stored on a local disk, can be in any coordinate system
+-   polygons stored in an equal-area or UTM coordinate system, with CRS units of meters
+-   [fixed-density sampling](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html) of polygons
+-   estimation of quantiles from collected raster samples
 
 Back to our example data. The first step is to check the MLRA polygons (`mlra`); how many features per MLRA symbol? Note that some MLRA have more than one polygon.
 
@@ -1280,9 +1298,9 @@ densityplot(~ value | group, data = ex.all,
 
 ### Example: Summarizing MLRA Raster Data with `lattice` graphics
 
-Lattice graphics are useful for summarizing grouped comparisons. 
+Lattice graphics are useful for summarizing grouped comparisons.
 
-The syntax is difficult to learn and remember, but there is a lot of [documentation online](http://www.statmethods.net/advgraphs/trellis.html). 
+The syntax is difficult to learn and remember, but there is a lot of [documentation online](http://www.statmethods.net/advgraphs/trellis.html).
 
 ```{r, fig.width=8, fig.height=4, eval=TRUE}
 library(lattice)
@@ -1310,6 +1328,7 @@ bwplot(mlra ~ value | name, data = m,                   # setup plot and data so
 )
 ```
 
+````{=html}
 <!--
 
 ##### Interactive Summaries
@@ -1338,23 +1357,20 @@ histboxp(
 )
 ```
 -->
+````
 
 ## Additional Reading (Spatial)
 
-* Ahmed, Zia. 2020. [Geospatial Data Science with R](https://zia207.github.io/geospatial-r-github.io/index.html).
+-   Ahmed, Zia. 2020. [Geospatial Data Science with R](https://zia207.github.io/geospatial-r-github.io/index.html).
 
-* Gimond, M., 2019. Intro to GIS and Spatial Analysis [https://mgimond.github.io/Spatial/](https://mgimond.github.io/Spatial/)
+-   Gimond, M., 2019. Intro to GIS and Spatial Analysis <https://mgimond.github.io/Spatial/>
 
-* Hijmans, R.J. 2019. Spatial Data Science with R. [https://rspatial.org/](https://rspatial.org/)
+-   Hijmans, R.J. 2019. Spatial Data Science with R. <https://rspatial.org/>
 
-* Lovelace, R., J. Nowosad, and J. Muenchow, 2019. Geocomputation with R. CRC Press. [https://bookdown.org/robinlovelace/geocompr/](https://bookdown.org/robinlovelace/geocompr/)
+-   Lovelace, R., J. Nowosad, and J. Muenchow, 2019. Geocomputation with R. CRC Press. <https://bookdown.org/robinlovelace/geocompr/>
 
-* Pebesma, E., and R.S. Bivand. 2005. Classes and methods for spatial data: The sp package. [https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf](https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf).
+-   Pebesma, E., and R.S. Bivand. 2005. Classes and methods for spatial data: The sp package. <https://cran.r-project.org/web/packages/sp/vignettes/intro_sp.pdf>.
 
-* Pebesma, E. and R. Bivand, 2019. Spatial Data Science. [https://keen-swartz-3146c4.netlify.com/](https://keen-swartz-3146c4.netlify.com/)
+-   Pebesma, E. and R. Bivand, 2019. Spatial Data Science. <https://keen-swartz-3146c4.netlify.com/>
 
-* [Applied Spatial Data Analysis with R](http://www.asdar-book.org/)
-
-
-
-
+-   [Applied Spatial Data Analysis with R](http://www.asdar-book.org/)

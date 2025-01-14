@@ -740,30 +740,6 @@ We can use the `addmargins()` function to add the row and column sums to the mar
 addmargins(table(pedons$hzname, pedons$texcl))
 ```
 
-<!-- #### `dput()` -->
-
-<!-- Another very useful function is `dput()`, which prints a string-representation of the output of an R expression as code that generates that output so that you can re-use it.  -->
-
-<!-- It is also good short-hand for concatenating a comma-delimited list.  -->
-
-<!-- Here, we select the first four `pedon_id` values in `pedons` site table, and print out a comma-separated `c()` expression showing those values as a static R expression. -->
-
-<!-- ```{r, eval=TRUE} -->
-<!-- dput(site(pedons)$pedon_id[1:4]) -->
-<!-- ``` -->
-
-<!-- This result string can be copy-pasted as a comma-delimited string, used as a string of UserSiteID's for entering into NASIS list queries or other things. -->
-
-<!-- The `dput()` function is helpful when sending questions or example data to colleagues. Here, we see that the results of `dput()` are equivalent to the input after evaluation by R. -->
-
-<!-- ```{r, eval=TRUE} -->
-<!-- all(c("08DWB028", "07RJV098", "07RJV099", "S2007CA009002") == site(pedons)$pedon_id[1:4]) -->
-<!-- ``` -->
-
-<!--Do we want to include here? Perhaps move to the end as more of a footnote for future work and extensibility.
-
-I think this is now more covered in Stephens intro anyway. The main point of me including this (as well as the specialized timeseries object stub) was to draw parallels between objects for specialized data purposes. And how in some ways the SPC is 'tidy' for our typical soil profile data. I understand this probably makes you cringe, and you couldn't have known what I had in mind from just the two line stub.-AB
-
 #### The `dplyr` package and "tidy" data principles
 
 **[Tidy Data Principles](https://tidyr.tidyverse.org/articles/tidy-data.html)**
@@ -927,7 +903,7 @@ We use the `SoilProfileCollection` `subset` method, where we first specify a dat
 Here, we combine two logical expressions to find `taxsubgrp` containing `"alfs"` (Alfisols) with `obsdate` before January 1st, 2010. 
 
 ```{r, eval=TRUE,  fig.width=8, fig.height=4}
-subset2 <- subset(pedons, grepl("alfs", taxsubgrp) & obs_date < as.POSIXlt("2010-01-01"))
+subset2 <- subset(pedons, grepl("alfs", taxsubgrp) & obsdate < as.POSIXlt("2010-01-01"))
 
 # check taxonomic range of particle size classes in the data
 # overwhelmingly these are described as loamy-skeletal ultic haploxeralfs
@@ -935,7 +911,7 @@ sort(table(subset2$taxsubgrp), decreasing = TRUE)
 sort(table(subset2$taxpartsize), decreasing = TRUE)
 
 # check year described and taxpartsize
-table(subset2$taxpartsize, substr(subset2$obs_date, 0, 4))
+table(subset2$taxpartsize, substr(subset2$obsdate, 0, 4))
 
 # a double equal sign '==' is used for exact character or numeric criteria
 subset3 <- subset(subset2, taxpartsize == 'loamy-skeletal')
@@ -1031,7 +1007,6 @@ _Notes about default settings and handling of `NULL` (missing data elements or r
 ```
 NOTE: some records are missing surface fragment cover
 NOTE: some records are missing rock fragment volume
-NOTE: all records are missing artifact volume
 ```
 
 ### Inspecting Results
@@ -1051,7 +1026,7 @@ download.file("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/dat
               destfile = example.data.path)
 ```
 
-Downloading and installing the above .rda is equivalent to doing NASIS query  "_PedonPC_Plus_DataDump_select" (MLRA04 Bozeman) for to fill your selected set for User Site ID: `%MT647%`, NASIS Site: `MLRA04%`, NASIS Group: `4-MIS Pedons`, followed by `mt647 <- fetchNASIS()`.
+Downloading and installing the above .rda is equivalent to doing NASIS query  "_PedonPC_Plus_DataDump_select" (MLRA04 Bozeman) for to fill your selected set for User Site ID: `%MT647%`, NASIS Site: `SSRO_Northwest`, NASIS Group: `NW-MIS Point Data`, followed by `mt647 <- fetchNASIS()`.
 
 #### Load Example Data
 
@@ -1085,7 +1060,7 @@ get('bad.pedon.ids', envir = soilDB.env)
 
 ```{r, eval=TRUE}
 # by default, rmHzErrors removes the "bad" illogical pedons
-any(mt647$pedon_id %in% get('bad.pedon.ids', envir=soilDB.env))
+any(mt647$upedonid %in% get('bad.pedon.ids', envir=soilDB.env))
 ```
 
 When `fetchNASIS(..., rmHzErrors = TRUE)` (the default), any horizons that were omitted from the SoilProfileCollection will be stored in the `bad.horizons` variable in the `soilDB.env` environment.
@@ -1361,7 +1336,7 @@ mt663$first_landform <- sapply(strsplit(mt663$landform_string, "&"),
 # k: number of clusters to identify
 diagnosticPropertyPlot(
   mt663[1:30, ], v = v, k = 5,
-  grid.label = 'site_id', 
+  grid.label = 'usiteid', 
   dend.label = 'first_landform', 
   sort.vars = TRUE
 )
@@ -1400,7 +1375,7 @@ v <- c('ochric.epipedon', 'cambic.horizon',
 # generate diagnostic property diagram
 diagnosticPropertyPlot(
   f, v = v, k = 5, 
-  grid.label = 'site_id', 
+  grid.label = 'usiteid', 
   dend.label = 'taxonname'
 )
 ```
@@ -1443,13 +1418,12 @@ You can use the CA792 (Sequoia-Kings Canyon National Park) pedons as an example.
 library(soilDB)
 
 # write query as a character string
-q <- "SELECT siteiid as siteiid, peiid, usiteid as site_id, 
-             upedonid as pedon_id, obsdate as obs_date,
-             soitemp, soitempdep FROM site_View_1
+q <- "SELECT siteiid as siteiid, peiid, usiteid as upedonid, obsdate, soitemp, soitempdep 
+       FROM site_View_1
        INNER JOIN siteobs_View_1 ON site_View_1.siteiid = siteobs_View_1.siteiidref
        LEFT OUTER JOIN sitesoiltemp_View_1 ON siteobs_View_1.siteobsiid = sitesoiltemp_View_1.siteobsiidref
        LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref
-      ORDER BY obs_date, siteiid;"
+      ORDER BY obsdate, siteiid;"
 
 # setup connection to local NASIS
 channel <- NASIS()
@@ -1472,7 +1446,7 @@ d <- na.omit(d)
 table(d$soitempdep)
 
 # extract doy of year
-d$doy <- as.integer(format(d$obs_date, "%j"))
+d$doy <- as.integer(format(d$obsdate, "%j"))
 
 # when where measurements collected?
 hist(
