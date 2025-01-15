@@ -166,7 +166,7 @@ pedons <- fetchNASIS(from = 'pedons')
 
 -   `longstddecimaldegrees` and `latstddecimaldegrees` variables contain WGS84 longitude and latitude in decimal degrees. This is the standard format for location information used in NASIS.
 
-```{r, eval=FALSE}
+```{eval=FALSE}
 # modify this code (replace ...) to create a subset
 pedons.sp  <- aqp::subset(pedons, ...)
 ```
@@ -178,7 +178,7 @@ pedons.sp  <- aqp::subset(pedons, !is.na(longstddecimaldegrees) & !is.na(latstdd
 
 3.  Create a `sf` data.frame from the site data in the SoilProfileCollection object `pedons.sp` using `aqp::site()`. Replace the `...` in the following code. Promoting a data.frame to sf POINT geometry requires that the X and Y columns be specified.
 
-```{r, eval=FALSE}
+```{eval=FALSE}
 pedon.locations <- sf::st_as_sf(
   ..., 
   coords = c('longstddecimaldegrees', 'latstddecimaldegrees'),
@@ -197,7 +197,7 @@ pedon.locations <- sf::st_as_sf(
 
 4.  View your `sf` object `pedon.locations` interactively with `mapview::mapview()`, and change the `map.types` argument to `'Esri.WorldImagery'`. Use the `pedon.locations` column named `site_id` for the `label` argument.
 
-```{r}
+```
 # plot an interactive map
 mapview(pedon.locations, 
         legend = FALSE, 
@@ -215,7 +215,7 @@ mapview(pedon.locations,
 
 5.  Create a subset `sf` data.frame with only the following "site data" columns: `pedlabsampnum`, `upedonid`, `taxonname`, `hillslopeprof`, `elev_field`, `slope_field`, `aspect_field`, `plantassocnm`, `bedrckdepth`, `bedrckkind`, `pmkind`, `pmorigin`. Select the target columns with `dplyr::select()` (or another method) by replacing the `...` in the following code.
 
-```{r, eval=FALSE}
+```
 pedon.locations_sub <- dplyr::select(pedon.locations, ...) 
 # see also base::subset(x, select=...)
 ```
@@ -229,7 +229,8 @@ sf::st_write(pedon.locations_sub, "./NASIS-pedons.shp")
 
 7.  Send a screenshot of your interactive map, and your R script, to your mentor.
 
-For an example of exporting data to shapefile with the `sp` package, see this tutorial: [**Export Pedons to Shapefile with `sp`**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html). <!--
+For an example of exporting data to shapefile with the `sp` package, see this tutorial: [**Export Pedons to Shapefile with `sp`**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html). 
+<!--
 <!-- Requires 'rgdal', not on CRAN
 #### Export for Google Earth (_.kml_)
 
@@ -759,7 +760,7 @@ mlra[relate(vect(mlra), p.aea, relation = "intersects"),
 
 ### `sp`
 
-In `sp` objects, you do these operations with the `sp::over()` function. Access the associated vignette by pasting `vignette("over")` in the console when the `sp` package is loaded.
+In `sp` objects, you do these operations with the `sp::over()` function. Access the associated vignette by running `vignette("over")` in the console when the `sp` package is loaded.
 
 ```{r, eval=FALSE}
 # hand make a SpatialPoints object
@@ -786,17 +787,83 @@ over(p.aea, mlra.sp)
 -   `terra::datatype(r)` / `raster::dataType(r)`: get / set the data type
 -   ... many more, see the [`raster`](https://rspatial.github.io/raster/) and [`terra`](https://rspatial.github.io/terra/) package manuals
 
-### Rasters "In Memory" v.s. "File-Based"
+### Rasters "In Memory" vs. "File-Based"
 
-Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory. The `terra` package handles basically all of the logic delegating in v.s. out of memory processing internally--so it is rare that any adjustments to defaults are required.
+Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory. The `terra` package handles basically all of the logic delegating in vs. out of memory processing internally--so it is rare that any adjustments to defaults are required.
 
 With the `raster` package, the initial file/disk-based reference can be converted to an in-memory `RasterLayer` with the `readAll()` function. You can achieve a similar effect in `terra` by doing `set.values(object)`.
+
+### Rasters "Continuous" vs. "Categorical"
+
+Rasters can represent both continuous and categorical (factor) variables. Raster categories are stored as integers with one or more associated labels.
+
+The categories can be viewed using the `levels()` and `terra::cats()` functions. You can have multiple category columns, and the "active" category can be set with `terra::activeCat()`.
+
+You can use the `terra::classify()` function to assign integer values to each pixel that can be the basis for you categories. Then, you can set the categories associated.
+
+For example,  we classify the terra sample elevation dataset into high and low elevation areas. We supply a reclassification matrix of values with three columns. The first column is the "low" end of the class range, the second column is the high end of the class range. The third column contains the new values to assign.
+
+```{r, eval=TRUE}
+x <- terra::rast(system.file("ex", "elev.tif", package = "terra"))
+
+rcl <- cbind(c(0, 300), c(300, 600), 1:2)
+colnames(rcl) <- c("low", "high", "new_value")
+rcl
+
+y <- terra::classify(x, rcl)
+plot(y)
+```
+
+Once we classify a raster into a set of integer values, we can assign labels or categories to each value with `levels()`:
+
+```{r, eval=TRUE}
+new_levels <- data.frame(
+  values = 1:2,
+  region = c("low elevation", "high elevation"),
+  otherlabel = c("A", "B")
+)
+new_levels
+
+levels(y) <- new_levels
+plot(y)
+```
+
+Our categories had two columns with labels. The first one (`region`) is selected by default. We can use the second (`otherlabel`) if we set it as the active category with `terra::activeCat()`.
+
+```{r, eval=TRUE}
+terra::activeCat(y) <- "otherlabel"
+plot(y)
+```
+
+We can also handle values that are not matched in `classify()` matrix with the `others` argument. Here we set `others = 3` so that any cell values that are not included in `rcl` get assigned value `3`.
+
+```{r, eval= TRUE}
+rcl <- cbind(c(200, 300), c(300, 600), 1:2)
+colnames(rcl) <- c("low", "high", "new_value")
+rcl
+
+y2 <- terra::classify(x, rcl, others = 3)
+plot(y2)
+```
+
+We have not provided handling for `NA` values so they are not altered by the above classification. We can convert `NA` values explicitly by adding them to `rcl`:
+
+```{r, eval= TRUE}
+rcl <- cbind(c(200, 300, NA), c(300, 600, NA), c(1:2, 4))
+colnames(rcl) <- c("low", "high", "new_value")
+rcl
+
+y3 <- terra::classify(x, rcl, others = 3)
+plot(y3)
+```
+
+Note that `classify()` works with the "raw" values of categorical rasters, ignoring the categories. To simply change the labels of categorical rasters, use `terra::subst()` instead.
 
 ### Writing Rasters to File
 
 Exporting data requires consideration of the output format, datatype, encoding of NODATA, and other options such as compression.
 
-With terra, "LZW" compression is used by default when writing GeoTIFF files. Using the `gdal` argument e.g.: `terra::writeRaster(..., gdal=)` is equivalent to specifying `option` argument to `raster::writeRaster()`.
+With terra, `"COMPRESS=LZW"` option is used by default when writing GeoTIFF files. Using the `gdal` argument e.g.: `terra::writeRaster(..., gdal=)` is equivalent to specifying `options` argument to `raster::writeRaster()`.
 
 ```{r eval=FALSE}
 # using previous example data set
@@ -808,6 +875,35 @@ For example, a `RasterLayer` object that you wanted to save to disk as an intern
 ```{r eval=FALSE}
 # using previous example data set
 raster::writeRaster(r.wgs84, filename = 'r.tif', options = c("COMPRESS=LZW"))
+```
+
+#### Writing Categorical Rasters to File
+
+When you write categorical rasters to file, categories will either be stored within the file itself, or in a Persistent Auxiliary Metadata (PAM) into an .aux.xml file automatically. If only using terra or other GDAL tools to work with categorical data this is usually sufficient.
+
+You can also write a .vat.dbf file containing categorical information. Writing this file can be important if you want to use your categories in other GIS software such as ArcGIS (which does not necessarily make full use of GDAL PAM).
+
+We can write a data.frame containing the levels of our raster to file using `foreign::write.dbf()` function. You will append the ".vat.dbf"  extension to the base filename of your data.
+
+```{r}
+x <- terra::rast(system.file("ex", "elev.tif", package = "terra"))
+
+rcl <- cbind(c(0, 300), c(300, 600), 1:2)
+colnames(rcl) <- c("low", "high", "new_value")
+rcl
+
+y <- terra::classify(x, rcl)
+plot(y)
+
+terra::writeRaster(y, "my_categorical_data.tif", overwrite = TRUE)
+
+my_categories <- data.frame(
+  values = 1:2,
+  region = c("low elevation", "high elevation"),
+  otherlabel = c("A", "B")
+)
+
+foreign::write.dbf(my_categories, file = "my_categorical_data.tif.vat.dbf")
 ```
 
 ### Data Types
@@ -827,11 +923,9 @@ For example, if you have generated a `RasterLayer` that warrants integer precisi
 
 ```{r eval = FALSE}
 # integer grid with a range of 0-100
-# maybe soil texture classes
 raster::writeRaster(r, filename = 'r.tif', datatype = 'INT1U')
 
 # floating point grid with very wide range
-# maybe DSM soil property model output
 terra::writeRaster(t.wgs84, filename = 'r.tif', datatype = 'FLT4S')
 ```
 
@@ -854,7 +948,34 @@ terra::writeRaster(t.wgs84, filename='r.tif', gdal=c("COMPRESS=DEFLATE", "PREDIC
 
 See [this article](https://kokoalberti.com/articles/geotiff-compression-optimization-guide/) for some ideas on optimization of file read/write times and associated compressed file sizes.
 
-## Spatial Operations
+## Exercise 3: Creating a Slope Map
+
+In this exercise you will create a continuous and categorical slope gradient maps from a digital elevation model.
+
+1. Use the sample Tahoe-area LiDAR elevation dataset from the gdalUtilities package or your own dataset as input. If you use your own data, you may want to make a smaller extent with `[terra::crop()]`
+ - `tahoe <- terra::rast(system.file("extdata", "tahoe_lidar_bareearth.tif", package = "gdalUtilities"))`
+
+2. Run `terra::terrain()` to create a slope map with `unit="radians"`
+
+3. Convert radians to percent slope (divide by `2*pi`, multiply by `100`)
+
+4. Make a plot of the continuous percent slope. You can use `terra::plot()` for static or `terra::plet()` for interactive map.
+
+5. Use `terra::classify()` to create a categorical map of slope classes. Use the following breaks and assign the integer values `1` through `5` from lowest to highest.
+
+ - 0 to 3%
+ - 3 to 15%
+ - 15 to 30%
+ - 30 to 60%
+ - \>60% 
+ 
+6. Use `levels()` to set the categories of your raster.
+
+7. Write the raster data to a GeoTIFF file with `terra::writeRaster()`
+
+8. Write the raster attribute table to a .vat.dbf file with `foreign::write.dbf()`
+
+## Spatial Overlay Operations
 
 Spatial data are lot more useful when "related" (overlay, intersect, spatial query, etc.) to generate something new. The CRS of the two objects being overlaid must match.
 
