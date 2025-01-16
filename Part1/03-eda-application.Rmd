@@ -87,7 +87,7 @@ This view is fine for a small dataset, but can be cumbersome for larger ones. Th
 ```{r, message=FALSE, warning=FALSE, eval=TRUE}
 
 h %>%
-  select(genhz, clay, total_frags_pct, phfield, effclass) %>%
+  select(genhz, claytotest, total_frags_pct, phfield, effclass) %>%
   summary()
 
 ```
@@ -96,9 +96,9 @@ The `summary()` function is known as a generic R function. It will return a prep
 
 When you do have missing data and the function you want to run will not run with missing values, the following options are available:
 
-1.  **Exclude** all rows or columns that contain missing values using the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g., horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such as `clay <- na.exclude(h$clay)`.
+1.  **Exclude** all rows or columns that contain missing values using the function `na.exclude()`, such as `h2 <- na.exclude(h)`. However this can be wasteful because it removes all rows (e.g., horizons), regardless if the row only has 1 missing value. Instead it's sometimes best to create a temporary copy of the variable in question and then remove the missing variables, such as `claytotest <- na.exclude(h$claytotest)`.
 
-2.  **Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$clay <- ifelse(is.na(h$clay), 0, h$clay) # or h[is.na(h$clay), ] <- 0`.
+2.  **Replace** missing values with another value, such as zero, a global constant, or the mean or median value for that column, such as `h$claytotest <- ifelse(is.na(h$claytotest), 0, h$claytotest) # or h[is.na(h$claytotest), ] <- 0`.
 
 3.  **Read** the help file for the function you're attempting to use. Many functions have additional arguments for dealing with missing values, such as `na.rm`.
 
@@ -127,7 +127,7 @@ Typo errors such as these are a common problem with old pedon data in NASIS.
 1.  Create a new R script
 2.  Load the gopheridge dataset found within the soilDB package or use your own data (highly encouraged) and inspect the dataset
 3.  Apply the generalized horizon rules below or develop your own, see the following [job-aid](http://ncss-tech.github.io/AQP/aqp/gen-hz-assignment.html)
-4.  Summarize the `hzdept`, `genhz`, `texture_class`, `sand`, and `fine gravel`.
+4.  Summarize the `hzdept`, `genhz`, `texture_class`, `sandtotest`, and `fine gravel`.
 5.  Save your R script, and forward to your instructor.
 
 ```{r, eval=TRUE}
@@ -140,16 +140,26 @@ p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt','Cr','R')
 
 ```{r, echo = FALSE, eval=TRUE}
 desc <- data.frame(
-  Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
-  NASIS = c("RV ?", "RV", "RV", "L & H ?", "L & H"),
-  Description = c("arithmetic average", 
-                  "middle value, 50% quantile", 
-                  "most frequent value", "variation around mean", 
-                  "percent rank of values, such that all values are <= p"
-                  ),
-  'R function' = c("mean()", "median()", "sort(table(), decreasing = TRUE)[1]", "sd()", "quantile()"),
+  Parameter = c("Mean", "Weighted Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
+  NASIS = c("RV ?", "RV", "RV", "RV", "L & H ?", "L & H"),
+  Description = c(
+    "arithmetic average",
+    "weighted arithmetic average",
+    "middle value, 50% quantile",
+    "most frequent value",
+    "variation around mean",
+    "percent rank of values, such that all values are <= p"
+  ),
+  'R function' = c(
+    "mean()",
+    "weighted.mean()",
+    "median()",
+    "sort(table(), decreasing = TRUE)[1]",
+    "sd()",
+    "quantile()"
+  ),
   check.names = FALSE
-  )
+)
 knitr::kable(desc, caption = "Short Description of Descriptive Statistics and R Functions")
 ```
 
@@ -162,7 +172,7 @@ These measures are used to determine the mid-point of the range of observed valu
 The mean clay content from the loafercreek dataset may be determined:
 
 ```{r, eval=TRUE}
-mean(h$clay, na.rm = TRUE)
+mean(h$claytotest, na.rm = TRUE)
 ```
 
 **Median** is the middle measurement of a sample set, and as such is a more robust estimate of central tendency than the mean. This is known as the middle or 50th quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.
@@ -170,14 +180,14 @@ mean(h$clay, na.rm = TRUE)
 The median from the sample dataset may be determined:
 
 ```{r, eval=TRUE}
-median(h$clay, na.rm = TRUE)
+median(h$claytotest, na.rm = TRUE)
 ```
 
 **Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. R does not include a function for calculating the mode, but we can calculate it using the following example.
 
 ```{r, eval=TRUE}
 # sort and select the 1st value, which will be the mode
-sort(table(round(h$clay)), decreasing = TRUE)[1] 
+sort(table(round(h$claytotest)), decreasing = TRUE)[1] 
 ```
 
 **Frequencies**
@@ -199,8 +209,8 @@ table(h$genhz, h$texcl)
 
 # or
 
-h %>% count(genhz, texcl)
-
+h %>% 
+  count(genhz, texcl)
 ```
 
 We can also add margin totals to the table or convert the table frequencies to proportions.
@@ -210,21 +220,18 @@ We can also add margin totals to the table or convert the table frequencies to p
 addmargins(table(h$genhz, h$texcl))
 
 # calculate the proportions relative to the rows, margin = 1 calculates for rows, margin = 2 calculates for columns, margin = NULL calculates for total observations
-table(h$genhz, h$texture_class) %>% 
-  prop.table(margin = 1) %>% 
+table(h$genhz, h$texture_class) %>%
+  prop.table(margin = 1) %>%
   round(2) * 100
 ```
 
 To determine the mean by a group or category, use the `group_by` and `summarize` functions:
 
 ```{r, eval=TRUE}
-
 h %>%
   group_by(genhz) %>%
-  summarize(clay_avg = mean(clay, na.rm = TRUE),
-            clay_med = median(clay, na.rm = TRUE)
-            )
-
+  summarize(clay_avg = mean(claytotest, na.rm = TRUE),
+            clay_med = median(claytotest, na.rm = TRUE))
 ```
 
 ### Measures of Dispersion
@@ -238,7 +245,7 @@ $s^2 = \frac{\sum_{i=1}^{n}(x_i - \bar{x})^2} {n - 1}$
 This is the square of the sum of the deviations from the mean, divided by the number of samples minus 1. It is commonly referred to as the sum of squares. As the deviation increases, the variance increases. Conversely, if there is no deviation, the variance will equal 0. As a squared value, variance is always positive. Variance is an important component for many statistical analyses including the most commonly referred to measure of dispersion, the *standard deviation*. Variance for the sample dataset is:
 
 ```{r, eval=TRUE}
-var(h$clay, na.rm=TRUE)
+var(h$claytotest, na.rm=TRUE)
 ```
 
 **Standard Deviation** is the square root of the variance:
@@ -248,11 +255,11 @@ $s = \sqrt\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2} {n - 1}$
 The units of the standard deviation are the same as the units measured. From the formula you can see that the standard deviation is simply the square root of the variance. Standard deviation for the sample dataset is:
 
 ```{r, eval=TRUE}
-sd(h$clay, na.rm = TRUE)
+sd(h$claytotest, na.rm = TRUE)
 
 # or
 
-sqrt(var(h$clay, na.rm = TRUE))
+sqrt(var(h$claytotest, na.rm = TRUE))
 ```
 
 **Coefficient of Variation** (CV) is a relative (i.e., unitless) measure of standard deviation:
@@ -263,7 +270,7 @@ CV is calculated by dividing the standard deviation by the mean and multiplying 
 
 ```{r, eval=TRUE}
 # remove NA values and create a new variable
-clay <- na.exclude(h$clay)
+clay <- na.exclude(h$claytotest)
 
 sd(clay) / mean(clay) * 100
 ```
@@ -273,11 +280,11 @@ sd(clay) / mean(clay) * 100
 The default for the `quantile()` function returns the min, 25th percentile, median or 50th percentile, 75th percentile, and max, known as the five number summary originally proposed by Tukey. Other probabilities however can be used. At present the 5th, 50th, and 95th are being proposed for determining the range in characteristics (RIC) for a given soil property.
 
 ```{r, eval=TRUE}
-quantile(h$clay, na.rm = TRUE)
+quantile(h$claytotest, na.rm = TRUE)
 
 # or
 
-quantile(clay, probs = c(0.05, 0.5, 0.95), na.rm = TRUE)
+quantile(h$claytotest, probs = c(0.05, 0.5, 0.95), na.rm = TRUE)
 ```
 
 Thus, for the five number summary 25% of the observations fall between each of the intervals. [Quantiles are a useful metric because they are largely unaffected by the distribution of the data, and have a simple interpretation](https://ncss-tech.github.io/soil-range-in-characteristics/why-percentiles.html).
@@ -308,6 +315,63 @@ IQR(clay)
 diff(quantile(clay, p = c(0.25, 0.75)))
 ```
 
+### Weighted Summaries
+
+**Weighted Mean** - is the weighted arithmetic average. In the ordinary arithmetic average, each data point is assigned the same weight, whereas in a weighted mean the contribution of each data point to the final average can vary. 
+
+The function `weighted.mean()` takes two major inputs: `x`, a vector of data values, and `w`, a vector of weights. Like other statistics, you can remove missing values with `na.rm=TRUE`.
+
+```{r, eval=TRUE}
+# calculate horizon thickness
+h$hzthk <- h$hzdepb - h$hzdept
+
+# weighted mean (across all horizons and profiles)
+weighted.mean(h$claytotest, h$hzthk, na.rm = TRUE)
+```
+
+The above example is a little contrived since it is applied to all profiles and all horizons: so we only get one value out across `r length(loafercreek)` profiles and `r nrow(loafercreek)` horizons. 
+
+More commonly use the weighted mean to depth-weighted averages for individual pedons or components and mapunit averages. Depth-weighted averages commonly use horizon thicknesses as weights. Mapunit averages commonly use component percentages as weights. In other cases the weights may be derived from expert knowledge or some other source when we want to scale the contribution of particular observations or variables to a final result. 
+
+#### Profile-specific Weighted Calculations
+
+A more practical application of `weighted.mean()` is Particle Size Control Section weighted average properties. For this we need to use the horizon thickness _within the control section_ as weights.
+
+The aqp function [`trunc()`](https://ncss-tech.github.io/aqp/reference/glom.html) allows you to remove portions of profiles that are outside specified depth intervals (such as the PSCS boundaries). [`profileApply()`](https://ncss-tech.github.io/aqp/reference/profileApply.html) allows for iterating over all profiles in a _SoilProfileCollection_  to call some function on each one. 
+
+Here we calculate the PSCS weighted mean clay content for each profile in `loafercreek`:
+
+```{r, eval=TRUE}
+# calculate a "truncated" SPC with just the PSCS; drop = FALSE retains empty profiles for missing PSCS
+loafercreek_pscs <- trunc(loafercreek, loafercreek$psctopdepth, loafercreek$pscbotdepth, drop = FALSE)
+
+# calculate weighted mean for each profile, using the truncated horizon thicknesses as weights
+loafercreek$pscs_clay <- profileApply(loafercreek_pscs, function(p) {
+  weighted.mean(p$claytotest, w = p$hzdepb - p$hzdept, na.rm = TRUE)
+})
+
+# inspect
+loafercreek$pscs_clay
+```
+
+Note that several of these pedons have `NaN` values in the result. This can happen even with `na.rm=TRUE` because pedons either do not have both `psctopdepth` and `pscbotdepth` populated in NASIS or all horizons in the PSCS have `NA` clay content.
+
+```{r}
+# inspect new site-level column pscs_clay
+head(site(loafercreek)[, c("peiid", "upedonid", "psctopdepth", "pscbotdepth", "pscs_clay")])
+
+# plot just the pedons with missing pscs_clay
+plot(subset(loafercreek, is.na(pscs_clay)), color = "claytotest")
+```
+
+You always need to pay attention to the possibility of missing data or weights because missing values can dramatically the final result--sometimes in unexpected ways!
+
+#### Other Weighted Statistics
+
+There are many other weighted statistics available. Essentially all will use a matrix of data values and a matrix of weights to scale the contribution of data values to the final statistic value.
+
+The package `Hmisc` defines several [weighted variants of common summary statistics](https://search.r-project.org/CRAN/refmans/Hmisc/html/wtd.stats.html), notably `Hmisc::wtd.quantile()`. The `DescTools` package also defines [`Quantile()`](https://search.r-project.org/CRAN/refmans/DescTools/html/Quantile.html) which strictly follows the Eurostat definition of a weighted quantile.
+
 ### Correlation
 
 A correlation matrix is a table of the calculated correlation coefficients of all variables. This provides a quantitative measure to guide the decision making process. The following will produce a correlation matrix for the sp4 dataset:
@@ -316,7 +380,7 @@ A correlation matrix is a table of the calculated correlation coefficients of al
 h$hzdepm <- (h$hzdepb + h$hzdept) / 2 # Compute the middle horizon depth
 
 h %>%
-  select(hzdepm, clay, sand, total_frags_pct, phfield) %>%
+  select(hzdepm, claytotest, sandtotest, total_frags_pct, phfield) %>%
   cor(use = "complete.obs") %>%
   round(2)
 ```
@@ -398,10 +462,10 @@ p_b <- ggplot(h[idx, ], aes(x = texture_class)) +
   ggtitle("Bar Plot")
 
 # histogram
-p <- ggplot(data = h, aes(x = clay))
+p <- ggplot(data = h, aes(x = claytotest))
 
 p_h <- p + 
-  geom_histogram(bins = nclass.Sturges(h$clay)) + 
+  geom_histogram(bins = nclass.Sturges(h$claytotest)) + 
   xlab("clay (%)") + ylab("count (n)") +
   theme(aspect.ratio = 1) +
   ggtitle("Histogram")
@@ -434,8 +498,8 @@ A histogram is similar to a bar plot, except that instead of summarizing categor
 
 ```{r histogram, eval=TRUE}
 
-ggplot(h, aes(x = clay)) +
-  geom_histogram(bins = nclass.Sturges(h$clay))
+ggplot(h, aes(x = claytotest)) +
+  geom_histogram(bins = nclass.Sturges(h$claytotest))
 
 ```
 
@@ -445,7 +509,7 @@ A density estimation, also known as a Kernel density plot, generally provides a 
 
 ```{r densityplot, eval=TRUE}
 
-ggplot(h, aes(x = clay)) +
+ggplot(h, aes(x = claytotest)) +
   geom_density()
 
 ```
@@ -461,17 +525,17 @@ That is not to say the outlier points are in error, just that they are extreme c
 ```{r bp, echo=FALSE, eval=TRUE}
 
 lab1 <- c("whisker", "lower quartile (25%)", "median (50%)", "upper quartile (50%)", "whisker")
-fn <- boxplot.stats(h$clay)$stats
+fn <- boxplot.stats(h$claytotest)$stats
 df <- data.frame(lab1, fn = fn)
 # df <- rbind(data.frame(lab1 = "outliers", fn = 52), df)
 df2 <- data.frame(fn = c(52, mean(fn[c(4, 5)]), fn[3]), var = c("outliers", "1.5 x IQR", "interquartile range (IQR)"))
 
-ggplot(h, aes(y = clay)) +
+ggplot(h, aes(y = claytotest)) +
   geom_boxplot()  + 
   geom_text(data = df, aes(x = -0.85, y = fn, label = lab1)) +
   geom_text(data = df2, aes(x = 1 - c(0.4, 0.3, -0.15), y = fn, label = var)) +
   # outliners
-  annotate("segment", x = 0.35, xend = 0.35, y = max(h$clay, na.rm = TRUE), yend = df$fn[5], 
+  annotate("segment", x = 0.35, xend = 0.35, y = max(h$claytotest, na.rm = TRUE), yend = df$fn[5], 
            arrow = grid::arrow(ends = "both", angle = 90, length = unit(0.1, "cm"))) +
   # whiskers
   annotate("segment", x = 0.45, xend = 0.45, y = df$fn[4], yend = df$fn[5], 
@@ -486,7 +550,7 @@ ggplot(h, aes(y = clay)) +
 ```
 
 ```{r boxplots, eval=TRUE}
-ggplot(h, aes(x = genhz, y = clay)) +
+ggplot(h, aes(x = genhz, y = claytotest)) +
   geom_boxplot()
 ```
 
@@ -499,7 +563,7 @@ A QQ plot is a plot of the actual data values against a normal distribution (whi
 ```{r, eval=TRUE, warning=FALSE}
 
 # QQ Plot for Clay
-ggplot(h, aes(sample = clay)) + 
+ggplot(h, aes(sample = claytotest)) + 
   geom_qq() +
   geom_qq_line()
 
@@ -592,8 +656,8 @@ With the loafercreek dataset the mean and median for clay were only slightly dif
 
 p   <- c(0.025, 0.25, 0.5, 0.75, 0.975)
 
-avg <- mean(h$clay, na.rm = TRUE)
-std <- sd(h$clay,   na.rm = TRUE)
+avg <- mean(h$claytotest, na.rm = TRUE)
+std <- sd(h$claytotest,   na.rm = TRUE)
 
 clay <- rbind(
   data.frame(
@@ -602,7 +666,7 @@ clay <- rbind(
     stringsAsFactors = TRUE
     ),
   data.frame(
-    value    = quantile(h$clay, p, na.rm = TRUE),
+    value    = quantile(h$claytotest, p, na.rm = TRUE),
     variable = "median & pct",
     stringsAsFactors = TRUE
     )
@@ -624,7 +688,7 @@ frags <- rbind(
     )
   )
 
-p1 <- ggplot(h, aes(x = clay)) +
+p1 <- ggplot(h, aes(x = claytotest)) +
   geom_density(fill = "grey", alpha = 0.5) +
   geom_vline(data = clay, aes(xintercept = value, lty = variable)) +
   xlab("clay (%)") +
@@ -654,7 +718,7 @@ However for rock fragments, we commonly see a long tailed distribution (e.g., sk
 
 ```{r, echo=FALSE, purl=FALSE, fig.dim = c(8, 4), eval=TRUE, warning=FALSE, message=FALSE}
 # scatter plot
-p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
+p_s <- ggplot(h, aes(x = claytotest, y = hzdepm)) +
   geom_point() +
   ylim(100, 0) +
   ylab("depth (cm)") + xlab("clay (%)") +
@@ -663,12 +727,12 @@ p_s <- ggplot(h, aes(x = clay, y = hzdepm)) +
 
 # line graph
 
-# h2 <- slice(loafercreek, 0:100 ~ clay)@horizons
+# h2 <- slice(loafercreek, 0:100 ~ claytotest)@horizons
 
 p_l <- ggplot(h) +
-  # geom_line(aes(y = clay, x = hzdept, group = peiid)) +
-  geom_step(aes(y = clay, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
-  geom_smooth(aes(y = clay, x = (hzdept + hzdepb) / 2), se = FALSE) +
+  # geom_line(aes(y = claytotest, x = hzdept, group = peiid)) +
+  geom_step(aes(y = claytotest, x = hzdept, group = peiid), direction = "vh", alpha = 0.5) +
+  geom_smooth(aes(y = claytotest, x = (hzdept + hzdepb) / 2), se = FALSE) +
   xlim(100, 0) +
   xlab("depth (cm)") + ylab("clay (%)") +
   coord_flip() +
@@ -687,12 +751,12 @@ Create a basic scatter plot using the loafercreek dataset.
 
 ```{r, eval=TRUE, warning=FALSE}
 # scatter plot
-ggplot(h, aes(x = clay, y = hzdepm)) +
+ggplot(h, aes(x = claytotest, y = hzdepm)) +
   geom_point() +
   ylim(100, 0)
 
 # line plot
-ggplot(h, aes(y = clay, x = hzdepm, group = peiid)) +
+ggplot(h, aes(y = claytotest, x = hzdepm, group = peiid)) +
   geom_line() +
   coord_flip() +
   xlim(100, 0)
@@ -708,7 +772,7 @@ The function below produces a scatterplot matrix for all the numeric variables i
 library(GGally)
   
 h %>%
-  select(hzdepm, clay, phfield, total_frags_pct) %>%
+  select(hzdepm, claytotest, phfield, total_frags_pct) %>%
   ggpairs()
 
 ```
@@ -716,12 +780,12 @@ h %>%
 ### 3rd Dimension - Color, Shape, Size, Layers, etc...
 
 ```{r, purl=FALSE, echo=FALSE, fig.dim = c(8, 4), eval=TRUE, message=FALSE, warning=FALSE}
-h$clay2 <- ifelse(is.na(h$clay), 0, h$clay)
+h$clay2 <- ifelse(is.na(h$claytotest), 0, h$claytotest)
 
-ggplot(h, aes(y = clay, x = hzdepm, col = genhz)) +
+ggplot(h, aes(y = claytotest, x = hzdepm, col = genhz)) +
   geom_point(size = 2) +
   geom_smooth(se = FALSE, col = "black") +
-  xlim(100, 0) + ylim(min(h$clay, na.rm = TRUE), max(h$clay, na.rm = TRUE)) +
+  xlim(100, 0) + ylim(min(h$claytotest, na.rm = TRUE), max(h$claytotest, na.rm = TRUE)) +
   xlab("depth (cm)") + ylab("clay (%)") +
   coord_flip() +
   theme(aspect.ratio = 1)
@@ -732,12 +796,12 @@ ggplot(h, aes(y = clay, x = hzdepm, col = genhz)) +
 ```{r color, fig.dim = c(8, 4), eval=TRUE}
 
 # scatter plot
-ggplot(h, aes(x = clay, y = hzdepm, color = genhz)) +
+ggplot(h, aes(x = claytotest, y = hzdepm, color = genhz)) +
   geom_point(size = 3) +
   ylim(100, 0)
 
 # density plot
-ggplot(h, aes(x = clay, color = genhz)) +
+ggplot(h, aes(x = claytotest, color = genhz)) +
   geom_density(size = 2)
 
 # bar plot
@@ -745,7 +809,7 @@ ggplot(h, aes(x = genhz, fill = texture_class)) +
   geom_bar()
 
 # box plot
-ggplot(h, aes(x = genhz, y = clay)) + 
+ggplot(h, aes(x = genhz, y = claytotest)) + 
   geom_boxplot()
 
 # heat map (pseudo bar plot)
@@ -764,8 +828,8 @@ library(tidyr)
 
 # convert to long format
 df <- h %>% 
-  select(peiid, genhz, hzdepm, clay, phfield, total_frags_pct) %>% 
-  pivot_longer(cols = c("clay", "phfield", "total_frags_pct"))
+  select(peiid, genhz, hzdepm, claytotest, phfield, total_frags_pct) %>% 
+  pivot_longer(cols = c("claytotest", "phfield", "total_frags_pct"))
 
 ggplot(df, aes(x = genhz, y = value)) +
   geom_boxplot() +
@@ -781,7 +845,7 @@ ggplot(df, aes(x = genhz, y = value)) +
 data(loafercreek, package = "soilDB")
 
 s <- aqp::slab(loafercreek, 
-               fm = ~ clay + phfield + total_frags_pct,
+               fm = ~ claytotest + phfield + total_frags_pct,
                slab.structure = 0:100,
                slab.fun = function(x) quantile(x, c(0.1, 0.5, 0.9), na.rm = TRUE))
 
@@ -854,52 +918,54 @@ Many pedon descriptions include soil texture class and modifiers, but lack numer
 While numeric data on textural separates may be missing, it can still be estimated by the class ranges and averages. NASIS has many calculations used to estimate missing values. To facilitate this process in R, several new functions have recently been added to the aqp package. These new aqp functions are intended to impute missing values or check existing values. The `ssc_to_texcl()` function uses the same logic as the particle size estimator calculation in NASIS to classify sand and clay into texture class. The results are stored in `data(soiltexture)` and used by `texcl_to_ssc()` as a lookup table to convert texture class to sand, silt and clay. The function `texcl_to_ssc()` replicates the functionality described by Levi (2017). Unlike the other functions, `texture_to_taxpartsize()` is intended to be computed on weighted averages within the family particle size control section. Below is a demonstration of these new aqp R functions.
 
 ```{r, warning=FALSE, message=FALSE}
-
 library(aqp)
 library(soiltexture)
 
 # example of texcl_to_ssc(texcl)
-texcl <- c("s",  "ls",  "l",  "cl",  "c")   
-test <- texcl_to_ssc(texcl) 
+texcl <- c("s", "ls", "l", "cl", "c")
+test <- texcl_to_ssc(texcl)
 head(cbind(texcl, test))
 
 # example of ssc_to_texcl()
-ssc <- data.frame(CLAY = c(55, 33, 18, 6, 3),
-                  SAND = c(20, 33, 42, 82, 93),
-                  SILT = c(25, 34, 40, 12,  4)
-                  )  
-texcl <- ssc_to_texcl(sand = ssc$SAND, 
-                      clay = ssc$CLAY
-                      )
+ssc <- data.frame(
+  CLAY = c(55, 33, 18, 6, 3),
+  SAND = c(20, 33, 42, 82, 93),
+  SILT = c(25, 34, 40, 12, 4)
+)
+
+texcl <- ssc_to_texcl(sand = ssc$SAND, clay = ssc$CLAY)
 ssc_texcl <- cbind(ssc, texcl)
 head(ssc_texcl)
 
 # plot on a textural triangle
-TT.plot(class.sys = "USDA-NCSS.TT", 
-        tri.data = ssc_texcl,
-        pch = 16, col = "blue"
-        )
-
+TT.plot(
+  class.sys = "USDA-NCSS.TT",
+  tri.data = ssc_texcl,
+  pch = 16,
+  col = "blue"
+)
 
 # example of texmod_to_fragvoltol()
-frags <- c("gr",  "grv",  "grx",  "pgr",  "pgrv",  "pgrx") 
+frags <- c("gr", "grv", "grx", "pgr", "pgrv", "pgrx")
 test <- texmod_to_fragvoltot(frags)[1:4]
 head(test)
 
 # example of texture_to_taxpartsize()
-tex <- data.frame(texcl = c("c",  "cl",  "l",  "ls",  "s"),
-                  clay  = c(55, 33, 18, 6, 3),
-                  sand  = c(20, 33, 42, 82, 93),
-                  fragvoltot = c(35, 15, 34, 60, 91)
-                  )
-tex$fpsc <- texture_to_taxpartsize(
-  texcl = tex$texcl, 
-  clay = tex$clay,
-  sand = tex$sand, 
-  fragvoltot = tex$fragvoltot
-  ) 
-head(tex)
+tex <- data.frame(
+  texcl = c("c", "cl", "l", "ls", "s"),
+  clay  = c(55, 33, 18, 6, 3),
+  sand  = c(20, 33, 42, 82, 93),
+  fragvoltot = c(35, 15, 34, 60, 91)
+)
 
+tex$fpsc <- texture_to_taxpartsize(
+  texcl = tex$texcl,
+  clay = tex$clay,
+  sand = tex$sand,
+  fragvoltot = tex$fragvoltot
+)
+
+head(tex)
 ```
 
 ## The Shiny Package
