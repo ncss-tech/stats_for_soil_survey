@@ -799,7 +799,9 @@ Anecdote about using `dplyr` for very simple base R things, and deprecation/pack
 
 ### Missing Values
 
-"Missing" values are encoded in R as `NA`. `table()` has a `useNA` argument that affects whether `NA` values are counted. Use `is.na()` to return a logical value that identifies missing data.
+"Missing" values are encoded in R as `NA`. `table()` has a `useNA` argument that affects whether `NA` values are counted. 
+
+Use `is.na()` to return a logical value that identifies missing data.
 
 ```{r, eval=TRUE}
 table(pedons$taxsubgrp, useNA = "ifany")
@@ -1015,7 +1017,48 @@ Tools for totally ordered indexed observations -- especially irregular time seri
 
 ## Exercise 2: O Horizon Thickness
 
-This exercise will use a synthetic dataset of O horizon thicknesses modeled after https://acsess.onlinelibrary.wiley.com/doi/epdf/10.2136/sh1993.1.0022
+This exercise uses a synthetic transect generated with R code. The 10 hypothetical pedons along the transect have all been described using the a standardized set of horizon designations: Oi, Oe, A, C, Cg. The thicknesses of layers, the depth to gleyed matrix, and soil organic carbon content vary between pedons. 
+
+We will start to examine this dataset graphically, and then will utilize some functions defined for the _SoilProfileCollection_ to extract information from the data.
+
+```{r, eval=TRUE, echo=FALSE}
+load(url("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/ohz.rda"))
+plotSPC(ohz)
+```
+
+The function `thicknessOf()` can be used to calculate the thickness of horizons matching a regular expression pattern. For example, to calculate the O horizon thickness we can match the pattern `"O"`:
+
+```{r, eval=TRUE}
+ohz_thickness <- thicknessOf(ohz, pattern = "O", prefix = "O_")
+ohz_thickness
+```
+
+We will use the `site()` LEFT JOIN method to merge the data into the _SoilProfileCollection_.
+
+```{r, eval=TRUE}
+site(ohz) <- ohz_thickness
+```
+
+Now, let's plot the profiles in order of cumulative O horizon thickness. We draw lines at 20 and 40cm to indicate the thresholds for histic epipedon and Histosols soil order:
+
+```{r, eval=TRUE}
+plotSPC(ohz, plot.order = order(ohz$O_thickness))
+abline(h = c(20, 40), lty = 2)
+```
+
+Using the object `ohz` object we just inspected, answer the following questions using techniques from the previous sections. Check your logic by comparing to the plot above. 
+
+1. Check if any soil organic carbon values are `NA`. Make a profile sketch (`plotSPC()`) using organic carbon percentage (`"soc"`) to color the profiles. Then calculate a new column using the function `is.na()` and use that to color the profiles. Which profiles have missing data? In which horizons?
+
+2. Tabulate unique horizon designations (`ohz$name`). How many of each horizon designation are present?
+
+3. Use regular expressions to count the number of Cg horizons in the collection.
+
+4. Filter the `ohz` object using `aqp::subset()` to select pedons where `O_thickness` is greater than `20` and less than `40`. This is the histic epipedon thickness requirement. How many pedons have a histic epipedon?
+
+5. Filter the `ohz` object using `aqp::subset()` to select pedons where `O_thickness` is greater than `40`. This is the Histosols order thickness requirement. How many pedons are Histosols?
+
+Submit an .R script containing code used to answer 1 through 5 to your mentor.
 
 ## `fetchNASIS()` data checks
 
@@ -1043,31 +1086,16 @@ NOTE: some records are missing rock fragment volume
 
 ### Inspecting Results
 
-Here we inspect occurrence of andic soil properties in MT647.
+We will analyze occurrence of andic soil properties in pedons from MT647. We will download this "selected set" from the course website from an *.rda* file to save you the effort of crafting your selected set just for this example.
 
-We will download this "selected set" from the course website as an *.rda* file to save you the effort of crafting your selected set just for this example.
-
-```{r, eval=TRUE}
-example.data.dir <- "C:/workspace2"
-example.data.path <- file.path(example.data.dir, "mt647.rda")
-
-if (!dir.exists(example.data.dir))
-  dir.create(example.data.dir, recursive = TRUE)
-
-download.file("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt647.rda", 
-              destfile = example.data.path)
-```
-
-Downloading and installing the above .rda is equivalent to doing NASIS query "\_PedonPC_Plus_DataDump_select" (MLRA04 Bozeman) for to fill your selected set for User Site ID: `%MT647%`, NASIS Site: `SSRO_Northwest`, NASIS Group: `NW-MIS Point Data`, followed by `mt647 <- fetchNASIS()`.
+Downloading and installing the .rda is equivalent to NASIS query _SSRO_Northwest: \_PedonPC_Plus_DataDump_select_ for User Site ID: `%MT647%`, NASIS Site: `SSRO_Northwest`, and NASIS Group: `NW-MIS Point Data`.  After populating your NASIS selected set `mt647` is created in R with `mt647 <- fetchNASIS()`.
 
 #### Load Example Data
 
-To load the sample object data into R, just use `load()` and the path to the *.rda* file (`example.data.path` or `"C:/workspace2/mt647.rda"`)
+To load the sample object data into R, just use `load()` and the path to the *.rda* file. In this case we are using a remote path, so we use `url()` to open the connection:
 
 ```{r eval=TRUE}
-# load the sample data
-example.data.dir <- "C:/workspace2"
-load(file.path(example.data.dir, "mt647.rda"))
+load(url("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt647.rda"))
 ```
 
 ```{r, eval=TRUE}
@@ -1091,7 +1119,7 @@ get('bad.pedon.ids', envir = soilDB.env)
 ```
 
 ```{r, eval=TRUE}
-# by default, rmHzErrors removes the "bad" illogical pedons
+# rmHzErrors=TRUE removes the "bad" illogical pedons
 any(mt647$upedonid %in% get('bad.pedon.ids', envir=soilDB.env))
 ```
 
@@ -1186,27 +1214,12 @@ There are a variety of calculated fields that are included in the default `fetch
 
 Below is a summary of additional information that can be readily brought into R from your NASIS selected set via the `get_extended_data_from_NASIS()` function.
 
-To download the sample `2015MT663%` data from the course page with R:
-
-```{r, eval=TRUE}
-example.data.dir <- "C:/workspace2"
-example.data.path <- file.path(example.data.dir, "mt663.rda")
-
-if (!dir.exists(example.data.dir))
-  dir.create(example.data.dir, recursive = TRUE)
-
-download.file("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt663.rda", 
-              destfile = example.data.path)
-```
-
 Before continuing, *imagine* opening the NASIS client, populating your selected set with `2015MT663%` using a query like "*NSSC Pangaea – POINT-Pedon/Site by User Pedon ID*"
 
 Load the data like we did above.
 
 ```{r eval=TRUE}
-# load the sample data
-example.data.dir <- "C:/workspace2"
-load(file.path(example.data.dir, "mt663.rda"))
+load(url("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt663.rda"))
 ```
 
 ```{r}

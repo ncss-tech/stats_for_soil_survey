@@ -799,7 +799,7 @@ Rasters can represent both continuous and categorical (factor) variables. Raster
 
 The categories can be viewed using the `levels()` and `terra::cats()` functions. You can have multiple category columns, and the "active" category can be set with `terra::activeCat()`.
 
-You can use the `terra::classify()` function to assign integer values to each pixel that can be the basis for you categories. Then, you can set the categories associated.
+You can use the `terra::classify()` function to assign integer values to each pixel that can be the basis for your categories. Then, you can set the category labels associated with each integer value.
 
 For example,  we classify the terra sample elevation dataset into high and low elevation areas. We supply a reclassification matrix of values with three columns. The first column is the "low" end of the class range, the second column is the high end of the class range. The third column contains the new values to assign.
 
@@ -953,7 +953,7 @@ See [this article](https://kokoalberti.com/articles/geotiff-compression-optimiza
 In this exercise you will create a continuous and categorical slope gradient maps from a digital elevation model.
 
 1. Use the sample Tahoe-area LiDAR elevation dataset from the gdalUtilities package or your own dataset as input. If you use your own data, you may want to make a smaller extent with `[terra::crop()]`
- - `tahoe <- terra::rast(system.file("extdata", "tahoe_lidar_bareearth.tif", package = "gdalUtilities"))`
+   - `tahoe <- terra::rast(system.file("extdata", "tahoe_lidar_bareearth.tif", package = "gdalUtilities"))`
 
 2. Run `terra::terrain()` to create a slope map with `unit="radians"`
 
@@ -963,11 +963,11 @@ In this exercise you will create a continuous and categorical slope gradient map
 
 5. Use `terra::classify()` to create a categorical map of slope classes. Use the following breaks and assign the integer values `1` through `5` from lowest to highest.
 
- - 0 to 3%
- - 3 to 15%
- - 15 to 30%
- - 30 to 60%
- - \>60% 
+   - 0 to 3%
+   - 3 to 15%
+   - 15 to 30%
+   - 30 to 60%
+   - \>60% 
  
 6. Use `levels()` to set the categories of your raster.
 
@@ -1361,34 +1361,40 @@ dplyr::group_by(m, mlra, name) %>%
 tapply(m$value, list(m$mlra, m$name), mean, na.rm = TRUE)
 ```
 
-### Example: Faster with `exactextractr`
+### Zonal Statistics with `exactextractr`
 
 This example shows how to determine the distribution of Frost-Free Days across a soil series extent.
 
-The data are extracted from the raster data source very rapidly using the `exactextractr` package.
+First, we load some sample data. We use `soilDB::seriesExtent()` to get some extent polygons for two series of interest. Then we load some PRISM-derived Frost Free Day estimates.
 
-```{r fig.width=6, fig.height=5, results='hide', eval=TRUE}
+```{r results='hide', eval=TRUE}
 library(sf)
 library(soilDB)
 library(terra)
 library(lattice)
 library(exactextractr)
 
-# 5-10 seconds to download Series Extent Explorer data 
 series <- c('holland', 'san joaquin')
-
-# make SpatialPolygonsDataFrame
 s <- do.call('rbind', lapply(series, seriesExtent))
 
-# load pointer to PRISM data
+# load PRISM data
 r <- rast('C:/workspace2/chapter-4/FFD.tif')
 
-# transform extent to CRS of raster with sf
-s <- st_transform(st_as_sf(s), crs = st_crs(r))
+# inspect
+r
+
+# transform extent to CRS of raster 
+s <- st_transform(s, crs = st_crs(r))
 
 # inspect
 s
+```
 
+#### Directly Returning Extracted Values
+
+Data are extracted from the raster data source very rapidly using the `exactextractr` package.
+
+```{r, fig.width=6, fig.height=5, eval=TRUE}
 # use `st_union(s)` to create a MULTI- POINT/LINE/POLYGON from single
 # use `sf::st_cast(s, 'POLYGON')` to create other types
 
@@ -1396,6 +1402,7 @@ system.time({ ex <- exactextractr::exact_extract(r, s) })
 
 # ex is a list(), with data.frame [value, coverage_fraction]
 #  for each polygon in s (we have one MULTIPOLYGON per series)
+head(ex[[1]])
 
 # combine all list elements `ex` into single data.frame `ex.all`
 #  - use do.call('rbind', ...) to stack data.frames row-wise
@@ -1416,6 +1423,54 @@ densityplot(~ value | group, data = ex.all,
             main = 'FFD Estimate for Extent of San Joaquin and Holland Series'
 )
 ```
+
+#### Predefined Summary Operations
+
+In the previous example we extracted all values and their coverage fractions into memory so we could make a graph with them in R. This operation does not scale as well to very large rasters where all values would not fit in memory.
+
+[`exactextractr::exact_extract()`](https://search.r-project.org/CRAN/refmans/exactextractr/html/exact_extract.html) has multiple built-in summary statistics we can use. These summary statistics can be processed very efficiently as all pixels do not to be loaded into memory at once. The available methods include weighted variants that account for pixel coverage fraction. You can specify summary options using the `fun` argument. 
+For example, `fun="quantile"` calculates quantiles of cell values, weighted by coverage fraction. We used two MULTIPOLYGON geometries corresponding to two series extents, so we get two sets of 3 quantiles for the Frost Free Days (FFD) grid. 
+
+```{r, eval=TRUE}
+ex2 <- exactextractr::exact_extract(
+  r,
+  s,
+  fun = "quantile",
+  quantiles = c(0.05, 0.5, 0.95),
+  full_colnames = TRUE,
+  append_cols = "series"
+)
+
+ex2
+```
+
+The list of summary operations available for use in `exact_extract()` `fun` argument includes: `"min"`, `"max"`, `"count"`, `"sum"`, `"mean"`, `"median"`, `"quantile"`, `"mode"`, `"majority"`, `"minority"`, `"variety"`, `"variance"`, `"stdev"`, `"coefficient_of_variation"`, `"weighted_mean"`, `"weighted_sum"`, `"weighted_stdev"`, `"weighted_variance"`, `"frac"`, and `"weighted_frac."`
+
+Of  interest beyond the typical summary statistics are  compositional summaries: `"frac"` and `"weighted_frac"`. These two methods calculate composition of unique levels of the raster for the input features.
+
+For example, imagine an interpretation for crop suitability. One requirement of this hypothetical crop is a growing season length greater than 250 days. We will estimate the growing season length using Frost Free Days. First we create a classified raster based on our criteria, then we summarize the raster data using the polygon boundaries and `fun="frac"`:
+
+```{r, eval=TRUE}
+# calculate a binary raster
+#   0: not suitable
+#   1: suitable
+r2 <- r > 250
+levels(r2) <- data.frame(values = 0:1,
+                         suitability = c("Not suitable", "Suitable"))
+plot(r2)
+
+ex3 <- exactextractr::exact_extract(
+  r2,
+  s,
+  fun = "frac",
+  full_colnames = TRUE,
+  append_cols = "series"
+)
+
+ex3
+```
+
+From this output we can see that only about `r round(ex3[1,3])`% of areas within the Holland series extent polygon have more than 250 Frost Free Days, whereas almost all of the San Joaquin soil extent polygon would meet the growing season requirement.
 
 ### Example: Summarizing MLRA Raster Data with `lattice` graphics
 
