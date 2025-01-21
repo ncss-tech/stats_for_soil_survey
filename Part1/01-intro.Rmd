@@ -602,16 +602,17 @@ plot(npk$yield)
 dev.off()
 ```
 
-The first line of this command creates a blank file named sand with a JPEG extension. The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the JPEG file we are creating). The third line closes the graphics device.
+The first line of this command creates a blank file named `"npk_yield.png"`. The second line plots the data object that you want to create a graphic of (here it is conveniently the same name as the PNG file we are creating). The third line closes the graphics device.
 
 ## Exercise 1: R packages and Functions
 
-Using the examples discussed thus far as a guide, demonstrate your mastery of the material by performing the following tasks.
+Using the examples discussed thus far as a guide, demonstrate your mastery of the material by performing the following tasks. 
 
-1.  Create an R script file, demonstrate 3 basic R functions, and comment (`#`) your code.
-2.  Install the FedData R package from CRAN and [GitHub](https://github.com/ropensci/FedData). Save the commands in your R script file.
-3.  Load the FedData R package and read the help file for the `get_ssurgo` function within the FedData package. What is the 1st input/argument? Save the R command in your R script.
-4.  Save your R script, and forward to your instructor.
+1.  Create a new R script file with all commands you use.
+2.  Demonstrate usage of 3 R functions and comment (`#`) your code with answers to the questions.
+2.  Install the FedData R package from CRAN and [GitHub](https://github.com/ropensci/FedData). 
+3.  Load the FedData R package and read the help file for the `get_ssurgo()` function within the FedData package. What is the 1st input/argument? 
+4.  Save your R script and forward to your mentor.
 
 ## Loading Data
 
@@ -651,9 +652,9 @@ sand_example <- read_excel("sand_example.xlsx")
 
 ![](static-figures/sand_readxl.png)
 
-#### NASIS (Web) Reports
+#### NASIS Web Reports
 
-NASIS provides a plethora of reports, many of which can be read into R for analysis. The `soilDB` R package provides a series of functions to read data from NASIS either using a local database connection or via HTML web reports. Similar functions also exist for accessing tabular data from Soil Data Access. More details on `soilDB` will be provided in the next chapter, but now we'll illustrate how to access some example datasets for manipulating tabular data.
+NASIS provides many reports that can be read into R for analysis. The `soilDB` R package provides a series of functions to read data from NASIS either using a local database connection or via HTML web reports. Similar functions also exist for accessing tabular data from Soil Data Access. More details on `soilDB` will be provided in the next chapter, but now we'll illustrate how to access some example datasets for manipulating tabular data.
 
 ```{r, eval=FALSE}
 library(soilDB)
@@ -668,35 +669,33 @@ leg <- get_legend_from_NASISWebReport(mlraoffice = "Indi%", areasymbol = "%")
 mu  <- get_mapunit_from_NASISWebReport(areasymbol = c("IN001", "IN11%"))
 ```
 
+Since these functions in soilDB query web reports, it is not necessary to be a NASIS user or set up your local database and selected set. We can simply pass parameters to the web report URL and get tabular results back.
+
 ## Data manipulation
 
-Before we can do any sort of analysis, our data often needs to be manipulated one way or another. Estimates vary, but an analyst typically spend 80% of their time manipulating data, and only 20% actually analyzing or modeling. Tasks generally involve filtering, transforming, merging, aggregating, and reshaping data.
+Before we can do any analysis our data usually needs to be manipulated one way or another. Estimates vary, but an analyst typically spend 80% of their time manipulating data and only 20% actually analyzing or modeling. Tasks generally involve filtering, transforming, merging, aggregating, and reshaping data.
 
-R has many functions and packages for manipulating data frames, but within the past several years a family of packages, known as the `tidyverse`, have been developed to simplify interacting with data frames (or tibbles). Within the `tidyverse` the most commonly used packages are `dplyr` and `tidyr`. Many of the tidyverse function names are patterned after SQL syntax.
+R has many functions and packages for manipulating data frames, but within the past several years a family of packages, known as the `tidyverse`, have been developed to simplify interacting with data frames (or tibbles). Within the `tidyverse` the most commonly used packages are `dplyr` and `tidyr`. Many of the tidyverse function names are patterned after SQL functions.  These packages  and are built around the ["tidy data"](https://tidyr.tidyverse.org/articles/tidy-data.html) philosophy. This simply means that rows are observations and each column is a variable.
 
-```{=html}
-<!--
-An important principle of tabular data is that it should be ["normalized'](https://en.wikipedia.org/wiki/Database_normalization) or ["tidy"](https://r4ds.had.co.nz/tidy-data.html). This simply means that rows should hold observations, and columns should hold variables for each observation. 
--->
-```
 We will review the most common functions you need to know in order to accomplish the majority of data manipulation tasks.
 
 ### Viewing and Removing Data
 
-Once a file is imported, it is imperative that you check to ensure that R correctly imported your data. Make sure numerical data are correctly imported as numerical, that your column headings are preserved, etc. To view the data simply **click** on the mu dataset listed in the Environment tab. This will open up a separate window that displays a spreadsheet like view.
+Once a file is imported, it is imperative that you check that R correctly imported your data. Make sure numeric data are correctly imported as numeric, that your column headings are preserved, etc. To view the data you can **click** on the `mu` dataset listed in the RStudio Environment tab. This will open up a separate window that displays a spreadsheet like view. This is equivalent to the function `View(mu)`.
 
 ![](static-figures/ch1_view_dataframe.png)
 
 Additionally you can use the following functions to view your data in R.
 
-| Function  | Description                                         |
-|-----------|-----------------------------------------------------|
-| `print()` | prints the entire object (avoid with large tables)  |
-| `head()`  | prints the first 6 lines of your data               |
-| `str()`   | shows the data structure of an R object             |
-| `names()` | lists the column names (i.e., headers) of your data |
-| `ls()`    | lists all the R objects in your workspace directory |
-| `dput()`  | print code to re-create an R object                 |
+| Function  | Description                                          |
+|-----------|------------------------------------------------------|
+| `print()` | prints the entire object (avoid with large tables)   |
+| `head()`  | prints the first 6 lines of your data                |
+| `str()`   | shows the data structure of an R object              |
+| `names()` | lists the column names (i.e., headers) of your data  |
+| `ls()`    | lists all the R objects in your workspace directory  |
+| `dput()`  | print code to re-create an R object                  |
+| `View()`  | show a spreadsheet-style data viewer for an R object |
 
 Try entering the following commands to view the `mu` dataset in R:
 
@@ -710,15 +709,19 @@ head(mu)
 ls()
 
 dput(mu[1, ])
+
+View(mu)
 ```
 
-A data object is anything you've created or imported and assigned a name to in R. The Environment tab allows you to see what data objects are in your R session and expand their structure. Right now sand should be the only data object listed. If you wanted to delete all data objects from your R session, you could **click the broom icon** from the Environments tab. Otherwise you could type:
+A data object is anything you've created or imported and assigned a name to in R. The Environment tab allows you to see what data objects are in your R session and expand their structure.
+
+If you wanted to delete all data objects from your R session, you could **click the broom icon** from the Environments tab. Otherwise you could type:
 
 ```{r}
 # Remove all R objects
 rm(list = ls(all = TRUE)) 
 
-# Remove individual objects
+# Remove individual objects by name
 rm(mu, leg, sand)
 ```
 
@@ -970,15 +973,13 @@ Given what you now know about R, try to answer the following questions:
 ## Additional Reading (Introduction)
 
 -   Introductory R Books
-    -   [R for Data Science](https://r4ds.had.co.nz/index.html)
-    -   [RStudio Cheatsheets](https://rstudio.com/resources/cheatsheets/)
+    -   [R for Data Science](https://r4ds.hadley.nz/)
+    -   [Posit (RStudio) Cheatsheets](https://posit.co/resources/cheatsheets/)
     -   [Quick-R](https://www.statmethods.net/)
 -   Advanced DSM R Books
     -   [Predictive Soil Mapping with R](https://envirometrix.github.io/PredictiveSoilMapping/)
     -   [Using R for Digital Soil Mapping (not free)](http://www.springer.com/us/book/9783319443256)
     -   [Soil Spectral Inference with R (not free)](https://github.com/AlexandreWadoux/soilspec)
-    -   [GSP SOC Cookbook](https://fao-gsp.github.io/SOC-Mapping-Cookbook/)
-    -   [GSP SAS Manual](https://fao-gsp.github.io/GSSmap)
 -   Soil Science R Applications
     -   [aqp and soilDB tutorials](http://ncss-tech.github.io/AQP/)
     -   [ISRIC World Soil Information Example Training Courses](https://www.isric.org/utilise/capacity-building/training-courses#examplecourses)
@@ -988,6 +989,6 @@ Given what you now know about R, try to answer the following questions:
     -   [David Rossiter's Cornell Homepage](http://www.css.cornell.edu/faculty/dgr2/)
     -   [Pierre Roudier](https://pierreroudier.github.io/teaching/index.html)
 -   Soil Sciences and Statistics Review Articles
-    -   Arkely, R., 1976. Statistical Methods in Soil Classification Research. Advances in Agronomy 28:37-70. <https://www.sciencedirect.com/science/article/pii/S0065211308605520>
+    -   Arkley, R., 1976. Statistical Methods in Soil Classification Research. Advances in Agronomy 28:37-70. <https://www.sciencedirect.com/science/article/pii/S0065211308605520>
     -   Mausbach, M., and L. Wilding, 1991. Spatial Variability of Soils and Landforms. Soil Science Society of America, Madison. <https://dl.sciencesocieties.org/publications/books/tocs/sssaspecialpubl/spatialvariabil>
     -   Wilding, L., Smeck, N., and G. Hall, 1983. Spatial Variability and Pedology. In : L. Widling, N. Smeck, and G. Hall (Eds). Pedogenesis and Soil Taxonomy I. Conceps and Interactions. Elseiver, Amsterdam, pp. 83-116. <https://www.sciencedirect.com/science/article/pii/S0166248108705993>

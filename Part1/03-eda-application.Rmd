@@ -156,12 +156,12 @@ desc <- data.frame(
     "percent rank of values, such that all values are <= p"
   ),
   'R function' = c(
-    "mean()",
-    "weighted.mean()",
-    "median()",
-    "sort(table(), decreasing = TRUE)[1]",
-    "sd()",
-    "quantile()"
+    "`mean()`",
+    "`weighted.mean()`",
+    "`median()`",
+    "`sort(table(), decreasing = TRUE)[1]`",
+    "`sd()`",
+    "`quantile()`"
   ),
   check.names = FALSE
 )
@@ -170,7 +170,7 @@ knitr::kable(desc, caption = "Short Description of Descriptive Statistics and R 
 
 ### Measures of Central Tendency
 
-These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used measures for our purposes.
+These measures are used to determine the mid-point of the range of observed values. In NASIS speak this should ideally be equivalent to the representative value (RV) for numeric and integer data. The mean and median are the most commonly used statistics for central tendency.
 
 #### Mean
 
@@ -358,7 +358,7 @@ h$hzthk <- h$hzdepb - h$hzdept
 weighted.mean(h$claytotest, h$hzthk, na.rm = TRUE)
 ```
 
-The above example is a little contrived since it is applied to all profiles and all horizons. We only get one value out across `r length(loafercreek)` profiles and `r nrow(loafercreek)` horizons. 
+The above example is applied to all profiles and all horizons. We only get one value across `r length(loafercreek)` profiles and `r nrow(loafercreek)` horizons. 
 
 More commonly we use the weighted mean for depth-weighted averages in individual pedons or components and, also, for mapunit averages. 
 
@@ -418,11 +418,13 @@ h %>%
   round(2)
 ```
 
-As seen in the output, variables are perfectly correlated with themselves and have a correlation coefficient of 1.0. Negative values indicate a negative relationship between variables. What is considered highly correlated? A good rule of thumb is anything with a value of **0.7** or greater is considered highly correlated.
+Variables are perfectly correlated with themselves so they have a correlation coefficient of 1.0. Negative values indicate a negative relationship between variables. 
+
+What is considered "highly correlated"? A good rule of thumb is anything with a value of **0.7** or greater is considered highly correlated.
 
 ## Exercise 2: Compute Descriptive Statistics
 
-Add to your existing R script from Exercise 1, add answers as comments, and send to your mentor. Exercise 3 will build on Exercise 1 and 2.
+Add to your existing R script from Exercise 1, add answers as comments, and send to your mentor. Exercise 3 will build on Exercises 1 and 2.
 
 1.  Aggregate by `genhz` and calculate several descriptive statistics for `hzdept`, `gravel` and `phfield`.
 2.  Cross-tabulate `geomposhill` and `argillic.horizon` from the site table, as a percentage.
@@ -541,10 +543,8 @@ ggplot(h, aes(x = claytotest)) +
 A density estimation, also known as a Kernel density plot, generally provides a better visualization of the shape of the distribution in comparison to the histogram. Compared to the histogram where the y-axis represents the number or percent (i.e., frequency) of observations, the y-axis for the density plot represents the probability of observing any given value, such that the area under the curve equals one. One curious feature of the density curve is the hint of two peaks (i.e. bimodal distribution?). Given that our sample includes a mixture of surface and subsurface horizons, we may have two different populations. However, considering how much the two distributions overlap, it seems impractical to separate them in this instance.
 
 ```{r densityplot, eval=TRUE}
-
 ggplot(h, aes(x = claytotest)) +
   geom_density()
-
 ```
 
 ### Box plots
@@ -556,7 +556,6 @@ The parts of the boxplot are shown in the figure below. The "box" of the boxplot
 That is not to say the outlier points are in error, just that they are extreme compared to the rest of the data set. However, you may want to evaluate these points to ensure that they are correct.
 
 ```{r bp, echo=FALSE, eval=TRUE}
-
 lab1 <- c("whisker", "lower quartile (25%)", "median (50%)", "upper quartile (50%)", "whisker")
 fn <- boxplot.stats(h$claytotest)$stats
 df <- data.frame(lab1, fn = fn)
@@ -579,7 +578,6 @@ ggplot(h, aes(y = claytotest)) +
   scale_x_discrete(breaks = NULL) + 
   xlab("") + ylab("clay (%)") +
   ggtitle("Boxplot Components")
-
 ```
 
 ```{r boxplots, eval=TRUE}
@@ -594,7 +592,6 @@ The above box plot shows a steady increase in clay content with depth. Notice th
 A QQ plot is a plot of the actual data values against a normal distribution (which has a mean of 0 and standard deviation of 1).
 
 ```{r, eval=TRUE, warning=FALSE}
-
 # QQ Plot for Clay
 ggplot(h, aes(sample = claytotest)) + 
   geom_qq() +
@@ -604,7 +601,6 @@ ggplot(h, aes(sample = claytotest)) +
 ggplot(h, aes(sample = total_frags_pct)) + 
   geom_qq() +
   geom_qq_line()
-
 ```
 
 If the data set is perfectly symmetric (i.e. normal), the data points will form a straight line. Overall this plot shows that our clay example is more or less symmetric. However the second plot shows that our rock fragments are far from evenly distributed.
@@ -673,7 +669,6 @@ Viewing a histogram or density plot of your data provides a quick visual referen
 Occasionally distributions are Uniform, or nearly so:
 
 ```{r, purl=FALSE, echo = FALSE, warning=FALSE, eval=TRUE}
-
 r <- data.frame(y = dunif(seq(-1, 2, 0.1)), x = 1:31)
 
 ggplot(r, aes(x = x, y = y)) +
@@ -686,7 +681,6 @@ ggplot(r, aes(x = x, y = y)) +
 With the loafercreek dataset the mean and median for clay were only slightly different, so we can safely assume that we have a normal distribution. However many soil variables often have a non-normal distribution. For example, let's look at graphical examination of the mean vs. median for clay and rock fragments:
 
 ```{r clay vs frags, purl=FALSE, echo=FALSE, fig.dim = c(8, 4), eval=TRUE}
-
 p   <- c(0.025, 0.25, 0.5, 0.75, 0.975)
 
 avg <- mean(h$claytotest, na.rm = TRUE)
@@ -738,7 +732,6 @@ p2 <- ggplot(h, aes(x = total_frags_pct)) +
   ggtitle("Rock Fragments")
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)
-
 ```
 
 The solid lines represent the breakpoint for the mean and standard deviations. The dashed lines represents the median and quantiles. The median is a more robust measure of central tendency compared to the mean. In order for the mean to be a useful measure, the data distribution must be approximately normal. The further the data departs from normality, the less meaningful the mean becomes.
@@ -773,7 +766,6 @@ p_l <- ggplot(h) +
   ggtitle("Line Plot")
 
 gridExtra::grid.arrange(p_s, p_l, ncol = 2)
-
 ```
 
 Plotting points of one ratio or interval variable against another is a scatter plot. Plots can be produced for a single or multiple pairs of variables. Many independent variables are often under consideration in soil survey work. This is especially common when GIS is used, which offers the potential to correlate soil attributes with a large variety of raster datasets.
@@ -793,7 +785,6 @@ ggplot(h, aes(y = claytotest, x = hzdepm, group = peiid)) +
   geom_line() +
   coord_flip() +
   xlim(100, 0)
-
 ```
 
 This plots clay on the X axis and depth on the X axis. As shown in the scatterplot above, there is a moderate correlation between these variables.
@@ -801,13 +792,11 @@ This plots clay on the X axis and depth on the X axis. As shown in the scatterpl
 The function below produces a scatterplot matrix for all the numeric variables in the dataset. This is a good command to use for determining rough linear correlations for continuous variables.
 
 ```{r, eval=TRUE, warning=FALSE, message=FALSE}
-
 library(GGally)
   
 h %>%
   select(hzdepm, claytotest, phfield, total_frags_pct) %>%
   ggpairs()
-
 ```
 
 ### 3rd Dimension - Color, Shape, Size, Layers, etc...
@@ -827,7 +816,6 @@ ggplot(h, aes(y = claytotest, x = hzdepm, col = genhz)) +
 #### Color and Groups
 
 ```{r color, fig.dim = c(8, 4), eval=TRUE}
-
 # scatter plot
 ggplot(h, aes(x = claytotest, y = hzdepm, color = genhz)) +
   geom_point(size = 3) +
@@ -850,13 +838,11 @@ s <- aqp::site(loafercreek)
 
 ggplot(s, aes(x = landform_string, y = pmkind)) + 
   geom_tile(alpha = 0.2) 
-  
 ```
 
 #### Facets - box plots
 
 ```{r facets, fig.dim = c(8, 4), eval=TRUE}
-
 library(tidyr)
 
 # convert to long format
@@ -868,13 +854,11 @@ ggplot(df, aes(x = genhz, y = value)) +
   geom_boxplot() +
   xlab("genhz") +
   facet_wrap(~ name, scales = "free_y")
-
 ```
 
 #### Facets - depth plots
 
 ```{r, fig.dim=c(8, 4), eval=TRUE}
-
 data(loafercreek, package = "soilDB")
 
 s <- aqp::slab(loafercreek, 
@@ -892,7 +876,6 @@ ggplot(s, aes(x = top, y = X50.)) +
   # flip axis
   coord_flip() +
   facet_wrap(~ variable, scales = "free_x")
-
 ```
 
 ## Exercise 3: Graphical Methods
