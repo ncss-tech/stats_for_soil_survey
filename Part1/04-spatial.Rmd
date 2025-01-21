@@ -146,11 +146,11 @@ mapview(gopher.locations, label = gopher.locations$site_id)
 
 ## Exercise 1: Pedon Locations
 
-In this exercise, you will create an interactive map with the pedons in your selected set. Then you will export them to a shapefile. Modify the code snippets below to make an R plot and a shapefile of pedon data loaded from your NASIS selected set. You will plot pedon locations using the standard WGS84 longitude/latitude decimal degrees fields from Site table of NASIS. In some cases, these data might be incomplete; you need to handle this possibility.
+In this exercise, you will create an interactive map with the pedons in your selected set. Then you will export them to a shapefile. Send a screenshot of your interactive map and your R script with any comments to your mentor.
 
-In this exercise you will create a subset SoilProfileCollection for the pedons that are not missing spatial data (`longstddecimaldegrees` and `latstddecimaldegrees`).
+Modify the code snippets below to make an R plot and a shapefile of pedon data loaded from your NASIS selected set. You will plot pedon locations using the standard WGS84 longitude/latitude decimal degrees fields from Site table of NASIS. In some cases, these data might be incomplete. You will create a subset SoilProfileCollection for the pedons that have complete spatial data (`longstddecimaldegrees` and `latstddecimaldegrees`).
 
-1.  Make a new R script, load the `aqp`, `soilDB`, `sf` and `mapview` packages and some pedons via `fetchNASIS()` (or similar source).
+1. Load the `aqp`, `soilDB`, `sf` and `mapview` packages and some pedons via `fetchNASIS()` (or similar source). You can use the sample datasets from Chapter 2 if you would like.
 
 ```{r r_plot_pedons, eval=FALSE, echo=TRUE, results='show', warning=FALSE}
 library(aqp)
@@ -162,7 +162,7 @@ library(mapview)
 pedons <- fetchNASIS(from = 'pedons')
 ```
 
-2.  Use the base R `subset()` function to create a subset of your SoilProfileCollection using `is.na()`
+2.  Use the base R `subset()` function to create a subset of your SoilProfileCollection using `is.na()` to detect missing spatial data.
 
 -   `longstddecimaldegrees` and `latstddecimaldegrees` variables contain WGS84 longitude and latitude in decimal degrees. This is the standard format for location information used in NASIS.
 
@@ -176,7 +176,7 @@ pedons.sp  <- aqp::subset(pedons, ...)
 pedons.sp  <- aqp::subset(pedons, !is.na(longstddecimaldegrees) & !is.na(latstddecimaldegrees))
 ```
 
-3.  Create a `sf` data.frame from the site data in the SoilProfileCollection object `pedons.sp` using `aqp::site()`. Replace the `...` in the following code. Promoting a data.frame to sf POINT geometry requires that the X and Y columns be specified.
+3.  Create a `sf` data.frame from the site data in the SoilProfileCollection object `pedons.sp` using `aqp::site()`. Replace the `...` in the following code. Promoting a data.frame to sf POINT geometry requires that X and Y coordinate columns be specified.
 
 ```{eval=FALSE}
 pedon.locations <- sf::st_as_sf(
@@ -226,20 +226,6 @@ pedon.locations_sub <- dplyr::select(pedon.locations, ...)
 # write to SHP; output CRS is geographic coordinate system WGS84
 sf::st_write(pedon.locations_sub, "./NASIS-pedons.shp")
 ```
-
-7.  Send a screenshot of your interactive map, and your R script, to your mentor.
-
-For an example of exporting data to shapefile with the `sp` package, see this tutorial: [**Export Pedons to Shapefile with `sp`**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS.html). 
-<!--
-<!-- Requires 'rgdal', not on CRAN
-#### Export for Google Earth (_.kml_)
-
-Google Earth is a powerful viewer for point data. Geographic data is displayed in Google Earth using the Keyhole Markup Language (KML) format.  
-
-Using the [plotKML](https://cran.r-project.org/web/packages/plotKML/plotKML.pdf) package, you can easily create a KML file to inspect and view in Google Earth.  
-
-See the related material in this tutorial: [**Export Pedons to Google Earth**](http://ncss-tech.github.io/AQP/soilDB/export-points-from-NASIS-to-Google-Earth.html). 
--->
 
 ## Packages for Vector Data
 
@@ -575,11 +561,11 @@ s.sp <- sf::as_Spatial(s)
 # these all create the same internal sp::CRS object
 proj4string(s.sp) <- sp::CRS('EPSG:4326')          # proj >6; EPSG
 proj4string(s.sp) <- sp::CRS('OGC:CRS84')          # proj >6; OGC
-proj4string(s.sp) <- '+init=epsg:4326'             # proj4 style +init string
-proj4string(s.sp) <- '+proj=longlat +datum=WGS84'  # proj4 style +proj string
+proj4string(s.sp) <- '+init=epsg:4326'             # proj 4 style +init string (deprecated)
+proj4string(s.sp) <- '+proj=longlat +datum=WGS84'  # proj 4 style +proj string
 ```
 
-Here, we do the same transformations we did above only using `sp`: `spTransform()`.
+Here, we do the same transformations we did above only using `sp::spTransform()`.
 
 ```{r, eval=TRUE}
 # transform to UTM zone 10
@@ -879,9 +865,9 @@ raster::writeRaster(x, filename = 'r.tif', options = c("COMPRESS=LZW"))
 
 #### Writing Categorical Rasters to File
 
-When you write categorical rasters to file, categories will either be stored within the file itself, or in a Persistent Auxiliary Metadata (PAM) into an .aux.xml file automatically. If only using terra or other GDAL tools to work with categorical data this is usually sufficient.
+When you write categorical rasters to file, categories will either be stored within the file itself, or in a Persistent Auxiliary Metadata (PAM) into an .aux.xml file automatically. If only using terra or other GDAL tools to work with raster data this is usually sufficient.
 
-You can also write a .vat.dbf file containing categorical information. Writing this file can be important if you want to use your categories in other GIS software such as ArcGIS (which does not necessarily make full use of GDAL PAM).
+You can also write a Value Attribute Table (VAT) as a .vat.dbf file containing categorical information. Writing this file can be important if you want to use your categories in other GIS software such as ArcGIS (which does not necessarily make full use of GDAL PAM).
 
 We can write a data.frame containing the levels of our raster to file using `foreign::write.dbf()` function. You will append the ".vat.dbf"  extension to the base filename of your data.
 
@@ -919,7 +905,7 @@ Commonly used raster `datatype` include: "unsigned integer", "signed integer", a
 
 It is wise to manually specify an output `datatype` that will "just fit" the required precision.
 
-For example, if you have generated a `RasterLayer` that warrants integer precision and ranges from 0 to 100, then the `INT1U` data type would provide enough precision to store all possible values *and* the NODATA value. Raster data stored as integers will always be smaller (sometimes 10-100x) than those stored as floating point, especially when internal compression is enabled.
+For example, if you have generated a `SpatRaster` that warrants integer precision and ranges from 0 to 100, then the `INT1U` data type would provide enough precision to store all possible values *and* the NODATA value, with the smallest possible file size. Raster data stored as integers will always be smaller (sometimes 10-100x) than those stored as floating point, especially when compressed.
 
 ```{r eval = FALSE}
 # integer grid with a range of 0-100
@@ -952,16 +938,18 @@ See [this article](https://kokoalberti.com/articles/geotiff-compression-optimiza
 
 In this exercise you will create a continuous and categorical slope gradient maps from a digital elevation model.
 
-1. Use the sample Tahoe-area LiDAR elevation dataset from the gdalUtilities package or your own dataset as input. If you use your own data, you may want to make a smaller extent with `[terra::crop()]`
+1. Use the sample Tahoe-area LiDAR elevation dataset from the gdalUtilities package or your own dataset as input. If you use your own data, you may want to make a smaller extent with [`terra::crop()`](https://search.r-project.org/CRAN/refmans/terra/html/crop.html).
    - `tahoe <- terra::rast(system.file("extdata", "tahoe_lidar_bareearth.tif", package = "gdalUtilities"))`
 
-2. Run `terra::terrain()` to create a slope map with `unit="radians"`
+2. Run [`terra::terrain()`](https://search.r-project.org/CRAN/refmans/terra/html/terrain.html) to create a slope map with `unit="radians"`.
 
-3. Convert radians to percent slope (divide by `2*pi`, multiply by `100`)
+3. Convert radians to percent slope (divide by `2*pi`, multiply by `100`).
 
-4. Make a plot of the continuous percent slope. You can use `terra::plot()` for static or `terra::plet()` for interactive map.
+4. Make a plot of the continuous percent slope. You can use `terra::plot()` for static map or `terra::plet()` for an interactive map.
 
-5. Use `terra::classify()` to create a categorical map of slope classes. Use the following breaks and assign the integer values `1` through `5` from lowest to highest.
+5. Make a plot of the binned percent slope. You can use `terra::plot(..., type="interval")` to do this. You can experiment with custom class breaks using the `breaks` argument.
+
+5. Use `terra::classify()` to create a categorical map of custom slope classes. Use the following breaks and assign the integer values `1` through `5` from lowest to highest.
 
    - 0 to 3%
    - 3 to 15%
@@ -969,12 +957,13 @@ In this exercise you will create a continuous and categorical slope gradient map
    - 30 to 60%
    - \>60% 
  
-6. Use `levels()` to set the categories of your raster.
+6. Create a data.frame containing the integer values and class labels. Use `levels()` to set the categories for your raster.
 
 7. Write the raster data to a GeoTIFF file with `terra::writeRaster()`
 
 8. Write the raster attribute table to a .vat.dbf file with `foreign::write.dbf()`
 
+Bonus: Load the GeoTIFF file in the GIS software of your choice to inspect.  
 ## Spatial Overlay Operations
 
 Spatial data are lot more useful when "related" (overlay, intersect, spatial query, etc.) to generate something new. The CRS of the two objects being overlaid must match.
@@ -1089,9 +1078,11 @@ plot(sf::st_geometry(mlra.gcs), main = 'MLRA 15 and 18', add = TRUE)
 
 ## Exercise 4: Extracting Raster Data
 
+
+
 ### Raster Summary By Point: NASIS Pedon Locations
 
-Extract PRISM data at the coordinates associated with NASIS pedons that have been correlated to the [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series.
+In this extendex example and exercise, we will extract PRISM data at the coordinates associated with NASIS pedons that have been correlated to the [Loafercreek](https://casoilresource.lawr.ucdavis.edu/sde/?series=loafercreek) series.
 
 We will use the sample dataset `loafercreek` from the `soilDB` package to get NASIS data. This example can be easily adapted to your own pedon data extracted from NASIS using [`fetchNASIS()`](http://ncss-tech.github.io/soilDB/reference/fetchNASIS.html), but if your points are not in California, you will need to supply your own raster data.
 
@@ -1272,20 +1263,13 @@ Basic climate summaries from a standardized source (e.g. PRISM) might be a usefu
 
 The following example is a simplified version of what is available in the [`soilReports`](https://github.com/ncss-tech/soilReports) package, reports on the [ncss-tech](https://github.com/ncss-tech/soil-pit/tree/master/reports) GitHub repository.
 
-Efficient summary of large raster data sources can be accomplished using:
-
--   internally-compressed raster data sources, stored on a local disk, can be in any coordinate system
--   polygons stored in an equal-area or UTM coordinate system, with CRS units of meters
--   [fixed-density sampling](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html) of polygons
--   estimation of quantiles from collected raster samples
-
-Back to our example data. The first step is to check the MLRA polygons (`mlra`); how many features per MLRA symbol? Note that some MLRA have more than one polygon.
+The first step is to check the MLRA polygons (`mlra`); how many features per MLRA symbol? Note that some MLRAs have more than one polygon.
 
 ```{r}
 table(mlra$MLRARSYM)
 ```
 
-Convert polygon area from square meters to acres and summarize. Note that this will only make sense when using a projected CRS with units of meters (equal area)!
+Convert polygon area from square meters to acres and summarize. [`terra::expanse()`](https://search.r-project.org/CRAN/refmans/terra/html/expanse.html) returns area in meters by default. For vector data, the best way to compute area is to use the longitude/latitude CRS. This is contrary to (erroneous, but popular) belief that you should use a planar coordinate reference system. Where applicable, the transformation to lon/lat is done automatically, if `transform=TRUE`.
 
 ```{r}
 poly.area <- terra::expanse(terra::vect(mlra)) / 4046.86 
@@ -1371,7 +1355,6 @@ First, we load some sample data. We use `soilDB::seriesExtent()` to get some ext
 library(sf)
 library(soilDB)
 library(terra)
-library(lattice)
 library(exactextractr)
 
 series <- c('holland', 'san joaquin')
@@ -1394,7 +1377,7 @@ s
 
 Data are extracted from the raster data source very rapidly using the `exactextractr` package.
 
-```{r, fig.width=6, fig.height=5, eval=TRUE}
+```{r, eval=TRUE}
 # use `st_union(s)` to create a MULTI- POINT/LINE/POLYGON from single
 # use `sf::st_cast(s, 'POLYGON')` to create other types
 
@@ -1412,6 +1395,12 @@ ex.all <- do.call('rbind', lapply(seq_along(ex), function(i) {
   cbind(data.frame(group = series[i]), ex[[i]])
 }))
 
+summary(ex.all)
+```
+
+```{r, fig.width=6, fig.height=5, eval=TRUE}
+library(lattice)
+
 # simple summary
 densityplot(~ value | group, data = ex.all, 
             plot.points = FALSE, bw = 2, lwd = 2,
@@ -1426,10 +1415,10 @@ densityplot(~ value | group, data = ex.all,
 
 #### Predefined Summary Operations
 
-In the previous example we extracted all values and their coverage fractions into memory so we could make a graph with them in R. This operation does not scale as well to very large rasters where all values would not fit in memory.
+In the previous example we extracted all values and their coverage fractions into memory so we could make a graph with them in R. This operation does not scale well to very large rasters where all values would not fit in memory.
 
 [`exactextractr::exact_extract()`](https://search.r-project.org/CRAN/refmans/exactextractr/html/exact_extract.html) has multiple built-in summary statistics we can use. These summary statistics can be processed very efficiently as all pixels do not to be loaded into memory at once. The available methods include weighted variants that account for pixel coverage fraction. You can specify summary options using the `fun` argument. 
-For example, `fun="quantile"` calculates quantiles of cell values, weighted by coverage fraction. We used two MULTIPOLYGON geometries corresponding to two series extents, so we get two sets of 3 quantiles for the Frost Free Days (FFD) grid. 
+For example, `fun="quantile"` calculates quantiles of cell values, weighted by coverage fraction. We used two MULTIPOLYGON geometries corresponding to two series extents, so we get two sets with 3 quantiles each for the Frost Free Days (FFD) grid. 
 
 ```{r, eval=TRUE}
 ex2 <- exactextractr::exact_extract(
@@ -1446,9 +1435,9 @@ ex2
 
 The list of summary operations available for use in `exact_extract()` `fun` argument includes: `"min"`, `"max"`, `"count"`, `"sum"`, `"mean"`, `"median"`, `"quantile"`, `"mode"`, `"majority"`, `"minority"`, `"variety"`, `"variance"`, `"stdev"`, `"coefficient_of_variation"`, `"weighted_mean"`, `"weighted_sum"`, `"weighted_stdev"`, `"weighted_variance"`, `"frac"`, and `"weighted_frac."`
 
-Of  interest beyond the typical summary statistics are  compositional summaries: `"frac"` and `"weighted_frac"`. These two methods calculate composition of unique levels of the raster for the input features.
+Of interest beyond the typical summary statistics are frequency tables or compositional summaries. The `"frac"` and `"weighted_frac"` methods calculate composition of unique levels of the raster for the input features.
 
-For example, imagine an interpretation for crop suitability. One requirement of this hypothetical crop is a growing season length greater than 250 days. We will estimate the growing season length using Frost Free Days. First we create a classified raster based on our criteria, then we summarize the raster data using the polygon boundaries and `fun="frac"`:
+For example, imagine an interpretation for crop suitability. One requirement of this hypothetical crop is a growing season length greater than 250 days. Assume we can estimate the growing season for this crop length using Frost Free Days. First we create a classified raster based on our criteria, then we summarize the raster data using the polygon boundaries and `fun="frac"`:
 
 ```{r, eval=TRUE}
 # calculate a binary raster
@@ -1470,7 +1459,9 @@ ex3 <- exactextractr::exact_extract(
 ex3
 ```
 
-From this output we can see that only about `r round(ex3[1,3])`% of areas within the Holland series extent polygon have more than 250 Frost Free Days, whereas almost all of the San Joaquin soil extent polygon would meet the growing season requirement.
+From this output we can see that only about `r round(ex3[1,3] * 100)`% of areas within the Holland series extent polygon have more than 250 Frost Free Days, whereas almost all of the San Joaquin soil extent polygon would meet the growing season requirement.
+
+Note that terra also supports creation of a frequency table of raster values via [`terra::freq()`](https://search.r-project.org/CRAN/refmans/terra/html/freq.html). This function works similarly to `exact_extract(..., fun = "frac")` but is built in to terra. The `exactextractr::exact_extract()` method is demonstrated in this chapter because it has many more summary statistics available.
 
 ### Example: Summarizing MLRA Raster Data with `lattice` graphics
 
@@ -1508,7 +1499,7 @@ bwplot(mlra ~ value | name, data = m,                   # setup plot and data so
 
 Static figures are a good start, but sometimes an interactive summary is more appropriate for EDA.
 
-The `histboxp` function from the `Hmisc` package creates interactive (HTML) chunks that can be used in RStudio, or embedded in RMarkdown documents (e.g. these notes or `soilReports`). Use the mouse to hover over, click, drag, etc. to interact with the data. Double-click to reset the plot.
+The [`histboxp()`](https://search.r-project.org/CRAN/refmans/Hmisc/html/histboxp.html) function from the `Hmisc` package creates interactive (HTML) chunks that can be used in RStudio, or embedded in RMarkdown documents (e.g. these notes or `soilReports`). Use the mouse to hover over, click, drag, etc. to interact with the data. Double-click to reset the plot.
 
 ```{r fig.width=8, fig.height=7}
 library(Hmisc)

@@ -329,56 +329,9 @@ All slots in the collection have a relationship to the site or *i*-index. When y
 
 Similarly, when all horizons are removed (say, you request the 6th j-index from a profile that has only 5 layers), the site index and all associated data are removed from the collection.
 
-````{=html}
-<!--
-##### Optional: `tibble` and `data.table` `SoilProfileCollection` objects
-
-Since the CRAN release of `aqp` 1.25 there has been support for `tibble` and `data.table` `data.frame` subclasses in the slots of the `SoilProfileCollection`. 
-
-Most methods that make `SoilProfileCollections` for you (e.g. `fetchNASIS`) only use `data.frame` objects, so this is, at this point, a completely optional feature.
-
-```{r, eval=FALSE}
-data("gopheridge", package="soilDB")
-pedons <- gopheridge
-
-# before: data.frame
-class(horizons(pedons))
-
-# set a new data.frame class with aqp_df_class<- then rebuild the SPC
-aqp_df_class(pedons) <- "tibble" # or "tbl_df", "data.table", "data.frame"
-pedons <- rebuildSPC(pedons)
-
-# after: tbl_df, a subclass of data.frame
-class(horizons(pedons))
-```
-
-This is an nice feature if you are a user of the `tidyverse` metapackage -- or scripts that use it -- as these use `tibble` as the "central" `data.frame`-class object -- and you may be frustrated by the old behavior of SPCs behaving erratically when given `tibble`, or turning your `tibble` into `data.frame`.
-
-If you want to take advantage of high performance code for manipulating tabular data in the `data.table` package, you can also use that as the internal data.frame subclass. 
-
-`data.table` is now _silently_ used in `aqp` for several operations to increase efficiency. If you prefer to use `data.table` in your scripts, integration with the `SoilProfileCollection` is now easier than ever.
-
-### Why bother with a `SoilProfileCollection`?
-
-As discussed at the beginning of the chapter, typical soil data sets have several tables with complex relationships between them. Manually keeping data sets in sync can range somewhere between a "chore" and a "Real Big Problem&trade;". We could manually do almost anything with or without a `SoilProfileCollection`... So _why bother_ with another data type?
-
-Well, there are _lots_ of things we could do from scratch -- most of us do not do those things. If we did we _might_ mess something up if we weren't doing it all the time. 
-
-We don't go and re-write the NASIS queries we use for each new project... We re-use the same tools in new project areas. In the same way, logic in the `SoilProfileCollection` is "off-loaded" onto special procedures. In the case of `aqp` and the SPC, these have been around for years and are rigorously unit-tested. 
-
-This is why we use the `SoilProfileCollection`. We can "trust" it to take care of certain things -- reducing the amount of indexing and other book keeping needed in our own analysis code. 
-
-The thinking has been put into the "schema" of the object and its methods up front, which makes it so that the user can focus on her or his analysis. This goal, in principle, is why NASIS, and all of the other soil databases and data models, exist. 
-
-There are of course a variety of other tools available for managing spatial and relational data in and out of R -- this course does not seek to be comprehensive in covering those tools. Many tools can be used in tandem with `SoilProfileCollection` objects or the outputs they create.
-
-If you understand the basic object types involved, you will see that the `SoilProfileCollection` is not the answer to every problem, but rather a convenient, efficient abstraction tailored for soil data work, and harmonious with a variety of R objects and data structures.
-
-All of the above together means that more time and energy can be put towards to solving _soil_ problems, rather than computer problems. 
--->
-````
-
 ## Exercise 1: Assemble a `SoilProfileCollection` from several CSV files
+
+Save the code you use in an R script, add answers as comments, and send to your mentor.
 
 [Link to exercise R code](https://github.com/ncss-tech/stats_for_soil_survey/blob/master/exercises/SPC-from-CSV-files.R)
 
@@ -391,8 +344,6 @@ Run the code in the linked R file and answer these questions.
 1.  How many profiles (sites) and horizons are in the `granite` SoilProfileCollection? How many in `andesite`? See `length()` and `nrow()` functions for SoilProfileCollection objects.
 
 2.  Which profile (and which horizon in that profile) has the highest ratio of oxalate-extractable Fe to dithionite-citrate-extractable Fe (`Fe_o_to_Fe_d`)?
-
-Send the results of questions (and any code you used) to your mentor.
 
 ## Using the `soilDB` Package
 
@@ -711,11 +662,11 @@ get('component.ecosite.problems', envir = get_soilDB_env())
 
 These `get()` calls access variables stored in the package environment `soilDB.env`. The variables only exist if there are "problems" / values found by the data checks -- and if you fix the errors in the NASIS database and the checks don't find any errors then nothing will be returned by these functions.
 
-### Summaries
+## Basic Data Inspection
 
 Now that you've loaded some data, you can look at additional ways to summarize and interact with data elements.
 
-#### `table()` and Cross Tabulation
+### `table()`: Tabulation and Cross Tabulation
 
 The base R `table()` function is very useful for quick summary operations. It returns a named vector with the amount of each unique level of the a given vector.
 
@@ -771,7 +722,7 @@ We can use the `addmargins()` function to add the row and column sums to the mar
 addmargins(table(pedons$hzname, pedons$texcl))
 ```
 
-#### The `dplyr` package and "tidy" data principles
+### The `dplyr` package and "tidy" data principles
 
 [**Tidy Data Principles**](https://tidyr.tidyverse.org/articles/tidy-data.html)
 
@@ -779,27 +730,9 @@ This is a stub to talk about `dplyr` some links to tidyverse-centric examples of
 
 Talk about cool things like `rowwise()`, `across()` and translation to high-performance code (`dtplyr`) and SQL (`dbplyr`).
 
-```{=html}
-<!--
-Brief point on why students learning R probably should use it for certain things at least. 
-
- - Abundant resources available
- 
- - Now mature
-
- - Many options for inputs, ways to do things
- 
- - Possibly more expressive code, in a consistent style (easier to share with others?)
- 
-But also that they should have a basic understanding how could be done in base R -- if nothing else to be better-informed of their (probably easier `dplyr`) choices. 
-
-Anecdote about using `dplyr` for very simple base R things, and deprecation/package stability in general. `dplyr` is stable now, but it wasn't. Be aware of that kind of thing when you use a new package.
--->
-```
-
 ### Missing Values
 
-"Missing" values are encoded in R as `NA`. `table()` has a `useNA` argument that affects whether `NA` values are counted. 
+Missing values are encoded in R as `NA`. The `table()` function has a `useNA` argument that affects whether `NA` values are counted. 
 
 Use `is.na()` to return a logical value that identifies missing data.
 
@@ -1017,9 +950,11 @@ Tools for totally ordered indexed observations -- especially irregular time seri
 
 ## Exercise 2: O Horizon Thickness
 
-This exercise uses a synthetic transect generated with R code. The 10 hypothetical pedons along the transect have all been described using the a standardized set of horizon designations: Oi, Oe, A, C, Cg. The thicknesses of layers, the depth to gleyed matrix, and soil organic carbon content vary between pedons. 
+This exercise uses a synthetic transect generated with R code. The 10 hypothetical pedons along the transect have all been described using the a standardized set of horizon designations: Oe, Oa, A, Cg1, Cg2. The thicknesses of layers, the depth to gleyed matrix, and soil organic carbon content vary between pedons. 
 
 We will start to examine this dataset graphically, and then will utilize some functions defined for the _SoilProfileCollection_ to extract information from the data.
+
+Save the code you use in an R script, add answers as comments, and send to your mentor.
 
 ```{r, eval=TRUE, echo=FALSE}
 load(url("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/ohz.rda"))
@@ -1039,32 +974,70 @@ We will use the `site()` LEFT JOIN method to merge the data into the _SoilProfil
 site(ohz) <- ohz_thickness
 ```
 
-Now, let's plot the profiles in order of cumulative O horizon thickness. We draw lines at 20 and 40cm to indicate the thresholds for histic epipedon and Histosols soil order:
+Now, let's plot the profiles in order of cumulative O horizon thickness. We draw dashed lines at 20 and 40cm to indicate the thresholds for histic epipedon and Histosols soil order:
 
 ```{r, eval=TRUE}
 plotSPC(ohz, plot.order = order(ohz$O_thickness))
 abline(h = c(20, 40), lty = 2)
 ```
 
-Using the object `ohz` object we just inspected, answer the following questions using techniques from the previous sections. Check your logic by comparing to the plot above. 
+Using the object `ohz` object we just inspected, answer the following questions using techniques from the previous sections. Check your logic by comparing to the profile sketch. 
 
 1. Check if any soil organic carbon values are `NA`. Make a profile sketch (`plotSPC()`) using organic carbon percentage (`"soc"`) to color the profiles. Then calculate a new column using the function `is.na()` and use that to color the profiles. Which profiles have missing data? In which horizons?
 
 2. Tabulate unique horizon designations (`ohz$name`). How many of each horizon designation are present?
 
-3. Use regular expressions to count the number of Cg horizons in the collection.
+3. Use regular expressions to count the number of Cg horizons in the collection. How many Cg horizons have organic carbon data in the `"soc"` column?
 
-4. Filter the `ohz` object using `aqp::subset()` to select pedons where `O_thickness` is greater than `20` and less than `40`. This is the histic epipedon thickness requirement. How many pedons have a histic epipedon?
+4. Filter the `ohz` object using `aqp::subset()` to select pedons where `O_thickness` column is greater than `20` and less than `40`. This is the histic epipedon thickness requirement. How many pedons have a histic epipedon?
 
-5. Filter the `ohz` object using `aqp::subset()` to select pedons where `O_thickness` is greater than `40`. This is the Histosols order thickness requirement. How many pedons are Histosols?
+5. Filter the `ohz` object using `aqp::subset()` to select pedons where `O_thickness` column is greater than `40`. This is the Histosols order thickness requirement. How many pedons are Histosols?
 
-Submit an .R script containing code used to answer 1 through 5 to your mentor.
+## Generalized Horizon Labels
+
+After review of the data, a new set of more general labels can be assigned to each horizon to define groups over which soil properties will be aggregated. These are called "Generalized Horizon Labels" (GHL). These new labels define functionally similar groups that usually span multiple genetic horizons.
+
+Consider this situation: you have a collection of pedons that have been correlated to a named soil series or component. You would like to objectively compute a range in characteristics (“low-rv-high” values) and the typical range of horizon depths. 
+
+Most collections of pedon data have variation in description style and horizons used, horizon depths, and number of horizons described.
+
+![](static-figures/genhz-sketch.png)
+
+In the scenario depicted in the image above there are several obvious “micro-correlation” decisions that can be to group horizons for aggregation. 
+
+For example: what horizon prototype scheme (e.g., A-Bt1-Bt2-Bt3-Cr-R) best conveys the concept of this soil series or soil component? Does it make sense to group the Bt3, Bt4, BCt, and CBt horizons for aggregation? What about grouping Bt3 and 2Bt3 horizons? Do BA and AB horizons occur frequently enough to be included as their own group?
+
+### Formal Approach
+
+Generalized horizon labels are an aggregation strategy. Here is a basic outline of the process:
+
+1. Select a set of GHL that best represents a group of pedons to be aggregated. This could be based on series descriptions, expert knowledge, or inspection of the most frequently described horizon designations.
+
+3. Assign GHL to each horizon using whatever information is available for grouping horizons. This micro-correlation of horizon designations will often require slightly different rules for each dataset and group. Careful inspection of horizon designation and observed properties is critical.
+
+3. Evaluate GHL assignments and manually refine as needed.
+
+4. Keep track of final GHL assignments in NASIS (`dspcomplayerid`) column, an R script, or a text file.
+
+5. Compute range in characteristics, aka low-rv-high values, for clay, sand, pH, etc. using the labels as grouping variables.
+
+6. Estimate a most likely top and bottom depths for each GHL group.
+
+### Functions for Handling Generalized Horizon Labels
+
+The aqp package defines several functions that can be used to assign GHLs or summarize the data associated with them.
+
+The function `generalize.hz()` can be used to apply new labels based on regular expression pattern matching. The function `GHL()` can be used to get or set the column containing generalized horizon labels for a _SoilProfileCollection_.
+
+Exercise 4 in this chapter will let you work through the process of summarizing data using GHLs. But first we continue with tools to inspect your data retrieved from NASIS with soilDb. It is very important that basic QC/QA be performed on your data before proceeding with statistical summaries.
 
 ## `fetchNASIS()` data checks
 
-`fetchNASIS()` does a lot of the hard work for you by pulling out a variety of child tables and joining them to site/horizon tables
+`fetchNASIS()` does a lot of the hard work for you by pulling out a variety of child tables and joining them to site/horizon tables.
 
-This results in a `SoilProfileCollection` object that has many of the NASIS data columns. In order to do this, a variety of processes are run. Output is generated that you should look at. We will walk through the most common parts.
+This results in a `SoilProfileCollection` object that has many of the NASIS data columns. In order to do this, a variety of internal processes are performed. Output is generated in the console that you should always look at.
+
+We will walk through a few of the most common outputs.
 
 *Quality control and limited "filling" of fragments, horizon depth data, site data, tables*
 
@@ -1086,9 +1059,11 @@ NOTE: some records are missing rock fragment volume
 
 ### Inspecting Results
 
-We will analyze occurrence of andic soil properties in pedons from MT647. We will download this "selected set" from the course website from an *.rda* file to save you the effort of crafting your selected set just for this example.
+We will analyze occurrence of andic soil properties in pedons from MT647. This is a simple demonstration of interrogating a dataset, subsetting it into logical chunks, with a goal of finding out more about a specific diagnostic feature.
 
-Downloading and installing the .rda is equivalent to NASIS query _SSRO_Northwest: \_PedonPC_Plus_DataDump_select_ for User Site ID: `%MT647%`, NASIS Site: `SSRO_Northwest`, and NASIS Group: `NW-MIS Point Data`.  After populating your NASIS selected set `mt647` is created in R with `mt647 <- fetchNASIS()`.
+We will download a "selected set" from the course website from an *.rda* file to save you the effort of crafting your selected set just for this example.
+
+Downloading and installing the *.rda* is equivalent to NASIS query _SSRO_Northwest: \_PedonPC_Plus_DataDump_select_ for User Site ID: `%MT647%`, NASIS Site: `SSRO_Northwest`, and NASIS Group: `NW-MIS Point Data`.  After populating your NASIS selected set `mt647` is created in R with `mt647 <- fetchNASIS(rmHzErrors=TRUE)` and `mt647err <- fetchNASIS(rmHzErrors=FALSE)`. `rmHzErrors=FALSE` is the default behavior, we create two objects to demonstrate how to identify and fix common horizon errors.
 
 #### Load Example Data
 
@@ -1123,7 +1098,7 @@ get('bad.pedon.ids', envir = soilDB.env)
 any(mt647$upedonid %in% get('bad.pedon.ids', envir=soilDB.env))
 ```
 
-When `fetchNASIS(..., rmHzErrors = TRUE)` (the default), any horizons that were omitted from the SoilProfileCollection will be stored in the `bad.horizons` variable in the `soilDB.env` environment.
+When `fetchNASIS(..., rmHzErrors = TRUE)` (the default), any horizons that were omitted from the _SoilProfileCollection_ will be stored in the `bad.horizons` variable in the `soilDB.env` environment.
 
 ```{r, eval=TRUE}
 head(get('bad.horizons', envir=soilDB.env))
@@ -1174,9 +1149,9 @@ good.profiles
 
 ## Extended Data Functions
 
-Additional data related to both site and horizon information can be fetched using the [`get_extended_data_from_NASIS()`](http://ncss-tech.github.io/soilDB/reference/get_extended_data_from_NASIS.html) function. This function returns a named `list()` with several tables that `fetchNASIS` draws from--in addition to the typical Site/Pedon/Component/Horizon tables.
+Additional data related to both site and horizon information can be fetched using the [`get_extended_data_from_NASIS()`](http://ncss-tech.github.io/soilDB/reference/get_extended_data_from_NASIS.html) function. This function returns a named _list_ object with several tables that `fetchNASIS()` draws from.
 
-There are a variety of calculated fields that are included in the default `fetchNASIS` result based on the extended data--you can make use of these to simplify queries and aggregations for a variety of analyses... And then follow up with more detailed data as needed.
+There are a variety of calculated fields that are included in the default `fetchNASIS()` result based on these extended data. Sometimes you need to work with a less aggregated representation of the source data to chase down data issues.
 
 ### Elements of `get_extended_data_from_NASIS()`
 
@@ -1214,7 +1189,7 @@ There are a variety of calculated fields that are included in the default `fetch
 
 Below is a summary of additional information that can be readily brought into R from your NASIS selected set via the `get_extended_data_from_NASIS()` function.
 
-Before continuing, *imagine* opening the NASIS client, populating your selected set with `2015MT663%` using a query like "*NSSC Pangaea – POINT-Pedon/Site by User Pedon ID*"
+Before continuing, imagine opening the NASIS client, populating your selected set with `2015MT663%` using a query like "*NSSC Pangaea – POINT-Pedon/Site by User Pedon ID*"
 
 Load the data like we did above.
 
@@ -1224,6 +1199,7 @@ load(url("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/boo
 
 ```{r}
 ## fetch extended site and horizon data from local NASIS
+# mt663 <- fetchNASIS()
 # mt663ext <- get_extended_data_from_NASIS_db()
 ```
 
@@ -1296,7 +1272,7 @@ You can swap `landform_string` for: `landscape_string` (landscape), `hillslopepr
 
 ### Diagnostic Features
 
-#### Boolean Diagnostic Features in `fetchNASIS`
+#### Boolean Diagnostic Features in `fetchNASIS()`
 
 If diagnostic features are populated in the Pedon Diagnostic Features table in NASIS, then Boolean (`TRUE` or `FALSE`, or "logical") fields are created for each diagnostic feature type found in the data brought in by `fetchNASIS`.
 
@@ -1389,6 +1365,8 @@ diagnosticPropertyPlot(
 
 ## Exercise 3: Diagnostic Horizons in Your Own Data
 
+Save the code you use in an R script, add answers as comments, and send to your mentor.
+
 Use the following script to generate a diagnostic-feature diagram for the pedon data you've loaded from your NASIS selected set. Alternately, you may use the MT663 data from the example above, just substitute the object `mt663` for `f`.
 
 You can select a subset of desired diagnostic properties or use all diagnostic feature columns.
@@ -1425,10 +1403,6 @@ diagnosticPropertyPlot(
 )
 ```
 
-For more information on generating diagnostic feature diagrams, see the following tutorial:
-
--   [**Diagnostic Feature Property Plots**](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html).
-
 **Questions:**
 
 Use the results of `site()`, `horizons()`, `diagnostic_hz()` to answer the following questions about your own data. These functions return data.frame objects from a SoilProfileCollection derived from your local NASIS data.
@@ -1439,7 +1413,9 @@ Use the results of `site()`, `horizons()`, `diagnostic_hz()` to answer the follo
 
 3.  Interpret: What diagnostic features did you choose to plot? Did you notice any patterns in the diagnostic features that tend to occur together?
 
-Send your mentor a copy of your results and the commands you used.
+For more information on generating diagnostic feature diagrams, see the following tutorial:
+
+-   [**Diagnostic Feature Property Plots**](http://ncss-tech.github.io/AQP/sharpshootR/diagnostic-property-plot.html).
 
 ## Custom Queries to Local NASIS Database
 
@@ -1551,13 +1527,11 @@ This demonstrates one way of grouping horizon data for determining the Range in 
 
 -   [Generalized Horizon Labels with Loafercreek](http://ncss-tech.github.io/stats_for_soil_survey/exercises/genhz_homework.html)
 
-For the exercise during class, we will give you some time to read over the materials and apply the process to the sample `loafercreek` data. The code to apply the process to `loafercreek` is given.
-
-Then we ask that you apply a similar process to your own data, adjusting your generalized horizon patterns as needed for your local soils.
+For the exercise during class we will give you some time to read over the materials and apply the process to the sample `loafercreek` data. The code to apply the process to `loafercreek` is given. Then we ask that you apply the process to your own data, adjusting your generalized horizon patterns as needed for your local soils.
 
 This may take more time than we have during class itself, so you should follow up as needed with your mentor to complete the exercise. Chapter 3 Exploratory Data Analysis will get deeper into some of the topics that are referenced in the `loafercreek` code, such as summary statistics on grouped data. You will send a table and profile plots to your mentor when you are done.
 
-This tutorial gives some further discussion of generalized horizon labels to order profiles based on horizon level properties.
+Further discussion of generalized horizon labels to order profiles based on horizon-level properties can be found in this tutorial:
 
 -   [Pair-Wise Distances by Generalized Horizon Labels tutorial](http://ncss-tech.github.io/AQP/aqp/genhz-distance-eval.html)
 
