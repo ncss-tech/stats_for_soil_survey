@@ -80,6 +80,127 @@ knitr::kable(desc)
 
 ---
 
+```{r, weighting}
+
+# Example ----
+# Create a 4 square polygon
+n <- 2
+bb <- st_make_grid(st_bbox(c(xmin = 0, xmax = n, ymin = 0, ymax = n)), n = n)
+grd <- st_as_sf(bb)
+grd$ID <- 1:length(bb)
+df <- st_centroid(grd) |> st_coordinates() |> as.data.frame()
+bb2 <- st_make_grid(st_bbox(c(xmin = 0, xmax = n, ymin = 0, ymax = n)), n = n)
+grd2 <- st_as_sf(bb2)
+grd2$landform = c(rep("backslope", 3), "summit")
+# grd3 <- ms_dissolve(grd2, field = "mapunit")
+grd2$component = c(rep("a", 3), "b")
+
+ggplot() +
+  geom_sf(data = grd2, aes(fill = component)) +
+  ggtitle("map unit") +
+  theme(
+    axis.text = element_blank(), 
+    axis.ticks = element_blank(), axis.title = element_blank()
+  )
+
+
+# stratified sample the grid
+test <- mapply(FUN = function(i, x, n) {
+  st_coordinates(st_sample(x[[1]][i, ], size = n))
+  },
+  i = 1:4,
+  x = lapply(1:4, function(x) grd2),
+  n = c(1, 1, 1, 3),
+  SIMPLIFY = FALSE
+  )
+test <- do.call("rbind", test)
+test_sf <- st_as_sf(as.data.frame(test), coords = 1:2)
+
+ex <- extract(vect(grd2), st_coordinates(test_sf))
+test_sf <- cbind(test_sf, ex)
+
+
+# simulate clay content and component probabilities
+test_sf <- within(test_sf, {
+  samp_co = c(
+    rbinom(3, 1, prob = 0.75),
+    rbinom(3, 1, prob = 0.25)
+  )
+  samp_clay = c(
+    rnorm(3, 15),
+    rnorm(3, 30)
+  )
+  samp_co = ifelse(samp_co == 1, "a", "b")
+  w1  = c(rep(0.75 / 3, 3), rep(0.25 / 3, 3)) * 4
+  # or
+  w2  = c(rep(1 / 1, 3), rep(1 / 3, 3))
+  
+  pct  = c(rep(3 / 3, 3), rep(1 / 3, 3)) / 4
+  p = c(rep(1 / 4, 3), rep(1 / 4 / 3, 3))  
+  
+  p = 1 / w1
+  w = w1
+})
+
+
+ggplot() +
+  geom_sf(data = grd2, aes(fill = landform)) +
+  ggtitle("map unit") +
+  theme(
+    axis.text = element_blank(), 
+    axis.ticks = element_blank(), axis.title = element_blank()
+  ) +
+  geom_sf(
+    data = mutate(test_sf, component = samp_co), 
+    aes(shape = component), size = 3
+    )
+  # geom_sf_text(data = test_sf, aes(label = samp_co), nudge_y = - 0.1, nudge_x = 0.45) +
+  # guides(fill = guide_legend((title = "component")))
+
+
+
+# compare tabular summaries
+table(pred    = test_sf$component, obs       = test_sf$samp_co) |>
+  addmargins()
+table(mapunit = test_sf$component, component = test_sf$samp_co) |> 
+  addmargins()
+
+vars <- c("component", "samp_co")
+test_sf[vars] <- lapply(st_drop_geometry(test_sf[vars]), as.factor)
+yardstick::conf_mat(test_sf, truth = samp_co, estimate = component, case_weights = w)$table |>
+  addmargins()
+
+# survey
+test_sf$id <- 1:nrow(test_sf)
+test3 <- test_sf |>
+  srvyr::as_survey_design(
+    probs = 1/w,
+    # weights = w,
+    strata  = landform,
+    # ids = id,
+    nest = TRUE
+    )
+srvyr::survey_count(test3, samp_co, vartype = "ci")
+
+(tb <- table(test_sf$component))
+(wtd <- Hmisc::wtd.table(test_sf$component, weights = test_sf$w, type = "table"))
+xtabs(w ~ component, data = test_sf)
+(mapunit <- prop.table(wtd) |> round(2))
+(accuracy <- mapunit |> as.matrix() |> apply(X = _, 2, max))
+
+weighted.mean(test_sf$samp_clay, w = test_sf$w)
+
+a = c(2.1, 0.8, 1.1, 0.3, 1.4, 0.9, 0.9, 0.6, 1.3, 1.5)
+b = c(5.1, 3.4, 4.5, 4, 3.9, 5.5, 4.7, 5.5, 4.2, 4.1)
+
+mean(c(a, b))
+weighted.mean(c(a, b), w = c(rep(0.9/10, 10), rep(0.1/10, 10)))
+
+
+```
+
+---
+
 
 ## Descriptive Statistics - Numeric Data
 
