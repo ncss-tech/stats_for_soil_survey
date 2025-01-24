@@ -1233,11 +1233,13 @@ For another exercise you can use the `region11/lab_summary_by_taxonname` report 
 
 -   ODBC connection to NASIS is set up
 
+-   NASIS local database and selected set contains site, pedon, NCSS Lab Pedon Lab Data tables
+
 -   Beware each report has a unique configuration file that may need to be edited.
 
 ### Instructions
 
-1.  **Load** your NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by upedonid and Taxon Name" from the Region 11 report folder to load your selected set. Be sure to target both the site, pedon and lab layer tables. **Remove** from your selected set the pedons and sites you wish to exclude from the report.
+1.  **Load** your NASIS selected set. **Run** a query such as "POINT - Pedon/Site/NCSSlabdata by taxonname" from the _NSSC Pangaea_ report folder to load your selected set. You can use `Miami` as the taxon name, or any taxon of your choice that has lab data. Be sure to target both the site, pedon and lab layer objects in query of national database. **Remove** from your selected set any pedons and sites you wish to exclude from the report.
 
 2.  **Copy** the lab summary to your working directory.
 
@@ -1270,6 +1272,8 @@ Pay special attention to how caret `^` and dollar `$` symbols are used in REGEX.
 **Command-line approach**
 
 ```{r, eval=FALSE}
+library(rmarkdown)
+
 # Set report parameters
 series <- "Miami"
 genhz_rules <- "C:/workspace2/lab_sum/Miami_rules.R"
@@ -1278,25 +1282,23 @@ genhz_rules <- "C:/workspace2/lab_sum/Miami_rules.R"
 report_path <- "C:/workspace2/lab_sum/report.Rmd"
 
 # Run the report
-render(input = report_path, 
-       output_dir = "C:/workspace2", 
-       output_file = "C:/workspace2/lab_sum.html", 
-       envir = new.env(), 
-       params = list(series = series,
-                     genhz_rules = genhz_rules
-                     )
-       )
+render(
+  input = report_path,
+  output_dir = "C:/workspace2",
+  output_file = "C:/workspace2/lab_sum.html",
+  envir = new.env(),
+  params = list(series = series, 
+                genhz_rules = genhz_rules)
+)
 ```
 
 **Manual approach**
 
-**Open** the report.Rmd, **hit** the Knit drop down arrow, and select **Knit with Parameters**.
+**Open** the report.Rmd, **ckucj** the Knit drop down arrow, and select **Knit with Parameters**.
 
 ![](static-figures/knit_button.png)
 
 6.  **Save** the report. The report is automatically saved upon creation in the same folder as the R report. However, it is given the same generic name as the R report (i.e., "C:/workspace/lab_sum/report.html"), and will be overwritten the next time the report is run. Therefore, if you wish to save the report, rename the .html file to a name of your choosing and/or convert it to a PDF.
-
-Also, beware when opening the .html file with Internet Explorer -- be sure to click on "Allow blocked content" if prompted. Otherwise, Internet Explorer will alter the formatting of tables etc. within the document.
 
 **Sample pedon report**
 
@@ -1305,62 +1307,10 @@ Also, beware when opening the .html file with Internet Explorer -- be sure to cl
 *Brief summary of steps:*
 
 -   Load your selected set with the pedon and site table for an existing GHL file, or make your own (highly encouraged)
--   Run the `lab_summary_by_taxonname.Rmd` report on a soil series of your choice.
+-   Run the lab_summary_by_taxonname report on a soil series of your choice by opening _report.Rmd_ and clicking Knit with Parameters in RStudio, or using the `render()` function.
 -   Show your work and submit the results to your mentor.
 
-## Exercise 6: Run Shiny Pedon Summary
-
-The `region2/shiny-pedon-summary` report is an interactive Shiny-based report that uses `flexdashboard` to help the user subset and summarize NASIS pedons from a graphical interface.
-
--   You can try a ShinyApps.io demo [here](https://brownag.shinyapps.io/ShinyPedonSummary/)
-
-The "Shiny Pedon Summary" allows one to rapidly generate reports from a large set of pedons in their NASIS selected set.
-
-The left INPUT sidebar has numerous options for subsetting pedon data. Specifically, you can change REGEX patterns for *mapunit symbol*, *taxon name*, *local phase*, and *User Pedon ID*. Also, you can use the drop down boxes to filter on *taxon kind* or compare different "modal"/RV pedons.
-
-![Example: Analyzing the Loafercreek Taxadjuncts](https://ncss-tech.github.io/soilReports/docs/shiny-pedon-summary/shiny-pedon_loafercreek-taxadjuncts.PNG)
-
-1.  **Create an instance of the `region2/shiny-pedon-summary` report with `soilReports`**:
-
-```{r eval=FALSE}
-# create new instance of reports 
-library(soilReports)
-
-# set path for shiny-pedon-summary report instance
-shinyped.path <- "C:/workspace2/chapter3/shiny-pedon"
-
-# create directories (if needed)
-if(!dir.exists(shinyped.path))
-  dir.create(shinyped.path, recursive = TRUE)
-
-# get report dependencies
-reportSetup('region2/shiny-pedon-summary')
-
-# copy report contents to target path
-copyReport('region2/shiny-pedon-summary', outputDir = shinyped.path, overwrite = TRUE)
-```
-
-2.  **Update the `config.R` file**
-
-You can update the `config.R` file in "C:/workspace2/chapter3/shiny-pedon" (or wherever you installed the report) to use the `soilDB` datasets `loafercreek` and `gopheridge` by setting `demo_mode <- TRUE`. This is the *simplest* way to demonstrate how this report works. Alternately, when `demo_mode <- FALSE`, pedons will be loaded from your NASIS selected set.
-
-`config.R` also allows you to specify a shapefile for overlaying the points on -- to determine mapunit symbol -- as well as several raster data sources whose values will be extracted at point locations and summarized. The demo dataset does not use either of these by default, due to large file sizes.
-
-Furthermore, a default (very general) set of REGEX generalized horizon patterns is provided to assign generalized horizon labels for provisional grouping. These provided patterns are unlikely to cover ALL cases, and *always* need to be modified for final correlation. That said, they do a decent job of making a first-pass correlation for diverse types of soils.
-
-The default `config.R` settings use the general patterns: `use_regex_ghz <- TRUE`. You are welcome to modify the defaults. If you want to use the values you have populated in NASIS *Pedon Horizon Component Layer ID*, set `use_regex_ghz <- FALSE`.
-
-3.  **Run the report via `shiny.Rmd`**
-
-This report uses the Shiny `flexdashboard` interface. Open up `shiny.Rmd` and click the "Run Document" button to start the report. This will load the pedon and spatial data specified in `config.R`.
-
-**NOTE:** *If a Viewer Window does not pop-up right away, click the gear icon to the right of the "Run Document" button. Be sure the option "Preview in Window" is checked, then click "Run Document" again.*
-
-4.  All of the subset parameters are in the left-hand sidebar. Play around with all of these options -- the graphs and plots in the tabs to the right will automatically update as you make changes.
-
-5.  When you like what you have, you can export a non-interactive HTML file for your records. To do this, first, set the "Report name:" box to something informative -- this will be your report output file name. Then, scroll down to the bottom of the INPUT sidebar and click "Export Report" button. Check the "output" folder (subdirectory of where you installed the report) for your results.
-
-## Exercise 7: Run Mapunit Comparison
+## Exercise 6: Run Mapunit Comparison
 
 Another popular report in `soilReports` is the `region2/mu-comparison` report.
 
@@ -1375,9 +1325,7 @@ In this example, we clip a small portion of SSURGO polygons from the CA630 soil 
 mucomp.path <- "C:/workspace2/chapter3/mucomp"
 
 # create any directories that may be missing
-if(!dir.exists(mucomp.path)) {
-  dir.create(mucomp.path, recursive = TRUE)
-}
+dir.create(mucomp.path, recursive = TRUE, showWarnings = FALSE)
 
 mucomp.zip <- file.path(mucomp.path, 'mucomp-data.zip')
 
@@ -1400,7 +1348,7 @@ reportSetup('region2/mu-comparison')
 copyReport('region2/mu-comparison', outputDir = mucomp.path, overwrite = TRUE)
 ```
 
-If you want, you can now set up the default `config.R` that is created by `copyReport()` to work with your own data. OR you can use the "sample" `config.R` file (called `new_config.R`) in the ZIP file downloaded above.
+If you want, you can now set up the default _config.R_ that is created by `copyReport()` to work with your own data. OR you can use the "sample" `config.R` file (called _new_config.R_) in the ZIP file downloaded above.
 
 3.  **Run this code to replace the default `config.R` with the sample data `config.R`**:
 
@@ -1416,6 +1364,57 @@ file.copy(from = file.path(mucomp.path, "new_config.R"),
 5.  **Inspect the report output HTML file, as well as the spatial and tabular data output in the `output` folder.**
 
 *Question: What differences can you see between the five mapunit symbols that were analyzed?*
+
+## Exercise 7: Run Shiny Pedon Summary
+
+The `region2/shiny-pedon-summary` report is an interactive Shiny-based report that uses `flexdashboard` to help the user subset and summarize NASIS pedons from a graphical interface.
+
+-   You can try a ShinyApps.io demo [here](https://brownag.shinyapps.io/ShinyPedonSummary/)
+
+The "Shiny Pedon Summary" allows one to rapidly generate reports from a large set of pedons in their NASIS selected set.
+
+The left INPUT sidebar has numerous options for subsetting pedon data. Specifically, you can change REGEX patterns for *mapunit symbol*, *taxon name*, *local phase*, and *User Pedon ID*. Also, you can use the drop down boxes to filter on *taxon kind* or compare different "modal"/RV pedons.
+
+![Example: Analyzing the Loafercreek Taxadjuncts](https://ncss-tech.github.io/soilReports/docs/shiny-pedon-summary/shiny-pedon_loafercreek-taxadjuncts.PNG)
+
+1. **Create an instance of the `region2/shiny-pedon-summary` report with `soilReports`**:
+
+```{r eval=FALSE}
+# create new instance of reports 
+library(soilReports)
+
+# set path for shiny-pedon-summary report instance
+shinyped.path <- "C:/workspace2/chapter3/shiny-pedon"
+
+# create directories (if needed)
+dir.create(shinyped.path, recursive = TRUE, showWarnings = FALSE)
+
+# get report dependencies
+reportSetup('region2/shiny-pedon-summary')
+
+# copy report contents to target path
+copyReport('region2/shiny-pedon-summary', outputDir = shinyped.path, overwrite = TRUE)
+```
+
+2. **Update the `config.R` file**
+
+You can update the _config.R_ file in `"C:/workspace2/chapter3/shiny-pedon"` (or wherever you installed the report) to use the `soilDB` datasets `loafercreek` and `gopheridge` by setting `demo_mode <- TRUE`. This is the simplest way to demonstrate how this report works. Alternately, when `demo_mode <- FALSE`, pedons will be loaded from your NASIS selected set.
+
+_config.R_ also allows you to specify a shapefile for overlaying the points on--to determine mapunit symbol--as well as several raster data sources whose values will be extracted at point locations and summarized. The demo data does not use either of these by default due to large file sizes.
+
+A very general default set of REGEX generalized horizon patterns is provided to assign generalized horizon labels for provisional grouping. These patterns are unlikely to cover ALL cases and *always* need to be modified for final correlation. 
+
+The default _config.R_ settings use the general patterns: `use_regex_ghz <- TRUE`. You are welcome to modify the defaults. If you want to use the values you have populated in NASIS *Pedon Horizon Component Layer ID*, set `use_regex_ghz <- FALSE`.
+
+3. **Run the report via `shiny.Rmd`**
+
+This report uses the Shiny `flexdashboard` interface. Open up _shiny.Rmd_ and click the "Run Document" button to start the report. This will load the pedon and spatial data specified in _config.R_.
+
+**NOTE:** *If a Viewer Window does not pop-up right away, click the gear icon to the right of the "Run Document" button. Be sure the option "Preview in Window" is checked, then click "Run Document" again.*
+
+4. All of the subset parameters are in the left-hand sidebar. Play around with all of these options. The graphs and plots in the tabs to the right will automatically update as you make changes.
+
+5. When you like what you have, you can export a non-interactive HTML file for your records. To do this first set the "Report name:" box to something informative; this will be your report output file name. Then, scroll down to the bottom of the INPUT sidebar and click "Export Report" button. When rendering completes check the "output" folder in the directory where you installed the report.
 
 ## Additional Reading (Exploratory Data Analysis)
 
