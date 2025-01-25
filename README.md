@@ -28,7 +28,7 @@
 
 ### [**Chapter 3:** *Exploratory Data Analysis*](http://ncss-tech.github.io/stats_for_soil_survey/book/eda.html)
 
--   #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/4_exploratory_data_analysis/ch4_prez_2024.pptx)
+-   #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/4_exploratory_data_analysis/ch4_prez.pptx)
 
 -   #### [Shiny Apps](http://ncss-tech.github.io/stats_for_soil_survey/presentations/4_exploratory_data_analysis/shiny_app_pres.html)
 
