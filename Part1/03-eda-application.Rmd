@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Exploratory Data Analysis {#eda}
 
 ![](static-figures/logo.jpg)
@@ -24,7 +29,6 @@ This chapter will demonstrate the following:
 Descriptive statistics include:
 
 -   **Mean** - arithmetic average\
--   **Weighted Mean** - weighted arithmetic average\
 -   **Median** - middle value\
 -   **Mode** - most frequent value\
 -   **Standard Deviation** - variation around the mean\
@@ -123,6 +127,51 @@ h$hzname <- ifelse(h$hzname == "BT", "Bt", h$hzname)
 
 Typo errors such as these are a common problem with old pedon data in NASIS.
 
+
+## Calculating Weights
+
+Before we can begin calculating statistics from our data we need to calculate their weight. A weight (w) is the number of observations a sample (n) represents within a population (N).
+
+- w = N / n
+- N = sum(w)
+
+Weights will either inflate or deflate the contribution of each observation to the final results. The more unbalanced the sample is from the population, the more substantial the weights impact will be.
+
+Inflation
+
+- w = 100 / 10 = 10
+- each 1 sample represents 10 units within the population
+
+Diluation 
+
+- w = 10 / 30 = 0.33
+- each 1 samples represents 0.33 units within the population
+
+Commonly we use the weighted mean for depth-weighted averages in individual pedons or components and, also, for map unit averages. 
+
+Depth-weighted averages commonly use horizon thicknesses as weights, while map unit averages commonly use component percentages (or component acres) as weights. 
+
+When we want to scale the contribution of particular observations or variables to a final result, weights may be derived from expert knowledge or some other data source. 
+
+The example below calculates both the horizon thickness and genhz weight for each pedon and horizon. Each of these measures can be used as weights
+
+```{r, weighting}
+
+horizons(loafercreek) <- loafercreek %>%
+  horizons() %>%
+  mutate(
+    thk = hzdepb - hzdept
+    ) %>%
+  group_by(peiid, genhz) %>%
+  reframe(
+    phiid, thk,
+    genhz_wt = thk / sum(thk)
+    ) %>% 
+  select(phiid, thk, genhz_wt) %>%
+  as.data.frame()
+
+```
+
 ## Exercise 1: Fetch and Inspect Data
 
 Save the code you use in an R script, add answers as comments, and send to your mentor. Exercises 2 and 3 will build on Exercise 1.
@@ -145,28 +194,33 @@ p <- c('^A|BA$', 'Bt1|Bw','Bt$|Bt2', 'Bt3|CBt$|BCt', 'Cr', 'R')
 
 ```{r, echo = FALSE, eval=TRUE}
 desc <- data.frame(
-  Parameter = c("Mean", "Weighted Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
-  NASIS = c("RV ?", "RV", "RV", "RV", "L & H ?", "L & H"),
+  Parameter = c("Mean", "Median", "Mode", "Standard Deviation", "Quantiles"),
+  NASIS = c("RV ?", "RV", "RV", "L & H ?", "L & H"),
   Description = c(
     "arithmetic average",
-    "weighted arithmetic average",
     "middle value, 50% quantile",
     "most frequent value",
     "variation around mean",
     "percent rank of values, such that all values are <= p"
   ),
-  'R function' = c(
+  'R functions' = c(
     "`mean()`",
-    "`weighted.mean()`",
     "`median()`",
-    "`sort(table(), decreasing = TRUE)[1]`",
+    "`DescTools::Mode()`",
     "`sd()`",
     "`quantile()`"
   ),
   check.names = FALSE
 )
-knitr::kable(desc, caption = "Short Description of Descriptive Statistics and R Functions")
+knitr::kable(desc, caption = "Short Description of Summary Statistics and R Functions.")
 ```
+
+#### Other Weighted Statistics
+
+There are many other weighted statistics available. Essentially all will use a matrix of data values and a matrix of weights to scale the contribution of data values to the final statistic value.
+
+The package `Hmisc` defines several [weighted variants of common summary statistics](https://search.r-project.org/CRAN/refmans/Hmisc/html/wtd.stats.html), notably `Hmisc::wtd.quantile()`. The `DescTools` package also defines [`Quantile()`](https://search.r-project.org/CRAN/refmans/DescTools/html/Quantile.html) which strictly follows the Eurostat definition of a weighted quantile.
+
 
 ### Measures of Central Tendency
 
@@ -182,6 +236,54 @@ The mean clay content from the loafercreek dataset may be determined:
 mean(h$claytotest, na.rm = TRUE)
 ```
 
+#### Weighted Mean
+
+**Weighted Mean** - is the weighted arithmetic average. In the ordinary arithmetic average, each data point is assigned the same weight, whereas in a weighted average the contribution of each data point to the mean can vary. 
+
+The function `weighted.mean()` takes two major inputs: `x`, a vector of data values, and `w`, a vector of weights. Like other statistics, you can remove missing values with `na.rm=TRUE`.
+
+```{r, eval=TRUE}
+# calculate horizon thickness
+h$hzthk <- h$hzdepb - h$hzdept
+
+# weighted mean (across all horizons and profiles)
+weighted.mean(h$claytotest, h$hzthk, na.rm = TRUE)
+```
+
+The above example is applied to all profiles and all horizons. We only get one value across `r length(loafercreek)` profiles and `r nrow(loafercreek)` horizons. 
+
+A more practical application of `weighted.mean()` is Particle Size Control Section (PSCS) weighted average properties. For this we need to use the horizon thickness _within the control section_ as weights. 
+
+The aqp function [`trunc()`](https://ncss-tech.github.io/aqp/reference/glom.html) allows you to remove portions of profiles that are outside specified depth intervals (such as the PSCS boundaries). [`profileApply()`](https://ncss-tech.github.io/aqp/reference/profileApply.html) allows for iterating over all profiles in a _SoilProfileCollection_  to call some function on each one. 
+
+Here we calculate the PSCS weighted mean clay content for each profile in `loafercreek`:
+
+```{r, eval=TRUE}
+# calculate a "truncated" SPC with just the PSCS; drop = FALSE retains empty profiles for missing PSCS
+loafercreek_pscs <- trunc(loafercreek, loafercreek$psctopdepth, loafercreek$pscbotdepth, drop = FALSE)
+
+# calculate weighted mean for each profile, using the truncated horizon thicknesses as weights
+loafercreek$pscs_clay <- profileApply(loafercreek_pscs, function(p) {
+  weighted.mean(p$claytotest, w = p$hzdepb - p$hzdept, na.rm = TRUE)
+})
+
+# inspect
+loafercreek$pscs_clay
+```
+
+Note that several of these pedons have `NaN` values in the result. This can happen even with `na.rm=TRUE` because pedons either do not have both `psctopdepth` and `pscbotdepth` populated in NASIS or all horizons in the PSCS have `NA` clay content.
+
+```{r}
+# inspect new site-level column pscs_clay
+head(site(loafercreek)[, c("peiid", "upedonid", "psctopdepth", "pscbotdepth", "pscs_clay")])
+
+# plot just the pedons with missing pscs_clay
+plot(subset(loafercreek, is.na(pscs_clay)), color = "claytotest")
+```
+
+You always need to pay attention to the possibility of missing data or weights because missing values can dramatically the final result--sometimes in unexpected ways!
+
+
 #### Median
 
 **Median** is the middle measurement of a sample set, and as such is a more robust estimate of central tendency than the mean. This is known as the middle or 50th quantile, meaning there are an equal number of samples with values less than and greater than the median. For example, assuming there are 21 samples, sorted in ascending order, the median would be the 11th sample.
@@ -194,11 +296,13 @@ median(h$claytotest, na.rm = TRUE)
 
 #### Mode
 
-**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. R does not include a function for calculating the mode, but we can calculate it using the following example.
+**Mode** - is the most frequent measurement in the sample. The use of mode is typically reserved for factors, which we will discuss shortly. One issue with using the mode for numeric data is that the data need to be rounded to the level of desired precision. R does not include a function for calculating the mode, but we can calculate it using the `Mode()` function from the `DescTools` package.
 
 ```{r, eval=TRUE}
-# sort and select the 1st value, which will be the mode
-sort(table(round(h$claytotest)), decreasing = TRUE)[1] 
+h$claytotest %>%
+  round() %>%
+  DescTools::Mode(na.rm = TRUE)
+
 ```
 
 #### Frequencies
@@ -226,7 +330,28 @@ h %>%
   count(genhz, texcl)
 ```
 
-We can also add margin totals to the table or convert the table frequencies to proportions.
+To calculate a weighted frequencies we need to use the `xtabs()` function, which uses a different syntax style, but can perform more complex tabulations. Notice how when the thickness is incorporated as a weight how it impacts the resulting frequencies. In the following example the results represent the total thickness of each `texcl`.
+
+```{r}
+xtabs(thk ~ texcl, data = h)
+```
+
+If instead we do a cross tabulation and weight by the `genhz_wt` we created early, the results represent the total number of pedons (i.e. `peiid`) that have the same `genhz`.
+
+```{r}
+tb <- xtabs(genhz_wt ~ genhz + texcl, data = h, addNA = TRUE) %>% round()
+tb
+
+sum(tb)
+
+sum(h$genhz_wt)
+
+paste(h$peiid, h$genhz) %>% unique() %>% length()
+
+```
+
+
+We can also add margin totals to tables or convert the table frequencies to proportions.
 
 ```{r eval=TRUE}
 # append the table with row and column sums
@@ -243,8 +368,10 @@ To determine the mean by a group or category, use the `group_by` and `summarize`
 ```{r, eval=TRUE}
 h %>%
   group_by(genhz) %>%
-  summarize(clay_avg = mean(claytotest, na.rm = TRUE),
-            clay_med = median(claytotest, na.rm = TRUE))
+  summarize(
+    clay_avg = mean(claytotest,   na.rm = TRUE),
+    clay_med = median(claytotest, na.rm = TRUE)
+    )
 ```
 
 ### Measures of Dispersion
@@ -344,66 +471,6 @@ IQR(clay)
 diff(quantile(clay, p = c(0.25, 0.75)))
 ```
 
-### Weighted Summaries
-
-**Weighted Mean** - is the weighted arithmetic average. In the ordinary arithmetic average, each data point is assigned the same weight, whereas in a weighted average the contribution of each data point to the mean can vary. 
-
-The function `weighted.mean()` takes two major inputs: `x`, a vector of data values, and `w`, a vector of weights. Like other statistics, you can remove missing values with `na.rm=TRUE`.
-
-```{r, eval=TRUE}
-# calculate horizon thickness
-h$hzthk <- h$hzdepb - h$hzdept
-
-# weighted mean (across all horizons and profiles)
-weighted.mean(h$claytotest, h$hzthk, na.rm = TRUE)
-```
-
-The above example is applied to all profiles and all horizons. We only get one value across `r length(loafercreek)` profiles and `r nrow(loafercreek)` horizons. 
-
-More commonly we use the weighted mean for depth-weighted averages in individual pedons or components and, also, for mapunit averages. 
-
-Depth-weighted averages commonly use horizon thicknesses as weights. Mapunit averages commonly use component percentages as weights. 
-
-When we want to scale the contribution of particular observations or variables to a final result, weights may be derived from expert knowledge or some other data source. 
-
-#### Profile-specific Weighted Calculations
-
-A more practical application of `weighted.mean()` is Particle Size Control Section (PSCS) weighted average properties. For this we need to use the horizon thickness _within the control section_ as weights. 
-
-The aqp function [`trunc()`](https://ncss-tech.github.io/aqp/reference/glom.html) allows you to remove portions of profiles that are outside specified depth intervals (such as the PSCS boundaries). [`profileApply()`](https://ncss-tech.github.io/aqp/reference/profileApply.html) allows for iterating over all profiles in a _SoilProfileCollection_  to call some function on each one. 
-
-Here we calculate the PSCS weighted mean clay content for each profile in `loafercreek`:
-
-```{r, eval=TRUE}
-# calculate a "truncated" SPC with just the PSCS; drop = FALSE retains empty profiles for missing PSCS
-loafercreek_pscs <- trunc(loafercreek, loafercreek$psctopdepth, loafercreek$pscbotdepth, drop = FALSE)
-
-# calculate weighted mean for each profile, using the truncated horizon thicknesses as weights
-loafercreek$pscs_clay <- profileApply(loafercreek_pscs, function(p) {
-  weighted.mean(p$claytotest, w = p$hzdepb - p$hzdept, na.rm = TRUE)
-})
-
-# inspect
-loafercreek$pscs_clay
-```
-
-Note that several of these pedons have `NaN` values in the result. This can happen even with `na.rm=TRUE` because pedons either do not have both `psctopdepth` and `pscbotdepth` populated in NASIS or all horizons in the PSCS have `NA` clay content.
-
-```{r}
-# inspect new site-level column pscs_clay
-head(site(loafercreek)[, c("peiid", "upedonid", "psctopdepth", "pscbotdepth", "pscs_clay")])
-
-# plot just the pedons with missing pscs_clay
-plot(subset(loafercreek, is.na(pscs_clay)), color = "claytotest")
-```
-
-You always need to pay attention to the possibility of missing data or weights because missing values can dramatically the final result--sometimes in unexpected ways!
-
-#### Other Weighted Statistics
-
-There are many other weighted statistics available. Essentially all will use a matrix of data values and a matrix of weights to scale the contribution of data values to the final statistic value.
-
-The package `Hmisc` defines several [weighted variants of common summary statistics](https://search.r-project.org/CRAN/refmans/Hmisc/html/wtd.stats.html), notably `Hmisc::wtd.quantile()`. The `DescTools` package also defines [`Quantile()`](https://search.r-project.org/CRAN/refmans/DescTools/html/Quantile.html) which strictly follows the Eurostat definition of a weighted quantile.
 
 ### Correlation
 
@@ -462,12 +529,15 @@ figs <- data.frame(
   #                ),
   'Base R' = c("barplot()", "hist()", "plot(density())", "qqnorm()", "boxplot()", "plot()"),
   'lattice' = c("barchart()", "histogram()", "densityplot()", "qq()", "bwplot()", "xyplot"),
-  'ggplot geoms' = c("geom_bar()", "geom_histogram()", "geom_density()", "geom_qq()", "geom_boxplot()", "geom_point()"),
+  'ggplot2 geoms' = c("geom_bar()", "geom_histogram()", "geom_density()", "geom_qq()", "geom_boxplot()", "geom_point()"),
   check.names = FALSE
   )
 
 knitr::kable(figs, caption = "Comparison of R's 3 Graphing Systems and their Equivalent Functions for Plotting")
 ```
+
+The `ggplot2 geoms` all for the incorporation of weights using the `weight` argument in the `aes()` function, where appropriate.
+
 
 ### Distributions
 
@@ -523,7 +593,7 @@ A bar plot is a graphical display of the frequency (i.e. number of observations 
 library(ggplot2)
 
 # bar plot
-ggplot(h, aes(x = texcl)) +
+ggplot(h, aes(x = texcl, weight = thk)) +
   geom_bar()
 ```
 
