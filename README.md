@@ -2,7 +2,7 @@
 
 <img src="book/static-figures/logo.jpg" width="100%">
 
-#### 2024-01-16
+#### 2025-01-27
 
 ### **[Precourse Assignment](http://ncss-tech.github.io/stats_for_soil_survey/book/index.html)**
 
@@ -22,8 +22,6 @@
 
 ### [**Chapter 2:** *The Data We Use*](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html)
 
--   #### [Presentation](http://ncss-tech.github.io/stats_for_soil_survey/presentations/2a_tabular_data/2a_tabular_data.html)
-
 -   #### [Generalized Horizons w/ Loafercreek](http://ncss-tech.github.io/stats_for_soil_survey/exercises/genhz_homework.html)
 
 ### [**Chapter 3:** *Exploratory Data Analysis*](http://ncss-tech.github.io/stats_for_soil_survey/book/eda.html)
@@ -31,13 +29,6 @@
 -   #### [Presentation](https://github.com/ncss-tech/stats_for_soil_survey/raw/master/presentations/4_exploratory_data_analysis/ch4_prez.pptx)
 
 -   #### [Shiny Apps](http://ncss-tech.github.io/stats_for_soil_survey/presentations/4_exploratory_data_analysis/shiny_app_pres.html)
-
-<!-- 
-    - Extras
-      - [TEUI](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/4_teui.html)
-      - [ArcGIS](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/4_arcgis.html)
-      - [Shiny Apps](http://ncss-tech.github.io/stats_for_soil_survey/chapters/4_exploratory_analysis/4_shiny_app.html)
--->
 
 ### [**Chapter 4:** *Spatial Data in R*](http://ncss-tech.github.io/stats_for_soil_survey/book/spatial.html)
 
