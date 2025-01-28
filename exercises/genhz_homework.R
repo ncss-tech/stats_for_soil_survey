@@ -116,10 +116,10 @@ res_df <- hzdata %>%
             summarize(clay_mean = mean(clay, na.rm = TRUE),
                       clay_sd = sd(clay, na.rm = TRUE),
                       clay_min = min(clay, na.rm = TRUE),
-                      clay_max = max(clay, na.rm = TRUE),
                       clay_Q05 = quantile(clay, probs = 0.05, na.rm = TRUE),
                       clay_Q50 = quantile(clay, probs = 0.5, na.rm = TRUE),
                       clay_Q95 = quantile(clay, probs = 0.95, na.rm = TRUE),
+                      clay_max = max(clay, na.rm = TRUE),
                       clay_n_nona = sum(!is.na(clay)),
                       clay_n = length(clay))
 
