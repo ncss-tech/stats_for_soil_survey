@@ -248,7 +248,7 @@ initSpatial(sp4, crs = "OGC:CRS84") <- ~ x + y
 
 This is new syntax introduced in aqp 2.0, the older syntax uses the `coordinates<-` and `proj4string<-` methods.
 
-#### Extracting Site and Horizon Data
+### Extracting Site and Horizon Data
 
 You can extract values from the collection's `@site` and `@horizon` slots using the `site()` and `horizons()` functions. These create `data.frame` objects that are separate from the _SoilProfileCollection_.
 
@@ -263,7 +263,7 @@ h <- horizons(sp4)
 str(h)
 ```
 
-#### Methods like `data.frame`
+### Methods like `data.frame`
 
 The base R functions for accessing and setting `data.frame` columns by name such as `$` and `[[` work for _SoilProfileCollection_ objects, too. Review `data.frame` methods:
 
@@ -277,7 +277,7 @@ The base R functions for accessing and setting `data.frame` columns by name such
 
 See [Chapter 1](intro.html) and the Chapter 2 [Appendix](http://ncss-tech.github.io/stats_for_soil_survey/misc/2a_appendix_data_types.html) for additional details and examples.
 
-##### Column Access by Name: `$` and `[[`
+#### Column Access by Name: `$` and `[[`
 
 ```{r, eval=TRUE}
 # sp4 is a SoilProfileCollection
@@ -301,7 +301,7 @@ site(sp4)$newvar1 <- "numberone"
 horizons(sp4)$newvar2 <- "numbertwo"
 ```
 
-##### Row Access: `[`
+#### Row Access: `[`
 
 The _SoilProfileCollection_ also has `[` ("single bracket"), but with a different interpretation from the `[i, j]` indexing of `data.frame` objects.
 
@@ -342,19 +342,19 @@ Run the code in the linked R file and answer these questions.
 
 1.  How many profiles (sites) and horizons are in the `granite` SoilProfileCollection? How many in `andesite`? See `length()` and `nrow()` functions for SoilProfileCollection objects.
 
-2.  Which profile (and which horizon in that profile) has the highest ratio of oxalate-extractable Fe to dithionite-citrate-extractable Fe (`Fe_o_to_Fe_d`)?
+2.  Which profile, and which horizon in that profile, has the highest ratio of oxalate-extractable Fe to dithionite-citrate-extractable Fe (`Fe_o_to_Fe_d`)?
 
 ## Using the `soilDB` Package
 
-The `soilDB` package for R provides functions for accessing data stored in NASIS, KSSL, SDA, SoilWeb, SoilGrids and other sources.
+The `soilDB` package for R provides functions for accessing data stored in NASIS, KSSL, SDA, SoilWeb, SoilGrids, and other sources.
 
 These high-level 'fetch' functions bundle or wrap lower-level 'get' functions which access internal database interfaces to NASIS and other data sources. The ODBC connection to NASIS that you set up during the pre-course is an example of an internal database interface.
 
 Basic data checks are run within 'fetch' functions. These checks ensure the basic integrity of the data as it is queried and moved from its existing structure into an SPC. There are times when it is useful to use the lower-level `get` functions individually. They generally return single `data.frame` or `list` of `data.frame`.
 
-You can set up scripts to make custom queries against these or other sources on your own -- there is an example at the end of this section.
+You can set up scripts to make custom queries against these or other sources on your own. There is an example at the end of this chapter.
 
-For now, we will start with the 'fetch' functions and others that will get you a large variety of data you can use for soil and ecological site analyses.
+For now we will start with the 'fetch' functions and others that will get you a large variety of data you can use for soil and ecological site analyses. There are many more functions available in soilDB, see https://ncss-tech.github.io/soilDB/reference/index.html for details.
 
 ### soilDB functions for tabular data
 
@@ -928,7 +928,9 @@ We will start to examine this dataset graphically, and then we will use some fun
 
 Save the code you use in an R script, add answers as comments, and send to your mentor.
 
-```{r, eval=TRUE, echo=FALSE}
+First, we will load the sample data:
+
+```{r, eval=TRUE}
 load(url("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/ohz.rda"))
 plotSPC(ohz)
 ```
@@ -953,13 +955,13 @@ plotSPC(ohz, plot.order = order(ohz$O_thickness))
 abline(h = c(20, 40), lty = 2)
 ```
 
-Using the object `ohz` object we just inspected, answer the following questions using techniques from the previous sections. Check your logic by comparing to the profile sketch. 
+Using the `ohz` object answer the following questions. Use techniques from the previous sections. Check your logic by comparing to the profile sketch. 
 
 1. Check if any soil organic carbon values are `NA`. Make a profile sketch (`plotSPC()`) using organic carbon percentage (`"soc"`) to color the profiles. Then calculate a new column using the function `is.na()` and use that to color the profiles. Which profiles have missing data? In which horizons?
 
-2. Tabulate unique horizon designations (`ohz$name`). How many of each horizon designation are present?
+2. Tabulate horizon designations (`ohz$name`) using `table()`. How many of each horizon designation are present?
 
-3. Use regular expressions to count the number of Cg horizons in the collection. How many Cg horizons have organic carbon data in the `"soc"` column?
+3. Use regular expressions to count the number of `"Cg"` horizons in the collection. How many Cg horizons have organic carbon data in the `"soc"` column?
 
 4. Filter the `ohz` object using `aqp::subset()` to select pedons where `O_thickness` column is greater than `20` and less than `40`. This is the histic epipedon thickness requirement. How many pedons have a histic epipedon?
 
