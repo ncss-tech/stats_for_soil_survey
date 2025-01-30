@@ -182,10 +182,11 @@ library(ggplot2)
 set.seed(4)
 
 # Create a sixteen square polygon
-bb <- st_make_grid(st_bbox(c(xmin = 0, xmax = 6, ymin = 0, ymax = 6)), n = 6)
+n = 4
+bb <- st_make_grid(st_bbox(c(xmin = 0, xmax = n, ymin = 0, ymax = n)), n = n)
 grd <- st_as_sf(bb)
 grd$ID <- 1:length(bb)
-
+grd <- rmapshaper::ms_explode(grd)
 ```
 
 
@@ -273,13 +274,14 @@ In stratified random sampling, the sampling region is spatially subset into diff
 
 
 ```{r stratified, fig.width=4, fig.height=4, eval=TRUE}
-grd2 <- st_cast(grd, "MULTIPOLYGON")
-st_crs(grd2) <- 5070
-
-test <- st_sample(grd2, size = 16, type = "random", by_polygon = TRUE)
+idx <- 1:nrow(grd)
+test <- sapply(idx, function(x) st_sample(grd[x, ], size = 1))
+test <- do.call("rbind", test) |>
+  as.data.frame() |> 
+  st_as_sf(coords = 1:2)
 
 ggplot() + 
-  geom_sf(data = grd2) + 
+  geom_sf(data = grd) + 
   geom_sf(data = test) + 
   ggtitle("Stratified")
 ```
@@ -310,11 +312,12 @@ In multistage random sampling, the region is separated into different subsets th
 ```{r two_stage, fig.width=4, fig.height=4, eval=TRUE}
 # Select 8 samples from each square
 idx <- sample(1:nrow(grd), size = 2, replace = FALSE)
-grd_sub <- grd[idx, ]
-test <- sapply(1:2, function(i) {
-  st_coordinates(st_sample(grd_sub[i, ], size = 8, type = "random"))
+test <- sapply(idx, function(i) {
+  st_sample(grd[i, ], size = 8, type = "random")
 })
-test <- st_as_sf(as.data.frame(test), coords = 1:2)
+test <- do.call("rbind", test) |> 
+  as.data.frame() |> 
+  st_as_sf(coords = 1:2)
 
 ggplot() + 
   geom_sf(data = grd) + 
@@ -384,7 +387,7 @@ Covariate space coverage sampling is a stratified sampling technique to obtain r
 ```{r, eval=TRUE}
 library(sf)
 library(terra)
-source("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/fcsc.R")
+library(sgsR)
 
 # import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau
 data("volcano")
@@ -407,14 +410,13 @@ slope_r <- terrain(volcano_r, v = "slope", unit = "degrees")
 rs  <- c(volcano_r, slope_r)
 
 # Covariate Space Coverage Sampling
-source("https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/exercises/fcsc.R")
-fs <- cscs(rs, vars = c("elev", "slope"), n = 20)
-
-fs_sf <- st_as_sf(fs, coords = c("x", "y"), crs = crs(rs))
+n = 20
+fs_strata <- strat_kmeans(rs, nStrata = n, iter = 10000)
+fs_samp   <- sample_nc(rs, nSamp = n, iter = 10000)
 
 # Plot CSCS Samples
-plot(volcano_r, axes=FALSE)
-points(fs_sf)
+plot(fs_strata, col = map.pal("random", n))
+plot(fs_samp, col = "black", cex = 1, pch = 19, add = TRUE)
 ```
 
 ### Conditioned Latin Hypercube (cLHS)
@@ -502,7 +504,7 @@ sys <- spatSample(rs, size = 20, method = "regular", as.points = TRUE)
 cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
 
 # take a CSCS sample
-fs <- cscs(rs, vars = c("elev", "slope"), n = 20)
+fs <- sample_nc(rs, nSamp = 20) |> extract(rs, y = _) |> select(elev, slope)
 
 # Combind and Extract Samples
 s <- rbind(
@@ -534,7 +536,7 @@ plot(volcano_r, main = "cLHS", cex.main = 2, axes=FALSE)
 points(cs$sampled_data, pch = 3, cex = 1.2)
 
 plot(volcano_r, main = "CSCS", cex.main = 2, axes=FALSE)
-points(fs_sf, pch = 3, cex = 1.2)
+points(fs_samp, pch = 3, cex = 1.2)
 ```
 
 The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs. 
