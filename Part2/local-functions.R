@@ -42,8 +42,8 @@ makeCP <- function(.dist, new.order = NULL, .cp = hcl.colors(n = 25, palette = '
 
 
 # compare pair-wise distances between 3 individuals
-distPlot <- function(ex, vars, individuals, id, scale.data=FALSE, show.distances=TRUE, ...) {
-  par(mar=c(5,5,1,1))
+distPlot <- function(ex, vars, individuals, id, scale.data = FALSE, show.distances = TRUE, ...) {
+  par(mar = c(5, 5, 1, 1))
   # optionally scale
   if(scale.data) {
     ex.scaled <- scale(ex[, vars], center = TRUE, scale = TRUE)
@@ -108,24 +108,35 @@ simulatePredictions <- function(n, alpha) {
   d$id <- rownames(d)
   
   # simulate actual classes using predicted probabilities
-  d <- ddply(d, 'id', function(i) {
-    i$actual <- sample(class.labels, size = 1, prob = i[, class.labels])
-    return(i)
+  d$actual <- apply(d[, class.labels], 1, function(i) {
+    sample(class.labels, size = 1, prob = i)
   })
+  
+  # consider need for factor,
+  # critical when counts of a class are 0
+  d$actual <- factor(d$actual, levels = class.labels)
   
   # reshape for plotting
   m <- melt(d, id.vars = 'id', measure.vars = class.labels)
   
   # compute H and CI for each simulated case
-  H <- apply(x, 1, shannonEntropy, b=2)
+  H <- apply(x, 1, shannonEntropy, b = 2)
   # H.norm <- apply(x, 1, shannonEntropy, b=k)
   CI <- apply(x, 1, confusionIndex)
   
   # reshape for plotting
-  z <- data.frame(Shannon.H=H, CI=CI)
-  z.long <- make.groups(Shannon.H=z$Shannon.H, CI=z$CI)
+  z <- data.frame(Shannon.H = H, CI = CI)
+  z.long <- make.groups(Shannon.H = z$Shannon.H, CI = z$CI)
   
-  return(list(predictions=d, predictions.long=m, stats=z, stats.long=z.long, classes=class.labels))
+  .res <- list(
+    predictions = d, 
+    predictions.long = m, 
+    stats = z, 
+    stats.long = z.long, 
+    classes = class.labels
+  )
+  
+  return(.res)
 }
 
 # get an example of predictions and associated uncertainty stats
@@ -140,7 +151,7 @@ extractExample <- function(x, n=1) {
 
 # generate some performance metrics
 # x: results from simulatePredictions()
-performance <- function(x, w=NULL) {
+performance <- function(x, w = NULL) {
   # predictions
   p <- x$predictions
   
@@ -151,7 +162,6 @@ performance <- function(x, w=NULL) {
     diag(w) <- 1
     dimnames(w) <- list(x$classes, x$classes)
   }
-  
   
   # confusion matrix
   tab <- crossTabProbs(x)
@@ -164,10 +174,15 @@ performance <- function(x, w=NULL) {
   # equal priors, the default
   tau.equal.res <-tauW(tab)
   # priors from actual observations
-  tau.actual.res <-tauW(tab, P=prop.table(table(p$actual)))
+  tau.actual.res <-tauW(tab, P = prop.table(table(p$actual)))
   
+  res <- data.frame(
+    brier.score = bs, 
+    tau.equal = tau.equal.res$tau, 
+    tau.actual = tau.actual.res$tau, 
+    PCC = tau.equal.res$overall.naive
+  )
   
-  res <- data.frame(brier.score=bs, tau.equal=tau.equal.res$tau, tau.actual=tau.actual.res$tau, PCC=tau.equal.res$overall.naive)
   return(res)
 }
 
