@@ -147,7 +147,7 @@ data.frame(
   level = "soil series", 
   n     = c(5, 10),
   acres = c(2000, 20000)
-  )
+)
 
 
 # components
@@ -155,15 +155,14 @@ data.frame(
   level = "components",
   n     = 1,
   acres = 3000
-  )
+)
 
 # map units
 data.frame(
   level = "map unit",
-  n     = cumsum(c(30, rep(10, 3))),
+  n     = cumsum(c(30, rep(10, 3))), 
   acres = c(2000, seq(from = 4000, by = 4000, length.out = 3))
-  )
-
+)
 ```
 
 
@@ -323,7 +322,6 @@ ggplot() +
   geom_sf(data = grd) + 
   geom_sf(data = test) + 
   ggtitle("Two-stage")
-
 ```
 
 
@@ -450,6 +448,7 @@ The cLHS procedure iteratively selects samples from the strata variables such th
 To perform cLHS using R, you can use the clhs package [@roudier2011].
 
 ```{r clhs, fig.width=4, fig.height=4, eval=TRUE}
+# create a RasterStack from SpatRaster in previous example
 rs2 <- raster::stack(rs)
 
 library(clhs)
@@ -472,10 +471,11 @@ cbind(summary(volcano_r), summary(slope_r)[1:6])
 Although the above example works well on the small `volcano` dataset, the clhs package is inefficient if you are working with large rasters with many cells. To overcome this limitation, you can first take a large random sample and then subsample it using cLHS.
 
 ```{r clhs_sub, eval=FALSE}
-sub_s <- spatSample(rs, size = 200, as.points = TRUE) |>
-  st_as_sf() # random sample function from the raster package
+# random sample with spatSample from terra package
+sub_s <- spatSample(rs, size = 200, as.points = TRUE)
 
-s <- clhs(sub_s, size = 20, progress = FALSE, simple = FALSE)
+# convert to sf object and do clhs sampling
+s <- clhs(st_as_sf(sub_s), size = 20, progress = FALSE, simple = FALSE)
 ```
 
 ## Evaluating a Sampling Strategy
@@ -504,15 +504,17 @@ sys <- spatSample(rs, size = 20, method = "regular", as.points = TRUE)
 cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
 
 # take a CSCS sample
-fs <- sample_nc(rs, nSamp = 20) |> extract(rs, y = _) |> select(elev, slope)
+fs <- sample_nc(rs, nSamp = 20) |>
+  extract(rs, y = _) |> 
+  select(elev, slope)
 
 # Combind and Extract Samples
 s <- rbind(
   data.frame(method = "Simple Random 400", as.data.frame(sr400)),
-  data.frame(method = "Simple Random",     as.data.frame(sr)),
+  data.frame(method = "Simple Random", as.data.frame(sr)),
   data.frame(method = "Systematic Random", as.data.frame(sys)),
-  data.frame(method = "cLHS",              slot(cs$sampled_data, 'data')),
-  data.frame(method = "CSCS",              fs[c("elev", "slope")])
+  data.frame(method = "cLHS", slot(cs$sampled_data, 'data')),
+  data.frame(method = "CSCS", fs[c("elev", "slope")])
 )
 
 # Summarize the sample values
