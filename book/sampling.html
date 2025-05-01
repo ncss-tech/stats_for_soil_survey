@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Chapter 5 Sampling | Statistics for Soil Survey - Part 1</title>
   <meta name="description" content="Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::gitbook." />
-  <meta name="generator" content="bookdown 0.42 and GitBook 2.6.7" />
+  <meta name="generator" content="bookdown 0.43 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Chapter 5 Sampling | Statistics for Soil Survey - Part 1" />
   <meta property="og:type" content="book" />
@@ -23,7 +23,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2025-01-31" />
+<meta name="date" content="2025-05-01" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -83,7 +83,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -555,7 +555,7 @@ div.csl-indent {
 <span id="cb439-5"><a href="sampling.html#cb439-5" tabindex="-1"></a>  <span class="at">level =</span> <span class="st">&quot;soil series&quot;</span>, </span>
 <span id="cb439-6"><a href="sampling.html#cb439-6" tabindex="-1"></a>  <span class="at">n     =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">10</span>),</span>
 <span id="cb439-7"><a href="sampling.html#cb439-7" tabindex="-1"></a>  <span class="at">acres =</span> <span class="fu">c</span>(<span class="dv">2000</span>, <span class="dv">20000</span>)</span>
-<span id="cb439-8"><a href="sampling.html#cb439-8" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb439-8"><a href="sampling.html#cb439-8" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>##         level  n acres
 ## 1 soil series  5  2000
 ## 2 soil series 10 20000</code></pre>
@@ -564,15 +564,15 @@ div.csl-indent {
 <span id="cb441-3"><a href="sampling.html#cb441-3" tabindex="-1"></a>  <span class="at">level =</span> <span class="st">&quot;components&quot;</span>,</span>
 <span id="cb441-4"><a href="sampling.html#cb441-4" tabindex="-1"></a>  <span class="at">n     =</span> <span class="dv">1</span>,</span>
 <span id="cb441-5"><a href="sampling.html#cb441-5" tabindex="-1"></a>  <span class="at">acres =</span> <span class="dv">3000</span></span>
-<span id="cb441-6"><a href="sampling.html#cb441-6" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb441-6"><a href="sampling.html#cb441-6" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>##        level n acres
 ## 1 components 1  3000</code></pre>
 <div class="sourceCode" id="cb443"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb443-1"><a href="sampling.html#cb443-1" tabindex="-1"></a><span class="co"># map units</span></span>
 <span id="cb443-2"><a href="sampling.html#cb443-2" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
 <span id="cb443-3"><a href="sampling.html#cb443-3" tabindex="-1"></a>  <span class="at">level =</span> <span class="st">&quot;map unit&quot;</span>,</span>
-<span id="cb443-4"><a href="sampling.html#cb443-4" tabindex="-1"></a>  <span class="at">n     =</span> <span class="fu">cumsum</span>(<span class="fu">c</span>(<span class="dv">30</span>, <span class="fu">rep</span>(<span class="dv">10</span>, <span class="dv">3</span>))),</span>
+<span id="cb443-4"><a href="sampling.html#cb443-4" tabindex="-1"></a>  <span class="at">n     =</span> <span class="fu">cumsum</span>(<span class="fu">c</span>(<span class="dv">30</span>, <span class="fu">rep</span>(<span class="dv">10</span>, <span class="dv">3</span>))), </span>
 <span id="cb443-5"><a href="sampling.html#cb443-5" tabindex="-1"></a>  <span class="at">acres =</span> <span class="fu">c</span>(<span class="dv">2000</span>, <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">4000</span>, <span class="at">by =</span> <span class="dv">4000</span>, <span class="at">length.out =</span> <span class="dv">3</span>))</span>
-<span id="cb443-6"><a href="sampling.html#cb443-6" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb443-6"><a href="sampling.html#cb443-6" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>##      level  n acres
 ## 1 map unit 30  2000
 ## 2 map unit 40  4000
@@ -817,17 +817,18 @@ div.csl-indent {
 </ul>
 <p>The cLHS procedure iteratively selects samples from the strata variables such that they replicate the range of values from each stratum. Without a technique such as cLHS, obtaining a sample that is representative of the feature space becomes increasingly difficult as the number of variables (strata) increases.</p>
 <p>To perform cLHS using R, you can use the clhs package <span class="citation">(<a href="#ref-roudier2011">Roudier 2011</a>)</span>.</p>
-<div class="sourceCode" id="cb452"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb452-1"><a href="sampling.html#cb452-1" tabindex="-1"></a>rs2 <span class="ot">&lt;-</span> raster<span class="sc">::</span><span class="fu">stack</span>(rs)</span>
-<span id="cb452-2"><a href="sampling.html#cb452-2" tabindex="-1"></a></span>
-<span id="cb452-3"><a href="sampling.html#cb452-3" tabindex="-1"></a><span class="fu">library</span>(clhs)</span>
-<span id="cb452-4"><a href="sampling.html#cb452-4" tabindex="-1"></a></span>
-<span id="cb452-5"><a href="sampling.html#cb452-5" tabindex="-1"></a><span class="co"># generate cLHS design</span></span>
-<span id="cb452-6"><a href="sampling.html#cb452-6" tabindex="-1"></a>cs <span class="ot">&lt;-</span> <span class="fu">clhs</span>(rs2, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">simple =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb452-7"><a href="sampling.html#cb452-7" tabindex="-1"></a></span>
-<span id="cb452-8"><a href="sampling.html#cb452-8" tabindex="-1"></a><span class="co"># Plot cLHS Samples</span></span>
-<span id="cb452-9"><a href="sampling.html#cb452-9" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">4</span>))</span>
-<span id="cb452-10"><a href="sampling.html#cb452-10" tabindex="-1"></a><span class="fu">plot</span>(volcano_r, <span class="at">axes=</span><span class="cn">FALSE</span>)</span>
-<span id="cb452-11"><a href="sampling.html#cb452-11" tabindex="-1"></a><span class="fu">points</span>(cs<span class="sc">$</span>sampled_data)</span></code></pre></div>
+<div class="sourceCode" id="cb452"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb452-1"><a href="sampling.html#cb452-1" tabindex="-1"></a><span class="co"># create a RasterStack from SpatRaster in previous example</span></span>
+<span id="cb452-2"><a href="sampling.html#cb452-2" tabindex="-1"></a>rs2 <span class="ot">&lt;-</span> raster<span class="sc">::</span><span class="fu">stack</span>(rs)</span>
+<span id="cb452-3"><a href="sampling.html#cb452-3" tabindex="-1"></a></span>
+<span id="cb452-4"><a href="sampling.html#cb452-4" tabindex="-1"></a><span class="fu">library</span>(clhs)</span>
+<span id="cb452-5"><a href="sampling.html#cb452-5" tabindex="-1"></a></span>
+<span id="cb452-6"><a href="sampling.html#cb452-6" tabindex="-1"></a><span class="co"># generate cLHS design</span></span>
+<span id="cb452-7"><a href="sampling.html#cb452-7" tabindex="-1"></a>cs <span class="ot">&lt;-</span> <span class="fu">clhs</span>(rs2, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">simple =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb452-8"><a href="sampling.html#cb452-8" tabindex="-1"></a></span>
+<span id="cb452-9"><a href="sampling.html#cb452-9" tabindex="-1"></a><span class="co"># Plot cLHS Samples</span></span>
+<span id="cb452-10"><a href="sampling.html#cb452-10" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">4</span>))</span>
+<span id="cb452-11"><a href="sampling.html#cb452-11" tabindex="-1"></a><span class="fu">plot</span>(volcano_r, <span class="at">axes=</span><span class="cn">FALSE</span>)</span>
+<span id="cb452-12"><a href="sampling.html#cb452-12" tabindex="-1"></a><span class="fu">points</span>(cs<span class="sc">$</span>sampled_data)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/clhs-1.png" width="384" style="display: block; margin: auto;" /></p>
 <div class="sourceCode" id="cb453"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb453-1"><a href="sampling.html#cb453-1" tabindex="-1"></a><span class="co"># Summary of clhs object</span></span>
 <span id="cb453-2"><a href="sampling.html#cb453-2" tabindex="-1"></a><span class="fu">summary</span>(cs<span class="sc">$</span>sampled_data)<span class="sc">$</span>data</span></code></pre></div>
@@ -849,10 +850,11 @@ div.csl-indent {
 ##  &quot;3rd Qu.:150.0  &quot; &quot;3rd Qu.:21.666  &quot;
 ##  &quot;Max.   :195.0  &quot; &quot;Max.   :43.032  &quot;</code></pre>
 <p>Although the above example works well on the small <code>volcano</code> dataset, the clhs package is inefficient if you are working with large rasters with many cells. To overcome this limitation, you can first take a large random sample and then subsample it using cLHS.</p>
-<div class="sourceCode" id="cb457"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb457-1"><a href="sampling.html#cb457-1" tabindex="-1"></a>sub_s <span class="ot">&lt;-</span> <span class="fu">spatSample</span>(rs, <span class="at">size =</span> <span class="dv">200</span>, <span class="at">as.points =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb457-2"><a href="sampling.html#cb457-2" tabindex="-1"></a>  <span class="fu">st_as_sf</span>() <span class="co"># random sample function from the raster package</span></span>
+<div class="sourceCode" id="cb457"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb457-1"><a href="sampling.html#cb457-1" tabindex="-1"></a><span class="co"># random sample with spatSample from terra package</span></span>
+<span id="cb457-2"><a href="sampling.html#cb457-2" tabindex="-1"></a>sub_s <span class="ot">&lt;-</span> <span class="fu">spatSample</span>(rs, <span class="at">size =</span> <span class="dv">200</span>, <span class="at">as.points =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb457-3"><a href="sampling.html#cb457-3" tabindex="-1"></a></span>
-<span id="cb457-4"><a href="sampling.html#cb457-4" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">clhs</span>(sub_s, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">simple =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<span id="cb457-4"><a href="sampling.html#cb457-4" tabindex="-1"></a><span class="co"># convert to sf object and do clhs sampling</span></span>
+<span id="cb457-5"><a href="sampling.html#cb457-5" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">clhs</span>(<span class="fu">st_as_sf</span>(sub_s), <span class="at">size =</span> <span class="dv">20</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">simple =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 </div>
 </div>
 <div id="evaluating-a-sampling-strategy" class="section level2 hasAnchor" number="5.3">
@@ -878,19 +880,21 @@ div.csl-indent {
 <span id="cb458-17"><a href="sampling.html#cb458-17" tabindex="-1"></a>cs <span class="ot">&lt;-</span> <span class="fu">clhs</span>(rs2, <span class="at">size =</span> <span class="dv">20</span>, <span class="at">progress =</span> <span class="cn">FALSE</span>, <span class="at">simple =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb458-18"><a href="sampling.html#cb458-18" tabindex="-1"></a></span>
 <span id="cb458-19"><a href="sampling.html#cb458-19" tabindex="-1"></a><span class="co"># take a CSCS sample</span></span>
-<span id="cb458-20"><a href="sampling.html#cb458-20" tabindex="-1"></a>fs <span class="ot">&lt;-</span> <span class="fu">sample_nc</span>(rs, <span class="at">nSamp =</span> <span class="dv">20</span>) <span class="sc">|&gt;</span> <span class="fu">extract</span>(rs, <span class="at">y =</span> _) <span class="sc">|&gt;</span> <span class="fu">select</span>(elev, slope)</span>
-<span id="cb458-21"><a href="sampling.html#cb458-21" tabindex="-1"></a></span>
-<span id="cb458-22"><a href="sampling.html#cb458-22" tabindex="-1"></a><span class="co"># Combind and Extract Samples</span></span>
-<span id="cb458-23"><a href="sampling.html#cb458-23" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
-<span id="cb458-24"><a href="sampling.html#cb458-24" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Simple Random 400&quot;</span>, <span class="fu">as.data.frame</span>(sr400)),</span>
-<span id="cb458-25"><a href="sampling.html#cb458-25" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Simple Random&quot;</span>,     <span class="fu">as.data.frame</span>(sr)),</span>
-<span id="cb458-26"><a href="sampling.html#cb458-26" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Systematic Random&quot;</span>, <span class="fu">as.data.frame</span>(sys)),</span>
-<span id="cb458-27"><a href="sampling.html#cb458-27" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;cLHS&quot;</span>,              <span class="fu">slot</span>(cs<span class="sc">$</span>sampled_data, <span class="st">&#39;data&#39;</span>)),</span>
-<span id="cb458-28"><a href="sampling.html#cb458-28" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;CSCS&quot;</span>,              fs[<span class="fu">c</span>(<span class="st">&quot;elev&quot;</span>, <span class="st">&quot;slope&quot;</span>)])</span>
-<span id="cb458-29"><a href="sampling.html#cb458-29" tabindex="-1"></a>)</span>
-<span id="cb458-30"><a href="sampling.html#cb458-30" tabindex="-1"></a></span>
-<span id="cb458-31"><a href="sampling.html#cb458-31" tabindex="-1"></a><span class="co"># Summarize the sample values</span></span>
-<span id="cb458-32"><a href="sampling.html#cb458-32" tabindex="-1"></a><span class="fu">aggregate</span>(slope <span class="sc">~</span> method, <span class="at">data =</span> s, <span class="cf">function</span>(x) <span class="fu">round</span>(<span class="fu">summary</span>(x)))</span></code></pre></div>
+<span id="cb458-20"><a href="sampling.html#cb458-20" tabindex="-1"></a>fs <span class="ot">&lt;-</span> <span class="fu">sample_nc</span>(rs, <span class="at">nSamp =</span> <span class="dv">20</span>) <span class="sc">|&gt;</span></span>
+<span id="cb458-21"><a href="sampling.html#cb458-21" tabindex="-1"></a>  <span class="fu">extract</span>(rs, <span class="at">y =</span> _) <span class="sc">|&gt;</span> </span>
+<span id="cb458-22"><a href="sampling.html#cb458-22" tabindex="-1"></a>  <span class="fu">select</span>(elev, slope)</span>
+<span id="cb458-23"><a href="sampling.html#cb458-23" tabindex="-1"></a></span>
+<span id="cb458-24"><a href="sampling.html#cb458-24" tabindex="-1"></a><span class="co"># Combind and Extract Samples</span></span>
+<span id="cb458-25"><a href="sampling.html#cb458-25" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb458-26"><a href="sampling.html#cb458-26" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Simple Random 400&quot;</span>, <span class="fu">as.data.frame</span>(sr400)),</span>
+<span id="cb458-27"><a href="sampling.html#cb458-27" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Simple Random&quot;</span>, <span class="fu">as.data.frame</span>(sr)),</span>
+<span id="cb458-28"><a href="sampling.html#cb458-28" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;Systematic Random&quot;</span>, <span class="fu">as.data.frame</span>(sys)),</span>
+<span id="cb458-29"><a href="sampling.html#cb458-29" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;cLHS&quot;</span>, <span class="fu">slot</span>(cs<span class="sc">$</span>sampled_data, <span class="st">&#39;data&#39;</span>)),</span>
+<span id="cb458-30"><a href="sampling.html#cb458-30" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;CSCS&quot;</span>, fs[<span class="fu">c</span>(<span class="st">&quot;elev&quot;</span>, <span class="st">&quot;slope&quot;</span>)])</span>
+<span id="cb458-31"><a href="sampling.html#cb458-31" tabindex="-1"></a>)</span>
+<span id="cb458-32"><a href="sampling.html#cb458-32" tabindex="-1"></a></span>
+<span id="cb458-33"><a href="sampling.html#cb458-33" tabindex="-1"></a><span class="co"># Summarize the sample values</span></span>
+<span id="cb458-34"><a href="sampling.html#cb458-34" tabindex="-1"></a><span class="fu">aggregate</span>(slope <span class="sc">~</span> method, <span class="at">data =</span> s, <span class="cf">function</span>(x) <span class="fu">round</span>(<span class="fu">summary</span>(x)))</span></code></pre></div>
 <pre><code>##              method slope.Min. slope.1st Qu. slope.Median slope.Mean slope.3rd Qu. slope.Max.
 ## 1              cLHS          3             8           15         16            21         32
 ## 2              CSCS          1             7           15         16            24         36
@@ -1046,42 +1050,42 @@ Zhang, Zhiyong, and Yujiao Mai. 2021. <span>“<span>WebPower</span>: <span>Basi
 <script>
 gitbook.require(["gitbook"], function(gitbook) {
 gitbook.start({
-"sharing": {
-"github": false,
-"facebook": true,
-"twitter": true,
-"linkedin": false,
-"weibo": false,
-"instapaper": false,
-"vk": false,
-"whatsapp": false,
-"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
-},
-"fontsettings": {
-"theme": "white",
-"family": "sans",
-"size": 2
-},
-"edit": {
-"link": null,
-"text": null
-},
-"history": {
-"link": null,
-"text": null
-},
-"view": {
-"link": null,
-"text": null
-},
-"download": ["s4ssbook.pdf", "s4ssbook.epub"],
-"search": {
-"engine": "fuse",
-"options": null
-},
-"toc": {
-"collapse": "subsection"
-}
+  "sharing": {
+    "github": false,
+    "facebook": true,
+    "twitter": true,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": null,
+    "text": null
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": ["s4ssbook.pdf", "s4ssbook.epub"],
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
 });
 });
 </script>
