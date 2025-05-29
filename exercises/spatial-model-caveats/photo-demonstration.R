@@ -23,6 +23,12 @@ r <- rast('ah.png')
 # an RC airplane
 # r <- rast('scout.png')
 
+# an RC airplane, color version
+# remove RGB indexing
+# r <- rast('scout-color.png')
+# RGB(r) <- NULL
+
+
 # init standardized layer name
 names(r) <- 'var'
 
@@ -46,8 +52,7 @@ points(s.eval, col = 1, cex = 1, pch = 15)
 
 
 ## evaluation of sampled data-space
-s
-
+boxplot(list(exhaustive = values(r), train = s$var, test = s.eval$var), las = 1, varwidth = TRUE)
 
 
 
