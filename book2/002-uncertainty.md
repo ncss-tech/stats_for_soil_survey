@@ -50,17 +50,17 @@ Below is a simulated example demonstrating the affect of sample size and standar
 ## # Groups:   sd [2]
 ##   sd     n       med_min med_mean med_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10     6.31     7.06    7.79
-## 2 sd = 1 n = 30     6.69     7.11    7.46
-## 3 sd = 1 n = 60     6.76     7.02    7.30
-## 4 sd = 1 n = 100    6.78     7.00    7.29
-## 5 sd = 2 n = 10     5.38     6.93    7.82
-## 6 sd = 2 n = 30     6.43     7.12    7.86
-## 7 sd = 2 n = 60     6.52     7.01    7.60
-## 8 sd = 2 n = 100    6.61     7.06    7.67
+## 1 sd = 1 n = 10     6.26     7.06    7.92
+## 2 sd = 1 n = 30     6.61     7.05    7.59
+## 3 sd = 1 n = 60     6.68     6.99    7.22
+## 4 sd = 1 n = 100    6.88     7.05    7.23
+## 5 sd = 2 n = 10     5.86     7.22    9.39
+## 6 sd = 2 n = 30     6.20     7.05    8.11
+## 7 sd = 2 n = 60     6.47     7.13    7.73
+## 8 sd = 2 n = 100    6.20     6.96    7.36
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" width="768" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-2-1.png" alt="" width="768" />
 
 The results show that quantile estimates are more variable with smaller sample sizes and larger inherent standard deviations. This example demonstrates how our results would differ if we were to sample the same soils again. We would be "uncertain" of our results unless the underlying standard deviation is small or our sample size was large. Both factors would also impact how certain we could be that 2 or more classes of soils are different.
 
@@ -84,7 +84,7 @@ sqrt(SS / (length(test$pH) - 1))
 ```
 
 ```
-## [1] 1.572971
+## [1] 1.578741
 ```
 
 Note below how our estimate of the variance can vary widely, particularly for simulated datasets with a inherent standard deviation of 2.
@@ -95,14 +95,14 @@ Note below how our estimate of the variance can vary widely, particularly for si
 ## # Groups:   sd [2]
 ##   sd     n       sd2_min sd2_mean sd2_max
 ##   <chr>  <fct>     <dbl>    <dbl>   <dbl>
-## 1 sd = 1 n = 10    0.535    0.934    1.33
-## 2 sd = 1 n = 30    0.750    0.989    1.24
-## 3 sd = 1 n = 60    0.830    0.967    1.17
-## 4 sd = 1 n = 100   0.894    1.02     1.20
-## 5 sd = 2 n = 10    0.768    2.07     3.22
-## 6 sd = 2 n = 30    1.29     1.96     2.46
-## 7 sd = 2 n = 60    1.65     1.99     2.37
-## 8 sd = 2 n = 100   1.67     1.97     2.31
+## 1 sd = 1 n = 10    0.417    0.960    1.51
+## 2 sd = 1 n = 30    0.849    1.01     1.27
+## 3 sd = 1 n = 60    0.860    1.02     1.18
+## 4 sd = 1 n = 100   0.787    1.01     1.15
+## 5 sd = 2 n = 10    0.953    1.95     2.90
+## 6 sd = 2 n = 30    1.42     1.95     2.36
+## 7 sd = 2 n = 60    1.60     1.96     2.36
+## 8 sd = 2 n = 100   1.71     2.00     2.29
 ```
 
 Now let's see Standard Error (standard deviation / square root of n) below. The results show how our estimates become more precise as the sample size increases.
@@ -113,14 +113,14 @@ Now let's see Standard Error (standard deviation / square root of n) below. The 
 ## # Groups:   sd [2]
 ##   sd     n       SE_min SE_mean SE_max
 ##   <chr>  <fct>    <dbl>   <dbl>  <dbl>
-## 1 sd = 1 n = 10  0.169    0.295  0.420
-## 2 sd = 1 n = 30  0.137    0.181  0.226
-## 3 sd = 1 n = 60  0.107    0.125  0.150
-## 4 sd = 1 n = 100 0.0894   0.102  0.120
-## 5 sd = 2 n = 10  0.243    0.655  1.02 
-## 6 sd = 2 n = 30  0.235    0.359  0.449
-## 7 sd = 2 n = 60  0.213    0.257  0.306
-## 8 sd = 2 n = 100 0.167    0.197  0.231
+## 1 sd = 1 n = 10  0.132    0.304  0.478
+## 2 sd = 1 n = 30  0.155    0.185  0.232
+## 3 sd = 1 n = 60  0.111    0.132  0.152
+## 4 sd = 1 n = 100 0.0787   0.101  0.115
+## 5 sd = 2 n = 10  0.301    0.617  0.918
+## 6 sd = 2 n = 30  0.260    0.355  0.431
+## 7 sd = 2 n = 60  0.206    0.254  0.305
+## 8 sd = 2 n = 100 0.171    0.200  0.229
 ```
 
 ## Theory of Uncertainty
@@ -189,14 +189,14 @@ quantile(boot_stats$vars)
 
 ```
 ##        0%       25%       50%       75%      100% 
-## 0.9108295 1.0228083 1.1424803 1.2628137 1.5688706
+## 0.8009716 1.0523449 1.1438908 1.1958408 1.5468352
 ```
 
 ``` r
 stripchart(boot_stats$vars)
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-6-1.png" alt="" width="672" />
 
 ``` r
 # Traditional Approach
@@ -213,7 +213,7 @@ quantile(boot_stats$means, c(0.025, 0.975))
 
 ```
 ##     2.5%    97.5% 
-## 5.705315 6.236405
+## 5.808052 6.214024
 ```
 
 ``` r
@@ -274,7 +274,7 @@ Below is a summary of the various measures used to quantify accuracy and precisi
   - References: Kutner et al. 2004; [Zumel and Mount 2020](http://mng.bz/ndYf) 
 
 <!-- The RMSE and bias figure is hard to understand without further explanation. Can we use colors in addition to line type? -->
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-10-1.png" width="672" /><img src="002-uncertainty_files/figure-html/unnamed-chunk-10-2.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-10-1.png" alt="" width="672" /><img src="002-uncertainty_files/figure-html/unnamed-chunk-10-2.png" alt="" width="672" />
 
 
 **Precision/Uncertainty:**
@@ -292,7 +292,7 @@ Below is a summary of the various measures used to quantify accuracy and precisi
   Pro: Typically ranges between 0 and 1; values larger than 1 indicate very high model uncertainty. No distribution assumptions.
   References: Nauman and Duniway (2019)
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-11-1.png" alt="" width="672" />
 
 
 ### Examples
@@ -382,7 +382,7 @@ ggplot(sas[idx, ], aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
   geom_smooth(method = "lm")
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-12-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-12-1.png" alt="" width="672" />
 
 ``` r
 ggplot(sas, aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
@@ -392,7 +392,7 @@ ggplot(sas, aes(x = pH_0.30_pred, y = pH_0.30_obs)) +
   geom_smooth()
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-12-2.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-12-2.png" alt="" width="672" />
 
 ### Exercise 2
 
@@ -703,7 +703,7 @@ plot(
 abline(0, 1)
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-16-1.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-16-1.png" alt="" width="672" />
 
 ``` r
 # reset the plotting parameters
@@ -719,7 +719,7 @@ ggplot(bs, aes(x = BS2_pred, fill = BS2_obs)) +
   xlab("BS2 Probability")
 ```
 
-<img src="002-uncertainty_files/figure-html/unnamed-chunk-16-2.png" width="672" />
+<img src="002-uncertainty_files/figure-html/unnamed-chunk-16-2.png" alt="" width="672" />
 
 ``` r
 ## Trade Precision for Sensitivity by Varying the Threshold 
@@ -1065,12 +1065,12 @@ summary(lm_cv)
 
 ```
 ##       RMSE              R2        
-##  Min.   :0.4498   Min.   :0.8392  
-##  1st Qu.:0.4593   1st Qu.:0.8475  
-##  Median :0.4717   Median :0.8517  
-##  Mean   :0.4689   Mean   :0.8526  
-##  3rd Qu.:0.4749   3rd Qu.:0.8594  
-##  Max.   :0.4843   Max.   :0.8650
+##  Min.   :0.4622   Min.   :0.8465  
+##  1st Qu.:0.4663   1st Qu.:0.8503  
+##  Median :0.4680   Median :0.8516  
+##  Mean   :0.4690   Mean   :0.8526  
+##  3rd Qu.:0.4729   3rd Qu.:0.8546  
+##  Max.   :0.4776   Max.   :0.8598
 ```
 
 #### Subsample (Resampling or sample simulation)
