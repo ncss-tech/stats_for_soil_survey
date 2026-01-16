@@ -78,8 +78,8 @@ knitr::kable(desc)
 ```
  
 
----
-
+# Weighting
+## Box example
 ```{r, weighting}
 
 # Example ----
@@ -88,15 +88,13 @@ n <- 2
 bb <- st_make_grid(st_bbox(c(xmin = 0, xmax = n, ymin = 0, ymax = n)), n = n)
 grd <- st_as_sf(bb)
 grd$ID <- 1:length(bb)
-df <- st_centroid(grd) |> st_coordinates() |> as.data.frame()
-bb2 <- st_make_grid(st_bbox(c(xmin = 0, xmax = n, ymin = 0, ymax = n)), n = n)
-grd2 <- st_as_sf(bb2)
-grd2$landform = c(rep("backslope", 3), "summit")
+grd$landform = c(rep("backslope", 3), "summit")
 # grd3 <- ms_dissolve(grd2, field = "mapunit")
-grd2$component = c(rep("a", 3), "b")
+grd$comp = c(rep("a", 3), "b")
+grd
 
 ggplot() +
-  geom_sf(data = grd2, aes(fill = component)) +
+  geom_sf(data = grd, aes(fill = landform)) +
   ggtitle("map unit") +
   theme(
     axis.text = element_blank(), 
@@ -105,101 +103,249 @@ ggplot() +
 
 
 # stratified sample the grid
+set.seed(56)
 test <- mapply(FUN = function(i, x, n) {
   st_coordinates(st_sample(x[[1]][i, ], size = n))
   },
   i = 1:4,
-  x = lapply(1:4, function(x) grd2),
+  x = lapply(1:4, function(x) grd),
   n = c(1, 1, 1, 3),
   SIMPLIFY = FALSE
   )
 test <- do.call("rbind", test)
-test_sf <- st_as_sf(as.data.frame(test), coords = 1:2)
+sample <- st_as_sf(as.data.frame(test), coords = 1:2)
 
-ex <- extract(vect(grd2), st_coordinates(test_sf))
-test_sf <- cbind(test_sf, ex)
+ex <- extract(vect(grd), st_coordinates(sample))
+sample <- cbind(sample, ex)
 
 
 # simulate clay content and component probabilities
-test_sf <- within(test_sf, {
-  samp_co = c(
-    rbinom(3, 1, prob = 0.75),
-    rbinom(3, 1, prob = 0.25)
-  )
+set.seed(2)
+sample <- within(sample, {
+  component = c("a", "a", "b", "a", "b", "b")
+  size      = c(1, 1, 1, rep(1/3, 3))
+  w         = size / 1
+})
+test
+sample <- within(sample, {
+  # samp_co = c(
+  #   # rbinom(3, 1, prob = 0.75),
+  #   # rbinom(3, 1, prob = 0.25)
+  # )
   samp_clay = c(
     rnorm(3, 15),
     rnorm(3, 30)
   )
-  samp_co = ifelse(samp_co == 1, "a", "b")
-  w1 = c(rep(0.75 / 3, 3), rep(0.25 / 3, 3)) * 4
-  # or
-  w2 = c(rep(1/1, 3), rep(1/3, 3))
-  # or 
-  w3 = c(rep(4/1, 3), rep(4/3, 3)) / 4
-  
-  pct  = c(rep(3 / 3, 3), rep(1 / 3, 3)) / 4
-  p = c(rep(1 / 4, 3), rep(3 / 4, 3))  
-  
-  p = 1 / w1
-  w = w1
 })
 
 
+#   samp_co = ifelse(samp_co == 1, "a", "b")
+#   w1 = c(rep(0.75 / 3, 3), rep(0.25 / 3, 3)) * 4
+#   # or
+#   w2 = c(rep(1/1, 3), rep(1/3, 3))
+#   # or 
+#   w3 = c(rep(4/1, 3), rep(4/3, 3)) / 4
+#   
+#   pct  = c(rep(3 / 3, 3), rep(1 / 3, 3)) / 4
+#   p = c(rep(1 / 4, 3), rep(3 / 4, 3))  
+#   
+#   p = 1 / w1
+#   w = w1
+# })
+
+
 ggplot() +
-  geom_sf(data = grd2, aes(fill = landform)) +
+  geom_sf(data = grd, aes(fill = landform)) +
   ggtitle("map unit") +
   theme(
     axis.text = element_blank(), 
     axis.ticks = element_blank(), axis.title = element_blank()
   ) +
   geom_sf(
-    data = mutate(test_sf, component = samp_co), 
+    data = mutate(sample, component = component), 
     aes(shape = component), size = 3
     )
-  # geom_sf_text(data = test_sf, aes(label = samp_co), nudge_y = - 0.1, nudge_x = 0.45) +
+  # geom_sf_text(data = sample, aes(label = samp_co), nudge_y = - 0.1, nudge_x = 0.45) +
   # guides(fill = guide_legend((title = "component")))
 
 
 
 # compare tabular summaries
-table(pred    = test_sf$component, obs       = test_sf$samp_co) |>
+table(pred    = sample$comp, obs       = sample$component) |>
   addmargins()
-table(mapunit = test_sf$component, component = test_sf$samp_co) |> 
+table(mapunit = sample$comp, component = sample$component) |> 
   addmargins()
 
-vars <- c("component", "samp_co")
-test_sf[vars] <- lapply(st_drop_geometry(test_sf[vars]), as.factor)
-yardstick::conf_mat(test_sf, truth = samp_co, estimate = component, case_weights = w)$table |>
+vars <- c("component", "comp")
+sample[vars] <- lapply(st_drop_geometry(sample[vars]), as.factor)
+yardstick::conf_mat(sample, truth = comp, estimate = component, case_weights = w)$table |>
+  prop.table(margin = 2) |>
   addmargins()
+  
 
 # survey
-test_sf$id <- 1:nrow(test_sf)
-test3 <- test_sf |>
+sample$id <- 1:nrow(sample)
+test3 <- sample |>
   srvyr::as_survey_design(
-    probs = 1/w,
-    # weights = w,
+    # probs = 1/w,
+    weights = w,
     strata  = landform,
     # ids = id,
     nest = TRUE
     )
-srvyr::survey_count(test3, samp_co, vartype = "ci")
+srvyr::survey_count(test3, component, vartype = "ci")
 
-(tb <- table(test_sf$component))
-(wtd <- Hmisc::wtd.table(test_sf$component, weights = test_sf$w, type = "table"))
-xtabs(w ~ component, data = test_sf)
-(mapunit <- prop.table(wtd) |> round(2))
+(tb <- table(sample$component))
+# (wtb <- Hmisc::wtd.table(sample$component, weights = sample$w, type = "table"))
+(wtb <- xtabs(w ~ component, data = sample))
+(mapunit <- prop.table(wtb) |> round(2))
 (accuracy <- mapunit |> as.matrix() |> apply(X = _, 2, max))
+c(mapunit, ua = accuracy)
+wtb_lf <- xtabs(w ~ landform + component, data = sample) |>
+  prop.table() |>
+  round(2)
+wtb_lf
 
-weighted.mean(test_sf$samp_clay, w = test_sf$w)
+tb_lf <- xtabs(~ landform + comp, data = grd) |> 
+  prop.table()
+tb_lf |>
+  cbind(accuracy = max(tb_lf))
 
-a = c(2.1, 0.8, 1.1, 0.3, 1.4, 0.9, 0.9, 0.6, 1.3, 1.5)
-b = c(5.1, 3.4, 4.5, 4, 3.9, 5.5, 4.7, 5.5, 4.2, 4.1)
+weighted.mean(sample$samp_clay, w = sample$w)
 
-mean(c(a, b))
-weighted.mean(c(a, b), w = c(rep(0.9/10, 10), rep(0.1/10, 10)))
+sample |>
+  st_drop_geometry() |>
+  group_by(component) |>
+  summarize(wtd_avg = weighted.mean(samp_clay, w = w)) |>
+  ungroup()
+
+```
+
+## Volcano example
+
+```{r}
+library(sf)
+library(terra)
+library(sgsR)
+library(geocmeans)
+
+
+# import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau
+data("volcano")
+volcano_r <- rast(
+  volcano[87:1, 61:1],
+  crs = crs("+init=epsg:27200"),
+  extent = c(
+    xmin = 2667405,
+    xmax = 2667405 + 61 * 10,
+    ymin = 6478705,
+    ymax = 6478705 + 87 * 10
+  )
+)
+names(volcano_r) <- "elev"
+
+volcano_r <- rast("C:/workspace2/dem_derivatives2.tif")
+nm <- c("z", "hs", "slp", "kp", "kt", "twi", "tpi", "mpi", "rsp", "z_f", "hs_f", "slp_f", "kp_f", "kt_f", "twi_f", "mpi_f")
+idx_uf <- nm[c(1, 3:9)]
+idx_f  <- nm[c(10, 12:15, 7, 16, 9)]
+names(volcano_r) <- nm
+v_nm <- names(volcano_r)[c(1, 3:9)]
+
+strat_kmeans(volcano_r[[idx_uf]], nStrata = 7) |> freq() |> transform(p = round(count / sum(count), 2))
+strat_kmeans(volcano_r[[idx_f]], nStrata = 7) |> 
+  freq() |> 
+  dplyr::mutate(
+    p  = count / sum(count), 
+    wp = count / (70 * p),
+    wk = count / 10,
+    wk / wp,
+    1/wk, 
+    1/wp,
+    1/(1/wk),
+    1/(1/wp)
+    )
+
+test <- lapply(v_nm, function(n){
+  aband <- volcano_r[[n]]
+  aband$nrows <- nrow(aband)
+  return(aband)
+})
+names(test) <- v_nm
+
+
+fcm_r <- CMeans(test, k = 7, m = 1.6, standardize = TRUE)
+fcm_r2 <- fcm_r$rasters |>
+  rast()
+idx <- seq(1, nlyr(fcm_r2), 2)
+fcm_r2 <- fcm_r2[[idx]]
+
+nm <- c("Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "k")
+names(fcm_r2) <- nm
+levels(fcm_r2$k) <- data.frame(id = 1:7, compname = nm[1:7]) 
+summary(fcm_r2[[-8]] |> max())
+fcm_r2 |> plot()
+
+names(fcm_r2)[8] <- "k_0p025acres"
+k_smooth5 <- fcm_r2[[1:7]] |> bayesEO::bayes_smooth(window_size = 5) |>
+  bayesEO::bayes_label()
+# fcm_r2$k_smooth5_0p1acres <- sieve(fcm_r2[[9]], threshold = 4,   direction = 4)
+fcm_r2$k_smooth5_1p4acres <- sieve(k_smooth5, threshold = 58,  direction = 4)
+# fcm_r2$k_smooth5_5p7acres <- sieve(fcm_r2[[9]], threshold = 225, direction = 4)
+plot(fcm_r2)
+
+
+# distance
+fcm_dist <- fcm_r$Centers |> 
+  as.data.frame() |> 
+  dist(upper = TRUE) |>
+  as.matrix()
+
+comb <- expand.grid(2:7, 1:7) |>
+  apply(X = _, 2, as.character) |>
+  as.data.frame() |>
+  subset(Var1 != Var2)
+idx <- apply(comb, 1, function(x) paste(sort(x), collapse = ", ")) |> duplicated()
+comb <- comb[!idx, ]
+comb$dist <- NA
+for (i in 1:nrow(comb)) {
+  # add cross-covariance
+  comb[i, "dist"] <- fcm_dist[comb[i, 1], comb[i, 2]]
+}
+
+test <- spatSample(k_smooth5, size = 5, as.points = TRUE)
+
+
+test <- spatSample(fcm_r2, size = 30)
+
+cm <- table(pred = fcm_r2$k_smooth5_1p4acres |> values(), obs = fcm_r2$k_0p025acres |> values())
+cm <- table(pred = test$k_smooth5_1p4acres, obs = test$k_0p025acres)
+cm_p <- round(prop.table(cm, margin = 1) * 100)
+
+nm <- colnames(cm)
+nm_new <- apply(cm_p, 1, function(x) {
+  idx <- which(x > 15)
+  idx <- idx[order(x[idx], decreasing = TRUE)]
+  paste0(nm[idx], collapse = "-")
+})
+rownames(cm_p) <- nm_new
+
+ua <- round(diag(cm) / apply(cm, 1, sum), 2) * 100
+pa <- round(diag(cm) / apply(cm, 2, sum), 2) * 100
+oa <- round(sum(diag(cm)) / sum(cm) * 100)
+
+cm2 <- cbind(cm_p, ua)
+cm2 <- rbind(cm2, pa)
+cm2[8, 8] <- oa
+dimnames(cm2) <- list(
+  obs  = dimnames(cm2)[[1]],
+  pred = dimnames(cm2)[[2]]
+)
+cm2
+mapac::aa_card(x = test$k_0p025acres, m = test$k_smooth5_1p4acres)
 
 
 ```
+
 
 ---
 
