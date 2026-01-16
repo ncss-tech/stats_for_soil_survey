@@ -4,7 +4,6 @@ library(ape)
 library(farver)
 library(MASS)
 library(colorspace)
-library(viridisLite)
 
 ## some notes on preparing an example image, not too large 
 # library(magick)

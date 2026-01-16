@@ -45,12 +45,7 @@ soildata <- st_as_sf(
 mapview(soildata)
 ```
 
-
-```
-##   |                                                                              |                                                                      |   0%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================================================| 100%
-```
-
-<img src="006-treemodels_files/figure-html/unnamed-chunk-4-1.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-4-1.png" alt="" width="672" />
 
 
 
@@ -153,7 +148,7 @@ ggplot(soildata, aes(x = spodint, y = solar)) +
   xlab("spodic intensity") + ylab("solar")
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-8-1.png" alt="" width="672" />
 
 ``` r
 #how about aspect?
@@ -162,7 +157,7 @@ ggplot(soildata, aes(x = spodint, y = northwestn)) +
   xlab("spodic intensity") + ylab("northwestness")
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-8-2.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-8-2.png" alt="" width="672" />
 
 ``` r
 #distribution of O horizon thickness among soil orders
@@ -171,7 +166,7 @@ ggplot(soildata, aes(x = Otot)) +
   facet_wrap(~ order)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-8-3.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-8-3.png" alt="" width="672" />
 
 ``` r
 # combine numeric columns into a new data frame
@@ -196,7 +191,7 @@ cormatrix <- cor(numeric)
 corrplot(cormatrix, method = "circle")
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-8-4.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-8-4.png" alt="" width="672" />
 
 
 ### Exercise 1
@@ -272,7 +267,7 @@ plot(spodintmodel)
 text(spodintmodel, cex = 0.8) #cex is text size
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-10-1.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-10-1.png" alt="" width="672" />
 
 
 ``` r
@@ -290,21 +285,21 @@ For more plot customization, use the rpart.plot package.
 rpart.plot(spodintmodel, extra = 3) 
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-12-1.png" width="576" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-12-1.png" alt="" width="576" />
 
 ``` r
 # adding 100 to the extra setting displays the percentage observations in the node
 rpart.plot(spodintmodel, extra = 103) 
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-12-2.png" width="576" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-12-2.png" alt="" width="576" />
 
 ``` r
 # prp is another function in the rpart.plot package that has numerous plot customization options
 prp(spodintmodel, type = 1, extra = 1, branch = 1) 
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-12-3.png" width="576" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-12-3.png" alt="" width="576" />
 
 Notice that the terminal nodes display the different spodic intensity classes, ranging from 0 to 2. **Can you think of another way that we could model spodic expression?** 
 
@@ -365,7 +360,7 @@ plot(spodintmodel2)
 text(spodintmodel2, cex = 0.8)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-13-1.png" alt="" width="672" />
 
 Notice that several of the splits changed. Which model performed better? One way to compare the two models is to use the function `printcp()`:
 
@@ -438,13 +433,13 @@ The `printcp()` funtion generates a cost complexity parameter table that provide
 plotcp(spodintmodel)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-15-1.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-15-1.png" alt="" width="672" />
 
 ``` r
 plotcp(spodintmodel2)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-15-2.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-15-2.png" alt="" width="672" />
 
 The optimal CP value is 0.029321 for spodintmodel and 0.050459 for spodintmodel2. Since both spodic intensity models overfit that data, they will need to be pruned using the `prune()` function.
 
@@ -481,7 +476,7 @@ printcp(pruned)
 rpart.plot(pruned, extra = 3)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-16-1.png" width="288" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-16-1.png" alt="" width="288" />
 
 ``` r
 pruned2 <- prune(spodintmodel2, cp = 0.050459)
@@ -514,7 +509,7 @@ printcp(pruned2)
 rpart.plot(pruned2, extra = 3)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-16-2.png" width="288" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-16-2.png" alt="" width="288" />
 
 The misclassification rate (in cross-validation) for the spodintmodel was 57% (root node error * xerror * 100) which dropped to 38% in the spodintmodel2. Why did the performance of these models differ significantly?
 
@@ -737,7 +732,7 @@ rf
 plot(rf)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-18-1.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-18-1.png" alt="" width="672" />
 
 The rf model, generated using the default number of trees and number of variables tried at each split, explained approximately 23% of the variance and produced a mean square error (sum of squared residuals divided by n) of 28 cm2. If you were to run this same model again, the % variance explained and MSE would change slightly due to the random subsetting and averaging in the randomForest algorithm. **How does this compare with the rpart model?**
 
@@ -747,7 +742,7 @@ Recall that the **soildata** dataset had one Histosol observation:
 hist(soildata$Otot)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-19-1.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-19-1.png" alt="" width="672" />
 
 
 Let's remove that observation to see how it impacted our model. 
@@ -794,7 +789,7 @@ Another way to assess the rf model is to look at the variable importance plot.
 varImpPlot(rf2)
 ```
 
-<img src="006-treemodels_files/figure-html/unnamed-chunk-21-1.png" width="672" />
+<img src="006-treemodels_files/figure-html/unnamed-chunk-21-1.png" alt="" width="672" />
 
 ``` r
 # sorted tabular summary

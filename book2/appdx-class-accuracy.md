@@ -33,33 +33,33 @@ Given the complex nature of class mapping results (e.g. stack of class probabili
 
 ## Theses
 
- * The $\tau$ statistic of [@Rossiter2017] is a more reliable and nuanced representation of accuracy vs. PCC.
+* The $\tau$ statistic of [@Rossiter2017] is a more reliable and nuanced representation of accuracy vs. PCC.
 
- * The $\tau$ statistic can be *upgraded* with additional *knowledge* given the availability of 1) prior understanding of class proportions, and/or, 2) meaningful parameterization of pair-wise class distances.
-  
- * There can be consensus on formulation of *approximate* pair-wise distances, within a given modeling domain. Pair-wise distances may not necessarily be the same across modeling domains or projects.
-  
- * Brier scores are option for an even more nuanced representation of accuracy as they integrate all predicted probabilities.
+* The $\tau$ statistic can be *upgraded* with additional *knowledge* given the availability of 1) prior understanding of class proportions, and/or, 2) meaningful parameterization of pair-wise class distances.
 
- * The confusion index of @Burrough1997 is an *unstable* metric when the number of predicted classes is large and when the most likely classes are associated with low probabilities.
-   
- * Shannon entropy (log base 2) is a more reliable representation of uncertainty than the confusion index, especially when the number of possible classes varies by project. The importance of a universally reliable representation of uncertainty is even more important when several methods are used concurrently.
-  
- * There *should be* a way to integrate pair-wise distances into the Shannon entropy (or related method) and Brier scores; maybe we will discover those here.
-  
+* There can be consensus on formulation of *approximate* pair-wise distances, within a given modeling domain. Pair-wise distances may not necessarily be the same across modeling domains or projects.
 
-  
+* Brier scores are option for an even more nuanced representation of accuracy as they integrate all predicted probabilities.
+
+* The confusion index of @Burrough1997 is an *unstable* metric when the number of predicted classes is large and when the most likely classes are associated with low probabilities.
+
+* Shannon entropy (log base 2) is a more reliable representation of uncertainty than the confusion index, especially when the number of possible classes varies by project. The importance of a universally reliable representation of uncertainty is even more important when several methods are used concurrently.
+
+* There *should be* a way to integrate pair-wise distances into the Shannon entropy (or related method) and Brier scores; maybe we will discover those here.
+
+
+
 
 ## Soap Box Time
 Our current QC/QA process is based on many forms of evaluation, accumulates some degree of subjectivity and relies heavily on qualitative forms of information (field experience, institutional knowledge, etc.).  On the opposite side of the spectrum, the validation of raster mapping is often claimed to be free of subjective interference and entirely quantitative. Those are "good things" that we should always strive for, however, the simplicity of calculating a "percent correctly classified" can interfere with a more nuanced evaluation of accuracy. As I mentioned on the phone (and implicitly volunteered for) a validation "score" might be more meaningful than any single validation metrics. 
 
 One such score might include:
 
- * agreement between predicted probabilities and observed class (e.g. Brier scores)
- * agreement between the most likely class and observed class, accounting for class similarities (e.g. weighted $\tau$)
- * distribution of class-wise Shannon entropy values
- * calibration vs. predicted vs. validation proportion of classes
- * some kind of metric that integrates spatial connectivity of predictions / observations, for example: cross-tabulate calibration / prediction / validation classes with geomorphon classes
+* agreement between predicted probabilities and observed class (e.g. Brier scores)
+* agreement between the most likely class and observed class, accounting for class similarities (e.g. weighted $\tau$)
+* distribution of class-wise Shannon entropy values
+* calibration vs. predicted vs. validation proportion of classes
+* some kind of metric that integrates spatial connectivity of predictions / observations, for example: cross-tabulate calibration / prediction / validation classes with geomorphon classes
 
 I strongly believe that we need a robust suite of metrics primarily for internal discussion and evaluation of raster mapping products; even more so when complex modeling frameworks such as randomForest or neural nets are used.
 
@@ -71,9 +71,9 @@ Accuracy and uncertainty metrics are primarily vehicles for understanding, re-ca
 
 Consider a supervised classification that generates predictions for 5 possible soil classes. Suites of predicted probabilities fall into 3 general cases:
 
- * "Case 1": classes **D** and **E** are nearly tied for the most likely class, but their respective probabilities are generally < 0.5
- * "Case 2": class **E** is almost always the most likely class, but classes **B**, **C**, and **D** are tied for second place
- * "Case 3": class **E** is always the most likely class, all other classes have probabilities < 0.2
+* "Case 1": classes **D** and **E** are nearly tied for the most likely class, but their respective probabilities are generally < 0.5
+* "Case 2": class **E** is almost always the most likely class, but classes **B**, **C**, and **D** are tied for second place
+* "Case 3": class **E** is always the most likely class, all other classes have probabilities < 0.2
 
 
 ``` r
@@ -88,9 +88,9 @@ print(p.1)
 
 Even though these are simulated data, the three cases above demonstrate common modeling scenarios where classification uncertainty ranges from very low ("Case 3") in some areas to quite high ("Case 1") in others. These three cases could easily be associated with real situations:
 
- * "Case 1": predictions for soil classes represent a hillslope complex that isn't quite disentangled by the model
- * "Case 2": predictions for soil classes represent limited success in partitioning between a single water shedding (**E**) vs. multiple water collecting positions (**A**-**D**)
- * "Case 3": predictions for soil classes represent a successful partitioning between Holocene age deposits (**E**) vs. older alluvial terraces (**A**-**D**)
+* "Case 1": predictions for soil classes represent a hillslope complex that isn't quite disentangled by the model
+* "Case 2": predictions for soil classes represent limited success in partitioning between a single water shedding (**E**) vs. multiple water collecting positions (**A**-**D**)
+* "Case 3": predictions for soil classes represent a successful partitioning between Holocene age deposits (**E**) vs. older alluvial terraces (**A**-**D**)
 
 
 
@@ -114,10 +114,10 @@ where $B$ is an index of agreement between predicted probabilities, $\mathbf{p}$
 
 Follow-up:
 
- * https://en.wikipedia.org/wiki/Brier_score
- * https://stats.stackexchange.com/questions/112250/understanding-the-rank-probability-score
- * http://empslocal.ex.ac.uk/people/staff/dbs202/publications/2008/stephenson-brier.pdf
- * http://iopscience.iop.org/article/10.1088/1748-9326/7/4/044019
+* https://en.wikipedia.org/wiki/Brier_score
+* https://stats.stackexchange.com/questions/112250/understanding-the-rank-probability-score
+* http://empslocal.ex.ac.uk/people/staff/dbs202/publications/2008/stephenson-brier.pdf
+* http://iopscience.iop.org/article/10.1088/1748-9326/7/4/044019
 
 
 *What about a weighted version of this score, based on a re-statement of the distance matrix?*
@@ -130,11 +130,11 @@ Follow-up:
 
 #### Commentary from DGR
 
- * Prior class probabilities. Commentary from DGR:
-   + That depends on the mapping method. In LDA we can set the priors, then we'd use these in tau. But for an automatic DSM procedure the priors are all equal (Foody's modified kappa). If judging a manual mapper, the priors can be their overall probabilities for an area.  E.g., in one county we have a pretty good idea that it is half Vertisols, so the mapper is prejudiced (in the good sense) about this.
-   
- * Class similarity
-   + The weighting is quite tricky since obviously it can be used to manipulate results. I really like the 'error loss' method if there is some numerical value put on each difference -- as I did with the NC site index. In CA you have the Storie index, you could use that difference for mis-mappings of series.  Numerical taxonomy measures could also be used but you'd need to agree on which properties to use. If the purpose of the map is e.g. to estimate C stocks, then the difference between the mean C stocks  between classes from NASIS might be used. Coming up with a transparent and accepted weighting can be tricky.
+* Prior class probabilities. Commentary from DGR:
++ That depends on the mapping method. In LDA we can set the priors, then we'd use these in tau. But for an automatic DSM procedure the priors are all equal (Foody's modified kappa). If judging a manual mapper, the priors can be their overall probabilities for an area.  E.g., in one county we have a pretty good idea that it is half Vertisols, so the mapper is prejudiced (in the good sense) about this.
+
+* Class similarity
++ The weighting is quite tricky since obviously it can be used to manipulate results. I really like the 'error loss' method if there is some numerical value put on each difference -- as I did with the NC site index. In CA you have the Storie index, you could use that difference for mis-mappings of series.  Numerical taxonomy measures could also be used but you'd need to agree on which properties to use. If the purpose of the map is e.g. to estimate C stocks, then the difference between the mean C stocks  between classes from NASIS might be used. Coming up with a transparent and accepted weighting can be tricky.
 
 
 
@@ -166,11 +166,20 @@ It is my recommendation that the $log_{2}$ version of Shannon H be used as our *
 print(p.1)
 ```
 
-<img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-3-1.svg" width="960" />
+<img src="appdx-class-accuracy_files/figure-html/unnamed-chunk-3-1.svg" alt="" width="960" />
+
 
 ``` r
-pp <- ldply(s, performance)
-names(pp)[1] <- 'example'
+pp <- imap(s, .f = function(i, idx) {
+  .res <- performance(i)
+  .res$example <- idx
+  
+  .res <- .res[, c(5, 1:4)]
+  return(.res)
+})
+
+# flatten and setup factor levels
+pp <- do.call('rbind', pp)
 
 kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_width = FALSE)
 ```
@@ -195,29 +204,43 @@ kable_styling(kable(pp, row.names = FALSE, digits = 2, format='html'), full_widt
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.72 </td>
-   <td style="text-align:right;"> 0.26 </td>
-   <td style="text-align:right;"> 0.21 </td>
-   <td style="text-align:right;"> 0.41 </td>
+   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 0.28 </td>
+   <td style="text-align:right;"> 0.23 </td>
+   <td style="text-align:right;"> 0.43 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
-   <td style="text-align:right;"> 0.28 </td>
-   <td style="text-align:right;"> 0.81 </td>
-   <td style="text-align:right;"> 0.45 </td>
-   <td style="text-align:right;"> 0.84 </td>
+   <td style="text-align:right;"> 0.30 </td>
+   <td style="text-align:right;"> 0.79 </td>
+   <td style="text-align:right;"> 0.44 </td>
+   <td style="text-align:right;"> 0.83 </td>
   </tr>
 </tbody>
 </table>
 
 
 ``` r
-ex <- ldply(s, extractExample, n=1)
-names(ex)[1] <- 'example'
-ex$CI <- NULL
-ex$actual <- NULL
+ex <- imap(s, .f = function(i, idx) {
+  .res <- extractExample(i, n = 1)
+  .res$example <- idx
+  
+  .res$CI <- NULL
+  .res$actual <- NULL
+  
+  .res <- .res[, c(7, 1:6)]
+  return(.res)
+})
 
-add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='html'), full_width = FALSE), header=c(" " = 1, "Class Probabilities" = 5, "Uncertainty" = 1))
+# flatten and setup factor levels
+ex <- do.call('rbind', ex)
+
+add_header_above(
+  kable_styling(
+    kable(ex, row.names = FALSE, digits = 2, format = 'html'), 
+    full_width = FALSE), 
+  header=c(" " = 1, "Class Probabilities" = 5, "Uncertainty" = 1)
+)
 ```
 
 <table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -240,30 +263,30 @@ add_header_above(kable_styling(kable(ex, row.names = FALSE, digits = 2, format='
 <tbody>
   <tr>
    <td style="text-align:left;"> Case 1 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:right;"> 0.16 </td>
    <td style="text-align:right;"> 0.11 </td>
-   <td style="text-align:right;"> 0.17 </td>
-   <td style="text-align:right;"> 0.06 </td>
-   <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:right;"> 0.32 </td>
-   <td style="text-align:right;"> 2.08 </td>
+   <td style="text-align:right;"> 0.35 </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:right;"> 2.14 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 2 </td>
-   <td style="text-align:right;"> 0.20 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 0.11 </td>
-   <td style="text-align:right;"> 0.27 </td>
-   <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:right;"> 2.14 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:right;"> 0.24 </td>
+   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 2.10 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Case 3 </td>
    <td style="text-align:right;"> 0.01 </td>
-   <td style="text-align:right;"> 0.02 </td>
-   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.11 </td>
    <td style="text-align:right;"> 0.05 </td>
-   <td style="text-align:right;"> 0.89 </td>
-   <td style="text-align:right;"> 0.71 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.81 </td>
+   <td style="text-align:right;"> 0.99 </td>
   </tr>
 </tbody>
 </table>
@@ -279,23 +302,23 @@ library(aqp)
 
 # example data
 d <- structure(list(A = c(0.0897243494322252, 0.0537087411977284, 
-0.0643087579284512, 0.0582791533521884, 0.0655491726966812, 0.0878056947034425, 
-0.0550727743006022, 0.10724015754623, 0.0332599961787985, 0.0555131608754956
+                          0.0643087579284512, 0.0582791533521884, 0.0655491726966812, 0.0878056947034425, 
+                          0.0550727743006022, 0.10724015754623, 0.0332599961787985, 0.0555131608754956
 ), B = c(0.191110141078936, 0.187244044389649, 0.119214057525671, 
-0.198461646003737, 0.161851348940294, 0.172157251906694, 0.113611770097243, 
-0.178697159594029, 0.194607795787689, 0.188977055949146), C = c(0.121941735763077, 
-0.0770539012535731, 0.0977753159795662, 0.0774293724263895, 0.072198187957068, 
-0.0366921003115242, 0.151033286139089, 0.0974443429098862, 0.124876574685048, 
-0.0864142563046045), D = c(0.351108807309283, 0.322120077305279, 
-0.440632731639948, 0.401063395801608, 0.312647702445919, 0.304193047630158, 
-0.270239142407351, 0.258895264130713, 0.422747316475851, 0.252724366285052
-), E = c(0.246114966416479, 0.359873235853771, 0.278069136926363, 
-0.264766432416077, 0.387753587960038, 0.399151905448182, 0.410043027055715, 
-0.357723075819142, 0.224508316872614, 0.416371160585702), id = c("1", 
-"10", "100", "1000", "101", "102", "103", "104", "105", "106"
-), actual = c("D", "B", "D", "E", "D", "D", "E", "E", "D", "E"
-)), .Names = c("A", "B", "C", "D", "E", "id", "actual"), row.names = c(NA, 
-10L), class = "data.frame")
+         0.198461646003737, 0.161851348940294, 0.172157251906694, 0.113611770097243, 
+         0.178697159594029, 0.194607795787689, 0.188977055949146), C = c(0.121941735763077, 
+                                                                         0.0770539012535731, 0.0977753159795662, 0.0774293724263895, 0.072198187957068, 
+                                                                         0.0366921003115242, 0.151033286139089, 0.0974443429098862, 0.124876574685048, 
+                                                                         0.0864142563046045), D = c(0.351108807309283, 0.322120077305279, 
+                                                                                                    0.440632731639948, 0.401063395801608, 0.312647702445919, 0.304193047630158, 
+                                                                                                    0.270239142407351, 0.258895264130713, 0.422747316475851, 0.252724366285052
+                                                                         ), E = c(0.246114966416479, 0.359873235853771, 0.278069136926363, 
+                                                                                  0.264766432416077, 0.387753587960038, 0.399151905448182, 0.410043027055715, 
+                                                                                  0.357723075819142, 0.224508316872614, 0.416371160585702), id = c("1", 
+                                                                                                                                                   "10", "100", "1000", "101", "102", "103", "104", "105", "106"
+                                                                                  ), actual = c("D", "B", "D", "E", "D", "D", "E", "E", "D", "E"
+                                                                                  )), .Names = c("A", "B", "C", "D", "E", "id", "actual"), row.names = c(NA, 
+                                                                                                                                                         10L), class = "data.frame")
 
 # check it out
 # predictions, and actual, observed class
@@ -351,21 +374,21 @@ apply(d[, c('A', 'B', 'C', 'D', 'E')], 1, shannonEntropy)
 
 
 ## Resources
- 
+
 ### Evaluating Accuracy of Categorical / Probabilistic Predictions
- 
- * [Commentary on the use of confusion matrix and AUROC](http://www.fharrell.com/post/mlconfusion/)
- * [What is  the AUC / AUROC?](https://stats.stackexchange.com/questions/132777/what-does-auc-stand-for-and-what-is-it/193333#193333)
- * [Commentary on C-index / AUROC](https://stats.stackexchange.com/questions/1241/what-do-roc-curves-tell-you-that-traditional-inference-wouldnt)
- * [AUROC](https://stats.stackexchange.com/questions/90659/why-is-auc-higher-for-a-classifier-that-is-less-accurate-than-for-one-that-is-mo/90705#90705)
- * [Scoring Rules](https://en.wikipedia.org/wiki/Scoring_rule)
- * [Frank Harrel's Website + links](http://biostat.mc.vanderbilt.edu/wiki/Main/RmS)
- * [Classification vs. Prediction](http://www.fharrell.com/post/classification/)
+
+* [Commentary on the use of confusion matrix and AUROC](http://www.fharrell.com/post/mlconfusion/)
+* [What is  the AUC / AUROC?](https://stats.stackexchange.com/questions/132777/what-does-auc-stand-for-and-what-is-it/193333#193333)
+* [Commentary on C-index / AUROC](https://stats.stackexchange.com/questions/1241/what-do-roc-curves-tell-you-that-traditional-inference-wouldnt)
+* [AUROC](https://stats.stackexchange.com/questions/90659/why-is-auc-higher-for-a-classifier-that-is-less-accurate-than-for-one-that-is-mo/90705#90705)
+* [Scoring Rules](https://en.wikipedia.org/wiki/Scoring_rule)
+* [Frank Harrel's Website + links](http://biostat.mc.vanderbilt.edu/wiki/Main/RmS)
+* [Classification vs. Prediction](http://www.fharrell.com/post/classification/)
 
 ### Sampling and Stability of Estimates
-  
- * [Gridded Data: Sample vs. Population](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html)
- * [Demonstration of sampling density vs. stability of median](http://ncss-tech.github.io/AQP/sharpshootR/sampling-stability-demo.html)
+
+* [Gridded Data: Sample vs. Population](http://ncss-tech.github.io/AQP/sharpshootR/sample-vs-population.html)
+* [Demonstration of sampling density vs. stability of median](http://ncss-tech.github.io/AQP/sharpshootR/sampling-stability-demo.html)
 
 
 

@@ -146,7 +146,7 @@ ms_df %>%
 ## (`geom_line()`).
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-3-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-3-1.png" alt="" width="672" />
 
 ``` r
 # Aggregate by Year, Month, and Julian day (i.e. 1-365, 366 for leap years)
@@ -244,7 +244,15 @@ library(raster)
 ```
 
 ```
+## Warning: package 'raster' was built under R version 4.5.2
+```
+
+```
 ## Loading required package: sp
+```
+
+```
+## Warning: package 'sp' was built under R version 4.5.2
 ```
 
 ```
@@ -337,7 +345,7 @@ ggplot(data, aes(sample = mast)) +
   geom_qq_line()
 ```
 
-<img src="004-linear-models_files/figure-html/qq-plot-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/qq-plot-1.png" alt="" width="672" />
 
 By examining the correlations between some of the predictors we can also determine whether they are *collinear* (e.g. > 0.6). This is common for similar variables such as Landsat bands, terrain derivatives, and climatic variables. Variables that are colinear are redundant and contain no additional information. In addition, collinearity will make it difficult to estimate our regression coefficients. 
 
@@ -347,20 +355,14 @@ vars <- c("mast", "elev", "temp", "precip", "tc_2", "tc_1", "tc_3")
 GGally::ggpairs(data[vars])
 ```
 
-```
-## Registered S3 method overwritten by 'GGally':
-##   method from   
-##   +.gg   ggplot2
-```
-
-<img src="004-linear-models_files/figure-html/unnamed-chunk-8-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-8-1.png" alt="" width="672" />
 
 ``` r
 vars <- c("mast", "slope", "twi", "northness", "solar", "solarcv")
 GGally::ggpairs(data[vars])
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-8-2.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-8-2.png" alt="" width="672" />
 
 The correlation matrices and scatter plots above show that that MAST has moderate correlations with some of the variables, particularly the elevation and the climatic variables. 
 
@@ -394,7 +396,7 @@ ggplot(geodata_l, aes(x = value, fill = source)) +
 ## (`stat_density()`).
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-9-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-9-1.png" alt="" width="672" />
 
 The overlap between our sample and the population appear satisfactory.
 
@@ -441,14 +443,14 @@ par(mfcol = c(2, 2))
 plot(fit_lm)
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-10-1.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-2.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-3.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-4.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-10-1.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-2.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-3.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-4.png" alt="" width="672" />
 
 ``` r
 # partial residuals
 termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-10-5.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-6.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-7.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-8.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-9.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-10.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-11.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-12.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-13.png" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-14.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-10-5.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-6.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-7.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-8.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-9.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-10.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-11.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-12.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-13.png" alt="" width="672" /><img src="004-linear-models_files/figure-html/unnamed-chunk-10-14.png" alt="" width="672" />
 
 Remember the residuals are simply just the observed values minus the predicted values, which are easy enough to calculate. Alternatively we can simply extract them from the fitted model object.
 
@@ -566,12 +568,12 @@ validate(fit_ols, bw = TRUE)
 ```
 
 ```
-##           index.orig training   test optimism index.corrected  n
-## R-square      0.9286   0.9319 0.9154   0.0165          0.9120 40
-## MSE           2.1473   1.8643 2.5430  -0.6787          2.8261 40
-## g             5.6666   5.6236 5.6643  -0.0407          5.7074 40
-## Intercept     0.0000   0.0000 0.1430  -0.1430          0.1430 40
-## Slope         1.0000   1.0000 0.9917   0.0083          0.9917 40
+##           index.orig training   test optimism index.corrected   Lower  Upper  n
+## R-square      0.9286   0.9319 0.9154   0.0165          0.9120  0.8513 0.9702 40
+## MSE           2.1473   1.8643 2.5430  -0.6787          2.8261  1.9117 4.6450 40
+## g             5.6666   5.6236 5.6643  -0.0407          5.7074  4.4042 7.1069 40
+## Intercept     0.0000   0.0000 0.1430  -0.1430          0.1430 -1.5418 1.9954 40
+## Slope         1.0000   1.0000 0.9917   0.0083          0.9917  0.8949 1.0651 40
 ## 
 ## Factors Retained in Backwards Elimination
 ## 
@@ -671,12 +673,18 @@ validate(final_ols, method = "crossvalidation", B = 10)
 ```
 
 ```
-##           index.orig training   test optimism index.corrected  n
-## R-square      0.9209   0.9227 0.7896   0.1331          0.7878 10
-## MSE           2.3332   2.2652 2.7234  -0.4582          2.7914 10
-## g             5.7197   5.6658 5.4657   0.2001          5.5196 10
-## Intercept     0.0000   0.0000 0.8853  -0.8853          0.8853 10
-## Slope         1.0000   1.0000 0.9571   0.0429          0.9571 10
+##           index.orig training   test optimism index.corrected   Lower   Upper
+## R-square      0.9209   0.9227 0.7896   0.1331          0.7878  0.1892  1.1780
+## MSE           2.3332   2.2652 2.7234  -0.4582          2.7914 -0.2562  8.1036
+## g             5.7197   5.6658 5.4657   0.2001          5.5196 -0.5433 14.6908
+## Intercept     0.0000   0.0000 0.8853  -0.8853          0.8853 -6.2797 11.8002
+## Slope         1.0000   1.0000 0.9571   0.0429          0.9571  0.4814  1.2582
+##            n
+## R-square  10
+## MSE       10
+## g         10
+## Intercept 10
+## Slope     10
 ```
 
 ``` r
@@ -722,7 +730,7 @@ ggplot(data, aes(x = pred, y = mast)) +
 ## `geom_smooth()` using formula = 'y ~ x'
 ```
 
-<img src="004-linear-models_files/figure-html/final-model-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/final-model-1.png" alt="" width="672" />
 
 
 
@@ -786,7 +794,7 @@ anova(final_ols)
 plot(anova(final_ols), what = "partial R2")
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-16-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-16-1.png" alt="" width="672" />
 
 Another way to visualize the contribution of each variable is to plot their partial effects, which summarize how much each variable effects the model if we hold all the other variables constant at their median values and vary the variable of interest over it's 25th and 75th percentiles. This is a useful way to compare the impact of each variable side by side in the units of the response variable. In this case we can see below that again `elev` has the biggest impact, with range of approximately -6 to -4.5 degrees. The effect of `solarcv` is smallest compared to the other tasseled cap variables.
 
@@ -796,7 +804,7 @@ Another way to visualize the contribution of each variable is to plot their part
 plot(summary(final_ols))
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-17-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-17-1.png" alt="" width="672" />
 
 The partial effects can also be visualized as regression lines with their confidence intervals, which illustrates the slope of the predictor variables in relation to `mast`. 
 
@@ -809,7 +817,7 @@ ggplot(Predict(final_ols),
        )
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-18-1.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-18-1.png" alt="" width="672" />
 
 ``` r
 # Vary solarcv (North = 23; Flat = 33; South = 55)
@@ -818,7 +826,7 @@ ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
   scale_y_continuous(breaks = c(8, 15, 22))
 ```
 
-<img src="004-linear-models_files/figure-html/unnamed-chunk-18-2.png" width="672" />
+<img src="004-linear-models_files/figure-html/unnamed-chunk-18-2.png" alt="" width="672" />
 
 
 
@@ -842,7 +850,7 @@ names(mast_r) <- c("MAST", "SE")
 
 ``` r
 # mast
-plot(mast_r, col = viridis::viridis(10))
+plot(mast_r, col = hcl.colors(10))
 ```
 
 
