@@ -7,7 +7,7 @@ documentclass: book
 bibliography: [book.bib, packages.bib]
 biblio-style: apalike
 link-citations: yes
-description: "Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::gitbook."
+description: "Web-based course content for Statistics for Soil Survey - Part 1 made with bookdown::bookdown_site"
 ---
 
 ```{r include=FALSE}
@@ -26,13 +26,18 @@ knitr::write_bib(c(
 ```{r include=FALSE}
 # This sets up the whole book defaults for chunk options
 #  - hide messages and warnings
-#  - eval is FALSE by default (if you write code or change it, 
-#                              you have the responsibility to turn it on if needed 
-#                              and verify it does not break book)
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, 
-                      eval = FALSE, class.source = 'codeBlocks',
-                      fig.retina = 3, fig.align = 'center', 
-                      dev = 'png')
+#  - eval is FALSE by default 
+#   - if you write code or change code, you have the responsibility 
+#     to turn evaluation on, if needed, and verify it does not break the book
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  eval = FALSE,
+  class.source = 'codeBlocks',
+  fig.retina = 3,
+  fig.align = 'center',
+  dev = 'png'
+)
 ```
 
 # Pre-course Assignment {.unnumbered}
@@ -45,11 +50,13 @@ Make a local folder `C:\workspace2` to use as a working directory for this cours
 
 ## Configure RStudio
 
+First, before doing any setup or installing packages, make sure you have the latest available version of RStudio and R installed from the Software Center.
+
 Open **RStudio**, and edit the "Global Options" (Main menu: **Tools → Global Options**).
 
 ## Essentials
 
-These options are important for pleasant, reproducible and efficient use of the **RStudio** environment:
+These options are important for reproducible and efficient use of the **RStudio** environment:
 
 1.  **Change** the default working directory to `C:\workspace2` (**R** General Tab)
 
@@ -57,9 +64,7 @@ These options are important for pleasant, reproducible and efficient use of the 
 
 ![Figure 1: Example of RStudio General settings.](static-figures/rstudio_options_general.png)
 
-**RStudio** detects the available **R** installations on your computer.
-
-Individual versions are certified for the Software Center as they become available, and sometimes there is a more recent version available for download. It is worth taking the time *before installing packages* to get the latest version of **R** available to you. This is to minimize compatibility issues which arise over time.
+**RStudio** automatically detects the **R** installations on your computer, and may prompt you to select one. Select the most recent version available.
 
 ## Personalization
 
@@ -73,109 +78,193 @@ Individual versions are certified for the Software Center as they become availab
 
 -   Optional: Use **RStudio** Projects (top-right corner) to manage working directories
 
-<!-- ## Install .RProfile -->
-
-<!-- The code you run next will establish a *safe* location for your **R** package library.  -->
-
-<!-- Your package library should ideally be on a local disk with about 1 - 2 GB of free space.  -->
-
-<!-- We want to prevent installs to `~` (your `$HOME` directory) which is typically on a network share (such as `H:/`), not a local disk.  -->
-
-<!-- **Copy** the following code in the box below and **paste** into the **R** console panel after the command prompt (`>`) and press **enter**.  -->
-
-<!-- _Hint: the **R** console is the lower left or left window in RStudio with a tab labeled "Console"._ -->
-
-<!-- ```{r, eval=FALSE} -->
-
-<!-- source('https://raw.githubusercontent.com/ncss-tech/soilReports/master/R/installRprofile.R') -->
-
-<!-- installRprofile(overwrite=TRUE) -->
-
-<!-- ``` -->
-
-<!-- An updated set of library paths will be printed. Close and re-open **RStudio**, or Restart **R** (Main menu: **Session &rarr; Restart R**; or **Ctrl+Shift+F10**), before continuing to the next steps. -->
-
-<!-- ![Figure 3: Example of RStudio Console - the R library paths are on a local drive "C:/"](static-figures/rconsole.png)   -->
-
-<!-- When your `.Rprofile` is set up correctly you will see output in a new **R** console/session confirming your _library paths_ are: -->
-
-<!--   1) on a local drive (such as `C:/`) -->
-
-<!-- 2) specific to the version number of **R** installed (such as `4.0`) -->
-
 ## Install Required Packages
 
-Packages can be installed by name from the Comprehensive **R** Archive Network (CRAN) using the base **R** function `install.packages()`. There are a lot of packages out there--many more than you will download here, and many of which are useful for Soil Survey work.
+Packages can be installed by name from the Comprehensive **R** Archive Network (CRAN) using the base **R** function `install.packages()`. 
 
-The first time you install packages, **R** may ask you if you want to create a local package library. You need to do this because we cannot write to system folders as non-administrator users on CCE machines. The default location for R package library on Windows is: `C:\Users\<User.Name>\AppData\Local\R\win-library\<X.X>` where `<User.Name>` is the current Windows user name and `<X.X>` is the version of R packages are being installed for.
+There are a lot of packages out there.
 
-If you have an existing R package library (for same minor version of R), you can copy that library into the `AppData\Local\R` folder as needed.
+The first time you install packages, **R** will ask you if you want to create a local package library. You need to do this we usually do not have administrator priveliges on government furnished equipment. 
 
-For example, to download and install the `remotes` package from CRAN:
+The default location for R package library on Windows is: `C:\Users\<User.Name>\AppData\Local\R\win-library\<X.X>` where `<User.Name>` is the your Windows user name and `<X.X>` is the minor version of R packages are being installed for. There is no need to change this default. But you want to be sure your package library is not on any sort of network share or Cloud-synced folder (OneDrive, Box, etc.) as this, at best, slows things down, and at worst causes difficult to debug problems with accessing files.
+
+For a first example of installing a package, we will get the `remotes` package from CRAN. Copy all of the code from the box below and paste into the **R** console window. Paste after the command prompt (`>`) and press **enter**. 
 
 ```{r, eval=FALSE}
 install.packages("remotes")
 ```
 
-To install the **R** packages used in this class copy all of the code from the box below and paste into the **R** console window. Paste after the command prompt (`>`) and press **enter**.
-
-Downloading and configuring the packages will take a while if you are installing or upgrading all of the packages in the list below.
-
-On particularly slow network connections, i.e. over VPN or USDA network in general, it may be necessary to increase the "timeout" option to ensure the downloads have sufficient time to complete.
+On particularly slow network connections, i.e. over VPN or USDA network in general, it may be necessary to increase the "timeout" option to ensure that downloads have sufficient time to complete. To do that, you can use the `options()` function to set the `timeout` option. Run the following code in the console:
 
 ```{r, eval = FALSE}
 # increase default timeout from 1 minute to 5 minutes (for current session only)
 options(timeout = 300)
 ```
 
-We will use the [`pak` package](https://pak.r-lib.org/) for easy and efficient package installation and updates to the suite of packages needed for the book ([Part 1](https://ncss-tech.github.io/stats_for_soil_survey/book/index.html) and [Part 2](https://ncss-tech.github.io/stats_for_soil_survey/book2/index.html)) and exercises .
+We will use the [`pak` package](https://pak.r-lib.org/) for easy and efficient package installation for the packages needed for the book ([Part 1](https://ncss-tech.github.io/stats_for_soil_survey/book/index.html) and [Part 2](https://ncss-tech.github.io/stats_for_soil_survey/book2/index.html)) and exercises.
 
 ```{r, eval = FALSE}
 if (!requireNamespace("pak")) {
   install.packages("pak")
 }
 
-## character vector of package names
-packages <- c(
-    # soil
-    "aqp", "soilDB", "sharpshootR", "soiltexture", "SoilTaxonomy",
-    # gis
-    "raster", "sp", "sf", "terra", "gdalUtilities", "rmapshaper",
-    "rgrass", "RSAGA", "exactextractr", "fasterize", "RANN",
-    # data management
-    "dplyr", "tidyr", "devtools", "roxygen2", "Hmisc", "circular", "DT", "remotes", "DescTools", "dendextend", 
-    # databases
-    "DBI", "odbc", "RSQLite",
-    # graphics
-    "ggplot2", "latticeExtra", "tactile", "maps", "spData", "tmap", "kableExtra", "corrplot", "farver",
-    "mapview", "ggmap", "ggspatial", "plotrix", "rpart.plot", "visreg", "diagram", "GGally", "igraph",
-    # modeling
-    "car", "rms", "randomForest", "ranger", "party", "ROCR", "survey",
-    "caret", "vegan", "ape", "shape", "modEvA", "gower", "MBESS", "yardstick",
-    # sampling
-    "clhs", "spcosa", "sgsR"
+library(pak)
+  
+packages <- list(
+  
+  # Soil-specific packages
+  soil_packages = c(
+    "aqp",           # Algorithms for Quantitative Pedology
+    "soilDB",        # Soil Database Access
+    "sharpshootR",   # Soil mapping and analysis tools
+    "soiltexture",   # Soil texture analysis and texture triangle plots
+    "SoilTaxonomy"   # Soil Taxonomy classification system utilities
+  ),
+  
+  # GIS and Spatial Analysis Packages
+  gis_packages = c(
+    # Spatial data handling
+    "sf",            # Simple Features (vector geometry)
+    "terra",         # Spatial (raster and vector) data handling
+    "gdalUtilities", # GDAL utilities
+    "rmapshaper",    # Topological polygon simplification
+    
+    # Spatial Analysis Tools
+    "exactextractr", # Zonal statistics
+    "RANN"           # Nearest neighbor search
+  ),
+  
+  # Data Management and Manipulation Packages
+  data_management_packages = c(
+    # Data manipulation
+    "dplyr",         # Data manipulation
+    "tidyr",         # Data tidying
+    
+    # Package development
+    "devtools",      # Package development
+    "roxygen2",      # Documentation generation
+    
+    # Utility packages
+    "Hmisc",         # Miscellaneous high-level functions
+    "circular",      # Circular statistics
+    "DT",            # Interactive data tables
+    "remotes",       # Package installation
+    "DescTools",     # Descriptive statistics
+    "dendextend"     # Dendrogram extensions
+  ),
+  
+  # Database Packages
+  database_packages = c(
+    "DBI",           # Database interface
+    "odbc",          # ODBC database connection
+    "RSQLite"        # SQLite database
+  ),
+  
+  # Visualization and Graphics Packages
+  graphics_packages = c(
+    # Plotting libraries
+    "ggplot2",       # Modern graphic visualization
+    "lattice",       # Legacy graphical visualization
+    "latticeExtra",  # Extended lattice graphics
+    "tactile",       # Additional lattice graph themes
+    
+    # Mapping packages
+    "spData",        # Spatial datasets
+    "tmap",          # Thematic maps
+    "mapview",       # Interactive maps (quick visualization)
+    "leaflet",       # Interactive maps (high-level interface to Leaflet.js)
+    "ggmap",         # Base maps from online services with ggplot2
+    "ggspatial",     # Spatial annotations for ggplot2 and sf workflows
+    
+    # Additional visualization tools
+    "kableExtra",    # Table formatting
+    "corrplot",      # Correlation plots
+    "rpart.plot",    # Decision tree plotting
+    "visreg",        # Visualization of regression models
+    "diagram",       # Flow diagrams
+    "GGally",        # Extended ggplot2 functionality
+    "igraph"         # Network visualization
+  ),
+  
+  # Modeling Packages
+  modeling_packages = c(
+    # Statistical modeling
+    "car",           # Companion to Applied Regression
+    "rms",           # Regression modeling strategies
+    
+    # Machine Learning
+    "randomForest",  # Random forest algorithm
+    "ranger",        # Fast random forest implementation
+    "party",         # Conditional inference trees
+    "ROCR",          # ROC analysis
+    "survey",        # Complex survey analysis
+    "caret",         # Machine learning workflow
+    
+    # Ecological and Multivariate Analysis
+    "vegan",         # Ecological community analysis
+    "ape",           # Phylogenetic analysis
+    "shape",         # Shape analysis
+    "modEvA",        # Model evaluation
+    "gower",         # Gower distance
+    "MBESS",         # Mediation and moderation
+    "yardstick"      # Model performance metrics
+  ),
+  
+  # Sampling Packages
+  sampling_packages = c(
+    "clhs",          # Conditioned Latin Hypercube Sampling
+    "spcosa",        # Spatial coverage sampling
+    "sgsR"           # Spatial grid sampling
+  ),
+  
+  # Other utilities
+  utility_packages = c(
+    # Report Generation
+    "knitr",         # Dynamic report generation in R using Literate Programming
+    "rmarkdown",     # Render R Markdown (.Rmd) documents
+    
+    # Package management
+    "remotes",       # Installation of packages from GitHub
+    "pak"            # Easy package installation and dependency management
   )
+)
 
-pak::pkg_install(packages, dependencies = TRUE)
+# Install packages
+pak::pkg_install(unlist(packages))
 ```
 
-The `ipkCRAN` function will let you know if any of the above packages fail to install.
+```{r, include=FALSE, eval=FALSE}
+# helper for updating stats_for_soil_survey package DESCRIPTION file
+cat(sort(unlist(packages)), sep = ",\n\t")
+```
 
-Whenever you run some code *always* check the console output for warnings and errors before continuing. It may be easiest to send commands *individually* to learn about and inspect their output, rather than running the entire file and wondering where an error occurred.
+`pak` will resolve the dependencies of the above packages, then you will need to enter `Y` (yes) in the console to proceed with installation.
 
-## Dealing With Errors
+The `pkg_install()` function will let you know if anything fails to install or other errors occur.
+Here's a streamlined and more concise version:
 
-If a lot of output is produced by a command you should scroll up and sift through it as best you can. Copy and paste parts of the error message to use in internet searches, and try to find cases where folks have encountered problems.
+## Dealing with Errors in R
 
-### No output is produced after pasting into console
+### Best Practices
 
-If you do not have a new command prompt (`>`) and a blinking cursor on the left hand side of your console, but instead see a `+` after you run a command, **R** may think you are still in the middle of submitting input to the "read-eval-print-loop" (REPL).
+- Always check the console output for warnings and errors before proceeding.
+- When working with unfamiliar code, run commands individually and carefully inspect the output.
+- Avoid running entire files at once, as this can make error identification difficult.
 
-If this is not expected you are possibly missing closing quotes, braces, brackets or parentheses. **R** needs to know you were done with your expression, so you may need to supply some input to get the command to be complete.
+### Common Error Scenarios
 
-Pasting code line-by-line is useful but prone to input errors with multiline expressions. Alternately, you can run commands or an entire file using the GUI or keyboard shortcuts such as **Ctrl+Enter**. You have a chance to try this in the example at the end.
+#### Incomplete Command Indicator
 
-### `‘SOMEPACKAGE’ is not available (for R version X.Y.Z)`
+If you see a `+` instead of the standard `>` command prompt, R is waiting for you to complete an expression. This typically means you're missing (or have mismatched) quotes (`"` or `'`), braces (`{`), brackets (`[`), or parentheses (`(`).
+
+#### Troubleshooting Tips
+
+- Scroll through console output to identify error details
+- Copy and paste error messages into web searches
+- Use keyboard shortcuts like **Ctrl+Enter** to run code sections
+- When possible, run code line-by-line to minimize input errors
+
+#### `install.packages()`: `‘SOMEPACKAGE’ is not available (for R version X.Y.Z)`
 
 This means *either*:
 
@@ -187,23 +276,19 @@ You can try again, but first check for spelling and case-sensitivity. When in do
 
 Note that not all **R** packages are available on CRAN: there are many other ways that you can deliver packages (including GitHub described below).
 
-## Packages not on CRAN
+## Packages from Other Repositories.
 
-Some R packages rely on compiled code. Windows users are limited to installing "binary" versions of such packages from CRAN unless they have "Rtools" installed. The Rtools software is available from the Software Center, and is specific to the version of R you have.
+Some R packages rely on compiled code. Windows users are limited to installing "binary" versions of such packages from CRAN unless they have Rtools installed. The Rtools software is available from the Software Center, and it is specific to the version of R you have.
 
 One way to get the latest binary builds of R packages that use compiled code is by using <https://r-universe.dev>. This website provides custom repositories that can be used in addition to the defaults in `install.packages()`
 
-For example, you can install raster-related "rspatial" packages from r-universe.dev. This may not be "required" but it is good to know how to specify an alternate package repository source using the `repos=` argument. Check with your mentor to see if there are known issues with current CRAN packages.
+For example, you can install  "rspatial" package `terra` from r-universe.dev by setting an alternate package repository with the `repos=` argument.
 
 ```{r, eval=FALSE}
-install.packages(c('terra', 'raster'), repos='https://rspatial.r-universe.dev')
+install.packages('terra', repos='https://rspatial.r-universe.dev')
 ```
 
-To install the latest version of packages from the Algorithms for Quantitative Pedology (AQP) suite off GitHub we use the `remotes` package.
-
-The AQP packages are updated much more frequently on GitHub than they are on CRAN.
-
-Generally, the CRAN versions (installed above) are the "stable" releases whereas the GitHub repositories have new features and bug fixes.
+To install the latest version of ncss-tech (packages contributed by USDA-NRCS SPSD staff and NCSS cooperators) off GitHub we will often use the `remotes` package.
 
 ```{r, eval=FALSE}
 remotes::install_github("ncss-tech/aqp", dependencies=FALSE, upgrade=FALSE, build=FALSE)
@@ -212,11 +297,19 @@ remotes::install_github("ncss-tech/sharpshootR", dependencies=FALSE, upgrade=FAL
 remotes::install_github("ncss-tech/soilReports", dependencies=FALSE, upgrade=FALSE, build=FALSE)
 ```
 
+Generally, the CRAN versions (installed above) are the "stable" releases whereas the GitHub repositories are development versions with new features and bug fixes.
+
+You can also get builds of these development packages using `install.packages(..., repos="https://ncss-tech.r-universe.dev")`. These may not be updated immediately after changes are pushed to GitHub, but should be available within a day of any updates.
+
 ## Install NASIS 
 
-If you do not have NASIS installed you will not be able to complete the next steps. For USDA staff NASIS can be installed from the Software Center. Search `"NASIS"` and you should find two applications. First you must install "Microsoft SQL Server Express for the NASIS Client", then restart your computer, and then install the "NASIS Client". 
+If you do not have NASIS installed you will not be able to complete the next steps. 
 
-If you do not have access to the Software Center, or cannot find NASIS, it can be installed by OCIO staff by submitting an IT support ticket for "Install / Uninstall Software". If you are not a USDA employee you can find additional information on NASIS installation here: https://new.cloudvault.usda.gov/index.php/s/xFTJabHiT45WDom
+For USDA staff NASIS can be installed from the Software Center. Search `"NASIS"` and you should find two applications. First, you must install "Microsoft SQL Server Express 2016 for NASIS Client", then restart your computer, and then install the "NASIS Client". 
+
+If you do not have access to the Software Center, or cannot find NASIS, it can be installed by OCIO staff by submitting an IT support ticket for "Install / Uninstall Software". 
+
+If you are not a USDA employee you can find additional information on NASIS installation here: https://new.cloudvault.usda.gov/index.php/s/xFTJabHiT45WDom
 
 More information on installing and initializing your NASIS client for the first time can be found in the training materials for NASIS 1010 (Basic NASIS) course: https://ncss-tech.github.io/nasis_training/content/pre-course.html
 
@@ -224,11 +317,13 @@ More information on installing and initializing your NASIS client for the first 
 
 Establish an ODBC connection to NASIS by following the directions at the following hyperlink ([ODBC Connection to NASIS](http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html)).
 
-Once you've successfully established a ODBC connection, prove it by loading your NASIS selected set with the site and pedon tables for any pedons from your local area. You only need a few pedons at a minimum for this demo -- too many (say, \>20) will make the example profile plot cluttered.
+Once you've successfully established the ODBC connection, you will "prove" it by loading your NASIS selected set with the site and pedon tables for any pedons from your local area.
 
--   Paste the below code at the command prompt (`>`) and press **enter**, as you did above.
+You only need a few pedons for this demo too many (\>20) will make the example profile plot cluttered.
 
--   Or create a new **R** script (Main menu: **File → New File → R Script**) and paste code into the "Source" pane (script editor window). Then, click the **Run** button in the top-right corner of the Script Editor or use **Ctrl+Enter** to run code at the cursor location / any selected code. This will execute the code in the Console.
+-   Paste the code below in the console (after the `>`) and press **enter**, as you did above.
+
+-   Alternately, you can create a new **R** script (Main menu: **File → New File → R Script**) and paste code into the new tab in the "Source" pane (script editor window). Then,  you can click the **Run** button in the top-right corner of the Script Editor or use **Ctrl+Enter** to run code at the cursor location or any selected code. This will send the code to the console and run it.
 
 Submit the resulting plot to your mentor (from "Plot" pane (bottom-right): **Export → Save as PDF...**)
 
@@ -253,11 +348,9 @@ plot(test, label='upedonid')
 ```
 
 ## Proof
-
-Follow the one line example below, copy the output, and submit the results to your mentor. This will help us to verify that all of the required packages have been installed.
+Copy the output from the `sessionInfo()` command and submit the results to your mentor. This will help us to verify that all of the required packages have been installed.
 
 ```{r, eval=FALSE}
-# dump list of packages that are loaded into the current session
 sessionInfo()
 ```
 
