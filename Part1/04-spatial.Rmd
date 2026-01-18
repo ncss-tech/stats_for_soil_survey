@@ -30,14 +30,8 @@ library(soilDB)
 # "Simple Feature" (vector) data structures 
 library(sf)
 
-# superseded by sf -- spatial object classes e.g. SpatialPoints/SpatialPolygons
-library(sp)
-
 # gridded data management / analysis
 library(terra)
-
-# superseded by terra
-# library(raster)
 
 # interactive maps with leaflet
 library(mapview)
@@ -45,13 +39,13 @@ library(mapview)
 
 There are [many packages](https://cran.r-project.org/web/views/Spatial.html) available for working with spatial data, however we only have time to cover introducing a few common libraries.
 
-A couple resources are linked here for 5 packages that provide different ways displaying spatial data graphically:
+Below is a list of external resources for for 5 packages that provide different ways displaying spatial data graphically:
 
 -   [`tmap`](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
--   [`ggplot2`](https://ggplot2.tidyverse.org/), [`ggmap`](https://github.com/dkahle/ggmap)\
+-   [`ggplot2`](https://ggplot2.tidyverse.org/), [`ggmap`](https://cran.r-project.org/package=ggmap), [`ggspatial`](https://paleolimbot.github.io/ggspatial/)
+-   [`leaflet`](https://rstudio.github.io/leaflet/)
 -   [`mapview`](https://r-spatial.github.io/mapview/)
 -   [`mapdeck`](https://symbolixau.github.io/mapdeck/articles/mapdeck.html)
--   [`leaflet`](https://rstudio.github.io/leaflet/)
 
 ## Making Maps with R
 
@@ -67,19 +61,19 @@ An excellent resource for making maps with R is the chapter in "Geocomputation w
 
 Spatial data sources: "raster" and "vector"
 
--   Raster data sources (grids/images): GeoTIFF, ERDAS, BIL, ASCII grid, WMS, ...
--   Vector data sources (points/lines/polygons): Shape File, ESRI File Geodatabase, KML, GeoJSON, GML, WFS, ...
+-   [Raster data sources](https://gdal.org/en/stable/drivers/raster/index.html) (grids/images); e.g. GeoTIFF, ERDAS, BIL, ASCII grid, WMS
+-   [Vector data sources](https://gdal.org/en/stable/drivers/vector/index.html) (points/lines/polygons); e.g. GeoPackage, Shapefile, ESRI File Geodatabase, KML, GeoJSON, GML, WFS
 
-Conventional data sources that can be *upgraded* to be spatial data because they contain [GeoJSON](http://geojson.org/), [WKT](https://en.wikipedia.org/wiki/Well-known_text), or point coordinates include:
+Data sources that can be *upgraded* to be spatial data because they contain [GeoJSON](http://geojson.org/), [WKT](https://en.wikipedia.org/wiki/Well-known_text), or other coordinate formats include:
 
 -   NASIS/LIMS reports
 -   Web pages and Web Services
 -   Excel and CSV files
 -   Photo EXIF information
 
-Here are some R-based interfaces to NCSS data sources via [`soilDB`](https://cran.r-project.org/web/packages/soilDB/index.html) package.
+Here are some R-based interfaces to NCSS data sources via [`soilDB`](https://cran.r-project.org/package=soilDB) package.
 
--   Functions that return *tabular data* contain longitude, latitude coordinates:
+-   Functions that return *tabular data* with longitude, latitude coordinates:
 
     -   [`fetchNASIS()`](http://ncss-tech.github.io/AQP/soilDB/fetchNASIS-mini-tutorial.html): NASIS "site" data 
 
@@ -87,7 +81,7 @@ Here are some R-based interfaces to NCSS data sources via [`soilDB`](https://cra
 
     -   [`fetchKSSL()`](http://ncss-tech.github.io/AQP/soilDB/KSSL-demo.html): KSSL "site" data from SoilWeb 
 
--   Functions that *return* spatial data:
+-   Functions that return *spatial data*:
 
     -   [`fetchSDA_spatial()`](http://ncss-tech.github.io/soilDB/reference/fetchSDA_spatial.html): polygon, bounding box and centroid data from SSURGO, STATSGO and the `sapolygon` (Soil Survey Area Polygon) from Soil Data Access (SDA)
 
@@ -103,7 +97,7 @@ Here are some R-based interfaces to NCSS data sources via [`soilDB`](https://cra
 
 ## Viewing Pedon Locations
 
-In this section we will introduce the `sf` package with `mapview`.
+In this section we will introduce the `sf` package and interactive maps with `mapview`.
 
 ### Plotting Geographic Data
 
@@ -134,8 +128,8 @@ data("gopheridge", package = "soilDB")
 # st_as_sf(): convert data.frame to spatial simple features, with points in $geometry 
 # st_crs(): set EPSG:4326 Coordinate Reference System (CRS) as Well-Known Text (WKT)
 gopher.locations <- st_as_sf(
-  site(gopheridge), 
-  coords = c('longstddecimaldegrees','latstddecimaldegrees'),
+  site(gopheridge),
+  coords = c('longstddecimaldegrees', 'latstddecimaldegrees'),
   crs = st_crs(4326)
 )
 
@@ -189,8 +183,8 @@ pedon.locations <- sf::st_as_sf(
 ```{r, eval=FALSE, include=FALSE, echo=FALSE}
 # answer 
 pedon.locations <- sf::st_as_sf(
-  aqp::site(pedons.sp), 
-  coords = c('longstddecimaldegrees','latstddecimaldegrees'),
+  aqp::site(pedons.sp),
+  coords = c('longstddecimaldegrees', 'latstddecimaldegrees'),
   crs = sf::st_crs(4326) #WGS84 GCS
 )
 ```
@@ -207,10 +201,12 @@ mapview(pedon.locations,
 
 ```{r, eval=FALSE, include=FALSE, echo=FALSE}
 # answer 
-mapview(pedon.locations, 
-        legend = FALSE, 
-        map.types = 'Esri.WorldImagery',
-        label = pedon.locations$site_id)
+mapview(
+  pedon.locations,
+  legend = FALSE,
+  map.types = 'Esri.WorldImagery',
+  label = pedon.locations$site_id
+)
 ```
 
 5.  Create a subset `sf` data.frame with only the following "site data" columns: `pedlabsampnum`, `upedonid`, `taxonname`, `hillslopeprof`, `elev_field`, `slope_field`, `aspect_field`, `plantassocnm`, `bedrckdepth`, `bedrckkind`, `pmkind`, `pmorigin`. Select the target columns with `dplyr::select()` (or another method) by replacing the `...` in the following code.
@@ -298,11 +294,19 @@ sf::st_write(x, dsn = 'E:/gis_data/ca630/pedon_locations.shp')
 sf::write_sf(x, dsn = 'E:/gis_data/ca630/pedon_locations.shp')
 ```
 
+The `sf` `st_read()` / `read_sf()` / `st_write()` / `write_sf()` functions have many arguments, so it is worth spending some time reviewing the associated manual pages.
+
 #### `sp`
 
-Export object `x` to shapefile using the `sf` syntax. `rgdal` is no longer available on CRAN.
+For some workflows based on older packages in the R ecosystem, it may be necessary to convert `sf` objects to [`sp` package](https://cran.r-project.org/package=sp) objects. 
 
-The `sf` `st_read()` / `read_sf()` / `st_write()` / `write_sf()` functions have many arguments, so it is worth spending some time reviewing the associated manual pages.
+There is a simple conversion function for this in `sf`. For the single `sf` data.frame object class there are several corresponding `sp` classes depending on geometry type and whether they have an attribute table. All the `sp` class names start with the word "Spatial" e.g. "SpatialPolygonsDataFrame" has polygon geometry with associated attributes, whereas "SpatialPoints" has point geometry with no attributes.
+
+```{r, eval=FALSE}
+sf::as_Spatial(x)
+```
+
+In general you should avoid using the `sp` package classes and functions in new work, but you may encounter packages or workflows that require you to convert between them.
 
 ### Interactive mapping with `mapview` and `leaflet`
 
@@ -434,25 +438,25 @@ lines(p, v)
 
 The R object only stores a reference to the data until they are needed to be loaded into memory. This allows for internal raster manipulation algorithms to intelligently deal with very large grids that may not fit in memory.
 
-#### Other approaches to raster data
+<!-- #### Other approaches to raster data -->
 
-##### `raster`
+<!-- ##### `raster` -->
 
-A more complete background on the capabilities of the `raster` package, and the replacement [`terra`](https://rspatial.org/terra/index.html), are described in the [*Spatial Data Science with R*](http://rspatial.org/) online book.
+<!-- A more complete background on the capabilities of the `raster` package, and the replacement [`terra`](https://rspatial.org/terra/index.html), are described in the [*Spatial Data Science with R*](http://rspatial.org/) online book. -->
 
-```{r, eval = TRUE}
-# convert r to a RasterLayer object
-r2 <- raster::raster(f)
+<!-- ```{r, eval = TRUE} -->
+<!-- # convert r to a RasterLayer object -->
+<!-- r2 <- raster::raster(f) -->
 
-# show RasterLayer details
-print(r2) 
-```
+<!-- # show RasterLayer details -->
+<!-- print(r2)  -->
+<!-- ``` -->
 
-[*Introduction to the raster package*](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf) vignette
+<!-- [*Introduction to the raster package*](https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf) vignette -->
 
-##### `stars`
+<!-- ##### `stars` -->
 
-There is also a package called [`stars`](https://r-spatial.github.io/stars/) (Spatiotemporal Arrays: Raster and Vector Datacubes) that is the `sf`-centric way of dealing with higher dimensional raster and vector "datacubes." Data cubes have additional dimensions related to time, spectral band, or sensor type. The `stars` data structures are often used for processing spectral data sources from satellites.
+<!-- There is also a package called [`stars`](https://r-spatial.github.io/stars/) (Spatiotemporal Arrays: Raster and Vector Datacubes) that is the `sf`-centric way of dealing with higher dimensional raster and vector "datacubes." Data cubes have additional dimensions related to time, spectral band, or sensor type. The `stars` data structures are often used for processing spectral data sources from satellites. -->
 
 #### Related Links
 
@@ -460,15 +464,34 @@ There is also a package called [`stars`](https://r-spatial.github.io/stars/) (Sp
 -   [rspatial.org - Spatial Data Science with R](https://rspatial.org/)
 -   [Goodbye PROJ.4 strings! How to specify a coordinate reference system in R?](https://inbo.github.io/tutorials/tutorials/spatial_crs_coding/)
 
+### Converting Vector to Vector
+
+For a simple way to get a bounding box polygon from an existing SpatVector, use:
+
+```r
+as.polygons(x, extent=TRUE)
+```
+
+You can also use `as.points()` or `as.lines()` on an existing polygon SpatVector to decompose geometries into their constituent points and lines. 
+
+
 ### Converting Vector to Raster
 
 #### [`terra::rasterize()`](https://rspatial.github.io/terra/reference/rasterize.html)
 
-#### [`fasterize::fasterize()`](https://cran.r-project.org/web/packages/fasterize/vignettes/using-fasterize.html)
+Use `terra::rasterize()` to transfer values associated with the geometries of vector data to a raster.
 
 ### Converting Raster to Vector
 
 #### [`terra::as.polygons()`](https://rspatial.github.io/terra/reference/as.polygons.html)
+
+Use `terra::as.polygons()` to convert SpatRaster, SpatVector, or SpatExtent to a SpatVector of polygons. 
+
+To convert rasters to polygons, use `as.polygons()` on the SpatRaster object. The default behavior (`values=TRUE`) will transfer the cell values to the attribute table of the resulting polygons. 
+
+For most rasters it will be necessary to do additional processing to create clean-looking geometries. There are many possible approaches for this that generally outside the scope of this class, but the packages discussed in this chapter provide a set of core infrastructure that can be used for high-level workflows like raster to polygon conversion, smoothing lines, etc.
+
+One simple way to decrease blockiness and "stair-stepping" in the resulting polygons is to disaggregate the raster (e.g. with `terra::disagg()`) to create a finer resolution grid before converting to vector. 
 
 ## Coordinate Reference Systems (CRS)
 
@@ -476,9 +499,11 @@ Spatial data aren't all that useful without an accurate description of the Coord
 
 Without a CRS it is not possible to perform coordinate transformations (e.g. conversion of geographic coordinates to projected coordinates), spatial overlay (e.g. intersection), or geometric calculations (e.g. distance or area).
 
-The "old" way (PROJ.4) of specifying coordinate reference systems is using character strings containing, for example: `+proj` or `+init` arguments. In general, this still "works," so you may encounter it and need to know about it. But you also may encounter cases where CRS are specified using integers, strings of the form `authority:code`, or well-known text (WKT).
+<!-- The "old" way (PROJ.4) of specifying coordinate reference systems is using character strings containing, for example: `+proj` or `+init` arguments. In general, this still "works," so you may encounter it and need to know about it. -->
 
-Some common examples of coordinate system "EPSG" codes and their legacy "PROJ.4" strings. 4
+There are many ways to specify a CRS, several of which are common in **R**, such as: using integers, strings of the form `authority:code`, or well-known text (WKT).
+
+Some common examples of coordinate system "EPSG" codes and their legacy "PROJ.4" strings.
 
 -   "EPSG" stands for European Petroleum Survey Group. The "EPSG Geodetic Parameter Dataset" is a public registry of geodetic datums, spatial reference systems, Earth ellipsoids, coordinate transformations and related units of measurement.
 
@@ -486,25 +511,23 @@ Some common examples of coordinate system "EPSG" codes and their legacy "PROJ.4"
 
 -   "PROJ" is the software responsible for transforming coordinates from one CRS to another. The current version of PROJ available is 9, and in PROJ \> 6 major changes were made to the way that coordinate reference systems are defined and transformed led to the "PROJ.4" syntax falling out of favor.
 
--   *EPSG*: [`4326`](https://epsg.io/4326) / *PROJ.4*:`+proj=longlat +datum=WGS84` - geographic, WGS84 datum (NASIS Standard)
+-   *EPSG*: [`4326`](https://epsg.io/4326) - geographic, WGS84 datum (NASIS Standard)
 
 -   *OGC*:[`CRS84`](http://defs.opengis.net/vocprez/object?uri=http://www.opengis.net/def/ogc/CRS84) - geographic, WGS84 datum (same as above but explicit longitude, latitude XY order)
 
--   *EPSG*: [`4269`](https://epsg.io/4269) / *PROJ.4*:`+proj=longlat +datum=NAD83` - geographic, NAD83 datum
+-   *EPSG*: [`4269`](https://epsg.io/4269) - geographic, NAD83 datum
 
--   *EPSG*: [`4267`](https://epsg.io/4267) / *PROJ.4*:`+proj=longlat +datum=NAD27` - geographic, NAD27 datum
+-   *EPSG*: [`4267`](https://epsg.io/4267) - geographic, NAD27 datum
 
--   *EPSG*: [`26910`](https://epsg.io/26910) / *PROJ.4*:`+proj=utm +zone=10 +datum=NAD83` - projected (UTM zone 10), NAD83 datum
+-   *EPSG*: [`26910`](https://epsg.io/26910) - projected (UTM zone 10), NAD83 datum
 
--   *EPSG*: [`5070`](https://epsg.io/5070) / *PROJ.4*: `+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23.0 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs` - Albers Equal Area CONUS (gSSURGO)
+-   *EPSG*: [`5070`](https://epsg.io/5070) - Albers Equal Area CONUS (gSSURGO)
 
 -   More on the EPSG codes and specifics of CRS definitions:
 
     -   <https://spatialreference.org/ref/epsg/>
 
     -   <https://epsg.io/>
-
-While you may encounter PROJ.4 strings, these are no longer considered the preferred method of referencing Coordinate Reference Systems -- and, in general, newer methods are "easier."
 
 Well-known text (WKT) is a human- machine-readable standard format for geometry, so storing the Coordinate Reference System information in a similar format makes sense. This format is returned by the `sf::st_crs()` method.
 
@@ -514,13 +537,14 @@ For example: the WKT representation of `EPSG:4326`:
 st_crs(4326)
 ```
 
-This is using the [OGC WKT CRS standard](https://www.ogc.org/standards/wkt-crs). Adoption of this standard caused some significant changes in packages in the R ecosystem.
+This is using the [OGC WKT CRS standard](https://www.ogc.org/standards/wkt-crs).
 
-So you can get familiar, what follows are several examples of doing the same thing: setting the CRS of spatial objects with WGS84 longitude/latitude geographic coordinates. If you have another target coordinate system, it is just a matter of using the correct codes to identify it.
 
 ### Assigning and Transforming Coordinate Systems
 
-Returning to the example from above, lets **assign** a CRS to our series extent `s` using different methods.
+This section gives examples of setting the CRS of spatial objects with WGS84 longitude/latitude geographic coordinates. If you have another target coordinate system, it is just a matter of using the correct codes to identify it.
+
+Returning to the example from above, lets **assign** a CRS to our series extent `s` using different methods. Assigning a CRS does not transform or reproject the coordinates, it simply sets the metadata for the object.
 
 ```{r, eval=TRUE}
 s <- seriesExtent('san joaquin')
@@ -548,31 +572,6 @@ s.utm <- st_transform(x = s, crs = 26910)
 
 # transform to GCS NAD27
 s.nad27 <- st_transform(x = s, crs = st_crs(4267))
-```
-
-#### `sp`
-
-You can do the same thing several different ways with `sp` objects. An equivalent EPSG, OGC and PROJ.4 can be set or get using `proj4string<-`/`proj4string` and either a `sp` `CRS` object or a PROJ.4 string for `Spatial` objects.
-
-```{r, eval=TRUE}
-# s is an sf object (we converted it), convert back to Spatial* object
-s.sp <- sf::as_Spatial(s) 
-
-# these all create the same internal sp::CRS object
-proj4string(s.sp) <- sp::CRS('EPSG:4326')          # proj >6; EPSG
-proj4string(s.sp) <- sp::CRS('OGC:CRS84')          # proj >6; OGC
-proj4string(s.sp) <- '+init=epsg:4326'             # proj 4 style +init string (deprecated)
-proj4string(s.sp) <- '+proj=longlat +datum=WGS84'  # proj 4 style +proj string
-```
-
-Here, we do the same transformations we did above only using `sp::spTransform()`.
-
-```{r, eval=TRUE}
-# transform to UTM zone 10
-s.utm <- spTransform(s.sp, CRS('+proj=utm +zone=10 +datum=NAD83'))
-
-# transform to GCS NAD27
-s.nad27 <- spTransform(s.sp, CRS('+proj=longlat +datum=NAD27'))
 ```
 
 #### `terra` and `raster`
