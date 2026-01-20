@@ -26,7 +26,7 @@ library(dplyr)
 ```
 
 
-## Objectives
+# Objectives
 
 * Review methods for estimating Low, RV, and High values
 * Review different methods for visualing soil data
@@ -85,30 +85,89 @@ knitr::kable(desc)
 # Example ----
 # Create a 4 square polygon
 n <- 2
-bb <- st_make_grid(st_bbox(c(xmin = 0, xmax = n, ymin = 0, ymax = n)), n = n)
-grd <- st_as_sf(bb)
-grd$ID <- 1:length(bb)
-grd$landform = c(rep("backslope", 3), "summit")
+bb2 <- st_make_grid(st_bbox(c(xmin = 0, xmax = n, ymin = 0, ymax = n)), n = n)
+grd2 <- st_as_sf(bb2)
+# grd2$ID <- 1:length(bb2)
+grd2$landform = c(rep("backslope", 3), "summit")
 # grd3 <- ms_dissolve(grd2, field = "mapunit")
-grd$comp = c(rep("a", 3), "b")
-grd
+# grd2$comp = c(rep("a", 3), "b")
+grd2
 
-ggplot() +
+n <- 10
+bb10 <- st_make_grid(st_bbox(bb2), n = n)
+grd10 <- st_as_sf(bb10)
+grd10$ID <- 1:length(bb10)
+grd10
+
+grd <- intersect(vect(grd2), vect(grd10)) |>
+  st_as_sf()
+plot(grd)
+
+idx <- grd$landform == "backslope"
+set.seed(62)
+# set.seed(721)
+grd <- within(grd, {
+  comppct_r <- ifelse(
+    idx, 
+    rlogis(sum(idx),   boot::logit(0.75)) |> boot::inv.logit(),
+    rlogis(sum(! idx), boot::logit(0.25)) |> boot::inv.logit()
+    )
+  A <- comppct_r
+  B <- 1 - comppct_r
+  component <- ifelse(comppct_r > 0.5, "A", "B")
+  comppct_r <- NULL
+})
+table(grd$component) |> prop.table()
+table(grd$component, grd$landform) |> prop.table(margin = 2) |> round(2)
+
+
+# plot box
+gg_lf <- ggplot() +
   geom_sf(data = grd, aes(fill = landform)) +
-  ggtitle("map unit") +
+  # ggtitle("map unit") +
   theme(
     axis.text = element_blank(), 
-    axis.ticks = element_blank(), axis.title = element_blank()
-  )
+    axis.ticks = element_blank()
+  ) +
+  ggtitle("Model")
+gg_cn <- ggplot() +
+  geom_sf(data = grd, aes(fill = component)) +
+  # ggtitle("map unit") +
+  theme(
+    axis.text = element_blank(), 
+    axis.ticks = element_blank()
+  ) +
+  ggtitle("Population Class")
+gg_a <- ggplot() +
+  geom_sf(data = grd, aes(fill = A), ) +
+  # ggtitle("map unit") +
+  theme(
+    axis.text = element_blank(), 
+    axis.ticks = element_blank()
+  ) +
+  scale_fill_viridis_c(name = "Component\nA") +
+  ggtitle("Population %")
+gg_b <- ggplot() +
+  geom_sf(data = grd, aes(fill = B)) +
+  # ggtitle("map unit") +
+  theme(
+    axis.text = element_blank(), 
+    axis.ticks = element_blank()
+  ) +
+  scale_fill_viridis_c(name = "Component\nB") +
+  ggtitle("Population %")
+
+
+gridExtra::grid.arrange(gg_cn, gg_lf, gg_a, gg_b, top = "Map Unit")
 
 
 # stratified sample the grid
-set.seed(56)
+set.seed(221)
 test <- mapply(FUN = function(i, x, n) {
   st_coordinates(st_sample(x[[1]][i, ], size = n))
   },
   i = 1:4,
-  x = lapply(1:4, function(x) grd),
+  x = lapply(1:4, function(x) grd2),
   n = c(1, 1, 1, 3),
   SIMPLIFY = FALSE
   )
@@ -117,16 +176,16 @@ sample <- st_as_sf(as.data.frame(test), coords = 1:2)
 
 ex <- extract(vect(grd), st_coordinates(sample))
 sample <- cbind(sample, ex)
+sample
 
-
-# simulate clay content and component probabilities
-set.seed(2)
 sample <- within(sample, {
-  component = c("a", "a", "b", "a", "b", "b")
+  # component = c("a", "a", "b", "a", "b", "b")
   size      = c(1, 1, 1, rep(1/3, 3))
   w         = size / 1
 })
-test
+
+# simulate clay content and component probabilities
+set.seed(2)
 sample <- within(sample, {
   # samp_co = c(
   #   # rbinom(3, 1, prob = 0.75),
@@ -162,7 +221,7 @@ ggplot() +
     axis.ticks = element_blank(), axis.title = element_blank()
   ) +
   geom_sf(
-    data = mutate(sample, component = component), 
+    data = mutate(sample), #, component = component), 
     aes(shape = component), size = 3
     )
   # geom_sf_text(data = sample, aes(label = samp_co), nudge_y = - 0.1, nudge_x = 0.45) +
@@ -210,6 +269,39 @@ tb_lf <- xtabs(~ landform + comp, data = grd) |>
   prop.table()
 tb_lf |>
   cbind(accuracy = max(tb_lf))
+
+# component L-RV-H
+grd$w <- 1
+grd$mu <- "test"
+grd |> 
+  select(compname, w, A, B, mu) |>
+  # pivot_longer(cols = c(A, B)) |>
+  group_by(mu) |>
+  reframe(across(A:B, ~DescTools::Quantile(x = .x, weights = w, probs = c(0.1, 0.5, 0.9)) |> t() |> round(2)))
+
+grd |> 
+  select(compname, w, A, B, mu) |>
+  pivot_longer(cols = c(A, B)) |>
+  group_by(mu, compname, name) |>
+  reframe(across(value, ~DescTools::Quantile(x = .x, weights = w, probs = c(0.1, 0.5, 0.9)) |> t()))
+
+
+table(grd$compname)
+mean(grd$A)
+quantile(grd$A, p = seq(0, 1, 0.1))
+quantile(grd$A, p = c(0.1, 0.5, 0.9))
+grd |> 
+  select(A, B) |>
+  st_drop_geometry() |>
+  apply(X = _, 2, mean) |>
+  round(2)
+grd |> 
+  select(A, B) |>
+  st_drop_geometry() |>
+  apply(X = _, 2, function(x) quantile(x, p = c(0.1, 0.5, 0.9))) |>
+  round(2) |>
+  t()
+
 
 weighted.mean(sample$samp_clay, w = sample$w)
 
@@ -350,7 +442,7 @@ mapac::aa_card(x = test$k_0p025acres, m = test$k_smooth5_1p4acres)
 ---
 
 
-## Descriptive Statistics - Numeric Data
+# Descriptive Statistics - Numeric Data
 
 ```{r}
 data("loafercreek")
@@ -388,7 +480,7 @@ table(h$genhz, h$texture_class, useNA = "ifany")
 ---
 
 
-## Graphical Methods - Descriptions
+# Graphical Methods - Descriptions
 
 ```{r, echo=FALSE}
 
@@ -439,7 +531,7 @@ knitr::kable(figs)
 ---
 
 
-## Distributions
+# Distributions
 
 ```{r, echo=FALSE, fig.dim = c(8, 4)}
 
