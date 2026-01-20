@@ -1,5 +1,20 @@
-## get bookdown
-# install.packages('bookdown')
+## get bookdown and book development dependencies
+if (!requireNamespace("rmarkdown")) {
+  install.packages("rmarkdown")
+}
+
+if (!requireNamespace("knitr")) {
+  install.packages("knitr")
+}
+
+if (!requireNamespace("bookdown")) {
+  install.packages("bookdown")
+}
+
+if (!requireNamespace("pak")) {
+  install.packages("pak")
+  pak::pak_install_extra()
+}
 
 options(bookdown.clean_book = TRUE)
 

@@ -4,6 +4,8 @@
 # remotes::install_github("cran/RandomFields")
 # remotes::install_github("ropensci/NLMR")
 
+# alternative (?): see JN's recent posts
+
 
 library(terra)
 library(raster)
@@ -18,14 +20,14 @@ library(NLMR)
 # example image
 
 # portrait of a famous actor
-r <- rast('ah.png')
+r <- rast('ah.png', noflip = TRUE)
 
 # an RC airplane
-# r <- rast('scout.png')
+# r <- rast('scout.png', noflip = TRUE)
 
 # an RC airplane, color version
 # remove RGB indexing
-# r <- rast('scout-color.png')
+# r <- rast('scout-color.png', noflip = TRUE)
 # RGB(r) <- NULL
 
 
