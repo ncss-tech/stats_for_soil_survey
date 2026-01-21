@@ -82,6 +82,11 @@ knitr::kable(desc)
 ## Box example
 ```{r, weighting}
 
+library(sf)
+library(terra)
+library(sgsR)
+library(ggplot2)
+
 # Example ----
 # Create a 4 square polygon
 n <- 2
@@ -101,7 +106,6 @@ grd10
 
 grd <- intersect(vect(grd2), vect(grd10)) |>
   st_as_sf()
-plot(grd)
 
 idx <- grd$landform == "backslope"
 set.seed(62)
@@ -109,8 +113,8 @@ set.seed(62)
 grd <- within(grd, {
   comppct_r <- ifelse(
     idx, 
-    rlogis(sum(idx),   boot::logit(0.75)) |> boot::inv.logit(),
-    rlogis(sum(! idx), boot::logit(0.25)) |> boot::inv.logit()
+    rlogis(sum(idx),   location = boot::logit(0.75), scale = 0.5) |> boot::inv.logit(),
+    rlogis(sum(! idx), location = boot::logit(0.25), scale = 0.5) |> boot::inv.logit()
     )
   A <- comppct_r
   B <- 1 - comppct_r
@@ -119,6 +123,7 @@ grd <- within(grd, {
 })
 table(grd$component) |> prop.table()
 table(grd$component, grd$landform) |> prop.table(margin = 2) |> round(2)
+plot(grd)
 
 
 # plot box
@@ -129,7 +134,7 @@ gg_lf <- ggplot() +
     axis.text = element_blank(), 
     axis.ticks = element_blank()
   ) +
-  ggtitle("Model")
+  ggtitle("Landscape Strata")
 gg_cn <- ggplot() +
   geom_sf(data = grd, aes(fill = component)) +
   # ggtitle("map unit") +
@@ -162,7 +167,7 @@ gridExtra::grid.arrange(gg_cn, gg_lf, gg_a, gg_b, top = "Map Unit")
 
 
 # stratified sample the grid
-set.seed(221)
+set.seed(6912)
 test <- mapply(FUN = function(i, x, n) {
   st_coordinates(st_sample(x[[1]][i, ], size = n))
   },
@@ -214,14 +219,14 @@ sample <- within(sample, {
 
 
 ggplot() +
-  geom_sf(data = grd, aes(fill = landform)) +
+  geom_sf(data = grd2, aes(fill = landform)) +
   ggtitle("map unit") +
   theme(
     axis.text = element_blank(), 
     axis.ticks = element_blank(), axis.title = element_blank()
   ) +
   geom_sf(
-    data = mutate(sample), #, component = component), 
+    data = sample, #, component = component), 
     aes(shape = component), size = 3
     )
   # geom_sf_text(data = sample, aes(label = samp_co), nudge_y = - 0.1, nudge_x = 0.45) +
@@ -265,44 +270,51 @@ wtb_lf <- xtabs(w ~ landform + component, data = sample) |>
   round(2)
 wtb_lf
 
-tb_lf <- xtabs(~ landform + comp, data = grd) |> 
+tb_lf <- xtabs(~ landform + component, data = grd) |> 
   prop.table()
 tb_lf |>
   cbind(accuracy = max(tb_lf))
 
 # component L-RV-H
-grd$w <- 1
-grd$mu <- "test"
-grd |> 
-  select(compname, w, A, B, mu) |>
-  # pivot_longer(cols = c(A, B)) |>
-  group_by(mu) |>
-  reframe(across(A:B, ~DescTools::Quantile(x = .x, weights = w, probs = c(0.1, 0.5, 0.9)) |> t() |> round(2)))
-
-grd |> 
-  select(compname, w, A, B, mu) |>
-  pivot_longer(cols = c(A, B)) |>
-  group_by(mu, compname, name) |>
-  reframe(across(value, ~DescTools::Quantile(x = .x, weights = w, probs = c(0.1, 0.5, 0.9)) |> t()))
-
-
-table(grd$compname)
-mean(grd$A)
-quantile(grd$A, p = seq(0, 1, 0.1))
-quantile(grd$A, p = c(0.1, 0.5, 0.9))
-grd |> 
-  select(A, B) |>
-  st_drop_geometry() |>
-  apply(X = _, 2, mean) |>
+n <- ceiling(nrow(grd) * 0.5)
+samp <- st_sample(grd, size = n) |> 
+  st_coordinates() |>
+  terra::extract(x = vect(grd), y = _)
+table(samp$component) |> 
+  prop.table() |> 
   round(2)
-grd |> 
+samp_vals <- sapply(1:100, function(i) {
+  sample(samp$component, n - ceiling(n * 0.1)) |> 
+    table() |> 
+    prop.table()
+  }, 
+  simplify = FALSE
+  ) |> 
+  do.call("rbind", args = _)
+samp_lrh <- apply(samp_vals, MARGIN = 2, FUN = function(x) quantile(x, p = c(0.1, 0.5, 0.9))) |> 
+  t() |> 
+  round(2)
+samp_lrh  
+
+## population values
+table(grd$component)
+quantile(grd$A, p = c(0.1, 0.5, 0.9))
+pop_lrh <- grd |> 
   select(A, B) |>
   st_drop_geometry() |>
   apply(X = _, 2, function(x) quantile(x, p = c(0.1, 0.5, 0.9))) |>
   round(2) |>
   t()
+pop_lrh
+
+# inverse quantiles, same as hardened frequency proportions 
+ecdf_A_t <- ecdf(samp_vals[, 1])
+p <- c(0.1, 0.5, 0.9)
+rev(1 - ecdf_A_t(p))
+table(grd$A > 0.5)
 
 
+# weighted clay values
 weighted.mean(sample$samp_clay, w = sample$w)
 
 sample |>
