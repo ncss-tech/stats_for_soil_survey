@@ -87,6 +87,7 @@ library(terra)
 library(sgsR)
 library(ggplot2)
 
+
 # Example ----
 # Create a 4 square polygon
 n <- 2
@@ -163,7 +164,7 @@ gg_b <- ggplot() +
   ggtitle("Population %")
 
 
-gridExtra::grid.arrange(gg_cn, gg_lf, gg_a, gg_b, top = "Map Unit")
+gridExtra::grid.arrange(gg_cn, gg_lf, gg_a, gg_b, top = "Map Unit A-B")
 
 
 # stratified sample the grid
@@ -276,7 +277,28 @@ tb_lf |>
   cbind(accuracy = max(tb_lf))
 
 # component L-RV-H
-n <- ceiling(nrow(grd) * 0.5)
+n <- nrow(sample)
+# samp <- st_sample(grd, size = n) |> 
+#   st_coordinates() |>
+#   terra::extract(x = vect(grd), y = _)
+# table(samp$component) |> 
+#   prop.table() |> 
+#   round(2)
+samp_vals <- sapply(1:100, function(i) {
+  sample(sample$component, size = n - ceiling(n * 0.1), prob = 1 / sample$w) |> 
+    table() |> 
+    prop.table()
+  }, 
+  simplify = FALSE
+  ) |> 
+  do.call("rbind", args = _)
+samp_lrh <- apply(samp_vals, MARGIN = 2, FUN = function(x) quantile(x, p = c(0.1, 0.5, 0.9))) |> 
+  t() |> 
+  round(2)
+samp_lrh  
+
+
+n <- ceiling(nrow(grd) * 1)
 samp <- st_sample(grd, size = n) |> 
   st_coordinates() |>
   terra::extract(x = vect(grd), y = _)
@@ -305,13 +327,72 @@ pop_lrh <- grd |>
   apply(X = _, 2, function(x) quantile(x, p = c(0.1, 0.5, 0.9))) |>
   round(2) |>
   t()
-pop_lrh
+pop_lrh2 <- cbind(ind = row.names(pop_lrh), pop_lrh) |>
+  as.data.frame()
+names(pop_lrh2) <- c("ind", "L", "RV", "H")
+pop_lrh2 <- pop_lrh |> t() |> as.data.frame() |>
+  stack()
+
+# plot component percent ranges
+grd_lo <- grd[c("A", "B")] |>
+  st_drop_geometry() |>
+  stack() 
+gg_A <- grd_lo |>
+  subset(ind == "A") |>
+  ggplot(aes(x = values)) +
+  geom_histogram(breaks = seq(0, 1, 0.1)) +
+  geom_vline(xintercept = pop_lrh2$values[pop_lrh2$ind == "A"][1], linetype = "dashed") +
+  geom_vline(xintercept = pop_lrh2$values[pop_lrh2$ind == "A"][3], linetype = "dashed") +
+  geom_vline(xintercept = pop_lrh2$values[pop_lrh2$ind == "A"][2]) +
+  # facet_wrap(~ ind, ncol = 1) +
+  ggtitle("Component A") +
+  xlab("Probability")
+gg_B <- grd_lo |>
+  subset(ind == "B") |>
+  ggplot(aes(x = values)) +
+  geom_histogram(breaks = seq(0, 1, 0.1)) +
+  geom_vline(xintercept = pop_lrh2$values[pop_lrh2$ind == "B"][1], linetype = "dashed") +
+  geom_vline(xintercept = pop_lrh2$values[pop_lrh2$ind == "B"][3], linetype = "dashed") +
+  geom_vline(xintercept = pop_lrh2$values[pop_lrh2$ind == "B"][2]) +
+  # facet_wrap(~ ind, ncol = 1) +
+  ggtitle("Component B") +
+  xlab("Probability")
+gg_AB_pop <- gridExtra::grid.arrange(gg_A, gg_B, top = "Population", nrow = 1)
+
+# plot component percent ranges
+samp_lo <- samp_vals |>
+  as.data.frame(col.names = c("A", "B")) |>
+  stack() 
+gg_As <- samp_lo |>
+  subset(ind == "A") |>
+  ggplot(aes(x = values)) +
+  geom_histogram() +
+  geom_vline(xintercept = samp_lrh[1, 1], linetype = "dashed") +
+  geom_vline(xintercept = samp_lrh[1, 3], linetype = "dashed") +
+  geom_vline(xintercept = samp_lrh[1, 2]) +
+  # facet_wrap(~ ind, ncol = 1) +
+  ggtitle("Component A") +
+  xlim(0, 1) + xlab("Probability")
+gg_Bs <- samp_lo |>
+  subset(ind == "B") |>
+  ggplot(aes(x = values)) +
+  geom_histogram() +
+  geom_vline(xintercept = samp_lrh[2, 1], linetype = "dashed") +
+  geom_vline(xintercept = samp_lrh[2, 3], linetype = "dashed") +
+  geom_vline(xintercept = samp_lrh[2, 2]) +
+  # facet_wrap(~ ind, ncol = 1) +
+  ggtitle("Component B") +
+  xlim(0, 1) + xlab("Probability")
+gg_AB_samp <- gridExtra::grid.arrange(gg_As, gg_Bs, top = "Hardened Sample", nrow = 1)
+gridExtra::grid.arrange(gg_AB_samp, gg_AB_pop, top = "Map Unit A-B", nrow = 2)
+
 
 # inverse quantiles, same as hardened frequency proportions 
 ecdf_A_t <- ecdf(samp_vals[, 1])
 p <- c(0.1, 0.5, 0.9)
 rev(1 - ecdf_A_t(p))
 table(grd$A > 0.5)
+
 
 
 # weighted clay values
