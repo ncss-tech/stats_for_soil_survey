@@ -12,7 +12,12 @@ output:
 ---
 
 ```{r setup, purl=FALSE, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  fig.align = 'center', 
+  dev = 'png', 
+  fig.retina = 2
+)
 ```
 
 ***
@@ -88,7 +93,7 @@ Then apply the same strategy to NASIS pedons from your area of responsibility, a
 
 If you use `fetchNASIS()` please note that it produces QC output that may be relevant to your analysis. [STAT 1010: Chapter 2 - fetchNASIS data checks](http://ncss-tech.github.io/stats_for_soil_survey/book/data.html#fetchnasis-data-checks)
 
-```{r, message=FALSE, warning=FALSE, fig.width=8.5, fig.height=5}
+```{r, message=FALSE, warning=FALSE, fig.width=12, fig.height=6}
 library(aqp, warn.conflicts = FALSE)
 library(soilDB)
 
@@ -102,13 +107,20 @@ data("loafercreek")
 pedons <- loafercreek[1:20, ]
 
 # plot profile sketches
-par(mar = c(0, 0, 2, 1))
-plot(pedons, name = 'hzname', print.id = FALSE)
+par(mar = c(0, 0, 0, 1.5))
+plot(
+  pedons, 
+  print.id = FALSE,
+  width = 0.35, 
+  name.style = 'center-center', 
+  cex.names = 0.65, 
+  max.depth = 150
+)
 ```
 
-In order to help your mentor debug any issues you may be having it is helpful to provide an RData file containing the SoilProfileCollection of pedons using `save()` 
+In order to help your mentor debug any issues you may be having it is helpful to provide an RData file containing the `SoilProfileCollection` of pedons using `save()` 
 
-```{r}
+```{r eval=FALSE}
 # after loading your data as a SoilProfileCollection, save it
 save(pedons, file = "my_pedons.Rda")
 ```
@@ -300,15 +312,21 @@ Let's recreate the graph we did at the beginning, only now we will color horizon
 
 Compare the coloring (based on `pedons$newgenhz2`) with the field horizon designations (`pedons$hzname`) to the right of each profile.
 
-```{r fig.width=8.5, fig.height=5}
+```{r fig.width=12, fig.height=6}
 ## RESULT #1
 
-# plot profile sketches - first 20 profiles; color by gen hz.
-par(mar = c(0, 0, 3, 1))
-plotSPC(pedons,
-        name = 'hzname',
-        color = 'newgenhz',
-        print.id = FALSE)
+# plot profile sketches, color by gen hz.
+par(mar = c(0, 0, 3, 2))
+plotSPC(
+  pedons, 
+  print.id = FALSE, 
+  color = 'newgenhz', 
+  width = 0.35, 
+  name.style = 'center-center', 
+  cex.names = 0.65, 
+  col.label = 'Generalized Horizon Label', 
+  max.depth = 150
+  )
 ```
 
 In RStudio you can "Export" a plot from the drop down menu at top of "Plots" pane (after you run the code to make the plot). Or save the plot using R code. See `?pdf`, `?jpg`, `?dev.off` helpfiles for how to capture output sent to a graphics device (by `plot()`) and save it to a file instead of sending it to the "Plots" pane.
