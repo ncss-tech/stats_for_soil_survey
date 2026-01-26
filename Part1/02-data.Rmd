@@ -738,33 +738,52 @@ table(!is.na(pedons$taxsubgrp))
 sort(table(pedons$texture), decreasing=TRUE)
 ```
 
-### Logical Operators
+### Logical Operators{#logical-operators-detail}
+Logical values encode one of two possible values, `TRUE` or `FALSE`. [Logical operators](https://en.wikipedia.org/wiki/Logical_connective) are functions that compare inputs using the rules of [Boolean Algebra](https://en.wikipedia.org/wiki/Boolean_algebra) and return a logical value or vector. Some functions such as the test for equality (`==`) or inequality (`>`) accept many possible data types (numeric, character) and return a vector of logical values. Logical vectors (e.g. `c(TRUE, FALSE, FALSE, TRUE)`) are a convenient way of describing complex subsetting tasks such as "find all rows of `x` that either alfisols OR ultisols, but not those taxa which contain the 'duri-' formative element".
 
-[Logical operators](https://stat.ethz.ch/R-manual/R-devel/library/base/html/Logic.html) act on vectors for the purposes of comparison.
+Logical operations can be visualized as [Venn diagrams](https://en.wikipedia.org/wiki/Venn_diagram). Some of the more common logical operators are demonstrated in the following figure. Logical operators can be combined using parenthesis to describe complex subsetting criteria.
+![Commonly used logical operators, described using Venn diagrams.](static-figures/logical-operator-examples.png)
 
--   `==` "EQUAL TO"
 
--   `!=` "NOT EQUAL TO"
+Common operators and functions that return logical vectors:
 
--   `<` LESS than
+  - `A == B`: "A is equal to B", note the use of double-equal sign
 
-    -   LESS than or equal to `<=`
+  - `A != B`: "A is not equal to B", note that `!` can be used to invert any logical operator
+  
+  - `<, >, <=, >=`: inequality operators
 
--   `>` GREATER than
+  - `grepl(pattern, x)`: text `pattern` found in `x`, similar to SQL `LIKE` (e.g. `areasymbol LIKE "CA%"`), [REGEX Resources in Chapter 2](#regex-resources)
+  
 
-    -   GREATER than or equal to `>=`
+Vectorized logical operators:
 
--   `%in%` Equivalent to `IN ()` in SQL; same logic as `match()` but returns a logical, not integer
+  - `A & B`: `&` is the ["AND" operator](https://en.wikipedia.org/wiki/Logical_conjunction), "intersection of A and B"
 
-    -   Example: `pedons$taxpartsize %in% c('loamy-skeletal', 'sandy-skeletal')`
+  - `A | B`: `|` is the ["OR" operator](https://en.wikipedia.org/wiki/Logical_disjunction), "union of A and B"
+  
+  - `xor(A, B)`: [exclusive OR](https://en.wikipedia.org/wiki/Exclusive_or), "A or B, but not both"
 
-    -   Returns a vector of `TRUE`/`FALSE` equal in length to left-hand side
+  - `A %in% B`: equivalent to SQL `IN` operator (e.g. `areasymbol IN ("IN001", "IN111")`)
 
--   `&` logical AND
 
--   `|` logical OR
+Single item logical operators:
 
-Any logical operation on `NA` returns `NA`, so it is important to make sure your data are complete before relying on logical expressions to find conditions of interest.
+  - `A && B`: logical AND, single element comparisons
+  
+  - `A || B`: logical OR, single element comparisons
+
+
+Logical aggregate functions (returns a single value):
+
+  - `all(A)`: test that all elements of `A` are `TRUE`
+  
+  - `any(A)`: test that one or more elements of `A` are `TRUE`
+  
+
+
+Note that logical operations on objects containing `NA` will evaluate to `NA`. If you plan to use a logical vector for subsetting, be sure to use `which()` to convert all instances of `TRUE` into their corresponding integer index.
+
 
 ### Pattern Matching
 
