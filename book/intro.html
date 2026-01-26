@@ -23,7 +23,7 @@
 <meta name="author" content="Soil Survey Staff" />
 
 
-<meta name="date" content="2026-01-23" />
+<meta name="date" content="2026-01-26" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -286,7 +286,7 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="2.6.1" data-path="data.html"><a href="data.html#table-tabulation-and-cross-tabulation"><i class="fa fa-check"></i><b>2.6.1</b> <code>table()</code>: Tabulation and Cross Tabulation</a></li>
 <li class="chapter" data-level="2.6.2" data-path="data.html"><a href="data.html#missing-values"><i class="fa fa-check"></i><b>2.6.2</b> Missing Values</a></li>
-<li class="chapter" data-level="2.6.3" data-path="data.html"><a href="data.html#logical-operators"><i class="fa fa-check"></i><b>2.6.3</b> Logical Operators</a></li>
+<li class="chapter" data-level="2.6.3" data-path="data.html"><a href="data.html#logical-operators-detail"><i class="fa fa-check"></i><b>2.6.3</b> Logical Operators</a></li>
 <li class="chapter" data-level="2.6.4" data-path="data.html"><a href="data.html#pattern-matching"><i class="fa fa-check"></i><b>2.6.4</b> Pattern Matching</a></li>
 <li class="chapter" data-level="2.6.5" data-path="data.html"><a href="data.html#filtering"><i class="fa fa-check"></i><b>2.6.5</b> Filtering</a></li>
 <li class="chapter" data-level="2.6.6" data-path="data.html"><a href="data.html#dates-and-times"><i class="fa fa-check"></i><b>2.6.6</b> Dates and Times</a></li>
@@ -1163,7 +1163,7 @@ div.csl-indent {
 <div id="filtering-or-subsetting-data" class="section level3 hasAnchor" number="1.12.2">
 <h3><span class="header-section-number">1.12.2</span> Filtering or Subsetting Data<a href="intro.html#filtering-or-subsetting-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>When analyzing data in NASIS, filtering is typically accomplished by loading your selected set with only the records you’re interested in. However, it is often useful or necessary to subset your data after it’s loaded. This can allow you to isolate interesting records within large datasets. For these reasons R has numerous options/functions for filtering data.</p>
-<p>Data frames can be filtered by both columns and rows, using either <strong>names</strong>, <strong>position</strong> (e.g. column 1, row 5), or <strong>logical</strong> indices (e.g. <code>TRUE</code>/<code>FALSE</code>). Another particularly useful feature is the use of <strong>pattern matching</strong> which uses regular expressions to select data, which is similar to the <code>LIKE</code> statement from SQL.</p>
+<p>Data frames can be subset by both columns and rows, using either <strong>names</strong>, <strong>position</strong> (e.g. column 1, row 5), or <strong>logical</strong> indices (e.g. <code>TRUE</code> and <code>FALSE</code>). Another particularly useful feature is the use of <strong>pattern matching</strong> which uses regular expressions to select data, which is similar to the <code>LIKE</code> statement from SQL.</p>
 <p>**Filtering with names and numerical indices</p>
 <div class="sourceCode" id="cb25"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb25-1"><a href="intro.html#cb25-1" tabindex="-1"></a><span class="co"># Filtering with names (character values)</span></span>
 <span id="cb25-2"><a href="intro.html#cb25-2" tabindex="-1"></a>mu<span class="sc">$</span>areasymbol                             <span class="co"># select column names using $</span></span>
@@ -1172,47 +1172,52 @@ div.csl-indent {
 <span id="cb25-5"><a href="intro.html#cb25-5" tabindex="-1"></a>mu[<span class="fu">c</span>(<span class="st">&quot;1&quot;</span>, <span class="st">&quot;2&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;areasymbol&quot;</span>, <span class="st">&quot;musym&quot;</span>)] <span class="co"># select column and row names using []</span></span>
 <span id="cb25-6"><a href="intro.html#cb25-6" tabindex="-1"></a></span>
 <span id="cb25-7"><a href="intro.html#cb25-7" tabindex="-1"></a><span class="co"># Filtering by position (integer values)</span></span>
-<span id="cb25-8"><a href="intro.html#cb25-8" tabindex="-1"></a>mu[<span class="dv">1</span>, ]          <span class="co"># select first row</span></span>
-<span id="cb25-9"><a href="intro.html#cb25-9" tabindex="-1"></a>mu[, <span class="dv">1</span>]          <span class="co"># select first column</span></span>
-<span id="cb25-10"><a href="intro.html#cb25-10" tabindex="-1"></a>mu[<span class="dv">2</span>, <span class="dv">2</span>]         <span class="co"># select second row and second column</span></span>
-<span id="cb25-11"><a href="intro.html#cb25-11" tabindex="-1"></a>mu[<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>), ] <span class="co"># select multiple rows</span></span>
-<span id="cb25-12"><a href="intro.html#cb25-12" tabindex="-1"></a>mu[<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="sc">-</span><span class="dv">2</span>), ]  <span class="co"># drop multiple rows</span></span></code></pre></div>
-<p><strong>Logical Operators</strong></p>
+<span id="cb25-8"><a href="intro.html#cb25-8" tabindex="-1"></a>mu[<span class="dv">1</span>, ]          <span class="co"># select row 1</span></span>
+<span id="cb25-9"><a href="intro.html#cb25-9" tabindex="-1"></a>mu[, <span class="dv">1</span>]          <span class="co"># select column 1</span></span>
+<span id="cb25-10"><a href="intro.html#cb25-10" tabindex="-1"></a>mu[<span class="dv">2</span>, <span class="dv">2</span>]         <span class="co"># select row 2 and column 2</span></span>
+<span id="cb25-11"><a href="intro.html#cb25-11" tabindex="-1"></a>mu[<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>), ] <span class="co"># select rows 1, 2, 3</span></span>
+<span id="cb25-12"><a href="intro.html#cb25-12" tabindex="-1"></a>mu[<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), ]   <span class="co"># drop rows 1, 2</span></span></code></pre></div>
+<p><strong>Logical Vectors and Operators</strong>
+Logical values encode one of two possible values (<code>TRUE</code> or <code>FALSE</code>) and are interpreted via <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Logic.html">logical operators</a>. Some of the more common operators are demonstrated in the following figure. Logical operators can be combined using parenthesis to describe complex subsetting criteria.
+<img src="static-figures/logical-operator-examples.png" alt="Commonly used logical operators, described using Venn diagrams." /></p>
+<p>Common operators and functions that return logical vectors:</p>
 <ul>
-<li><p><code>==</code> Equal To (NOTE: R uses a double equal sign)</p></li>
-<li><p><code>!=</code> Not Equal To</p></li>
-<li><p><code>&lt;, &gt;, &lt;=, &gt;=</code> Less than, greater than, less than or equal to, and greater than or equal</p></li>
-<li><p><code>&amp;</code> Equivalent to <code>AND</code> must match both conditions</p></li>
-<li><p><code>|</code> Equivalent to <code>OR</code> must match at least one condition</p></li>
-<li><p><code>%in%</code> equivalent to <code>IN ()</code> in SQL (e.g. <code>mu$areasymbol %in% c("IN001", "IN111"</code>)</p></li>
-<li><p><code>grepl()</code> similar to <code>LIKE</code> in SQL (e.g. <code>grepl("IN%", mu$areasymbol)</code>)</p></li>
+<li><p><code>A == B</code>: “A is equal to B”, note the use of double-equal sign</p></li>
+<li><p><code>A != B</code>: “A is not equal to B”, note that <code>!</code> can be used to invert any logical operator</p></li>
+<li><p><code>&lt;, &gt;, &lt;=, &gt;=</code>: inequality operators</p></li>
+<li><p><code>grepl(pattern, x)</code>: text <code>pattern</code> found in <code>x</code>, similar to SQL <code>LIKE</code> (e.g. <code>areasymbol LIKE "CA%"</code>), <a href="data.html#regex-resources">REGEX Resources in Chapter 2</a></p></li>
 </ul>
-<p><strong>Filtering with logicals</strong></p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb26-1"><a href="intro.html#cb26-1" tabindex="-1"></a><span class="co"># Standard evaluation with base R []</span></span>
+<p>Vectorized logical operators:</p>
+<ul>
+<li><p><code>A &amp; B</code>: <code>&amp;</code> is the <a href="https://en.wikipedia.org/wiki/Logical_conjunction">“AND” operator</a>, “intersection of A and B”</p></li>
+<li><p><code>A | B</code>: <code>|</code> is the <a href="https://en.wikipedia.org/wiki/Logical_disjunction">“OR” operator</a>, “union of A and B”</p></li>
+<li><p><code>xor(A, B)</code>: <a href="https://en.wikipedia.org/wiki/Exclusive_or">exclusive OR</a>, “A or B, but not both”</p></li>
+<li><p><code>A %in% B</code>: equivalent to SQL <code>IN</code> operator (e.g. <code>areasymbol IN ("IN001", "IN111")</code>)</p></li>
+</ul>
+<p>See <a href="data.html#logical-operators-detail">Chapter 2</a> for a more detailed description.</p>
+<p><strong>Filtering with logical vectors</strong></p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb26-1"><a href="intro.html#cb26-1" tabindex="-1"></a><span class="co"># Standard evaluation with base R [], be careful of NA</span></span>
 <span id="cb26-2"><a href="intro.html#cb26-2" tabindex="-1"></a></span>
-<span id="cb26-3"><a href="intro.html#cb26-3" tabindex="-1"></a><span class="co"># Filtering with logicals</span></span>
+<span id="cb26-3"><a href="intro.html#cb26-3" tabindex="-1"></a><span class="co"># Filtering with logical vectors</span></span>
 <span id="cb26-4"><a href="intro.html#cb26-4" tabindex="-1"></a>mu[mu<span class="sc">$</span>areasymbol <span class="sc">==</span> <span class="st">&quot;IN001&quot;</span>, ]                <span class="co"># select rows that equal IN001</span></span>
 <span id="cb26-5"><a href="intro.html#cb26-5" tabindex="-1"></a>mu[mu<span class="sc">$</span>areasymbol <span class="sc">!=</span> <span class="st">&quot;IN001&quot;</span>, ]                <span class="co"># select rows that do not equal IN001</span></span>
 <span id="cb26-6"><a href="intro.html#cb26-6" tabindex="-1"></a>mu[, <span class="fu">names</span>(mu) <span class="sc">==</span> <span class="st">&quot;areasymbol&quot;</span>]               <span class="co"># select columns that equal areasymbol</span></span>
 <span id="cb26-7"><a href="intro.html#cb26-7" tabindex="-1"></a>mu[, <span class="fu">names</span>(mu) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;areasymbol&quot;</span>, <span class="st">&quot;musym&quot;</span>)] <span class="co"># select columns that match areasymbol and musym </span></span>
 <span id="cb26-8"><a href="intro.html#cb26-8" tabindex="-1"></a>mu[<span class="fu">grepl</span>(<span class="st">&quot;Miami&quot;</span>, mu<span class="sc">$</span>muname), ]               <span class="co"># select rows that contain Miami</span></span>
 <span id="cb26-9"><a href="intro.html#cb26-9" tabindex="-1"></a></span>
-<span id="cb26-10"><a href="intro.html#cb26-10" tabindex="-1"></a><span class="co"># Non-standard evaluation with tidyverse</span></span>
-<span id="cb26-11"><a href="intro.html#cb26-11" tabindex="-1"></a></span>
-<span id="cb26-12"><a href="intro.html#cb26-12" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb26-10"><a href="intro.html#cb26-10" tabindex="-1"></a><span class="co"># if there are NA present, be sure to use which()</span></span>
+<span id="cb26-11"><a href="intro.html#cb26-11" tabindex="-1"></a>mu[<span class="fu">which</span>(mu<span class="sc">$</span>areasymbol <span class="sc">==</span> <span class="st">&#39;IN001&#39;</span>), ]</span>
+<span id="cb26-12"><a href="intro.html#cb26-12" tabindex="-1"></a></span>
 <span id="cb26-13"><a href="intro.html#cb26-13" tabindex="-1"></a></span>
-<span id="cb26-14"><a href="intro.html#cb26-14" tabindex="-1"></a><span class="co"># Filtering rows</span></span>
-<span id="cb26-15"><a href="intro.html#cb26-15" tabindex="-1"></a><span class="fu">filter</span>(mu, areasymbol <span class="sc">==</span> <span class="st">&quot;IN001&quot;</span>)</span>
-<span id="cb26-16"><a href="intro.html#cb26-16" tabindex="-1"></a><span class="fu">filter</span>(mu, areasymbol <span class="sc">!=</span> <span class="st">&quot;IN001&quot;</span>)</span>
-<span id="cb26-17"><a href="intro.html#cb26-17" tabindex="-1"></a><span class="fu">filter</span>(mu, areasymbol <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;IN001&quot;</span>, <span class="st">&quot;IN111&quot;</span>))</span>
-<span id="cb26-18"><a href="intro.html#cb26-18" tabindex="-1"></a><span class="fu">filter</span>(mu, <span class="fu">grepl</span>(<span class="st">&quot;Miami&quot;</span>, muname))</span>
-<span id="cb26-19"><a href="intro.html#cb26-19" tabindex="-1"></a><span class="fu">filter</span>(mu, muacres <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
-<span id="cb26-20"><a href="intro.html#cb26-20" tabindex="-1"></a></span>
-<span id="cb26-21"><a href="intro.html#cb26-21" tabindex="-1"></a><span class="co"># Select columns</span></span>
-<span id="cb26-22"><a href="intro.html#cb26-22" tabindex="-1"></a><span class="fu">select</span>(mu, areasymbol, musym)</span>
-<span id="cb26-23"><a href="intro.html#cb26-23" tabindex="-1"></a></span>
-<span id="cb26-24"><a href="intro.html#cb26-24" tabindex="-1"></a><span class="co"># Slice  rows</span></span>
-<span id="cb26-25"><a href="intro.html#cb26-25" tabindex="-1"></a><span class="fu">slice</span>(mu, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span></code></pre></div>
+<span id="cb26-14"><a href="intro.html#cb26-14" tabindex="-1"></a><span class="co"># Non-standard evaluation with tidyverse</span></span>
+<span id="cb26-15"><a href="intro.html#cb26-15" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb26-16"><a href="intro.html#cb26-16" tabindex="-1"></a></span>
+<span id="cb26-17"><a href="intro.html#cb26-17" tabindex="-1"></a><span class="co"># Filtering rows</span></span>
+<span id="cb26-18"><a href="intro.html#cb26-18" tabindex="-1"></a><span class="fu">filter</span>(mu, areasymbol <span class="sc">==</span> <span class="st">&quot;IN001&quot;</span>)</span>
+<span id="cb26-19"><a href="intro.html#cb26-19" tabindex="-1"></a><span class="fu">filter</span>(mu, areasymbol <span class="sc">!=</span> <span class="st">&quot;IN001&quot;</span>)</span>
+<span id="cb26-20"><a href="intro.html#cb26-20" tabindex="-1"></a><span class="fu">filter</span>(mu, areasymbol <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;IN001&quot;</span>, <span class="st">&quot;IN111&quot;</span>))</span>
+<span id="cb26-21"><a href="intro.html#cb26-21" tabindex="-1"></a><span class="fu">filter</span>(mu, <span class="fu">grepl</span>(<span class="st">&quot;Miami&quot;</span>, muname))</span>
+<span id="cb26-22"><a href="intro.html#cb26-22" tabindex="-1"></a><span class="fu">filter</span>(mu, muacres <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code></pre></div>
 </div>
 <div id="transforming-data" class="section level3 hasAnchor" number="1.12.3">
 <h3><span class="header-section-number">1.12.3</span> Transforming Data<a href="intro.html#transforming-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
