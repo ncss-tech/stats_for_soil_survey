@@ -276,8 +276,11 @@ tb_lf <- xtabs(~ landform + component, data = grd) |>
   prop.table()
 tb_lf |>
   cbind(accuracy = max(tb_lf))
+```
 
-# component L-RV-H
+
+### component L-RV-H
+```{r}
 n <- nrow(sample)
 # samp <- st_sample(grd, size = n) |> 
 #   st_coordinates() |>
@@ -407,8 +410,8 @@ sample |>
 
 ```
 
-# Accuracy
-## Confusion matrix
+### Accuracy
+### Confusion matrix
 ```{r}
 test <- c(30, 70, 10, 90) |>
   matrix(byrow = TRUE, nrow = 2) |>
@@ -422,7 +425,7 @@ cbind(test, ua) |>
 
 ```
 
-## RMSE
+### RMSE
 ```{r}
 test <- data.frame(index = 1:10, sample = rnorm(5, mean = 10), mean = 10)
 test$xmin <- apply(test[-1], 1, min)
@@ -434,7 +437,7 @@ ggplot(test, aes(x = sample, y = index)) +
   geom_point() +
   geom_vline(xintercept = 10) +
   geom_linerange(aes(xmin = xmin, xmax = xmax), lty = "dashed") +
-  ggtitle("Example of the sample errors")
+  ggtitle("Example of the RV value versus sample errors")
 
 
 ```
@@ -470,8 +473,15 @@ idx_f  <- nm[c(10, 12:15, 7, 16, 9)]
 names(volcano_r) <- nm
 v_nm <- names(volcano_r)[c(1, 3:9)]
 
-strat_kmeans(volcano_r[[idx_uf]], nStrata = 7) |> freq() |> transform(p = round(count / sum(count), 2))
-strat_kmeans(volcano_r[[idx_f]], nStrata = 7) |> 
+set.seed(34)
+strat_kmeans(volcano_r[[idx_uf]], nStrata = 7) |> 
+  freq() |> 
+  within({
+    p = count / sum(count)
+    w = 1/2
+    })
+set.seed(34)
+tab2 <- strat_kmeans(volcano_r[[idx_f]], nStrata = 7) |> 
   freq() |> 
   dplyr::mutate(
     p  = count / sum(count), 
@@ -493,6 +503,7 @@ names(test) <- v_nm
 
 
 fcm_r <- CMeans(test, k = 7, m = 1.6, standardize = TRUE)
+
 fcm_r2 <- fcm_r$rasters |>
   rast()
 idx <- seq(1, nlyr(fcm_r2), 2)
@@ -513,6 +524,9 @@ fcm_r2$k_smooth5_1p4acres <- sieve(k_smooth5, threshold = 58,  direction = 4)
 plot(fcm_r2)
 
 
+sgsR::allocate_existing_equal(fcm_r2[[8]])
+
+
 # distance
 fcm_dist <- fcm_r$Centers |> 
   as.data.frame() |> 
@@ -531,13 +545,63 @@ for (i in 1:nrow(comb)) {
   comb[i, "dist"] <- fcm_dist[comb[i, 1], comb[i, 2]]
 }
 
-test <- spatSample(k_smooth5, size = 5, as.points = TRUE)
+```
+
+### sample strata
+```{r}
+# sgsR
+strata <- fcm_r2[[8]]
+names(strata) <- "strata"
+test <- sample_strat(strata, 10, allocation = "equal", method = "random")
+test <- extract(fcm_r2, st_coordinates(test))
+
+# terra
+strata <- fcm_r2[[8]]
+test_samp <- spatSample(strata, size = 10, method = "stratified", as.points = TRUE)
+test_samp <- extract(fcm_r2, test_samp)
+
+table(test_samp$k_0p025acres)
+table(test_samp$k_smooth5_1p4acres)
+
+test_pop <- as.data.frame(fcm_r2)
+```
 
 
-test <- spatSample(fcm_r2, size = 30)
+### compute weight
+```{r}
+tab <- freq(fcm_r2[[8]]) |>
+  dplyr::mutate(
+    # population
+    p  = count / sum(count),
+    nk_p = count * (70/sum(count)),
+    nk_e = 10,
+    wk_p = count / nk_p,
+    wk_e = count / nk_e,
+    pk_p = 1 / wk_p,
+    pk_e = 1 / wk_e,
+    pr = pk_p / pk_e,
+    wr = wk_e / wk_p
+    # nr = nk_p / nk_e
+  )
+idx <- c(4:11)
+tab[idx] <- lapply(tab[idx], function(x) round(x, 2))
+tab
 
-cm <- table(pred = fcm_r2$k_smooth5_1p4acres |> values(), obs = fcm_r2$k_0p025acres |> values())
-cm <- table(pred = test$k_smooth5_1p4acres, obs = test$k_0p025acres)
+cor(tab$pr, tab$wr)
+cor(tab$wk_e, tab$wr)
+```
+
+
+### accuracy
+```{r}
+test_samp2 <- merge(test_samp, tab, by.x = "k_0p025acres", by.y = "value")
+names(test_samp2)[c(1, 10)] <- c("obs", "pred")
+
+cm <- xtabs(wk_e ~ pred + obs, data = test_samp2)
+cm2 <- aqp::tauW(cm)
+cm
+cbind(round(cm, 2), ua = cm2$user.naive) |> round(2) |> rbind(pa = c(cm2$prod.naive, cm2$overall.naive) |> round(2))
+
 cm_p <- round(prop.table(cm, margin = 1) * 100)
 
 nm <- colnames(cm)
@@ -553,8 +617,8 @@ pa <- round(diag(cm) / apply(cm, 2, sum), 2) * 100
 oa <- round(sum(diag(cm)) / sum(cm) * 100)
 
 cm2 <- cbind(cm_p, ua)
-cm2 <- rbind(cm2, pa)
-cm2[8, 8] <- oa
+cm2 <- rbind(cm2, pa = c(pa, oa))
+
 dimnames(cm2) <- list(
   obs  = dimnames(cm2)[[1]],
   pred = dimnames(cm2)[[2]]
