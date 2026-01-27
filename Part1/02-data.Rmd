@@ -721,27 +721,36 @@ For example, let's cross-tabulate horizon designation (`hzname`) with horizon te
 
 We can use the `addmargins()` function to add the row and column sums to the margins of the table for easier interpretation when there are many rows/columns in the result.
 
+Table objects can be subset and re-ordered using '['-style indexing. Sometimes it is helpful to shuffle rows and columns so that the most frequent combinations are in the "upper left" corner of the table.
 ```{r, eval=TRUE}
-addmargins(table(pedons$hzname, pedons$texcl))
+# cross-tabulation: hzname x texture class
+tab <- table(pedons$hzname, pedons$texcl)
+
+# row ordering index
+o.row <- order(rowSums(tab), decreasing = TRUE)
+
+# column ordering index
+o.col <- order(colSums(tab), decreasing = TRUE)
+
+# re-order cells of table
+tab <- tab[o.row, o.col]
+
+# add row and column sums
+addmargins(tab)
 ```
 
 ### Missing Values
 
-Missing values are encoded in R as `NA`. The `table()` function has a `useNA` argument that affects whether `NA` values are counted. 
+Missing values are encoded in R as `NA`. By default, the `table()` function will ignore NA. The `useNA` argument can conditionally (`useNA = 'ifany'`) or always print counts of NA (`useNA = 'always'`).
 
-Use `is.na()` to return a logical value that identifies missing data.
+Use `is.na()` to return a logical value that identifies elements of an object that are missing data. Use `which()` to convert a logical vector into an index of elements that are `TRUE`.
 
 ```{r, eval=TRUE}
-table(pedons$taxsubgrp, useNA = "ifany")
+# NA in moist hue
+table(pedons$m_hue, useNA = 'ifany')
 
-#  is.na(...) 
-table(is.na(pedons$taxsubgrp))
-
-#  is NOT NA !is.na(...)
-table(!is.na(pedons$taxsubgrp))
-
-# it can also be applied to horizon level columns in the SPC
-sort(table(pedons$texture), decreasing=TRUE)
+# proportion of values that are not NA
+prop.table(table(!is.na(pedons$m_hue)))
 ```
 
 ### Logical Operators{#logical-operators-detail}
