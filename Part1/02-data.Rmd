@@ -344,7 +344,7 @@ Save the code you use in an R script, add answers as comments, and send to your 
 
 Run the code in the linked R file and answer these questions.
 
-1.  How many profiles (sites) and horizons are in the `granite` SoilProfileCollection? How many in `andesite`? See `length()` and `nrow()` functions for SoilProfileCollection objects.
+1.  How many profiles (sites) and horizons are in the `granite` SoilProfileCollection? How many in `andesite`? See `length()` and `nrow()` functions for `SoilProfileCollection` objects.
 
 2.  Which profile, and which horizon in that profile, has the highest ratio of oxalate-extractable Fe to dithionite-citrate-extractable Fe (`Fe_o_to_Fe_d`)?
 
@@ -549,13 +549,14 @@ str(gopheridge, 2)
 
 There are many columns in the data.frame objects within a `fetchNASIS()` _SoilProfileCollection_.
 
-The following guide is part of the soilDB documentation and describes the columns that are returned from a `fetchNASIS(from="pedons")` call. In the future this guide will be extended to describe component data.
+The following guide is part of the soilDB documentation and describes the columns that are returned from a `fetchNASIS(from = 'pedons')` call. In the future this guide will be extended to describe component data.
 
--   [fetchNASIS(from="pedons") column description guide](https://ncss-tech.github.io/soilDB/articles/fetchNASIS.html)
+-   [fetchNASIS(from = 'pedons') column description guide](https://ncss-tech.github.io/soilDB/articles/fetchNASIS.html)
 
-With `siteNames()` and `horizonNames()` we can view the names for eachslot respectively in the `gopheridge` object.
+With `siteNames()` and `horizonNames()` we can view the names for each slot respectively in the `gopheridge` object.
 
 ```{r spcNames, eval=TRUE}
+# future TODO: limit to first ~10 items?
 # the fields at the site and horizon levels within the SPC
 siteNames(gopheridge)
 horizonNames(gopheridge)
@@ -817,15 +818,15 @@ Another method is to create an index using `which()` function. `which()` takes a
 
 *Do a graphical check to see the "typic" profiles are selected.*
 
-Plot them in R using the _SoilProfileCollection_ "plot" method (e.g., specialized version of the generic `plot()` function).
+Profile sketches are a convenient way to check the results of manipulating a `SoilProfileCollection`.
 
-```{r, eval=TRUE, fig.width=8, fig.height=4}
+```{r, eval=TRUE, fig.width=8, fig.height=4.5}
 # adjust margins
-par(mar=c(1,0,0,1))
+par(mar = c(0.5, 0, 0.5, 2))
 
-# plot the first 10 profiles of subset1
-plot(subset1[1:10, ], label = 'taxsubgrp', max.depth = 60)
-title('Pedons with the word "typic" at subgroup-level of Soil Taxonomy', line=-2)
+# note the first 10 profiles of subset1 are selected
+plotSPC(subset1[1:10, ], label = 'taxsubgrp', max.depth = 60, cex.names = 0.8, cex.id = 0.66)
+title('Pedons with the word "typic" at subgroup-level of Soil Taxonomy', line = -1.5)
 ```
 
 #### Resources for Regular Expressions{#regex-resources}
@@ -953,9 +954,13 @@ Save the code you use in an R script, add answers as comments, and send to your 
 
 First, we will load the sample data:
 
-```{r, eval=TRUE}
+```{r, eval=TRUE, fig.width=8, fig.height=4}
+# read an RDA file into R session
+# this creates an object `ohz`
 load(url("https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/ohz.rda"))
-plotSPC(ohz)
+
+par(mar = c(0, 0, 0, 2))
+plotSPC(ohz, cex.names = 0.75)
 ```
 
 The aqp function `thicknessOf()` can be used to calculate the thickness of horizons matching a regular expression pattern. For example, to calculate the total O horizon thickness  we can match the pattern `"O"`:
@@ -973,9 +978,12 @@ site(ohz) <- ohz_thickness
 
 Now, let's plot the profiles in order of total O horizon thickness. We draw dashed lines at 20 and 40cm to indicate the thresholds for histic epipedon and Histosols soil order:
 
-```{r, eval=TRUE}
-plotSPC(ohz, plot.order = order(ohz$O_thickness))
-abline(h = c(20, 40), lty = 2)
+```{r, eval=TRUE, fig.width=8, fig.height=4}
+par(mar = c(0, 0, 0, 2))
+plotSPC(ohz, plot.order = order(ohz$O_thickness), cex.names = 0.75)
+
+# horizontal lines at 20cm and 40cm
+abline(h = c(20, 40), lty = 2, col = 'firebrick')
 ```
 
 Using the `ohz` object answer the following questions. Use techniques from the previous sections. Check your logic by comparing to the profile sketch. 
