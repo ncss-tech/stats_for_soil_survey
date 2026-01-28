@@ -73,8 +73,9 @@
 
 
 <style type="text/css">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -84,7 +85,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -529,10 +530,10 @@ div.csl-indent {
 <li><p>Making and documenting observations of soil requires hard work. Digging is difficult, and writing soil descriptions is time consuming!</p></li>
 <li><p>Our confidence in observations typically weakens with the depth of the material described.</p>
 <ul>
-<li>If we acknowledge this, which we must, then how do we deal with it in pedon data?
+<li>How do we deal with it in pedon data?
 <ul>
-<li>Use a cutoff depth, for example 100 cm, can be used to truncate observations to a zone of greater confidence.</li>
-<li>Show the relative confidence of the data with depth.</li>
+<li>Use a cutoff depth, for example 100 cm, can be used to truncate observations</li>
+<li>Show the relative confidence of the data with depth</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -551,11 +552,12 @@ div.csl-indent {
 </ul></li>
 <li>Description style differences
 <ul>
-<li>Depth described, horizonation usage styles</li>
+<li>Depth described, horizon designation usage styles</li>
 </ul></li>
 <li>Legacy data vintage
 <ul>
-<li>Decadal span of data</li>
+<li>Data spanning multiple decades of standards</li>
+<li>Local, regional, and national variations in standards</li>
 <li>Taxonomy updates, horizon nomenclature changes</li>
 </ul></li>
 <li>Location confidence
@@ -570,18 +572,17 @@ div.csl-indent {
 <h2><span class="header-section-number">2.4</span> The <em>SoilProfileCollection</em><a href="data.html#the-soilprofilecollection" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>The <a href="http://ncss-tech.github.io/aqp/articles/Introduction-to-SoilProfileCollection-Objects.html"><em>SoilProfileCollection</em></a> class (SPC) provided by the <code>aqp</code> package is a specialized structure for soil data analysis. It simplifies the process of working with collections of data associated with soil profiles, e.g., site-level, horizon-level, spatial, diagnostic horizons, and other metadata.</p>
 <p>A <em>SoilProfileCollection</em> is similar to the NASIS Site/Pedon “object” in that it provides generalizations, specific routines and rules about data tables and their relationships.</p>
-<p>The <em>SoilProfileCollection</em> is an S4 R object. S4 objects have <a href="https://stat.ethz.ch/R-manual/R-patched/library/methods/html/slot.html">slots</a>. Of primary importance, are the slots for site-level and horizon-level data.</p>
-<p>In many ways the SPC is more adaptable than the NASIS “Pedon” concept because it is more general. However, the SPC is not as expressive as the complex hierarchy of objects in NASIS, which are more aligned with data archival vs. analysis.</p>
+<p>The <em>SoilProfileCollection</em> is an S4 R object. S4 objects have <a href="https://stat.ethz.ch/R-manual/R-patched/library/methods/html/slot.html">slots</a>. The main slots you need to know about are the slots for site-level and horizon-level data.</p>
 <div id="soilprofilecollection-methods" class="section level3 hasAnchor" number="2.4.1">
 <h3><span class="header-section-number">2.4.1</span> <em>SoilProfileCollection</em> methods<a href="data.html#soilprofilecollection-methods" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Many “familiar” methods are defined for the <em>SoilProfileCollection</em> object. Some are unique, and others operate like more common functions of vector and <code>data.frame</code> objects, such as <code>nrow()</code> (<em>“how many horizons?”</em>) or <code>length()</code> (<em>“how many sites/pedons?”</em>).</p>
-<p>Perhaps most importantly, when you access the site data (with <code>site(&lt;object&gt;)</code>) or the horizon data (with <code>horizons(&lt;object&gt;)</code>) of a <em>SoilProfileCollection</em>, you get a <code>data.frame</code> object that you can use like any other you might use or make in R.</p>
+<p>Many familiar R functions are defined for the <em>SoilProfileCollection</em> object. Some are unique, and others operate like more common functions of vector and <code>data.frame</code> objects, such as <code>nrow()</code> (<em>“how many horizons?”</em>) or <code>length()</code> (<em>“how many sites/pedons?”</em>).</p>
+<p>When you access the site data (with <code>site(&lt;object&gt;)</code>) or the horizon data (with <code>horizons(&lt;object&gt;)</code>) of a <em>SoilProfileCollection</em>, you get a <code>data.frame</code> object that you can use like any other in R.</p>
 <div id="promoting-a-data.frame-to-soilprofilecollection" class="section level4 hasAnchor" number="2.4.1.1">
 <h4><span class="header-section-number">2.4.1.1</span> Promoting a <code>data.frame</code> to <em>SoilProfileCollection</em><a href="data.html#promoting-a-data.frame-to-soilprofilecollection" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>The <em>SoilProfileCollection</em> object is a collection of 1-dimensional profile descriptions, of the type conventionally described on a Form 232, or of tabular data returned from laboratory.</p>
-<p>The object is “horizon data forward” in that you start with the layers, and can add or create site-level attributes by normalization, joins, and calculation.</p>
-<p>Most of the time if you are using your NASIS data, or an official database, there are defined ways of getting the data “into” an SPC. For example, <code>fetchOSD</code> returns a <em>SoilProfileCollection</em> that has been assembled from horizon and site level attributes gleaned from the OSDs text, Soil Classification database, and other sources.</p>
-<p>In the pre-course, we had you set up a process so you could connect to your local NASIS instance to “fetch” data and have methods like <code>fetchNASIS</code> put things together for you.</p>
+<p>The <em>SoilProfileCollection</em> object is a collection of 1-dimensional profile descriptions, like you might see on a Form 232, or of tabular data returned from laboratory.</p>
+<p>The object is “horizon data forward” in that you start with the layers, and can add or create site-level attributes by normalization, joins, and calculations.</p>
+<p>Most of the time if you are using your NASIS data, or an official database, there are defined ways of getting the data “into” an SPC. For example, <code>fetchOSD</code> returns a <em>SoilProfileCollection</em> that has been assembled from horizon and site level attributes parsed from the OSD text, Soil Classification database, and other sources.</p>
+<p>In the pre-course, we had you set up the connection to your local NASIS instance to “fetch” data and have methods like <code>fetchNASIS</code> put things together for you.</p>
 <p>This input to make a <em>SoilProfileCollection</em> can be represented most simply as a <code>data.frame</code> with unique site or profile ID and depth combinations for each horizon or layer–for example, a subset of the <code>phorizon</code> or <code>chorizon</code> table in NASIS.</p>
 <p>A simple demonstration of “tabular horizon data” is the <code>sp4</code> data set bundled with <code>aqp</code>: some serpentine soil profiles stored in a <code>data.frame</code> in the <code>aqp</code> package (after McGahan et al., 2009).</p>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb36-1"><a href="data.html#cb36-1" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
@@ -648,7 +649,7 @@ div.csl-indent {
 ## 
 ## Spatial Data:
 ## [EMPTY]</code></pre>
-<p>The formula expresses the idea that a profile <code>id</code> defined by set of <code>top</code> and <code>bottom</code> depths.</p>
+<p>The formula expresses the idea that a profile <code>id</code> has layers defined by set of <code>top</code> and <code>bottom</code> depths.</p>
 <p>NOTE: A character vector with same names has the same effect, and can be easier to “program” with than the formula-based syntax.</p>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb44-1"><a href="data.html#cb44-1" tabindex="-1"></a><span class="fu">depths</span>(sp4) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;id&quot;</span>, <span class="st">&quot;top&quot;</span>, <span class="st">&quot;bottom&quot;</span>)</span></code></pre></div>
 </div>
@@ -661,7 +662,6 @@ div.csl-indent {
 <span id="cb45-2"><a href="data.html#cb45-2" tabindex="-1"></a>sp4<span class="sc">$</span>y <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">10</span>) <span class="co"># dummy XY coordinates</span></span>
 <span id="cb45-3"><a href="data.html#cb45-3" tabindex="-1"></a></span>
 <span id="cb45-4"><a href="data.html#cb45-4" tabindex="-1"></a><span class="fu">initSpatial</span>(sp4, <span class="at">crs =</span> <span class="st">&quot;OGC:CRS84&quot;</span>) <span class="ot">&lt;-</span> <span class="er">~</span> x <span class="sc">+</span> y</span></code></pre></div>
-<p>This is new syntax introduced in aqp 2.0, the older syntax uses the <code>coordinates&lt;-</code> and <code>proj4string&lt;-</code> methods.</p>
 </div>
 <div id="extracting-site-and-horizon-data" class="section level3 hasAnchor" number="2.4.3">
 <h3><span class="header-section-number">2.4.3</span> Extracting Site and Horizon Data<a href="data.html#extracting-site-and-horizon-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -705,12 +705,15 @@ div.csl-indent {
 <li><code>x[i, ]</code>: specified rows, all columns</li>
 <li><code>x[, j]</code>: all rows, specified columns</li>
 <li><code>x[i, j]</code>: specified rows, specified columns</li>
+</ul></li>
+<li><code>[</code>: special SoilProfileCollection-specific “k-index” keywords
+<ul>
 <li><code>x[, , .FIRST]</code>: first horizon of every profile</li>
 <li><code>x[, , .LAST]</code>: last horizon of every profile</li>
 <li><code>x[, , .LAST, .BOTTOM]</code>: bottom depth of the last horizon of every profile</li>
 </ul></li>
 </ul>
-<p>See the <a href="https://ncss-tech.github.io/aqp/articles/Introduction-to-SoilProfileCollection-Objects.html#subsetting-soilprofilecollection-objects">Subsetting SoilProfileCollection Objects</a> reference for a more detailed explanation.</p>
+<p>See the <a href="https://ncss-tech.github.io/aqp/articles/Introduction-to-SoilProfileCollection-Objects.html#subsetting-soilprofilecollection-objects">Subsetting SoilProfileCollection Objects</a> reference for more details.</p>
 <div id="column-access-by-name-and" class="section level4 hasAnchor" number="2.4.4.1">
 <h4><span class="header-section-number">2.4.4.1</span> Column Access by Name: <code>$</code> and <code>[[</code><a href="data.html#column-access-by-name-and" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <div class="sourceCode" id="cb50"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb50-1"><a href="data.html#cb50-1" tabindex="-1"></a><span class="co"># sp4 is a SoilProfileCollection</span></span>
@@ -737,10 +740,10 @@ div.csl-indent {
 </div>
 <div id="row-access" class="section level4 hasAnchor" number="2.4.4.2">
 <h4><span class="header-section-number">2.4.4.2</span> Row Access: <code>[</code><a href="data.html#row-access" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>The <em>SoilProfileCollection</em> also has <code>[</code> (“single bracket”), but with a different interpretation from the <code>[i, j]</code> indexing of <code>data.frame</code> objects.</p>
+<p>The <em>SoilProfileCollection</em> also has <code>[</code> (“single bracket”), but with a different interpretation than we have with the <code>[i, j]</code> indexing of <code>data.frame</code> objects.</p>
 <ul>
 <li><p>In a <code>data.frame</code> you have <code>object[row, column, drop=TRUE]</code>; the result is a <code>data.frame</code> (or a vector with default <code>drop=TRUE</code>).</p></li>
-<li><p>In a <em>SoilProfileCollection</em> you have <code>object[site, horizon]</code>; the result is a <em>SoilProfileCollection</em>.</p></li>
+<li><p>In a <em>SoilProfileCollection</em> you have <code>object[site, horizon]</code>; the result is always a <em>SoilProfileCollection</em>.</p></li>
 </ul>
 <div class="sourceCode" id="cb59"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb59-1"><a href="data.html#cb59-1" tabindex="-1"></a><span class="co"># i-index: first 2 profiles, all horizons</span></span>
 <span id="cb59-2"><a href="data.html#cb59-2" tabindex="-1"></a>sp4[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, ]</span></code></pre></div>
@@ -817,11 +820,12 @@ div.csl-indent {
 </div>
 <div id="using-the-soildb-package" class="section level2 hasAnchor" number="2.5">
 <h2><span class="header-section-number">2.5</span> Using the <code>soilDB</code> Package<a href="data.html#using-the-soildb-package" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<p>The <code>soilDB</code> package for R provides functions for accessing data stored in NASIS, KSSL, SDA, SoilWeb, SoilGrids, and other sources. Functions that use data from SoilWeb are documented in a new <a href="https://ncss-tech.github.io/soilDB/articles/soilweb-data-functions.html">vignette</a>.</p>
-<p>These high-level ‘fetch’ functions bundle or wrap lower-level ‘get’ functions which access internal database interfaces to NASIS and other data sources. The ODBC connection to NASIS that you set up during the pre-course is an example of an internal database interface.</p>
-<p>Basic data checks are run within ‘fetch’ functions. These checks ensure the basic integrity of the data as it is queried and moved from its existing structure into an SPC. There are times when it is useful to use the lower-level <code>get</code> functions individually. They generally return single <code>data.frame</code> or <code>list</code> of <code>data.frame</code>.</p>
+<p>The <code>soilDB</code> package for R provides functions for accessing data stored in NASIS, KSSL, Soil Data Access (SDA), SoilWeb, SoilGrids, and other sources. Functions that use data from SDA are documented in a <a href="https://ncss-tech.github.io/soilDB/articles/sda.html">vignette</a>, also functions that use data from SoilWeb are documented in a <a href="https://ncss-tech.github.io/soilDB/articles/soilweb-data-functions.html">vignette</a>.</p>
+<p>These high-level ‘fetch’ functions bundle lower-level ‘get’ functions that access internal database interfaces to NASIS and other data sources. The ODBC connection to NASIS that you set up during the pre-course is an one example of a database interface.</p>
+<p>Basic data checks are run within the ‘fetch’ functions. These checks ensure the basic integrity of the data as it is queried and moved from its existing structure into an SPC or other final object. There are times when it is useful to use the lower-level <code>get</code> functions individually. They generally return single <code>data.frame</code> or a <code>list</code> of <code>data.frame</code>.</p>
 <p>You can set up scripts to make custom queries against these or other sources on your own. There is an example at the end of this chapter.</p>
-<p>For now we will start with the ‘fetch’ functions and others that will get you a large variety of data you can use for soil and ecological site analyses. There are many more functions available in soilDB, see <a href="https://ncss-tech.github.io/soilDB/reference/index.html" class="uri">https://ncss-tech.github.io/soilDB/reference/index.html</a> for details.</p>
+<p>For now we will start with the ‘fetch’ functions and others that will get you a variety of data you can use for soil and ecological site analyses.</p>
+<p>There are many more functions available in soilDB, see <a href="https://ncss-tech.github.io/soilDB/reference/index.html" class="uri">https://ncss-tech.github.io/soilDB/reference/index.html</a> for the full list.</p>
 <div id="soildb-functions-for-tabular-data" class="section level3 hasAnchor" number="2.5.1">
 <h3><span class="header-section-number">2.5.1</span> soilDB functions for tabular data<a href="data.html#soildb-functions-for-tabular-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><code>soilDB</code> functions are the quickest way to get up and running:</p>
@@ -847,9 +851,7 @@ div.csl-indent {
 <li>Can be used to access SSURGO, STATSGO (spatial and tabular), and Lab DataMart snapshots</li>
 <li>Submits queries to the Soil Data Access system.
 <ul>
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial.html">Soil Data Access Tutorial</a></li>
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-tutorial-2.html">SDA and Spatial Data</a></li>
-<li><a href="http://ncss-tech.github.io/AQP/soilDB/SDA-cointerp-tutorial.html">SDA and Interpretations</a></li>
+<li><a href="https://ncss-tech.github.io/soilDB/articles/sda.htm">Soil Data Access Tutorial</a></li>
 </ul></li>
 </ul></li>
 <li><p><a href="http://ncss-tech.github.io/soilDB/reference/fetchLDM.html"><strong>fetchLDM()</strong></a></p>
@@ -905,7 +907,7 @@ div.csl-indent {
 </div>
 <div id="open-database-connectivity-odbc-connection-to-nasis" class="section level3 hasAnchor" number="2.5.2">
 <h3><span class="header-section-number">2.5.2</span> Open Database Connectivity (ODBC) Connection to NASIS<a href="data.html#open-database-connectivity-odbc-connection-to-nasis" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>After setting up an ODBC connection, as you did as part of the pre-course, you can use R to access data from a selected set defined in your local NASIS database.</p>
+<p>After setting up an ODBC connection you can use R to access data from a selected set defined in your local NASIS database.</p>
 <ul>
 <li><a href="http://ncss-tech.github.io/AQP/soilDB/setup_local_nasis.html"><strong>How to Create an ODBC Connection to local NASIS database for R</strong></a>.</li>
 </ul>
@@ -916,9 +918,9 @@ div.csl-indent {
 <h3><span class="header-section-number">2.5.3</span> <code>fetchNASIS()</code><a href="data.html#fetchnasis" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>The <a href="http://ncss-tech.github.io/soilDB/reference/fetchNASIS.html">fetchNASIS()</a> convenience function extracts data from a NASIS selected set via Structured Query Language (SQL).</p>
 <p>Note that the import process in <code>fetchNASIS()</code>, and the other methods, is not comprehensive. It does not pull every column for every table related to pedon data out of NASIS.</p>
-<p>Instead, it pulls essential / commonly used pedon and horizon data. Higher level functions like <code>fetchNASIS()</code> bundle a series of lower-level queries to get specific parts of the Pedon or Component data structures. Much of the nested complexity of NASIS is simplified in the resulting object.</p>
+<p>Instead, it pulls essential / commonly used pedon and horizon data, and makes several assumptions about those data. A lot of the nested complexity of NASIS is simplified in the resulting object.</p>
 <p><img src="s4ssbook_files/figure-html/structure_diagram_a-1.png" alt="" width="672" style="display: block; margin: auto;" /></p>
-<p>Many-to-one relationships are “flattened” where possible by <code>fetchNASIS()</code>. This aggregates the data from various tables into one “site” record with related horizon records, per profile.</p>
+<p>For example, many-to-one relationships are “flattened” wherever possible. This “flattening” aggregates the data from various tables into one “site” or “horizon” record.</p>
 <p>You can see the child tables that are aggregated using the <code>get_extended_data_from_NASIS()</code> method, which returns a named list of child table sources that can be joined to the <em>SoilProfileCollection</em> made with <code>fetchNASIS()</code> using the internal record IDs.</p>
 <div id="fetchnasis-arguments" class="section level4 hasAnchor" number="2.5.3.1">
 <h4><span class="header-section-number">2.5.3.1</span> fetchNASIS arguments<a href="data.html#fetchnasis-arguments" class="anchor-section" aria-label="Anchor link to header"></a></h4>
@@ -1002,15 +1004,14 @@ div.csl-indent {
 ##   ..@ site        :&#39;data.frame&#39;: 52 obs. of  172 variables:
 ##   ..@ diagnostic  :&#39;data.frame&#39;: 164 obs. of  4 variables:
 ##   ..@ restrictions:&#39;data.frame&#39;: 56 obs. of  8 variables:</code></pre>
-<p>There are many columns in the data.frame objects within a <code>fetchNASIS()</code> <em>SoilProfileCollection</em>.</p>
+<p>There are many columns in the <code>data.frame</code> objects within a <code>fetchNASIS()</code> <em>SoilProfileCollection</em>.</p>
 <p>The following guide is part of the soilDB documentation and describes the columns that are returned from a <code>fetchNASIS(from = 'pedons')</code> call. In the future this guide will be extended to describe component data.</p>
 <ul>
 <li><a href="https://ncss-tech.github.io/soilDB/articles/fetchNASIS.html">fetchNASIS(from = ‘pedons’) column description guide</a></li>
 </ul>
 <p>With <code>siteNames()</code> and <code>horizonNames()</code> we can view the names for each slot respectively in the <code>gopheridge</code> object.</p>
-<div class="sourceCode" id="cb69"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb69-1"><a href="data.html#cb69-1" tabindex="-1"></a><span class="co"># future </span><span class="al">TODO</span><span class="co">: limit to first ~10 items?</span></span>
-<span id="cb69-2"><a href="data.html#cb69-2" tabindex="-1"></a><span class="co"># the fields at the site and horizon levels within the SPC</span></span>
-<span id="cb69-3"><a href="data.html#cb69-3" tabindex="-1"></a><span class="fu">siteNames</span>(gopheridge)</span></code></pre></div>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb69-1"><a href="data.html#cb69-1" tabindex="-1"></a><span class="co"># the fields at the site and horizon levels within the SPC</span></span>
+<span id="cb69-2"><a href="data.html#cb69-2" tabindex="-1"></a><span class="fu">siteNames</span>(gopheridge)</span></code></pre></div>
 <pre><code>##   [1] &quot;peiid&quot;                                    &quot;siteiid&quot;                                 
 ##   [3] &quot;ecositeid&quot;                                &quot;ecositenm&quot;                               
 ##   [5] &quot;ecositecorrdate&quot;                          &quot;es_classifier&quot;                           
@@ -1263,7 +1264,7 @@ div.csl-indent {
 ##   typic haploxerepts                1            0    0          0              5
 ##   ultic haploxeralfs                2            0    1          1             40
 ##   ultic haploxerolls                0            1    0          0              0</code></pre>
-<p>As expected with <code>gopheridge</code> the majority of pedons are <em>Loamy-skeletal Ultic Haploxeralfs</em>.</p>
+<p>For <code>gopheridge</code> the majority of pedons are <em>Loamy-skeletal Ultic Haploxeralfs</em>, which generally aligns with the series concept.</p>
 <p>Since <code>pedons</code> contains site and horizon level data, when cross tabulating we need to be sure pair a column from the site data with other site-level columns, and the same for horizon-level. This is because all arguments to <code>table()</code> must have the same length.</p>
 <p>For example, let’s cross-tabulate horizon designation (<code>hzname</code>) with horizon texture class (<code>texcl</code>).</p>
 <p>We can use the <code>addmargins()</code> function to add the row and column sums to the margins of the table for easier interpretation when there are many rows/columns in the result.</p>
@@ -1323,7 +1324,7 @@ div.csl-indent {
 </div>
 <div id="missing-values" class="section level3 hasAnchor" number="2.6.2">
 <h3><span class="header-section-number">2.6.2</span> Missing Values<a href="data.html#missing-values" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Missing values are encoded in R as <code>NA</code>. By default, the <code>table()</code> function will ignore NA. The <code>useNA</code> argument can conditionally (<code>useNA = 'ifany'</code>) or always print counts of NA (<code>useNA = 'always'</code>).</p>
+<p>Missing values are encoded in R as <code>NA</code>. By default, the <code>table()</code> function will ignore <code>NA</code>. The <code>useNA</code> argument can conditionally (<code>useNA = 'ifany'</code>) or always print counts of <code>NA</code> (<code>useNA = 'always'</code>).</p>
 <p>Use <code>is.na()</code> to return a logical value that identifies elements of an object that are missing data. Use <code>which()</code> to convert a logical vector into an index of elements that are <code>TRUE</code>.</p>
 <div class="sourceCode" id="cb90"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb90-1"><a href="data.html#cb90-1" tabindex="-1"></a><span class="co"># NA in moist hue</span></span>
 <span id="cb90-2"><a href="data.html#cb90-2" tabindex="-1"></a><span class="fu">table</span>(pedons<span class="sc">$</span>m_hue, <span class="at">useNA =</span> <span class="st">&#39;ifany&#39;</span>)</span></code></pre></div>
@@ -1338,14 +1339,19 @@ div.csl-indent {
 </div>
 <div id="logical-operators-detail" class="section level3 hasAnchor" number="2.6.3">
 <h3><span class="header-section-number">2.6.3</span> Logical Operators<a href="data.html#logical-operators-detail" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Logical values encode one of two possible values, <code>TRUE</code> or <code>FALSE</code>. <a href="https://en.wikipedia.org/wiki/Logical_connective">Logical operators</a> are functions that compare inputs using the rules of <a href="https://en.wikipedia.org/wiki/Boolean_algebra">Boolean Algebra</a> and return a logical value or vector. Some functions such as the test for equality (<code>==</code>) or inequality (<code>&gt;</code>) accept many possible data types (numeric, character) and return a vector of logical values. Logical vectors (e.g. <code>c(TRUE, FALSE, FALSE, TRUE)</code>) are a convenient way of describing complex subsetting tasks such as “find all records that represent either alfisols OR ultisols, but not those records which contain the ‘duri-’ formative element”.</p>
-<p>Logical operations can be visualized as <a href="https://en.wikipedia.org/wiki/Venn_diagram">Venn diagrams</a>. Some of the more common logical operators are demonstrated in the following figure. Logical operators can be combined using parenthesis to describe complex subsetting criteria.
-<img src="static-figures/logical-operator-examples.png" alt="Commonly used logical operators, described using Venn diagrams." /></p>
-<p>Common operators and functions that return logical vectors:</p>
+<p>Logical values in R encode one of three constant values: <code>TRUE</code> or <code>FALSE</code>, or missing (<code>NA</code>).</p>
+<p><a href="https://en.wikipedia.org/wiki/Logical_connective">Logical operators</a> are functions that compare inputs using the rules of <a href="https://en.wikipedia.org/wiki/Boolean_algebra">Boolean Algebra</a> and return a logical value or vector. Some functions such as the test for equality (<code>==</code>) or inequality (<code>!=</code>) accept many possible data types (numeric, character) and return a vector of logical values.</p>
+<p>Logical vectors (e.g. <code>c(TRUE, FALSE, FALSE, TRUE)</code>) are a way to express complex subsetting tasks such as “find all records that represent either alfisols OR inceptisols, but not records that contain the ‘duri-’ formative element”:</p>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="data.html#cb94-1" tabindex="-1"></a>order_lgl <span class="ot">&lt;-</span> taxorder <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;alfisols&quot;</span>, <span class="st">&quot;inceptisols&quot;</span>)</span>
+<span id="cb94-2"><a href="data.html#cb94-2" tabindex="-1"></a>subgroup_lgl <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">&quot;duri&quot;</span>, taxsubgrp)</span>
+<span id="cb94-3"><a href="data.html#cb94-3" tabindex="-1"></a>combined_lgl <span class="ot">&lt;-</span> order_lgl <span class="sc">&amp;</span> combined_lgl</span>
+<span id="cb94-4"><a href="data.html#cb94-4" tabindex="-1"></a><span class="fu">subset</span>(pedons, combined_lgl)</span></code></pre></div>
+<p>Logical operations can be visualized as <a href="https://en.wikipedia.org/wiki/Venn_diagram">Venn diagrams</a>. Some of the more common logical operators are demonstrated in the following figure. Logical operators can be combined using parenthesis to describe complex subsetting criteria. <img src="static-figures/logical-operator-examples.png" alt="Commonly used logical operators, described using Venn diagrams." /></p>
+<p>Common operators and functions that return logical vectors include:</p>
 <ul>
 <li><p><code>A == B</code>: “A is equal to B”, note the use of double-equal sign</p></li>
-<li><p><code>A != B</code>: “A is not equal to B”, note that <code>!</code> can be used to invert any logical operator</p></li>
-<li><p><code>&lt;, &gt;, &lt;=, &gt;=</code>: inequality operators</p></li>
+<li><p><code>A != B</code>: “A is not equal to B”, note that <code>!</code> can be used to invert any logical vector</p></li>
+<li><p><code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>: inequality operators</p></li>
 <li><p><code>grepl(pattern, x)</code>: text <code>pattern</code> found in <code>x</code>, similar to SQL <code>LIKE</code> (e.g. <code>areasymbol LIKE "CA%"</code>), <a href="data.html#regex-resources">REGEX Resources in Chapter 2</a></p></li>
 </ul>
 <p>Vectorized logical operators:</p>
@@ -1355,17 +1361,17 @@ div.csl-indent {
 <li><p><code>xor(A, B)</code>: <a href="https://en.wikipedia.org/wiki/Exclusive_or">exclusive OR</a>, “A or B, but not both”</p></li>
 <li><p><code>A %in% B</code>: equivalent to SQL <code>IN</code> operator (e.g. <code>areasymbol IN ("IN001", "IN111")</code>)</p></li>
 </ul>
-<p>Single item logical operators:</p>
-<ul>
-<li><p><code>A &amp;&amp; B</code>: logical AND, single element comparisons</p></li>
-<li><p><code>A || B</code>: logical OR, single element comparisons</p></li>
-</ul>
 <p>Logical aggregate functions (return a single value):</p>
 <ul>
 <li><p><code>all(A)</code>: test that all elements of <code>A</code> are <code>TRUE</code></p></li>
 <li><p><code>any(A)</code>: test that one or more elements of <code>A</code> are <code>TRUE</code></p></li>
 </ul>
-<p>Note that logical operations on objects containing <code>NA</code> will evaluate to <code>NA</code>. If you plan to use a logical vector for subsetting, be sure to use <code>which()</code> to convert all instances of <code>TRUE</code> into their corresponding integer index.</p>
+<p>Left-to-right logical operators:</p>
+<ul>
+<li><p><code>A &amp;&amp; B</code>: logical AND, if A is <code>FALSE</code> B is not evaluated, if A or B are length &gt; 1, only the first is evaluated</p></li>
+<li><p><code>A || B</code>: logical OR, if A is <code>TRUE</code> B is not evaluated, if A or B are length &gt; 1, only the first is evaluated</p></li>
+</ul>
+<p>Note: logical operations on objects containing <code>NA</code> will evaluate to <code>NA</code>. If you plan to use a logical vector for subsetting, either use <code>which()</code> to convert all instances of <code>TRUE</code> into their corresponding integer index, or use a function that implicitly treats <code>NA</code> as <code>FALSE</code>, such as <code>subset()</code> or <code>dplyr::filter()</code></p>
 </div>
 <div id="pattern-matching" class="section level3 hasAnchor" number="2.6.4">
 <h3><span class="header-section-number">2.6.4</span> Pattern Matching<a href="data.html#pattern-matching" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -1373,15 +1379,15 @@ div.csl-indent {
 <p>Patterns are specified using <a href="http://regexr.com/">regular expression</a> (REGEX) syntax.</p>
 <p>This process can be applied to many different columns in the SPC based on how you need to filter the data. This example pattern matches on the <code>taxsubgrp</code> column, but another useful application might be to pattern match on geomorphology or parent material.</p>
 <p>Say we want to see what the variation of particle size classes are within a specific subgroup. We can use <code>grep()</code> to create a row index, then apply that index to the <em>SoilProfileCollection</em>.</p>
-<div class="sourceCode" id="cb94"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb94-1"><a href="data.html#cb94-1" tabindex="-1"></a><span class="co"># create a numeric index for pedons with taxsubgroup containing &#39;typic&#39;</span></span>
-<span id="cb94-2"><a href="data.html#cb94-2" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&#39;typic&#39;</span>, pedons<span class="sc">$</span>taxsubgrp)</span>
-<span id="cb94-3"><a href="data.html#cb94-3" tabindex="-1"></a>idx</span></code></pre></div>
+<div class="sourceCode" id="cb95"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb95-1"><a href="data.html#cb95-1" tabindex="-1"></a><span class="co"># create a numeric index for pedons with taxsubgroup containing &#39;typic&#39;</span></span>
+<span id="cb95-2"><a href="data.html#cb95-2" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&#39;typic&#39;</span>, pedons<span class="sc">$</span>taxsubgrp)</span>
+<span id="cb95-3"><a href="data.html#cb95-3" tabindex="-1"></a>idx</span></code></pre></div>
 <pre><code>## [1] 11 12 13 14 26 50</code></pre>
-<div class="sourceCode" id="cb96"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb96-1"><a href="data.html#cb96-1" tabindex="-1"></a><span class="co"># use square bracket notation to subset &#39;typic&#39; soils in `subset1` object</span></span>
-<span id="cb96-2"><a href="data.html#cb96-2" tabindex="-1"></a>subset1 <span class="ot">&lt;-</span> pedons[idx,]</span>
-<span id="cb96-3"><a href="data.html#cb96-3" tabindex="-1"></a></span>
-<span id="cb96-4"><a href="data.html#cb96-4" tabindex="-1"></a><span class="co"># or use the index directly to summarize taxpartsize for &#39;typic&#39; soils</span></span>
-<span id="cb96-5"><a href="data.html#cb96-5" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(pedons<span class="sc">$</span>taxpartsize[idx]), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb97-1"><a href="data.html#cb97-1" tabindex="-1"></a><span class="co"># use square bracket notation to subset &#39;typic&#39; soils in `subset1` object</span></span>
+<span id="cb97-2"><a href="data.html#cb97-2" tabindex="-1"></a>subset1 <span class="ot">&lt;-</span> pedons[idx, ]</span>
+<span id="cb97-3"><a href="data.html#cb97-3" tabindex="-1"></a></span>
+<span id="cb97-4"><a href="data.html#cb97-4" tabindex="-1"></a><span class="co"># or use the index directly to summarize taxpartsize for &#39;typic&#39; soils</span></span>
+<span id="cb97-5"><a href="data.html#cb97-5" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(pedons<span class="sc">$</span>taxpartsize[idx]), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## 
 ##  loamy-skeletal clayey-skeletal 
 ##               5               1</code></pre>
@@ -1389,12 +1395,18 @@ div.csl-indent {
 <p>Another method is to create an index using <code>which()</code> function. <code>which()</code> takes any logical vector (or expression), and it returns the indices (positions) where that expression returns <code>TRUE</code>. The use of <code>which</code> becomes more important when there are missing values (NA) in an expression.</p>
 <p><em>Do a graphical check to see the “typic” profiles are selected.</em></p>
 <p>Profile sketches are a convenient way to check the results of manipulating a <code>SoilProfileCollection</code>.</p>
-<div class="sourceCode" id="cb98"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb98-1"><a href="data.html#cb98-1" tabindex="-1"></a><span class="co"># adjust margins</span></span>
-<span id="cb98-2"><a href="data.html#cb98-2" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">2</span>))</span>
-<span id="cb98-3"><a href="data.html#cb98-3" tabindex="-1"></a></span>
-<span id="cb98-4"><a href="data.html#cb98-4" tabindex="-1"></a><span class="co"># note the first 10 profiles of subset1 are selected</span></span>
-<span id="cb98-5"><a href="data.html#cb98-5" tabindex="-1"></a><span class="fu">plotSPC</span>(subset1[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, ], <span class="at">label =</span> <span class="st">&#39;taxsubgrp&#39;</span>, <span class="at">max.depth =</span> <span class="dv">60</span>, <span class="at">cex.names =</span> <span class="fl">0.8</span>, <span class="at">cex.id =</span> <span class="fl">0.66</span>)</span>
-<span id="cb98-6"><a href="data.html#cb98-6" tabindex="-1"></a><span class="fu">title</span>(<span class="st">&#39;Pedons with the word &quot;typic&quot; at subgroup-level of Soil Taxonomy&#39;</span>, <span class="at">line =</span> <span class="sc">-</span><span class="fl">1.5</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb99"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb99-1"><a href="data.html#cb99-1" tabindex="-1"></a><span class="co"># adjust margins</span></span>
+<span id="cb99-2"><a href="data.html#cb99-2" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="dv">0</span>, <span class="fl">0.5</span>, <span class="dv">2</span>))</span>
+<span id="cb99-3"><a href="data.html#cb99-3" tabindex="-1"></a></span>
+<span id="cb99-4"><a href="data.html#cb99-4" tabindex="-1"></a><span class="co"># note the first 10 profiles of subset1 are selected</span></span>
+<span id="cb99-5"><a href="data.html#cb99-5" tabindex="-1"></a><span class="fu">plotSPC</span>(</span>
+<span id="cb99-6"><a href="data.html#cb99-6" tabindex="-1"></a>  subset1[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, ],</span>
+<span id="cb99-7"><a href="data.html#cb99-7" tabindex="-1"></a>  <span class="at">label =</span> <span class="st">&#39;taxsubgrp&#39;</span>,</span>
+<span id="cb99-8"><a href="data.html#cb99-8" tabindex="-1"></a>  <span class="at">max.depth =</span> <span class="dv">60</span>,</span>
+<span id="cb99-9"><a href="data.html#cb99-9" tabindex="-1"></a>  <span class="at">cex.names =</span> <span class="fl">0.8</span>,</span>
+<span id="cb99-10"><a href="data.html#cb99-10" tabindex="-1"></a>  <span class="at">cex.id =</span> <span class="fl">0.66</span></span>
+<span id="cb99-11"><a href="data.html#cb99-11" tabindex="-1"></a>)</span>
+<span id="cb99-12"><a href="data.html#cb99-12" tabindex="-1"></a><span class="fu">title</span>(<span class="st">&#39;Pedons with the word &quot;typic&quot; at subgroup-level of Soil Taxonomy&#39;</span>, <span class="at">line =</span> <span class="sc">-</span><span class="fl">1.5</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-57-1.png" alt="" width="768" style="display: block; margin: auto;" /></p>
 <div id="regex-resources" class="section level4 hasAnchor" number="2.6.4.1">
 <h4><span class="header-section-number">2.6.4.1</span> Resources for Regular Expressions<a href="data.html#regex-resources" class="anchor-section" aria-label="Anchor link to header"></a></h4>
@@ -1462,36 +1474,37 @@ div.csl-indent {
 <h4><span class="header-section-number">2.6.5.1</span> Filtering with <code>aqp::subset()</code><a href="data.html#filtering-with-aqpsubset" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>We use the <em>SoilProfileCollection</em> <code>subset</code> method, where we first specify a data (<code>pedons</code>) object then we can write expressions for the columns that exist in that object.</p>
 <p>Here, we combine two logical expressions to find <code>taxsubgrp</code> containing <code>"alfs"</code> (Alfisols) with <code>obsdate</code> before January 1st, 2010.</p>
-<div class="sourceCode" id="cb99"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb99-1"><a href="data.html#cb99-1" tabindex="-1"></a>subset2 <span class="ot">&lt;-</span> <span class="fu">subset</span>(pedons, <span class="fu">grepl</span>(<span class="st">&quot;alfs&quot;</span>, taxsubgrp) <span class="sc">&amp;</span> obsdate <span class="sc">&lt;</span> <span class="fu">as.POSIXlt</span>(<span class="st">&quot;2010-01-01&quot;</span>))</span>
-<span id="cb99-2"><a href="data.html#cb99-2" tabindex="-1"></a></span>
-<span id="cb99-3"><a href="data.html#cb99-3" tabindex="-1"></a><span class="co"># check taxonomic range of particle size classes in the data</span></span>
-<span id="cb99-4"><a href="data.html#cb99-4" tabindex="-1"></a><span class="co"># overwhelmingly these are described as loamy-skeletal ultic haploxeralfs</span></span>
-<span id="cb99-5"><a href="data.html#cb99-5" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(subset2<span class="sc">$</span>taxsubgrp), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb100"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb100-1"><a href="data.html#cb100-1" tabindex="-1"></a>subset2 <span class="ot">&lt;-</span> <span class="fu">subset</span>(pedons,</span>
+<span id="cb100-2"><a href="data.html#cb100-2" tabindex="-1"></a>                  <span class="fu">grepl</span>(<span class="st">&quot;alfs&quot;</span>, taxsubgrp) <span class="sc">&amp;</span> obsdate <span class="sc">&lt;</span> <span class="fu">as.POSIXlt</span>(<span class="st">&quot;2010-01-01&quot;</span>))</span>
+<span id="cb100-3"><a href="data.html#cb100-3" tabindex="-1"></a></span>
+<span id="cb100-4"><a href="data.html#cb100-4" tabindex="-1"></a><span class="co"># check taxonomic range of particle size classes in the data</span></span>
+<span id="cb100-5"><a href="data.html#cb100-5" tabindex="-1"></a><span class="co"># overwhelmingly these are described as loamy-skeletal ultic haploxeralfs</span></span>
+<span id="cb100-6"><a href="data.html#cb100-6" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(subset2<span class="sc">$</span>taxsubgrp), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## 
 ##  ultic haploxeralfs mollic haploxeralfs 
 ##                  28                   1</code></pre>
-<div class="sourceCode" id="cb101"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb101-1"><a href="data.html#cb101-1" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(subset2<span class="sc">$</span>taxpartsize), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb102"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb102-1"><a href="data.html#cb102-1" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(subset2<span class="sc">$</span>taxpartsize), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## 
 ##  loamy-skeletal clayey-skeletal            fine      fine-loamy 
 ##              25               2               1               1</code></pre>
-<div class="sourceCode" id="cb103"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb103-1"><a href="data.html#cb103-1" tabindex="-1"></a><span class="co"># check year described and taxpartsize</span></span>
-<span id="cb103-2"><a href="data.html#cb103-2" tabindex="-1"></a><span class="fu">table</span>(subset2<span class="sc">$</span>taxpartsize, <span class="fu">substr</span>(subset2<span class="sc">$</span>obsdate, <span class="dv">0</span>, <span class="dv">4</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb104"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb104-1"><a href="data.html#cb104-1" tabindex="-1"></a><span class="co"># check year described and taxpartsize</span></span>
+<span id="cb104-2"><a href="data.html#cb104-2" tabindex="-1"></a><span class="fu">table</span>(subset2<span class="sc">$</span>taxpartsize, <span class="fu">substr</span>(subset2<span class="sc">$</span>obsdate, <span class="dv">0</span>, <span class="dv">4</span>))</span></code></pre></div>
 <pre><code>##                  
 ##                   2007 2008 2009
 ##   clayey-skeletal    1    0    1
 ##   fine               1    0    0
 ##   fine-loamy         1    0    0
 ##   loamy-skeletal    19    1    5</code></pre>
-<div class="sourceCode" id="cb105"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb105-1"><a href="data.html#cb105-1" tabindex="-1"></a><span class="co"># a double equal sign &#39;==&#39; is used for exact character or numeric criteria</span></span>
-<span id="cb105-2"><a href="data.html#cb105-2" tabindex="-1"></a>subset3 <span class="ot">&lt;-</span> <span class="fu">subset</span>(subset2, taxpartsize <span class="sc">==</span> <span class="st">&#39;loamy-skeletal&#39;</span>)</span>
-<span id="cb105-3"><a href="data.html#cb105-3" tabindex="-1"></a></span>
-<span id="cb105-4"><a href="data.html#cb105-4" tabindex="-1"></a><span class="fu">table</span>(subset3<span class="sc">$</span>taxpartsize)</span></code></pre></div>
+<div class="sourceCode" id="cb106"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb106-1"><a href="data.html#cb106-1" tabindex="-1"></a><span class="co"># a double equal sign &#39;==&#39; is used for exact character or numeric criteria</span></span>
+<span id="cb106-2"><a href="data.html#cb106-2" tabindex="-1"></a>subset3 <span class="ot">&lt;-</span> <span class="fu">subset</span>(subset2, taxpartsize <span class="sc">==</span> <span class="st">&#39;loamy-skeletal&#39;</span>)</span>
+<span id="cb106-3"><a href="data.html#cb106-3" tabindex="-1"></a></span>
+<span id="cb106-4"><a href="data.html#cb106-4" tabindex="-1"></a><span class="fu">table</span>(subset3<span class="sc">$</span>taxpartsize)</span></code></pre></div>
 <pre><code>## 
 ## loamy-skeletal 
 ##             25</code></pre>
-<div class="sourceCode" id="cb107"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb107-1"><a href="data.html#cb107-1" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
-<span id="cb107-2"><a href="data.html#cb107-2" tabindex="-1"></a><span class="fu">plotSPC</span>(subset3[<span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, ], <span class="at">print.id =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb107-3"><a href="data.html#cb107-3" tabindex="-1"></a><span class="fu">title</span>(<span class="st">&#39;Loamy-skeletal Ultic Haploxeralfs&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb108"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb108-1"><a href="data.html#cb108-1" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb108-2"><a href="data.html#cb108-2" tabindex="-1"></a><span class="fu">plotSPC</span>(subset3[<span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, ], <span class="at">print.id =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb108-3"><a href="data.html#cb108-3" tabindex="-1"></a><span class="fu">title</span>(<span class="st">&#39;Loamy-skeletal Ultic Haploxeralfs&#39;</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-58-1.png" alt="" width="768" style="display: block; margin: auto;" /></p>
 </div>
 </div>
@@ -1502,11 +1515,11 @@ div.csl-indent {
 <p>This conversion accounts for important things such as timezone using your computer’s locale–which is important to keep in mind.</p>
 <p>When converting to POSIX time several unambiguous (year-month-day) date time formats can be detected.</p>
 <p>For instance, if you want to convert a date in the common month-day-year format, you need to specify the <code>format</code> argument:</p>
-<div class="sourceCode" id="cb108"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb108-1"><a href="data.html#cb108-1" tabindex="-1"></a><span class="fu">as.POSIXct</span>(<span class="dv">24</span><span class="sc">*</span><span class="dv">60</span><span class="sc">*</span><span class="dv">60</span>, <span class="at">origin =</span> <span class="st">&quot;1970-01-01&quot;</span>, <span class="at">tz =</span> <span class="st">&quot;UTC&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb109"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb109-1"><a href="data.html#cb109-1" tabindex="-1"></a><span class="fu">as.POSIXct</span>(<span class="dv">24</span> <span class="sc">*</span> <span class="dv">60</span> <span class="sc">*</span> <span class="dv">60</span>, <span class="at">origin =</span> <span class="st">&quot;1970-01-01&quot;</span>, <span class="at">tz =</span> <span class="st">&quot;UTC&quot;</span>)</span></code></pre></div>
 <pre><code>## [1] &quot;1970-01-02 UTC&quot;</code></pre>
 <p>By default the timezone will match your current timezone. Dates without times are treated as being at midnight UTC.</p>
 <p>You can customize the timezone with <code>tz</code> argument:</p>
-<div class="sourceCode" id="cb110"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb110-1"><a href="data.html#cb110-1" tabindex="-1"></a><span class="fu">as.POSIXlt</span>(<span class="st">&quot;01/01/1970&quot;</span>, <span class="at">tz =</span> <span class="st">&quot;UTC&quot;</span>, <span class="at">format =</span> <span class="st">&quot;%m/%d/%Y&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb111"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb111-1"><a href="data.html#cb111-1" tabindex="-1"></a><span class="fu">as.POSIXlt</span>(<span class="st">&quot;01/01/1970&quot;</span>, <span class="at">tz =</span> <span class="st">&quot;UTC&quot;</span>, <span class="at">format =</span> <span class="st">&quot;%m/%d/%Y&quot;</span>)</span></code></pre></div>
 <pre><code>## [1] &quot;1970-01-01 UTC&quot;</code></pre>
 <p><code>POSIXlt</code> and <code>POSIXct</code> objects can be formatted with the <code>format()</code> function. <code>strptime()</code> can be used to parse character vectors into date/times. You use <code>as.POSIXlt()</code> with character input, and <code>as.POSIXct()</code> with numeric input.</p>
 <p>R also has the Date class which can be used for formatting calendar dates. You can convert POSIXlt/POSIXct objects to Date objects with <code>as.Date()</code></p>
@@ -1518,16 +1531,16 @@ div.csl-indent {
 <p>We will start to examine this dataset graphically, and then we will use some functions defined for the <em>SoilProfileCollection</em> to extract information from the data.</p>
 <p>Save the code you use in an R script, add answers as comments, and send to your mentor.</p>
 <p>First, we will load the sample data:</p>
-<div class="sourceCode" id="cb112"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb112-1"><a href="data.html#cb112-1" tabindex="-1"></a><span class="co"># read an RDA file into R session</span></span>
-<span id="cb112-2"><a href="data.html#cb112-2" tabindex="-1"></a><span class="co"># this creates an object `ohz`</span></span>
-<span id="cb112-3"><a href="data.html#cb112-3" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">url</span>(<span class="st">&quot;https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/ohz.rda&quot;</span>))</span>
-<span id="cb112-4"><a href="data.html#cb112-4" tabindex="-1"></a></span>
-<span id="cb112-5"><a href="data.html#cb112-5" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>))</span>
-<span id="cb112-6"><a href="data.html#cb112-6" tabindex="-1"></a><span class="fu">plotSPC</span>(ohz, <span class="at">cex.names =</span> <span class="fl">0.75</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb113"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb113-1"><a href="data.html#cb113-1" tabindex="-1"></a><span class="co"># read an RDA file into R session</span></span>
+<span id="cb113-2"><a href="data.html#cb113-2" tabindex="-1"></a><span class="co"># this creates an object `ohz`</span></span>
+<span id="cb113-3"><a href="data.html#cb113-3" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">url</span>(<span class="st">&quot;https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/ohz.rda&quot;</span>))</span>
+<span id="cb113-4"><a href="data.html#cb113-4" tabindex="-1"></a></span>
+<span id="cb113-5"><a href="data.html#cb113-5" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>))</span>
+<span id="cb113-6"><a href="data.html#cb113-6" tabindex="-1"></a><span class="fu">plotSPC</span>(ohz, <span class="at">cex.names =</span> <span class="fl">0.75</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-61-1.png" alt="" width="768" style="display: block; margin: auto;" /></p>
 <p>The aqp function <code>thicknessOf()</code> can be used to calculate the thickness of horizons matching a regular expression pattern. For example, to calculate the total O horizon thickness we can match the pattern <code>"O"</code>:</p>
-<div class="sourceCode" id="cb113"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb113-1"><a href="data.html#cb113-1" tabindex="-1"></a>ohz_thickness <span class="ot">&lt;-</span> <span class="fu">thicknessOf</span>(ohz, <span class="at">pattern =</span> <span class="st">&quot;O&quot;</span>, <span class="at">prefix =</span> <span class="st">&quot;O_&quot;</span>)</span>
-<span id="cb113-2"><a href="data.html#cb113-2" tabindex="-1"></a>ohz_thickness</span></code></pre></div>
+<div class="sourceCode" id="cb114"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb114-1"><a href="data.html#cb114-1" tabindex="-1"></a>ohz_thickness <span class="ot">&lt;-</span> <span class="fu">thicknessOf</span>(ohz, <span class="at">pattern =</span> <span class="st">&quot;O&quot;</span>, <span class="at">prefix =</span> <span class="st">&quot;O_&quot;</span>)</span>
+<span id="cb114-2"><a href="data.html#cb114-2" tabindex="-1"></a>ohz_thickness</span></code></pre></div>
 <pre><code>##      id O_thickness
 ## 1  P-01          23
 ## 2  P-02          40
@@ -1540,13 +1553,13 @@ div.csl-indent {
 ## 9  P-09          47
 ## 10 P-10          42</code></pre>
 <p>We will use the <code>site()</code> LEFT JOIN method to merge the calculated thickness into the <em>SoilProfileCollection</em>.</p>
-<div class="sourceCode" id="cb115"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb115-1"><a href="data.html#cb115-1" tabindex="-1"></a><span class="fu">site</span>(ohz) <span class="ot">&lt;-</span> ohz_thickness</span></code></pre></div>
+<div class="sourceCode" id="cb116"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb116-1"><a href="data.html#cb116-1" tabindex="-1"></a><span class="fu">site</span>(ohz) <span class="ot">&lt;-</span> ohz_thickness</span></code></pre></div>
 <p>Now, let’s plot the profiles in order of total O horizon thickness. We draw dashed lines at 20 and 40cm to indicate the thresholds for histic epipedon and Histosols soil order:</p>
-<div class="sourceCode" id="cb116"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb116-1"><a href="data.html#cb116-1" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>))</span>
-<span id="cb116-2"><a href="data.html#cb116-2" tabindex="-1"></a><span class="fu">plotSPC</span>(ohz, <span class="at">plot.order =</span> <span class="fu">order</span>(ohz<span class="sc">$</span>O_thickness), <span class="at">cex.names =</span> <span class="fl">0.75</span>)</span>
-<span id="cb116-3"><a href="data.html#cb116-3" tabindex="-1"></a></span>
-<span id="cb116-4"><a href="data.html#cb116-4" tabindex="-1"></a><span class="co"># horizontal lines at 20cm and 40cm</span></span>
-<span id="cb116-5"><a href="data.html#cb116-5" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">40</span>), <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">&#39;firebrick&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb117"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb117-1"><a href="data.html#cb117-1" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>))</span>
+<span id="cb117-2"><a href="data.html#cb117-2" tabindex="-1"></a><span class="fu">plotSPC</span>(ohz, <span class="at">plot.order =</span> <span class="fu">order</span>(ohz<span class="sc">$</span>O_thickness), <span class="at">cex.names =</span> <span class="fl">0.75</span>)</span>
+<span id="cb117-3"><a href="data.html#cb117-3" tabindex="-1"></a></span>
+<span id="cb117-4"><a href="data.html#cb117-4" tabindex="-1"></a><span class="co"># horizontal lines at 20cm and 40cm</span></span>
+<span id="cb117-5"><a href="data.html#cb117-5" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">40</span>), <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">&#39;firebrick&#39;</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-64-1.png" alt="" width="768" style="display: block; margin: auto;" /></p>
 <p>Using the <code>ohz</code> object answer the following questions. Use techniques from the previous sections. Check your logic by comparing to the profile sketch.</p>
 <ol style="list-style-type: decimal">
@@ -1608,20 +1621,20 @@ NOTE: all records are missing rock fragment volume</code></pre>
 <div id="load-example-data" class="section level4 hasAnchor" number="2.8.1.1">
 <h4><span class="header-section-number">2.8.1.1</span> Load Example Data<a href="data.html#load-example-data" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>To load the sample object data into R, just use <code>load()</code> and the path to the <em>.rda</em> file. In this case we are using a remote path, so we use <code>url()</code> to open the connection:</p>
-<div class="sourceCode" id="cb119"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb119-1"><a href="data.html#cb119-1" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">url</span>(<span class="st">&quot;https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt647.rda&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb120"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb120-1"><a href="data.html#cb120-1" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">url</span>(<span class="st">&quot;https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt647.rda&quot;</span>))</span></code></pre></div>
 </div>
 </div>
 <div id="select-pedons-with-andic-soil-properties" class="section level3 hasAnchor" number="2.8.2">
 <h3><span class="header-section-number">2.8.2</span> Select Pedons with Andic Soil Properties<a href="data.html#select-pedons-with-andic-soil-properties" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div class="sourceCode" id="cb120"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb120-1"><a href="data.html#cb120-1" tabindex="-1"></a><span class="fu">length</span>(mt647)</span></code></pre></div>
+<div class="sourceCode" id="cb121"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb121-1"><a href="data.html#cb121-1" tabindex="-1"></a><span class="fu">length</span>(mt647)</span></code></pre></div>
 <pre><code>## [1] 481</code></pre>
-<div class="sourceCode" id="cb122"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb122-1"><a href="data.html#cb122-1" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">site</span>(mt647)<span class="sc">$</span>andic.soil.properties, <span class="at">useNA =</span> <span class="st">&quot;ifany&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb123"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb123-1"><a href="data.html#cb123-1" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">site</span>(mt647)<span class="sc">$</span>andic.soil.properties, <span class="at">useNA =</span> <span class="st">&quot;ifany&quot;</span>)</span></code></pre></div>
 <pre><code>## 
 ## FALSE  TRUE  &lt;NA&gt; 
 ##     2    83   396</code></pre>
-<div class="sourceCode" id="cb124"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb124-1"><a href="data.html#cb124-1" tabindex="-1"></a><span class="co"># get just the profiles with andic.soil.properties == TRUE</span></span>
-<span id="cb124-2"><a href="data.html#cb124-2" tabindex="-1"></a>mt647.asp <span class="ot">&lt;-</span> <span class="fu">subset</span>(mt647, andic.soil.properties)</span>
-<span id="cb124-3"><a href="data.html#cb124-3" tabindex="-1"></a>mt647.asp</span></code></pre></div>
+<div class="sourceCode" id="cb125"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb125-1"><a href="data.html#cb125-1" tabindex="-1"></a><span class="co"># get just the profiles with andic.soil.properties == TRUE</span></span>
+<span id="cb125-2"><a href="data.html#cb125-2" tabindex="-1"></a>mt647.asp <span class="ot">&lt;-</span> <span class="fu">subset</span>(mt647, andic.soil.properties)</span>
+<span id="cb125-3"><a href="data.html#cb125-3" tabindex="-1"></a>mt647.asp</span></code></pre></div>
 <pre><code>## SoilProfileCollection with 83 profiles and 446 horizons
 ## profile ID: peiid  |  horizon ID: phiid 
 ## Depth range: 20 - 305 cm
@@ -1637,49 +1650,49 @@ NOTE: all records are missing rock fragment volume</code></pre>
 ## [... more horizons ...]
 ## 
 ## ----- Sites (6 / 83 rows  |  10 / 132 columns) -----
-##  siteiid  peiid ecositeid ecositenm ecositecorrdate es_classifier siteecositehistory.classifier es_selection_method
-##   845415 828140      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##   845429 828152      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##   845430 828153      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##   845432 828155      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##   845434 828157      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##   845451 828176      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  upedonid siteobsiid
-##   P23-134     821442
-##   P92-052     821456
-##   P92-046     821457
-##   P93-053     821459
-##   P91-103     821461
-##   P89-011     821478
+##  siteiid  peiid ecositeid ecositenm ecositecorrdate es_classifier siteecositehistory.classifier
+##   845415 828140      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##   845429 828152      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##   845430 828153      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##   845432 828155      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##   845434 828157      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##   845451 828176      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  es_selection_method upedonid siteobsiid
+##                 &lt;NA&gt;  P23-134     821442
+##                 &lt;NA&gt;  P92-052     821456
+##                 &lt;NA&gt;  P92-046     821457
+##                 &lt;NA&gt;  P93-053     821459
+##                 &lt;NA&gt;  P91-103     821461
+##                 &lt;NA&gt;  P89-011     821478
 ## [... more sites ...]
 ## 
 ## Spatial Data:
 ## [EMPTY]</code></pre>
-<div class="sourceCode" id="cb126"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb126-1"><a href="data.html#cb126-1" tabindex="-1"></a><span class="fu">length</span>(mt647.asp)</span></code></pre></div>
+<div class="sourceCode" id="cb127"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb127-1"><a href="data.html#cb127-1" tabindex="-1"></a><span class="fu">length</span>(mt647.asp)</span></code></pre></div>
 <pre><code>## [1] 83</code></pre>
 <p>We can compare this to what we see in the NASIS Pedon Diagnostic Features table:</p>
 <p><img src="static-figures/ch2_mt647_asp_diagnostics.png" /></p>
 <div id="using-fetchnasis-output-to-find-errors" class="section level4 hasAnchor" number="2.8.2.1">
 <h4><span class="header-section-number">2.8.2.1</span> Using <code>fetchNASIS()</code> output to find errors<a href="data.html#using-fetchnasis-output-to-find-errors" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>Any profiles that have have logic errors detected are stored in <code>soilDB.env</code> <code>bad.pedon.ids</code> variable after you run <code>fetchNASIS</code>. If this variable does not exist either you have not run <code>fetchNASIS()</code> in the current session or there are no errors.</p>
-<div class="sourceCode" id="cb128"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb128-1"><a href="data.html#cb128-1" tabindex="-1"></a><span class="co"># these are the troublesome user pedon IDs</span></span>
-<span id="cb128-2"><a href="data.html#cb128-2" tabindex="-1"></a><span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir =</span> soilDB.env)</span></code></pre></div>
-<pre><code>##  [1] &quot;P93-037&quot; &quot;P90-008&quot; &quot;P90-004&quot; &quot;P90-009&quot; &quot;P93-058&quot; &quot;P93-059&quot; &quot;P90-025&quot; &quot;P90-002&quot; &quot;P90-012&quot; &quot;P92-001&quot; &quot;P92-085&quot;
-## [12] &quot;P90-019&quot; &quot;P90-010&quot; &quot;P90-015&quot; &quot;P91-094&quot; &quot;P92-029&quot; &quot;P92-076&quot; &quot;P93-026&quot; &quot;P93-035&quot; &quot;P93-063&quot; &quot;P93-064&quot; &quot;P93-041&quot;
-## [23] &quot;P93-043&quot; &quot;P93-044&quot; &quot;P93-083&quot; &quot;P93-112&quot; &quot;P93-113&quot; &quot;P93-124&quot; &quot;P93-001&quot; &quot;P96-007&quot; &quot;P91-025&quot; &quot;P93-078&quot; &quot;P92-044&quot;
-## [34] &quot;P91-112&quot; &quot;P92-038&quot; &quot;P90-018&quot; &quot;P93-057&quot; &quot;P93-084&quot; &quot;P90-016&quot; &quot;P92-063&quot; &quot;P92-048&quot; &quot;P93-052&quot; &quot;F01-230&quot; &quot;F95-420&quot;
-## [45] &quot;F95-114&quot; &quot;F96-205&quot; &quot;P75-006&quot; &quot;P91-105&quot; &quot;P91-059&quot;</code></pre>
-<div class="sourceCode" id="cb130"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb130-1"><a href="data.html#cb130-1" tabindex="-1"></a><span class="co"># rmHzErrors=TRUE removes the &quot;bad&quot; illogical pedons</span></span>
-<span id="cb130-2"><a href="data.html#cb130-2" tabindex="-1"></a><span class="fu">any</span>(mt647<span class="sc">$</span>upedonid <span class="sc">%in%</span> <span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
+<div class="sourceCode" id="cb129"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb129-1"><a href="data.html#cb129-1" tabindex="-1"></a><span class="co"># these are the troublesome user pedon IDs</span></span>
+<span id="cb129-2"><a href="data.html#cb129-2" tabindex="-1"></a><span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir =</span> soilDB.env)</span></code></pre></div>
+<pre><code>##  [1] &quot;P93-037&quot; &quot;P90-008&quot; &quot;P90-004&quot; &quot;P90-009&quot; &quot;P93-058&quot; &quot;P93-059&quot; &quot;P90-025&quot; &quot;P90-002&quot; &quot;P90-012&quot; &quot;P92-001&quot;
+## [11] &quot;P92-085&quot; &quot;P90-019&quot; &quot;P90-010&quot; &quot;P90-015&quot; &quot;P91-094&quot; &quot;P92-029&quot; &quot;P92-076&quot; &quot;P93-026&quot; &quot;P93-035&quot; &quot;P93-063&quot;
+## [21] &quot;P93-064&quot; &quot;P93-041&quot; &quot;P93-043&quot; &quot;P93-044&quot; &quot;P93-083&quot; &quot;P93-112&quot; &quot;P93-113&quot; &quot;P93-124&quot; &quot;P93-001&quot; &quot;P96-007&quot;
+## [31] &quot;P91-025&quot; &quot;P93-078&quot; &quot;P92-044&quot; &quot;P91-112&quot; &quot;P92-038&quot; &quot;P90-018&quot; &quot;P93-057&quot; &quot;P93-084&quot; &quot;P90-016&quot; &quot;P92-063&quot;
+## [41] &quot;P92-048&quot; &quot;P93-052&quot; &quot;F01-230&quot; &quot;F95-420&quot; &quot;F95-114&quot; &quot;F96-205&quot; &quot;P75-006&quot; &quot;P91-105&quot; &quot;P91-059&quot;</code></pre>
+<div class="sourceCode" id="cb131"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb131-1"><a href="data.html#cb131-1" tabindex="-1"></a><span class="co"># rmHzErrors=TRUE removes the &quot;bad&quot; illogical pedons</span></span>
+<span id="cb131-2"><a href="data.html#cb131-2" tabindex="-1"></a><span class="fu">any</span>(mt647<span class="sc">$</span>upedonid <span class="sc">%in%</span> <span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
 <pre><code>## [1] FALSE</code></pre>
-<div class="sourceCode" id="cb132"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb132-1"><a href="data.html#cb132-1" tabindex="-1"></a><span class="co"># mt647err is created with rmHzErrors=FALSE</span></span>
-<span id="cb132-2"><a href="data.html#cb132-2" tabindex="-1"></a><span class="fu">any</span>(mt647err<span class="sc">$</span>upedonid <span class="sc">%in%</span> <span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
+<div class="sourceCode" id="cb133"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb133-1"><a href="data.html#cb133-1" tabindex="-1"></a><span class="co"># mt647err is created with rmHzErrors=FALSE</span></span>
+<span id="cb133-2"><a href="data.html#cb133-2" tabindex="-1"></a><span class="fu">any</span>(mt647err<span class="sc">$</span>upedonid <span class="sc">%in%</span> <span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
-<div class="sourceCode" id="cb134"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb134-1"><a href="data.html#cb134-1" tabindex="-1"></a><span class="co"># mt647.asp is a subset of mt647, so  no errors</span></span>
-<span id="cb134-2"><a href="data.html#cb134-2" tabindex="-1"></a><span class="fu">any</span>(mt647.asp<span class="sc">$</span>upedonid <span class="sc">%in%</span> <span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
+<div class="sourceCode" id="cb135"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb135-1"><a href="data.html#cb135-1" tabindex="-1"></a><span class="co"># mt647.asp is a subset of mt647, so  no errors</span></span>
+<span id="cb135-2"><a href="data.html#cb135-2" tabindex="-1"></a><span class="fu">any</span>(mt647.asp<span class="sc">$</span>upedonid <span class="sc">%in%</span> <span class="fu">get</span>(<span class="st">&#39;bad.pedon.ids&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
 <pre><code>## [1] FALSE</code></pre>
 <p>When <code>fetchNASIS(..., rmHzErrors = TRUE)</code> any horizons that were omitted from the <em>SoilProfileCollection</em> will be stored in the <code>bad.horizons</code> variable in the <code>soilDB.env</code> environment.</p>
-<div class="sourceCode" id="cb136"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb136-1"><a href="data.html#cb136-1" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">get</span>(<span class="st">&#39;bad.horizons&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
+<div class="sourceCode" id="cb137"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb137-1"><a href="data.html#cb137-1" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">get</span>(<span class="st">&#39;bad.horizons&#39;</span>, <span class="at">envir=</span>soilDB.env))</span></code></pre></div>
 <pre><code>##      peiid   phiid upedonid hzname hzdept hzdepb
 ## 67  868038 4270406  F01-230      E     NA     NA
 ## 68  868038 4270407  F01-230     Bw     NA     NA
@@ -1698,10 +1711,10 @@ NOTE: all records are missing rock fragment volume</code></pre>
 <li><p>overlaps and gaps (<code>"overlapOrGap"</code>)</p></li>
 <li><p>missing depths (<code>"missingDepth"</code>)</p></li>
 </ol>
-<div class="sourceCode" id="cb138"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb138-1"><a href="data.html#cb138-1" tabindex="-1"></a>logic_tests <span class="ot">&lt;-</span> <span class="fu">checkHzDepthLogic</span>(mt647err)</span>
-<span id="cb138-2"><a href="data.html#cb138-2" tabindex="-1"></a></span>
-<span id="cb138-3"><a href="data.html#cb138-3" tabindex="-1"></a><span class="co"># look at first few (look OK; valid == TRUE)</span></span>
-<span id="cb138-4"><a href="data.html#cb138-4" tabindex="-1"></a><span class="fu">head</span>(logic_tests)</span></code></pre></div>
+<div class="sourceCode" id="cb139"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb139-1"><a href="data.html#cb139-1" tabindex="-1"></a>logic_tests <span class="ot">&lt;-</span> <span class="fu">checkHzDepthLogic</span>(mt647err)</span>
+<span id="cb139-2"><a href="data.html#cb139-2" tabindex="-1"></a></span>
+<span id="cb139-3"><a href="data.html#cb139-3" tabindex="-1"></a><span class="co"># look at first few (look OK; valid == TRUE)</span></span>
+<span id="cb139-4"><a href="data.html#cb139-4" tabindex="-1"></a><span class="fu">head</span>(logic_tests)</span></code></pre></div>
 <pre><code>##    peiid valid depthLogic sameDepth missingDepth overlapOrGap
 ## 1 828138  TRUE      FALSE     FALSE        FALSE        FALSE
 ## 2 828139  TRUE      FALSE     FALSE        FALSE        FALSE
@@ -1709,8 +1722,8 @@ NOTE: all records are missing rock fragment volume</code></pre>
 ## 4 828141  TRUE      FALSE     FALSE        FALSE        FALSE
 ## 5 828142  TRUE      FALSE     FALSE        FALSE        FALSE
 ## 6 828143  TRUE      FALSE     FALSE        FALSE        FALSE</code></pre>
-<div class="sourceCode" id="cb140"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb140-1"><a href="data.html#cb140-1" tabindex="-1"></a><span class="co"># these all have overlapOrGap errors</span></span>
-<span id="cb140-2"><a href="data.html#cb140-2" tabindex="-1"></a><span class="fu">head</span>(logic_tests[<span class="sc">!</span>logic_tests<span class="sc">$</span>valid, ])</span></code></pre></div>
+<div class="sourceCode" id="cb141"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb141-1"><a href="data.html#cb141-1" tabindex="-1"></a><span class="co"># these all have overlapOrGap errors</span></span>
+<span id="cb141-2"><a href="data.html#cb141-2" tabindex="-1"></a><span class="fu">head</span>(logic_tests[<span class="sc">!</span>logic_tests<span class="sc">$</span>valid, ])</span></code></pre></div>
 <pre><code>##     peiid valid depthLogic sameDepth missingDepth overlapOrGap
 ## 11 828148 FALSE      FALSE     FALSE        FALSE         TRUE
 ## 23 828160 FALSE      FALSE     FALSE        FALSE         TRUE
@@ -1718,11 +1731,11 @@ NOTE: all records are missing rock fragment volume</code></pre>
 ## 34 828171 FALSE      FALSE     FALSE        FALSE         TRUE
 ## 35 828172 FALSE      FALSE     FALSE        FALSE         TRUE
 ## 36 828173 FALSE      FALSE     FALSE        FALSE         TRUE</code></pre>
-<div class="sourceCode" id="cb142"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb142-1"><a href="data.html#cb142-1" tabindex="-1"></a><span class="co"># join the logic test data into the site table</span></span>
-<span id="cb142-2"><a href="data.html#cb142-2" tabindex="-1"></a><span class="fu">site</span>(mt647err) <span class="ot">&lt;-</span> logic_tests</span></code></pre></div>
+<div class="sourceCode" id="cb143"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb143-1"><a href="data.html#cb143-1" tabindex="-1"></a><span class="co"># join the logic test data into the site table</span></span>
+<span id="cb143-2"><a href="data.html#cb143-2" tabindex="-1"></a><span class="fu">site</span>(mt647err) <span class="ot">&lt;-</span> logic_tests</span></code></pre></div>
 <p>Use the <code>$valid</code> vector in result to select profiles with depth logic issues (<code>logic_tests$valid == FALSE</code>)</p>
-<div class="sourceCode" id="cb143"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb143-1"><a href="data.html#cb143-1" tabindex="-1"></a>bad.profiles <span class="ot">&lt;-</span> <span class="fu">subset</span>(mt647err, <span class="sc">!</span>valid)</span>
-<span id="cb143-2"><a href="data.html#cb143-2" tabindex="-1"></a>bad.profiles</span></code></pre></div>
+<div class="sourceCode" id="cb144"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb144-1"><a href="data.html#cb144-1" tabindex="-1"></a>bad.profiles <span class="ot">&lt;-</span> <span class="fu">subset</span>(mt647err, <span class="sc">!</span>valid)</span>
+<span id="cb144-2"><a href="data.html#cb144-2" tabindex="-1"></a>bad.profiles</span></code></pre></div>
 <pre><code>## SoilProfileCollection with 49 profiles and 338 horizons
 ## profile ID: peiid  |  horizon ID: phiid 
 ## Depth range: 15 - 152 cm
@@ -1738,29 +1751,29 @@ NOTE: all records are missing rock fragment volume</code></pre>
 ## [... more horizons ...]
 ## 
 ## ----- Sites (6 / 49 rows  |  10 / 137 columns) -----
-##   peiid siteiid ecositeid ecositenm ecositecorrdate es_classifier siteecositehistory.classifier es_selection_method
-##  828148  845423      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828160  845435      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828162  845437      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828171  845446      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828172  845447      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828173  845448      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  upedonid siteobsiid
-##   P93-037     821450
-##   P90-008     821462
-##   P90-004     821464
-##   P90-009     821473
-##   P93-058     821474
-##   P93-059     821475
+##   peiid siteiid ecositeid ecositenm ecositecorrdate es_classifier siteecositehistory.classifier
+##  828148  845423      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828160  845435      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828162  845437      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828171  845446      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828172  845447      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828173  845448      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  es_selection_method upedonid siteobsiid
+##                 &lt;NA&gt;  P93-037     821450
+##                 &lt;NA&gt;  P90-008     821462
+##                 &lt;NA&gt;  P90-004     821464
+##                 &lt;NA&gt;  P90-009     821473
+##                 &lt;NA&gt;  P93-058     821474
+##                 &lt;NA&gt;  P93-059     821475
 ## [... more sites ...]
 ## 
 ## Spatial Data:
 ## [EMPTY]</code></pre>
-<div class="sourceCode" id="cb145"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb145-1"><a href="data.html#cb145-1" tabindex="-1"></a><span class="fu">length</span>(bad.profiles)</span></code></pre></div>
+<div class="sourceCode" id="cb146"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb146-1"><a href="data.html#cb146-1" tabindex="-1"></a><span class="fu">length</span>(bad.profiles)</span></code></pre></div>
 <pre><code>## [1] 49</code></pre>
 <p>Alternately, we can keep only the “valid” ones (where <code>logic_tests$valid == TRUE</code>):</p>
-<div class="sourceCode" id="cb147"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb147-1"><a href="data.html#cb147-1" tabindex="-1"></a>good.profiles <span class="ot">&lt;-</span> <span class="fu">subset</span>(mt647err, logic_tests<span class="sc">$</span>valid)</span>
-<span id="cb147-2"><a href="data.html#cb147-2" tabindex="-1"></a>good.profiles</span></code></pre></div>
+<div class="sourceCode" id="cb148"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb148-1"><a href="data.html#cb148-1" tabindex="-1"></a>good.profiles <span class="ot">&lt;-</span> <span class="fu">subset</span>(mt647err, logic_tests<span class="sc">$</span>valid)</span>
+<span id="cb148-2"><a href="data.html#cb148-2" tabindex="-1"></a>good.profiles</span></code></pre></div>
 <pre><code>## SoilProfileCollection with 481 profiles and 2536 horizons
 ## profile ID: peiid  |  horizon ID: phiid 
 ## Depth range: 14 - 1552 cm
@@ -1776,25 +1789,25 @@ NOTE: all records are missing rock fragment volume</code></pre>
 ## [... more horizons ...]
 ## 
 ## ----- Sites (6 / 481 rows  |  10 / 137 columns) -----
-##   peiid siteiid ecositeid ecositenm ecositecorrdate es_classifier siteecositehistory.classifier es_selection_method
-##  828138  845413      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828139  845414      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828140  845415      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828141  845416      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828142  845417      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  828143  845418      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;                &lt;NA&gt;
-##  upedonid siteobsiid
-##   P91-043     821440
-##   P91-029     821441
-##   P23-134     821442
-##   P93-025     821443
-##   P93-075     821444
-##   P93-074     821445
+##   peiid siteiid ecositeid ecositenm ecositecorrdate es_classifier siteecositehistory.classifier
+##  828138  845413      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828139  845414      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828140  845415      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828141  845416      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828142  845417      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  828143  845418      &lt;NA&gt;      &lt;NA&gt;            &lt;NA&gt;          &lt;NA&gt;                          &lt;NA&gt;
+##  es_selection_method upedonid siteobsiid
+##                 &lt;NA&gt;  P91-043     821440
+##                 &lt;NA&gt;  P91-029     821441
+##                 &lt;NA&gt;  P23-134     821442
+##                 &lt;NA&gt;  P93-025     821443
+##                 &lt;NA&gt;  P93-075     821444
+##                 &lt;NA&gt;  P93-074     821445
 ## [... more sites ...]
 ## 
 ## Spatial Data:
 ## [EMPTY]</code></pre>
-<div class="sourceCode" id="cb149"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb149-1"><a href="data.html#cb149-1" tabindex="-1"></a><span class="fu">length</span>(good.profiles)</span></code></pre></div>
+<div class="sourceCode" id="cb150"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb150-1"><a href="data.html#cb150-1" tabindex="-1"></a><span class="fu">length</span>(good.profiles)</span></code></pre></div>
 <pre><code>## [1] 481</code></pre>
 <p>Once you have created a subset <em>SoilProfileCollection</em>, you can manually inspect the data in that set to identify areas where there are issues. Ideally you would fix these in NASIS. If you don’t have the ability to fix them in NASIS, you might write some R code into your analysis script to apply patches to missing or invalid data before proceeding with summaries.</p>
 </div>
@@ -1834,16 +1847,16 @@ NOTE: all records are missing rock fragment volume</code></pre>
 <p>Below is a summary of additional information that can be readily brought into R from your NASIS selected set via the <code>get_extended_data_from_NASIS()</code> function.</p>
 <p>Before continuing, imagine opening the NASIS client, populating your selected set with <code>2015MT663%</code> using a query like “<em>NSSC Pangaea – POINT-Pedon/Site by User Pedon ID</em>”</p>
 <p>Load the data like we did above.</p>
-<div class="sourceCode" id="cb151"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb151-1"><a href="data.html#cb151-1" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">url</span>(<span class="st">&quot;https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt663.rda&quot;</span>))</span></code></pre></div>
-<div class="sourceCode" id="cb152"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb152-1"><a href="data.html#cb152-1" tabindex="-1"></a><span class="do">## fetch extended site and horizon data from local NASIS</span></span>
-<span id="cb152-2"><a href="data.html#cb152-2" tabindex="-1"></a><span class="co"># mt663 &lt;- fetchNASIS()</span></span>
-<span id="cb152-3"><a href="data.html#cb152-3" tabindex="-1"></a><span class="co"># mt663ext &lt;- get_extended_data_from_NASIS_db()</span></span></code></pre></div>
+<div class="sourceCode" id="cb152"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb152-1"><a href="data.html#cb152-1" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">url</span>(<span class="st">&quot;https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/book/02/mt663.rda&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb153"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb153-1"><a href="data.html#cb153-1" tabindex="-1"></a><span class="do">## fetch extended site and horizon data from local NASIS</span></span>
+<span id="cb153-2"><a href="data.html#cb153-2" tabindex="-1"></a><span class="co"># mt663 &lt;- fetchNASIS()</span></span>
+<span id="cb153-3"><a href="data.html#cb153-3" tabindex="-1"></a><span class="co"># mt663ext &lt;- get_extended_data_from_NASIS_db()</span></span></code></pre></div>
 <p>We could use the <code>get_extended_data_from_NASIS_db()</code> function if <code>2015MT663%</code> or other data were in the selected set, but we will use the <code>mt663ext</code> data we loaded from the <em>.rda</em> file.</p>
 <p>The column names are the names of variables that you could join to your site or horizon data by various means. Generally these variable names, with a few exceptions, mirror the <a href="https://www.nrcs.usda.gov/resources/education-and-teaching-materials/nasis-database-metadata">NASIS 7 data model names</a>.</p>
-<div class="sourceCode" id="cb153"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb153-1"><a href="data.html#cb153-1" tabindex="-1"></a><span class="co"># site and pedon related extended data</span></span>
-<span id="cb153-2"><a href="data.html#cb153-2" tabindex="-1"></a></span>
-<span id="cb153-3"><a href="data.html#cb153-3" tabindex="-1"></a><span class="co"># list all dataframes in the extended data</span></span>
-<span id="cb153-4"><a href="data.html#cb153-4" tabindex="-1"></a><span class="fu">str</span>(mt663ext, <span class="dv">1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb154"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb154-1"><a href="data.html#cb154-1" tabindex="-1"></a><span class="co"># site and pedon related extended data</span></span>
+<span id="cb154-2"><a href="data.html#cb154-2" tabindex="-1"></a></span>
+<span id="cb154-3"><a href="data.html#cb154-3" tabindex="-1"></a><span class="co"># list all dataframes in the extended data</span></span>
+<span id="cb154-4"><a href="data.html#cb154-4" tabindex="-1"></a><span class="fu">str</span>(mt663ext, <span class="dv">1</span>)</span></code></pre></div>
 <pre><code>## List of 14
 ##  $ ecositehistory:&#39;data.frame&#39;:  0 obs. of  7 variables:
 ##  $ siteaoverlap  :&#39;data.frame&#39;:  127 obs. of  5 variables:
@@ -1859,67 +1872,67 @@ NOTE: all records are missing rock fragment volume</code></pre>
 ##  $ pm            :&#39;data.frame&#39;:  179 obs. of  9 variables:
 ##  $ struct        :&#39;data.frame&#39;:  444 obs. of  6 variables:
 ##  $ hzdesgn       :&#39;data.frame&#39;:  561 obs. of  19 variables:</code></pre>
-<div class="sourceCode" id="cb155"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb155-1"><a href="data.html#cb155-1" tabindex="-1"></a><span class="co"># vegetation data summary</span></span>
-<span id="cb155-2"><a href="data.html#cb155-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>ecositehistory) </span></code></pre></div>
+<div class="sourceCode" id="cb156"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb156-1"><a href="data.html#cb156-1" tabindex="-1"></a><span class="co"># vegetation data summary</span></span>
+<span id="cb156-2"><a href="data.html#cb156-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>ecositehistory) </span></code></pre></div>
 <pre><code>## [1] &quot;siteiid&quot;                       &quot;ecositeid&quot;                     &quot;ecositenm&quot;                    
 ## [4] &quot;ecositecorrdate&quot;               &quot;es_classifier&quot;                 &quot;siteecositehistory.classifier&quot;
 ## [7] &quot;es_selection_method&quot;</code></pre>
-<div class="sourceCode" id="cb157"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb157-1"><a href="data.html#cb157-1" tabindex="-1"></a><span class="co"># diagnostic features</span></span>
-<span id="cb157-2"><a href="data.html#cb157-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>diagnostic) </span></code></pre></div>
+<div class="sourceCode" id="cb158"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb158-1"><a href="data.html#cb158-1" tabindex="-1"></a><span class="co"># diagnostic features</span></span>
+<span id="cb158-2"><a href="data.html#cb158-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>diagnostic) </span></code></pre></div>
 <pre><code>## [1] &quot;peiid&quot;    &quot;featkind&quot; &quot;featdept&quot; &quot;featdepb&quot;</code></pre>
-<div class="sourceCode" id="cb159"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb159-1"><a href="data.html#cb159-1" tabindex="-1"></a><span class="co"># surface rock fragments</span></span>
-<span id="cb159-2"><a href="data.html#cb159-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>surf_frag_summary)</span></code></pre></div>
+<div class="sourceCode" id="cb160"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb160-1"><a href="data.html#cb160-1" tabindex="-1"></a><span class="co"># surface rock fragments</span></span>
+<span id="cb160-2"><a href="data.html#cb160-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>surf_frag_summary)</span></code></pre></div>
 <pre><code>## NULL</code></pre>
-<div class="sourceCode" id="cb161"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb161-1"><a href="data.html#cb161-1" tabindex="-1"></a><span class="co"># geomorphic description</span></span>
-<span id="cb161-2"><a href="data.html#cb161-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>geomorph)</span></code></pre></div>
-<pre><code>## [1] &quot;peiid&quot;          &quot;geomicrorelief&quot; &quot;geommicelev&quot;    &quot;geomfmod&quot;       &quot;geomfname&quot;      &quot;geomfeatid&quot;    
-## [7] &quot;existsonfeat&quot;   &quot;geomfiidref&quot;    &quot;geomftname&quot;</code></pre>
-<div class="sourceCode" id="cb163"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb163-1"><a href="data.html#cb163-1" tabindex="-1"></a><span class="co"># taxonomic history data</span></span>
-<span id="cb163-2"><a href="data.html#cb163-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>taxhistory)</span></code></pre></div>
+<div class="sourceCode" id="cb162"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb162-1"><a href="data.html#cb162-1" tabindex="-1"></a><span class="co"># geomorphic description</span></span>
+<span id="cb162-2"><a href="data.html#cb162-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>geomorph)</span></code></pre></div>
+<pre><code>## [1] &quot;peiid&quot;          &quot;geomicrorelief&quot; &quot;geommicelev&quot;    &quot;geomfmod&quot;       &quot;geomfname&quot;     
+## [6] &quot;geomfeatid&quot;     &quot;existsonfeat&quot;   &quot;geomfiidref&quot;    &quot;geomftname&quot;</code></pre>
+<div class="sourceCode" id="cb164"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb164-1"><a href="data.html#cb164-1" tabindex="-1"></a><span class="co"># taxonomic history data</span></span>
+<span id="cb164-2"><a href="data.html#cb164-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>taxhistory)</span></code></pre></div>
 <pre><code>##  [1] &quot;peiid&quot;            &quot;classdate&quot;        &quot;classifier&quot;       &quot;classtype&quot;        &quot;taxonname&quot;       
 ##  [6] &quot;localphase&quot;       &quot;taxonkind&quot;        &quot;seriesstatus&quot;     &quot;taxclname&quot;        &quot;taxpartsize&quot;     
 ## [11] &quot;taxorder&quot;         &quot;taxsuborder&quot;      &quot;taxgrtgroup&quot;      &quot;taxsubgrp&quot;        &quot;soiltaxedition&quot;  
 ## [16] &quot;osdtypelocflag&quot;   &quot;taxmoistcl&quot;       &quot;taxtempregime&quot;    &quot;taxfamother&quot;      &quot;taxreaction&quot;     
 ## [21] &quot;taxfamhahatmatcl&quot; &quot;psctopdepth&quot;      &quot;pscbotdepth&quot;</code></pre>
-<div class="sourceCode" id="cb165"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb165-1"><a href="data.html#cb165-1" tabindex="-1"></a><span class="co"># linked photo stored in site textnotes</span></span>
-<span id="cb165-2"><a href="data.html#cb165-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>photo) </span></code></pre></div>
+<div class="sourceCode" id="cb166"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb166-1"><a href="data.html#cb166-1" tabindex="-1"></a><span class="co"># linked photo stored in site textnotes</span></span>
+<span id="cb166-2"><a href="data.html#cb166-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>photo) </span></code></pre></div>
 <pre><code>## [1] &quot;siteiid&quot;   &quot;recdate&quot;   &quot;textcat&quot;   &quot;imagepath&quot;</code></pre>
-<div class="sourceCode" id="cb167"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb167-1"><a href="data.html#cb167-1" tabindex="-1"></a><span class="co"># site parent materials</span></span>
-<span id="cb167-2"><a href="data.html#cb167-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>pm)</span></code></pre></div>
-<pre><code>## [1] &quot;siteiid&quot;    &quot;seqnum&quot;     &quot;pmorder&quot;    &quot;pmdept&quot;     &quot;pmdepb&quot;     &quot;pmmodifier&quot; &quot;pmgenmod&quot;   &quot;pmkind&quot;    
-## [9] &quot;pmorigin&quot;</code></pre>
-<div class="sourceCode" id="cb169"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb169-1"><a href="data.html#cb169-1" tabindex="-1"></a><span class="do">###</span></span>
-<span id="cb169-2"><a href="data.html#cb169-2" tabindex="-1"></a><span class="do">### horizon related extended data</span></span>
-<span id="cb169-3"><a href="data.html#cb169-3" tabindex="-1"></a><span class="do">### </span></span>
-<span id="cb169-4"><a href="data.html#cb169-4" tabindex="-1"></a></span>
-<span id="cb169-5"><a href="data.html#cb169-5" tabindex="-1"></a><span class="co"># rock fragments </span></span>
-<span id="cb169-6"><a href="data.html#cb169-6" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>frag_summary) </span></code></pre></div>
+<div class="sourceCode" id="cb168"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb168-1"><a href="data.html#cb168-1" tabindex="-1"></a><span class="co"># site parent materials</span></span>
+<span id="cb168-2"><a href="data.html#cb168-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>pm)</span></code></pre></div>
+<pre><code>## [1] &quot;siteiid&quot;    &quot;seqnum&quot;     &quot;pmorder&quot;    &quot;pmdept&quot;     &quot;pmdepb&quot;     &quot;pmmodifier&quot; &quot;pmgenmod&quot;  
+## [8] &quot;pmkind&quot;     &quot;pmorigin&quot;</code></pre>
+<div class="sourceCode" id="cb170"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb170-1"><a href="data.html#cb170-1" tabindex="-1"></a><span class="do">###</span></span>
+<span id="cb170-2"><a href="data.html#cb170-2" tabindex="-1"></a><span class="do">### horizon related extended data</span></span>
+<span id="cb170-3"><a href="data.html#cb170-3" tabindex="-1"></a><span class="do">### </span></span>
+<span id="cb170-4"><a href="data.html#cb170-4" tabindex="-1"></a></span>
+<span id="cb170-5"><a href="data.html#cb170-5" tabindex="-1"></a><span class="co"># rock fragments </span></span>
+<span id="cb170-6"><a href="data.html#cb170-6" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>frag_summary) </span></code></pre></div>
 <pre><code>##  [1] &quot;phiid&quot;                &quot;fine_gravel&quot;          &quot;gravel&quot;               &quot;cobbles&quot;             
 ##  [5] &quot;stones&quot;               &quot;boulders&quot;             &quot;channers&quot;             &quot;flagstones&quot;          
 ##  [9] &quot;parafine_gravel&quot;      &quot;paragravel&quot;           &quot;paracobbles&quot;          &quot;parastones&quot;          
 ## [13] &quot;paraboulders&quot;         &quot;parachanners&quot;         &quot;paraflagstones&quot;       &quot;unspecified&quot;         
 ## [17] &quot;total_frags_pct_nopf&quot; &quot;total_frags_pct&quot;</code></pre>
-<div class="sourceCode" id="cb171"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb171-1"><a href="data.html#cb171-1" tabindex="-1"></a><span class="co"># soil texture modifers</span></span>
-<span id="cb171-2"><a href="data.html#cb171-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>texmodifier)</span></code></pre></div>
+<div class="sourceCode" id="cb172"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb172-1"><a href="data.html#cb172-1" tabindex="-1"></a><span class="co"># soil texture modifers</span></span>
+<span id="cb172-2"><a href="data.html#cb172-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>texmodifier)</span></code></pre></div>
 <pre><code>## [1] &quot;peiid&quot;  &quot;phiid&quot;  &quot;phtiid&quot; &quot;seqnum&quot; &quot;texmod&quot;</code></pre>
-<div class="sourceCode" id="cb173"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb173-1"><a href="data.html#cb173-1" tabindex="-1"></a><span class="co"># soil structure data</span></span>
-<span id="cb173-2"><a href="data.html#cb173-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>struct) </span></code></pre></div>
+<div class="sourceCode" id="cb174"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb174-1"><a href="data.html#cb174-1" tabindex="-1"></a><span class="co"># soil structure data</span></span>
+<span id="cb174-2"><a href="data.html#cb174-2" tabindex="-1"></a><span class="fu">colnames</span>(mt663ext<span class="sc">$</span>struct) </span></code></pre></div>
 <pre><code>## [1] &quot;phiid&quot;         &quot;structgrade&quot;   &quot;structsize&quot;    &quot;structtype&quot;    &quot;structid&quot;      &quot;structpartsto&quot;</code></pre>
 </div>
 <div id="visualizing-common-landforms" class="section level3 hasAnchor" number="2.9.3">
 <h3><span class="header-section-number">2.9.3</span> Visualizing Common Landforms<a href="data.html#visualizing-common-landforms" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>The following code generates a simple graphical summary of the 10 most commonly occurring <code>"landform_string"</code> (a calculated field in <code>fetchNASIS()</code>) to inspect which are the most common.</p>
-<div class="sourceCode" id="cb175"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb175-1"><a href="data.html#cb175-1" tabindex="-1"></a><span class="co"># load data from a NASIS selected set (or sample object)</span></span>
-<span id="cb175-2"><a href="data.html#cb175-2" tabindex="-1"></a>pedons <span class="ot">&lt;-</span> mt663</span>
-<span id="cb175-3"><a href="data.html#cb175-3" tabindex="-1"></a></span>
-<span id="cb175-4"><a href="data.html#cb175-4" tabindex="-1"></a><span class="co"># create &#39;lf&#39; object of landform factors sorted in descending order</span></span>
-<span id="cb175-5"><a href="data.html#cb175-5" tabindex="-1"></a>lf <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">table</span>(pedons<span class="sc">$</span>landform_string), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb175-6"><a href="data.html#cb175-6" tabindex="-1"></a></span>
-<span id="cb175-7"><a href="data.html#cb175-7" tabindex="-1"></a><span class="co"># plot top 10 or length, whichever is shorter</span></span>
-<span id="cb175-8"><a href="data.html#cb175-8" tabindex="-1"></a>Hmisc<span class="sc">::</span><span class="fu">dotchart2</span>(lf[<span class="dv">1</span><span class="sc">:</span><span class="fu">pmin</span>(<span class="dv">10</span>, <span class="fu">length</span>(lf))],</span>
-<span id="cb175-9"><a href="data.html#cb175-9" tabindex="-1"></a>                 <span class="at">col =</span> <span class="st">&#39;black&#39;</span>,</span>
-<span id="cb175-10"><a href="data.html#cb175-10" tabindex="-1"></a>                 <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(lf)),</span>
-<span id="cb175-11"><a href="data.html#cb175-11" tabindex="-1"></a>                 <span class="at">cex.labels =</span> <span class="fl">0.75</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb176"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb176-1"><a href="data.html#cb176-1" tabindex="-1"></a><span class="co"># load data from a NASIS selected set (or sample object)</span></span>
+<span id="cb176-2"><a href="data.html#cb176-2" tabindex="-1"></a>pedons <span class="ot">&lt;-</span> mt663</span>
+<span id="cb176-3"><a href="data.html#cb176-3" tabindex="-1"></a></span>
+<span id="cb176-4"><a href="data.html#cb176-4" tabindex="-1"></a><span class="co"># create &#39;lf&#39; object of landform factors sorted in descending order</span></span>
+<span id="cb176-5"><a href="data.html#cb176-5" tabindex="-1"></a>lf <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">table</span>(pedons<span class="sc">$</span>landform_string), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb176-6"><a href="data.html#cb176-6" tabindex="-1"></a></span>
+<span id="cb176-7"><a href="data.html#cb176-7" tabindex="-1"></a><span class="co"># plot top 10 or length, whichever is shorter</span></span>
+<span id="cb176-8"><a href="data.html#cb176-8" tabindex="-1"></a>Hmisc<span class="sc">::</span><span class="fu">dotchart2</span>(lf[<span class="dv">1</span><span class="sc">:</span><span class="fu">pmin</span>(<span class="dv">10</span>, <span class="fu">length</span>(lf))],</span>
+<span id="cb176-9"><a href="data.html#cb176-9" tabindex="-1"></a>                 <span class="at">col =</span> <span class="st">&#39;black&#39;</span>,</span>
+<span id="cb176-10"><a href="data.html#cb176-10" tabindex="-1"></a>                 <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(lf)),</span>
+<span id="cb176-11"><a href="data.html#cb176-11" tabindex="-1"></a>                 <span class="at">cex.labels =</span> <span class="fl">0.75</span>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/owndata_c-1.png" alt="" width="672" style="display: block; margin: auto;" /></p>
 <p>For a challenge and to further inspect your own data try the above code with some other summaries of geomorphic data produced by <code>fetchNASIS()</code>.</p>
 <p>You can swap <code>landform_string</code> for: <code>landscape_string</code> (landscape), <code>hillslopeprof</code> (2D), <code>geomposmntn</code>, <code>geomposhill</code>, <code>geompostrce</code>, <code>geomposflats</code> (3D), <code>slope_shape</code>, <code>shapeacross</code>, <code>shapedown</code> (slope shape across/down), <code>microfeature_string</code> (microfeature), or <code>geomicrorelief_string</code> (site observation microrelief).</p>
@@ -1934,18 +1947,20 @@ NOTE: all records are missing rock fragment volume</code></pre>
 <div id="thickness-from-diagnostic-features-table" class="section level4 hasAnchor" number="2.9.4.2">
 <h4><span class="header-section-number">2.9.4.2</span> Thickness from Diagnostic Features Table<a href="data.html#thickness-from-diagnostic-features-table" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>The following is an example of how you could use the diagnostic features (if populated!) from the extended data to determine the thickness of a diagnostic feature of interest.</p>
-<div class="sourceCode" id="cb176"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb176-1"><a href="data.html#cb176-1" tabindex="-1"></a><span class="co"># get diagnostic features associated with pedons loaded from selected set</span></span>
-<span id="cb176-2"><a href="data.html#cb176-2" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">diagnostic_hz</span>(mt663)</span>
-<span id="cb176-3"><a href="data.html#cb176-3" tabindex="-1"></a></span>
-<span id="cb176-4"><a href="data.html#cb176-4" tabindex="-1"></a><span class="co"># summary of the diagnostic features in your data!</span></span>
-<span id="cb176-5"><a href="data.html#cb176-5" tabindex="-1"></a><span class="fu">unique</span>(d<span class="sc">$</span>featkind)</span></code></pre></div>
-<pre><code>##  [1] &quot;ochric epipedon&quot;          &quot;cambic horizon&quot;           &quot;lithic contact&quot;           &quot;mollic epipedon&quot;         
-##  [5] &quot;argillic horizon&quot;         &quot;redox concentrations&quot;     &quot;andic soil properties&quot;    &quot;secondary carbonates&quot;    
-##  [9] &quot;sapric soil materials&quot;    &quot;aquic conditions&quot;         &quot;reduced matrix&quot;           &quot;albic horizon&quot;           
-## [13] &quot;spodic horizon&quot;           &quot;glossic horizon&quot;          &quot;spodic materials&quot;         &quot;lithologic discontinuity&quot;
-## [17] &quot;densic materials&quot;         &quot;umbric epipedon&quot;          &quot;albic materials&quot;          NA</code></pre>
-<div class="sourceCode" id="cb178"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb178-1"><a href="data.html#cb178-1" tabindex="-1"></a><span class="co"># tabulate</span></span>
-<span id="cb178-2"><a href="data.html#cb178-2" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(<span class="fu">droplevels</span>(<span class="fu">factor</span>(d<span class="sc">$</span>featkind))), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb177"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb177-1"><a href="data.html#cb177-1" tabindex="-1"></a><span class="co"># get diagnostic features associated with pedons loaded from selected set</span></span>
+<span id="cb177-2"><a href="data.html#cb177-2" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">diagnostic_hz</span>(mt663)</span>
+<span id="cb177-3"><a href="data.html#cb177-3" tabindex="-1"></a></span>
+<span id="cb177-4"><a href="data.html#cb177-4" tabindex="-1"></a><span class="co"># summary of the diagnostic features in your data!</span></span>
+<span id="cb177-5"><a href="data.html#cb177-5" tabindex="-1"></a><span class="fu">unique</span>(d<span class="sc">$</span>featkind)</span></code></pre></div>
+<pre><code>##  [1] &quot;ochric epipedon&quot;          &quot;cambic horizon&quot;           &quot;lithic contact&quot;          
+##  [4] &quot;mollic epipedon&quot;          &quot;argillic horizon&quot;         &quot;redox concentrations&quot;    
+##  [7] &quot;andic soil properties&quot;    &quot;secondary carbonates&quot;     &quot;sapric soil materials&quot;   
+## [10] &quot;aquic conditions&quot;         &quot;reduced matrix&quot;           &quot;albic horizon&quot;           
+## [13] &quot;spodic horizon&quot;           &quot;glossic horizon&quot;          &quot;spodic materials&quot;        
+## [16] &quot;lithologic discontinuity&quot; &quot;densic materials&quot;         &quot;umbric epipedon&quot;         
+## [19] &quot;albic materials&quot;          NA</code></pre>
+<div class="sourceCode" id="cb179"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb179-1"><a href="data.html#cb179-1" tabindex="-1"></a><span class="co"># tabulate</span></span>
+<span id="cb179-2"><a href="data.html#cb179-2" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">table</span>(<span class="fu">droplevels</span>(<span class="fu">factor</span>(d<span class="sc">$</span>featkind))), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>## 
 ##          ochric epipedon           cambic horizon         argillic horizon          mollic epipedon 
 ##                       61                       54                       43                       42 
@@ -1957,21 +1972,21 @@ NOTE: all records are missing rock fragment volume</code></pre>
 ##                        3                        2                        1                        1 
 ##         densic materials     redox concentrations         spodic materials 
 ##                        1                        1                        1</code></pre>
-<div class="sourceCode" id="cb180"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb180-1"><a href="data.html#cb180-1" tabindex="-1"></a><span class="co"># subset argillic horizons</span></span>
-<span id="cb180-2"><a href="data.html#cb180-2" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[d<span class="sc">$</span>featkind <span class="sc">==</span> <span class="st">&#39;argillic horizon&#39;</span>, ]</span>
-<span id="cb180-3"><a href="data.html#cb180-3" tabindex="-1"></a></span>
-<span id="cb180-4"><a href="data.html#cb180-4" tabindex="-1"></a><span class="co"># create a new column and subtract the upper from the lower depth</span></span>
-<span id="cb180-5"><a href="data.html#cb180-5" tabindex="-1"></a>d<span class="sc">$</span>argillic_thickness_cm <span class="ot">&lt;-</span> d<span class="sc">$</span>featdepb <span class="sc">-</span> d<span class="sc">$</span>featdept</span>
-<span id="cb180-6"><a href="data.html#cb180-6" tabindex="-1"></a></span>
-<span id="cb180-7"><a href="data.html#cb180-7" tabindex="-1"></a><span class="co"># create another new column with the upper depth to the diagnostic feature</span></span>
-<span id="cb180-8"><a href="data.html#cb180-8" tabindex="-1"></a>d<span class="sc">$</span>depth_to_argillic_cm <span class="ot">&lt;-</span> d<span class="sc">$</span>featdept</span>
-<span id="cb180-9"><a href="data.html#cb180-9" tabindex="-1"></a></span>
-<span id="cb180-10"><a href="data.html#cb180-10" tabindex="-1"></a><span class="co"># omit NA values</span></span>
-<span id="cb180-11"><a href="data.html#cb180-11" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(d)</span>
-<span id="cb180-12"><a href="data.html#cb180-12" tabindex="-1"></a></span>
-<span id="cb180-13"><a href="data.html#cb180-13" tabindex="-1"></a><span class="co"># subset to pedon records IDs and calculated thickness</span></span>
-<span id="cb180-14"><a href="data.html#cb180-14" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[, <span class="fu">c</span>(<span class="st">&#39;peiid&#39;</span>, <span class="st">&#39;argillic_thickness_cm&#39;</span>, <span class="st">&#39;depth_to_argillic_cm&#39;</span>)]</span>
-<span id="cb180-15"><a href="data.html#cb180-15" tabindex="-1"></a><span class="fu">head</span>(d)</span></code></pre></div>
+<div class="sourceCode" id="cb181"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb181-1"><a href="data.html#cb181-1" tabindex="-1"></a><span class="co"># subset argillic horizons</span></span>
+<span id="cb181-2"><a href="data.html#cb181-2" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[d<span class="sc">$</span>featkind <span class="sc">==</span> <span class="st">&#39;argillic horizon&#39;</span>, ]</span>
+<span id="cb181-3"><a href="data.html#cb181-3" tabindex="-1"></a></span>
+<span id="cb181-4"><a href="data.html#cb181-4" tabindex="-1"></a><span class="co"># create a new column and subtract the upper from the lower depth</span></span>
+<span id="cb181-5"><a href="data.html#cb181-5" tabindex="-1"></a>d<span class="sc">$</span>argillic_thickness_cm <span class="ot">&lt;-</span> d<span class="sc">$</span>featdepb <span class="sc">-</span> d<span class="sc">$</span>featdept</span>
+<span id="cb181-6"><a href="data.html#cb181-6" tabindex="-1"></a></span>
+<span id="cb181-7"><a href="data.html#cb181-7" tabindex="-1"></a><span class="co"># create another new column with the upper depth to the diagnostic feature</span></span>
+<span id="cb181-8"><a href="data.html#cb181-8" tabindex="-1"></a>d<span class="sc">$</span>depth_to_argillic_cm <span class="ot">&lt;-</span> d<span class="sc">$</span>featdept</span>
+<span id="cb181-9"><a href="data.html#cb181-9" tabindex="-1"></a></span>
+<span id="cb181-10"><a href="data.html#cb181-10" tabindex="-1"></a><span class="co"># omit NA values</span></span>
+<span id="cb181-11"><a href="data.html#cb181-11" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(d)</span>
+<span id="cb181-12"><a href="data.html#cb181-12" tabindex="-1"></a></span>
+<span id="cb181-13"><a href="data.html#cb181-13" tabindex="-1"></a><span class="co"># subset to pedon records IDs and calculated thickness</span></span>
+<span id="cb181-14"><a href="data.html#cb181-14" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[, <span class="fu">c</span>(<span class="st">&#39;peiid&#39;</span>, <span class="st">&#39;argillic_thickness_cm&#39;</span>, <span class="st">&#39;depth_to_argillic_cm&#39;</span>)]</span>
+<span id="cb181-15"><a href="data.html#cb181-15" tabindex="-1"></a><span class="fu">head</span>(d)</span></code></pre></div>
 <pre><code>##      peiid argillic_thickness_cm depth_to_argillic_cm
 ## 7  1092610                    56                   30
 ## 24 1092617                    38                   34
@@ -1979,57 +1994,57 @@ NOTE: all records are missing rock fragment volume</code></pre>
 ## 28 1092619                    38                   32
 ## 30 1092620                    29                   24
 ## 33 1092621                    23                   19</code></pre>
-<div class="sourceCode" id="cb182"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb182-1"><a href="data.html#cb182-1" tabindex="-1"></a><span class="co"># left-join with existing site data</span></span>
-<span id="cb182-2"><a href="data.html#cb182-2" tabindex="-1"></a><span class="fu">site</span>(mt663) <span class="ot">&lt;-</span> d</span>
-<span id="cb182-3"><a href="data.html#cb182-3" tabindex="-1"></a></span>
-<span id="cb182-4"><a href="data.html#cb182-4" tabindex="-1"></a><span class="co"># plot as histogram</span></span>
-<span id="cb182-5"><a href="data.html#cb182-5" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.5</span>, <span class="fl">4.5</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span>
-<span id="cb182-6"><a href="data.html#cb182-6" tabindex="-1"></a></span>
-<span id="cb182-7"><a href="data.html#cb182-7" tabindex="-1"></a><span class="co"># note additional arguments to adjust figure labels</span></span>
-<span id="cb182-8"><a href="data.html#cb182-8" tabindex="-1"></a><span class="fu">hist</span>(</span>
-<span id="cb182-9"><a href="data.html#cb182-9" tabindex="-1"></a>  mt663<span class="sc">$</span>argillic_thickness_cm, </span>
-<span id="cb182-10"><a href="data.html#cb182-10" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&#39;Thickness of argillic (cm)&#39;</span>, </span>
-<span id="cb182-11"><a href="data.html#cb182-11" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">&#39;&#39;</span>,</span>
-<span id="cb182-12"><a href="data.html#cb182-12" tabindex="-1"></a>  <span class="at">las =</span> <span class="dv">1</span></span>
-<span id="cb182-13"><a href="data.html#cb182-13" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb183"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb183-1"><a href="data.html#cb183-1" tabindex="-1"></a><span class="co"># left-join with existing site data</span></span>
+<span id="cb183-2"><a href="data.html#cb183-2" tabindex="-1"></a><span class="fu">site</span>(mt663) <span class="ot">&lt;-</span> d</span>
+<span id="cb183-3"><a href="data.html#cb183-3" tabindex="-1"></a></span>
+<span id="cb183-4"><a href="data.html#cb183-4" tabindex="-1"></a><span class="co"># plot as histogram</span></span>
+<span id="cb183-5"><a href="data.html#cb183-5" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="fl">4.5</span>, <span class="fl">4.5</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb183-6"><a href="data.html#cb183-6" tabindex="-1"></a></span>
+<span id="cb183-7"><a href="data.html#cb183-7" tabindex="-1"></a><span class="co"># note additional arguments to adjust figure labels</span></span>
+<span id="cb183-8"><a href="data.html#cb183-8" tabindex="-1"></a><span class="fu">hist</span>(</span>
+<span id="cb183-9"><a href="data.html#cb183-9" tabindex="-1"></a>  mt663<span class="sc">$</span>argillic_thickness_cm, </span>
+<span id="cb183-10"><a href="data.html#cb183-10" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&#39;Thickness of argillic (cm)&#39;</span>, </span>
+<span id="cb183-11"><a href="data.html#cb183-11" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">&#39;&#39;</span>,</span>
+<span id="cb183-12"><a href="data.html#cb183-12" tabindex="-1"></a>  <span class="at">las =</span> <span class="dv">1</span></span>
+<span id="cb183-13"><a href="data.html#cb183-13" tabindex="-1"></a>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-76-1.png" alt="" width="576" style="display: block; margin: auto;" /></p>
-<div class="sourceCode" id="cb183"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb183-1"><a href="data.html#cb183-1" tabindex="-1"></a><span class="fu">hist</span>(</span>
-<span id="cb183-2"><a href="data.html#cb183-2" tabindex="-1"></a>  mt663<span class="sc">$</span>depth_to_argillic_cm, </span>
-<span id="cb183-3"><a href="data.html#cb183-3" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&#39;Depth to argillic top depth (cm)&#39;</span>, </span>
-<span id="cb183-4"><a href="data.html#cb183-4" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">&#39;&#39;</span>,</span>
-<span id="cb183-5"><a href="data.html#cb183-5" tabindex="-1"></a>  <span class="at">las =</span> <span class="dv">1</span></span>
-<span id="cb183-6"><a href="data.html#cb183-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb184"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb184-1"><a href="data.html#cb184-1" tabindex="-1"></a><span class="fu">hist</span>(</span>
+<span id="cb184-2"><a href="data.html#cb184-2" tabindex="-1"></a>  mt663<span class="sc">$</span>depth_to_argillic_cm, </span>
+<span id="cb184-3"><a href="data.html#cb184-3" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&#39;Depth to argillic top depth (cm)&#39;</span>, </span>
+<span id="cb184-4"><a href="data.html#cb184-4" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">&#39;&#39;</span>,</span>
+<span id="cb184-5"><a href="data.html#cb184-5" tabindex="-1"></a>  <span class="at">las =</span> <span class="dv">1</span></span>
+<span id="cb184-6"><a href="data.html#cb184-6" tabindex="-1"></a>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-76-2.png" alt="" width="576" style="display: block; margin: auto;" /></p>
 <p>Quick check: <em>What can you do with the boolean diagnostic feature data stored in the site table of a <code>fetchNASIS()</code> SoilProfileCollection?</em></p>
 </div>
 <div id="diagnostic-feature-diagrams" class="section level4 hasAnchor" number="2.9.4.3">
 <h4><span class="header-section-number">2.9.4.3</span> Diagnostic Feature Diagrams<a href="data.html#diagnostic-feature-diagrams" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<div class="sourceCode" id="cb184"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb184-1"><a href="data.html#cb184-1" tabindex="-1"></a><span class="co"># work up diagnostic plot based on the mt663 dataset loaded above</span></span>
-<span id="cb184-2"><a href="data.html#cb184-2" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
-<span id="cb184-3"><a href="data.html#cb184-3" tabindex="-1"></a><span class="fu">library</span>(soilDB)</span>
-<span id="cb184-4"><a href="data.html#cb184-4" tabindex="-1"></a><span class="fu">library</span>(sharpshootR)</span>
-<span id="cb184-5"><a href="data.html#cb184-5" tabindex="-1"></a></span>
-<span id="cb184-6"><a href="data.html#cb184-6" tabindex="-1"></a><span class="co"># can limit which diagnostic features to show by setting &#39;v&#39; manually</span></span>
-<span id="cb184-7"><a href="data.html#cb184-7" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;ochric.epipedon&#39;</span>, <span class="st">&#39;mollic.epipedon&#39;</span>, <span class="st">&#39;andic.soil.properties&#39;</span>, </span>
-<span id="cb184-8"><a href="data.html#cb184-8" tabindex="-1"></a>       <span class="st">&#39;argillic.horizon&#39;</span>, <span class="st">&#39;cambic.horizon&#39;</span>, </span>
-<span id="cb184-9"><a href="data.html#cb184-9" tabindex="-1"></a>       <span class="st">&#39;lithic.contact&#39;</span>)</span>
-<span id="cb184-10"><a href="data.html#cb184-10" tabindex="-1"></a></span>
-<span id="cb184-11"><a href="data.html#cb184-11" tabindex="-1"></a><span class="co"># the default concatenated landform_string may have multiple levels</span></span>
-<span id="cb184-12"><a href="data.html#cb184-12" tabindex="-1"></a><span class="co">#  depending on how the geomorphic tables were populated</span></span>
-<span id="cb184-13"><a href="data.html#cb184-13" tabindex="-1"></a><span class="co">#  these are concatenated using the ampersand (&amp;) character</span></span>
-<span id="cb184-14"><a href="data.html#cb184-14" tabindex="-1"></a><span class="co">#  so take the first string split using ampersand as a delimiter</span></span>
-<span id="cb184-15"><a href="data.html#cb184-15" tabindex="-1"></a>mt663<span class="sc">$</span>first_landform <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">strsplit</span>(mt663<span class="sc">$</span>landform_string, <span class="st">&quot;&amp;&quot;</span>), </span>
-<span id="cb184-16"><a href="data.html#cb184-16" tabindex="-1"></a>                                  <span class="cf">function</span>(x) x[[<span class="dv">1</span>]])</span>
-<span id="cb184-17"><a href="data.html#cb184-17" tabindex="-1"></a></span>
-<span id="cb184-18"><a href="data.html#cb184-18" tabindex="-1"></a><span class="co"># plot with diagnostic features ordered according to co-occurrence</span></span>
-<span id="cb184-19"><a href="data.html#cb184-19" tabindex="-1"></a><span class="co"># v: site-level attributes to consider</span></span>
-<span id="cb184-20"><a href="data.html#cb184-20" tabindex="-1"></a><span class="co"># k: number of clusters to identify</span></span>
-<span id="cb184-21"><a href="data.html#cb184-21" tabindex="-1"></a><span class="fu">diagnosticPropertyPlot</span>(</span>
-<span id="cb184-22"><a href="data.html#cb184-22" tabindex="-1"></a>  mt663[<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, ], <span class="at">v =</span> v, <span class="at">k =</span> <span class="dv">5</span>,</span>
-<span id="cb184-23"><a href="data.html#cb184-23" tabindex="-1"></a>  <span class="at">grid.label =</span> <span class="st">&#39;usiteid&#39;</span>, </span>
-<span id="cb184-24"><a href="data.html#cb184-24" tabindex="-1"></a>  <span class="at">dend.label =</span> <span class="st">&#39;first_landform&#39;</span>, </span>
-<span id="cb184-25"><a href="data.html#cb184-25" tabindex="-1"></a>  <span class="at">sort.vars =</span> <span class="cn">TRUE</span></span>
-<span id="cb184-26"><a href="data.html#cb184-26" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb185"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb185-1"><a href="data.html#cb185-1" tabindex="-1"></a><span class="co"># work up diagnostic plot based on the mt663 dataset loaded above</span></span>
+<span id="cb185-2"><a href="data.html#cb185-2" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
+<span id="cb185-3"><a href="data.html#cb185-3" tabindex="-1"></a><span class="fu">library</span>(soilDB)</span>
+<span id="cb185-4"><a href="data.html#cb185-4" tabindex="-1"></a><span class="fu">library</span>(sharpshootR)</span>
+<span id="cb185-5"><a href="data.html#cb185-5" tabindex="-1"></a></span>
+<span id="cb185-6"><a href="data.html#cb185-6" tabindex="-1"></a><span class="co"># can limit which diagnostic features to show by setting &#39;v&#39; manually</span></span>
+<span id="cb185-7"><a href="data.html#cb185-7" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;ochric.epipedon&#39;</span>, <span class="st">&#39;mollic.epipedon&#39;</span>, <span class="st">&#39;andic.soil.properties&#39;</span>, </span>
+<span id="cb185-8"><a href="data.html#cb185-8" tabindex="-1"></a>       <span class="st">&#39;argillic.horizon&#39;</span>, <span class="st">&#39;cambic.horizon&#39;</span>, </span>
+<span id="cb185-9"><a href="data.html#cb185-9" tabindex="-1"></a>       <span class="st">&#39;lithic.contact&#39;</span>)</span>
+<span id="cb185-10"><a href="data.html#cb185-10" tabindex="-1"></a></span>
+<span id="cb185-11"><a href="data.html#cb185-11" tabindex="-1"></a><span class="co"># the default concatenated landform_string may have multiple levels</span></span>
+<span id="cb185-12"><a href="data.html#cb185-12" tabindex="-1"></a><span class="co">#  depending on how the geomorphic tables were populated</span></span>
+<span id="cb185-13"><a href="data.html#cb185-13" tabindex="-1"></a><span class="co">#  these are concatenated using the ampersand (&amp;) character</span></span>
+<span id="cb185-14"><a href="data.html#cb185-14" tabindex="-1"></a><span class="co">#  so take the first string split using ampersand as a delimiter</span></span>
+<span id="cb185-15"><a href="data.html#cb185-15" tabindex="-1"></a>mt663<span class="sc">$</span>first_landform <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">strsplit</span>(mt663<span class="sc">$</span>landform_string, <span class="st">&quot;&amp;&quot;</span>), </span>
+<span id="cb185-16"><a href="data.html#cb185-16" tabindex="-1"></a>                                  <span class="cf">function</span>(x) x[[<span class="dv">1</span>]])</span>
+<span id="cb185-17"><a href="data.html#cb185-17" tabindex="-1"></a></span>
+<span id="cb185-18"><a href="data.html#cb185-18" tabindex="-1"></a><span class="co"># plot with diagnostic features ordered according to co-occurrence</span></span>
+<span id="cb185-19"><a href="data.html#cb185-19" tabindex="-1"></a><span class="co"># v: site-level attributes to consider</span></span>
+<span id="cb185-20"><a href="data.html#cb185-20" tabindex="-1"></a><span class="co"># k: number of clusters to identify</span></span>
+<span id="cb185-21"><a href="data.html#cb185-21" tabindex="-1"></a><span class="fu">diagnosticPropertyPlot</span>(</span>
+<span id="cb185-22"><a href="data.html#cb185-22" tabindex="-1"></a>  mt663[<span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, ], <span class="at">v =</span> v, <span class="at">k =</span> <span class="dv">5</span>,</span>
+<span id="cb185-23"><a href="data.html#cb185-23" tabindex="-1"></a>  <span class="at">grid.label =</span> <span class="st">&#39;usiteid&#39;</span>, </span>
+<span id="cb185-24"><a href="data.html#cb185-24" tabindex="-1"></a>  <span class="at">dend.label =</span> <span class="st">&#39;first_landform&#39;</span>, </span>
+<span id="cb185-25"><a href="data.html#cb185-25" tabindex="-1"></a>  <span class="at">sort.vars =</span> <span class="cn">TRUE</span></span>
+<span id="cb185-26"><a href="data.html#cb185-26" tabindex="-1"></a>)</span></code></pre></div>
 <p><img src="s4ssbook_files/figure-html/unnamed-chunk-77-1.png" alt="" width="864" style="display: block; margin: auto;" /></p>
 </div>
 </div>
@@ -2039,35 +2054,35 @@ NOTE: all records are missing rock fragment volume</code></pre>
 <p>Save the code you use in an R script, add answers as comments, and send to your mentor.</p>
 <p>Use the following script to generate a diagnostic-feature diagram for the pedon data you’ve loaded from your NASIS selected set. Alternately, you may use the MT663 data from the example above, just substitute the object <code>mt663</code> for <code>f</code>.</p>
 <p>You can select a subset of desired diagnostic properties or use all diagnostic feature columns.</p>
-<div class="sourceCode" id="cb185"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb185-1"><a href="data.html#cb185-1" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
-<span id="cb185-2"><a href="data.html#cb185-2" tabindex="-1"></a><span class="fu">library</span>(soilDB)</span>
-<span id="cb185-3"><a href="data.html#cb185-3" tabindex="-1"></a><span class="fu">library</span>(sharpshootR)</span>
-<span id="cb185-4"><a href="data.html#cb185-4" tabindex="-1"></a></span>
-<span id="cb185-5"><a href="data.html#cb185-5" tabindex="-1"></a><span class="co"># Load data</span></span>
-<span id="cb185-6"><a href="data.html#cb185-6" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="fu">fetchNASIS</span>(<span class="at">from =</span> <span class="st">&#39;pedons&#39;</span>)</span>
-<span id="cb185-7"><a href="data.html#cb185-7" tabindex="-1"></a></span>
-<span id="cb185-8"><a href="data.html#cb185-8" tabindex="-1"></a><span class="co"># ... May need to use subset() to reduce the number of pedons!</span></span>
-<span id="cb185-9"><a href="data.html#cb185-9" tabindex="-1"></a></span>
-<span id="cb185-10"><a href="data.html#cb185-10" tabindex="-1"></a><span class="co"># get all diagnostic feature columns from site data </span></span>
-<span id="cb185-11"><a href="data.html#cb185-11" tabindex="-1"></a><span class="co"># by pattern matching on &#39;[.]&#39; in the site attribute names</span></span>
-<span id="cb185-12"><a href="data.html#cb185-12" tabindex="-1"></a><span class="co"># this is not a generic rule, but works here</span></span>
-<span id="cb185-13"><a href="data.html#cb185-13" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&#39;[.]&#39;</span>, <span class="fu">siteNames</span>(f))</span>
-<span id="cb185-14"><a href="data.html#cb185-14" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">siteNames</span>(f)[idx]</span>
-<span id="cb185-15"><a href="data.html#cb185-15" tabindex="-1"></a></span>
-<span id="cb185-16"><a href="data.html#cb185-16" tabindex="-1"></a><span class="co"># inspect v</span></span>
-<span id="cb185-17"><a href="data.html#cb185-17" tabindex="-1"></a>v</span>
-<span id="cb185-18"><a href="data.html#cb185-18" tabindex="-1"></a></span>
-<span id="cb185-19"><a href="data.html#cb185-19" tabindex="-1"></a><span class="co"># insert diagnostics of interest from the possible list in &#39;v&#39;</span></span>
-<span id="cb185-20"><a href="data.html#cb185-20" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;ochric.epipedon&#39;</span>, <span class="st">&#39;cambic.horizon&#39;</span>, </span>
-<span id="cb185-21"><a href="data.html#cb185-21" tabindex="-1"></a>       <span class="st">&#39;argillic.horizon&#39;</span>, <span class="st">&#39;paralithic.contact&#39;</span>,</span>
-<span id="cb185-22"><a href="data.html#cb185-22" tabindex="-1"></a>       <span class="st">&#39;lithic.contact&#39;</span>)</span>
-<span id="cb185-23"><a href="data.html#cb185-23" tabindex="-1"></a></span>
-<span id="cb185-24"><a href="data.html#cb185-24" tabindex="-1"></a><span class="co"># generate diagnostic property diagram</span></span>
-<span id="cb185-25"><a href="data.html#cb185-25" tabindex="-1"></a><span class="fu">diagnosticPropertyPlot</span>(</span>
-<span id="cb185-26"><a href="data.html#cb185-26" tabindex="-1"></a>  f, <span class="at">v =</span> v, <span class="at">k =</span> <span class="dv">5</span>, </span>
-<span id="cb185-27"><a href="data.html#cb185-27" tabindex="-1"></a>  <span class="at">grid.label =</span> <span class="st">&#39;usiteid&#39;</span>, </span>
-<span id="cb185-28"><a href="data.html#cb185-28" tabindex="-1"></a>  <span class="at">dend.label =</span> <span class="st">&#39;taxonname&#39;</span></span>
-<span id="cb185-29"><a href="data.html#cb185-29" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb186"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb186-1"><a href="data.html#cb186-1" tabindex="-1"></a><span class="fu">library</span>(aqp)</span>
+<span id="cb186-2"><a href="data.html#cb186-2" tabindex="-1"></a><span class="fu">library</span>(soilDB)</span>
+<span id="cb186-3"><a href="data.html#cb186-3" tabindex="-1"></a><span class="fu">library</span>(sharpshootR)</span>
+<span id="cb186-4"><a href="data.html#cb186-4" tabindex="-1"></a></span>
+<span id="cb186-5"><a href="data.html#cb186-5" tabindex="-1"></a><span class="co"># Load data</span></span>
+<span id="cb186-6"><a href="data.html#cb186-6" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="fu">fetchNASIS</span>(<span class="at">from =</span> <span class="st">&#39;pedons&#39;</span>)</span>
+<span id="cb186-7"><a href="data.html#cb186-7" tabindex="-1"></a></span>
+<span id="cb186-8"><a href="data.html#cb186-8" tabindex="-1"></a><span class="co"># ... May need to use subset() to reduce the number of pedons!</span></span>
+<span id="cb186-9"><a href="data.html#cb186-9" tabindex="-1"></a></span>
+<span id="cb186-10"><a href="data.html#cb186-10" tabindex="-1"></a><span class="co"># get all diagnostic feature columns from site data </span></span>
+<span id="cb186-11"><a href="data.html#cb186-11" tabindex="-1"></a><span class="co"># by pattern matching on &#39;[.]&#39; in the site attribute names</span></span>
+<span id="cb186-12"><a href="data.html#cb186-12" tabindex="-1"></a><span class="co"># this is not a generic rule, but works here</span></span>
+<span id="cb186-13"><a href="data.html#cb186-13" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&#39;[.]&#39;</span>, <span class="fu">siteNames</span>(f))</span>
+<span id="cb186-14"><a href="data.html#cb186-14" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">siteNames</span>(f)[idx]</span>
+<span id="cb186-15"><a href="data.html#cb186-15" tabindex="-1"></a></span>
+<span id="cb186-16"><a href="data.html#cb186-16" tabindex="-1"></a><span class="co"># inspect v</span></span>
+<span id="cb186-17"><a href="data.html#cb186-17" tabindex="-1"></a>v</span>
+<span id="cb186-18"><a href="data.html#cb186-18" tabindex="-1"></a></span>
+<span id="cb186-19"><a href="data.html#cb186-19" tabindex="-1"></a><span class="co"># insert diagnostics of interest from the possible list in &#39;v&#39;</span></span>
+<span id="cb186-20"><a href="data.html#cb186-20" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;ochric.epipedon&#39;</span>, <span class="st">&#39;cambic.horizon&#39;</span>, </span>
+<span id="cb186-21"><a href="data.html#cb186-21" tabindex="-1"></a>       <span class="st">&#39;argillic.horizon&#39;</span>, <span class="st">&#39;paralithic.contact&#39;</span>,</span>
+<span id="cb186-22"><a href="data.html#cb186-22" tabindex="-1"></a>       <span class="st">&#39;lithic.contact&#39;</span>)</span>
+<span id="cb186-23"><a href="data.html#cb186-23" tabindex="-1"></a></span>
+<span id="cb186-24"><a href="data.html#cb186-24" tabindex="-1"></a><span class="co"># generate diagnostic property diagram</span></span>
+<span id="cb186-25"><a href="data.html#cb186-25" tabindex="-1"></a><span class="fu">diagnosticPropertyPlot</span>(</span>
+<span id="cb186-26"><a href="data.html#cb186-26" tabindex="-1"></a>  f, <span class="at">v =</span> v, <span class="at">k =</span> <span class="dv">5</span>, </span>
+<span id="cb186-27"><a href="data.html#cb186-27" tabindex="-1"></a>  <span class="at">grid.label =</span> <span class="st">&#39;usiteid&#39;</span>, </span>
+<span id="cb186-28"><a href="data.html#cb186-28" tabindex="-1"></a>  <span class="at">dend.label =</span> <span class="st">&#39;taxonname&#39;</span></span>
+<span id="cb186-29"><a href="data.html#cb186-29" tabindex="-1"></a>)</span></code></pre></div>
 <p><strong>Questions:</strong></p>
 <p>Use the results of <code>site()</code>, <code>horizons()</code>, <code>diagnostic_hz()</code> to answer the following questions about your own data. These functions return data.frame objects from a SoilProfileCollection derived from your local NASIS data.</p>
 <ol style="list-style-type: decimal">
@@ -2091,81 +2106,81 @@ NOTE: all records are missing rock fragment volume</code></pre>
 <h3><span class="header-section-number">2.10.1</span> Example: Site Soil Temperature Data from CA792 (Sequoia-Kings Canyon National Park)<a href="data.html#example-site-soil-temperature-data-from-ca792-sequoia-kings-canyon-national-park" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>The following example will return all records in your selected set <code>sitesoiltemp</code> table, along with a couple of fields from the <code>site</code>, <code>siteobs</code>, and <code>pedon</code> tables. This is a convenient way to collect all of the field-based soil temperature data associated with the pedons in your selected set for further analysis.</p>
 <p>You can use the CA792 (Sequoia-Kings Canyon National Park) pedons as an example. Use a query that searches user pedon ID for the following pattern <code>%CA792%</code> to download and populate a selected set in the NASIS client.</p>
-<div class="sourceCode" id="cb186"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb186-1"><a href="data.html#cb186-1" tabindex="-1"></a><span class="fu">library</span>(soilDB)</span>
-<span id="cb186-2"><a href="data.html#cb186-2" tabindex="-1"></a></span>
-<span id="cb186-3"><a href="data.html#cb186-3" tabindex="-1"></a><span class="co"># write query as a character string</span></span>
-<span id="cb186-4"><a href="data.html#cb186-4" tabindex="-1"></a>q <span class="ot">&lt;-</span> <span class="st">&quot;SELECT siteiid as siteiid, peiid, usiteid, obsdate, soitemp, soitempdep </span></span>
-<span id="cb186-5"><a href="data.html#cb186-5" tabindex="-1"></a><span class="st">       FROM site_View_1</span></span>
-<span id="cb186-6"><a href="data.html#cb186-6" tabindex="-1"></a><span class="st">       INNER JOIN siteobs_View_1 ON site_View_1.siteiid = siteobs_View_1.siteiidref</span></span>
-<span id="cb186-7"><a href="data.html#cb186-7" tabindex="-1"></a><span class="st">       LEFT OUTER JOIN sitesoiltemp_View_1 ON siteobs_View_1.siteobsiid = sitesoiltemp_View_1.siteobsiidref</span></span>
-<span id="cb186-8"><a href="data.html#cb186-8" tabindex="-1"></a><span class="st">       LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref</span></span>
-<span id="cb186-9"><a href="data.html#cb186-9" tabindex="-1"></a><span class="st">      ORDER BY obsdate, siteiid;&quot;</span></span>
-<span id="cb186-10"><a href="data.html#cb186-10" tabindex="-1"></a></span>
-<span id="cb186-11"><a href="data.html#cb186-11" tabindex="-1"></a><span class="co"># setup connection to local NASIS</span></span>
-<span id="cb186-12"><a href="data.html#cb186-12" tabindex="-1"></a>channel <span class="ot">&lt;-</span> <span class="fu">NASIS</span>()</span>
-<span id="cb186-13"><a href="data.html#cb186-13" tabindex="-1"></a></span>
-<span id="cb186-14"><a href="data.html#cb186-14" tabindex="-1"></a><span class="co"># exec query</span></span>
-<span id="cb186-15"><a href="data.html#cb186-15" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">dbQueryNASIS</span>(channel, q)</span></code></pre></div>
+<div class="sourceCode" id="cb187"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb187-1"><a href="data.html#cb187-1" tabindex="-1"></a><span class="fu">library</span>(soilDB)</span>
+<span id="cb187-2"><a href="data.html#cb187-2" tabindex="-1"></a></span>
+<span id="cb187-3"><a href="data.html#cb187-3" tabindex="-1"></a><span class="co"># write query as a character string</span></span>
+<span id="cb187-4"><a href="data.html#cb187-4" tabindex="-1"></a>q <span class="ot">&lt;-</span> <span class="st">&quot;SELECT siteiid as siteiid, peiid, usiteid, obsdate, soitemp, soitempdep </span></span>
+<span id="cb187-5"><a href="data.html#cb187-5" tabindex="-1"></a><span class="st">       FROM site_View_1</span></span>
+<span id="cb187-6"><a href="data.html#cb187-6" tabindex="-1"></a><span class="st">       INNER JOIN siteobs_View_1 ON site_View_1.siteiid = siteobs_View_1.siteiidref</span></span>
+<span id="cb187-7"><a href="data.html#cb187-7" tabindex="-1"></a><span class="st">       LEFT OUTER JOIN sitesoiltemp_View_1 ON siteobs_View_1.siteobsiid = sitesoiltemp_View_1.siteobsiidref</span></span>
+<span id="cb187-8"><a href="data.html#cb187-8" tabindex="-1"></a><span class="st">       LEFT OUTER JOIN pedon_View_1 ON siteobs_View_1.siteobsiid = pedon_View_1.siteobsiidref</span></span>
+<span id="cb187-9"><a href="data.html#cb187-9" tabindex="-1"></a><span class="st">      ORDER BY obsdate, siteiid;&quot;</span></span>
+<span id="cb187-10"><a href="data.html#cb187-10" tabindex="-1"></a></span>
+<span id="cb187-11"><a href="data.html#cb187-11" tabindex="-1"></a><span class="co"># setup connection to local NASIS</span></span>
+<span id="cb187-12"><a href="data.html#cb187-12" tabindex="-1"></a>channel <span class="ot">&lt;-</span> <span class="fu">NASIS</span>()</span>
+<span id="cb187-13"><a href="data.html#cb187-13" tabindex="-1"></a></span>
+<span id="cb187-14"><a href="data.html#cb187-14" tabindex="-1"></a><span class="co"># exec query</span></span>
+<span id="cb187-15"><a href="data.html#cb187-15" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">dbQueryNASIS</span>(channel, q)</span></code></pre></div>
 <p>The functions <code>dbConnectNASIS()</code> (alias <code>NASIS()</code>) and <code>dbQueryNASIS()</code> allow you to create a connection to the NASIS local database and send queries to that connection, respectively. By default, <code>dbQueryNASIS()</code> will close your connection after completing the query; you can change this by setting <code>close=FALSE</code>.</p>
-<div class="sourceCode" id="cb187"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb187-1"><a href="data.html#cb187-1" tabindex="-1"></a><span class="co"># check results</span></span>
-<span id="cb187-2"><a href="data.html#cb187-2" tabindex="-1"></a><span class="fu">str</span>(d)</span>
-<span id="cb187-3"><a href="data.html#cb187-3" tabindex="-1"></a></span>
-<span id="cb187-4"><a href="data.html#cb187-4" tabindex="-1"></a><span class="co"># remove records missing values</span></span>
-<span id="cb187-5"><a href="data.html#cb187-5" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(d)</span>
-<span id="cb187-6"><a href="data.html#cb187-6" tabindex="-1"></a></span>
-<span id="cb187-7"><a href="data.html#cb187-7" tabindex="-1"></a><span class="co"># tabulate unique soil depths</span></span>
-<span id="cb187-8"><a href="data.html#cb187-8" tabindex="-1"></a><span class="fu">table</span>(d<span class="sc">$</span>soitempdep)</span>
-<span id="cb187-9"><a href="data.html#cb187-9" tabindex="-1"></a></span>
-<span id="cb187-10"><a href="data.html#cb187-10" tabindex="-1"></a><span class="co"># extract doy of year</span></span>
-<span id="cb187-11"><a href="data.html#cb187-11" tabindex="-1"></a>d<span class="sc">$</span>doy <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">format</span>(d<span class="sc">$</span>obsdate, <span class="st">&quot;%j&quot;</span>))</span>
-<span id="cb187-12"><a href="data.html#cb187-12" tabindex="-1"></a></span>
-<span id="cb187-13"><a href="data.html#cb187-13" tabindex="-1"></a><span class="co"># when where measurements collected?</span></span>
-<span id="cb187-14"><a href="data.html#cb187-14" tabindex="-1"></a><span class="fu">hist</span>(</span>
-<span id="cb187-15"><a href="data.html#cb187-15" tabindex="-1"></a>  d<span class="sc">$</span>doy,</span>
-<span id="cb187-16"><a href="data.html#cb187-16" tabindex="-1"></a>  <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">366</span>),</span>
-<span id="cb187-17"><a href="data.html#cb187-17" tabindex="-1"></a>  <span class="at">las =</span> <span class="dv">1</span>,</span>
-<span id="cb187-18"><a href="data.html#cb187-18" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">&#39;Soil Temperature Measurements&#39;</span>,</span>
-<span id="cb187-19"><a href="data.html#cb187-19" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&#39;Day of Year&#39;</span></span>
-<span id="cb187-20"><a href="data.html#cb187-20" tabindex="-1"></a>)</span>
-<span id="cb187-21"><a href="data.html#cb187-21" tabindex="-1"></a></span>
-<span id="cb187-22"><a href="data.html#cb187-22" tabindex="-1"></a><span class="co"># soil temperature by day of year</span></span>
-<span id="cb187-23"><a href="data.html#cb187-23" tabindex="-1"></a><span class="fu">plot</span>(</span>
-<span id="cb187-24"><a href="data.html#cb187-24" tabindex="-1"></a>  soitemp <span class="sc">~</span> doy,</span>
-<span id="cb187-25"><a href="data.html#cb187-25" tabindex="-1"></a>  <span class="at">data =</span> d,</span>
-<span id="cb187-26"><a href="data.html#cb187-26" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">&#39;Soil Temperature Measurements (CA792)</span><span class="sc">\n</span><span class="st">NASIS &quot;Site Soil Temperature&quot; table&#39;</span>,</span>
-<span id="cb187-27"><a href="data.html#cb187-27" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&#39;p&#39;</span>,</span>
-<span id="cb187-28"><a href="data.html#cb187-28" tabindex="-1"></a>  <span class="at">pch =</span> <span class="dv">21</span>, </span>
-<span id="cb187-29"><a href="data.html#cb187-29" tabindex="-1"></a>  <span class="at">bg =</span> <span class="st">&#39;royalblue&#39;</span>,</span>
-<span id="cb187-30"><a href="data.html#cb187-30" tabindex="-1"></a>  <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">366</span>),</span>
-<span id="cb187-31"><a href="data.html#cb187-31" tabindex="-1"></a>  <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">26</span>),</span>
-<span id="cb187-32"><a href="data.html#cb187-32" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&#39;Day of Year&#39;</span>,</span>
-<span id="cb187-33"><a href="data.html#cb187-33" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">&#39;Soil Temperature at 50cm (deg C)&#39;</span>,</span>
-<span id="cb187-34"><a href="data.html#cb187-34" tabindex="-1"></a>  <span class="at">las =</span> <span class="dv">1</span></span>
-<span id="cb187-35"><a href="data.html#cb187-35" tabindex="-1"></a>)</span>
-<span id="cb187-36"><a href="data.html#cb187-36" tabindex="-1"></a></span>
-<span id="cb187-37"><a href="data.html#cb187-37" tabindex="-1"></a><span class="co"># vernal equinox, summer solstice, autumnal equinox, winter solstice</span></span>
-<span id="cb187-38"><a href="data.html#cb187-38" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">c</span>(<span class="st">&#39;2022-03-20&#39;</span>, <span class="st">&#39;2022-06-21&#39;</span>, <span class="st">&#39;2022-09-23&#39;</span>, <span class="st">&#39;2022-12-21&#39;</span>))</span>
-<span id="cb187-39"><a href="data.html#cb187-39" tabindex="-1"></a></span>
-<span id="cb187-40"><a href="data.html#cb187-40" tabindex="-1"></a><span class="co"># convert dates -&gt; Julian date, or day-of-year</span></span>
-<span id="cb187-41"><a href="data.html#cb187-41" tabindex="-1"></a>doy <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">format</span>(x, <span class="st">&quot;%j&quot;</span>))</span>
-<span id="cb187-42"><a href="data.html#cb187-42" tabindex="-1"></a></span>
-<span id="cb187-43"><a href="data.html#cb187-43" tabindex="-1"></a><span class="co"># add vertical lines</span></span>
-<span id="cb187-44"><a href="data.html#cb187-44" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> doy, <span class="at">lty =</span> <span class="dv">3</span>, <span class="at">col =</span> <span class="fu">grey</span>(<span class="fl">0.45</span>))</span>
-<span id="cb187-45"><a href="data.html#cb187-45" tabindex="-1"></a></span>
-<span id="cb187-46"><a href="data.html#cb187-46" tabindex="-1"></a><span class="co"># annotate</span></span>
-<span id="cb187-47"><a href="data.html#cb187-47" tabindex="-1"></a><span class="co"># pos argument: left-center offset</span></span>
-<span id="cb187-48"><a href="data.html#cb187-48" tabindex="-1"></a><span class="fu">text</span>(</span>
-<span id="cb187-49"><a href="data.html#cb187-49" tabindex="-1"></a>  <span class="at">x =</span> doy, </span>
-<span id="cb187-50"><a href="data.html#cb187-50" tabindex="-1"></a>  <span class="at">y =</span> <span class="sc">-</span><span class="dv">1</span>, </span>
-<span id="cb187-51"><a href="data.html#cb187-51" tabindex="-1"></a>  <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&#39;vernal equinox&#39;</span>, <span class="st">&#39;summer solstice&#39;</span>, <span class="st">&#39;autumnal equinox&#39;</span>, <span class="st">&#39;winter solstice&#39;</span>), </span>
-<span id="cb187-52"><a href="data.html#cb187-52" tabindex="-1"></a>  <span class="at">pos =</span> <span class="dv">2</span>,</span>
-<span id="cb187-53"><a href="data.html#cb187-53" tabindex="-1"></a>  <span class="at">cex =</span> <span class="fl">0.75</span>,</span>
-<span id="cb187-54"><a href="data.html#cb187-54" tabindex="-1"></a>  <span class="at">font =</span> <span class="dv">3</span></span>
-<span id="cb187-55"><a href="data.html#cb187-55" tabindex="-1"></a>)</span>
-<span id="cb187-56"><a href="data.html#cb187-56" tabindex="-1"></a></span>
-<span id="cb187-57"><a href="data.html#cb187-57" tabindex="-1"></a><span class="co"># box/whisker plot showing distribution of day-of-year </span></span>
-<span id="cb187-58"><a href="data.html#cb187-58" tabindex="-1"></a><span class="co"># when measurements (pedon descriptions) were collected</span></span>
-<span id="cb187-59"><a href="data.html#cb187-59" tabindex="-1"></a><span class="fu">boxplot</span>(d<span class="sc">$</span>doy, <span class="at">at =</span> <span class="dv">26</span>, <span class="at">horizontal =</span> <span class="cn">TRUE</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">lty =</span> <span class="dv">1</span>, <span class="at">width =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="st">&#39;white&#39;</span>, <span class="at">axes =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb188"><pre class="sourceCode r codeBlocks"><code class="sourceCode r"><span id="cb188-1"><a href="data.html#cb188-1" tabindex="-1"></a><span class="co"># check results</span></span>
+<span id="cb188-2"><a href="data.html#cb188-2" tabindex="-1"></a><span class="fu">str</span>(d)</span>
+<span id="cb188-3"><a href="data.html#cb188-3" tabindex="-1"></a></span>
+<span id="cb188-4"><a href="data.html#cb188-4" tabindex="-1"></a><span class="co"># remove records missing values</span></span>
+<span id="cb188-5"><a href="data.html#cb188-5" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(d)</span>
+<span id="cb188-6"><a href="data.html#cb188-6" tabindex="-1"></a></span>
+<span id="cb188-7"><a href="data.html#cb188-7" tabindex="-1"></a><span class="co"># tabulate unique soil depths</span></span>
+<span id="cb188-8"><a href="data.html#cb188-8" tabindex="-1"></a><span class="fu">table</span>(d<span class="sc">$</span>soitempdep)</span>
+<span id="cb188-9"><a href="data.html#cb188-9" tabindex="-1"></a></span>
+<span id="cb188-10"><a href="data.html#cb188-10" tabindex="-1"></a><span class="co"># extract doy of year</span></span>
+<span id="cb188-11"><a href="data.html#cb188-11" tabindex="-1"></a>d<span class="sc">$</span>doy <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">format</span>(d<span class="sc">$</span>obsdate, <span class="st">&quot;%j&quot;</span>))</span>
+<span id="cb188-12"><a href="data.html#cb188-12" tabindex="-1"></a></span>
+<span id="cb188-13"><a href="data.html#cb188-13" tabindex="-1"></a><span class="co"># when where measurements collected?</span></span>
+<span id="cb188-14"><a href="data.html#cb188-14" tabindex="-1"></a><span class="fu">hist</span>(</span>
+<span id="cb188-15"><a href="data.html#cb188-15" tabindex="-1"></a>  d<span class="sc">$</span>doy,</span>
+<span id="cb188-16"><a href="data.html#cb188-16" tabindex="-1"></a>  <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">366</span>),</span>
+<span id="cb188-17"><a href="data.html#cb188-17" tabindex="-1"></a>  <span class="at">las =</span> <span class="dv">1</span>,</span>
+<span id="cb188-18"><a href="data.html#cb188-18" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">&#39;Soil Temperature Measurements&#39;</span>,</span>
+<span id="cb188-19"><a href="data.html#cb188-19" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&#39;Day of Year&#39;</span></span>
+<span id="cb188-20"><a href="data.html#cb188-20" tabindex="-1"></a>)</span>
+<span id="cb188-21"><a href="data.html#cb188-21" tabindex="-1"></a></span>
+<span id="cb188-22"><a href="data.html#cb188-22" tabindex="-1"></a><span class="co"># soil temperature by day of year</span></span>
+<span id="cb188-23"><a href="data.html#cb188-23" tabindex="-1"></a><span class="fu">plot</span>(</span>
+<span id="cb188-24"><a href="data.html#cb188-24" tabindex="-1"></a>  soitemp <span class="sc">~</span> doy,</span>
+<span id="cb188-25"><a href="data.html#cb188-25" tabindex="-1"></a>  <span class="at">data =</span> d,</span>
+<span id="cb188-26"><a href="data.html#cb188-26" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">&#39;Soil Temperature Measurements (CA792)</span><span class="sc">\n</span><span class="st">NASIS &quot;Site Soil Temperature&quot; table&#39;</span>,</span>
+<span id="cb188-27"><a href="data.html#cb188-27" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&#39;p&#39;</span>,</span>
+<span id="cb188-28"><a href="data.html#cb188-28" tabindex="-1"></a>  <span class="at">pch =</span> <span class="dv">21</span>, </span>
+<span id="cb188-29"><a href="data.html#cb188-29" tabindex="-1"></a>  <span class="at">bg =</span> <span class="st">&#39;royalblue&#39;</span>,</span>
+<span id="cb188-30"><a href="data.html#cb188-30" tabindex="-1"></a>  <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">366</span>),</span>
+<span id="cb188-31"><a href="data.html#cb188-31" tabindex="-1"></a>  <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">26</span>),</span>
+<span id="cb188-32"><a href="data.html#cb188-32" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&#39;Day of Year&#39;</span>,</span>
+<span id="cb188-33"><a href="data.html#cb188-33" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">&#39;Soil Temperature at 50cm (deg C)&#39;</span>,</span>
+<span id="cb188-34"><a href="data.html#cb188-34" tabindex="-1"></a>  <span class="at">las =</span> <span class="dv">1</span></span>
+<span id="cb188-35"><a href="data.html#cb188-35" tabindex="-1"></a>)</span>
+<span id="cb188-36"><a href="data.html#cb188-36" tabindex="-1"></a></span>
+<span id="cb188-37"><a href="data.html#cb188-37" tabindex="-1"></a><span class="co"># vernal equinox, summer solstice, autumnal equinox, winter solstice</span></span>
+<span id="cb188-38"><a href="data.html#cb188-38" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">c</span>(<span class="st">&#39;2022-03-20&#39;</span>, <span class="st">&#39;2022-06-21&#39;</span>, <span class="st">&#39;2022-09-23&#39;</span>, <span class="st">&#39;2022-12-21&#39;</span>))</span>
+<span id="cb188-39"><a href="data.html#cb188-39" tabindex="-1"></a></span>
+<span id="cb188-40"><a href="data.html#cb188-40" tabindex="-1"></a><span class="co"># convert dates -&gt; Julian date, or day-of-year</span></span>
+<span id="cb188-41"><a href="data.html#cb188-41" tabindex="-1"></a>doy <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">format</span>(x, <span class="st">&quot;%j&quot;</span>))</span>
+<span id="cb188-42"><a href="data.html#cb188-42" tabindex="-1"></a></span>
+<span id="cb188-43"><a href="data.html#cb188-43" tabindex="-1"></a><span class="co"># add vertical lines</span></span>
+<span id="cb188-44"><a href="data.html#cb188-44" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> doy, <span class="at">lty =</span> <span class="dv">3</span>, <span class="at">col =</span> <span class="fu">grey</span>(<span class="fl">0.45</span>))</span>
+<span id="cb188-45"><a href="data.html#cb188-45" tabindex="-1"></a></span>
+<span id="cb188-46"><a href="data.html#cb188-46" tabindex="-1"></a><span class="co"># annotate</span></span>
+<span id="cb188-47"><a href="data.html#cb188-47" tabindex="-1"></a><span class="co"># pos argument: left-center offset</span></span>
+<span id="cb188-48"><a href="data.html#cb188-48" tabindex="-1"></a><span class="fu">text</span>(</span>
+<span id="cb188-49"><a href="data.html#cb188-49" tabindex="-1"></a>  <span class="at">x =</span> doy, </span>
+<span id="cb188-50"><a href="data.html#cb188-50" tabindex="-1"></a>  <span class="at">y =</span> <span class="sc">-</span><span class="dv">1</span>, </span>
+<span id="cb188-51"><a href="data.html#cb188-51" tabindex="-1"></a>  <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&#39;vernal equinox&#39;</span>, <span class="st">&#39;summer solstice&#39;</span>, <span class="st">&#39;autumnal equinox&#39;</span>, <span class="st">&#39;winter solstice&#39;</span>), </span>
+<span id="cb188-52"><a href="data.html#cb188-52" tabindex="-1"></a>  <span class="at">pos =</span> <span class="dv">2</span>,</span>
+<span id="cb188-53"><a href="data.html#cb188-53" tabindex="-1"></a>  <span class="at">cex =</span> <span class="fl">0.75</span>,</span>
+<span id="cb188-54"><a href="data.html#cb188-54" tabindex="-1"></a>  <span class="at">font =</span> <span class="dv">3</span></span>
+<span id="cb188-55"><a href="data.html#cb188-55" tabindex="-1"></a>)</span>
+<span id="cb188-56"><a href="data.html#cb188-56" tabindex="-1"></a></span>
+<span id="cb188-57"><a href="data.html#cb188-57" tabindex="-1"></a><span class="co"># box/whisker plot showing distribution of day-of-year </span></span>
+<span id="cb188-58"><a href="data.html#cb188-58" tabindex="-1"></a><span class="co"># when measurements (pedon descriptions) were collected</span></span>
+<span id="cb188-59"><a href="data.html#cb188-59" tabindex="-1"></a><span class="fu">boxplot</span>(d<span class="sc">$</span>doy, <span class="at">at =</span> <span class="dv">26</span>, <span class="at">horizontal =</span> <span class="cn">TRUE</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">lty =</span> <span class="dv">1</span>, <span class="at">width =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="st">&#39;white&#39;</span>, <span class="at">axes =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <p><img src="static-figures/CA792-soil-temperature-example.png" /> +</p>
 </div>
 </div>
@@ -2176,9 +2191,11 @@ NOTE: all records are missing rock fragment volume</code></pre>
 <ul>
 <li><a href="http://ncss-tech.github.io/stats_for_soil_survey/exercises/genhz_homework.html">Generalized Horizon Labels with Loafercreek</a></li>
 </ul>
-<p>For the exercise during class we will give you some time to read over the materials and apply the process to the sample <code>loafercreek</code> data. The code to apply the process to <code>loafercreek</code> is given. Then we ask that you apply the process to your own data, adjusting your generalized horizon patterns as needed for your local soils.</p>
-<p>This may take more time than we have during class itself, so you should follow up as needed with your mentor to complete the exercise. Chapter 3 Exploratory Data Analysis will get deeper into some of the topics that are referenced in the <code>loafercreek</code> code, such as summary statistics on grouped data. You will send a table and profile plots to your mentor when you are done.</p>
-<p>See the <a href="http://ncss-tech.github.io/AQP/aqp/genhz-distance-eval.html">Pair-Wise Distances by Generalized Horizon Labels</a> demonstration, for an example of how GHL can be used to summarize “differences” between profiles within collection via numerical classification.</p>
+<p>For the exercise during class we will give you some time to read over the materials and apply the process to the sample <code>loafercreek</code> data.</p>
+<p>The code to apply the process to <code>loafercreek</code> is given. We will ask you to apply the process to your own data, adjusting your generalized horizon patterns as needed for your local soils. You will send a table and profile plots to your mentor when you are done.</p>
+<p>This may take more time than we have during class itself, so you should follow up as needed with your mentor to complete the exercise.</p>
+<p>Chapter 3 Exploratory Data Analysis will get deeper into some of the topics that are referenced in the <code>loafercreek</code> code, such as summary statistics on grouped data.</p>
+<p>See the <a href="http://ncss-tech.github.io/AQP/aqp/genhz-distance-eval.html">Pair-Wise Distances by Generalized Horizon Labels</a> demonstration, for an example of how GHL can be used to summarize “differences” between profiles via numerical classification.</p>
 
 </div>
 </div>
