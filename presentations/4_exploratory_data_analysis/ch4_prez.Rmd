@@ -288,7 +288,7 @@ n <- nrow(sample)
 # table(samp$component) |> 
 #   prop.table() |> 
 #   round(2)
-samp_vals6 <- sapply(1:100, function(i) {
+samp_vals6 <- sapply(1:1000, function(i) {
   sample(sample$component, size = n, 
          prob = sample$w,
          replace = TRUE
@@ -552,35 +552,36 @@ for (i in 1:nrow(comb)) {
 # sgsR
 strata <- fcm_r2[[8]]
 names(strata) <- "strata"
-test <- sample_strat(strata, 10, allocation = "equal", method = "random")
-test <- extract(fcm_r2, st_coordinates(test))
+test_samp1 <- sample_strat(strata, 10, allocation = "equal", method = "random")
+test_samp1 <- extract(fcm_r2, st_coordinates(test_samp1))
 
 # terra
-strata <- fcm_r2[[8]]
-test_samp <- spatSample(strata, size = 10, method = "stratified", as.points = TRUE)
-test_samp <- extract(fcm_r2, test_samp)
+names(fcm_r2)[8:9] <- c("obs", "map")
+strata <- fcm_r2[[9]]
+test_samp2 <- spatSample(strata, size = 10, method = "stratified", as.points = TRUE)
+samp <- extract(fcm_r2, test_samp2)[9:10]
 
-table(test_samp$k_0p025acres)
-table(test_samp$k_smooth5_1p4acres)
+table(samp$obs)
+table(samp$map)
 
-test_pop <- as.data.frame(fcm_r2)
+population <- as.data.frame(fcm_r2)[8:9]
 ```
 
 
 ### compute weight
 ```{r}
-tab <- freq(fcm_r2[[8]]) |>
+tab <- freq(fcm_r2[[9]]) |>
   dplyr::mutate(
     # population
     p  = count / sum(count),
-    nk_p = count * (70/sum(count)),
-    nk_e = 10,
-    wk_p = count / nk_p,
-    wk_e = count / nk_e,
-    pk_p = 1 / wk_p,
-    pk_e = 1 / wk_e,
-    pr = pk_p / pk_e,
-    wr = wk_e / wk_p
+    nk_pop   = count * (70/sum(count)),
+    nk_equal = 10,
+    wk_pop   = count / nk_pop,
+    wk_equal = count / nk_equal,
+    pk_pop   = 1 / wk_pop,
+    pk_equal = 1 / wk_equal,
+    # pr = pk_p / pk_e,
+    wk_ratio = wk_equal / wk_pop
     # nr = nk_p / nk_e
   )
 idx <- c(4:11)
@@ -588,19 +589,30 @@ tab[idx] <- lapply(tab[idx], function(x) round(x, 2))
 tab
 
 cor(tab$pr, tab$wr)
-cor(tab$wk_e, tab$wr)
+cor(tab$wk_equal, tab$wk_ratio)
 ```
 
 
 ### accuracy
 ```{r}
-test_samp2 <- merge(test_samp, tab, by.x = "k_0p025acres", by.y = "value")
-names(test_samp2)[c(1, 10)] <- c("obs", "pred")
+# test_samp12 <- merge(test_samp1, tab, by.x = "k_smooth5_1p4acres", by.y = "value")
+# names(test_samp12)[c(1, 9)] <- c("pred", "obs")
+# xtabs(wk_e ~ pred + obs, data = test_samp12)
 
-cm <- xtabs(wk_e ~ pred + obs, data = test_samp2)
-cm2 <- aqp::tauW(cm)
-cm
-cbind(round(cm, 2), ua = cm2$user.naive) |> round(2) |> rbind(pa = c(cm2$prod.naive, cm2$overall.naive) |> round(2))
+sample <- merge(samp, tab, by.x = "map", by.y = "value")
+# sample(test_samp21)[c(1, 10)] <- c("obs", "pred")
+
+
+(cm <- xtabs(wk_equal ~ map + obs, data = sample))
+prop.table(cm, margin = 1) |> round(2)
+cm2 <- aqp::tauW(cm/70)
+round(cm/70, 1)
+cbind(
+  as.data.frame.matrix(prop.table(cm, 1)) |> round(2), ua = cm2$user.naive) |> 
+  round(2) |> 
+  rbind(pa = c(cm2$prod.naive, cm2$overall.naive) |> round(2))
+table(pred = population$map, obs = population$obs) |> prop.table(1) |> round(2)
+
 
 cm_p <- round(prop.table(cm, margin = 1) * 100)
 
@@ -624,8 +636,74 @@ dimnames(cm2) <- list(
   pred = dimnames(cm2)[[2]]
 )
 cm2
-mapac::aa_card(x = test$k_0p025acres, m = test$k_smooth5_1p4acres)
+mapac::aa_card(x = sample$obs, m = sample$map)
+mapac::aa_stratified(
+  stratum   = sample$map,
+  reference = sample$obs,
+  map       = sample$map,
+  h   = sort(levels(sample$map)),
+  N_h = rep(10, 7)
+)
 
+
+# survey
+library(survey)
+
+volcano_svy <- svydesign(ids = ~1, weights = ~wk_e, stratum = ~pred, data = test_samp21, variables = ~pred + obs)
+tb <- svytable(~pred + obs, design = volcano_svy)
+svyciprop()
+
+
+# srvyr
+library(srvyr)
+
+ds <- as_survey_design(
+  sample,
+  weights = wk_equal,
+  strata = map
+)
+ds |>
+  group_by(map, obs) |>
+  summarize(p = survey_prop(vartype = "ci", level = 0.8))
+
+
+# DescTools
+cm_p <- xtabs(wk_e ~ pred + obs, data = test_samp21)
+cm_p |> prop.table(margin = 1) |> round(2)
+DescTools::MultinomCI(cm_p[1, ])
+DescTools::MultinomCI(cm_p[1, ], method = "wilson")
+DescTools::MultinomCI(cm_p[1, ], method = "goodman")
+
+
+# bootstrap
+test <- by(test_samp21, test_samp21$pred, function(x){
+  sapply(1:1000, function(i){
+    sample(x$obs, size = length(x), replace = TRUE, prob = x$wk_e) |>
+      table() |>
+      prop.table()
+  },
+  simplify = FALSE
+  ) |>
+    do.call("rbind", args = _)
+})
+test <- lapply(test, function(x){
+  apply(x, 2, function(y){
+    quantile(y, probs = c(0.1, 0.5, 0.9))
+  })
+})
+test
+
+samp_vals6 <- sapply(1:1000, function(i) {
+  sample(sample$component, size = n, 
+         prob = sample$w,
+         replace = TRUE
+         ) |> 
+    table() |> 
+    prop.table()
+  }, 
+  simplify = FALSE
+  ) |> 
+  do.call("rbind", args = _)
 
 ```
 
@@ -670,6 +748,42 @@ table(h$genhz, h$texture_class, useNA = "ifany")
 
 ---
 
+
+## Confidence Interval
+```{r}
+set.seed(342)
+test <- lapply(1L:10L, function(x) data.frame(sample = paste("sample", x), value = rnorm(100, mean = 0))) |>
+  do.call("rbind", args = _) |>
+  as.data.frame()
+test$sample <- factor(test$sample, levels = paste("sample", 1:10))
+pop <- data.frame(sample = "population", value = qnorm(seq(0.01, 0.99, 0.01)))
+test2 <- test |>
+  group_by(sample) |>
+  summarize(
+    mean = mean(value),
+    L1 = DescTools::MeanCI(value)[2],
+    H1 = DescTools::MeanCI(value)[3]
+    ) |>
+  mutate(type = "95% confidence interval")
+test3 <- test |>
+  group_by(sample) |>
+  summarize(
+    mean = mean(value),
+    L2 = quantile(value, probs = 0.1),
+    H2 = quantile(value, probs = 0.9)
+    ) |>
+  mutate(type = "10th to 90th quantile")
+ggplot(test2, aes(x = sample)) + 
+  geom_point(aes(y = mean)) +
+  geom_linerange(aes(y = mean, ymin = L1, ymax = H1, col = type), size = 3, alpha = 0.5) +
+  geom_linerange(data = test3, aes(ymin = L2, ymax = H2, col = type)) +
+  geom_hline(yintercept = 0, lty = "longdash", alpha = 0.5) +
+  coord_flip() +
+  geom_boxplot(data = pop, aes(y = value, x = "population")) + 
+  xlab(NULL) + ylab("values") +
+  ggtitle("Several confidence intervals estimated from the same population")
+
+```
 
 # Graphical Methods - Descriptions
 
