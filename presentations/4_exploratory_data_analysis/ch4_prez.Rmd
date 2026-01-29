@@ -550,29 +550,34 @@ for (i in 1:nrow(comb)) {
 
 ### sample strata
 ```{r}
-# sgsR
+# sample strata
+names(fcm_r2)[8:9] <- c("obs", "map")
 strata <- fcm_r2[[8]]
 names(strata) <- "strata"
 test_samp1 <- sample_strat(strata, 10, allocation = "equal", method = "random")
-test_samp1 <- extract(fcm_r2, st_coordinates(test_samp1))
+samp <- extract(fcm_r2, st_coordinates(test_samp1))
 
-# terra
+# sample final map
 names(fcm_r2)[8:9] <- c("obs", "map")
 strata <- fcm_r2[[9]]
 test_samp2 <- spatSample(strata, size = 10, method = "stratified", as.points = TRUE)
 samp <- extract(fcm_r2, test_samp2)[9:10]
 
-table(samp$obs)
-table(samp$map)
+table(map = samp$map, obs = samp$obs)
 
 population <- as.data.frame(fcm_r2)[8:9]
+table(map = population$map, obs = population$obs)
 ```
 
 
 ### compute weight
 ```{r}
+# weigts from final map
 tab <- freq(fcm_r2[[9]]) |>
+# # weights from strata
+# tab <- freq(fcm_r2[[8]]) |>
   dplyr::mutate(
+    layer = NULL,
     # population
     p  = count / sum(count),
     nk_pop   = count * (70/sum(count)),
@@ -596,30 +601,30 @@ cor(tab$wk_equal, tab$wk_ratio)
 
 ### accuracy
 ```{r}
-# test_samp12 <- merge(test_samp1, tab, by.x = "k_smooth5_1p4acres", by.y = "value")
-# names(test_samp12)[c(1, 9)] <- c("pred", "obs")
-# xtabs(wk_e ~ pred + obs, data = test_samp12)
 
+# weigts from final map
 sample <- merge(samp, tab, by.x = "map", by.y = "value")
-# sample(test_samp21)[c(1, 10)] <- c("obs", "pred")
-saveRDS(
-  list(
-    sample = sample, 
-    population = population,
-    rasters = fcm_r
-    ),
-  file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/exploratory_data/volcano.rds"
+# # weigts from strata
+# sample <- merge(samp, tab, by.x = "obs", by.y = "value")
+
+save(
+  sample = sample, 
+  population = population,
+  rasters = fcm_r,
+  file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/exploratory_data/volcano.RData"
   )
 
 
-# confusion matrix
+# weighted confusion matrix
+(table(map = sample$map, obs = sample$obs))
 cm <- xtabs(wk_equal ~ map + obs, data = sample)
-cm_scaled <- round(cm/70, 2)
+cm_scaled <- round(cm/70, 1)
 cm_scaled
 
 
 # map unit percentages
-comppct_r <- prop.table(cm, margin = 1) |> round(2)*100
+comppct_r <- prop.table(cm_scaled, margin = 1) |>
+  round(2)*100
 comppct_r
 
 
@@ -629,10 +634,9 @@ cm_metrics$overall.naive |> round(2)
 cm_metrics$user.naive |> round(2)
 cm_metrics$prod.naive |> round(2)
 
-cbind(
-  as.data.frame.matrix(cm_scaled), ua = cm2$user.naive) |> 
+cbind(as.data.frame.matrix(cm_scaled), ua = cm_metrics$user.naive) |>
   round(2) |> 
-  rbind(pa = c(cm2$prod.naive, cm2$overall.naive) |> round(2))
+  rbind(pa = c(cm_metrics$prod.naive, cm_metrics$overall.naive) |> round(2))
 
 
 # population map proportions
@@ -692,18 +696,19 @@ ds <- as_survey_design(
 )
 ds |>
   group_by(map, obs) |>
-  summarize(p = survey_prop(vartype = "ci", level = 0.8)) |>
-  filter(map == "Alpha")
+  summarize(p = survey_prop(vartype = "ci", level = 0.95, prop_method = "logit")) |>
+  filter(map == "Alpha") # first map unit
 
 
 # DescTools
 cm_map_CI <- cm_scaled |> 
   apply(MARGIN = 1, FUN = function(x) {
-    DescTools::MultinomCI(x, conf.level = 0.8, method = "wilson")
+    DescTools::MultinomCI(x, conf.level = 0.95, method = "wilson") |>
+      round(2)
     }, 
     simplify = FALSE
     )
-cm_map_CI$Alpha
+cm_map_CI$Alpha # first map unit
 
 
 # bootstrap
@@ -719,7 +724,7 @@ test <- by(sample, sample$map, function(x){
 })
 test <- lapply(test, function(x){
   apply(x, 2, function(y){
-    quantile(y, probs = c(0.1, 0.5, 0.9))
+    quantile(y, probs = c(0, 0.5, 1)) |> round(2)
   })
 })
 test$Alpha

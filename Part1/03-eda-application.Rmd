@@ -976,9 +976,50 @@ Add to your existing R script from Exercise 2, add answers as comments, and send
 
 ## Map unit composition
 
-```{r}
+```{r, eval=TRUE}
+# load volcano example
+fp <- "https://github.com/ncss-tech/stats_for_soil_survey/raw/refs/heads/master/data/exploratory_data/volcano.RData"
+load(url(fp))
+
+# weighted confusion matrix
+cm <- xtabs(wk_equal ~ map + obs, data = sample)
+cm_scaled <- round(cm/70, 1)
+cm_scaled
 
 
+# map unit percentages
+comppct_r <- prop.table(cm_scaled, margin = 1) |>
+  round(2)*100
+comppct_r
+
+
+# confusion matrix metrics
+cm_metrics <- aqp::tauW(cm_scaled)
+cm_metrics$overall.naive |> round(2)
+cm_metrics$user.naive |> round(2)
+cm_metrics$prod.naive |> round(2)
+
+cbind(as.data.frame.matrix(cm_scaled), ua = cm_metrics$user.naive) |>
+  round(2) |> 
+  rbind(pa = c(cm_metrics$prod.naive, cm_metrics$overall.naive) |> round(2))
+
+
+# population map proportions
+table(map = population$map, obs = population$obs) |> 
+  prop.table(1) |> 
+  round(2) |>
+  addmargins()*100
+
+
+# Confidence Intervals
+cm_map_CI <- cm_scaled |> 
+  apply(MARGIN = 1, FUN = function(x) {
+    DescTools::MultinomCI(x, conf.level = 0.95, method = "wilson") |>
+      round(2)
+    }, 
+    simplify = FALSE
+    )
+cm_map_CI$Alpha # first map unit
 ```
 
 
