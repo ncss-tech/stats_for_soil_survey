@@ -615,7 +615,9 @@ Similarly for `raster`:
 terra::writeRaster(r.wgs84, filename='s_wgs84.tif', gdal=c("COMPRESS=LZW"))
 ```
 
-## Load Required Packages
+## Vector and Raster Data
+
+### Load Required Packages
 
 Load required packages into a fresh RStudio Session (Ctrl + Shift + F10)
 
@@ -626,7 +628,7 @@ library(sf)
 library(terra)
 ```
 
-## Download Example Data
+### Download Example Data
 
 Run the following to create a path for the example data. Be sure to set a valid path to a local disk.
 
@@ -661,7 +663,7 @@ unzip(
 )
 ```
 
-## Load Example MLRA Data
+### Load Example MLRA Data
 
 We will be using polygons associated with MLRA 15 and 18 as part of this demonstration.
 
@@ -709,9 +711,9 @@ rs
 plot(rs)
 ```
 
-## Vector Data
+### Vector Data
 
-### `sf`
+#### `sf`
 
 ```{r, eval=TRUE}
 p <- sf::st_as_sf(data.frame(x = -120, y = 37.5),
@@ -727,7 +729,7 @@ st_intersects(p.aea, mlra)
 st_intersection(p.aea, mlra)
 ```
 
-### `terra`
+#### `terra`
 
 ```{r, eval=TRUE}
 p <- terra::vect(data.frame(x = -120, y = 37.5),
@@ -743,25 +745,9 @@ mlra[relate(vect(mlra), p.aea, relation = "intersects"),
 ]
 ```
 
-### `sp`
+### Raster Data
 
-In `sp` objects, you do these operations with the `sp::over()` function. Access the associated vignette by running `vignette("over")` in the console when the `sp` package is loaded.
-
-```{r, eval=FALSE}
-# hand make a SpatialPoints object
-# note that this is GCS
-p <- SpatialPoints(coords = cbind(-120, 37.5), 
-                   proj4string = CRS('+proj=longlat +datum=WGS84'))
-
-mlra.sp <- sf::as_Spatial(mlra)
-# spatial extraction of MLRA data requires a CRS transformation
-p.aea <- spTransform(p, proj4string(mlra.sp))
-over(p.aea, mlra.sp)
-```
-
-## Raster Data
-
-### Object Properties
+#### Object Properties
 
 `SpatRaster` and `RasterLayer` objects are similar to `sf`, `sp` and other R spatial objects in that they keep track of the linkages between data, coordinate reference system, and optional attribute tables. Getting and setting the contents of raster objects should be performed using functions such as:
 
@@ -772,13 +758,13 @@ over(p.aea, mlra.sp)
 -   `terra::datatype(r)` / `raster::dataType(r)`: get / set the data type
 -   ... many more, see the [`raster`](https://rspatial.github.io/raster/) and [`terra`](https://rspatial.github.io/terra/) package manuals
 
-### Rasters "In Memory" vs. "File-Based"
+#### Rasters "In Memory" vs. "File-Based"
 
 Processing of raster data in memory is always faster than processing on disk, as long as there is sufficient memory. The `terra` package handles basically all of the logic delegating in vs. out of memory processing internally--so it is rare that any adjustments to defaults are required.
 
 With the `raster` package, the initial file/disk-based reference can be converted to an in-memory `RasterLayer` with the `readAll()` function. You can achieve a similar effect in `terra` by doing `set.values(object)`.
 
-### Rasters "Continuous" vs. "Categorical"
+#### Rasters "Continuous" vs. "Categorical"
 
 Rasters can represent both continuous and categorical (factor) variables. Raster categories are stored as integers with one or more associated labels.
 
@@ -844,7 +830,7 @@ plot(y3)
 
 Note that `classify()` works with the "raw" values of categorical rasters, ignoring the categories. To simply change the labels of categorical rasters, use `terra::subst()` instead.
 
-### Writing Rasters to File
+#### Writing Rasters to File
 
 Exporting data requires consideration of the output format, datatype, encoding of NODATA, and other options such as compression.
 
@@ -891,7 +877,7 @@ my_categories <- data.frame(
 foreign::write.dbf(my_categories, file = "my_categorical_data.tif.vat.dbf")
 ```
 
-### Data Types
+#### Data Types
 
 Commonly used raster `datatype` include: "unsigned integer", "signed integer", and "floating point" of variable precision.
 
@@ -914,7 +900,7 @@ raster::writeRaster(x, filename = 'r.tif', datatype = 'INT1U')
 terra::writeRaster(x, filename = 'r.tif', datatype = 'FLT4S')
 ```
 
-#### Notes on Compression
+#### Compression
 
 It is often a good idea to create internally-compressed raster data.
 
