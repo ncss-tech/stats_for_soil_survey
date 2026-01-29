@@ -1,0 +1,178 @@
+<script>
+(function() {
+    // =========================================================================
+    // CONFIGURATION & STATE
+    // =========================================================================
+    const STORAGE_KEY = 'gitbook_scroll_state_v2';
+    const CONTAINER_SELECTOR = '.body-inner';
+    const RESTORE_TIMEOUT_MS = 3000; // Stop forcing scroll after 3s
+    
+    // We use sessionStorage because it behaves exactly as required:
+    // 1. Fresh Tab: Empty (No Restore)
+    // 2. Refresh: Persists (We filter this via History check)
+    // 3. Duplicate/Drag: Cloned (We Restore)
+    
+    // =========================================================================
+    // 1. SOPHISTICATED CONTEXT DETECTION
+    // =========================================================================
+    function shouldRestore() {
+        const storedValue = sessionStorage.getItem(STORAGE_KEY);
+        if (!storedValue) return false; // Fresh tab
+
+        // Heuristic: Differentiating Refresh vs. Drag/Duplicate
+        // A "Drag" or "Duplicate" often resets the navigation type in mysterious ways
+        // depending on browser/OS, but it ALWAYS copies sessionStorage.
+        
+        // Detection Logic:
+        // If we have Navigation Timing API (HTTP/HTTPS):
+        if (window.performance && window.performance.getEntriesByType) {
+            const nav = window.performance.getEntriesByType('navigation')[0];
+            if (nav && nav.type === 'reload') {
+                console.log("[ScrollFix] Reload detected. Aborting restore.");
+                return false; 
+            }
+        }
+        
+        // Fallback for file:// or ambiguous states:
+        // We bias towards restoring. It is better to restore on a refresh 
+        // than to lose place on a window drag.
+        return true;
+    }
+
+    const TARGET_SCROLL = shouldRestore() ? parseInt(sessionStorage.getItem(STORAGE_KEY), 10) : 0;
+
+    // =========================================================================
+    // 2. THE NUCLEAR INTERCEPTOR (Native Property Override)
+    // =========================================================================
+    function hijackElement(element) {
+        if (element.dataset.scrollHijacked) return;
+        element.dataset.scrollHijacked = "true";
+
+        console.log("[ScrollFix] Targeting element:", element);
+        
+        // Get the original native property descriptor
+        // (This allows us to actually scroll when WE want to)
+        const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTop') 
+                        || Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop');
+
+        // Define our custom property on this specific instance
+        Object.defineProperty(element, 'scrollTop', {
+            get: function() {
+                return descriptor.get.call(this);
+            },
+            set: function(value) {
+                // THE INTERCEPTION LOGIC
+                // If the system tries to set 0, and we are in the "Loading Phase",
+                // we lie and say "Okay" but do nothing, or we force our target.
+                const timeSinceLoad = performance.now();
+                
+                if (value === 0 && timeSinceLoad < RESTORE_TIMEOUT_MS && TARGET_SCROLL > 0) {
+                    console.warn(`[ScrollFix] Blocked Gitbook reset (0). Enforcing ${TARGET_SCROLL}.`);
+                    descriptor.set.call(this, TARGET_SCROLL);
+                } else {
+                    // Allow normal behavior (user scrolling or timeout expired)
+                    descriptor.set.call(this, value);
+                }
+            },
+            configurable: true
+        });
+
+        // Initial Force
+        if (TARGET_SCROLL > 0) {
+            descriptor.set.call(element, TARGET_SCROLL);
+        }
+    }
+
+    // =========================================================================
+    // 3. THE RESIZE OBSERVER (Defeating the "0 Height" Trap)
+    // =========================================================================
+    function observeGrowth(element) {
+        if (TARGET_SCROLL <= 0) return;
+
+        const ro = new ResizeObserver(() => {
+            // Every time the geometry changes (images load, mathjax renders),
+            // check if we are at the right spot.
+            if (performance.now() > RESTORE_TIMEOUT_MS) {
+                ro.disconnect();
+                return;
+            }
+
+            const current = element.scrollTop;
+            const maxScroll = element.scrollHeight - element.clientHeight;
+            
+            // If we are significantly off-target, and the page is now big enough
+            if (Math.abs(current - TARGET_SCROLL) > 5 && maxScroll >= TARGET_SCROLL) {
+                console.log("[ScrollFix] Layout shift detected. Re-applying scroll.");
+                
+                // Use the prototype setter to bypass our own logic if needed, 
+                // though our logic above handles 'set' correctly.
+                const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollTop') 
+                                || Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop');
+                descriptor.set.call(element, TARGET_SCROLL);
+            }
+        });
+        
+        ro.observe(element);
+        // Also observe the first child (often the wrapper for height)
+        if(element.firstElementChild) ro.observe(element.firstElementChild);
+    }
+
+    // =========================================================================
+    // 4. INITIALIZATION (Mutation Observer)
+    // =========================================================================
+    // We cannot assume .body-inner exists yet. We watch the DOM for its birth.
+    
+    function init() {
+        // Setup the listener to SAVE state (Standard throttle)
+        let saveTimeout;
+        window.addEventListener('scroll', (e) => {
+            if (e.target.matches && e.target.matches(CONTAINER_SELECTOR)) {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    const val = e.target.scrollTop;
+                    if (val > 0) sessionStorage.setItem(STORAGE_KEY, val);
+                }, 100);
+            }
+        }, true); // Capture phase to catch scroll on non-window elements
+
+        // Setup the injector
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((m) => {
+                m.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) {
+                        // Check if the node itself is the container
+                        if (node.matches(CONTAINER_SELECTOR)) {
+                            hijackElement(node);
+                            observeGrowth(node);
+                        } 
+                        // Or if the container is inside the added node
+                        else {
+                            const container = node.querySelector(CONTAINER_SELECTOR);
+                            if (container) {
+                                hijackElement(container);
+                                observeGrowth(container);
+                            }
+                        }
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Fallback: Check if it already exists (if script runs late)
+        const existing = document.querySelector(CONTAINER_SELECTOR);
+        if (existing) {
+            hijackElement(existing);
+            observeGrowth(existing);
+        }
+    }
+
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+
+})();
+</script>
