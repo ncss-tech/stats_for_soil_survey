@@ -522,7 +522,8 @@ k_smooth5 <- fcm_r2[[1:7]] |> bayesEO::bayes_smooth(window_size = 5) |>
 fcm_r2$k_smooth5_1p4acres <- sieve(k_smooth5, threshold = 58,  direction = 4)
 # fcm_r2$k_smooth5_5p7acres <- sieve(fcm_r2[[9]], threshold = 225, direction = 4)
 plot(fcm_r2)
-
+fcm_r <- fcm_r2
+names(fcm_r)[8:9] <- c("obs", "map")
 
 sgsR::allocate_existing_equal(fcm_r2[[8]])
 
@@ -601,17 +602,44 @@ cor(tab$wk_equal, tab$wk_ratio)
 
 sample <- merge(samp, tab, by.x = "map", by.y = "value")
 # sample(test_samp21)[c(1, 10)] <- c("obs", "pred")
+saveRDS(
+  list(
+    sample = sample, 
+    population = population,
+    rasters = fcm_r
+    ),
+  file = "C:/workspace2/github/ncss-tech/stats_for_soil_survey/data/exploratory_data/volcano.rds"
+  )
 
 
-(cm <- xtabs(wk_equal ~ map + obs, data = sample))
-prop.table(cm, margin = 1) |> round(2)
-cm2 <- aqp::tauW(cm/70)
-round(cm/70, 1)
+# confusion matrix
+cm <- xtabs(wk_equal ~ map + obs, data = sample)
+cm_scaled <- round(cm/70, 2)
+cm_scaled
+
+
+# map unit percentages
+comppct_r <- prop.table(cm, margin = 1) |> round(2)*100
+comppct_r
+
+
+# confusion matrix metrics
+cm_metrics <- aqp::tauW(cm_scaled)
+cm_metrics$overall.naive |> round(2)
+cm_metrics$user.naive |> round(2)
+cm_metrics$prod.naive |> round(2)
+
 cbind(
-  as.data.frame.matrix(prop.table(cm, 1)) |> round(2), ua = cm2$user.naive) |> 
+  as.data.frame.matrix(cm_scaled), ua = cm2$user.naive) |> 
   round(2) |> 
   rbind(pa = c(cm2$prod.naive, cm2$overall.naive) |> round(2))
-table(pred = population$map, obs = population$obs) |> prop.table(1) |> round(2)
+
+
+# population map proportions
+table(map = population$map, obs = population$obs) |> 
+  prop.table(1) |> 
+  round(2) |>
+  addmargins()*100
 
 
 cm_p <- round(prop.table(cm, margin = 1) * 100)
@@ -664,19 +692,22 @@ ds <- as_survey_design(
 )
 ds |>
   group_by(map, obs) |>
-  summarize(p = survey_prop(vartype = "ci", level = 0.8))
+  summarize(p = survey_prop(vartype = "ci", level = 0.8)) |>
+  filter(map == "Alpha")
 
 
 # DescTools
-cm_p <- xtabs(wk_e ~ pred + obs, data = test_samp21)
-cm_p |> prop.table(margin = 1) |> round(2)
-DescTools::MultinomCI(cm_p[1, ])
-DescTools::MultinomCI(cm_p[1, ], method = "wilson")
-DescTools::MultinomCI(cm_p[1, ], method = "goodman")
+cm_map_CI <- cm_scaled |> 
+  apply(MARGIN = 1, FUN = function(x) {
+    DescTools::MultinomCI(x, conf.level = 0.8, method = "wilson")
+    }, 
+    simplify = FALSE
+    )
+cm_map_CI$Alpha
 
 
 # bootstrap
-test <- by(test_samp21, test_samp21$pred, function(x){
+test <- by(sample, sample$map, function(x){
   sapply(1:1000, function(i){
     sample(x$obs, size = length(x), replace = TRUE, prob = x$wk_e) |>
       table() |>
@@ -691,7 +722,7 @@ test <- lapply(test, function(x){
     quantile(y, probs = c(0.1, 0.5, 0.9))
   })
 })
-test
+test$Alpha
 
 samp_vals6 <- sapply(1:1000, function(i) {
   sample(sample$component, size = n, 
