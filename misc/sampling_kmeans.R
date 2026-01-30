@@ -353,4 +353,84 @@ weighted.mean(c(mean(x1), mean(x2)), w = c(0.9, 0.1))
 weighted.mean(c(x1, x2), w = c(iw1, iw2))
 
 
+# weighting strata ----
+library(sf)
+library(terra)
+library(sgsR)
+
+# import volcano DEM, details at http://geomorphometry.org/content/volcano-maungawhau
+data("volcano")
+volcano_r <- rast(
+  volcano[87:1, 61:1],
+  crs = crs("+init=epsg:27200"),
+  extent = c(
+    xmin = 2667405,
+    xmax = 2667405 + 61 * 10,
+    ymin = 6478705,
+    ymax = 6478705 + 87 * 10
+  )
+)
+names(volcano_r) <- "elev"
+
+# calculate slope from the DEM
+slope_r <- terrain(volcano_r, v = "slope", unit = "degrees")
+
+# Stack Elevation and Slope
+rs  <- c(volcano_r, slope_r)
+
+# Covariate Space Coverage Sampling
+k <- 5
+n <- 10
+set.seed(123)
+fs_strata_k <- strat_kmeans(rs, nStrata = k, iter = 10000)
+set.seed(123)
+fs_strata_n <- strat_kmeans(rs, nStrata = k*n, iter = 1000)
+fs_strata <- fs_strata_k * 100 + fs_strata_n
+set.seed(123)
+fs_samp <- sample_nc(rs, nSamp = k*n, iter = 10000)
+# fs_samp <- sample_strat(fs_strata, nSamp = 10, allocation = "equal", method = "random")
+fs_sf <- extract(
+  c(fs_strata_n, 
+    fs_strata_k, 
+    fs_strata, 
+    rs),
+  fs_samp
+)
+names(fs_sf)[2:4] <- c("n", "k", "k_n")
+
+# Plot CSCS Samples
+plot(fs_strata_n, col = map.pal("random", n))
+plot(fs_samp, col = "black", cex = 1, pch = 19, add = TRUE)
+
+
+# Compute weights
+k_n <- table(value = fs_sf$n) |> 
+  as.data.frame(responseName = "nk_samp") |>
+  mutate(value = as.integer(value))
+tab <- freq(fs_strata_n) |>
+  left_join(k_n, by = "value") |>
+  mutate(
+    # population proportion
+    P       = round(count / sum(count), 2),
+    
+    # proportional sample reference
+    nk_pop  = count * (sum(nk_samp)/sum(count)),
+    wk_pop  = count / nk_pop,
+    pk_pop  = 1 / wk_pop,
+    
+    # unequal sample weights
+    wk_samp = count / nk_samp,
+    pk_samp = 1 / wk_samp,
+    
+    # pr = pk_p / pk_e,
+    wk_ratio = wk_samp / wk_pop,
+    # nr = nk_p / nk_e,
+    layer = NULL
+  ) |>
+  rename(strata = value, Nk = count) |>
+  select(strata, Nk, P, nk_pop, nk_samp, wk_pop, wk_samp, pk_pop, pk_samp, wk_ratio)
+idx <- c(4:10)
+tab[idx] <- lapply(tab[idx], function(x) round(x, 2))
+tab
+
 

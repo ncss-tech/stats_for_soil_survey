@@ -408,13 +408,46 @@ slope_r <- terrain(volcano_r, v = "slope", unit = "degrees")
 rs  <- c(volcano_r, slope_r)
 
 # Covariate Space Coverage Sampling
-n = 20
-fs_strata <- strat_kmeans(rs, nStrata = n, iter = 10000)
-fs_samp   <- sample_nc(rs, nSamp = n, iter = 10000)
+k <- 7
+n <- 10
+set.seed(123)
+fs_strata <- strat_kmeans(rs, nStrata = k, iter = 10000)
+set.seed(123)
+fs_samp <- sample_strat(fs_strata, nSamp = n, allocation = "equal", method = "random")
 
 # Plot CSCS Samples
+set.seed(321)
 plot(fs_strata, col = map.pal("random", n))
 plot(fs_samp, col = "black", cex = 1, pch = 19, add = TRUE)
+
+
+# Compute weights
+k_n <- table(value = fs_samp$strata) |> 
+  as.data.frame(responseName = "nk_samp") |>
+  mutate(value = as.integer(value))
+tab <- freq(fs_strata) |>
+  left_join(k_n, by = "value") |>
+  mutate(
+    # population proportion
+    P       = round(count / sum(count), 2),
+    
+    # proportional sample reference
+    nk_pop  = count * (sum(nk_samp)/sum(count)),
+    wk_pop  = count / nk_pop,
+    pk_pop  = 1 / wk_pop,
+    
+    # unequal sample weights
+    wk_samp = count / nk_samp,
+    pk_samp = 1 / wk_samp,
+    wk_ratio = wk_samp / wk_pop,
+    layer = NULL
+  ) |>
+  rename(strata = value, Nk = count) |>
+  select(strata, Nk, P, nk_pop, nk_samp, wk_pop, wk_samp, pk_pop, pk_samp, wk_ratio)
+idx <- c(4:10)
+tab[idx] <- lapply(tab[idx], function(x) round(x, 2))
+tab
+
 ```
 
 ### Conditioned Latin Hypercube (cLHS)
