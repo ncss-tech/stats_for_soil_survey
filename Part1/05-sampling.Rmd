@@ -537,7 +537,8 @@ sys <- spatSample(rs, size = 20, method = "regular", as.points = TRUE)
 cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
 
 # take a CSCS sample
-fs <- sample_nc(rs, nSamp = 20) |>
+fs_samp0 <- sample_nc(rs, nSamp = 20) 
+fs_samp <- fs_samp0 |>
   extract(rs, y = _) |> 
   select(elev, slope)
 
@@ -547,7 +548,7 @@ s <- rbind(
   data.frame(method = "Simple Random", as.data.frame(sr)),
   data.frame(method = "Systematic Random", as.data.frame(sys)),
   data.frame(method = "cLHS", slot(cs$sampled_data, 'data')),
-  data.frame(method = "CSCS", fs[c("elev", "slope")])
+  data.frame(method = "CSCS", fs_samp[c("elev", "slope")])
 )
 
 # Summarize the sample values
@@ -571,7 +572,7 @@ plot(volcano_r, main = "cLHS", cex.main = 2, axes=FALSE)
 points(cs$sampled_data, pch = 3, cex = 1.2)
 
 plot(volcano_r, main = "CSCS", cex.main = 2, axes=FALSE)
-points(fs_samp, pch = 3, cex = 1.2)
+points(fs_samp0, pch = 3, cex = 1.2)
 ```
 
 The overlapping density plots above illustrate the differences between large and small sets of samples using several sampling designs. 
