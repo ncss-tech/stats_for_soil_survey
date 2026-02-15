@@ -482,12 +482,10 @@ To perform cLHS using R, you can use the clhs package [@roudier2011].
 
 ```{r clhs, fig.width=4, fig.height=4, eval=TRUE}
 # create a RasterStack from SpatRaster in previous example
-rs2 <- raster::stack(rs)
-
 library(clhs)
 
 # generate cLHS design
-cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
+cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
 
 # Plot cLHS Samples
 par(mar=c(1,1,1,4))
@@ -495,7 +493,7 @@ plot(volcano_r, axes=FALSE)
 points(cs$sampled_data)
 
 # Summary of clhs object
-summary(cs$sampled_data)$data
+summary(cs$sampled_data)
 
 # Summary of raster objects
 cbind(summary(volcano_r), summary(slope_r)[1:6])
@@ -534,12 +532,12 @@ sr <- spatSample(rs, size = 20, method = "random", as.points = TRUE)
 sys <- spatSample(rs, size = 20, method = "regular", as.points = TRUE)
 
 # take a cLHS sample
-cs <- clhs(rs2, size = 20, progress = FALSE, simple = FALSE)
+cs <- clhs(rs, size = 20, progress = FALSE, simple = FALSE)
 
 # take a CSCS sample
 fs_samp0 <- sample_nc(rs, nSamp = 20) 
 fs_samp <- fs_samp0 |>
-  extract(rs, y = _) |> 
+  terra::extract(rs, y = _) |> 
   select(elev, slope)
 
 # Combind and Extract Samples
@@ -547,7 +545,7 @@ s <- rbind(
   data.frame(method = "Simple Random 400", as.data.frame(sr400)),
   data.frame(method = "Simple Random", as.data.frame(sr)),
   data.frame(method = "Systematic Random", as.data.frame(sys)),
-  data.frame(method = "cLHS", slot(cs$sampled_data, 'data')),
+  data.frame(method = "cLHS", cs$sampled_data),
   data.frame(method = "CSCS", fs_samp[c("elev", "slope")])
 )
 

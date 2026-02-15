@@ -616,7 +616,7 @@ save(
 
 
 # weighted confusion matrix
-(table(map = sample$map, obs = sample$obs))
+(cm2 = table(map = sample$map, obs = sample$obs))
 cm <- xtabs(wk_equal ~ map + obs, data = sample)
 cm_scaled <- round(cm/70, 1)
 cm_scaled
@@ -681,15 +681,15 @@ mapac::aa_stratified(
 # survey
 library(survey)
 
-volcano_svy <- svydesign(ids = ~1, weights = ~wk_e, stratum = ~pred, data = test_samp21, variables = ~pred + obs)
-tb <- svytable(~pred + obs, design = volcano_svy)
-svyciprop()
+volcano_svy <- svydesign(ids = ~1, weights = ~wk_equal, stratum = ~pred, data = sample, variables = ~map + obs)
+tb <- svytable(~map + obs, design = volcano_svy) |>
+  svyciprop()
 
 
 # srvyr
 library(srvyr)
 
-ds <- as_survey_design(
+ds <- srvyr::as_survey_design(
   sample,
   weights = wk_equal,
   strata = map

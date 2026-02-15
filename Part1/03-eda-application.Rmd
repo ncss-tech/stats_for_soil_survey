@@ -981,9 +981,13 @@ Add to your existing R script from Exercise 2, add answers as comments, and send
 fp <- "https://github.com/ncss-tech/stats_for_soil_survey/raw/refs/heads/master/data/exploratory_data/volcano.RData"
 load(url(fp))
 
+# unweighted confusion matrix
+cm <- xtabs(~ map + obs, data = sample)
+cm
+
 # weighted confusion matrix
-cm <- xtabs(wk_equal ~ map + obs, data = sample)
-cm_scaled <- round(cm/70, 1)
+cm_w <- xtabs(wk_equal ~ map + obs, data = sample)
+cm_scaled <- round(cm_w/sum(cm_w) * 70, 1)
 cm_scaled
 
 
@@ -999,10 +1003,6 @@ cm_metrics$overall.naive |> round(2)
 cm_metrics$user.naive |> round(2)
 cm_metrics$prod.naive |> round(2)
 
-cbind(as.data.frame.matrix(cm_scaled), ua = cm_metrics$user.naive) |>
-  round(2) |> 
-  rbind(pa = c(cm_metrics$prod.naive, cm_metrics$overall.naive) |> round(2))
-
 
 # population map proportions
 table(map = population$map, obs = population$obs) |> 
@@ -1012,14 +1012,18 @@ table(map = population$map, obs = population$obs) |>
 
 
 # Confidence Intervals
-cm_map_CI <- cm_scaled |> 
-  apply(MARGIN = 1, FUN = function(x) {
-    DescTools::MultinomCI(x, conf.level = 0.95, method = "wilson") |>
-      round(2)
-    }, 
-    simplify = FALSE
-    )
-cm_map_CI$Alpha # first map unit
+# srvyr
+library(srvyr)
+
+ds <- as_survey_design(
+  sample,
+  weights = wk_equal,
+  strata = map
+)
+ds |>
+  group_by(map, obs) |>
+  summarize(p = survey_prop(vartype = "ci", level = 0.95, prop_method = "logit")) |>
+  filter(map == "Alpha") # first map unit
 ```
 
 
