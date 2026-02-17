@@ -686,14 +686,21 @@ tb <- svytable(~map + obs, design = volcano_svy) |>
   svyciprop()
 
 
-# srvyr
+# srvyr R package
 library(srvyr)
 
-ds <- srvyr::as_survey_design(
+# specify the survey design
+ds <- as_survey_design(
   sample,
   weights = wk_equal,
   strata = map
 )
+# weighted confusion matrix
+ds |>
+  group_by(map, obs) |>
+  summarize(n = survey_total(vartype = NULL)) |>
+  tidyr::pivot_wider(names_from = obs, values_from = n)
+# Confidence Intervals
 ds |>
   group_by(map, obs) |>
   summarize(p = survey_prop(vartype = "ci", level = 0.95, prop_method = "logit")) |>
@@ -701,6 +708,8 @@ ds |>
 
 
 # DescTools
+# this is approximate since it doesn't account for the true sample size
+# must used scale confusion matrix
 cm_map_CI <- cm_scaled |> 
   apply(MARGIN = 1, FUN = function(x) {
     DescTools::MultinomCI(x, conf.level = 0.95, method = "wilson") |>

@@ -976,6 +976,14 @@ Add to your existing R script from Exercise 2, add answers as comments, and send
 
 ## Map unit composition
 
+Map unit composition tells us **how much** of each unique soil component resides within each delineated area, and is necessary to determine the aggregate value of all the various distinct soil horizons. Composition is reported as percentage. The total composition of each map unit must some to 100. Estimate of the soil composition for a map unit will vary depending on the sample size, weight, and estimation method used.
+
+The low (L) and high (H) values are intended to reflect how much the typical amounts vary between polygons (e.g. transecting) or pixels, or within (e.g. bootstrapping) a map unit. The L and H values represent confidence intervals. They should encompass the population RV, but won't allows due to measurement and sampling error.
+
+If digital soil mapping methods are used, a prediction interval can be derived from the modeled class memberships or probabilities.
+
+The example below is derived from the volcano data-set. A stratified sample was collected with an equal number of samples per strata (i.e. nk_equal), which resulted in unequal weights were strata (i.e. wk_equal). Estimates of proportional sample size (i.e. nk_pop) and weights are also included for reference. 
+
 ```{r, eval=TRUE}
 # load volcano example
 fp <- "https://github.com/ncss-tech/stats_for_soil_survey/raw/refs/heads/master/data/exploratory_data/volcano.RData"
@@ -987,7 +995,7 @@ cm
 
 # weighted confusion matrix
 cm_w <- xtabs(wk_equal ~ map + obs, data = sample)
-cm_scaled <- round(cm_w/sum(cm_w) * 70, 1)
+cm_scaled <- round(cm_w/sum(cm_w) * nrow(sample), 1)
 cm_scaled
 
 
@@ -1011,15 +1019,23 @@ table(map = population$map, obs = population$obs) |>
   addmargins()*100
 
 
-# Confidence Intervals
-# srvyr
+# srvyr R package
 library(srvyr)
 
+# specify the survey design
 ds <- as_survey_design(
   sample,
   weights = wk_equal,
   strata = map
 )
+
+# weighted confusion matrix
+ds |>
+  group_by(map, obs) |>
+  summarize(n = survey_total(vartype = NULL)) |>
+  tidyr::pivot_wider(names_from = obs, values_from = n)
+
+# Confidence Intervals
 ds |>
   group_by(map, obs) |>
   summarize(p = survey_prop(vartype = "ci", level = 0.95, prop_method = "logit")) |>
