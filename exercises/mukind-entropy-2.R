@@ -22,8 +22,7 @@ library(lattice)
 library(tactile)
 
 ## previously computed Shannon H by map unit, for all of SSURGO
-## FY24: 321,973 MU
-
+## FY26: 329691 MU
 tf <- tempfile()
 download.file('https://github.com/ncss-tech/stats_for_soil_survey/raw/master/data/mukind-entropy-calc.rds', destfile = tf)
 
@@ -173,6 +172,7 @@ all.H <- do.call('rbind', all.H)
 # FY22: 318,671 
 # FY23: 319,998
 # FY24: 321,973
+# FY26: 329,691
 nrow(all.H)
 
 ## save to a local file for later use
