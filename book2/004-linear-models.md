@@ -160,8 +160,12 @@ ms_n_df <- ms_df %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'sid'. You can override using the `.groups`
-## argument.
+## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by sid and day.
+## ℹ Output is grouped by sid.
+## ℹ Use `summarise(.groups = "drop_last")` to silence this message.
+## ℹ Use `summarise(.by = c(sid, day))` for per-operation grouping
+##   (`?dplyr::dplyr_by`) instead.
 ```
 
 ``` r
@@ -175,8 +179,12 @@ ms_site_df <- ms_df %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'sid'. You can override using the `.groups`
-## argument.
+## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by sid and Jday.
+## ℹ Output is grouped by sid.
+## ℹ Use `summarise(.groups = "drop_last")` to silence this message.
+## ℹ Use `summarise(.by = c(sid, Jday))` for per-operation grouping
+##   (`?dplyr::dplyr_by`) instead.
 ```
 
 ``` r
@@ -241,10 +249,6 @@ As you can see below their are numerous variables we could inspect.
 
 ``` r
 library(raster)
-```
-
-```
-## Warning: package 'raster' was built under R version 4.5.2
 ```
 
 ```
