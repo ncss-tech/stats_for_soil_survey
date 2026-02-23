@@ -150,13 +150,13 @@ dimnames(m) <- list(sp4.scaled$name, sp4.scaled$name)
 m[upper.tri(m)] <- NA
 
 # "nice" colors
-cols <- hcl.colors(10)
+cols <- hcl.colors(25, palette = 'mako')
 col.palette <- colorRampPalette(cols)
 
 levelplot(round(m, 2), col.regions=col.palette, colorkey=list(tick.number=10), xlab='', ylab='', main='Pair-Wise Distances', scales=list(alternating=3), panel=function(x, y, z, ...) {
   panel.levelplot(x, y, z, ...)
   idx <- which(!is.na(z))
-  panel.text(x[idx], y[idx], z[idx], font=2, col='red')
+  # panel.text(x[idx], y[idx], z[idx], font=2, col='firebrick')
   panel.abline(h=seq(from=0.5, to=length(y), by=1), col=grey(0.45))
   panel.abline(v=seq(from=0.5, to=length(x), by=1), col=grey(0.45))
 })
@@ -168,7 +168,7 @@ m <- m / max(m, na.rm = TRUE)
 levelplot(round(m, 2), col.regions=col.palette, colorkey=list(tick.number=10), xlab='', ylab='', main='Pair-Wise Distances', scales=list(alternating=3), panel=function(x, y, z, ...) {
   panel.levelplot(x, y, z, ...)
   idx <- which(!is.na(z))
-  panel.text(x[idx], y[idx], z[idx], font=2, col='red')
+  # panel.text(x[idx], y[idx], z[idx], font=2, col='red')
   panel.abline(h=seq(from=0.5, to=length(y), by=1), col=grey(0.45))
   panel.abline(v=seq(from=0.5, to=length(x), by=1), col=grey(0.45))
 })
@@ -372,7 +372,7 @@ All of these methods are sensitive to the type of **standardization** applied to
 
 
 ### Ordination: Visualization in a Reduced Space
-Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortions. [Carl Sagan gives a beautiful demonstration of this concept using shadows, in this excerpt from *Cosmos*. ](https://youtu.be/N0WjV6MmCyM) [Here is another excellent demonstration based on handwriting recognition.](http://colah.github.io/posts/2014-10-Visualizing-MNIST/)
+Humans are generally quite good at extracting spatial patterns, almost instantly, from two dimensional fields: faces, written language, etc. Sadly, this ability does not extend beyond two or three dimensions. The term [**ordination**](https://en.wikipedia.org/wiki/Ordination_(statistics)) refers to a suite of methods that project coordinates in a high-dimensional space into suitable coordinates in a low-dimensional (reduced) space. Map projections are a simple form of ordination: coordinates from the curved surface of the Earth are projected to a two-dimensional plane. As with any projection, there are assumptions, limitations, and distortions. [Carl Sagan gives a beautiful demonstration of this concept using shadows, in this excerpt from *Cosmos*. ](https://www.youtube.com/watch?v=UnURElCzGc0) [Here is another excellent demonstration based on handwriting recognition.](http://colah.github.io/posts/2014-10-Visualizing-MNIST/)
 
 Hole and Hironaka [-@Hole1960] were some of the first pedologists to apply ordination methods to soils data. The main figure from [their classic paper](https://dl.sciencesocieties.org/publications/sssaj/pdfs/24/4/SS0240040309) was hand-drawn, based on a physical model (constructed from wooden dowels and spheres!) of the ordination.
 <div style="width: 75%; margin: auto; border: 1px solid black; padding 5px;"><img src="static-figures/hole-et-al-ordination.png"></div>
@@ -513,7 +513,6 @@ mtext('profiles arranged from low \u2192 high, profile maximum CEC by NH4-Ac', s
 ### Pair-Wise Distances Between Soil Profiles
 
 ```{r eval = TRUE, fig.width=10, fig.height=5, echo=FALSE, message=FALSE}
-library(sharpshootR)
 # init example data
 data(sp4)
 depths(sp4) <- id ~ top + bottom
@@ -1136,6 +1135,10 @@ text(pca[, 1:2], sp4.scaled$name, cex=0.75, col=cols, font=2)
 box()
 ```
 
+#### Principal Coordinates Analysis
+
+
+
 #### Sammon's Non-linear Mapping
 Simple interface to nMDS, input is a distance matrix. Note that this algorithm will fail if there are 0's or ties within the distance matrix. See `?sammon` for details.
 
@@ -1365,18 +1368,18 @@ title('Selected Pedons from Official Series Descriptions', line=0)
 kable_styling(kable(head(site(s))[, c('id', 'soilorder', 'suborder', 'greatgroup', 'subgroup')], format = 'html'))
 ```
 
-```{r eval = TRUE, fig.width=12.5, fig.height=6}
-par(mar=c(0,1,1,2))
+```{r eval = TRUE, fig.width=13, fig.height=6}
+par(mar = c(0, 1, 1, 4))
 # plot dendrogram + profiles
 d <- SoilTaxonomyDendrogram(
   s, 
   cex.taxon.labels = 0.75, 
-  scaling.factor = 0.01, 
+  scaling.factor = 0.015, 
   width = 0.3, 
   cex.names = 0.55, 
   shrink = TRUE,
-  axis.line.offset = -3, 
-  cex.depth.axis = 0.75
+  depth.axis = list(line = -3.25, cex = 0.75),
+  max.depth = 200
 )
 ```
 

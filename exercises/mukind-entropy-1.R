@@ -1,3 +1,8 @@
+
+# https://github.com/ncss-tech/stats_for_soil_survey/blob/master/exercises/mukind-entropy-1.R
+
+
+
 library(aqp)
 library(soilDB)
 library(lattice)
@@ -7,6 +12,10 @@ library(tactile)
 
 soils <- c('cecil', 'altavista', 'lloyd', 'wickham', 'wilkes',  'chewacla', 'congaree')
 x <- fetchOSD(soils, extended = TRUE)
+
+str(x, 1)
+
+
 
 knitr::kable(x$hillpos)
 
@@ -79,13 +88,13 @@ nrow(x)
 head(x)
 
 # factor levels
-x$mukind <- factor(x$mukind, levels = c("Association", "Consociation", "Complex", "Undifferentiated group"))
+x$mukind <- factor(x$mukind, levels = c("Consociation", "Association", "Complex", "Undifferentiated group"))
 
 # investigate proportions of map unit kind by areasymbol
 x.mu <- unique(x[, c('areasymbol', 'mukey', 'mukind')])
 
 # cross-tab
-tab <- table(x.mu$areasymbol, x.mu$mukind)
+(tab <- table(x.mu$areasymbol, x.mu$mukind))
 
 # convert to row-wise proportions
 # round to 2 decimal places

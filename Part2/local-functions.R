@@ -42,7 +42,7 @@ makeCP <- function(.dist, new.order = NULL, .cp = hcl.colors(n = 25, palette = '
 
 
 # compare pair-wise distances between 3 individuals
-distPlot <- function(ex, vars, individuals, id, scale.data = FALSE, show.distances = TRUE, ...) {
+distPlot <- function(ex, vars, individuals, id, scale.data = FALSE, show.distances = TRUE, col = c('royalblue', 'firebrick'), ...) {
   par(mar = c(5, 5, 1, 1))
   # optionally scale
   if(scale.data) {
@@ -64,15 +64,15 @@ distPlot <- function(ex, vars, individuals, id, scale.data = FALSE, show.distanc
   grid()
   
   if(show.distances) {
-    arrows(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col='RoyalBlue', length = 0.1, code = 3)
-    arrows(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col='Orange', length = 0.1, code = 3)
+    arrows(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col = col[1], length = 0.1, code = 3)
+    arrows(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[2]], y.data[individuals[2]], lwd=2, col = col[2], length = 0.1, code = 3)
     
-    segments(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[3]], y.data[individuals[2]], lwd=1, lty=2, col='Orange')
-    segments(x.data[individuals[3]], y.data[individuals[2]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col='Orange')
-    segments(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[1]], lwd=1, lty=2, col='RoyalBlue')
-    segments(x.data[individuals[2]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col='RoyalBlue')
+    segments(x.data[individuals[3]], y.data[individuals[3]], x.data[individuals[3]], y.data[individuals[2]], lwd=1, lty=2, col = col[2])
+    segments(x.data[individuals[3]], y.data[individuals[2]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col = col[2])
+    segments(x.data[individuals[1]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[1]], lwd=1, lty=2, col = col[1])
+    segments(x.data[individuals[2]], y.data[individuals[1]], x.data[individuals[2]], y.data[individuals[2]], lwd=1, lty=2, col = col[1])
     
-    legend('topright', legend=c(m[individuals[1], individuals[2]], m[individuals[3], individuals[2]]), col=c('RoyalBlue', 'Orange'), lty=1, lwd=2, bty='n', title = 'Distance', cex=1.5)
+    legend('topright', legend=c(m[individuals[1], individuals[2]], m[individuals[3], individuals[2]]), col = c(col[1], col[2]), lty=1, lwd=2, bty='n', title = 'Distance', cex=1.5)
   }
   
   text(x.data, y.data, ex[[id]], col='black', cex=1.5, font=1, pos = 4)

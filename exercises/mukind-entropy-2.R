@@ -16,6 +16,10 @@
 
 
 
+# https://github.com/ncss-tech/stats_for_soil_survey/blob/master/exercises/mukind-entropy-2.R
+
+
+
 
 
 library(lattice)
