@@ -162,17 +162,17 @@ levelplot(round(m, 2), col.regions=col.palette, colorkey=list(tick.number=10), x
 })
 ```
 
-Rescaling to the interval {0,1}.
-```{r eval = TRUE, echo=FALSE, fig.width=6.5, fig.height=6.5}
-m <- m / max(m, na.rm = TRUE)
-levelplot(round(m, 2), col.regions=col.palette, colorkey=list(tick.number=10), xlab='', ylab='', main='Pair-Wise Distances', scales=list(alternating=3), panel=function(x, y, z, ...) {
-  panel.levelplot(x, y, z, ...)
-  idx <- which(!is.na(z))
-  # panel.text(x[idx], y[idx], z[idx], font=2, col='red')
-  panel.abline(h=seq(from=0.5, to=length(y), by=1), col=grey(0.45))
-  panel.abline(v=seq(from=0.5, to=length(x), by=1), col=grey(0.45))
-})
-```
+<!-- Rescaling to the interval {0,1}. -->
+<!-- ```{r eval = TRUE, echo=FALSE, fig.width=6.5, fig.height=6.5} -->
+<!-- m <- m / max(m, na.rm = TRUE) -->
+<!-- levelplot(round(m, 2), col.regions=col.palette, colorkey=list(tick.number=10), xlab='', ylab='', main='Pair-Wise Distances', scales=list(alternating=3), panel=function(x, y, z, ...) { -->
+<!--   panel.levelplot(x, y, z, ...) -->
+<!--   idx <- which(!is.na(z)) -->
+<!--   # panel.text(x[idx], y[idx], z[idx], font=2, col='red') -->
+<!--   panel.abline(h=seq(from=0.5, to=length(y), by=1), col=grey(0.45)) -->
+<!--   panel.abline(v=seq(from=0.5, to=length(x), by=1), col=grey(0.45)) -->
+<!-- }) -->
+<!-- ``` -->
 
 You can now begin to describe dissimilarity between individuals using an arbitrary number of (relevant) characteristics. You can make statements like *"The A horizon is roughly 2x more similar to the ABt horizon than it is to the Bt horizon."* Although this is a trivial example, the utility of generalizing these methods to soil survey operations should be obvious.
 
@@ -496,8 +496,8 @@ max.CEC7 <- profileApply(sp4, function(i) {
 # low -> high CEC7
 new.order <- order(max.CEC7)
 
-par(mar=c(1,0,0,0))
-plotSPC(sp4, color='cl', cex.names=0.75, plot.order = new.order)
+par(mar = c(1, 0, 0, 2.5))
+plotSPC(sp4, color = 'cl', cex.names = 0.75, plot.order = new.order)
 # title('Clustering Results in Context', line=-1)
 mtext('profiles arranged from low \u2192 high, profile maximum CEC by NH4-Ac', side = 1, line = -1, font=3, at = c(0.5, 50), adj = 0)
 ```
@@ -521,14 +521,14 @@ depths(sp4) <- id ~ top + bottom
 # using Ex-Ca:Mg and CEC at pH 7
 # with no depth-weighting (k=0)
 # to a maximum depth of 40 cm
-d <- NCSP(sp4, vars=c('ex_Ca_to_Mg', 'CEC_7'), k = 0, maxDepth = 40)
+d <- NCSP(sp4, vars = c('ex_Ca_to_Mg', 'CEC_7'), k = 0, maxDepth = 40)
 
 # cluster via divisive method
 clust <- diana(d)
 
 # visualize dissimilarity matrix via hierarchical clustering
-par(mar=c(0,0,3,1))
-plotProfileDendrogram(sp4, clust, dend.y.scale = 50, scaling.factor = 0.66, y.offset = 3.5, width=0.3, cex.names = 0.7, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio', name.style = 'center-center')
+par(mar = c(0, 0, 3, 2))
+plotProfileDendrogram(sp4, clust, dend.y.scale = 50, scaling.factor = 0.66, y.offset = 3.5, width=0.3, cex.names = 0.7, color='ex_Ca_to_Mg', col.label='Exchageable Ca to Mg Ratio', name.style = 'center-center', max.depth = 40)
 ```
 
 ![](static-figures/GHL-pair-wise-distances.png)
@@ -611,7 +611,12 @@ The following examples are based on the `gopheridge` sample dataset.
 data("gopheridge", package = "soilDB")
 
 # compute data completeness
-gopheridge$data.complete <- evalMissingData(gopheridge, vars = c('clay', 'sand', 'phfield'), name = 'hzname', p = 'Cr|R|Cd')
+gopheridge$data.complete <- evalMissingData(
+  gopheridge, 
+  vars = c('clay', 'sand', 'phfield'), 
+  name = 'hzname', 
+  p = 'Cr|R|Cd'
+)
 
 # check range in missing data
 summary(gopheridge$data.complete)
@@ -620,19 +625,19 @@ summary(gopheridge$data.complete)
 new.order <- order(gopheridge$data.complete)
 
 # plot along data completeness ranking
-par(mar=c(3,0,1,1))
-plot(gopheridge, plot.order=new.order, print.id=FALSE, name='')
+par(mar = c(3, 0, 1, 1))
+plotSPC(gopheridge, plot.order = new.order, print.id = FALSE, name = '', max.depth = 100, width = 0.33)
 
 # add axis, note re-ordering of axis labels
 axis(side=1, at=1:length(gopheridge), labels = round(gopheridge$data.complete[new.order], 2),
-line=-2, cex.axis=0.65, las=2)
+line = 0, cex.axis=0.65, las=2)
 
 title('Gopheridge pedons sorted according to data completeness (clay, sand, pH)')
 ```
 
 
 **missingDataGrid**
-```{r eval = TRUE, fig.width=9.5, fig.height=4}
+```{r eval = TRUE, fig.width=10, fig.height=4}
 # view missing data as a fraction
 res <- missingDataGrid(gopheridge, max_depth=100, vars=c('clay', 'sand', 'phfield'), filter.column='hzname', filter.regex = 'Cr|R|Cd', main='Fraction of missing data (clay, sand, pH)', cols = hcl.colors(10))
 
