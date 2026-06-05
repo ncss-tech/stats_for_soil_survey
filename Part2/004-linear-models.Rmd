@@ -188,7 +188,7 @@ Prior to any spatial analysis or modeling, you will need to develop a suite of g
 As you can see below their are numerous variables we could inspect.
 
 ```{r eval = TRUE}
-library(raster)
+library(terra)
 library(sf)
 
 # load raster stack from GitHub
@@ -198,17 +198,18 @@ geodata_r <- readRDS(githubURL)
 
 # Extract the geodata and add to a data frame
 mast_sf <- st_transform(mast_sf, crs = 5070)
-data <- raster::extract(geodata_r, st_coordinates(mast_sf))
-data <- cbind(st_drop_geometry(mast_sf), data)
+data <- extract(geodata_r, mast_sf, bind = TRUE) |>
+  as.data.frame()
+
 
 # convert aspect
 data$northness <- abs(180 - data$aspect)
 
 
 # random sample
-vars <- c("elev", "temp", "precip", "solar", "tc_1", "twi")
+vars <- c("elev", "temp", "precip", "solarcv", "tc_1", "tc_2")
 idx <- which(names(geodata_r) %in% vars)
-geodata_s <- sampleRegular(geodata_r[[idx]], size = 1000)
+geodata_s <- spatSample(geodata_r[[idx]], size = 1000, method = "regular")
 
 ```
 
@@ -258,15 +259,15 @@ Since our data was not randomly sampled, we had better check the distribution of
 
 ```{r, eval = TRUE}
 
-geodata_df <- as.data.frame(geodata_s)
+geodata_df <- geodata_s
 
 geodata_df <- rbind(
   data.frame(source = "sample",     data[names(geodata_df)]),
   data.frame(source = "population", geodata_df)
 )
 
-geodata_l <- pivot_longer(geodata_df,
-                          cols = -source)
+geodata_l <- tidyr::pivot_longer(geodata_df, cols = -source)
+
 
 ggplot(geodata_l, aes(x = value, fill = source)) +
   geom_density(alpha = 0.5) +
@@ -312,15 +313,21 @@ Once we have a model we need to assess residuals for linearity, normality, and h
 
 ```{r residuals, eval = TRUE, echo=TRUE}
 par(mfcol = c(2, 2))
-```
 
-```{r}
 # residual
+fit_ols |>
+  formula() |>
+  lm(formula = _, data = data) |> 
+  plot()
 plot(fit_lm)
 
-# partial residuals
-termplot(fit_lm, partial.resid = TRUE, col.res = "black", pch = 16)
 
+par(mfrow = c(5, 2))
+# partial residuals
+lm(formula(fit_ols), data = data) |>
+  termplot(partial.resid = TRUE, col.res = "black", pch = 16)
+
+dev.off()
 ```
 
 Remember the residuals are simply just the observed values minus the predicted values, which are easy enough to calculate. Alternatively we can simply extract them from the fitted model object.
@@ -352,11 +359,11 @@ As we mentioned earlier multicolinearity should be avoided. To assess a model fo
 ```{r vif, eval = TRUE}
 
 # vif() function from the rms or car packages
-sqrt(vif(fit_ols))
+fit_ols |> vif() |> sqrt()
 
 # or 
 
-sqrt(vif(fit_ols)) > 3
+fit_ols |> vif() |> sqrt() > 3
 
 ```
 
@@ -399,6 +406,8 @@ step_caret <- train(mast ~ elev + solar + aspect + twi + solar + solarcv + tc_1 
 )
 ## test accuracy and error
 summary(step_caret$resample)
+
+step_caret$finalModel
 ```
 
 The results for `validate()` above show which variables were retained and deleted. Above we can see a dot matrix of which variables were retained during each of the iterations from bootstrapping. In addition, we can see the difference between the training and test accuracy and error metrics. Remember that it is the test accuracy we should pay attention too.
@@ -454,29 +463,33 @@ We can examine how much each variable contributes to the model by examining the 
 
 ```{r, eval = TRUE}
 # Anova
-anova(final_ols)
-plot(anova(final_ols), what = "partial R2")
+final_ols |> anova()
+final_ols |> anova() |> plot(what = "remaining R2")
 ```
 
 Another way to visualize the contribution of each variable is to plot their partial effects, which summarize how much each variable effects the model if we hold all the other variables constant at their median values and vary the variable of interest over it's 25th and 75th percentiles. This is a useful way to compare the impact of each variable side by side in the units of the response variable. In this case we can see below that again `elev` has the biggest impact, with range of approximately -6 to -4.5 degrees. The effect of `solarcv` is smallest compared to the other tasseled cap variables.
 
 ```{r, eval = TRUE}
 # Model Effects
-plot(summary(final_ols))
+final_ols |> summary() |> plot()
 ```
 
 The partial effects can also be visualized as regression lines with their confidence intervals, which illustrates the slope of the predictor variables in relation to `mast`. 
 
 ```{r, eval = TRUE}
 # Plot Effects
-ggplot(Predict(final_ols),
-       addlayer = geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
-         scale_y_continuous(breaks = c(8, 15, 22))
-       )
+final_ols |>
+  Predict() |>
+  ggplot(
+    addlayer = geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
+      scale_y_continuous(breaks = c(8, 15, 22))
+    )
 
 
 # Vary solarcv (North = 23; Flat = 33; South = 55)
-ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
+final_ols |>
+  Predict(elev = NA, solarcv = c(23, 33, 51)) |>
+  ggplot() +
   geom_hline(yintercept = c(8, 15, 22), linetype = "dotted") +
   scale_y_continuous(breaks = c(8, 15, 22))
 
@@ -490,10 +503,10 @@ ggplot(Predict(final_ols, elev = NA, solarcv = c(23, 33, 51))) +
 
 # Predict mast model
 predfun <- function(model, data) {
-  v <- predict(model, data, se.fit=TRUE)
+  v <- predict(model, data, se.fit = TRUE)
   }
 
-mast_r <- predict(geodata_r, final_ols, fun = predfun, index = 1:2, progress = 'text')
+mast_r <- predict(geodata_r, final_ols, fun = predfun, index = 1:2)
 
 names(mast_r) <- c("MAST", "SE")
 
@@ -505,7 +518,7 @@ names(mast_r) <- c("MAST", "SE")
 ```{r tmap, eval = FALSE}
 
 # mast
-plot(mast_r, col = hcl.colors(10))
+plot(mast_r, col = viridis::viridis(10))
 
 ```
 
