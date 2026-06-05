@@ -260,6 +260,14 @@ test3 <- sample |>
     nest = TRUE
     )
 srvyr::survey_count(test3, component, vartype = "ci")
+test3 |>
+  group_by(component) |>
+  summarize(
+    p = srvyr::survey_prop(vartype = "ci", level = 0.9, method = "logit", conf.level = 0.9)
+  )
+table(sample$component)
+DescTools::BinomCI(3, 6, method = "logit", conf.level = 0.9)
+
 
 (tb <- table(sample$component))
 # (wtb <- Hmisc::wtd.table(sample$component, weights = sample$w, type = "table"))
@@ -312,7 +320,7 @@ samp <- st_sample(grd, size = n) |>
 table(samp$component) |> 
   prop.table() |> 
   round(2)
-samp_vals <- sapply(1:100, function(i) {
+samp_vals <- sapply(1:1000, function(i) {
   sample(samp$component, n, replace = TRUE) |> 
     table() |> 
     prop.table()
@@ -326,6 +334,8 @@ samp_lrh30 <- apply(samp_vals, MARGIN = 2, FUN = function(x) quantile(x, p = c(0
 samp_lrh30  
 
 
+
+
 ## population values
 table(grd$component)
 quantile(grd$A, p = c(0.1, 0.5, 0.9))
@@ -335,6 +345,16 @@ pop_lrh100 <- grd |>
   apply(X = _, 2, function(x) quantile(x, p = c(0.1, 0.5, 0.9))) |>
   round(2) |>
   t()
+pop_lrh100
+
+aggregate(
+  cbind(A, B) ~ 1, 
+  data = grd, 
+  function(x) {
+    quantile(x, probs = c(0.1, 0.5, 0.9)) |> 
+      round(2)
+    }
+  )
 
 
 # plot component percent ranges
