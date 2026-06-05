@@ -1,0 +1,2946 @@
+---
+title: "Tree Models Exercise"
+author: "STAT2020"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+    toc_depth: '3'
+    number_sections: true
+    df_print: paged
+  pdf_document:
+    toc: true
+    toc_depth: '3'
+  html_notebook:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    number_sections: true
+    df_print: paged
+always_allow_html: true
+subtitle: "Tree Models Exercise — USDA · NRCS · National Soil Survey Center"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width  = 8,
+  fig.height = 5,
+  comment = "#>"
+)
+```
+
+```{css, echo=FALSE}
+/* ── Sidebar TOC: pin to left edge, full viewport height ────────── */
+#TOC {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 220px;
+  overflow-y: auto;
+  padding: 1rem 0.75rem;
+  background: #f8f8f8;
+  border-right: 1px solid #ddd;
+  font-size: 0.85rem;
+  z-index: 100;
+}
+
+/* ── Main content: start after the sidebar ───────────────────────── */
+body {
+  margin-left: 235px !important;
+  max-width: none !important;
+}
+
+.main-container {
+  max-width: none !important;
+  width: calc(100vw - 255px) !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+/* ── Part heading spacing ─────────────────────────────────────────── */
+h1 {
+  margin-top:    3.5rem !important;
+  padding-top:   1.5rem !important;
+  border-top:    3px solid #2c5f2e;
+  padding-bottom: 0.4rem;
+}
+
+/* Don't add a border above the very first h1 (Setup) */
+h1:first-of-type {
+  border-top: none;
+  margin-top: 1rem !important;
+  padding-top: 0 !important;
+}
+
+/* ── Space below tabsets before next section ─────────────────────── */
+.tabset {
+  margin-bottom: 3rem !important;
+}
+
+/* ── Breathing room inside each tab panel ────────────────────────── */
+.tab-content {
+  padding-bottom: 1.5rem;
+}
+
+/* ── Horizontal rule spacing ─────────────────────────────────────── */
+hr {
+  margin-top:    2.5rem;
+  margin-bottom: 0.5rem;
+  border-top:    1px solid #ddd;
+}
+```
+
+---
+
+# Setup: Load Packages
+
+Install any missing packages before running. All packages should be available on CRAN.
+
+```{r packages}
+library(ggplot2)      # visualization
+library(sf)           # spatial data
+library(mapview)      # interactive maps
+library(corrplot)     # correlation matrix plot
+library(rpart)        # CART (recursive partitioning)
+library(rpart.plot)   # rpart visualization
+library(randomForest) # classic random forest
+library(ranger)       # fast random forest
+library(caret)        # cross-validation framework
+library(vip)          # variable importance plots
+library(pdp)          # partial dependence plots
+library(Boruta)          # feature selection
+library(tidyverse)       # data wrangling and ggplot2
+library(fastshap)        # SHAP values for any ML model
+library(shapviz)         # SHAP visualisation (beeswarm, waterfall)
+library(ggbeeswarm)      # beeswarm geometry for SHAP plots
+library(quantregForest)  # Quantile Regression Forest
+library(CAST)            # kNNDM CV and Area of Applicability
+```
+
+---
+
+# Part 1 — Explore the Dataset
+
+## Background
+
+We use a soil survey transect dataset from **West Virginia** throughout this exercise.
+The dataset contains field-collected pedon observations linked to environmental covariates
+derived from terrain analysis, remote sensing, and climate surfaces — the standard
+input data structure for digital soil mapping (DSM).
+
+**Response variables used in this exercise:**
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `spodint` | Ordered factor | Spodic intensity (0–2) — used for classification |
+| `Otot` | Continuous | O horizon thickness (cm) — used for regression and RF |
+
+**Key environmental covariates** include terrain derivatives (DEM, slope, aspect, TWI),
+Landsat reflectance bands, NDVI, solar radiation, and mean annual rainfall.
+
+
+## Load and Map Data
+
+```{r load-data}
+# Download the WV transect data from GitHub
+url <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/data/logistic/wv_transect_editedforR.csv"
+download.file(url, "soildata.csv", mode = "wb")
+soildata <- read.csv("soildata.csv", header = TRUE, sep = ",")
+
+# Convert to spatial object for mapping
+soildata_sf <- st_as_sf(
+  soildata,
+  coords = c("x", "y"),
+  crs    = 4326
+)
+
+# Interactive map of sampling locations
+mapview(soildata_sf, zcol = "depth_cm", layer.name = "Soil Depth (cm)")@map
+```
+
+```{r write-shapefile, eval=FALSE}
+# Optional: write shapefile for use in GIS
+write_sf(soildata_sf, dsn = "soildata.shp")
+```
+
+## Exploratory Data Analysis
+
+```{r eda-structure}
+# Reload as flat data frame for modeling
+soildata <- read.csv("soildata.csv", header = TRUE, sep = ",")
+
+soildata$spodint  <- ordered(as.factor(soildata$spodint))
+soildata$tipmound <- ordered(as.factor(soildata$tipmound))
+
+str(soildata)
+```
+
+```{r eda-plots, fig.height=4}
+# Spodic intensity vs solar radiation
+p1 <- ggplot(soildata, aes(x = spodint, y = solar)) +
+  geom_boxplot(fill = "#5b9bd5", alpha = 0.7) +
+  labs(x = "Spodic Intensity", y = "Solar Radiation",
+       title = "Solar Radiation by Spodic Intensity") +
+  theme_minimal(base_size = 12)
+
+# Spodic intensity vs northwestness (aspect proxy)
+p2 <- ggplot(soildata, aes(x = spodint, y = northwestn)) +
+  geom_boxplot(fill = "#70ad47", alpha = 0.7) +
+  labs(x = "Spodic Intensity", y = "Northwestness",
+       title = "Aspect (Northwestness) by Spodic Intensity") +
+  theme_minimal(base_size = 12)
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+> **Interpretation:** Solar radiation tends to decrease with higher spodic intensity — 
+> cooler, shaded north-facing positions favor the leaching processes that produce 
+> spodic horizons. This is the kind of soil-landscape relationship a decision tree 
+> will attempt to quantify and formalize.
+
+```{r eda-o-horizon}
+# O horizon thickness by soil order
+ggplot(soildata, aes(x = Otot)) +
+  geom_density(fill = "#8b6914", alpha = 0.6) +
+  facet_wrap(~ order, scales = "free_y") +
+  labs(x = "O Horizon Thickness (cm)", y = "Density",
+       title = "O Horizon Distribution by Soil Order") +
+  theme_minimal(base_size = 12)
+```
+
+## Correlation Matrix
+
+```{r correlation}
+# Select numeric columns only
+numeric_vars <- soildata |> dplyr::select(where(is.numeric))
+
+cormatrix <- cor(numeric_vars, use = "pairwise.complete.obs")
+
+corrplot(cormatrix,
+         method    = "color",
+         type      = "upper",
+         tl.cex    = 0.7,
+         tl.col    = "black",
+         addCoef.col = NULL,
+         col       = colorRampPalette(c("#2166ac", "white", "#b2182b"))(200))
+```
+
+> **Questions:**  
+> 1. Which predictors are highly correlated with each other? What does this imply for covariate selection?  
+> 2. Does any predictor show a strong correlation with `depth_cm`?
+
+---
+
+
+
+---
+
+# Part 2 — Classification Tree: Predicting Spodic Intensity
+
+## Theory: Gini Impurity and Information Gain
+
+For classification tasks, CART chooses splits that minimize **node impurity** 
+rather than RSS. Two common impurity measures:
+
+**Gini Impurity** (CART default):
+$$G = 1 - \sum_k p_k^2$$
+where $p_k$ is the class proportion. A pure node ($G = 0$) contains only one class.
+
+**Entropy** (used by C4.5 / information gain):
+$$H = -\sum_k p_k \log_2(p_k)$$
+
+*Example with 80% Spodic / 20% Non-Spodic (binary case):*
+
+- Gini: $G = 1 - (0.8^2 + 0.2^2) = 0.32$  
+- Entropy: $H = -(0.8 \log_2 0.8 + 0.2 \log_2 0.2) = 0.72$ bits
+
+For an **ordered multi-class** response like `spodint` (levels 0, 0.5, 1, 1.5, 2), 
+CART still uses Gini or entropy but now sums across all five class proportions at each node.
+The ordered structure is preserved — the tree can learn that intensity level 0 and 0.5 
+behave similarly while separating from 1.5 and 2.
+
+| Parameter | Default | Effect |
+|---|---|---|
+| `minsplit` | 20 | minimum observations in a node to attempt a split |
+| `minbucket` | `minsplit/3` ≈ 7 | minimum observations allowed in a terminal leaf |
+| `cp` | 0.01 | minimum proportional RSS improvement required to accept a split |
+| `maxdepth` | 30 | maximum tree depth from root to terminal node |
+| `maxcompete` | 4 | number of competitor splits reported per node |
+| `xval` | 10 | number of cross-validation folds for CP table |
+
+> **Tip:** For most soil classification tasks, Gini and entropy produce nearly 
+> identical trees. Gini is faster (no logarithm). Use entropy when class 
+> probabilities matter more than just the predicted class label.
+
+## Data Preparation
+
+```{r classify-prep}
+# Fresh read — classification task
+soildata <- read.csv("soildata.csv", header = TRUE, sep = ",")
+
+# Keep spodint as an ordered factor (0 < 0.5 < 1 < 1.5 < 2)
+soildata$spodint  <- ordered(as.factor(soildata$spodint))
+soildata$tipmound <- ordered(as.factor(soildata$tipmound))
+
+# Class distribution across all 5 intensity levels
+table(soildata$spodint)
+```
+
+```{r classify-split}
+set.seed(42)
+# 70/30 split — aligns with 006-treemodels approach
+datasplit <- sample(nrow(soildata), nrow(soildata) * 0.7)
+train_sp  <- soildata[ datasplit, ]
+test_sp   <- soildata[-datasplit, ]
+
+xvars_class <- c(
+  "rainfall", "geology", "aachn", "dem10m", "downslpgra", "eastness",
+  "greenrefl", "landsatb1", "landsatb2", "landsatb3", "landsatb7",
+  "maxc100", "maxent", "minc100", "mirref", "ndvi",
+  "northeastn", "northness", "northwestn", "planc100", "proc100",
+  "protection", "relpos11", "slp50", "solar", "tanc75"
+)
+```
+
+## Model 1: Multi-Class spodint
+
+We start by predicting **all five spodic intensity classes** (0, 0.5, 1, 1.5, 2) directly.
+This mirrors the original field measurement and preserves the full gradient of spodic expression.
+
+```{r spodint-model1, fig.height=6}
+spodintmodel <- rpart(
+  spodint ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl +
+    landsatb1 + landsatb2 + landsatb3 + landsatb7 + maxc100 + maxent + minc100 +
+    mirref + ndvi + northeastn + northness + northwestn + planc100 + proc100 +
+    protection + relpos11 + slp50 + solar + tanc75,
+  data   = train_sp,
+  method = "class"
+)
+
+# Text summary
+# spodintmodel
+```
+
+```{r spodint-model1-plot, fig.height=6}
+# Misclassification rate at node (incorrect / total in node)
+rpart.plot(spodintmodel, extra = 3,
+           main = "Spodic Intensity — Multi-Class (extra=3)")
+
+# Adding 100 shows percentage of observations in each node
+rpart.plot(spodintmodel, extra = 103,
+           main = "Spodic Intensity — Multi-Class (extra=103)")
+```
+
+> Notice that terminal nodes display spodic intensity classes 0–2. The tree must learn 
+> to separate five classes using the same covariates, making this a harder problem 
+> than binary classification.
+
+## Model 2: Binary (Spodic / Non-Spodic)
+
+An alternative framing: collapse the intensity scale into **spodic vs non-spodic**, 
+analogous to Nauman et al. (2015). Intensity ≤ 0.5 = non-spodic; ≥ 1 = spodic.
+This simplifies the prediction task but loses information about degree of expression.
+
+```{r spodint-model2, fig.height=6}
+# Recode spodint into binary response
+index  <- c(0, 0.5, 1, 1.5, 2)
+values <- c("nonspodic", "nonspodic", "spodic", "spodic", "spodic")
+soildata$spo_binary  <- as.factor(values[match(soildata$spodint, index)])
+train_sp$spo_binary  <- as.factor(values[match(train_sp$spodint, index)])
+test_sp$spo_binary   <- as.factor(values[match(test_sp$spodint, index)])
+
+spodintmodel2 <- rpart(
+  spo_binary ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl +
+    landsatb1 + landsatb2 + landsatb3 + landsatb7 + maxc100 + maxent + minc100 +
+    mirref + ndvi + northeastn + northness + northwestn + planc100 + proc100 +
+    protection + relpos11 + slp50 + solar + tanc75,
+  data   = train_sp,
+  method = "class", parms = list(split = "gini")
+)
+spodintmodel3 <- rpart(
+  spo_binary ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl +
+    landsatb1 + landsatb2 + landsatb3 + landsatb7 + maxc100 + maxent + minc100 +
+    mirref + ndvi + northeastn + northness + northwestn + planc100 + proc100 +
+    protection + relpos11 + slp50 + solar + tanc75,
+  data   = train_sp,
+  method = "class", parms = list(split = "information")
+)
+spodintmodel2
+spodintmodel3
+```
+
+```{r spodint-model2-plot, fig.height=5, fig.width=14}
+par(mfrow = c(1, 2))
+rpart.plot(spodintmodel2, extra = 103, box.palette = "GnBu",
+           main = "Full Tree: Gini impurity")
+rpart.plot(spodintmodel3, extra = 103, box.palette = "OrRd",
+           main = "Full Tree: Information (entropy)")
+par(mfrow = c(1, 1))
+```
+
+The two criteria build different full trees. Check the structure:
+
+```{r gini-vs-entropy-structure}
+# Node and split counts for each criterion
+gini_leaves <- sum(spodintmodel2$frame$var == "<leaf>")
+info_leaves <- sum(spodintmodel3$frame$var == "<leaf>")
+
+cat(sprintf("Gini      — terminal nodes: %d,  total nodes: %d\n",
+            gini_leaves, nrow(spodintmodel2$frame)))
+cat(sprintf("Entropy   — terminal nodes: %d,  total nodes: %d\n",
+            info_leaves, nrow(spodintmodel3$frame)))
+
+# Root and top splits for each
+cat("\n--- Gini: top 3 splits ---\n")
+print(spodintmodel2$frame[spodintmodel2$frame$var != "<leaf>",
+                           c("var", "n", "dev"), drop = FALSE][1:min(3, sum(spodintmodel2$frame$var != "<leaf>")), ])
+
+cat("\n--- Entropy: top 3 splits ---\n")
+print(spodintmodel3$frame[spodintmodel3$frame$var != "<leaf>",
+                           c("var", "n", "dev"), drop = FALSE][1:min(3, sum(spodintmodel3$frame$var != "<leaf>")), ])
+```
+
+```{r gini-vs-entropy-deep, fig.height=4}
+# Visualise where the splits diverge: compare paths to all terminal nodes
+gini_path <- path.rpart(spodintmodel2, nodes = as.integer(
+  row.names(spodintmodel2$frame[spodintmodel2$frame$var == "<leaf>", ])),
+  print.it = FALSE)
+info_path <- path.rpart(spodintmodel3, nodes = as.integer(
+  row.names(spodintmodel3$frame[spodintmodel3$frame$var == "<leaf>", ])),
+  print.it = FALSE)
+
+# Summarise: which variables appear in each tree's splits
+gini_vars <- unique(as.character(
+  spodintmodel2$frame$var[spodintmodel2$frame$var != "<leaf>"]))
+info_vars <- unique(as.character(
+  spodintmodel3$frame$var[spodintmodel3$frame$var != "<leaf>"]))
+
+cat("Variables used — Gini only:      ", paste(setdiff(gini_vars, info_vars), collapse = ", "), "\n")
+cat("Variables used — Entropy only:   ", paste(setdiff(info_vars, gini_vars), collapse = ", "), "\n")
+cat("Variables used — both criteria:  ", paste(intersect(gini_vars, info_vars), collapse = ", "), "\n")
+```
+
+> These divergences are in the **deep nodes** where sample sizes are small and the
+> impurity difference between competing splits is tiny. Gini and entropy have
+> different curvature near equal class proportions, so they rank marginal splits
+> differently — producing different subtrees in the lower branches.
+
+Now prune both with the 1-SE rule:
+
+```{r gini-vs-entropy-pruned, fig.height=5, fig.width=14}
+cp_1se_gini <- {
+  tbl <- spodintmodel2$cptable
+  xe  <- tbl[, "xerror"]; xs <- tbl[, "xstd"]
+  mi  <- which.min(xe)
+  tbl[min(which(xe <= xe[mi] + xs[mi])), "CP"]
+}
+cp_1se_info <- {
+  tbl <- spodintmodel3$cptable
+  xe  <- tbl[, "xerror"]; xs <- tbl[, "xstd"]
+  mi  <- which.min(xe)
+  tbl[min(which(xe <= xe[mi] + xs[mi])), "CP"]
+}
+
+pruned_gini <- prune(spodintmodel2, cp = cp_1se_gini)
+pruned_info <- prune(spodintmodel3, cp = cp_1se_info)
+
+cat(sprintf("Pruned Gini    — terminal nodes: %d  (from %d)\n",
+            sum(pruned_gini$frame$var == "<leaf>"), gini_leaves))
+cat(sprintf("Pruned Entropy — terminal nodes: %d  (from %d)\n",
+            sum(pruned_info$frame$var == "<leaf>"), info_leaves))
+
+par(mfrow = c(1, 2))
+rpart.plot(pruned_gini, extra = 103, box.palette = "GnBu",
+           main = "Pruned (1-SE): Gini")
+rpart.plot(pruned_info, extra = 103, box.palette = "OrRd",
+           main = "Pruned (1-SE): Entropy")
+par(mfrow = c(1, 1))
+```
+
+```{r gini-vs-entropy-accuracy}
+pred_gini <- predict(pruned_gini, newdata = test_sp, type = "class")
+pred_info <- predict(pruned_info, newdata = test_sp, type = "class")
+
+acc_gini <- mean(pred_gini == test_sp$spo_binary)
+acc_info <- mean(pred_info == test_sp$spo_binary)
+
+cat(sprintf("Test accuracy — Gini pruned:    %.4f\n", acc_gini))
+cat(sprintf("Test accuracy — Entropy pruned: %.4f\n", acc_info))
+cat(sprintf("Difference:                     %.4f\n", abs(acc_gini - acc_info)))
+```
+
+> After 1-SE pruning, the deep noise-driven branches are removed from both trees,
+> leaving only splits with a large, consistent impurity reduction — strong enough
+> that Gini and entropy rank them identically. The pruned trees typically share the
+> same structure and produce the same (or within rounding identical) test accuracy.
+
+> **Notice that several of the splits changed compared to the multi-class model. 
+> Which model do you think will perform better? Why?**
+
+## CP Comparison and Pruning
+
+The `printcp()` function generates the cost-complexity table: CP value, relative 
+error, 10-fold cross-validation error (`xerror`), and its standard error (`xstd`). 
+Use `plotcp()` to visualise the tradeoff between tree size and CV error.
+
+```{r cp-compare, fig.height=4}
+# CP tables for both models
+cat("=== Multi-class spodint CP table ===\n")
+printcp(spodintmodel)
+
+cat("\n=== Binary spodic/nonspodic CP table ===\n")
+printcp(spodintmodel2)
+```
+
+```{r plotcp-compare, fig.height=4}
+par(mfrow = c(1, 2))
+plotcp(spodintmodel,  main = "Multi-Class spodint")
+plotcp(spodintmodel2, main = "Binary spo_binary")
+par(mfrow = c(1, 1))
+```
+
+```{r prune-both, fig.height=4}
+# Automated 1-SE rule for both models
+cp_1se_fn <- function(model) {
+  tbl     <- model$cptable
+  xerr    <- tbl[, "xerror"]
+  xstd    <- tbl[, "xstd"]
+  min_idx <- which.min(xerr)
+  thresh  <- xerr[min_idx] + xstd[min_idx]
+  tbl[min(which(xerr <= thresh)), "CP"]
+}
+
+cp1 <- cp_1se_fn(spodintmodel)
+cp2 <- cp_1se_fn(spodintmodel2)
+cp3 <- cp_1se_fn(spodintmodel3)
+
+cat(sprintf("1-SE CP — multi-class: %.6f\n", cp1))
+cat(sprintf("1-SE CP — binary:      %.6f\n", cp2))
+cat(sprintf("1-SE CP — binary:      %.6f\n", cp3))
+pruned_mc  <- prune(spodintmodel,  cp = cp1)
+pruned_bin1 <- prune(spodintmodel2, cp = cp2)
+pruned_bin2 <- prune(spodintmodel3, cp = cp3)
+par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
+# rpart.plot(pruned_mc,  extra = 3, box.palette = "Greens", main = "Pruned — Multi-Class")
+rpart.plot(pruned_bin1, extra = 3, box.palette = "GnBu",   main = "Pruned — Binary")
+rpart.plot(pruned_bin2, extra = 3, box.palette = "GnBu",   main = "Pruned — Binary")
+par(mfrow = c(1, 1))
+
+```
+
+
+## Confusion Matrix Comparison
+
+Split-sample validation using the held-out 30% test set:
+
+```{r class-accuracy}
+# Multi-class predictions
+pred_mc  <- predict(pruned_mc,  newdata = test_sp, type = "class")
+cm_mc    <- confusionMatrix(pred_mc, test_sp$spodint, mode = "everything")
+
+# Binary predictions
+pred_bin <- predict(pruned_bin1, newdata = test_sp, type = "class")
+cm_bin   <- confusionMatrix(pred_bin, test_sp$spo_binary, mode = "everything")
+
+# Summary
+results_tbl <- data.frame(
+  Model    = c("Multi-Class (5 levels)", "Binary (spodic/nonspodic)"),
+  Accuracy = round(c(cm_mc$overall["Accuracy"],  cm_bin$overall["Accuracy"]), 4),
+  Kappa    = round(c(cm_mc$overall["Kappa"],     cm_bin$overall["Kappa"]),    4)
+)
+print(results_tbl)
+```
+
+```{r confusion-matrix-detail}
+cat("--- Multi-Class Confusion Matrix (rows=observed, cols=predicted) ---\n")
+print(cm_mc$table)
+
+cat("\n--- Binary Confusion Matrix ---\n")
+print(cm_bin$table)
+```
+
+> **Why does the binary model outperform the multi-class model?**  
+> The multi-class tree must separate five classes simultaneously with the same 
+> covariates. The rarest intermediate classes (0.5, 1.5) are often misclassified 
+> because the training signal is weak. Collapsing to binary removes this ambiguity — 
+> the decision boundary between spodic and non-spodic is more environmentally 
+> consistent than the boundaries between adjacent intensity levels.
+
+> **Questions:**  
+> 1. What was the misclassification rate for each model (root node error × xerror × 100)?  
+> 2. Which intensity levels are most commonly confused in the multi-class model? Does this make pedological sense?  
+> 3. What are the practical implications of misclassifying a spodic site as non-spodic in a soil survey context?  
+> 4. Consider treating `spodint` as numeric (0–2) and building a regression tree. What would a leaf mean of 1.0 tell you about the observations in that node?
+
+---
+
+# Part 3 — Regression Tree: Predicting O Horizon Thickness
+
+## Theory: How CART Splits
+
+A **regression tree** recursively partitions the feature space into rectangular
+regions based on binary splits. At each node, CART evaluates every candidate
+split $(j, t)$ — feature $j$ at threshold $t$ — and selects the one that
+maximally reduces the **Residual Sum of Squares (RSS)**:
+
+$$\Delta RSS = RSS_{\text{parent}} - \left[ RSS_{\text{left}} + RSS_{\text{right}} \right]$$
+
+Within each leaf, the prediction is the mean of all training samples:
+$$\hat{y}_{\text{leaf}} = \frac{1}{N_{\text{leaf}}} \sum_{i \in \text{leaf}} y_i$$
+
+This greedy, top-down algorithm is implemented in R as `rpart()` with `method = "anova"`.
+
+## Build and Inspect Tree
+
+```{r split-data}
+set.seed(42)
+idx <- createDataPartition(soildata$Otot, p = 0.70, list = FALSE)
+cal <- soildata[ idx, ]
+val <- soildata[-idx, ]
+
+cat("Calibration samples:", nrow(cal), "\n")
+cat("Validation samples: ", nrow(val), "\n")
+```
+
+```{r build-regression-tree}
+# Define covariate names (reused throughout exercise)
+xvars_terrain <- c(
+  "rainfall", "dem10m", "downslpgra", "eastness", "greenrefl",
+  "landsatb1", "landsatb2", "landsatb3", "landsatb7",
+  "maxc100", "maxent", "minc100", "mirref", "ndvi",
+  "northeastn", "northness", "northwestn", "planc100",
+  "proc100", "protection", "relpos11", "slp50", "solar", "tanc75"
+)
+
+tree_full <- rpart(
+  formula = as.formula(paste("Otot ~", paste(xvars_terrain, collapse = " + "))),
+  data    = cal,
+  method  = "anova",
+  control = rpart.control(cp = 0, minsplit = 10, minbucket = 5)
+)
+
+print(tree_full)
+```
+
+```{r plot-full-tree, fig.height=6}
+rpart.plot(tree_full,
+           type = 4, extra = 101, box.palette = "RdYlGn",
+           main = "Full Tree: Otot (cm)")
+```
+
+> **How to read this tree:**  
+> - **Top of node:** Split condition. Samples satisfying the rule go left; others right.  
+> - **Middle:** Predicted O horizon thickness (mean of training samples at this node).  
+> - **Bottom:** Percentage of training samples at this node.
+
+## Pruning with Cost-Complexity
+
+Allowing a tree to grow until every leaf contains a single sample produces 
+**zero training error but extreme overfitting** — the model has memorized noise
+rather than learning relationships. 
+
+**Cost-complexity pruning** penalizes tree size by a complexity parameter $\alpha$ (`cp` in R):
+
+$$R_\alpha(T) = R(T) + \alpha \times |T|$$
+
+where $R(T)$ is training error and $|T|$ is the number of leaf nodes. 
+As $\alpha$ increases, the optimal tree shrinks. Cross-validation selects 
+the best $\alpha$.
+
+```{r cp-diagnostic, fig.height=4}
+# Examine the complexity parameter table
+printcp(tree_full)
+
+# Plot CV error vs tree size
+plotcp(tree_full)
+```
+
+The **1-SE rule** selects the *smallest* tree whose CV error is within one standard
+error of the minimum — preferring interpretability over minimal CV error:
+
+```{r prune-1se}
+# Extract CP table components
+cp_tbl  <- tree_full$cptable
+xerr    <- cp_tbl[, "xerror"]
+xstd    <- cp_tbl[, "xstd"]
+
+# Minimum CV error and its location
+min_idx <- which.min(xerr)
+thresh  <- xerr[min_idx] + xstd[min_idx]
+
+# 1-SE rule: largest CP (simplest tree) still within 1 SE of the minimum
+cp_1se  <- cp_tbl[min(which(xerr <= thresh)), "CP"]
+cat(sprintf("Minimum-error CP: %.5f\n", cp_tbl[min_idx, "CP"]))
+cat(sprintf("1-SE rule CP:     %.5f\n", cp_1se))
+```
+
+```{r prune-tree, fig.height=5}
+tree_pruned <- prune(tree_full, cp = cp_1se)
+
+rpart.plot(tree_pruned,
+           type = 4, extra = 101, box.palette = "RdYlGn",
+           main = "Pruned Tree: Otot (cm)")
+```
+
+## Model Accuracy Comparison
+
+```{r regression-accuracy}
+# Predict on validation set
+pred_full   <- predict(tree_full,   newdata = val)
+pred_pruned <- predict(tree_pruned, newdata = val)
+
+# RMSE on original Otot scale
+rmse_full   <- RMSE(pred = pred_full,   obs = val$Otot)
+rmse_pruned <- RMSE(pred = pred_pruned, obs = val$Otot)
+
+rpart_results <- data.frame(
+  Model  = c("rpart full", "rpart pruned (1-SE)"),
+  RMSE   = round(c(rmse_full, rmse_pruned), 3),
+  Leaves = c(sum(tree_full$frame$var == "<leaf>"),
+             sum(tree_pruned$frame$var == "<leaf>"))
+)
+print(rpart_results)
+```
+
+```{r rpart-residuals, fig.height=4}
+plot(val$Otot, pred_pruned,
+     xlab = "Observed Otot (cm)", ylab = "Predicted (cm)",
+     main = "rpart pruned: Observed vs Predicted", col = "#8b6914", pch = 16)
+abline(0, 1, col = "red")
+```
+
+> **Key insight:** The pruned tree avoids fitting noise despite having far fewer nodes (bias-variance tradeoff).
+
+> **Questions:**  
+> 1. What was the root split variable? Does it make pedological sense for O horizon thickness?  
+> 2. How much did pruning reduce the number of leaves compared to the full tree?  
+> 3. Does the pruned tree RMSE indicate a useful model for field applications?
+
+---
+
+# Part 4 — Random Forest: O Horizon Thickness
+
+## Theory: Why Ensembles Work
+
+A single decision tree has **high variance** — small changes in training data 
+produce very different trees. The core idea of **bagging** (Breiman, 1996) is 
+that averaging many high-variance models cancels out their individual noise:
+
+$$\hat{f}_{\text{bag}}(x) = \frac{1}{B} \sum_{b=1}^{B} T_b(x)$$
+
+For $B$ trees each with variance $\sigma^2$ and pairwise correlation $\rho$:
+
+$$\text{Var}\!\left(\hat{f}_{\text{RF}}\right) = \rho\sigma^2 + \frac{(1-\rho)\,\sigma^2}{B}$$
+
+**Random Forest's key innovation** (Breiman, 2001): at each split, only a random 
+subset of `mtry` features is considered. This **decorrelates** the trees, reducing 
+$\rho$ and shrinking the irreducible first term. As $B \to \infty$, 
+$\text{Var} \to \rho\sigma^2$.
+
+## Build RF: O Horizon Thickness
+
+We continue with the WV soildata to build a Random Forest regression for total 
+O horizon thickness (`Otot`) — the same response variable used in Part 2's 
+regression tree — so we can directly compare single-tree vs ensemble performance.
+
+```{r rf-otot}
+# Fresh load — ensure clean state
+soildata <- read.csv("soildata.csv", header = TRUE, sep = ",")
+soildata$spodint  <- ordered(as.factor(soildata$spodint))
+soildata$tipmound <- ordered(as.factor(soildata$tipmound))
+
+set.seed(42)
+rf_otot <- randomForest(
+  Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl +
+    landsatb1 + landsatb2 + landsatb3 + landsatb7 + maxc100 + maxent + minc100 +
+    mirref + ndvi + northeastn + northness + northwestn + planc100 + proc100 +
+    protection + relpos11 + slp50 + solar + tanc75,
+  data       = soildata,
+  importance = TRUE,
+  ntree      = 1000,
+  mtry       = 10
+)
+
+# Statistical summary — % variance explained and MSE
+print(rf_otot)
+```
+
+```{r rf-otot-convergence, fig.height=4}
+# OOB error vs number of trees — use this to tune ntree
+plot(rf_otot,
+     main = "OOB Error vs Number of Trees (Otot)",
+     col  = "#2c5f2e")
+```
+
+> The curve should flatten well before 1000 trees. If it is still declining, 
+> increase `ntree`. **How does the % variance explained compare to the rpart 
+> regression tree from Part 2?**
+
+
+
+```{r}
+library(caret)
+library(ranger)
+
+# ── Covariates ───────────────────────────────────────────────────────────────
+predictors <- c(
+  "rainfall",   "geology",    "aachn",      "dem10m",     "downslpgra",
+  "eastness",   "greenrefl",  "landsatb1",  "landsatb2",  "landsatb3",
+  "landsatb7",  "maxc100",    "maxent",     "minc100",    "mirref",
+  "ndvi",       "northeastn", "northness",  "northwestn", "planc100",
+  "proc100",    "protection", "relpos11",   "slp50",      "solar",
+  "tanc75"
+)
+
+# ── Tuning grid ──────────────────────────────────────────────────────────────
+tuning_grid <- expand.grid(
+  mtry          = c(5, 8, 10, 13),
+  splitrule     = c("variance", "extratrees"),
+  min.node.size = c(3, 5, 10, 15, 20)
+)
+
+# ── Cross-validation control ─────────────────────────────────────────────────
+ctrl <- trainControl(
+  method          = "cv",
+  number          = 10,
+  savePredictions = "final"
+)
+
+# ── Train ────────────────────────────────────────────────────────────────────
+rf_tuned <- train(
+  x         = soildata[, predictors],
+  y         = soildata$Otot,
+  method    = "ranger",
+  trControl = ctrl,
+  tuneGrid  = tuning_grid,
+  num.trees = 500,
+  metric    = "RMSE"
+)
+
+# ── Results ──────────────────────────────────────────────────────────────────
+rf_tuned$bestTune
+rf_tuned$results
+
+# RMSE surface plot
+ggplot(rf_tuned$results,
+       aes(x      = min.node.size,
+           y      = RMSE,
+           colour = factor(mtry),
+           group  = factor(mtry))) +
+  geom_line() +
+  geom_point() +
+  labs(title  = "RF Tuning — O Horizon Thickness",
+       x      = "min.node.size",
+       y      = "CV RMSE  (cm)",
+       colour = "mtry") +
+  theme_minimal()
+
+# ── Refit final model with best parameters ────────────────────────────────────
+rf_final <- ranger(
+  formula       = Otot ~ .,
+  data          = soildata[, c(predictors, "Otot")],
+  num.trees     = 500,
+  mtry          = rf_tuned$bestTune$mtry,
+  min.node.size = rf_tuned$bestTune$min.node.size,
+  importance    = "permutation"
+)
+
+# ── Diagnostics ───────────────────────────────────────────────────────────────
+sqrt(rf_final$prediction.error)          # OOB RMSE
+
+sort(importance(rf_final), decreasing = TRUE)   # variable importance ranked
+
+# ── Plot Variable Importance ───────────────────────────────────────────────────────────────
+library(vip)
+# Bar chart — works directly with ranger objects
+vip(rf_final, num_features = 20,
+    aesthetics = list(fill = "#2c5f2e", width = 0.7)) +
+  theme_minimal(base_size = 12) +
+  labs(title = "Permutation Importance — O Horizon Thickness")
+```
+
+## Effect of Outlier Removal
+
+The `Otot` distribution has a strongly influential outlier — the single 
+Histosol observation with very thick O horizons. Let's examine its effect:
+
+```{r rf-otot-hist, fig.height=4}
+hist(soildata$Otot, breaks = 20,
+     main = "O Horizon Thickness Distribution",
+     xlab = "Otot (cm)", col = "#8b6914")
+```
+
+```{r rf-otot2}
+# Remove the Histosol observation
+soildata_nohist <- droplevels(subset(soildata, order != "histosol"))
+cat(sprintf("Observations removed: %d\n",
+            nrow(soildata) - nrow(soildata_nohist)))
+
+set.seed(42)
+rf_otot2 <- randomForest(
+  Otot ~ rainfall + geology + aachn + dem10m + downslpgra + eastness + greenrefl +
+    landsatb1 + landsatb2 + landsatb3 + landsatb7 + maxc100 + maxent + minc100 +
+    mirref + ndvi + northeastn + northness + northwestn + planc100 + proc100 +
+    protection + relpos11 + slp50 + solar + tanc75,
+  data       = soildata_nohist,
+  importance = TRUE,
+  ntree      = 1000,
+  mtry       = 9
+)
+
+# Compare both models side by side
+cat("--- With Histosol ---\n")
+cat(sprintf("  %% Var explained: %.1f%%\n", rf_otot$rsq[1000] * 100))
+cat(sprintf("  MSE (OOB):       %.3f\n",    rf_otot$mse[1000]))
+cat(sprintf("  RMSE (OOB):      %.3f cm\n", sqrt(rf_otot$mse[1000])))
+
+cat("\n--- Without Histosol ---\n")
+cat(sprintf("  %% Var explained: %.1f%%\n", rf_otot2$rsq[1000] * 100))
+cat(sprintf("  MSE (OOB):       %.3f\n",    rf_otot2$mse[1000]))
+cat(sprintf("  RMSE (OOB):      %.3f cm\n", sqrt(rf_otot2$mse[1000])))
+```
+
+```{r}
+# ── Train ────────────────────────────────────────────────────────────────────
+rf_tuned <- train(
+  x         = soildata_nohist[, predictors],
+  y         = soildata_nohist$Otot,
+  method    = "ranger",
+  trControl = ctrl,
+  tuneGrid  = tuning_grid,
+  num.trees = 500,
+  metric    = "RMSE"
+)
+
+# ── Results ──────────────────────────────────────────────────────────────────
+rf_tuned$bestTune
+rf_tuned$results
+
+# RMSE surface plot
+ggplot(rf_tuned$results,
+       aes(x      = min.node.size,
+           y      = RMSE,
+           colour = factor(mtry),
+           group  = factor(mtry))) +
+  geom_line() +
+  geom_point() +
+  labs(title  = "RF Tuning — O Horizon Thickness",
+       x      = "min.node.size",
+       y      = "CV RMSE  (cm)",
+       colour = "mtry") +
+  theme_minimal()
+
+# ── Refit final model with best parameters ────────────────────────────────────
+rf_final <- ranger(
+  formula       = Otot ~ .,
+  data          = soildata_nohist[, c(predictors, "Otot")],
+  num.trees     = 500,
+  mtry          = rf_tuned$bestTune$mtry,
+  min.node.size = rf_tuned$bestTune$min.node.size,
+  importance    = "permutation"
+)
+
+# ── Diagnostics ───────────────────────────────────────────────────────────────
+sqrt(rf_final$prediction.error)          # OOB RMSE
+
+sort(importance(rf_final), decreasing = TRUE)   # variable importance ranked
+
+```
+
+## Model Comparison: rpart vs RF
+
+To compare rpart and Random Forest fairly, **both models must be trained on the
+same data and evaluated on the same held-out set**.
+
+| Evaluation method | What it measures | Notes |
+|---|---|---|
+| **Split-sample** (val set) | Error on truly unseen data from a fixed 30% holdout | Directly comparable across model types |
+| **OOB** | Bootstrap leave-one-out estimate from the full training set | RF-specific; model saw all data; not comparable to val-set RMSE |
+
+Both models are trained on `cal_nohist` (70%, Histosol removed) and evaluated on
+`val`. Removing the Histosol from *both* training sets ensures neither model's
+performance is driven by a single extreme outlier. `rf_final` (full-data) is
+preserved for downstream DSM use.
+
+> **Note on the 1-SE rule and outliers:** The Histosol is the dominant source of
+> variance in `Otot`. Removing it from `cal` can cause the 1-SE rule to choose a
+> stump (no splits) because even the smallest tree is within one standard error of
+> the minimum CV error — the signal is too weak to justify any split with confidence.
+> When this happens the code falls back to the minimum-error CP, which keeps the
+> splits the data *can* support. This is itself a teaching point: the 1-SE rule
+> is conservative, and outliers can inflate apparent signal.
+
+```{r rf-model-comparison}
+# ── Shared training set: cal minus Histosol ───────────────────────────────────
+cal_nohist <- droplevels(subset(cal, order != "histosol"))
+
+# ── Rebuild rpart on cal_nohist — same formula and 1-SE rule ─────────────────
+tree_full_nh <- rpart(
+  formula = as.formula(paste("Otot ~", paste(xvars_terrain, collapse = " + "))),
+  data    = cal_nohist,
+  method  = "anova",
+  control = rpart.control(cp = 0, minsplit = 10, minbucket = 5)
+)
+cp_tbl_nh <- tree_full_nh$cptable
+xerr_nh   <- cp_tbl_nh[, "xerror"]
+xstd_nh   <- cp_tbl_nh[, "xstd"]
+min_nh    <- which.min(xerr_nh)
+thresh_nh <- xerr_nh[min_nh] + xstd_nh[min_nh]
+
+# 1-SE CP — use min-error CP as fallback if 1-SE collapses to a stump
+cp_1se_nh <- cp_tbl_nh[min(which(xerr_nh <= thresh_nh)), "CP"]
+tree_pruned_nh <- prune(tree_full_nh, cp = cp_1se_nh)
+n_leaves_nh    <- sum(tree_pruned_nh$frame$var == "<leaf>")
+
+if (n_leaves_nh == 1) {
+  # 1-SE collapsed to stump — removing the Histosol eliminated the dominant
+  # variance source; fall back to the minimum-error CP to keep usable splits
+  message("1-SE rule produced a stump on cal_nohist; falling back to min-error CP.")
+  cp_1se_nh      <- cp_tbl_nh[min_nh, "CP"]
+  tree_pruned_nh <- prune(tree_full_nh, cp = cp_1se_nh)
+  n_leaves_nh    <- sum(tree_pruned_nh$frame$var == "<leaf>")
+  rpart_label    <- "rpart pruned (min-error CP, fallback) [*]"
+} else {
+  rpart_label    <- "rpart pruned (1-SE CP) [*]"
+}
+
+pred_rpart_nh <- predict(tree_pruned_nh, newdata = val)
+rmse_rpart_nh <- RMSE(pred = pred_rpart_nh, obs = val$Otot)
+r2_rpart_nh   <- cor(pred_rpart_nh, val$Otot)^2
+
+cat(sprintf("rpart (cal_nohist) — leaves: %d  CP used: %.5f\n",
+            n_leaves_nh, cp_1se_nh))
+
+# ── RF on cal_nohist — best hyperparameters from earlier tuning ───────────────
+set.seed(42)
+rf_val_compare <- ranger(
+  formula       = Otot ~ .,
+  data          = cal_nohist[, c(predictors, "Otot")],
+  num.trees     = 500,
+  mtry          = rf_tuned$bestTune$mtry,
+  min.node.size = rf_tuned$bestTune$min.node.size,
+  importance    = "none"
+)
+
+pred_rf_val <- predict(rf_val_compare, data = val)$predictions
+rmse_rf_val <- RMSE(pred = pred_rf_val, obs = val$Otot)
+r2_rf_val   <- cor(pred_rf_val, val$Otot)^2
+
+# ── OOB metrics from full-data RF — for reference only ───────────────────────
+rmse_rf_oob <- sqrt(rf_otot2$mse[1000])
+r2_rf_oob   <- rf_otot2$rsq[1000]
+
+# ── Comparison table ──────────────────────────────────────────────────────────
+comparison <- data.frame(
+  Model        = c(
+    rpart_label,
+    "Random Forest - val set [*]",
+    "Random Forest - OOB [ref]"
+  ),
+  Trained_on   = c(
+    "cal_nohist 70%",
+    "cal_nohist 70%",
+    "all data (no Histosol)"
+  ),
+  Evaluated_on = c(
+    "val 30%",
+    "val 30%",
+    "OOB bootstrap"
+  ),
+  RMSE_cm = round(c(rmse_rpart_nh, rmse_rf_val, rmse_rf_oob), 3),
+  R2      = round(c(r2_rpart_nh,   r2_rf_val,   r2_rf_oob),   3)
+)
+print(comparison)
+
+cat("\n[*]  Direct head-to-head: identical training data (cal_nohist), identical val set.\n")
+cat("[ref] OOB reference only: RF trained on full data, not comparable to val-set rows.\n")
+```
+
+```{r rf-val-scatter, fig.height=4}
+# Observed vs predicted on the same val set — matched training data
+par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))  # tighten top margin
+
+plot(val$Otot, pred_rpart_nh,
+     xlab = "Observed (cm)", ylab = "Predicted (cm)",
+     col = "#8b6914", pch = 16)
+title(main = bquote(atop("rpart pruned",
+                         RMSE == .(round(rmse_rpart_nh, 2)) ~~ R^2 == .(round(r2_rpart_nh, 2)))))
+abline(0, 1, col = "red")
+
+plot(val$Otot, pred_rf_val,
+     xlab = "Observed (cm)", ylab = "Predicted (cm)",
+     col = "#2c5f2e", pch = 16)
+title(main = bquote(atop("Random Forest",
+                         RMSE == .(round(rmse_rf_val, 2)) ~~ R^2 == .(round(r2_rf_val, 2)))))
+abline(0, 1, col = "red")
+
+par(mfrow = c(1, 1))
+```
+
+> **Interpretation:**  
+> Rows 1 and 2 are a true head-to-head comparison — identical training set
+> (`cal_nohist`), identical evaluation set (`val`). Any difference in RMSE and R²
+> is due solely to the algorithm, not data leakage or sample composition. The OOB
+> row uses the full dataset for training; it cannot be fairly compared to the
+> val-set rows even though OOB is theoretically unbiased on its own training set.
+>
+> The observed vs predicted plots reveal *why* rpart achieves competitive RMSE
+> despite being the simpler model. The pruned tree reduced to a single split on
+> `landsatb7`, producing exactly **two possible predictions** — every observation
+> is assigned either the low-group mean (~4.5 cm) or the high-group mean (~9.5 cm).
+> The two horizontal bands in the left panel make this explicit. An RMSE of 4.91 cm
+> is being achieved by a model that cannot distinguish a 3 cm O horizon from a
+> 6 cm one if they fall on the same side of the landsatb7 threshold. This is not
+> evidence that rpart is a better model — it is evidence that the dominant signal
+> in a 177-observation training set is a single SWIR-reflectance threshold
+> separating moist forested sites (thick O) from drier sites (thin O), and that
+> the 1-SE pruning rule correctly identifies this as the only split justified by
+> the data.
+>
+> Random Forest (right panel) produces a continuous prediction surface and shows
+> the expected positive trend along the 1:1 line, but pays an accuracy penalty
+> on this small validation set (73 observations) because it is attempting to
+> learn a complex multivariate surface from limited signal. The 0.19 cm RMSE
+> difference between the two models is well within the sampling uncertainty of
+> a 73-sample validation set and should not be interpreted as a meaningful
+> performance gap. With substantially more training data (>1,000 observations),
+> RF would be expected to pull ahead as the complex surface it learns becomes
+> better supported by the data.
+
+> **Questions:**  
+> 1. Compare rows 1 and 2 (same training data, same val set). How much does RF reduce RMSE over rpart?  
+> 2. Does removing the Histosol change which model appears superior? What does this tell you about outlier sensitivity?  
+> 3. Why is the OOB RMSE (row 3) not a fair comparison to rows 1–2, even though OOB is considered unbiased?  
+> 4. What does R² add over RMSE for communicating model quality?
+
+## Variable Importance
+
+For regression RF, two importance metrics are reported:  
+- **%IncMSE**: average increase in OOB MSE when the variable is permuted. Larger = more important.  
+- **IncNodePurity**: total reduction in RSS across all splits on this variable, summed across all trees. Faster to compute but biased toward continuous/high-cardinality variables.
+
+```{r rf-importance, fig.height=6}
+varImpPlot(rf_otot2,
+           main = "Variable Importance — O Horizon Thickness (Histosol removed)",
+           col  = "#2c5f2e")
+```
+
+```{r rf-importance-table}
+# Sorted tabular importance — useful for reporting
+randomForest::importance(rf_otot2) |>
+  as.data.frame() |>
+  arrange(desc(`%IncMSE`))
+```
+
+
+> **Questions:**  
+> 1. Did removing the Histosol outlier improve % variance explained?  
+> 2. What is the OOB error (MSE and % variance explained)? How does this compare with the rpart regression tree from Part 2?  
+> 3. Which variable had the highest %IncMSE? What soil-forming factor does this represent?  
+> 4. Do %IncMSE and IncNodePurity agree on the ranking of top predictors? If not, why might they differ?
+
+## Exercise: Folistic Epipedon Prediction
+
+Using the `soildata` dataset, build a Random Forest **classification** model to 
+predict the probability of a **folistic epipedon**. Folistic epipedons provide 
+habitat for the Northern Flying Squirrel and are a key mapping target in the 
+Monongahela National Forest.
+
+```{r epipedon-recode}
+# Recode epipedon: combine ochric and umbric into nonfolistic
+soildata$epipedon2 <- ifelse(
+  soildata$epipedon %in% c("ochric", "umbric"),
+  "nonfolistic",
+  soildata$epipedon
+)
+table(soildata$epipedon2)
+```
+
+```{r epipedon-rf}
+# YOUR CODE HERE
+# Build a randomForest classification model predicting epipedon2
+# Tune ntree and mtry to capture the most variability
+# Hint: use importance=TRUE and examine varImpPlot()
+
+# rf_epipedon <- randomForest(
+#   as.factor(epipedon2) ~ ...,
+#   data = soildata,
+#   ntree = ???,
+#   mtry  = ???,
+#   importance = TRUE
+# )
+```
+
+> **Self-check questions:**  
+> 1. What is the OOB error rate?  
+> 2. Compare this classification model with the `Otot` regression model. Which would be better for spatial interpolation of folistic epipedon risk?  
+> 3. Which covariates are most important for predicting folistic epipedons? Do they differ from the Otot model? What soil-forming factor explanation would you give?
+
+---
+
+# Part 5 — Feature Selection with Boruta
+
+## Theory: Why Feature Selection Matters
+
+With many environmental covariates available (terrain + spectral + climate), 
+some predictors are noise. Including irrelevant features:
+
+- Increases computation time
+- Can reduce model accuracy via the "curse of dimensionality"
+- Complicates interpretation
+
+**Boruta** is a wrapper around Random Forest that identifies relevant features
+by comparing each predictor's importance against the importance of shuffled
+"shadow" copies of itself. Features that consistently outperform their shadow 
+are confirmed as important.
+
+## Run Boruta
+
+```{r boruta, cache=TRUE, fig.height=5}
+# Fresh load for O horizon thickness prediction
+soildata <- read.csv("soildata.csv", header = TRUE, sep = ",")
+yvar  <- "Otot"
+xvars_bor <- c(
+  "rainfall", "geology", "aachn", "dem10m", "downslpgra", "eastness",
+  "greenrefl", "landsatb1", "landsatb2", "landsatb3", "landsatb7",
+  "maxc100", "maxent", "minc100", "mirref", "ndvi",
+  "northeastn", "northness", "northwestn", "planc100", "proc100",
+  "protection", "relpos11", "slp50", "solar", "tanc75"
+)
+
+set.seed(42)
+fs_bor <- Boruta(
+  y       = soildata[[yvar]],
+  x       = soildata[, xvars_bor],
+  maxRuns = 50,
+  doTrace = 1
+)
+
+# Variable importance plot (green = confirmed, yellow = tentative, red = rejected)
+plot(fs_bor,
+     xlab = "", las = 2, cex.axis = 0.7,
+     main = "Boruta Feature Selection: O Horizon Thickness")
+```
+
+```{r boruta-results}
+# Confirmed important features
+vars_confirmed <- getSelectedAttributes(fs_bor)
+cat("Confirmed important features:\n")
+print(vars_confirmed)
+
+cat(sprintf("\n%d of %d features confirmed important.\n",
+            length(vars_confirmed), length(xvars_bor)))
+
+# Detailed attribute statistics
+attrib_stats <- attStats(fs_bor)
+attrib_stats[order(-attrib_stats$meanImp), c("meanImp", "decision")]
+```
+
+---
+
+# Part 6 — Cross-Validation with caret and ranger
+
+## Theory: Why Cross-Validate?
+
+The primary purpose of CV here is **hyperparameter tuning**: `caret` fits ranger
+repeatedly across a grid of `mtry`, `min.node.size`, and `splitrule` values,
+selecting the combination with the best average held-out RMSE across 10 folds.
+CV also generalizes to any model type, making RF directly comparable to rpart or
+other algorithms on the same folds.
+
+
+## 10-Fold CV Without Feature Selection
+
+```{r cv-full, cache=TRUE}
+tc <- trainControl(
+  method       = "cv",
+  number       = 10,
+  returnResamp = "all",
+  savePredictions = TRUE,
+  verboseIter  = FALSE
+)
+
+set.seed(42)
+dep_tr_full <- train(
+  y          = soildata[[yvar]],
+  x          = soildata[, xvars_bor],
+  method     = "ranger",
+  importance = "permutation",
+  trControl  = tc
+)
+
+print(dep_tr_full)
+```
+
+## 10-Fold CV With Boruta Features
+
+```{r cv-boruta, cache=TRUE, dependson="boruta"}
+set.seed(42)
+dep_tr_bor <- train(
+  y          = soildata[[yvar]],
+  x          = soildata[, vars_confirmed],
+  method     = "ranger",
+  importance = "permutation",
+  trControl  = tc
+)
+
+print(dep_tr_bor)
+```
+
+## Compare Results
+
+```{r cv-compare}
+# Extract metrics at the selected (best) hyperparameter combination only.
+# $results has one row per hyperparameter combo with metrics already averaged
+# across all 10 folds — this is NOT cherry-picking across folds.
+best_full <- merge(dep_tr_full$bestTune, dep_tr_full$results)
+best_bor  <- merge(dep_tr_bor$bestTune,  dep_tr_bor$results)
+
+cv_compare <- data.frame(
+  Model = c("All features", "Boruta-selected"),
+  RMSE  = round(c(best_full$RMSE,      best_bor$RMSE),      4),
+  Rsq   = round(c(best_full$Rsquared,  best_bor$Rsquared),  4),
+  MAE   = round(c(best_full$MAE,       best_bor$MAE),       4)
+)
+print(cv_compare)
+```
+
+```{r cv-importance, fig.height=4}
+# Variable importance comparison
+p_full <- vip::vip(dep_tr_full, num_features = 15,
+                   aesthetics = list(fill = "#5b9bd5", width = 0.6)) +
+  ggtitle("All Features") + theme_minimal(base_size = 11)
+
+p_bor  <- vip::vip(dep_tr_bor,  num_features = 15,
+                   aesthetics = list(fill = "#70ad47", width = 0.6)) +
+  ggtitle("Boruta-Selected") + theme_minimal(base_size = 11)
+
+gridExtra::grid.arrange(p_full, p_bor, ncol = 2)
+```
+
+> **Application:** Permutation importance provides a data-driven 
+> quantification of soil forming factors. If precipitation (`rainfall`) 
+> dominates, your model confirms climate-controlled SOC dynamics in this MLRA.
+> Document the top-ranked covariates in your MLRA correlation documents as 
+> quantitative support for your conceptual soil-landscape model.
+
+> **Questions:**  
+> 1. Did feature selection (Boruta) improve or worsen CV RMSE?  
+> 2. Which predictor has the highest permutation importance?  
+> 3. How does this top predictor relate to the soil-forming factors for O horizon development in WV?
+
+---
+
+# Part 7 — Partial Dependence Plots
+
+## Theory: What PDPs Show
+
+A **Partial Dependence Plot (PDP)** marginalizes the model's predictions over
+all other features to show the average effect of a single predictor:
+
+$$\hat{f}_{x_j}(x_j) = \frac{1}{N} \sum_{i=1}^{N} \hat{f}(x_j, \mathbf{x}_{-j,i})$$
+
+Unlike variable importance (which ranks features), PDPs show the *shape* of 
+the relationship — whether it is linear, threshold-driven, or non-monotonic.
+This is especially useful for communicating soil-landscape relationships to field
+scientists.
+
+## Fit Final Model and Plot
+
+```{r pdp-model}
+# Refit using CV-tuned hyperparameters from dep_tr_bor (Part 6)
+# dep_tr_bor searched mtry, min.node.size, and splitrule via 10-fold CV —
+# hardcoding heuristics here would give worse OOB R² than the CV result.
+cat("Best hyperparameters from CV (dep_tr_bor):\n")
+print(dep_tr_bor$bestTune)
+
+# Guard: bestTune$mtry must not exceed the number of confirmed features.
+# A stale cv-boruta cache (trained on a larger feature set) can produce an
+# mtry value that is valid for the cached run but too large here.
+mtry_final <- min(dep_tr_bor$bestTune$mtry, length(vars_confirmed))
+if (mtry_final != dep_tr_bor$bestTune$mtry)
+  warning("bestTune$mtry clamped to ", mtry_final,
+          " — re-knit with cache cleared to resolve cache inconsistency.")
+
+set.seed(42)
+rf_final <- ranger(
+  formula       = as.formula(paste(yvar, "~", paste(vars_confirmed, collapse = " + "))),
+  data          = soildata[, c(yvar, vars_confirmed)],
+  num.trees     = 500,
+  mtry          = mtry_final,
+  min.node.size = dep_tr_bor$bestTune$min.node.size,
+  splitrule     = dep_tr_bor$bestTune$splitrule,
+  importance    = "permutation"
+)
+
+cat(sprintf("OOB R2:   %.4f\n", rf_final$r.squared))
+cat(sprintf("OOB RMSE: %.4f cm\n", sqrt(rf_final$prediction.error)))
+```
+
+```{r}
+# ── OOB residual diagnostics  ─────────────────────────────
+oob_preds  <- rf_final$predictions          # OOB predictions in cm
+resid_oob  <- soildata[[yvar]] - oob_preds
+
+par(mfrow = c(1, 2))
+plot(oob_preds, resid_oob,
+     xlab = "OOB Predicted (cm)", ylab = "Residual (cm)",
+     main = "OOB Residuals vs Fitted", pch = 16, col = "#2c5f2e")
+abline(h = 0, col = "red", lty = 2)
+qqnorm(resid_oob, main = "Q-Q Plot: OOB Residuals")
+qqline(resid_oob, col = "red")
+par(mfrow = c(1, 1))
+
+oob_rmse <- sqrt(mean(resid_oob^2))
+oob_r2   <- 1 - sum(resid_oob^2) / sum((soildata[[yvar]] - mean(soildata[[yvar]]))^2)
+cat("OOB RMSE (cm):", round(oob_rmse, 2), "\n")
+cat("OOB R\u00b2:      ", round(oob_r2, 3), "\n")
+
+```
+
+
+```{r pdp-plots, fig.height=4}
+# Top 2 predictors from importance
+top_vars <- names(sort(rf_final$variable.importance, decreasing = TRUE))[1:2]
+cat("Top predictors:", paste(top_vars, collapse = ", "), "\n")
+
+# PDP for top two predictors
+pdp1 <- pdp::partial(rf_final, pred.var = top_vars[1],
+                     plot = FALSE, grid.resolution = 30)
+pdp2 <- pdp::partial(rf_final, pred.var = top_vars[2],
+                     plot = FALSE, grid.resolution = 30)
+
+
+ggplot(pdp1, aes_string(x = top_vars[1], y = "yhat")) +
+  geom_line(color = "#2c5f2e", linewidth = 1.2) +
+  geom_rug(data = soildata, aes_string(x = top_vars[1], y = NULL),
+           sides = "b", alpha = 0.3) +
+  labs(x = top_vars[1], y = "Partial Dependence (O Horizon, cm)",
+       title = paste("Partial Dependence:", top_vars[1])) +
+  theme_minimal(base_size = 12)
+
+ggplot(pdp2, aes_string(x = top_vars[2], y = "yhat")) +
+  geom_line(color = "#2c5f2e", linewidth = 1.2) +
+  geom_rug(data = soildata, aes_string(x = top_vars[2], y = NULL),
+           sides = "b", alpha = 0.3) +
+  labs(x = top_vars[2], y = "Partial Dependence (O Horizon, cm)",
+       title = paste("Partial Dependence:", top_vars[2])) +
+  theme_minimal(base_size = 12)
+```
+
+```{r pdp-2way, fig.height=5}
+pd_2way <- pdp::partial(
+  rf_final,
+  pred.var        = top_vars[1:2],
+  plot            = FALSE,
+  grid.resolution = 20
+)
+
+ggplot(pd_2way, aes_string(x = top_vars[1], y = top_vars[2], fill = "yhat")) +
+  geom_tile() +
+  scale_fill_viridis_c(name = "O Horizon (cm)", option = "D") +
+  labs(title = "2-Way Partial Dependence", x = top_vars[1], y = top_vars[2]) +
+  theme_minimal(base_size = 12)
+```
+
+> **Questions:**  
+> 1. What is the shape of the top predictor's partial dependence — linear, threshold, or non-monotonic? What soil-forming factor does this suggest?  
+> 2. In the 2-way plot, do the two predictors interact (non-parallel isolines) or act independently (parallel bands)?  
+> 3. At what value of the top predictor does O horizon thickness increase most steeply? Does this correspond to a known ecological or pedological threshold in WV?
+
+---
+
+# Part 8 — Model Diagnostics
+
+## Observed vs. Predicted
+
+```{r diagnostics-pred}
+# Generate training predictions
+soildata$pred_Otot <- predict(rf_final, data = soildata)$predictions
+soildata$resid     <- soildata$Otot - soildata$pred_Otot
+
+# 1:1 plot
+ggplot(soildata, aes(x = pred_Otot, y = Otot)) +
+  geom_point(alpha = 0.5, color = "#2c5f2e") +
+  geom_abline(linetype = "dashed", color = "gray40") +
+  geom_smooth(method = "lm", color = "#e07b54", se = TRUE) +
+  labs(x = "Predicted O Horizon (cm)",
+       y = "Observed O Horizon (cm)",
+       title = "Observed vs. Predicted (Training Data)") +
+  theme_minimal(base_size = 12)
+```
+
+> **Note:** Training-data 1:1 plots are optimistic for Random Forest due to OOB 
+> aggregation. Always evaluate on a held-out validation set or use CV metrics.
+
+## Residual Plots
+
+```{r diagnostics-resid, fig.height=8}
+p_res1 <- ggplot(soildata, aes(x = pred_Otot, y = resid)) +
+  geom_point(alpha = 0.4, color = "#5b9bd5") +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  geom_smooth(se = FALSE, color = "#e07b54") +
+  labs(x = "Predicted", y = "Residual",
+       title = "Residuals vs. Fitted") +
+  theme_minimal(base_size = 12)
+
+p_res2 <- ggplot(soildata, aes(x = pred_Otot, y = sqrt(abs(resid)))) +
+  geom_point(alpha = 0.4, color = "#5b9bd5") +
+  geom_smooth(se = FALSE, color = "#e07b54") +
+  labs(x = "Predicted", y = "√|Residual|",
+       title = "Scale-Location (Homoscedasticity Check)") +
+  theme_minimal(base_size = 12)
+
+p_res3 <- ggplot(soildata, aes(sample = resid)) +
+  geom_qq(alpha = 0.5, color = "#5b9bd5") +
+  geom_qq_line(color = "red", linetype = "dashed") +
+  labs(title = "Normal Q-Q Plot of Residuals") +
+  theme_minimal(base_size = 12)
+
+gridExtra::grid.arrange(p_res1, p_res2, p_res3, ncol = 2)
+```
+
+> **Interpreting diagnostics:**  
+> - **Residuals vs Fitted:** Should show random scatter around zero. Systematic patterns indicate model misfit.  
+> - **Scale-Location:** A flat line indicates homoscedasticity (equal variance). Increasing spread suggests heteroscedasticity.  
+> - **Q-Q Plot:** Points should follow the reference line. Deviations in the tails indicate non-normal residuals, which can affect prediction intervals.
+
+---
+
+# Part 9 — SHAP Analysis
+
+## Theory: Why SHAP?
+
+Permutation importance and PDPs answer *which* variables matter and their *average* effect.
+SHAP (SHapley Additive exPlanations, Lundberg & Lee 2017) goes further — it attributes
+each prediction to individual feature contributions for **every observation**, not just
+on average across the dataset.
+
+**The SHAP decomposition:**
+$$\hat{f}(x_i) = \phi_0 + \sum_{j=1}^{p} \phi_{ij}$$
+
+where $\phi_0$ is the global baseline (mean prediction) and $\phi_{ij}$ is the contribution
+of feature $j$ to observation $i$'s prediction. These values are derived from cooperative
+game theory: each feature's contribution is its average marginal contribution across all
+possible orderings of features entering the model.
+
+**Why SHAP matters for DSM:**
+
+| Tool | What it shows | Limitation |
+|------|--------------|-----------|
+| Permutation VIP | Global ranking only | No per-observation detail |
+| PDP | Average marginal effect | Masks heterogeneity |
+| SHAP | Per-observation direction + magnitude | Computationally intensive |
+
+SHAP provides **interpretability** for complex models:
+you can show that high-rainfall sites drive high O horizon predictions through a
+positive SHAP contribution, confirming pedological plausibility for each mapped area
+rather than just on average.
+
+## Setup: Prepare the SHAP Model
+
+```{r shap-setup}
+# Install if needed: install.packages(c("fastshap", "shapviz"))
+library(fastshap)
+library(shapviz)
+
+# ── Ensure the final model exists in environment ──────────────────────────
+# (rf_final from Part 10 must be in the environment, trained on Otot)
+# If re-running standalone, recreate it here:
+
+soildata_nohist <- droplevels(subset(
+  read.csv("soildata.csv"), order != "histosol"
+))
+
+predictors <- c(
+  "rainfall",   "geology",    "aachn",      "dem10m",     "downslpgra",
+  "eastness",   "greenrefl",  "landsatb1",  "landsatb2",  "landsatb3",
+  "landsatb7",  "maxc100",    "maxent",     "minc100",    "mirref",
+  "ndvi",       "northeastn", "northness",  "northwestn", "planc100",
+  "proc100",    "protection", "relpos11",   "slp50",      "solar",
+  "tanc75"
+)
+
+set.seed(42)
+rf_shap <- ranger(
+  formula       = Otot ~ .,
+  data          = soildata_nohist[, c("Otot", predictors)],
+  num.trees     = 500,
+  mtry          = dep_tr_bor$bestTune$mtry,
+  min.node.size = dep_tr_bor$bestTune$min.node.size,
+  splitrule     = dep_tr_bor$bestTune$splitrule,
+  importance    = "permutation",
+  seed          = 42
+)
+
+cat(sprintf("OOB R\u00b2:   %.3f\n", rf_shap$r.squared))
+cat(sprintf("OOB RMSE (cm): %.2f\n", sqrt(rf_shap$prediction.error)))
+```
+
+## Compute SHAP Values
+
+```{r shap-compute, cache=TRUE}
+# ── Prediction wrapper required by fastshap ────────────────────────────────
+pfun <- function(object, newdata) {
+  predict(object, data = newdata)$predictions
+}
+
+# ── Monte Carlo SHAP approximation ─────────────────────────────────────────
+# nsim = 100 gives stable estimates; increase to 200 for final analysis
+# This takes ~30–60 seconds depending on hardware
+set.seed(42)
+shap_vals <- fastshap::explain(
+  object        = rf_shap,
+  X             = soildata_nohist[, predictors],
+  pred_wrapper  = pfun,
+  nsim          = 100
+)
+
+# shap_vals is an nsample × nfeature matrix (cm units)
+dim(shap_vals)
+head(round(shap_vals[, 1:6], 4))
+```
+
+## Global Importance (Mean |SHAP|)
+
+```{r shap-global-importance, fig.height=5}
+# Mean absolute SHAP = global variable importance (model-agnostic, unbiased)
+mean_abs_shap <- colMeans(abs(shap_vals)) |>
+  sort(decreasing = TRUE) |>
+  (\(x) data.frame(
+    feature        = factor(names(x), levels = rev(names(x))),
+    mean_abs_shap  = x
+  ))()
+
+ggplot(mean_abs_shap, aes(x = mean_abs_shap, y = feature)) +
+  geom_col(fill = "#2c5f2e", width = 0.7) +
+  geom_text(aes(label = round(mean_abs_shap, 3)),
+            hjust = -0.1, size = 3.2, color = "gray30") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title    = "Mean |SHAP| — Global Variable Importance",
+    subtitle = "O Horizon Thickness RF-WV Study Area",
+    x        = "Mean absolute SHAP value  (cm units)",
+    y        = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.y = element_text(size = 10))
+```
+
+> **Comparison with permutation importance:** Do the top-ranked SHAP features agree
+> with the permutation VIP from Part 9? They typically agree on the top 3–4 but may
+> diverge for correlated mid-importance features. SHAP handles collinearity more
+> gracefully because it distributes credit across correlated features.
+
+## Beeswarm Plot: Direction and Magnitude
+
+The beeswarm (SHAP summary) plot simultaneously shows importance (x-axis spread),
+direction (positive = increases prediction), and feature value (colour) for every
+observation. This is the single most informative diagnostic plot in an interpretable
+ML workflow.
+
+```{r shap-beeswarm, fig.height=7, fig.width=9}
+# Build long-format data frame for ggplot beeswarm
+X_mat <- as.data.frame(soildata_nohist[, predictors])
+
+# Normalise each feature to [0, 1] for colour mapping
+numeric_cols <- names(X_mat)[sapply(X_mat, is.numeric)]
+
+X_norm <- as.data.frame(lapply(X_mat[, numeric_cols, drop = FALSE], function(v) {
+  rng <- range(v, na.rm = TRUE)
+  if (diff(rng) == 0) return(rep(0.5, length(v)))
+  (v - rng[1]) / diff(rng)
+}))
+
+# Add geology back as numeric (integer codes) so join has no NULLs
+X_norm_full <- X_norm
+if ("geology" %in% colnames(X_mat)) {
+  X_norm_full$geology <- as.numeric(as.factor(X_mat$geology))
+  # re-normalise to 0-1
+  rng <- range(X_norm_full$geology, na.rm = TRUE)
+  X_norm_full$geology <- (X_norm_full$geology - rng[1]) / diff(rng)
+}
+
+# Rebuild shap_long with X_norm_full
+shap_long <- as.data.frame(shap_vals) |>
+  tibble::rowid_to_column("obs") |>
+  tidyr::pivot_longer(-obs, names_to = "feature", values_to = "shap") |>
+  dplyr::left_join(
+    X_norm_full |>
+      tibble::rowid_to_column("obs") |>
+      tidyr::pivot_longer(-obs, names_to = "feature", values_to = "feat_norm") |>
+      dplyr::mutate(feat_norm = as.numeric(feat_norm)),
+    by = c("obs", "feature")
+  ) |>
+  dplyr::mutate(
+    feat_norm = as.numeric(feat_norm),
+    feature   = factor(feature,
+                       levels = rev(levels(mean_abs_shap$feature)))
+  )
+
+# Verify
+str(shap_long$feat_norm)
+sum(is.na(shap_long$feat_norm))
+
+ggplot(shap_long, aes(x = shap, y = feature, colour = feat_norm)) +
+  ggbeeswarm::geom_beeswarm(
+    groupOnX    = FALSE,
+    size        = 1.2,
+    alpha       = 0.55,
+    cex         = 0.6
+  ) +
+  scale_colour_gradient2(
+    low      = "#1565C0",
+    mid      = "#E0E0E0",
+    high     = "#B71C1C",
+    midpoint = 0.5,
+    name     = "Feature value\n(normalised)\nLow ← → High"
+  ) +
+  geom_vline(xintercept = 0, colour = "grey40", linetype = "dashed") +
+  labs(
+    title    = "SHAP Beeswarm — Direction & Magnitude",
+    subtitle = "Each dot = one observation  |  Colour = feature value",
+    x        = "SHAP value  (impact on O horizon prediction, cm)",
+    y        = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "right")
+```
+
+> **How to read this plot:**
+> 
+> - **Horizontal position** = how much this feature pushed the prediction up (right)
+>   or down (left) for each observation.
+> - **Colour** = the feature's actual value for that observation (red = high, blue = low).
+> - **Width of the cloud** = overall importance of the feature (same ranking as Mean |SHAP|).
+> - **Pedological check:** For a well-specified DSM model you expect:
+>   - `maxent` red dots on the right (high terrain complexity → topographically protected positions → thick O horizons)
+>   - `solar` red dots on the left (high solar = warm dry sites → thin O horizons)
+>   - `northwestn` / `northness` red dots on the right (cool NW-facing aspects → reduced insolation, slower decomposition → thicker O)
+
+## SHAP Dependence Plots
+
+A SHAP dependence plot shows one feature's SHAP values against its actual values.
+The colour encodes a second feature, revealing interaction effects.
+
+```{r shap-dependence, fig.height=8, fig.width=10}
+# Get top 2 features by mean |SHAP| for the plot
+top2 <- as.character(mean_abs_shap$feature[1:2])
+f1   <- top2[1]
+f2   <- top2[2]
+
+# Build dependence data: feature 1 SHAP vs feature 1 value, colored by feature 2
+dep_df <- data.frame(
+  x_val   = X_mat[[f1]],
+  shap_f1 = shap_vals[, f1],    # matrix column indexing
+  col_var = X_mat[[f2]]
+)
+
+p_dep1 <- ggplot(dep_df, aes(x = x_val, y = shap_f1, colour = col_var)) +
+  geom_point(alpha = 0.6, size = 1.8) +
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"),
+              colour = "black", se = FALSE, linewidth = 0.8) +
+  scale_colour_viridis_c(name = f2, option = "D") +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+  labs(
+    title    = paste("SHAP Dependence:", f1),
+    subtitle = paste("Color =", f2, "  (interaction signal)"),
+    x        = f1,
+    y        = paste("SHAP value for", f1)
+  ) +
+  theme_minimal(base_size = 12)
+
+# Second dependence plot: feature 2
+dep_df2 <- data.frame(
+  x_val   = X_mat[[f2]],
+  shap_f2 = shap_vals[, f2],    # matrix column indexing
+  col_var = X_mat[[f1]]
+)
+
+p_dep2 <- ggplot(dep_df2, aes(x = x_val, y = shap_f2, colour = col_var)) +
+  geom_point(alpha = 0.6, size = 1.8) +
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"),
+              colour = "black", se = FALSE, linewidth = 0.8) +
+  scale_colour_viridis_c(name = f1, option = "C") +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+  labs(
+    title    = paste("SHAP Dependence:", f2),
+    subtitle = paste("Color =", f1, "  (interaction signal)"),
+    x        = f2,
+    y        = paste("SHAP value for", f2)
+  ) +
+  theme_minimal(base_size = 12)
+
+gridExtra::grid.arrange(p_dep1, p_dep2, ncol = 2)
+```
+
+> **Interaction signal:** If the colours in a dependence plot form a gradient pattern
+> (e.g., red points cluster in the upper-right), the effect of feature 1 on the
+> prediction *depends on* the value of feature 2 — a true interaction. This is
+> information PDPs cannot show because they average across that heterogeneity.
+
+**Interpretation:**
+The left panel shows northwestn has a clean, independent effect on O horizon thickness — SHAP values rise monotonically from −0.5 cm (SE-facing) to +1.0 cm (NW-facing) with no colour gradient, confirming aspect operates additively regardless of terrain complexity. The right panel reveals a one-directional interaction: maxent's contribution to O horizon thickness is amplified on NW-facing slopes (yellow dots consistently above the smooth) but suppressed on SE-facing slopes (purple dots below). The bottom-left cluster of yellow dots at low maxent confirms that NW aspect alone — without topographic complexity — adds little through the maxent pathway. Together the panels describe a coherent soil-landscape mechanism: cool NW-facing aspects and dissected terrain independently favour organic matter accumulation, but their combination produces the thickest O horizons in the dataset.
+
+
+## Waterfall Plot: Explaining One Prediction
+
+Waterfall plots decompose a single prediction into its SHAP contributions —
+useful for explaining to a field scientist *why* the model predicted a particular
+value at a specific pedon location.
+
+```{r shap-waterfall, fig.height=6}
+# ── Use shapviz for polished single-observation plots ──────────────────────
+sv <- shapviz(
+  object = shap_vals,          # matrix of SHAP values
+  X      = X_mat               # original feature values (for display)
+)
+
+# Find the observation with the highest predicted O horizon (most interesting)
+best_obs  <- which.max(rf_shap$predictions)
+worst_obs <- which.min(rf_shap$predictions)
+
+# Waterfall for the thickest predicted O horizon
+sv_waterfall(sv, row_id = best_obs, max_display = 12) +
+  labs(title = paste0("SHAP Waterfall — Obs ", best_obs,
+                      " (highest predicted O thickness)"),
+       subtitle = paste0("Predicted Otot: ",
+                         round(rf_shap$predictions[best_obs], 1),
+                         " cm"))
+```
+
+```{r shap-waterfall2, fig.height=6}
+# Waterfall for the thinnest predicted O horizon
+sv_waterfall(sv, row_id = worst_obs, max_display = 12) +
+  labs(title = paste0("SHAP Waterfall — Obs ", worst_obs,
+                      " (lowest predicted O thickness)"),
+       subtitle = paste0("Predicted Otot: ",
+                         round(rf_shap$predictions[worst_obs], 1),
+                         " cm"))
+```
+
+> **Questions:**
+> 1. Do the top SHAP features (Mean |SHAP| bar chart) align with your pedological
+>    expectations for O horizon development in West Virginia?
+> 2. In the beeswarm plot, identify one feature where blue dots (low values) fall to
+>    the right. What does this tell you about the direction of that feature's effect?
+> 3. Compare the waterfall for the thickest vs. thinnest predicted site. Which features
+>    *switch direction* between the two observations, suggesting site-specific interactions?
+> 4. Express the SHAP value for the top feature at the thickest-predicted site as a
+>    percentage increase in predicted O thickness (hint: exp(SHAP) − 1).
+
+---
+
+# Part 10 — Quantile Regression Forest and Uncertainty
+
+## Theory: Beyond Point Predictions
+
+A standard RF predicts the **conditional mean** $E[Y | X = x]$. In DSM this is
+insufficient for operational decision-making — field staff need to know not just
+the predicted value but **how confident** the model is at each location.
+
+**Quantile Regression Forest (QRF, Meinshausen 2006)** extends RF to predict the
+full conditional distribution $F(Y | X = x)$ by retaining all training observations
+in each terminal leaf rather than only the leaf mean. Any quantile can then be
+read from this empirical distribution:
+
+$$\hat{Q}_\tau(Y | X = x) = \text{weighted quantile of training responses in leaf}$$
+
+This enables **prediction intervals** without distributional assumptions — no need to
+assume normality:
+
+- **Median** ($\tau = 0.5$): robust point prediction
+- **90% PI**: $[\hat{Q}_{0.05},\ \hat{Q}_{0.95}]$
+- **PI width**: a spatial uncertainty map — wide intervals flag sites for targeted field verification
+
+
+## Fit QRF
+
+```{r qrf-fit}
+# ── QRF requires the quantregForest package ────────────────────────────────
+# install.packages("quantregForest")
+library(quantregForest)
+
+# ── Prepare training and validation matrices ───────────────────────────────
+# Convert factors to numeric in both sets
+prep_qrf <- function(df, predictors) {
+  df[, predictors] <- lapply(df[, predictors], function(v) {
+    if (is.numeric(v)) v else as.numeric(as.factor(v))
+  })
+  as.matrix(df[, predictors])
+}
+
+x_train <- prep_qrf(cal_nohist, predictors)
+y_train <- cal_nohist$Otot
+
+x_val   <- prep_qrf(val, predictors)
+y_val   <- val$Otot
+
+# ── Fit QRF on training data only ─────────────────────────────────────────
+set.seed(42)
+qrf_model <- quantregForest(
+  x        = x_train,
+  y        = y_train,
+  ntree    = 500,
+  mtry     = max(2, floor(length(predictors) / 3)),
+  nodesize = 5
+)
+
+# ── Predict on held-out validation set ────────────────────────────────────
+qrf_pred_cm <- predict(qrf_model, newdata = x_val, what = 0.50)
+qrf_lo_cm   <- pmax(predict(qrf_model, newdata = x_val, what = 0.05), 0)
+qrf_hi_cm   <- predict(qrf_model, newdata = x_val, what = 0.95)
+qrf_width   <- qrf_hi_cm - qrf_lo_cm
+
+# ── Honest PICP on validation set ─────────────────────────────────────────
+inside <- y_val >= qrf_lo_cm & y_val <= qrf_hi_cm
+picp   <- mean(inside)
+
+cat(sprintf("Validation n:                 %d\n",   length(y_val)))
+cat(sprintf("Median predicted O thickness: %.2f cm\n", median(qrf_pred_cm)))
+cat(sprintf("Median 90%% PI width:          %.2f cm\n", median(qrf_width)))
+cat(sprintf("Min / Max PI width:           %.2f / %.2f cm\n", min(qrf_width), max(qrf_width)))
+cat(sprintf("90%% PI coverage (PICP):       %.3f  (target: 0.90)\n", picp))
+cat(sprintf("Calibration:                  %s\n",
+            ifelse(picp > 0.92, "conservative (too wide)",
+            ifelse(picp < 0.88, "anti-conservative (too narrow)",
+                               "well-calibrated"))))
+
+```
+
+## Prediction Interval Calibration
+
+**Calibration** checks whether stated 90% PIs actually contain the observation 90% of the time
+(PICP — Prediction Interval Coverage Probability). Uncalibrated intervals are misleading
+regardless of model accuracy.
+
+```{r qrf-calibration}
+# ── PICP: fraction of observations inside the PI ──────────────────────────
+inside <- y_val >= qrf_lo_cm &
+          y_val <= qrf_hi_cm
+
+picp <- mean(inside)
+cat(sprintf("90%% PI coverage (PICP): %.3f  (target: 0.90)\n", picp))
+cat(sprintf("Overcoverage (>0.90 = conservative): %s\n",
+            ifelse(picp > 0.90, "YES", "NO")))
+```
+
+> **Important:** This PICP is computed on **training data** and will be optimistic
+> (similar to OOB error). For a proper calibration assessment use held-out test data
+> or spatial CV predictions. A PICP > 0.90 means intervals are conservative (too wide);
+> PICP < 0.90 means they are anti-conservative (too narrow, over-confident).
+
+## Visualise Intervals
+
+```{r qrf-interval-plot, fig.height=5}
+# Sort by predicted value for a clean ribbon plot
+plot_df <- data.frame(
+  obs    = y_val,          # was soildata_qrf$Otot
+  pred   = qrf_pred_cm,
+  lo     = qrf_lo_cm,
+  hi     = qrf_hi_cm,
+  width  = qrf_width,
+  inside = inside
+) |> dplyr::arrange(pred)
+
+plot_df$rank <- seq_len(nrow(plot_df))
+
+ggplot(plot_df, aes(x = rank)) +
+  geom_ribbon(aes(ymin = lo, ymax = hi), fill = "#a8d5a2", alpha = 0.5) +
+  geom_line(aes(y = pred), colour = "#2c5f2e", linewidth = 0.8) +
+  geom_point(aes(y = obs, colour = inside), size = 1.5, alpha = 0.7) +
+  scale_colour_manual(
+    values = c("TRUE"  = "#333333",
+               "FALSE" = "#e07b54"),
+    labels = c("TRUE"  = "Inside PI",
+               "FALSE" = "Outside PI"),
+    name   = NULL
+  ) +
+  labs(
+    title    = "QRF 90% Prediction Intervals — O Horizon Thickness",
+    subtitle = paste0("Sorted by predicted value  |  PICP = ",
+                      round(picp, 3), "  |  Orange = outside PI"),
+    x        = "Observation rank (sorted by prediction)",
+    y        = "O Horizon Thickness (cm)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "top")
+```
+QRF 90% prediction intervals evaluated on a held-out validation set (n ≈ 75) achieved a PICP of 0.918, indicating well-calibrated slightly conservative intervals. Median PI width was 5.00 cm. Interval width scaled appropriately with predicted O horizon thickness, reflecting greater model uncertainty at thick O horizon sites underrepresented in training data.
+
+
+## PI Width as Uncertainty Map
+
+PI width is heterogeneous across the landscape — some sites are modelled confidently
+and others are not. Mapping PI width alongside the point prediction is important for communicating spatial uncertainty.
+
+```{r qrf-uncertainty-map, fig.height=5}
+# ── Attach uncertainty to validation spatial data frame ───────────────────
+val_sf_qrf <- st_as_sf(
+  cbind(
+    val,
+    qrf_pred_cm = as.numeric(qrf_pred_cm),
+    qrf_lo_cm   = as.numeric(qrf_lo_cm),
+    qrf_hi_cm   = as.numeric(qrf_hi_cm),
+    qrf_width   = as.numeric(qrf_width)
+  ),
+  coords = c("x", "y"),
+  crs    = 4326
+)
+
+# ── Static map: PI width as bubble size + color ───────────────────────────
+ggplot(val_sf_qrf) +
+  geom_sf(aes(colour = qrf_width, size = qrf_width), alpha = 0.75) +
+  scale_colour_viridis_c(
+    name   = "PI Width (cm)",
+    option = "plasma",
+    trans  = "sqrt",
+    guide  = guide_legend()
+  ) +
+  scale_size_continuous(
+    name   = "PI Width (cm)",      # same name merges the two legends into one
+    range  = c(0.5, 5),
+    trans  = "sqrt"
+  ) +
+  labs(
+    title    = "QRF 90% Prediction Interval Width",
+    subtitle = "Validation set  |  Large / bright = high uncertainty; small / dark = high confidence"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position  = "right",
+    plot.title       = element_text(size = 13),
+    plot.subtitle    = element_text(size = 10)
+  )
+```
+
+Interpretation: PI width typically increases with predicted value for right-skewed soil properties — the model is less certain about thick O horizons (rare observations) than thin ones (abundant observations). This is the correct behavior and reflects training data density, not a model flaw. The spatial map shows uncertainty is not randomly distributed across the landscape — high-uncertainty sites (wide PI, large bright yellow/orange symbols) cluster in the southern portion of the transect around 38.60–38.65°N.
+
+```{r qrf-width-vs-pred, fig.height=4}
+# PI width vs predicted value: does uncertainty scale with magnitude?
+ggplot(plot_df, aes(x = pred, y = width)) +
+  geom_point(alpha = 0.5, colour = "#5b9bd5", size = 1.8) +
+  geom_smooth(method = "loess", colour = "#e07b54", se = TRUE) +
+  labs(
+    title = "PI Width vs Predicted O Thickness",
+    x     = "QRF Predicted Median (cm)",
+    y     = "90% PI Width (cm)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+**Interpretation:*** PI width shows a U-shaped relationship with predicted O thickness rather than a simple monotonic increase. The model is most confident at moderate predicted values (3–5 cm) where training observations are most dense. Uncertainty is elevated at both extremes — at very low predicted values (0–3 cm) intervals remain wide (~12–15 cm) because near-zero O horizon sites are environmentally ambiguous and difficult to distinguish from thin-but-present O horizons using the available covariates. At high predicted values (>8 cm) PI width rises to ~20 cm and plateaus, reflecting the scarcity of thick O horizon observations in the training data.
+
+## QRF vs RF: Point Prediction Comparison
+
+```{r qrf-vs-rf-comparison, fig.height=4}
+# ── RF mean predictions on validation set ─────────────────────────────────
+# rf_shap was trained on soildata_nohist — predict onto val
+rf_val_preds <- predict(rf_shap, data = val)$predictions
+
+# ── Build comparison on val set only ──────────────────────────────────────
+compare_df <- data.frame(
+  observed = y_val,
+  rf_mean  = rf_val_preds,
+  qrf_med  = as.numeric(qrf_pred_cm)   # already on val set
+)
+
+rmse_rf  <- sqrt(mean((compare_df$observed - compare_df$rf_mean)^2))
+rmse_qrf <- sqrt(mean((compare_df$observed - compare_df$qrf_med)^2))
+
+cat(sprintf("Val RMSE — RF mean:    %.2f cm\n", rmse_rf))
+cat(sprintf("Val RMSE — QRF median: %.2f cm\n", rmse_qrf))
+
+ggplot(compare_df, aes(x = rf_mean, y = qrf_med)) +
+  geom_point(alpha = 0.5, colour = "#2c5f2e", size = 1.8) +
+  geom_abline(linetype = "dashed", colour = "grey40") +
+  labs(
+    title    = "RF Mean vs QRF Median Predictions",
+    subtitle = "Validation set (n = 73)  |  Divergence from 1:1 indicates skewed residuals",
+    x        = "RF mean prediction (cm)",
+    y        = "QRF median prediction (cm)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+> **Questions:**
+> 1. What is the PICP for your 90% prediction intervals? Are they well-calibrated?
+> 2. Which observations (if any) fall outside the PI? Do they share any characteristics
+>    (e.g., soil order, landscape position)?
+> 3. Does PI width increase with predicted O thickness? What does that imply for
+>    field verification priorities?
+
+
+---
+
+# Part 11 — Spatial CV and Area of Applicability
+
+## Theory: Why OOB Error is Not Enough
+
+The OOB (out-of-bag) error in a Random Forest is a free cross-validation estimate —
+but it assumes training observations are **independent**. Soil pedon data violate
+this assumption: nearby samples share geology, climate, and parent material,
+making OOB predictions for a sample informally "assisted" by its geographic neighbours
+in the training data. The result is **optimistic accuracy**.
+
+**Two distinct problems that are often confused:**
+
+| Problem | Description | Solution |
+|---------|------------|---------|
+| Spatial CV for model selection | Choosing between models with spatially autocorrelated data | kNNDM or block CV during tuning |
+| Map accuracy assessment | Unbiased estimate of accuracy across the full prediction area | Probability-sampled independent validation |
+
+The **kNNDM** (k-fold Nearest Neighbour Distance Matching) framework (Linnenbrink et al.
+2023, CAST package) constructs CV folds such that the distribution of distances between
+validation and training points during CV matches the distribution between prediction
+locations and training data during mapping. This correctly penalises models that exploit
+spatial clustering rather than environmental signal.
+
+The **Area of Applicability (AOA, Meyer & Pebesma 2021)** identifies where the model
+can be trusted: locations where the predictor-space distance to the training data
+falls within what was encountered during CV. Predictions outside the AOA carry no
+validated accuracy guarantee.
+
+## Setup and Data Preparation
+
+```{r aoa-setup}
+# Install if needed:
+# install.packages("CAST")
+library(CAST)
+library(sf)
+
+# ── Rebuild spatial object with predictors attached ────────────────────────
+model_df <- soildata_nohist[, c("x", "y", "Otot", predictors)]
+
+# Remove rows with any NA in predictors
+model_df <- model_df[complete.cases(model_df), ]
+
+model_sf <- st_as_sf(model_df, coords = c("x", "y"), crs = 4326)
+
+cat(sprintf("Observations available for spatial CV: %d\n", nrow(model_df)))
+cat(sprintf("Predictors: %d\n", length(predictors)))
+
+# Quick look at spatial distribution
+plot(st_geometry(model_sf), pch = 16, cex = 0.7, col = "#2c5f2e",
+     main = "Pedon Locations — WV Transect")
+```
+
+## kNNDM Cross-Validation
+
+kNNDM matches the fold structure to the actual geographic conditions encountered
+during prediction. For a field-sample dataset with clustered sampling (legacy pedons),
+this gives a more realistic error estimate than random 10-fold CV.
+
+```{r knndm-folds, cache=TRUE}
+# ── Step 1: Create kNNDM folds ─────────────────────────────────────────────
+# knndm needs:
+#   - tpoints: training point locations (sf object)
+#   - modeldomain: the prediction area (sf polygon or point cloud)
+# For this exercise we approximate the prediction domain with a convex hull
+# buffered slightly — in a real DSM project this would be the MLRA polygon.
+
+study_area <- st_convex_hull(st_union(model_sf)) |>
+  st_buffer(dist = 0.05)   # ~5 km buffer in geographic degrees
+
+set.seed(42)
+knndm_folds <- knndm(
+  tpoints     = model_sf,
+  modeldomain = study_area,
+  k           = 10,          # 10 folds
+  maxp        = 0.5          # max fraction of data in any single fold
+)
+
+# Inspect fold structure
+cat("kNNDM fold sizes:\n")
+print(table(knndm_folds$clusters))
+cat(sprintf("kNNDM W-statistic: %.1f\n", knndm_folds$W))
+cat(sprintf("Fold sizes range:  %d – %d observations\n",
+            min(knndm_folds$indx_test |> sapply(length)),
+            max(knndm_folds$indx_test |> sapply(length))))
+
+# The sample-to-sample W would be much larger (green vs orange gap)
+# kNNDM has reduced it from that baseline to 370.6
+
+# Plot the W-statistic: how well CV distances match prediction distances
+plot(knndm_folds, type = "simple",
+     main = "kNNDM: Distance Distribution Match")
+```
+
+**Interpreting the W statistic:** kNNDM minimises the Wasserstein distance (W) between the distribution of nearest-neighbour distances from validation to training points during CV (blue curve) and the distribution of distances from prediction locations to training points during mapping (orange curve). A W close to 0 means the CV folds faithfully represent the geographic conditions encountered during prediction — the model is evaluated across the same range of distances it will face in production. A large W means CV is evaluated on nearby clustered points (green curve) while the model must predict across much larger distances in practice, producing optimistically inflated accuracy estimates. For this dataset, kNNDM achieved W = 370.6 across k = 10 folds with fold sizes ranging from 8 to 36 observations, reflecting the clustered pedon sampling structure of the WV study. The blue CV-distance curve tracks the orange prediction-to-sample curve substantially better than random CV would (which would approximate the green sample-to-sample curve), confirming that kNNDM accuracy estimates are more representative of true map accuracy than standard 10-fold CV. The residual gap between blue and orange at distances beyond 2000 m indicates that some remote prediction locations remain underrepresented in the CV evaluation — a limitation of the available training data density rather than the CV method itself.
+
+## Compare Random CV vs kNNDM CV
+
+```{r cv-comparison, cache=TRUE}
+# ── Random 10-fold CV ──────────────────────────────────────────────────────
+ctrl_random <- trainControl(
+  method          = "cv",
+  number          = 10,
+  savePredictions = "final"
+)
+
+# ── kNNDM CV using CAST's CreateSpacetimeFolds ─────────────────────────────
+# Pass knndm fold indices directly to caret via indexOut
+ctrl_knndm <- trainControl(
+  method          = "cv",
+  number          = 10,
+  index           = knndm_folds$indx_train,
+  indexOut        = knndm_folds$indx_test,
+  savePredictions = "final"
+)
+
+tuning_grid_cv <- expand.grid(
+  mtry          = max(2, floor(length(predictors) / 3)),
+  splitrule     = "variance",
+  min.node.size = 5
+)
+
+# ── Train with random CV ────────────────────────────────────────────────────
+set.seed(42)
+rf_random_cv <- train(
+  x         = model_df[, predictors],
+  y         = model_df$Otot,
+  method    = "ranger",
+  trControl = ctrl_random,
+  tuneGrid  = tuning_grid_cv,
+  num.trees = 500,
+  metric    = "RMSE"
+)
+
+# ── Train with kNNDM CV ─────────────────────────────────────────────────────
+set.seed(42)
+rf_knndm_cv <- train(
+  x         = model_df[, predictors],
+  y         = model_df$Otot,
+  method    = "ranger",
+  trControl = ctrl_knndm,
+  tuneGrid  = tuning_grid_cv,
+  num.trees = 500,
+  metric    = "RMSE"
+)
+
+# ── Extract and compare CV metrics ─────────────────────────────────────────
+rmse_random <- min(rf_random_cv$results$RMSE)
+rmse_knndm  <- min(rf_knndm_cv$results$RMSE)
+r2_random   <- max(rf_random_cv$results$Rsquared)
+r2_knndm    <- max(rf_knndm_cv$results$Rsquared)
+
+cv_table <- data.frame(
+  Method = c("Random 10-fold CV", "kNNDM 10-fold CV"),
+  RMSE_cm  = round(c(rmse_random, rmse_knndm), 4),
+  Rsquared = round(c(r2_random,   r2_knndm),   4),
+  Notes    = c("Likely optimistic (ignores spatial autocorrelation)",
+               "Realistic (matches prediction conditions)")
+)
+print(cv_table)
+
+cat(sprintf("\nAccuracy inflation (random vs kNNDM):\n"))
+cat(sprintf("  RMSE increase: %.4f cm  (%.1f%% relative)\n",
+            rmse_knndm - rmse_random,
+            (rmse_knndm / rmse_random - 1) * 100))
+cat(sprintf("  R\u00b2 decrease:  %.4f\n", r2_random - r2_knndm))
+```
+> **Interpretation:** The gap between random CV (RMSE = 4.81 cm, R² = 0.277) and
+> kNNDM CV (RMSE = 5.09 cm, R² = 0.180) is the key result. Random CV overstates
+> R² by 0.097 — a 54% relative inflation — and understates RMSE by 0.28 cm. This
+> is the spatial autocorrelation penalty: random CV assigns nearby clustered pedons
+> to validation folds, allowing the model to exploit spatial proximity rather than
+> genuine environmental signal, producing optimistically inflated accuracy. kNNDM
+> forces evaluation across distances that better represent true prediction conditions,
+> revealing the honest map accuracy.
+
+```{r cv-comparison-plot, fig.height=4}
+# ── Residuals: random CV vs kNNDM CV ──────────────────────────────────────
+pred_random <- rf_random_cv$pred[order(rf_random_cv$pred$rowIndex), ]
+pred_knndm  <- rf_knndm_cv$pred[order(rf_knndm_cv$pred$rowIndex), ]
+
+# Match to observed
+obs_vals <- model_df$Otot[
+  as.integer(rownames(model_df)) %in% pred_random$rowIndex
+]
+
+resid_random <- pred_random$obs - pred_random$pred
+resid_knndm  <- pred_knndm$obs  - pred_knndm$pred
+
+resid_df <- data.frame(
+  residual = c(resid_random, resid_knndm),
+  method   = rep(c("Random CV", "kNNDM CV"), c(length(resid_random),
+                                                length(resid_knndm)))
+)
+
+ggplot(resid_df, aes(x = residual, fill = method, colour = method)) +
+  geom_density(alpha = 0.4, linewidth = 0.8) +
+  scale_fill_manual(values  = c("kNNDM CV" = "#E07B54", "Random CV" = "#5B9BD5")) +
+  scale_colour_manual(values = c("kNNDM CV" = "#E07B54", "Random CV" = "#5B9BD5")) +
+  geom_vline(xintercept = 0, colour = "grey40", linetype = "dashed") +
+  scale_x_continuous(
+    limits = c(-15, 25),          # expand to show full tails
+    breaks = seq(-15, 25, by = 5)
+  ) +
+  labs(
+    title    = "CV Residual Distributions — Random vs kNNDM",
+    subtitle = "Wider kNNDM distribution = honest spatial error estimate",
+    x        = "Residual (cm)",
+    y        = "Density",
+    fill     = NULL,
+    colour   = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "right")
+```
+
+## Area of Applicability
+
+The AOA delineates where the model's reported CV accuracy is expected to hold.
+Locations with predictor combinations far from the training data (high dissimilarity
+index) fall outside the AOA — predictions there should not be reported with the
+same confidence as predictions within the AOA.
+
+```{r aoa-compute, cache=TRUE}
+# ── Rebuild spatial object from cal_nohist only ───────────────────────────
+cal_sf <- st_as_sf(cal_nohist, coords = c("x", "y"), crs = 4326)
+
+study_area <- st_convex_hull(st_union(cal_sf)) |>
+  st_buffer(dist = 0.05)
+
+# ── New kNNDM folds based on cal_nohist ───────────────────────────────────
+set.seed(42)
+knndm_cal <- knndm(
+  tpoints     = cal_sf,
+  modeldomain = study_area,
+  k           = 10
+)
+
+# ── New trainControl using cal_nohist fold indices ────────────────────────
+ctrl_knndm_cal <- trainControl(
+  method          = "cv",
+  index           = knndm_cal$indx_train,
+  indexOut        = knndm_cal$indx_test,
+  savePredictions = "final",
+  returnResamp    = "all"
+)
+
+# ── Retrain AOA model ─────────────────────────────────────────────────────
+set.seed(42)
+rf_aoa_model <- train(
+  x          = cal_nohist[, predictors[-2]],
+  y          = cal_nohist$Otot,
+  method     = "ranger",
+  trControl  = ctrl_knndm_cal,
+  tuneGrid   = tuning_grid_cv,
+  num.trees  = 500,
+  metric     = "RMSE",
+  importance = "permutation"
+)
+
+# ── Compute trainDI from calibration model ────────────────────────────────
+train_di <- trainDI(rf_aoa_model)
+
+# ── Evaluate AOA on held-out validation set ───────────────────────────────
+aoa_result <- aoa(
+  newdata  = val[, predictors[-2]],   # truly held-out
+  model    = rf_aoa_model,
+  trainDI  = train_di
+)
+
+di_vals  <- aoa_result$DI
+aoa_mask <- aoa_result$AOA
+
+cat(sprintf("Validation points inside AOA:  %d (%.1f%%)\n",
+            sum(aoa_mask == 1), mean(aoa_mask == 1) * 100))
+cat(sprintf("Validation points outside AOA: %d (%.1f%%)\n",
+            sum(aoa_mask == 0), mean(aoa_mask == 0) * 100))
+cat(sprintf("DI range: %.4f – %.4f  (threshold: %.4f)\n",
+            min(di_vals), max(di_vals), train_di$threshold))
+```
+
+```{r aoa-map, fig.height=5}
+# ── Build validation spatial object ───────────────────────────────────────
+val_sf <- st_as_sf(val, coords = c("x", "y"), crs = 4326)
+
+# ── Attach DI and AOA to validation spatial object ────────────────────────
+val_sf$DI  <- as.numeric(di_vals)
+val_sf$AOA <- factor(aoa_mask, levels = c(1, 0),
+                     labels = c("Inside AOA", "Outside AOA"))
+
+# ── Map 1: Dissimilarity Index ─────────────────────────────────────────────
+p_di <- ggplot(val_sf) +
+  geom_sf(aes(colour = DI, size = DI), alpha = 0.8) +
+  scale_colour_viridis_c(name = "DI", option = "magma", direction = -1) +
+  scale_size_continuous(name = "DI", range = c(0.5, 4)) +
+  labs(title    = "Dissimilarity Index (DI)",
+       subtitle = "High DI = far from training data in predictor space") +
+  theme_minimal(base_size = 11) +
+  guides(size = "none")
+
+# ── Map 2: AOA binary mask ─────────────────────────────────────────────────
+p_aoa <- ggplot(val_sf) +
+  geom_sf(aes(colour = AOA, size = AOA), alpha = 0.8) +
+  scale_colour_manual(
+    values = c("Inside AOA"  = "#2c5f2e",
+               "Outside AOA" = "#e07b54"),
+    name   = NULL
+  ) +
+  scale_size_manual(
+    values = c("Inside AOA"  = 1.5,
+               "Outside AOA" = 3.0),
+    guide  = "none"
+  ) +
+  labs(title    = "Area of Applicability",
+       subtitle = "Orange = predictions should be flagged / withheld") +
+  theme_minimal(base_size = 11)
+
+gridExtra::grid.arrange(p_di, p_aoa, ncol = 2)
+```
+
+## DI vs Prediction Error
+
+The DI should correlate with actual prediction error — higher DI means less
+reliable predictions. This relationship validates the AOA concept on your dataset.
+
+```{r aoa-di-vs-error, fig.height=4}
+# ── Validation predictions from rf_aoa_model ──────────────────────────────
+val_preds     <- predict(rf_aoa_model, newdata = val[, predictors[-2]])
+val_resid_abs <- abs(val$Otot - val_preds)
+
+# ── DI vs prediction error on validation set ──────────────────────────────
+di_error_df <- data.frame(
+  DI        = as.numeric(di_vals),
+  abs_resid = val_resid_abs,
+  AOA       = factor(aoa_mask, levels = c(1, 0),
+                     labels = c("Inside AOA", "Outside AOA"))
+)
+
+# ── AOA threshold ─────────────────────────────────────────────────────────
+aoa_threshold <- train_di$threshold
+
+ggplot(di_error_df, aes(x = DI, y = abs_resid, colour = AOA)) +
+  geom_point(alpha = 0.55, size = 1.8) +
+  geom_smooth(method = "loess", se = TRUE, colour = "black",
+              linewidth = 0.8) +
+  geom_vline(xintercept = aoa_threshold,
+             linetype = "dashed", colour = "grey50") +
+  annotate("text",
+           x     = aoa_threshold + 0.005,
+           y     = max(val_resid_abs) * 0.95,
+           label = paste0("AOA threshold = ", round(aoa_threshold, 3)),
+           hjust = 0, size = 3.5, colour = "grey40") +
+  scale_colour_manual(
+    values = c("Inside AOA"  = "#2c5f2e",
+               "Outside AOA" = "#e07b54"),
+    name   = NULL
+  ) +
+  labs(
+    title    = "Dissimilarity Index vs Absolute Prediction Error",
+    subtitle = "Vertical line = AOA threshold  |  DI should predict error magnitude",
+    x        = "Dissimilarity Index (DI)",
+    y        = "Absolute validation residual (cm)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+## Reporting Summary
+
+```{r aoa-reporting-summary}
+# ── Complete validation summary table ──────────────────────────────────────
+# kNNDM CV predictions are already in cm (model trained on raw Otot)
+val_rmse_cv <- sqrt(mean((pred_knndm$obs - pred_knndm$pred)^2))
+val_r2_cv   <- 1 - sum((pred_knndm$obs - pred_knndm$pred)^2) /
+                   sum((pred_knndm$obs - mean(pred_knndm$obs))^2)
+
+reporting <- data.frame(
+  Metric  = c(
+    "OOB RMSE (cm)",
+    "OOB R\u00b2",
+    "Random CV RMSE (cm)",
+    "Random CV R\u00b2",
+    "kNNDM CV RMSE (cm)",
+    "kNNDM CV R\u00b2",
+    "QRF 90% PICP",
+    "Median 90% PI width (cm)",
+    "Pct observations inside AOA"
+  ),
+  Value   = c(
+    round(sqrt(rf_shap$prediction.error), 3),
+    round(rf_shap$r.squared, 4),
+    round(rmse_random, 3),
+    round(r2_random,   4),
+    round(rmse_knndm,  3),
+    round(r2_knndm,    4),
+    round(picp, 3),
+    round(median(qrf_width), 2),
+    paste0(round(mean(aoa_mask == 1) * 100, 1), "%")
+  )
+)
+print(reporting, row.names = FALSE)
+```
+
+> **Reporting guidance:**
+> Report the **kNNDM CV RMSE and R²** (not OOB, not random CV).
+> Include the AOA percentage to communicate the spatial extent of validated predictions.
+> If PICP < 0.85 or > 0.95, note whether prediction intervals are anti-conservative
+> or conservative respectively.
+
+> **Questions:**
+> 1. By how much (in % RMSE) did kNNDM CV inflate the error estimate vs random CV?
+>    Does this match the 20–60% range reported in the DSM literature?
+> 2. What percentage of observations fall outside the AOA? What do those locations
+>    have in common (examine their predictor values)?
+> 3. Does the DI correlate with prediction error as expected? Where does the
+>    relationship break down?
+> 4. If you were writing the validation section of an MLRA correlation document for
+>    O horizon thickness in this MLRA, which metrics from the reporting table would
+>    you cite, and why?
+
+---
+
+# Part 12 — RF Classification with Grid Search (Land Cover)
+
+This section applies Random Forest to a **land cover classification** dataset 
+from imagery, demonstrating the grid-search tuning workflow and providing a 
+speed comparison with `ranger`. The dataset is separate from the WV soildata used 
+in Parts 1–4.
+
+## Load Land Cover Training Data
+
+```{r rf-load-data}
+# Download land cover classification training data
+url_lc <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/archive/chapters/8_Tree_models/IAD16_train.csv"
+download.file(url_lc, "LCdata.csv", mode = "wb")
+
+LCtrain <- read.csv("LCdata.csv", header = TRUE)
+train   <- LCtrain[, c(3:7, 10)]
+train$Observed <- as.factor(train$Observed)
+
+cat("Training samples:", nrow(train), "\n")
+table(train$Observed)
+```
+
+## Build Initial Random Forest
+
+```{r rf-initial}
+set.seed(42)
+rf_initial <- randomForest(
+  as.factor(Observed) ~ .,
+  data      = train,
+  ntree     = 500,
+  mtry      = 2,
+  importance = TRUE,
+  proximity  = TRUE,
+  keep.forest = TRUE
+)
+
+print(rf_initial)
+```
+```{r}
+# ── A priori class proportions from training data ──────────────────────────
+q <- prop.table(table(train$Observed))
+cat("A priori class proportions (q):\n")
+print(round(q, 4))
+
+# ── Confusion matrix from OOB predictions ─────────────────────────────────
+# randomForest stores OOB predicted classes directly
+obs_oob  <- train$Observed
+pred_oob <- rf_initial$predicted   # OOB predictions — one per training observation
+
+cm <- table(Observed = obs_oob, Predicted = pred_oob)
+cat("\nConfusion Matrix (OOB):\n")
+print(cm)
+
+# ── Overall accuracy ───────────────────────────────────────────────────────
+Po <- mean(obs_oob == pred_oob)
+n  <- sum(cm)
+
+cat(sprintf("Total observations: %d\n", n))
+cat(sprintf("Overall accuracy (Po): %.4f\n", Po))
+
+# ── Kappa ───────────────────────────────────────────────────────
+row_sums <- rowSums(cm)
+col_sums <- colSums(cm)
+Pe_kappa <- sum(row_sums * col_sums) / n^2
+kappa    <- (Po - Pe_kappa) / (1 - Pe_kappa)
+
+cat(sprintf("Pe (Kappa): %.4f\n", Pe_kappa))
+cat(sprintf("Kappa:      %.4f\n", kappa))
+
+# ── Expected accuracy (chance) ─────────────────────────────────────────────
+Pe <- sum(q^2)
+cat(sprintf("Expected accuracy (Pe): %.4f\n", Pe))
+
+# ── Tau ────────────────────────────────────────────────────────────────────
+tau <- (Po - Pe) / (1 - Pe)
+cat(sprintf("Tau:                    %.4f\n", tau))
+
+# ── Per-class tau ──────────────────────────────────────────────────────────
+prod_acc <- diag(cm) / rowSums(cm)   # producer's accuracy per class
+tau_k    <- (prod_acc - q) / (1 - q)
+
+tau_table <- data.frame(
+  Class         = names(prod_acc),
+  N             = rowSums(cm),
+  q_k           = round(as.numeric(q), 4),
+  Prod_Acc      = round(prod_acc, 4),
+  Tau_k         = round(as.numeric(tau_k), 4)
+)
+cat("\nPer-class tau:\n")
+print(tau_table, row.names = FALSE)
+```
+
+```{r rf-oob-curve, fig.height=4}
+# OOB error by number of trees
+err <- rf_initial$err.rate
+
+# Plot convergence
+matplot(err, type = "l", lty = 1,
+        col  = c("black", "#e41a1c", "#377eb8", "#4daf4a", "#984ea3")[1:ncol(err)],
+        xlab = "Number of Trees", ylab = "OOB Error Rate",
+        main = "Random Forest OOB Error Convergence")
+legend("topright", legend = colnames(err),
+       fill = c("black", "#e41a1c", "#377eb8", "#4daf4a", "#984ea3")[1:ncol(err)],
+       bty = "n", cex = 0.8)
+
+# Final OOB error
+cat(sprintf("Final OOB error rate: %.4f (%.1f%%)\n",
+            err[nrow(err), "OOB"], err[nrow(err), "OOB"] * 100))
+```
+
+
+
+```{r}
+# True landscape: 80% forest, 20% urban
+# Two different validation sampling designs, same model performance
+
+# ── Scenario A: proportional sample (reflects landscape) ──────────────────
+cm_A <- matrix(c(76, 4,    # forest: 76 correct, 4 wrong
+                  3, 17),  # urban:  17 correct, 3 wrong
+               nrow = 2, byrow = TRUE,
+               dimnames = list(c("forest","urban"), c("forest","urban")))
+
+n_A      <- sum(cm_A)
+Po_A     <- sum(diag(cm_A)) / n_A
+Pe_A     <- sum(rowSums(cm_A) * colSums(cm_A)) / n_A^2
+kappa_A  <- (Po_A - Pe_A) / (1 - Pe_A)
+
+# ── Scenario B: equal stratified sample (50 per class) ────────────────────
+cm_B <- matrix(c(47, 3,    # forest: 47 correct, 3 wrong
+                  4, 46),  # urban:  46 correct, 4 wrong
+               nrow = 2, byrow = TRUE,
+               dimnames = list(c("forest","urban"), c("forest","urban")))
+
+n_B      <- sum(cm_B)
+Po_B     <- sum(diag(cm_B)) / n_B
+Pe_B     <- sum(rowSums(cm_B) * colSums(cm_B)) / n_B^2
+kappa_B  <- (Po_B - Pe_B) / (1 - Pe_B)
+
+# ── Tau: same landscape proportions for both ──────────────────────────────
+q       <- c(forest = 0.80, urban = 0.20)
+Pe_tau  <- sum(q^2)
+tau_A   <- (Po_A - Pe_tau) / (1 - Pe_tau)
+tau_B   <- (Po_B - Pe_tau) / (1 - Pe_tau)
+
+cat(sprintf("Scenario A — Po: %.3f  Kappa: %.3f  Tau: %.3f\n",
+            Po_A, kappa_A, tau_A))
+cat(sprintf("Scenario B — Po: %.3f  Kappa: %.3f  Tau: %.3f\n",
+            Po_B, kappa_B, tau_B))
+```
+> Kappa estimates chance agreement from the validation sample marginals, so its value changes when the same model is evaluated with different sampling designs (proportional vs. equal stratified). Tau fixes the chance-agreement baseline using known landscape proportions, making it invariant to sampling design and therefore more appropriate for reporting map accuracy across the true class distribution.
+
+## Variable Importance
+
+Variable importance in RF is computed as **permutation importance (MDA)**:
+for each feature, the OOB samples are shuffled and prediction error is
+re-measured. The drop in accuracy — averaged across all trees — is the 
+importance score. This is unbiased with respect to feature cardinality and
+more reliable than single-tree importance.
+
+```{r rf-importance-lc, fig.height=5}
+varImpPlot(rf_initial,
+           main = "Random Forest Variable Importance\n(Mean Decrease Accuracy & Gini)",
+           col  = "#2c5f2e")
+```
+
+> **Questions:**  
+> 1. What is the OOB error rate?  
+> 2. Which predictor has the greatest drop in accuracy when permuted?  
+> 3. Do the two importance measures (MDA and Gini) agree on the top predictors?
+
+## Hyperparameter Grid Search
+
+```{r rf-grid, cache=TRUE}
+# Define search grid
+mtry_grid     <- seq(2, 4, 1)
+nodesize_grid <- seq(1, 8, 2)
+ntree_grid    <- seq(200, 800, 100)
+
+hyper_grid <- expand.grid(
+  mtry     = mtry_grid,
+  nodesize = nodesize_grid,
+  ntree    = ntree_grid
+)
+
+cat(sprintf("Testing %d hyperparameter combinations...\n", nrow(hyper_grid)))
+
+oob_err <- numeric(nrow(hyper_grid))
+
+for (i in seq_len(nrow(hyper_grid))) {
+  model      <- randomForest(
+    formula  = Observed ~ .,
+    data     = train,
+    mtry     = hyper_grid$mtry[i],
+    nodesize = hyper_grid$nodesize[i],
+    ntree    = hyper_grid$ntree[i]
+  )
+  oob_err[i] <- model$err.rate[nrow(model$err.rate), "OOB"]
+}
+
+opt_i <- which.min(oob_err)
+cat("\nOptimal hyperparameters:\n")
+print(hyper_grid[opt_i, ])
+cat(sprintf("Optimal OOB error: %.4f\n", oob_err[opt_i]))
+```
+
+```{r rf-optimal}
+# Build optimized RF
+rf_opt <- randomForest(
+  Observed ~ .,
+  data        = train,
+  ntree       = hyper_grid$ntree[opt_i],
+  mtry        = hyper_grid$mtry[opt_i],
+  nodesize    = hyper_grid$nodesize[opt_i],
+  importance  = TRUE,
+  keep.forest = TRUE
+)
+
+cat("Initial RF OOB error:  ", rf_initial$err.rate[nrow(rf_initial$err.rate), "OOB"], "\n")
+cat("Optimized RF OOB error:", rf_opt$err.rate[nrow(rf_opt$err.rate), "OOB"], "\n")
+```
+
+> **Questions:**  
+> 1. How many total models were evaluated in the grid search?  
+> 2. What are the optimal values for `ntree`, `mtry`, and `nodesize`?  
+> 3. By how much did hyperparameter tuning reduce OOB error?
+
+---
+
+# Part 13 — Predict and Map Land Cover
+
+## Load Imagery
+
+```{r load-imagery, eval=FALSE}
+library(terra)
+
+# Download sample NAIP imagery (5-band + NDVI)
+url_img <- "https://raw.githubusercontent.com/ncss-tech/stats_for_soil_survey/master/archive/chapters/8_Tree_models/NAIP_5m.zip"
+download.file(url_img, "NAIP_5m.zip", mode = "wb")
+unzip("NAIP_5m.zip")
+
+# Read the 4-band NAIP image (red, green, blue, NIR)
+x1 <- rast("m_3807706_nw_5m.tif")
+names(x1)
+```
+
+## Compute NDVI and Predict
+
+```{r predict-lc, eval=FALSE}
+# NDVI function
+calc_ndvi <- function(img, red_band = 1, nir_band = 4) {
+  (img[[nir_band]] - img[[red_band]]) / (img[[nir_band]] + img[[red_band]])
+}
+
+ndvi_layer <- calc_ndvi(x1)
+plot(ndvi_layer, main = "NDVI")
+
+# Stack with computed NDVI
+x <- c(x1, ndvi_layer)
+names(x) <- c("red", "green", "blue", "nir", "ndvi")
+
+# Predict land cover using optimized RF model
+LC_class <- predict(x, rf_opt, type = "response")
+
+# Distinct qualitative colors — one per class
+lc_classes <- levels(train$Observed)
+n_classes  <- length(lc_classes)
+
+# RColorBrewer "Set1" / "Dark2" palette gives maximally distinct hues
+lc_colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3",
+               "#ff7f00", "#a65628", "#f781bf", "#999999")[seq_len(n_classes)]
+
+plot(LC_class,
+     col   = lc_colors,
+     main  = "Predicted Land Cover",
+     plg   = list(title = "Land Cover Class", cex = 0.85))
+
+writeRaster(LC_class, "LC_Class_map.tif", overwrite = TRUE)
+
+# Probability surface — one layer per class, labeled with class name
+LC_prob <- predict(x, rf_opt, type = "prob")
+names(LC_prob) <- lc_classes   # label each layer with its class name
+
+# Plot each class probability map individually
+# 3-stop diverging palette: blue (low) → yellow (mid ~0.5) → red (high)
+# This maximises perceptual contrast at mid-range probabilities
+prob_pal <- colorRampPalette(c("#2166ac", "#ffffbf", "#d73027"))(100)
+
+par(mfrow = c(ceiling(n_classes / 3), 3),
+    mar    = c(2, 2, 3, 4))
+for (cls in lc_classes) {
+  plot(LC_prob[[cls]],
+       main   = paste("P(", cls, ")", sep = ""),
+       col    = prob_pal,
+       range  = c(0, 1))   # fix scale so maps are directly comparable
+}
+par(mfrow = c(1, 1))
+```
+
+```{r eval=FALSE}
+# ── Shannon Entropy and uncertainty metrics from probability surface ───────
+library(terra)
+
+# ── 1. Shannon Entropy ─────────────────────────────────────────────────────
+# H = -sum(p * log(p)) across all classes at each pixel
+# Maximum entropy = log(n_classes) — normalise to 0-1 for comparability
+entropy_raw <- app(LC_prob, fun = function(p) {
+  p   <- p[p > 0]           # exclude zero probabilities (log(0) undefined)
+  -sum(p * log(p))
+})
+
+entropy_norm <- entropy_raw / log(n_classes)   # 0 = certain, 1 = maximum uncertainty
+names(entropy_raw)  <- "Shannon_Entropy"
+names(entropy_norm) <- "Shannon_Entropy_Normalised"
+
+# ── 2. Confusion Index ─────────────────────────────────────────────────────
+# CI = 1 - (p1 - p2) where p1 = highest class probability, p2 = second highest
+# CI near 1 = two classes nearly equally likely (confused)
+# CI near 0 = one class dominates (confident)
+confusion_index <- app(LC_prob, fun = function(p) {
+  p_sorted <- sort(p, decreasing = TRUE)
+  1 - (p_sorted[1] - p_sorted[2])
+})
+names(confusion_index) <- "Confusion_Index"
+
+# ── 3. Maximum Probability (confidence of winning class) ──────────────────
+max_prob <- app(LC_prob, max)
+names(max_prob) <- "Max_Probability"
+
+# ── 4. Margin (difference between top two class probabilities) ─────────────
+margin <- app(LC_prob, fun = function(p) {
+  p_sorted <- sort(p, decreasing = TRUE)
+  p_sorted[1] - p_sorted[2]
+})
+names(margin) <- "Margin"
+
+# ── 5. Combine all uncertainty layers ─────────────────────────────────────
+uncertainty_stack <- c(entropy_norm, confusion_index, max_prob, margin)
+
+# ── 6. Plot all uncertainty metrics ───────────────────────────────────────
+unc_pal     <- colorRampPalette(c("#2166ac", "#ffffbf", "#d73027"))(100)
+conf_pal    <- colorRampPalette(c("#1a9641", "#ffffbf", "#d7191c"))(100)
+maxprob_pal <- colorRampPalette(c("#d73027", "#ffffbf", "#1a9641"))(100)
+
+par(mfrow = c(2, 2), mar = c(2, 2, 3, 4))
+
+plot(entropy_norm,
+     main  = "Shannon Entropy (normalised)",
+     col   = unc_pal,
+     range = c(0, 1))
+
+plot(confusion_index,
+     main  = "Confusion Index",
+     col   = conf_pal,
+     range = c(0, 1))
+
+plot(max_prob,
+     main  = "Max Class Probability",
+     col   = maxprob_pal,
+     range = c(0, 1))
+
+plot(margin,
+     main  = "Margin (p1 - p2)",
+     col   = maxprob_pal,
+     range = c(0, 1))
+
+par(mfrow = c(1, 1))
+
+# ── 7. Write uncertainty rasters to disk ──────────────────────────────────
+writeRaster(entropy_norm,    "entropy_normalised.tif",  overwrite = TRUE)
+writeRaster(confusion_index, "confusion_index.tif",     overwrite = TRUE)
+writeRaster(max_prob,        "max_probability.tif",     overwrite = TRUE)
+writeRaster(margin,          "margin.tif",              overwrite = TRUE)
+
+# ── 8. Summary statistics across the mapped area ──────────────────────────
+cat("=== Uncertainty Summary ===\n")
+cat(sprintf("Mean Shannon Entropy (0-1):  %.3f\n", global(entropy_norm,    "mean", na.rm=TRUE)[[1]]))
+cat(sprintf("Mean Confusion Index:        %.3f\n", global(confusion_index, "mean", na.rm=TRUE)[[1]]))
+cat(sprintf("Mean Max Probability:        %.3f\n", global(max_prob,        "mean", na.rm=TRUE)[[1]]))
+cat(sprintf("Mean Margin (p1-p2):         %.3f\n", global(margin,          "mean", na.rm=TRUE)[[1]]))
+
+# Fraction of pixels with high confusion (CI > 0.8)
+ci_vals <- values(confusion_index, na.rm = TRUE)
+cat(sprintf("Pixels with CI > 0.8:        %.1f%%\n", mean(ci_vals > 0.8) * 100))
+```
+
+
+
+
+
+
+**Shannon Entropy** captures overall spread across all classes — useful when more than two classes are competing. 
+**Confusion Index** focuses specifically on the competition between the top two classes — a pixel can have moderate entropy but low confusion if one class clearly dominates. 
+**Max Probability** is the simplest and most interpretable — areas below 0.5 should be flagged for verification. 
+**Margin** is the most sensitive to boundary uncertainty and aligns closely with what a field scientist would call a transition zone between map units.
+
+> **Question:** Examine the probability surface for each class. Which areas of the 
+> landscape show the highest prediction uncertainty (probability near 0.5)? 
+> What landscape features might explain this?
+
+---
+
+# Summary: Key Takeaways
+
+| Concept | What to Remember |
+|---------|-----------------|
+| **Decision Tree** | Recursive binary partitioning; interpretable but high variance |
+| **Pruning (1-SE rule)** | Selects simplest tree within 1 SE of minimum CV error |
+| **Multi-class vs Binary** | Binary response typically outperforms multi-class for spodic; collapsing classes removes ambiguous boundaries |
+| **Gini vs Entropy** | Produce nearly identical trees; Gini is faster |
+| **Histosol outlier** | Single extreme observation can substantially inflate MSE; always inspect distribution before modeling |
+| **Bagging** | Averaging trees reduces variance without changing bias |
+| **Random Feature Subsampling** | Decorrelates trees; key RF innovation |
+| **OOB Error** | Free CV estimate; biased for spatially structured soil data |
+| **%IncMSE vs IncNodePurity** | %IncMSE is unbiased and preferred for inference; IncNodePurity is biased toward continuous predictors |
+| **ranger** | 5–20× faster RF implementation; use for large DSM datasets |
+| **Permutation Importance** | Unbiased variable importance; use for scientific inference |
+| **Boruta** | Robust feature selection; eliminates noise covariates |
+| **PDPs** | Show marginal effect shape; useful for communicating soil-landscape relationships |
+| **SHAP** | Per-observation attribution of predictions; enables interpretability |
+| **QRF** | Predicts full conditional distribution; no normality assumption; enables calibrated prediction intervals |
+| **PICP** | Prediction Interval Coverage Probability; should match stated confidence level (e.g., 0.90 for 90% PI) |
+| **PI width map** | Spatial uncertainty diagnostic; wide intervals flag sites for targeted field verification |
+| **kNNDM CV** | Constructs folds matching geographic prediction conditions; gives realistic (not optimistic) accuracy estimates |
+| **Random vs Spatial CV gap** | Random CV overstates R² by 20–60% for clustered soil data; always report kNNDM metrics in MLRA documents |
+| **Area of Applicability** | Delineates where CV accuracy holds; predictions outside AOA lack validated accuracy guarantee |
+| **DI (Dissimilarity Index)** | Measures predictor-space distance to training data; high DI = unreliable prediction |
+
+> **Summary:** OOB error does not account for 
+> spatial autocorrelation in pedon training data. 
+> Always report **kNNDM spatially cross-validated** performance metrics (Part 14).
+> Accompany point predictions with **QRF prediction intervals** (Part 13) and
+> an **Area of Applicability** map (Part 14) to communicate where the model's
+> stated accuracy holds across the mapping unit.
+
+---
+
+```{r session-info}
+sessionInfo()
+```
